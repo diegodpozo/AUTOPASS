@@ -47,6 +47,11 @@
 
     <section class="features" id="features">
         <div class="feature-card">
+            <span class="feature-icon"><i class="fas fa-calendar-check"></i></span>
+            <h3>Reservas Anticipadas</h3>
+            <p>Planificá tu llegada y garantizá tu plaza en segundos.</p>
+        </div>
+        <div class="feature-card">
             <span class="feature-icon"><i class="fas fa-camera-retro"></i></span>
             <h3>Reconocimiento de patentes</h3>
             <p>Acceso automatizado mediante reconocimiento de patentes al instante. Sin tickets y sin demoras.</p>
@@ -65,11 +70,11 @@
 
     <section class="map-section" id="donde-estamos">
         <h2>Encontrá los mejores puntos</h2>
-        <p>Visitá nuestras oficinas centrales o encontrá el punto AUTOPASS más cercano a tu ubicación.</p>
+        <p>Encontrá el punto AUTOPASS más cercano a tu ubicación.</p>
         <div class="map-container">
             <div id="map"></div>
             <div class="map-overlay">
-                <h4><i class="fas fa-building"></i> Casa Central</h4>
+                <h4><i class="fas fa-building"></i> Playa</h4>
                 <p>Av. del Libertador 1200, CABA</p>
             </div>
         </div>
@@ -86,7 +91,6 @@
                 <div class="social-links" style="display: flex; gap: 15px;">
                     <a href="#" style="font-size: 1.2rem; color: var(--dorado);"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" style="font-size: 1.2rem; color: var(--dorado);"><i class="fab fa-instagram"></i></a>
-                    <a href="#" style="font-size: 1.2rem; color: var(--dorado);"><i class="fab fa-linkedin-in"></i></a>
                     <a href="#" style="font-size: 1.2rem; color: var(--dorado);"><i class="fab fa-x-twitter"></i></a>
                 </div>
             </div>
@@ -149,40 +153,120 @@
                 ¿Ya tenés una cuenta? <a href="javascript:void(0)" onclick="switchModal('registerModal', 'loginModal')" style="color: var(--dorado); text-decoration: none; font-weight: 700;">Iniciá sesión acá</a>
             </div>
             <div id="register-error" class="error-msg"></div>
+            
             <form id="registerForm">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nombre/s</label>
-                        <input type="text" id="reg-nombre" placeholder="Tu nombre/s" required>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="reg-nombre" placeholder="Tu nombre/s" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Apellido</label>
-                        <input type="text" id="reg-apellido" placeholder="Tu apellido" required>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user-tag"></i>
+                            <input type="text" id="reg-apellido" placeholder="Tu apellido" required>
+                        </div>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>DNI</label>
-                        <input type="text" id="reg-dni" placeholder="Ej: 12345678 (Sin puntos)" required>
+                        <div class="input-with-icon">
+                            <i class="fas fa-id-card"></i>
+                            <input type="text" id="reg-dni" placeholder="12345678" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Teléfono</label>
-                        <input type="tel" id="reg-tel" placeholder="Cód. área + número (Ej: 1122334455)" required>
+                        <div class="input-with-icon">
+                            <i class="fas fa-phone"></i>
+                            <input type="tel" id="reg-tel" placeholder="11 2233 4455" required>
+                        </div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Correo Electrónico</label>
-                    <input type="email" id="reg-email" placeholder="ejemplo@correo.com.ar" required>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="reg-email" placeholder="ejemplo@correo.com.ar" required>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="reg-password" placeholder="Mín. 8 carac. (1 Mayús. y 1 Espec. ! @ . ,)" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="reg-password" placeholder="Clave" required>
+                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('reg-password', this)"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Contraseña</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-shield-halved"></i>
+                            <input type="password" id="reg-password-confirm" placeholder="Repetir clave" required>
+                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('reg-password-confirm', this)"></i>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Finalizar Registro</button>
+                
+                <div class="password-requirements">
+                    <div id="req-len" class="req-item"><i class="far fa-circle"></i> 8+ caracteres</div>
+                    <div id="req-up" class="req-item"><i class="far fa-circle"></i> Una mayúscula</div>
+                    <div id="req-spec" class="req-item"><i class="far fa-circle"></i> Un símbolo (!@#)</div>
+                    <div id="req-match" class="req-item"><i class="far fa-circle"></i> Coinciden</div>
+                </div>
+
+                <div class="strength-meter-container" style="margin-top: -10px; margin-bottom: 25px;">
+                    <div id="password-strength" class="strength-meter"></div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 15px;">Finalizar Registro</button>
             </form>
         </div>
     </div>
 {% endblock %}
 
 {% block extra_scripts %}
+<script>
+    // Lógica del Carrusel (Integrada temporalmente o para ser movida a main.js)
+    const imagenesCarrusel = [
+        { src: '/static/images/INICIO/estacionamiento1.webp', leyenda: 'SEGURIDAD 24 HORAS' },
+        { src: '/static/images/INICIO/estacionamiento2.webp', leyenda: 'ACCESO INTELIGENTE' },
+        { src: '/static/images/INICIO/estacionamiento3.webp', leyenda: 'PAGOS DIGITALES' },
+        { src: '/static/images/INICIO/estacionamiento4.webp', leyenda: 'GESTIÓN EN TIEMPO REAL' },
+        { src: '/static/images/INICIO/trafico1.webp', leyenda: 'SIN DEMORAS' },
+        { src: '/static/images/INICIO/trafico2.webp', leyenda: 'EL FUTURO ES HOY' },
+        { src: '/static/images/INICIO/trafico3.webp', leyenda: 'TU LUGAR ASEGURADO' }
+    ];
+
+    let slideActual = 0;
+    const contenedor = document.getElementById('contenedorCarrusel');
+
+    function inicializarCarrusel() {
+        if (!contenedor) return;
+        imagenesCarrusel.forEach((img, index) => {
+            const div = document.createElement('div');
+            div.className = `item-carrusel ${index === 0 ? 'activo' : ''}`;
+            div.style.backgroundImage = `url('${img.src}')`;
+            div.innerHTML = `<div class="leyenda-carrusel">${img.leyenda}</div>`;
+            contenedor.appendChild(div);
+        });
+        
+        setInterval(() => MoverCarrusel(1), 5000);
+    }
+
+    function MoverCarrusel(direccion) {
+        const items = document.querySelectorAll('.item-carrusel');
+        if (items.length === 0) return;
+        
+        items[slideActual].classList.remove('activo');
+        slideActual = (slideActual + direccion + items.length) % items.length;
+        items[slideActual].classList.add('activo');
+    }
+
+    document.addEventListener('DOMContentLoaded', inicializarCarrusel);
+</script>
 {% endblock %}
