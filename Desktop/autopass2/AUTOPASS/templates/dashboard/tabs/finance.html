@@ -1,0 +1,86 @@
+<!-- PESTAÑA: REPORTE FINANCIERO -->
+<div id="tab-finance" class="tab-view" style="display: none;">
+    <div class="finance-layout">
+        <!-- SECCIÓN SUPERIOR: KPIS RÁPIDOS -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fas fa-money-bill-trend-up"></i></div>
+                <div class="kpi-data">
+                    <span class="label">Recaudación Total</span>
+                    <span class="value" id="fin-total">$0</span>
+                </div>
+                <div class="kpi-trend trend-up">▲ 12.5%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fas fa-receipt"></i></div>
+                <div class="kpi-data">
+                    <span class="label">Tickets Emitidos</span>
+                    <span class="value" id="fin-count">0</span>
+                </div>
+                <div class="kpi-trend">Estable</div>
+            </div>
+            <div class="kpi-card highlight">
+                <div class="kpi-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+                <div class="kpi-data">
+                    <span class="label">Ticket Promedio</span>
+                    <span class="value" id="fin-avg">$0</span>
+                </div>
+                <div class="kpi-trend trend-down">▼ 2.1%</div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN MEDIA: GRÁFICOS ANALÍTICOS -->
+        <div class="finance-analytics-row">
+            <div class="card chart-card">
+                <div class="card-header-premium">
+                    <div class="header-info-group">
+                        <div class="header-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="header-text"><h3>TENDENCIA DE INGRESOS</h3></div>
+                    </div>
+                    <div class="header-actions">
+                        <select id="fin-period" class="select-premium-sm" onchange="loadFinanceData()">
+                            <option value="day">HOY</option>
+                            <option value="week">ÚLTIMA SEMANA</option>
+                            <option value="month">ESTE MES</option>
+                            <option value="year">AÑO ACTUAL</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN INFERIOR: HISTORIAL DETALLADO -->
+        <div class="card mt-25">
+            <div class="card-header-premium">
+                <div class="header-info-group">
+                    <div class="header-icon"><i class="fas fa-list-check"></i></div>
+                    <div class="header-text"><h3>HISTORIAL DE PAGOS CONFIRMADOS</h3></div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline btn-sm" onclick="exportFinanceData()">
+                        <i class="fas fa-download"></i> EXPORTAR
+                    </button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Vehículo / Patente</th>
+                            <th>Monto Abonado</th>
+                            <th>Método de Pago</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-list">
+                        <tr><td colspan="5" class="text-center py-20">Cargando transacciones...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
