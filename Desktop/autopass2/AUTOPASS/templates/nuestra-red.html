@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}AUTOPASS - Conocé Más{% endblock %}
+
+{% block body_class %}bg-blur{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="/static/css/landing.css">
+{% endblock %}
+
+{% block content %}
+    <header id="main-header" class="header-landing">
+        <div class="header-container">
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <a href="/" class="header-logo-link">
+                <img src="/static/images/logo.png" alt="Logo" class="header-logo-img">
+                <div class="logo-text">AUTOPASS</div>
+            </a>
+
+            <nav id="nav-menu">
+                <div class="sidebar-header-mobile">
+                    <img src="/static/images/logo.png" alt="Logo">
+                    <span>AUTOPASS</span>
+                </div>
+
+                <div class="nav-links">
+                    <a href="/" class="nav-link">Inicio</a>
+                    <a href="/nuestra-red" class="nav-link active">Nuestra Red</a>
+                    <a href="/contacto" class="nav-link">Contacto</a>
+                </div>
+                
+                <div class="nav-actions">
+                    <div id="auth-guest-actions">
+                        <button class="btn-nav btn-login" onclick="openModal('loginModal')">INICIÁ SESIÓN</button>
+                        <button class="btn-nav btn-register" onclick="openModal('registerModal')">CREÁ TU CUENTA</button>
+                    </div>
+                    <div id="auth-user-actions" style="display:none;">
+                        <a href="/perfil" class="btn-nav btn-profile"><i class="fas fa-user-circle"></i> Mi Perfil</a>
+                        <button class="btn-nav btn-logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Cerrar Sesión</button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="page-hero">
+        <h1>NUESTRA RED</h1>
+        <p>Descubrí por qué miles de usuarios eligen la tecnología de AUTOPASS para su movilidad diaria.</p>
+    </section>
+
+    <section class="content public-content-section bg-negro">
+        <div class="feature-single-column">
+            <h2>Innovación en cada plaza</h2>
+            <p>AUTOPASS no es solo un sistema de estacionamiento; es un ecosistema diseñado para eliminar las fricciones del día a día. Nuestra red de estacionamientos inteligentes utiliza visión artificial de última generación para reconocer tu vehículo al instante.</p>
+            <ul class="feature-list-horizontal">
+                <li><i class="fas fa-check"></i> Sin tickets de papel</li>
+                <li><i class="fas fa-check"></i> Pagos automatizados</li>
+                <li><i class="fas fa-check"></i> Seguridad garantizada con ALPR</li>
+            </ul>
+        </div>
+
+        <h2 class="section-title-center">Estacionamientos Adheridos</h2>
+        <div class="grid-stats grid-adheridos">
+            <div class="card card-center">
+                <i class="fas fa-building-shield icon-large"></i>
+                <h3 class="text-white">AUTOPASS Central</h3>
+                <p class="text-muted-small"><i class="fas fa-location-dot footer-contact-item"></i> Av. del Libertador 1200, CABA</p>
+                <p class="text-muted-small"><i class="fas fa-phone footer-contact-item"></i> 11 4567-8900</p>
+                <p class="mt-10 fw-600">Abierto 24hs</p>
+            </div>
+            <div class="card card-center">
+                <i class="fas fa-map-location-dot icon-large"></i>
+                <h3 class="text-white">Punto Ituzaingó</h3>
+                <p class="text-muted-small"><i class="fas fa-location-dot footer-contact-item"></i> Mariano Acosta 50, Ituzaingó</p>
+                <p class="text-muted-small"><i class="fas fa-phone footer-contact-item"></i> 11 4567-8901</p>
+                <p class="mt-10 fw-600">07:00 a 23:00</p>
+            </div>
+            <div class="card card-center">
+                <i class="fas fa-square-parking icon-large"></i>
+                <h3 class="text-white">Centro Castelar</h3>
+                <p class="text-muted-small"><i class="fas fa-location-dot footer-contact-item"></i> Montes de Oca 1220, Castelar</p>
+                <p class="text-muted-small"><i class="fas fa-phone footer-contact-item"></i> 11 4567-8902</p>
+                <p class="mt-10 fw-600">Abierto 24hs</p>
+            </div>
+            <div class="card card-center">
+                <i class="fas fa-bag-shopping icon-large"></i>
+                <h3 class="text-white">Morón Shopping</h3>
+                <p class="text-muted-small"><i class="fas fa-location-dot footer-contact-item"></i> Av. J. M. de Rosas 658, Morón</p>
+                <p class="text-muted-small"><i class="fas fa-phone footer-contact-item"></i> 11 4567-8903</p>
+                <p class="mt-10 fw-600">07:00 a 00:00</p>
+            </div>
+        </div>
+    </section>
+
+    {% include "footer.html" %}
+
+    {% include "auth_modals.html" %}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/landing.js"></script>
+{% endblock %}
