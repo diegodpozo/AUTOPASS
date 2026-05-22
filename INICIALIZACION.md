@@ -1,59 +1,44 @@
-#  Guía de Inicialización: ParkingTech
+#  Guía de Inicialización: AUTOPASS
 
-Sigue estos pasos para poner en marcha el sistema con soporte de auditoría visual.
+Sigue estos pasos para poner en marcha el sistema bajo la nueva arquitectura modular.
 
 ## 1. Requisitos Previos
 - Python 3.9+ e instalar dependencias:
 ```bash
-.\venv\Scripts\python.exe -m pip install fastapi uvicorn sqlalchemy paho-mqtt python-dotenv opencv-python easyocr
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+# O el comando rápido:
+.\venv\Scripts\python.exe -m pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt requests opencv-python easyocr httpx pytest
 ```
 
-## 2. Ejecución (En orden)
+## 2. Configuración de Entorno
+Crea o edita el archivo `.env` en la raíz:
+```env
+DATABASE_URL=sqlite:///./parking.db
+SECRET_KEY=tu_secreto_aqui
+MQTT_BROKER=broker.hivemq.com
+IMAGE_DIR=captured_images
+```
 
-### Paso A: Servidor API y Dashboard
-```powershell
-.\venv\Scripts\activate
+## 3. Preparación de Base de Datos
+Este paso crea las tablas y los roles iniciales (Admin Global).
+```bash
+python init_db.py
+```
+
+## 4. Ejecución del Servidor
+```bash
 uvicorn main:app --reload
 ```
-*Acceso:* **http://localhost:8000**
 
-### USUARIO ADMIN:
-- admin@autopass.com
-- admin123
-
-### Paso B: Hardware
-- **Físico (Recomendado):** Conectar tu Arduino/ESP32 (Ver `Guia_Hardware/Conexion_Arduino.md`).
-
-### Paso C: Cámaras ALPR (Doble Celular)
-Abre dos terminales y usa el IP proporcionado por la App "IP Webcam":
-
-**Terminal 1 (ENTRADA):**
-```powershell
-.\venv\Scripts\activate
-$env:VIDEO_SOURCE="http://192.168.0.88:8080/video"; $env:GATE_ID="ENTRADA_PRINCIPAL"; $env:GATE_TYPE="entrada"; python alpr_service.py
+## 5. Verificación de Integridad
+Ejecuta los tests automáticos para asegurar que la modularización está operativa:
+```bash
+.\venv\Scripts\python.exe test_user_flow.py
 ```
 
-**Terminal 2 (SALIDA):**
-```powershell
-.\venv\Scripts\activate
-$env:VIDEO_SOURCE="http://192.168.0.88:8080/video"; $env:GATE_ID="SALIDA_PRINCIPAL"; $env:GATE_TYPE="salida"; python alpr_service.py
-```
-
-##  Limpieza del Sistema
-Para resetear el Dashboard, borrar fotos y poner el aforo en cero antes de una demostración:
-```powershell
-python reset_db.py
-```
-
-## 📸 Funcionamiento ALPR Pro
-1. **Consenso 3x**: La cámara debe ver la misma patente 3 veces para validarla (evita errores).
-2. **Filtros Nitidez**: Se aplica Sharpening y CLAHE automáticamente para distinguir letras difíciles (D vs O).
-3. **Control de Duplicados**: Si intentas ingresar un auto que ya está "ADENTRO", el sistema denegará el acceso.
-
-##  Prueba de Pago y Salida
-1. Simula o captura una entrada (Manual o vía Cámara).
-2. Verás al vehículo aparecer en la sección **"🚘 Vehículos en el Predio"**.
-3. Verás cómo su deuda aumenta en tiempo real según la tarifa configurada.
-4. Haz clic en el botón **PAGAR** dentro de esa misma tabla.
-5. Procede a simular la salida con la misma patente. La barrera solo abrirá si el estado cambió a **"✅ LISTO"**.
-
+---
+### 🚦 Flujo de Prueba Rápido (ALPR)
+1. Inicia el servidor.
+2. Abre una terminal nueva y corre `python alpr_service.py` (simulará una cámara).
+3. Entra a `http://localhost:8000/dashboard` como admin (admin@autopass.com / admin123).
+4. En la pestaña **Live**, deberías ver el stream simulado y las detecciones ingresando a la base de datos modular.

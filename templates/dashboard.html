@@ -5,9 +5,9 @@
 {% block body_class %}layout-with-sidebar{% endblock %}
 
 {% block extra_head %}
-    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/pages/dashboard.css">
     <!-- Reutilizamos estilos premium del perfil para consistencia -->
-    <link rel="stylesheet" href="/static/css/perfil-base.css">
+    <link rel="stylesheet" href="/static/css/pages/profile.css">
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,8 @@
         (function() {
             const token = localStorage.getItem('token');
             const rol = localStorage.getItem('rol');
-            if (!token || rol !== 'admin') {
+            const isAuthorized = ['admin', 'local_admin', 'staff'].includes(rol);
+            if (!token || !isAuthorized) {
                 window.location.href = '/';
             }
         })();
@@ -23,7 +24,7 @@
 
     <!-- BARRA LATERAL (ADMIN) -->
     <aside class="sidebar">
-        <div class="sidebar-toggle" onclick="toggleSidebar()">
+        <div class="sidebar-toggle" onclick="toggleSidebar()" title="Expandir/Contraer Menú">
             <i class="fas fa-chevron-left"></i>
         </div>
         <div class="logo">
@@ -31,14 +32,16 @@
             <span>AUTOPASS</span>
         </div>
         <nav class="nav-group">
-            <div class="nav-item active" onclick="switchTab('live', this)"><i class="fas fa-video"></i> <span class="nav-text">Monitoreo</span></div>
-            <div class="nav-item" onclick="switchTab('occupancy', this)"><i class="fas fa-car"></i> <span class="nav-text">Ocupación Actual</span></div>
-            <div class="nav-item" onclick="switchTab('admin-reservations', this)"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span></div>
-            <div class="nav-item" onclick="switchTab('users', this)"><i class="fas fa-users-gear"></i> <span class="nav-text">Gestión de Usuarios</span></div>
-            <div class="nav-item" onclick="switchTab('finance', this)"><i class="fas fa-chart-line"></i> <span class="nav-text">Reporte Financiero</span></div>
-            <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-gears"></i> <span class="nav-text">Configuración</span></div>
+            <div class="nav-item active" onclick="switchTab('live', this)" title="Ver monitoreo en tiempo real"><i class="fas fa-video"></i> <span class="nav-text">Monitoreo</span></div>
+            <div class="nav-item" onclick="switchTab('admin-reservations', this)" title="Gestionar reservas del sistema"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span></div>
+            
+            <!-- SECCIONES EXCLUSIVAS ADMIN -->
+            <div class="nav-item admin-only" onclick="switchTab('users', this)" title="Administrar usuarios y permisos"><i class="fas fa-users-gear"></i> <span class="nav-text">Gestión de Usuarios</span></div>
+            <div class="nav-item admin-only" onclick="switchTab('finance', this)" title="Ver analítica y reportes financieros"><i class="fas fa-chart-line"></i> <span class="nav-text">Reporte Financiero</span></div>
+            <div class="nav-item admin-only" onclick="switchTab('promotions', this)" title="Gestionar promociones y beneficios"><i class="fas fa-gift"></i> <span class="nav-text">Promociones</span></div>
+            <div class="nav-item admin-only" onclick="switchTab('settings', this)" title="Configurar parámetros del sistema"><i class="fas fa-gears"></i> <span class="nav-text">Configuración</span></div>
         </nav>
-        <div class="sidebar-footer" onclick="logout()">
+        <div class="sidebar-footer" onclick="logout()" title="Salir del sistema">
             <i class="fas fa-right-from-bracket"></i> <span>Cerrar Sesión</span>
         </div>
     </aside>
@@ -48,11 +51,11 @@
     <main class="main-content-scroll">
         <header>
             <div class="header-left">
-                <button class="mobile-nav-toggle no-print" onclick="toggleMobileNav()">
+                <button class="mobile-nav-toggle no-print" onclick="toggleMobileNav()" title="Menú móvil">
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="header-title-premium">
-                    <div class="header-icon-box">
+                    <div class="header-icon-box" title="Panel Administrativo">
                         <i class="fas fa-gauge-high"></i>
                     </div>
                     <div class="header-text-info">
@@ -63,13 +66,13 @@
             </div>
             <div class="header-right">
                 <div class="system-status-group">
-                    <div class="health-indicator">
+                    <div class="health-indicator" title="Estado de conexión con el servidor">
                         <span id="health-db" class="health-dot online"></span>
                         <span class="health-label">SISTEMA</span>
                     </div>
-                    <div class="clock-display" id="clock">00:00:00</div>
+                    <div class="clock-display" id="clock" title="Hora actual del sistema">00:00:00</div>
                 </div>
-                <div class="admin-badge">
+                <div class="admin-badge" title="Sesión iniciada como Administrador">
                     <i class="fas fa-user-shield"></i>
                     <span>Administrador</span>
                 </div>
@@ -80,17 +83,149 @@
             <div class="content-wrapper">
                 <div id="dashboard-tabs-container">
                     {% include "dashboard/tabs/live.html" %}
-                    {% include "dashboard/tabs/occupancy.html" %}
                     {% include "dashboard/tabs/admin_reservations.html" %}
                     {% include "dashboard/tabs/users.html" %}
                     {% include "dashboard/tabs/finance.html" %}
+                    {% include "dashboard/tabs/promotions.html" %}
                     {% include "dashboard/tabs/settings.html" %}
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- MODAL: VISUALIZADOR DE CAPTURAS -->
+    <div id="modal-log-detail" class="modal" style="display: none;">
+        <div class="modal-content modal-large glass-premium">
+            <div class="modal-header">
+                <div class="flex-row items-center gap-10">
+                    <div class="header-icon-box sm">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3 style="color: var(--dorado);">DETALLE DE CAPTURA</h3>
+                </div>
+                <span class="close-btn" onclick="closeModal('modal-log-detail')"><i class="fas fa-xmark"></i></span>
+            </div>
+            <div class="modal-body">
+                <div class="capture-audit-grid">
+                    <div class="capture-image-container">
+                        <img id="audit-image" src="" alt="Captura de Cámara" class="audit-img">
+                        <div id="audit-placeholder" class="image-placeholder-premium" style="display: none;">
+                            <i class="fas fa-camera-slash"></i>
+                            <span>IMAGEN NO DISPONIBLE</span>
+                        </div>
+                        <div class="capture-overlay" id="audit-overlay-container" style="display: none;">
+                            <span id="audit-plate-overlay" class="plate-style lg">ABC 123</span>
+                        </div>
+                    </div>
+                    <div class="capture-info-panel">
+                        <div class="info-card-premium">
+                            <label>PATENTE</label>
+                            <h2 id="audit-plate" class="text-dorado">---</h2>
+                        </div>
+                        <div class="info-grid-compact mt-20">
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <label>FECHA Y HORA</label>
+                                    <span id="audit-time">---</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-sign-in-alt" id="audit-type-icon"></i>
+                                <div>
+                                    <label>TIPO DE EVENTO</label>
+                                    <span id="audit-type" class="text-bold">---</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-receipt"></i>
+                                <div>
+                                    <label>ESTADO PAGO</label>
+                                    <span id="audit-payment">---</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-hashtag"></i>
+                                <div>
+                                    <label>ID RESERVA</label>
+                                    <span id="audit-res-id">---</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="audit-actions mt-20">
+                            <button class="btn btn-primary btn-full" onclick="closeModal('modal-log-detail')">
+                                CERRAR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DETALLE DE RESERVA -->
+    <div id="modal-res-detail" class="modal" style="display: none;">
+        <div class="modal-content glass-premium" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="flex-row items-center gap-10">
+                    <div class="header-icon-box sm">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3 style="color: var(--dorado);">DETALLE DE RESERVA</h3>
+                </div>
+                <span class="close-btn" onclick="closeModal('modal-res-detail')"><i class="fas fa-xmark"></i></span>
+            </div>
+            <div class="modal-body">
+                <div class="info-card-premium mb-20">
+                    <label>COMPROBANTE DE RESERVA</label>
+                    <h2 id="res-detail-id" class="text-dorado">#---</h2>
+                </div>
+                
+                <div class="info-grid-compact">
+                    <div class="info-item">
+                        <i class="fas fa-user"></i>
+                        <div><label>CLIENTE</label><span id="res-detail-user">---</span></div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-car"></i>
+                        <div><label>PATENTE</label><span id="res-detail-plate" class="text-bold">---</span></div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <div><label>INICIO</label><span id="res-detail-start">---</span></div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <div><label>FIN</label><span id="res-detail-end">---</span></div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-location-dot"></i>
+                        <div><label>SEDE</label><span id="res-detail-sucursal">---</span></div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-tags"></i>
+                        <div><label>TIPO</label><span id="res-detail-type">---</span></div>
+                    </div>
+                </div>
+
+                <div class="flex-row justify-between items-center mt-25 p-15" style="background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(197,160,89,0.2);">
+                    <div>
+                        <label class="text-muted text-small block mb-5">MONTO TOTAL</label>
+                        <h2 id="res-detail-amount" class="text-dorado" style="margin:0;">$0</h2>
+                    </div>
+                    <div id="res-detail-status-badges" class="flex-col gap-5 items-end">
+                        <!-- Badges dinámicos -->
+                    </div>
+                </div>
+
+                <div class="mt-30">
+                    <button class="btn btn-primary btn-full" onclick="closeModal('modal-res-detail')">CERRAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_scripts %}
-    <script src="/static/js/dashboard.js"></script>
+    <script type="module" src="/static/js/dashboard.js"></script>
 {% endblock %}

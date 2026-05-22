@@ -1,43 +1,43 @@
-# AUTOPASS - Estacionamiento Inteligente 
+# AUTOPASS - Estacionamiento Inteligente (v7.0 Modular)
 
-Solucion empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Modular** y un **Frontend Premium** de alto impacto.
+Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-##  Arquitectura del Sistema (v4.0)
+## 🌟 Últimas Actualizaciones (v7.2.2)
+- **Unified Account Hub**: Nueva interfaz de gestión de cuenta con seguridad integrada y diseño de doble panel.
+- **Historial de Puntos Premium**: Implementación de navegación paginada y cálculos inteligentes en el backend.
+- **Refinamiento UI/UX**: Centrado simétrico total, iconografía alineada y validaciones de seguridad en tiempo real.
 
-El proyecto ha sido refactorizado siguiendo estándares de ingeniería de software de alto nivel:
+## 🏗️ Arquitectura del Sistema
 
-- **Backend Modular (FastAPI + Routers)**: La lógica se divide en módulos especializados (`auth`, `parking`, `reports`, `user`, `admin`, `system`) para máxima mantenibilidad.
-- **Service Pattern**: La lógica de negocio (cobros, puntos AutoPass) está aislada en servicios independientes.
-- **Frontend Engine (Jinja2 + Layouts)**: Sistema de herencia de plantillas que garantiza consistencia visual y reduce el código repetido.
-- **Configuración Pro (.env)**: Centralización total de variables de entorno y secretos de seguridad.
+El proyecto sigue una estructura modular diseñada para el escalamiento y la alta mantenibilidad:
 
-##  Experiencia de Usuario de Vanguardia
+- **`core/`**: Infraestructura crítica (Configuración, Seguridad JWT/RBAC, DB, MQTT).
+- **`models/` & `schemas/`**: Capa de datos organizada por dominios (Usuarios, Parking, Reservas).
+- **`routes/`**: Controladores de API y entrega de Vistas HTML.
+- **`services/`**: Inteligencia de negocio y procesos de fondo.
+- **`templates/`**: Frontend modular basado en Jinja2 con componentes reutilizables.
 
-- **Landing Page v5.0**: Hero overlay sobre carrusel dinámico con leyendas rotativas, animaciones suaves y navegación optimizada.
-- **Sidebar Profesional**: Menú lateral inteligente con modos expandido/colapsado, logo compacto y alineación visual perfecta.
-- **Portal del Cliente v4.0**: Banner de bienvenida, tarjetas de acceso rápido, pase digital con QR, gestión de vehículos y cambio de contraseña.
-- **Dashboard Administrativo v2.0**: Monitoreo en vivo con indicadores visuales, badge EN VIVO, fallback de cámaras, tabla de movimientos con pills de color, y gestión de reservas presenciales.
-- **Business Intelligence**: Dashboard financiero con gráficos **Chart.js**, reportes detallados y filtros por período.
+## 🌟 Características Principales
 
-##  Características Destacadas
+- **Multi-Sede Nativo**: Gestión independiente de tarifas, aforo y personal por sucursal.
+- **Visión Artificial Híbrida**: Reconocimiento de patentes y códigos QR en tiempo real.
+- **RBAC (Role Based Access Control)**: Jerarquía de permisos (Admin, Local Admin, Staff, User).
+- **Fidelización**: Sistema de puntos AutoPass por consumo.
+- **IoT Ready**: Comunicación MQTT integrada para el control de hardware (barreras).
 
-###  Seguridad y Control de Acceso
-- **Autenticación JWT**: Flujo seguro de sesión con protección de rutas por roles.
-- **Control ALPR (EasyOCR)**: Reconocimiento inteligente de patentes con validación de aforo.
-- **Gestión de MQTT**: Apertura automatizada de barreras IoT.
+## 🚀 Inicio Rápido
 
-###  Portal del Cliente
-- **Mis Vehículos**: Registro y vinculación de dominios a la cuenta de usuario.
-- **Historial y Deuda**: Seguimiento en tiempo real del costo de estadía.
-- **Puntos AutoPass**: Sistema de fidelización por cada pago realizado.
+1. Instalar dependencias: `pip install -r requirements.txt`
+2. Inicializar DB: `python init_db.py`
+3. Arrancar: `uvicorn main:app --reload`
 
-##  Stack Tecnológico
-- **Lenguaje:** Python 3.9+
-- **Framework API:** FastAPI (Async)
-- **Base de Datos:** SQLAlchemy + SQLite (Configurable a PostgreSQL/MySQL via .env)
-- **Frontend:** Vanilla JS, CSS3 Moderno, Jinja2, Chart.js, Flatpickr.
-- **Comunicación IoT:** Paho-MQTT.
-- **IA:** OpenCV + EasyOCR.
+## 🛠️ Tecnologías
+
+- **Backend:** FastAPI (Python 3.9+)
+- **Base de Datos:** SQLAlchemy (SQLite/PostgreSQL)
+- **Frontend:** Vanilla JS, CSS Moderno, Jinja2, Chart.js.
+- **IoT:** Paho-MQTT.
+- **IA:** OpenCV + EasyOCR (Deep Learning).
 
 ---
-
+*AUTOPASS es una marca de ParkingTech. Hecho con ❤️ para la movilidad urbana.*

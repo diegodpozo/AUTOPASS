@@ -5,19 +5,18 @@ import os
 import base64
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-import models, schemas, auth
-from database import get_db
-from dotenv import load_dotenv
+import models, schemas
+from core.database import get_db
+from core.security import get_operational_user, get_current_user
+from core.config import settings
 from services.billing_service import BillingService
-
-load_dotenv()
 
 router = APIRouter(prefix="/v1", tags=["Parking & Access"])
 
 # Configuraciones de Integración
-MQTT_TOPIC_ENTRADA = os.getenv("MQTT_TOPIC_ENTRADA", "parking/barrera/entrada/control")
-MQTT_TOPIC_SALIDA = os.getenv("MQTT_TOPIC_SALIDA", "parking/barrera/salida/control")
-IMAGE_DIR = os.getenv("IMAGE_DIR", "captured_images")
+MQTT_TOPIC_ENTRADA = settings.MQTT_TOPIC_ENTRADA
+MQTT_TOPIC_SALIDA = settings.MQTT_TOPIC_SALIDA
+IMAGE_DIR = settings.IMAGE_DIR
 
 # --- UTILIDADES DE NORMALIZACIÓN ---
 
@@ -125,27 +124,36 @@ def exit_plate(data: schemas.PlateValidation, db: Session = Depends(get_db), req
 @router.post("/access/validate-qr", response_model=schemas.AccessResponse)
 def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), request: Request = None):
     """Valida un Pase Digital (QR) presentado en el tótem."""
+    print(f"[*] Solicitud de validación QR recibida: {data.qr_data}")
     try:
         parts = data.qr_data.split('|')
         if len(parts) < 3 or parts[0] != "AUTOPASS":
+            print(f"❌ [QR ERROR] Formato inválido: {data.qr_data}")
             return {"status": "error", "message": "Formato de QR inválido"}
         
         # Extraer ID y Patente del formato "AUTOPASS|ID:123|PLATE:ABC123"
         reserva_id = int(parts[1].split(':')[1])
-        patente = normalize_plate(parts[2].split(':')[1])
+        patente_qr = normalize_plate(parts[2].split(':')[1])
         
         reserva = db.query(models.Reservation).filter(models.Reservation.id == reserva_id).first()
         if not reserva:
+            print(f"❌ [QR ERROR] Reserva ID {reserva_id} no encontrada")
             return {"status": "error", "message": "Reserva no encontrada"}
         
-        if normalize_plate(reserva.patente) != patente:
+        # Normalizar ambas para la comparación
+        if normalize_plate(reserva.patente) != patente_qr:
+            print(f"❌ [QR ERROR] Patente no coincide. DB: {reserva.patente} vs QR: {patente_qr}")
             return {"status": "error", "message": "La patente del QR no coincide con la reserva"}
 
         if reserva.estado_pago != "Pagado":
+            print(f"❌ [QR ERROR] Reserva {reserva_id} pendiente de pago")
             return {"status": "denied", "message": "La reserva no ha sido abonada"}
 
         now = datetime.datetime.now()
-        is_entry = "ENTRADA" in data.gate_id.upper()
+        gate_id = data.gate_id.upper() if data.gate_id else "ENTRADA"
+        is_entry = "ENTRADA" in gate_id
+        
+        print(f"[*] Procesando acceso por QR para Reserva #{reserva_id} ({reserva.patente}) en {gate_id}")
         
         if is_entry:
             if reserva.estado_reserva == "Activa":
@@ -159,13 +167,14 @@ def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), reque
 
             aforo.ocupacion_actual += 1
             reserva.estado_reserva = "Activa"
-            db.add(models.AccessLog(patente_detectada=patente, tipo_evento="ENTRADA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True))
+            # Usamos siempre la patente de la reserva en la DB para el log
+            db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="ENTRADA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True))
             db.commit()
             
             if request and hasattr(request.app, 'mqtt_client'):
-                request.app.mqtt_client.publish(MQTT_TOPIC_ENTRADA, json.dumps({"command": "OPEN", "plate": patente, "method": "QR", "timestamp": now.isoformat()}))
+                request.app.mqtt_client.publish(MQTT_TOPIC_ENTRADA, json.dumps({"command": "OPEN", "plate": reserva.patente, "method": "QR", "timestamp": now.isoformat()}))
                 
-            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido. Bienvenido {patente}"}
+            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido. Bienvenido {reserva.patente}"}
         else:
             if reserva.estado_reserva != "Activa":
                 return {"status": "error", "message": "No se registra un ingreso activo para esta reserva"}
@@ -173,13 +182,14 @@ def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), reque
             aforo = db.query(models.ParkingAforo).first()
             if aforo.ocupacion_actual > 0: aforo.ocupacion_actual -= 1
             reserva.estado_reserva = "Completada"
-            db.add(models.AccessLog(patente_detectada=patente, tipo_evento="SALIDA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True))
+            # Usamos siempre la patente de la reserva en la DB para el log
+            db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="SALIDA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True))
             db.commit()
             
             if request and hasattr(request.app, 'mqtt_client'):
-                request.app.mqtt_client.publish(MQTT_TOPIC_SALIDA, json.dumps({"command": "OPEN", "plate": patente, "method": "QR", "timestamp": now.isoformat()}))
+                request.app.mqtt_client.publish(MQTT_TOPIC_SALIDA, json.dumps({"command": "OPEN", "plate": reserva.patente, "method": "QR", "timestamp": now.isoformat()}))
                 
-            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido. Adiós {patente}"}
+            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido. Adiós {reserva.patente}"}
             
     except Exception as e:
         return {"status": "error", "message": f"Error procesando QR: {str(e)}"}

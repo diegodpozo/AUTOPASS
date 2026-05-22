@@ -1,11 +1,15 @@
-/* --- LÓGICA: PÁGINA DE CONTACTO --- */
+import { showToast } from './modules/utils.js';
+
+/**
+ * CONTACTO BRIDGE
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
         contactForm.onsubmit = (e) => {
             e.preventDefault();
-            alert('Gracias por comunicarse con AUTOPASS. Su mensaje ha sido enviado con éxito y un asesor lo contactará a la brevedad.');
+            showToast('¡Mensaje enviado con éxito! Un asesor te contactará a la brevedad.');
             e.target.reset();
         };
     }

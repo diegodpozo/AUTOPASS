@@ -1,0 +1,132 @@
+/* --- TABLAS BASE --- */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+
+th { 
+    text-align: center; 
+    padding: 15px; 
+    color: #555; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    border-bottom: 1px solid var(--border-light); 
+    font-weight: 800; 
+    letter-spacing: 1px; 
+}
+
+td { 
+    padding: 20px 15px; 
+    font-size: 0.9rem; 
+    border-bottom: 1px solid rgba(255,255,255,0.05); 
+    color: #eee;
+}
+
+.text-center { text-align: center !important; }
+.justify-center { justify-content: center !important; }
+
+/* --- HOVER ACTIONS & ROWS --- */
+.user-actions {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+tr:hover .user-actions {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.user-name {
+    color: var(--blanco);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.user-dni {
+    color: #888;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.user-contact span {
+    color: var(--dorado);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.user-contact i {
+    opacity: 0.7;
+    margin-right: 5px;
+}
+
+/* --- RESPONSIVE TABLES (Card Layout) --- */
+@media (max-width: 992px) { /* Aumentamos el breakpoint para que en tablets ya sea tarjeta */
+    table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+    }
+
+    /* Esconder cabeceras tradicionales */
+    thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    tr {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        margin-bottom: 30px;
+        padding: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    td {
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        position: relative;
+        padding-left: 45% !important;
+        padding-top: 15px !important;
+        padding-bottom: 15px !important;
+        text-align: left; /* Alineado a la izquierda para mejor lectura del valor */
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    td:last-child {
+        border-bottom: 0;
+    }
+
+    /* El Label (la etiqueta a la izquierda) */
+    td::before {
+        position: absolute;
+        left: 15px;
+        width: 40%;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 800;
+        font-size: 0.65rem;
+        color: var(--dorado);
+        text-transform: uppercase;
+        content: attr(data-label);
+        opacity: 0.8;
+    }
+
+    /* Solo centramos el botón de Info al final, pero mantenemos su etiqueta para que se sepa qué es */
+    td[data-label="Info"] {
+        justify-content: flex-end;
+    }
+
+    .user-actions, .flex-row {
+        justify-content: center !important;
+        width: 100%;
+    }
+    
+    .btn-delete-promo {
+        opacity: 1 !important;
+    }
+}

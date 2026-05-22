@@ -1,45 +1,45 @@
-# 🌐 Contexto del Sistema: ParkingTech
+# 🌐 Contexto del Sistema: AUTOPASS
 
-Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente.
+Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente tras su transición a una **Arquitectura Limpia**.
 
-## 📐 Arquitectura del Ecosistema (v3.5+)
+## 📐 Arquitectura del Ecosistema
 
-El sistema ha sido refactorizado bajo una arquitectura modular de alta escalabilidad:
+El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una estructura modular por capas:
 
-1.  **Backend Modular (FastAPI Routers)**: 
-    - `routes/auth.py`: Autenticación, registro y gestión de tokens.
-    - `routes/parking.py`: Control de aforo y validación ALPR.
-    - `routes/reports.py`: Analítica avanzada y reportes financieros.
-    - `routes/user.py`: Portal del cliente y gestión de vehículos.
-    - `routes/admin.py`: Operaciones de sistema y configuración.
-    - `routes/system.py`: Utilidades de sistema y flujos de video.
-2.  **Capa de Servicios (Service Pattern)**:
-    - `services/billing_service.py`: Lógica centralizada de cobro y puntos AutoPass.
-    - `alpr_service.py`: Motor de reconocimiento de patentes.
-3.  **Frontend Premium (Modular JS)**: 
-    - `templates/base.html`: Esqueleto maestro para consistencia visual.
-    - `static/js/main.js`: Hub de utilidades globales y lógica base de UI.
-    - `static/js/reservas.js`: Motor de gestión de reservas y cálculos automáticos.
-    - `static/js/vehicles.js`: Gestión de flota del usuario.
-    - `static/css/`: Hojas de estilo especializadas (`perfil.css`, `dashboard.css`) para carga bajo demanda.
-    - Componentes Pro: Integración de **Chart.js**, **Flatpickr** y **html2canvas**.
+1.  **Capa Core (`core/`)**:
+    *   `core/config.py`: Gestión centralizada de variables de entorno y constantes.
+    *   `core/security.py`: Motor de seguridad con **RBAC (Role-Based Access Control)** y JWT.
+    *   `core/database.py`: Gestión de persistencia y sesiones.
+    *   `core/mqtt.py`: Orquestador de comunicación con barreras físicas.
+
+2.  **Backend Multi-Sede (FastAPI - `routes/`)**: 
+    *   `routes/admin.py`: Gestión de usuarios y reservas con **aislamiento por sucursal**.
+    *   `routes/reports.py`: Analítica financiera segmentada por sede.
+    *   `routes/views.py`: Router dedicado exclusivamente para el frontend Jinja2.
+
+3.  **Lógica de Negocio (`services/`)**:
+    *   `services/billing_service.py`: Lógica de cobro inteligente y tarifas por sede.
+    *   `services/worker_service.py`: Procesos de fondo para limpieza de reservas y tareas programadas.
+
+4.  **Gestión de Accesos ALPR**:
+    *   `alpr_service.py`: Servicio independiente de visión artificial que consume la API modular.
+
 ## 🔐 Configuración y Seguridad
-- **Variables de Entorno**: Configuración centralizada en archivo `.env` (MQTT, Secret Keys, DB URLs).
-- **Token JWT**: Protección robusta de endpoints y persistencia de sesión.
+- **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`).
+- **Token JWT**: Protección robusta de endpoints con validación de roles en tiempo real.
 
-## 🛠️ Comandos de Inicio Rápido (v3.1)
+## 🛠️ Comandos de Inicio Rápido
 
-### 1. Preparación del Entorno
+### 1. Preparación del Env virtual
 ```powershell
-# Instalar dependencias
-pip install -r DEPENDENCIAS.md (o el comando de instalación rápida)
-# Configurar variables
-cp .env.example .env  # Si existiera, o editar .env directamente
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
 ### 2. Inicialización de Base de Datos
 ```powershell
-python init_db.py
+python init_db.py  # Ahora utiliza la estructura modular core/database
 ```
 
 ### 3. Ejecución del Servidor
@@ -48,4 +48,4 @@ uvicorn main:app --reload
 ```
 
 ---
-*Nota: Es fundamental correr `init_db.py` antes del primer inicio para asegurar que los roles y configuraciones iniciales existan.*
+

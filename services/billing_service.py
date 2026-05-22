@@ -7,8 +7,8 @@ import models
 
 class BillingService:
     @staticmethod
-    def get_rate(db: Session, tipo: str = "hora") -> float:
-        """Obtiene la tarifa configurada según la modalidad de estadía."""
+    def get_rate(db: Session, tipo: str = "hora", sucursal: str = None) -> float:
+        """Obtiene la tarifa configurada según la modalidad de estadía y sede."""
         setting_map = {
             "hora": "precio_hora",
             "dia": "precio_dia",
@@ -17,19 +17,42 @@ class BillingService:
             "mes": "precio_mes",
         }
         clave = setting_map.get(tipo, "precio_hora")
-        setting = db.query(models.Settings).filter(models.Settings.clave == clave).first()
+        
+        # Buscar tarifa por sede
+        setting = db.query(models.Settings).filter(
+            models.Settings.clave == clave,
+            models.Settings.sucursal == sucursal
+        ).first()
+        
+        # Fallback a global si no hay sede específica
+        if not setting and sucursal:
+            setting = db.query(models.Settings).filter(
+                models.Settings.clave == clave,
+                models.Settings.sucursal == None
+            ).first()
+            
         return float(setting.valor) if setting else 1000.0
 
     @staticmethod
-    def get_hourly_rate(db: Session) -> float:
+    def get_hourly_rate(db: Session, sucursal: str = None) -> float:
         """Acceso rápido a la tarifa por hora base."""
-        setting = db.query(models.Settings).filter(models.Settings.clave == "precio_hora").first()
+        setting = db.query(models.Settings).filter(
+            models.Settings.clave == "precio_hora",
+            models.Settings.sucursal == sucursal
+        ).first()
+        
+        if not setting and sucursal:
+            setting = db.query(models.Settings).filter(
+                models.Settings.clave == "precio_hora",
+                models.Settings.sucursal == None
+            ).first()
+            
         return float(setting.valor) if setting else 1500.0
 
     @staticmethod
-    def calculate_debt(entry_time_str: str, db: Session) -> float:
-        """Calcula la deuda acumulada basada en bloques de horas transcurridas."""
-        precio_hora = BillingService.get_hourly_rate(db)
+    def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None) -> float:
+        """Calcula la deuda acumulada basada en bloques de horas y sede."""
+        precio_hora = BillingService.get_hourly_rate(db, sucursal=sucursal)
         entrada_dt = datetime.datetime.fromisoformat(entry_time_str)
         
         delta = datetime.datetime.now() - entrada_dt
@@ -47,7 +70,7 @@ class BillingService:
 
     @staticmethod
     def process_payment(db: Session, plate: str) -> dict:
-        """Procesa el cobro de una estadía pendiente y acredita puntos al titular."""
+        """Procesa el cobro de una estadía pendiente en la sede correspondiente."""
         log = db.query(models.AccessLog).filter(
             models.AccessLog.patente_detectada == plate,
             models.AccessLog.tipo_evento == "ENTRADA",
@@ -57,11 +80,12 @@ class BillingService:
         if not log:
             return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}
 
-        monto_real = BillingService.calculate_debt(log.fecha_hora, db)
+        monto_real = BillingService.calculate_debt(log.fecha_hora, db, sucursal=log.sucursal)
         
         # Confirmación de pago en el log
         log.pago_confirmado = True
         log.costo_estadia = monto_real
+        log.fecha_pago = datetime.datetime.now().isoformat()
         
         # Acreditación de beneficios por fidelización
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == plate).first()

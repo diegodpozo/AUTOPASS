@@ -1,0 +1,145 @@
+/* --- TARJETAS --- */
+.card { 
+    background: linear-gradient(135deg, rgba(22,22,22,0.9) 0%, rgba(18,18,18,0.95) 100%);
+    border-radius: 16px; border: 1px solid var(--border-light); 
+    padding: 25px; margin-bottom: 25px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+    backdrop-filter: blur(10px);
+}
+.card:hover { border-color: rgba(197, 160, 89, 0.15); }
+
+.card-title { 
+    font-family: 'Montserrat'; color: var(--dorado); font-size: 0.7rem; 
+    margin-bottom: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+    display: flex; align-items: center; gap: 10px;
+}
+.card-title i { font-size: 0.85rem; }
+
+/* --- STAT CARDS --- */
+.stat-card { 
+    background: linear-gradient(135deg, rgba(22,22,22,0.9) 0%, rgba(16,16,16,0.95) 100%);
+    padding: 22px 25px; border-radius: 16px; border: 1px solid var(--border-light); position: relative;
+    overflow: hidden; transition: all 0.4s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.stat-card:hover { border-color: rgba(197, 160, 89, 0.2); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.stat-card .label { font-size: 0.6rem; text-transform: uppercase; color: #777; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
+.stat-card .value { font-family: 'Montserrat'; font-size: 2rem; font-weight: 800; color: var(--dorado); }
+
+/* --- PREMIUM STAT CARDS --- */
+.stat-card-premium {
+    background: linear-gradient(135deg, #111 0%, #080808 100%);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.stat-card-premium:hover {
+    border-color: rgba(197, 160, 89, 0.2);
+    transform: translateX(5px);
+}
+
+.stat-card-premium.highlight {
+    background: linear-gradient(135deg, rgba(197, 160, 89, 0.1) 0%, #080808 100%);
+    border-color: rgba(197, 160, 89, 0.3);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dorado);
+    font-size: 1.2rem;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat-info .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #666;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.stat-info .value {
+    font-family: 'Montserrat';
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--blanco);
+}
+
+.stat-card-premium.highlight .value {
+    color: var(--dorado);
+}
+
+/* --- KPI CARDS --- */
+.kpi-card {
+    background: linear-gradient(135deg, #111 0%, #050505 100%);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.kpi-card:hover { transform: translateY(-5px); border-color: rgba(197, 160, 89, 0.3); }
+
+.kpi-card.highlight {
+    background: linear-gradient(135deg, rgba(197, 160, 89, 0.1) 0%, #050505 100%);
+    border-color: rgba(197, 160, 89, 0.3);
+}
+
+.kpi-icon {
+    width: 55px;
+    height: 55px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dorado);
+    font-size: 1.4rem;
+}
+
+.kpi-data { display: flex; flex-direction: column; }
+.kpi-data .label { font-size: 0.65rem; color: #777; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.kpi-data .value { font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 2px; }
+.kpi-card.highlight .value { color: var(--dorado); }
+
+/* --- INFO & AUDIT CARDS --- */
+.info-card-premium {
+    background: rgba(255,255,255,0.03);
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid var(--dorado);
+}
+
+.info-card-premium label {
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 5px;
+}

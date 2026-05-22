@@ -1,0 +1,48 @@
+<!-- MODALES Y OTROS COMPONENTES -->
+<div id="modal-pase-digital" class="modal-premium">
+    <div class="modal-content-premium ticket-container" id="ticket-to-capture">
+        <button class="modal-close-top no-print" onclick="closeDigitalPass()"><i class="fas fa-times"></i></button>
+        <div class="ticket-header">
+            <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo">
+            <div class="ticket-title-wrap"><span class="ticket-brand">AUTOPASS</span><span class="ticket-tagline">PASE DIGITAL</span></div>
+        </div>
+        <div class="ticket-body">
+            <div class="ticket-qr-section"><div id="ticket-qr" class="qr-canvas"></div><div class="ticket-id" id="ticket-id-display">#000000</div></div>
+            <div class="ticket-info-grid">
+                <div class="ticket-info-item"><label>PATENTE</label><span id="ticket-patente" class="plate-style">---</span></div>
+                <div class="ticket-info-item"><label>VENCE</label><span id="ticket-vence">---</span></div>
+                <div class="ticket-info-item full-width"><label>SUCURSAL</label><span id="ticket-sucursal">---</span></div>
+                <div class="ticket-info-item full-width"><label>DIRECCIÓN</label><span id="ticket-direccion" class="text-small">---</span></div>
+            </div>
+        </div>
+        <div class="ticket-footer">
+            <div class="ticket-instructions">Presentá este código en el lector de la entrada si el reconocimiento de patente falla.</div>
+            <div class="ticket-actions no-print"><button class="btn-ticket btn-download" onclick="shareTicket()"><i class="fas fa-share-nodes"></i> COMPARTIR PASE</button></div>
+        </div>
+        <div class="ticket-cutout left"></div><div class="ticket-cutout right"></div><div class="ticket-perf"></div>
+    </div>
+</div>
+
+<div id="rechargeModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('rechargeModal')"><i class="fas fa-xmark"></i></span>
+        <div class="text-center">
+            <i class="fas fa-wallet" style="font-size: 3rem; color: var(--dorado); margin-bottom: 15px; opacity: 0.8;"></i>
+            <h2 style="margin-bottom: 5px;">CARGÁ TU SALDO</h2>
+            <p class="modal-subtitle">Ingresá el monto que deseás acreditar en tu cuenta.</p>
+        </div>
+        <form id="rechargeForm" onsubmit="processRecharge(event)" style="margin-top: 25px;">
+            <div class="form-group">
+                <label>Monto a Cargar ($)</label>
+                <div class="input-with-icon"><i class="fas fa-dollar-sign"></i><input type="number" id="recharge-amount" placeholder="0.00" min="100" step="100" required autofocus></div>
+            </div>
+            <div class="quick-amounts" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 25px;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="setRechargeAmount(1000)">$1000</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="setRechargeAmount(5000)">$5000</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="setRechargeAmount(10000)">$10000</button>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-bolt"></i> ACREDITAR SALDO</button>
+        </form>
+        <div class="modal-text" style="font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 25px;"><i class="fas fa-shield-halved"></i> Transacción simulada para pruebas. Próximamente integración con Mercado Pago.</div>
+    </div>
+</div>

@@ -1,6 +1,6 @@
 # 📦 Dependencias del Proyecto: AUTOPASS
 
-Este documento detalla las librerías y herramientas necesarias para el funcionamiento del ecosistema completo de ParkingTech.
+Este documento detalla las librerías y herramientas necesarias para el funcionamiento del sistema
 
 ## 🐍 Requisitos de Entorno
 - **Python**: 3.9 o superior.

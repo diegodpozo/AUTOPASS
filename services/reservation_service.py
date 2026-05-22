@@ -11,26 +11,25 @@ from fastapi import HTTPException
 class ReservationService:
     @staticmethod
     def cleanup_overdue_reservations(db: Session):
-        """Cancela automáticamente reservas impagas 1 hora antes de su inicio."""
+        """Cancela automáticamente reservas impagas cuyo tiempo de inicio ya pasó con un margen de gracia."""
         now = datetime.datetime.now()
-        # El límite es 1 hora en el futuro. 
-        # Si la reserva empieza antes de ese límite y no está paga, se cancela.
-        limit = now + datetime.timedelta(hours=1)
-        limit_str = limit.strftime("%Y-%m-%d %H:%M")
+        # Damos un margen de 2 horas de gracia desde la hora de inicio antes de cancelar
+        grace_cutoff = now - datetime.timedelta(hours=2)
+        cutoff_str = grace_cutoff.strftime("%Y-%m-%d %H:%M")
         
         overdue = db.query(models.Reservation).filter(
             models.Reservation.estado_pago == "Pendiente",
             models.Reservation.estado_reserva == "Pendiente",
-            models.Reservation.fecha_inicio <= limit_str
+            models.Reservation.fecha_inicio <= cutoff_str
         ).all()
         
-        for r in overdue:
-            r.estado_reserva = "Cancelada"
-            r.estado_pago = "Cancelado"
-            
         if overdue:
+            print(f"[DEBUG CLEANUP] Encontradas {len(overdue)} reservas para cancelar. Cutoff: {cutoff_str}")
+            for r in overdue:
+                print(f"[DEBUG CLEANUP] Cancelando Reserva ID: {r.id}, Inicio: {r.fecha_inicio}")
+                r.estado_reserva = "Cancelada"
+                r.estado_pago = "Cancelado"
             db.commit()
-            print(f"[SYSTEM] Se cancelaron {len(overdue)} reservas por falta de pago anticipado.")
             return len(overdue)
         return 0
 
@@ -80,7 +79,7 @@ class ReservationService:
     @staticmethod
     def cancel_reservation(db: Session, user: models.User, res_id: int):
         """Cancela una reserva activa y gestiona reembolsos si correspondiera."""
-        res = ReservationRepository.get_by_user_and_id(db, user.id, res_id)
+        res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
         
         if not res: 
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
@@ -88,16 +87,23 @@ class ReservationService:
         if res.estado_reserva == "Cancelada":
             return {"status": "ok", "message": "La reserva ya se encuentra cancelada"}
             
+        # Si no se pasó un usuario (ej: llamado desde admin), usamos el dueño de la reserva
+        target_user = user or res.user
+
+        # Restricción: Los clientes no pueden cancelar reservas que ya están en curso (Activa)
+        if res.estado_reserva == "Activa" and user and user.rol == "user":
+            raise HTTPException(status_code=400, detail="No podés cancelar una reserva que ya está en curso. Contactá a soporte.")
+            
         # Proceso de reembolso para reservas prepagas
-        if res.estado_pago == "Pagado":
-            user.saldo += res.monto_total
+        if res.estado_pago == "Pagado" and target_user:
+            target_user.saldo += res.monto_total
             
             # Ajuste de puntos acreditados
             puntos_a_descontar = BillingService.calculate_points(res.monto_total)
-            user.puntos_acumulados -= puntos_a_descontar
+            target_user.puntos_acumulados -= puntos_a_descontar
             
             db.add(models.PointsLog(
-                user_id=user.id,
+                user_id=target_user.id,
                 cantidad=-puntos_a_descontar,
                 motivo=f"Cancelación de Reserva: {res.patente}",
                 fecha=datetime.datetime.now().isoformat()

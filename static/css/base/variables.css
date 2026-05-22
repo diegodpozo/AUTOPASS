@@ -1,0 +1,22 @@
+:root {
+    --dorado: #C5A059;
+    --dorado-dark: #A68045;
+    --blanco: #FFFFFF;
+    --negro: #000000;
+    --gris: #1A1A1A;
+    --gris-fondo: #0A0A0A;
+    --gris-card: #161616;
+    --gris-sidebar: #111111;
+    --border: rgba(197, 160, 89, 0.2);
+    --border-light: rgba(197, 160, 89, 0.1);
+    --danger: #ef4444;
+    --secondary: #10b981;
+    --font-mono: 'JetBrains Mono', monospace;
+    
+    /* Escala Tipográfica */
+    --text-xs: 0.7rem;
+    --text-sm: 0.85rem;
+    --text-md: 1.1rem;
+    --text-lg: 1.4rem;
+    --text-xl: 2.5rem;
+}

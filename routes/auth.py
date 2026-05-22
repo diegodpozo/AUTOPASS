@@ -1,8 +1,10 @@
 import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-import models, schemas, auth
-from database import get_db
+import models, schemas
+from core.database import get_db
+from core.security import authenticate_user, create_access_token, get_password_hash
+from core.config import settings
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
 
@@ -23,7 +25,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         dni=normalize_dni(user.dni),
         telefono=user.telefono,
         email=user.email.lower().strip(),
-        password_hash=auth.get_password_hash(user.password),
+        password_hash=get_password_hash(user.password),
         rol="user"
     )
     
@@ -34,7 +36,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """Autentica al usuario y retorna un token JWT de acceso."""
-    user = auth.authenticate_user(db, form_data.email, form_data.password)
+    user = authenticate_user(db, form_data.email, form_data.password)
     if not user:
         raise HTTPException(
             status_code=401,
@@ -42,8 +44,8 @@ def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token_expires = datetime.timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth.create_access_token(
+    access_token_expires = datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
         data={"sub": user.email, "rol": user.rol}, 
         expires_delta=access_token_expires
     )

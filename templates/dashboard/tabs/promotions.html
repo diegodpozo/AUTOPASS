@@ -1,0 +1,107 @@
+<section id="tab-promotions" class="tab-view" style="display: none;">
+    <div class="dashboard-card glass-premium">
+        <div class="card-header-premium">
+            <div class="header-left">
+                <div class="header-icon-box sm">
+                    <i class="fas fa-gift"></i>
+                </div>
+                <div>
+                    <h3 class="text-dorado">Gestión de Promociones</h3>
+                    <p class="text-muted text-small">Creá y administrá beneficios para los usuarios de tu sede.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary btn-sm" onclick="showCreatePromotionModal()">
+                    <i class="fas fa-plus"></i> NUEVA PROMOCIÓN
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container mt-20">
+            <table class="table-premium">
+                <thead>
+                    <tr>
+                        <th>Beneficio</th>
+                        <th>Descripción</th>
+                        <th>Costo (Puntos)</th>
+                        <th>Sede</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="promotions-admin-table-body">
+                    <!-- Cargado dinámicamente -->
+                    <tr>
+                        <td colspan="6" class="text-center p-20">Cargando promociones...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL: CREAR PROMOCIÓN -->
+<div id="modal-create-promotion" class="modal" style="display: none;">
+    <div class="modal-content glass-premium" style="max-width: 500px;">
+        <div class="modal-header">
+            <div class="flex-row items-center gap-10">
+                <div class="header-icon-box sm">
+                    <i class="fas fa-gift"></i>
+                </div>
+                <h3 style="color: var(--dorado);">NUEVA PROMOCIÓN</h3>
+            </div>
+            <span class="close-btn" onclick="closeModal('modal-create-promotion')"><i class="fas fa-xmark"></i></span>
+        </div>
+        <div class="modal-body">
+            <form id="form-create-promotion" onsubmit="event.preventDefault(); handleCreatePromotion();">
+                <div class="form-group mb-15">
+                    <label class="text-dorado">Título del Beneficio</label>
+                    <input type="text" id="promo-titulo" class="input-premium" placeholder="Ej: 1 Hora Gratis" required>
+                </div>
+                <div class="form-group mb-15">
+                    <label class="text-dorado">Descripción</label>
+                    <textarea id="promo-descripcion" class="input-premium" rows="3" placeholder="Detalles del beneficio..." required></textarea>
+                </div>
+                <div class="grid-2-col gap-15">
+                    <div class="form-group">
+                        <label class="text-dorado">Puntos necesarios</label>
+                        <input type="number" id="promo-costo" class="input-premium" placeholder="500" required>
+                    </div>
+                <div class="form-group mb-15">
+                    <label class="text-dorado">Seleccionar Ícono</label>
+                    <div class="icon-picker-grid" id="promo-icon-picker">
+                        <div class="icon-option active" data-icon="fas fa-gift" onclick="selectPromoIcon(this)"><i class="fas fa-gift"></i></div>
+                        <div class="icon-option" data-icon="fas fa-car" onclick="selectPromoIcon(this)"><i class="fas fa-car"></i></div>
+                        <div class="icon-option" data-icon="fas fa-clock" onclick="selectPromoIcon(this)"><i class="fas fa-clock"></i></div>
+                        <div class="icon-option" data-icon="fas fa-soap" onclick="selectPromoIcon(this)"><i class="fas fa-soap"></i></div>
+                        <div class="icon-option" data-icon="fas fa-coffee" onclick="selectPromoIcon(this)"><i class="fas fa-coffee"></i></div>
+                        <div class="icon-option" data-icon="fas fa-gas-pump" onclick="selectPromoIcon(this)"><i class="fas fa-gas-pump"></i></div>
+                        <div class="icon-option" data-icon="fas fa-star" onclick="selectPromoIcon(this)"><i class="fas fa-star"></i></div>
+                        <div class="icon-option" data-icon="fas fa-crown" onclick="selectPromoIcon(this)"><i class="fas fa-crown"></i></div>
+                        <div class="icon-option" data-icon="fas fa-ticket" onclick="selectPromoIcon(this)"><i class="fas fa-ticket"></i></div>
+                        <div class="icon-option" data-icon="fas fa-wrench" onclick="selectPromoIcon(this)"><i class="fas fa-wrench"></i></div>
+                        <div class="icon-option" data-icon="fas fa-percent" onclick="selectPromoIcon(this)"><i class="fas fa-percent"></i></div>
+                        <div class="icon-option" data-icon="fas fa-calendar-check" onclick="selectPromoIcon(this)"><i class="fas fa-calendar-check"></i></div>
+                    </div>
+                    <input type="hidden" id="promo-icono" value="fas fa-gift">
+                </div>
+                </div>
+                <div class="form-group mt-15 admin-only-field">
+                    <label class="text-dorado">Sede</label>
+                    <select id="promo-sucursal" class="input-premium">
+                        <option value="">Global (Todas)</option>
+                        <option value="AUTOPASS Central">AUTOPASS Central</option>
+                        <option value="AUTOPASS Ituzaingó">AUTOPASS Ituzaingó</option>
+                        <option value="AUTOPASS Castelar">AUTOPASS Castelar</option>
+                        <option value="AUTOPASS Morón">AUTOPASS Morón</option>
+                    </select>
+                </div>
+                
+                <div class="flex-row gap-10 mt-30">
+                    <button type="button" class="btn btn-outline btn-full" onclick="closeModal('modal-create-promotion')">CANCELAR</button>
+                    <button type="submit" class="btn btn-primary btn-full">GUARDAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

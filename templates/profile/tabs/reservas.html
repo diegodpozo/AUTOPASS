@@ -1,0 +1,72 @@
+<!-- SECCIÓN: MIS RESERVAS -->
+<div id="section-reservas" class="profile-section">
+    <div class="card welcome-card" style="text-align: center;">
+        <div class="welcome-msg">
+            <h1 style="justify-content: center;"><i class="fas fa-calendar-days"></i> MIS RESERVAS</h1>
+        </div>
+    </div>
+
+    <div class="reserva-stats-grid" style="justify-content: center;">
+        <div class="res-stat-card">
+            <div class="res-stat-value-wrap">
+                <i class="fas fa-car-side"></i>
+                <span class="res-stat-value" id="stat-res-active">0</span>
+            </div>
+            <span class="res-stat-label">En Curso</span>
+        </div>
+        <div class="res-stat-card">
+            <div class="res-stat-value-wrap">
+                <i class="fas fa-calendar-check"></i>
+                <span class="res-stat-value" id="stat-res-upcoming">0</span>
+            </div>
+            <span class="res-stat-label">Próximas</span>
+        </div>
+    </div>
+
+    <div class="flex-col">
+        <div id="container-res-featured" style="display: none; text-align: center;">
+            <div class="section-subtitle" style="justify-content: center; margin-left: 0;"><i class="fas fa-star"></i> ESTADÍA ACTUAL</div>
+            <div id="reservation-featured-list" style="display: flex; justify-content: center;"></div>
+        </div>
+
+        <div class="section-subtitle" style="justify-content: center; margin-left: 0;"><i class="fas fa-calendar-list"></i> TUS PRÓXIMAS RESERVAS</div>
+        <div id="reservation-list-active" class="reserva-grid-modern">
+            <p class="text-bold">Cargando reservas...</p>
+        </div>
+
+        <div class="section-subtitle" style="justify-content: center; margin-left: 0; margin-top: 50px;">
+            <i class="fas fa-clock-rotate-left"></i> HISTORIAL DE ESTADÍAS
+        </div>
+
+        <div id="historial-container" style="opacity: 1; margin-top: 0;">
+            <div class="card card-narrow" style="padding: 0; overflow: hidden; margin: 0 auto;">
+                <div class="history-filters-premium no-print" style="justify-content: center;">
+                    <div class="filter-group-premium">
+                        <label>Desde</label>
+                        <input type="date" id="history-filter-from" class="filter-input-premium">
+                    </div>
+                    <div class="filter-group-premium">
+                        <label>Hasta</label>
+                        <input type="date" id="history-filter-to" class="filter-input-premium">
+                    </div>
+                    <div class="filter-actions-premium">
+                        <button class="btn btn-primary btn-sm" onclick="applyHistoryFilters()" title="Filtrar"><i class="fas fa-filter"></i></button>
+                        <button class="btn btn-outline btn-sm" onclick="resetHistoryFilters()" title="Limpiar"><i class="fas fa-rotate-left"></i></button>
+                    </div>
+                </div>
+                <div id="reservation-list-history" class="flex-col" style="gap: 0;">
+                    <p class="text-bold" style="padding: 30px;">Cargando historial...</p>
+                </div>
+                <div id="historial-pagination" class="pagination" style="margin: 0; padding: 20px;">
+                    <button class="btn-pagination" onclick="historialPage(-1)" id="historial-prev">
+                        <i class="fas fa-chevron-left"></i> ANTERIOR
+                    </button>
+                    <span id="historial-page-info" class="page-info">Página 1</span>
+                    <button class="btn-pagination" onclick="historialPage(1)" id="historial-next">
+                        SIGUIENTE <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

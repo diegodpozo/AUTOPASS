@@ -13,3 +13,5 @@ opencv-python
 easyocr
 torch
 torchvision
+httpx
+pytest

@@ -1,0 +1,32 @@
+<!-- SECCIÓN: MIS VEHÍCULOS -->
+<div id="section-vehiculos" class="profile-section">
+    <div class="card welcome-card card-narrow" style="margin: 0 auto 40px; text-align: center;">
+        <div class="welcome-msg">
+            <h1><i class="fas fa-car-rear"></i> MIS VEHÍCULOS</h1>
+        </div>
+    </div>
+
+    <div class="flex-col items-center">
+        <div class="register-row-static">
+            <form id="add-vehicle-form" onsubmit="addVehicle(event)" class="form-compact-row-static">
+                <div class="form-group-premium flex-1">
+                    <label>Patente</label>
+                    <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase">
+                </div>
+                <div class="form-group-premium flex-1">
+                    <label>Marca / Modelo</label>
+                    <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm">
+                </div>
+                <button type="submit" class="btn btn-primary btn-add-vehicle" title="Vincular Vehículo">
+                    <span>AGREGAR</span> <i class="fas fa-check"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="card-vehicle-list-wrapper">
+            <div id="vehicle-list">
+                <p class="text-bold">Cargando flota...</p>
+            </div>
+        </div>
+    </div>
+</div>

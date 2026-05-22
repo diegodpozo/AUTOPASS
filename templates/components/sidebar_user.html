@@ -1,0 +1,19 @@
+<aside class="sidebar" id="main-sidebar">
+    <div class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-chevron-left"></i>
+    </div>
+    <a href="/" class="logo">
+        <img src="/static/images/logo.png" alt="Logo">
+        <span>AUTOPASS</span>
+    </a>
+    <nav class="nav-group">
+        <div class="nav-item active" onclick="showSection('inicio', this); closeMobileNav()"><i class="fas fa-house-user"></i> <span class="nav-text">Inicio</span></div>
+        <div class="nav-item" onclick="showSection('vehiculos', this); closeMobileNav()"><i class="fas fa-car-side"></i> <span class="nav-text">Mis Vehículos</span></div>
+        <div class="nav-item" onclick="showSection('reservas', this); closeMobileNav()"><i class="fas fa-calendar-check"></i> <span class="nav-text">Mis Reservas</span></div>
+        <div class="nav-item" onclick="showSection('puntos', this); closeMobileNav()"><i class="fas fa-star"></i> <span class="nav-text">Mis Puntos</span></div>
+        <div class="nav-item" onclick="showSection('perfil', this); closeMobileNav()"><i class="fas fa-user-gear"></i> <span class="nav-text">Mi Cuenta</span></div>
+    </nav>
+    <div class="sidebar-footer" onclick="logout()">
+        <i class="fas fa-right-from-bracket"></i> <span>Cerrar Sesión</span>
+    </div>
+</aside>
