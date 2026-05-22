@@ -1,0 +1,31 @@
+/* --- LAYOUT GRID SYSTEM --- */
+.layout-with-sidebar { 
+    display: grid; 
+    grid-template-columns: 240px 1fr; 
+    height: 100vh; 
+    overflow: hidden; 
+    transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout-with-sidebar.collapsed { grid-template-columns: 80px 1fr; }
+
+.main-content-scroll { 
+    display: flex; 
+    flex-direction: column; 
+    overflow-y: auto; 
+    flex: 1; 
+    height: 100vh; 
+    background: linear-gradient(180deg, var(--gris-fondo) 0%, #050505 100%); 
+}
+
+.content { padding: 35px 40px; }
+.content-wrapper { max-width: 1200px; margin: 0 auto; width: 100%; }
+
+/* RESPONSIVE GRID */
+@media (max-width: 768px) {
+    .layout-with-sidebar {
+        grid-template-columns: 1fr;
+    }
+    
+    .content { padding: 25px 20px; }
+}

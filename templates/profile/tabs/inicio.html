@@ -1,0 +1,235 @@
+<!-- SECCIÓN: INICIO -->
+<div id="section-inicio" class="profile-section active">
+    <div class="greeting-premium">
+        <h2 id="welcome-greeting">¡HOLA!</h2>
+        <p>¿Qué planes tenés para hoy? Gestioná tu estacionamiento de forma rápida.</p>
+    </div>
+
+    <div class="profile-main-grid">
+        <!-- ACCIONES RÁPIDAS Y RESERVA -->
+        <div class="grid-col">
+            <div class="card reserva-trigger-card" onclick="toggleReservaForm()">
+                <div class="reserva-trigger-content">
+                    <div class="flex-col gap-5">
+                        <h2 class="trigger-title">RESERVAR AHORA</h2>
+                    </div>
+                    <i id="reserva-form-arrow" class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div id="reserva-form-container">
+                <div class="modern-reservation-card">
+                    <div class="card-header-premium">
+                        <div class="header-icon"><i class="fas fa-calendar-plus"></i></div>
+                        <div class="header-text">
+                            <h3>GENERAR NUEVA RESERVA</h3>
+                            <p>Asegurá tu lugar en segundos.</p>
+                        </div>
+                    </div>
+
+                    <!-- ESTADO SIN VEHÍCULOS -->
+                    <div id="reserva-no-vehicles" style="display: none; padding: 40px 30px;">
+                        <div class="empty-state-premium">
+                            <div class="empty-icon-box">
+                                <i class="fas fa-car-rear main-icon"></i>
+                                <div class="icon-pulse"></div>
+                            </div>
+                            <div id="quick-add-info">
+                                <h4>¡UPS! NO TENÉS VEHÍCULOS</h4>
+                                <p>Para reservar, primero vinculá una patente a tu cuenta.</p>
+                                <button class="btn btn-primary btn-sm mt-15" onclick="showQuickAddVehicle()">
+                                    <i class="fas fa-plus-circle"></i> AGREGAR
+                                </button>
+                            </div>
+
+                            <div id="quick-add-form-container" style="display: none; width: 100%; max-width: 450px; margin: 0 auto;">
+                                <h4 class="text-dorado">VINCULAR NUEVO VEHÍCULO</h4>
+                                <form id="quick-add-vehicle-form" onsubmit="addVehicle(event, true)" class="form-compact-premium mt-20">
+                                    <div class="flex-row gap-10 flex-wrap-mobile">
+                                        <div class="form-group-premium flex-1">
+                                            <label>Patente</label>
+                                            <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase">
+                                        </div>
+                                        <div class="form-group-premium flex-1">
+                                            <label>Marca / Modelo</label>
+                                            <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm">
+                                        </div>
+                                    </div>
+                                    <div class="flex-row justify-center mt-20 gap-15">
+                                        <button type="button" class="btn btn-outline btn-sm" onclick="hideQuickAddVehicle()">CANCELAR</button>
+                                        <button type="submit" class="btn btn-primary btn-sm">GUARDAR Y CONTINUAR</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORMULARIO DE RESERVA -->
+                    <div id="reserva-form-content" style="padding: 30px;">
+                        <form class="reservation-form-modern" onsubmit="createReservation(event)">
+                            <div class="form-grid-premium">
+                                <div class="form-group-premium">
+                                    <label>Vehículo</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-car"></i>
+                                        <select class="res-vehicle" required>
+                                            <option value="">Cargando flota...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Punto AutoPass</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-location-dot"></i>
+                                        <select class="res-sede" required>
+                                            <option value="">Seleccioná sucursal...</option>
+                                            <option value="AUTOPASS Ituzaingó">AUTOPASS Ituzaingó</option>
+                                            <option value="AUTOPASS Castelar">AUTOPASS Castelar</option>
+                                            <option value="AUTOPASS Morón">AUTOPASS Morón</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Tipo de Estadía</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-clock"></i>
+                                        <select class="res-type" required>
+                                            <option value="" selected>Seleccioná tipo...</option>
+                                            <option value="hora">Hora</option>
+                                            <option value="dia">Día</option>
+                                            <option value="semana">Semana</option>
+                                            <option value="quincena">Quincena</option>
+                                            <option value="mes">Mes</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- CAMPOS DINÁMICOS SEGÚN TIPO DE RESERVA -->
+                                <div id="dynamic-fields-premium" class="full-width-premium">
+                                    <div id="hourly-fields" class="dynamic-row-premium" style="display:none;">
+                                        <div class="form-group-premium">
+                                            <label>Día</label>
+                                            <input type="text" class="res-date-only input-premium" placeholder="Fecha...">
+                                        </div>
+                                        <div class="form-group-premium">
+                                            <label>Hora Inicio</label>
+                                            <input type="time" class="res-time-only input-premium">
+                                        </div>
+                                        <div class="form-group-premium">
+                                            <label>Cantidad Horas</label>
+                                            <input type="number" class="res-hours-qty input-premium" min="1" max="24" placeholder="Ej: 2">
+                                        </div>
+                                    </div>
+                                    <div id="daily-fields" class="dynamic-row-premium" style="display:none;">
+                                        <div class="form-group-premium">
+                                            <label>Día de Estadía</label>
+                                            <input type="text" class="res-day-only input-premium" placeholder="Seleccioná día...">
+                                        </div>
+                                    </div>
+                                    <div id="weekly-fields" class="dynamic-row-premium" style="display:none;">
+                                        <div class="form-group-premium">
+                                            <label>Inicia el día</label>
+                                            <input type="text" class="res-week-start input-premium" placeholder="Fecha inicio...">
+                                        </div>
+                                        <div class="form-group-premium">
+                                            <label>Finaliza</label>
+                                            <input type="text" class="res-week-end input-premium-readonly" readonly>
+                                        </div>
+                                    </div>
+                                    <div id="fortnight-fields" class="dynamic-row-premium" style="display:none;">
+                                        <div class="form-group-premium">
+                                            <label>Inicia el día</label>
+                                            <input type="text" class="res-fortnight-start input-premium" placeholder="Fecha inicio...">
+                                        </div>
+                                        <div class="form-group-premium">
+                                            <label>Finaliza</label>
+                                            <input type="text" class="res-fortnight-end input-premium-readonly" readonly>
+                                        </div>
+                                    </div>
+                                    <div id="month-fields" class="dynamic-row-premium" style="display:none;">
+                                        <div class="form-group-premium">
+                                            <label>Inicia el día</label>
+                                            <input type="text" class="res-month-start input-premium" placeholder="Fecha inicio...">
+                                        </div>
+                                        <div class="form-group-premium">
+                                            <label>Finaliza</label>
+                                            <input type="text" class="res-month-end input-premium-readonly" readonly>
+                                        </div>
+                                    </div>
+                                    <div id="standard-fields" class="dynamic-row-premium" style="display:none;">
+                                        <div class="form-group-premium">
+                                            <label>Inicio</label>
+                                            <input type="text" class="res-start input-premium" placeholder="Fecha y hora...">
+                                        </div>
+                                        <div class="form-group-premium">
+                                            <label>Fin</label>
+                                            <input type="text" class="res-end input-premium" placeholder="Fecha y hora...">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="reservation-footer-premium">
+                                <div class="price-summary-premium">
+                                    <span class="total-label">Total Estimado:</span>
+                                    <span class="total-amount" id="reserva-total-est">$ ---</span>
+                                </div>
+                                <button type="submit" class="btn-confirm-premium">
+                                    <span>CONFIRMAR RESERVA</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-actions-grid mt-20">
+                <div class="action-btn-premium" onclick="openRechargeModal()">
+                    <i class="fas fa-wallet"></i>
+                    <span>Cargar Saldo</span>
+                </div>
+                <div class="action-btn-premium" onclick="showSection('puntos', document.querySelector('.nav-item[onclick*=\'puntos\']'))">
+                    <i class="fas fa-gift"></i>
+                    <span>Beneficios</span>
+                </div>
+                <div class="action-btn-premium" onclick="showSection('vehiculos', document.querySelector('.nav-item[onclick*=\'vehiculos\']'))">
+                    <i class="fas fa-car-side"></i>
+                    <span>Mis Autos</span>
+                </div>
+                <div class="action-btn-premium" onclick="showToast('Ubicación de sedes próximamente...')">
+                    <i class="fas fa-map-location-dot"></i>
+                    <span>Mapa Sedes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ESTADÍSTICAS Y PROGRESO -->
+        <div class="grid-col">
+            <!-- PROGRESO DE PUNTOS -->
+            <div class="points-progress-card">
+                <div class="progress-header">
+                    <span class="progress-title">Mi Progreso</span>
+                    <span class="progress-target" id="points-next-reward">Prox: 500 pts</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="points-progress-bar" class="progress-bar-fill"></div>
+                </div>
+                <p class="progress-footer-text" id="points-progress-text">
+                    ¡Estás muy cerca de tu próximo beneficio AutoPass!
+                </p>
+            </div>
+
+            <div class="grid-stats-compact">
+                <div class="stat-card">
+                    <div class="label">Vehículos Vinculados</div>
+                    <div class="value" id="stat-vehicles">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Reservas Activas</div>
+                    <div class="value" id="stat-reservations">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

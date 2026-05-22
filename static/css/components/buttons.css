@@ -1,0 +1,111 @@
+/* --- BOTONES BASE --- */
+.btn {
+    padding: 15px 35px; 
+    border-radius: 50px; 
+    border: none;
+    font-weight: 700; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    cursor: pointer; 
+    transition: all 0.3s; 
+    text-decoration: none; 
+    display: inline-block;
+    font-size: var(--text-sm);
+}
+
+.btn-primary { 
+    background: var(--dorado); 
+    color: var(--negro); 
+}
+
+.btn-primary:hover { 
+    background: var(--dorado-dark); 
+    transform: translateY(-3px); 
+    box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3); 
+}
+
+.btn-outline { 
+    background: rgba(0,0,0,0.3); 
+    color: var(--blanco); 
+    border: 2px solid rgba(255,255,255,0.2); 
+    backdrop-filter: blur(5px); 
+}
+
+.btn-outline:hover { 
+    border-color: var(--dorado); 
+    color: var(--dorado); 
+}
+
+.btn-outline.btn-danger { 
+    color: var(--danger); 
+    border-color: var(--danger); 
+}
+
+.btn-outline.btn-danger:hover { 
+    background: var(--danger); 
+    color: #fff; 
+    border-color: var(--danger); 
+}
+
+.btn-sm { padding: 8px 18px; font-size: 0.75rem; border-radius: 8px; }
+.btn-warning { border-color: #f59e0b; color: #f59e0b; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* --- BOTONES PREMIUM --- */
+.btn-premium {
+    background: linear-gradient(135deg, var(--dorado) 0%, var(--dorado-dark) 100%);
+    color: var(--negro);
+    border: none;
+    padding: 14px 28px;
+    border-radius: 50px; 
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
+}
+
+.btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(197, 160, 89, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-premium:active {
+    transform: translateY(0);
+}
+
+.btn-premium.sm {
+    padding: 8px 18px;
+    font-size: 0.7rem;
+    border-radius: 30px; 
+}
+
+.btn-premium i {
+    font-size: 0.9rem;
+}
+
+.btn-premium.sm i {
+    font-size: 0.75rem;
+}
+
+.btn-icon-premium {
+    width: 40px; height: 40px; border-radius: 50%; 
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--dorado);
+    cursor: pointer; transition: 0.3s;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.btn-icon-premium:hover {
+    background: var(--dorado);
+    color: var(--negro);
+    transform: scale(1.1);
+}

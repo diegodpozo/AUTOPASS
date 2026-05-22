@@ -1,6 +1,7 @@
-import pytest
 from fastapi.testclient import TestClient
 from main import app
+import models
+from core.database import SessionLocal
 import uuid
 import time
 
@@ -55,7 +56,7 @@ def test_complete_user_flow():
     db_patente = next(v["patente"] for v in vehicles if v["patente"].replace(" ", "") == patente)
 
     # 5. Cargar Saldo (necesario para reservar y que se marque como Pagado)
-    recharge_payload = {"monto": 5000.0}
+    recharge_payload = {"monto": 10000.0}
     response = client.post("/v1/user/recharge-balance", json=recharge_payload, headers=headers)
     assert response.status_code == 200
     
@@ -77,15 +78,29 @@ def test_complete_user_flow():
     response = client.post("/v1/user/reservations", json=reservation_payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    assert response.json()["estado_pago"] == "Pagado"
+    assert response.json()["estado_pago"] == "Pendiente"
+    
+    res_id = response.json().get("id")
+    if not res_id:
+        db = SessionLocal()
+        res_id = db.query(models.Reservation).order_by(models.Reservation.id.desc()).first().id
+        db.close()
+    
     monto_reserva = response.json()["monto"]
+
+    # 7. Pagar Reserva
+    response = client.post(f"/v1/user/reservations/{res_id}/pay", headers=headers)
+    if response.status_code != 200:
+        print(f"\n[DEBUG] Error pagando reserva {res_id}: {response.json()}")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
     # Verificar que se sumaron puntos (10 pts por cada $1000)
     response = client.get("/v1/user/me", headers=headers)
     expected_points = int(monto_reserva / 100) # 10 pts x $1000 = monto/100
     assert response.json()["puntos_acumulados"] >= expected_points
 
-    # 7. Verificar Historial de Puntos
+    # 8. Verificar Historial de Puntos
     response = client.get("/v1/user/points-history", headers=headers)
     assert response.status_code == 200
     assert any(p["cantidad"] > 0 for p in response.json())
@@ -93,18 +108,18 @@ def test_complete_user_flow():
     assert response.status_code == 200
     reservations = response.json()
     assert len(reservations) > 0
-    res_id = reservations[0]["id"]
+    assert reservations[0]["estado_pago"] == "Pagado"
 
-    # 8. Cancelar Reserva
+    # 9. Cancelar Reserva
     response = client.post(f"/v1/user/reservations/{res_id}/cancel", headers=headers)
     assert response.status_code == 200
     assert "reembolsado" in response.json()["message"].lower()
 
-    # 9. Verificar que el saldo fue reembolsado
+    # 10. Verificar que el saldo fue reembolsado
     response = client.get("/v1/user/me", headers=headers)
-    # El saldo inicial era 0, cargamos 5000, la reserva costó algo (2 horas * 1500 = 3000), 
-    # tras cancelar debería volver a 5000.
-    assert response.json()["saldo"] == 5000.0
+    # El saldo inicial era 0, cargamos 10000, la reserva costó algo, 
+    # tras pagar se descontó, tras cancelar debería volver a 10000.
+    assert response.json()["saldo"] == 10000.0
 
     print(f"\n[SUCCESS] Test de flujo completo finalizado para {email}")
 

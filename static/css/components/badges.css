@@ -1,0 +1,66 @@
+/* --- BADGES BASE --- */
+.balance-badge, .points-badge {
+    padding: 8px 16px; border-radius: 50px; display: flex; align-items: center; gap: 10px;
+    transition: all 0.3s ease;
+}
+.balance-badge:hover, .points-badge:hover { transform: translateY(-1px); }
+
+.points-badge-sm {
+    color: var(--dorado);
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- BADGES DE ROL --- */
+.role-badge {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.role-badge.admin { background: rgba(197, 160, 89, 0.2); color: var(--dorado); border: 1px solid rgba(197, 160, 89, 0.3); }
+.role-badge.local_admin { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+.role-badge.staff { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.2); }
+.role-badge.user { background: rgba(255, 255, 255, 0.05); color: #aaa; border: 1px solid rgba(255, 255, 255, 0.1); }
+
+/* --- BADGES DE ESTADO --- */
+.badge-status {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    text-transform: uppercase;
+}
+
+.badge-pagado, .badge-completada, .badge-active { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.2); }
+.badge-pendiente, .badge-activa { background: rgba(197, 160, 89, 0.1); color: var(--dorado); border: 1px solid rgba(197, 160, 89, 0.2); }
+.badge-cancelada, .badge-inactive { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+/* --- PATENTES --- */
+.plate-style {
+    background: #1e293b;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid rgba(255,255,255,0.05);
+    display: inline-block;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    white-space: nowrap;
+}
+
+.plate-style.lg {
+    font-size: 1.5rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+}

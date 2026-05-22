@@ -20,6 +20,10 @@ def fix_promos():
             print("[*] Agregando columna 'activa' a la tabla 'promotions'...")
             cursor.execute("ALTER TABLE promotions ADD COLUMN activa BOOLEAN DEFAULT 1")
         
+        if 'sucursal' not in cols:
+            print("[*] Agregando columna 'sucursal' a la tabla 'promotions'...")
+            cursor.execute("ALTER TABLE promotions ADD COLUMN sucursal TEXT")
+        
         # Normalización de estados
         print("[*] Activando todas las promociones existentes...")
         cursor.execute("UPDATE promotions SET activa = 1 WHERE activa IS NULL OR activa = 0")

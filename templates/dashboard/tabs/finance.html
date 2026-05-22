@@ -38,7 +38,7 @@
                         <div class="header-text"><h3>TENDENCIA DE INGRESOS</h3></div>
                     </div>
                     <div class="header-actions">
-                        <select id="fin-period" class="select-premium-sm" onchange="loadFinanceData()">
+                        <select id="fin-period" class="select-premium-sm" onchange="loadFinanceData()" title="Seleccionar período del reporte">
                             <option value="day">HOY</option>
                             <option value="week">ÚLTIMA SEMANA</option>
                             <option value="month">ESTE MES</option>
@@ -60,7 +60,7 @@
                     <div class="header-text"><h3>HISTORIAL DE PAGOS CONFIRMADOS</h3></div>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-outline btn-sm" onclick="exportFinanceData()">
+                    <button class="btn btn-outline btn-sm" onclick="exportFinanceData()" title="Exportar historial de pagos a Excel/CSV">
                         <i class="fas fa-download"></i> EXPORTAR
                     </button>
                 </div>

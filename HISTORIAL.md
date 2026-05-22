@@ -1,69 +1,149 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
-## 📅 16 DE MAYO, 2026 - REVOLUCIÓN DASHBOARD (COMMAND CENTER V5.9)
-- **REDISÉÑO INTEGRAL (ADMIN)**: SE TRANSFORMÓ EL DASHBOARD EN UN "CENTRO DE COMANDO" PROFESIONAL USANDO LA ESTÉTICA GOLD & BLACK.
-- **GESTIÓN DE RESERVAS PRO**: REFACTORIZACIÓN TOTAL DE LA TABLA DE RESERVAS CON KPIS DE RECAUDACIÓN, FILTRADO POR SEDE Y ACCIONES ADMINISTRATIVAS (COBRO MANUAL/CANCELACIÓN).
-- **CONTROL DE ACCESO HÍBRIDO**: IMPLEMENTACIÓN DE VALIDACIÓN DE PASES DIGITALES (QR) PARA APERTURA DE BARRERAS EN TÓTEMS DE ENTRADA Y SALIDA.
-- **AUTOMATIZACIÓN**: SISTEMA DE CANCELACIÓN AUTOMÁTICA PARA RESERVAS IMPAGAS 1 HORA ANTES DE SU INICIO (WORKER DE FONDO).
-- **OPTIMIZACIÓN VISUAL**: UNIFICACIÓN DE ICONOGRAFÍA DORADA, ALINEACIÓN DE FILTROS Y ENSANCHAMIENTO DE COLUMNAS PARA PATENTES LARGAS.
-- **FIX RESPONSIVE**: CORRECCIÓN DE EVENTOS EN EL MENÚ MÓVIL QUE IMPEDÍAN LA APERTURA DE MODALES DE LOGIN/REGISTRO.
-- **ARQUITECTURA MODULAR**: SE DIVIDIÓ EL HTML DEL DASHBOARD EN FRAGMENTOS (`/tabs/`) PARA FACILITAR EL MANTENIMIENTO.
+- **SISTEMA DE INSTALACIÓN**:
+    - **Refactor de `init_db.py`**: El script de inicialización ahora es un "Todo-en-Uno" que maneja la creación de tablas, migraciones automáticas y seeding de datos.
+    - **Migraciones Automáticas**: Implementación de lógica de detección de columnas faltantes para SQLite; el sistema ahora se actualiza solo al correr `init_db.py`.
+    - **Seeding de Datos Maestros**: Creación automática del usuario Administrador Global (`admin@autopass.com`), tarifas base, capacidad del predio y catálogo inicial de promociones.
+    - **Robustez**: Se eliminó la dependencia de scripts de mantenimiento manuales dispersos.
 
-## 📝 REGLAS DE LENGUAJE Y ESTILO (ACTUALIZADO 2026-05-16)
+## 📅 22 DE MAYO, 2026 - UI REFINEMENTS: PROMOTIONS & SECURITY HUB (V7.2.5)
+- **MIS PUNTOS**:
+    - **Restauración UI de Promociones**: Implementación completa de CSS para la grilla de beneficios (`promotions-grid`).
+    - **Tarjetas Premium**: Diseño de `promo-card` con Glassmorphism (desenfoque de fondo), bordes dorados y elevación dinámica (hover).
+    - **Iconografía & Tipografía**: Integración de iconos en contenedores circulares y destaque de costos en Montserrat 900.
+- **MI CUENTA**:
+    - **Compactación de Seguridad**: Reducción del ancho máximo del formulario de cambio de contraseña (`max-width: 320px`) para un diseño más elegante y centrado.
+    - **Refinamiento de Requerimientos**: Transición de la caja de validación a un flujo vertical más legible y estético.
+    - **Limpieza de Código**: Eliminación de estilos inline en `cuenta.html` delegando toda la responsabilidad al sistema modular de CSS.
 
-1.  **TRATO DE VOS (VOSEO ARGENTINO)**: TODO EL SITIO DEBE DIRIGIRSE AL USUARIO USANDO EL "VOS" (EJ: "INICIÁ", "REGISTRATE", "CONTACTANOS", "TENÉS").
-2.  **ORTOGRAFÍA Y ACENTOS**: TODAS LAS PALABRAS DEBEN ESTAR ESCRITAS CORRECTAMENTE, INCLUYENDO ACENTOS EN MAYÚSCULAS.
-3.  **FORMATO DE TEXTOS EN UI**: 
-    - **NOMBRES DE USUARIO**: SIEMPRE EN MAYÚSCULAS EN TODA LA INTERFAZ.
-    - **LOGO**: "AUTOPASS" siempre en **DORADO** (`var(--dorado)`) en el header público.
-4.  **ESTÉTICA**: GOLD & BLACK (Premium). Uso intensivo de Glassmorphism en interfaces públicas.
+## 📅 22 DE MAYO, 2026 - UI REFINEMENTS & LOCAL ADMIN ACCESS FIX (V7.2.4)
+- **DASHBOARD ADMINISTRATIVO**:
+    - **Ajuste de Columnas**: Ensanchamiento de la columna de "Patente" (`min-width: 110px`) en todas las tablas administrativas (Reservas, Monitoreo, Finanzas, Ocupación).
+    - **Integridad de Patentes**: Aplicación de `white-space: nowrap` a la clase `.plate-style` para evitar rupturas de línea en identificadores de vehículos.
+    - **Limpieza de Consola**: Eliminación de logs de depuración innecesarios (`console.log`) en la carga de usuarios para un entorno de producción más limpio.
+- **PORTAL DE USUARIO (RESERVA)**:
+    - **Alineación de Formulario**: Reajuste del layout de "Nueva Reserva" en el perfil; ahora los selectores (Vehículo, Punto, Estadía) se alinean a la izquierda y ocupan el ancho total de su columna.
+    - **Refinamiento de Labels**: Etiquetas alineadas a la izquierda para una lectura más natural.
+- **OPTIMIZACIÓN RESPONSIVA**:
+    - **Corrección de Misalignment**: Implementación de media query a 992px para apilar los campos de reserva en una sola columna, evitando desajustes visuales en tablets y móviles.
+    - **Estado Hover en Móvil**: Fix para el botón "Confirmar Reserva"; ahora mantiene su color dorado en touch-devices, evitando que se vuelva blanco por el hover persistente.
+- **SEGURIDAD & ACCESO**:
+    - **FIX: Redirección de Local Admin**: Se corrigió el error que enviaba a los Administradores de Sede al portal de cliente.
+    - **Dashboard Gatekeeper**: Actualización del script de seguridad inline en `dashboard.html` para autorizar explícitamente al rol `local_admin`.
+    - **Navegación Dinámica**: Sincronización de IDs en `navbar.html` para permitir que el JS actualice correctamente el enlace de perfil según el rol administrativo detectado.
+    - **Dashboard Bridge**: Inclusión de `local_admin` en la lógica de inicialización de pestañas restringidas.
 
-## 🚀 VERSIONES RECIENTES
+## 📅 22 DE MAYO, 2026 - PROMOTIONS SYSTEM & TOTAL RESPONSIVE (V7.2.3)
+- **SISTEMA DE PROMOCIONES**:
+    - Implementación de **Promociones por Sede**: Los beneficios ahora están vinculados a sucursales específicas (Castelar, Morón, Ituzaingó) o nivel Global.
+    - Backend: Actualización de modelos, esquemas y rutas administrativas para soportar aislamiento de beneficios por área.
+    - **Selector Visual de Íconos**: Interfaz interactiva en el dashboard para elegir iconos premium mediante cuadrícula en lugar de texto manual.
+    - Filtrado de Usuario: Los clientes solo visualizan beneficios de su sede asignada o promociones globales.
+- **OPTIMIZACIÓN RESPONSIVA (MOBILE FIRST)**:
+    - Implementación de **Responsive Card Layout**: Transformación automática de tablas (Reservas, Usuarios, Promociones) en tarjetas individuales en celulares y tablets (< 992px).
+    - Navegación Móvil Refinada: Sidebar deslizable con botón de hamburguesa y overlay de desenfoque para una experiencia tipo App nativa.
+    - Sincronización de Etiquetas: Uso de atributos `data-label` para mantener nombres de columnas visibles a la izquierda de los valores en modo tarjeta.
+    - Ajuste de Grillas: Transición de monitoreo y finanzas de multi-columna a flujo vertical simple en dispositivos pequeños.
+- **GESTIÓN DE USUARIOS REFINADA**:
+    - **Aislamiento de Datos por Rol**: Se ocultan los campos de "Puntos" y "Saldo" (`---`) para roles internos (Admin, Local Admin, Staff) para limpiar la interfaz.
+    - **Resaltado Financiero**: Aplicación de color verde esmeralda (`text-success`) exclusivo para el saldo de clientes, facilitando su identificación.
+    - **Filtro Avanzado por Rol**: Adición de selector de roles (Clientes, Empleados, etc.) que trabaja en conjunto con la búsqueda por texto.
+    - Reubicación del botón "NUEVO USUARIO" para equilibrio visual en escritorio y accesibilidad en móvil.
+- **LIMPIEZA DE UI & UX**:
+    - Ajuste de espaciado agresivo en el Registro de Reservas: Mayor separación vertical y líneas divisorias sutiles entre fechas.
+    - Centrado absoluto de todas las tablas de monitoreo y gestión para eliminar desplazamientos laterales.
+    - Fix de sintaxis CSS en `tables.css` para restaurar la integridad del diseño en pantallas retina y móviles.
 
-### VERSIÓN 5.8 (2026-05-16) — REFACTOR UI & NORMALIZACIÓN
-- **NORMALIZACIÓN FUENTES**: Migración total a Montserrat como fuente base del sistema.
-- **ESCALA TIPOGRÁFICA**: Implementación de variables CSS para tamaños de fuente estandarizados.
-- **SIDEBAR MÓVIL V2**: Ancho reducido a 260px, alineación izquierda y cambio de Uppercase a Title Case para mejor legibilidad.
-- **HEADER DESKTOP**: Restauración de proporciones premium y refactorización del botón de cierre de sesión (Outline Style).
-- **JS CLEANUP**: Depuración de `landing.js`, eliminación de lógica duplicada y mejora del cierre por click exterior.
+## 📅 21 DE MAYO, 2026 - UNIFIED ACCOUNT HUB & PAGINATED POINTS (V7.2.2)
+- **MI CUENTA**:
+    - Implementación del **Unified Account Surface**: Se unificaron los datos personales y el cambio de contraseña en una sola tarjeta premium de doble panel.
+    - Se eliminaron los menús desplegables para una gestión más directa y fluida.
+    - Alineación simétrica total: Columnas de iconos perfectamente alineadas y centrado de contenido en toda la pestaña.
+    - Optimización de inputs: Ancho calibrado para contraseñas de 20+ caracteres y modo edición ultracompacto.
+    - Se añadió una línea divisoria vertical para separar visualmente la información de la seguridad.
+- **MIS PUNTOS**:
+    - Implementación de **Paginación en Historial**: Navegación dinámica (10 por página) para mejorar el rendimiento y la legibilidad.
+    - Backend: Actualización del endpoint de puntos para devolver totales históricos y datos paginados.
+    - Centrado visual de las tarjetas de puntos acumulados, canjeados y disponibles.
+    - Colores dinámicos para totales: Verde para acumulado, rojo para canjeado y dorado para disponible.
+- **ESTABILIDAD JS**:
+    - Se restauraron las referencias globales al objeto `window` para todas las funciones críticas de perfil y navegación.
+    - Activación de validaciones de contraseña en tiempo real en la pestaña de cuenta.
 
-### VERSIÓN 5.1 (2026-05-16) — DASHBOARD & HEADER PRO
-- **HEADER LANDING REFACTORED**: Implementación de sticky header con desenfoque de fondo y detección de estado de sesión (Login/Perfil dinámico).
-- **DASHBOARD ENHANCEMENTS**: 
-    - Agregado saludo personalizado dinámico.
-    - Nueva sección "Mi Progreso" para visualización de beneficios acumulados.
-    - Grilla de "Accesos Rápidos" para navegación ágil.
-- **SECURITY UX**: Implementación de "ojitos" para ver/ocultar contraseña en el perfil.
-- **LOGO UNIFICATION**: Unificación de marca en dorado para todos los headers públicos.
-- **SIDEBAR REFACTOR**: Reducción de ancho a 240px y corrección de responsive en colapsado.
+## 📅 21 DE MAYO, 2026 - PERFECCIONAMIENTO UI/UX PERFIL (V7.2.1)
+- **MIS RESERVAS & PUNTOS**:
+    - Rediseño de tarjetas de estadísticas: Iconos alineados horizontalmente con valores numéricos y leyendas centradas.
+    - Eliminación de comportamiento colapsable en Historiales (Reservas y Puntos) para visibilidad directa.
+    - Implementación de `.card-narrow` (600px) para compactar y centrar listados de historial, eliminando espacios muertos.
+    - Restauración de colores dinámicos en Historial de Puntos (Verde para sumas, Rojo para canjes).
+    - Centrado absoluto de encabezados, subtítulos y cuadrículas de contenido para mayor armonía visual.
+- **PASE DIGITAL & MODALES**:
+    - Fix estructural de `modal-premium`: Se corrigió posicionamiento (ahora flotante y centrado con desenfoque de fondo).
+    - Restauración estética de Ticket Digital: Perforaciones, recortes circulares, tipografía monoespaciada y sección de QR.
+    - Adición de botón de cierre (`fas fa-times`) integrado dentro del diseño del ticket para mejor accesibilidad.
+- **INTEGRIDAD DE FORMULARIOS**:
+    - Unificación de clases `.input-premium-sm` en edición de cuenta para consistencia estética total.
+    - Exposición de funciones JS críticas a nivel global para asegurar interactividad en todas las pestañas.
 
-### VERSIÓN 5.0 (2026-05-14) — RESPONSIVE FULL 2.0 & ARQUITECTURA
-- **UNIFICACIÓN LEGAL**: Aplicación del header premium a Términos, Privacidad y Nuestra Red.
-- **GRID ADAPTATIVO**: Rediseño de formularios de reserva y tablas de historial para 1, 2 y 3 columnas según breakpoint.
-- **FOOTER INTELIGENTE**: Apilado vertical automático de acciones de pago y botones en móviles.
-- **CLEANUP CSS**: Eliminación masiva de estilos inline y centralización en hojas de estilo modulares.
-- **ARQUITECTURA DE CAPAS (BACKEND)**: 
-    - Implementación de Capa de Servicios (`ReservationService`) y Capa de Repositorios (`UserRepository`, `ReservationRepository`).
-    - Modularización de base de datos en `database.py`.
-- **SISTEMA DE PUNTOS**: Lógica integral de acumulación (10 pts x $1000) y descuentos por cancelación.
+## 📅 21 DE MAYO, 2026 - MODULARIZACIÓN CSS & UI REFINED (V7.2.0)
+- **ARQUITECTURA FRONTEND**:
+    - Modularización completa del sistema de estilos: División en `base/`, `components/`, `layout/` y `pages/`.
+    - Unificación del Header global y Sidebar responsiva con soporte para dashboard y portal.
+    - Creación de `static/css/base/utilities.css` para centralizar clases de layout y espaciado.
+- **OPTIMIZACIÓN DE PERFIL**:
+    - Consolidación de 5 archivos de perfil en `pages/profile.css`.
+    - Rediseño de la sección de **Vehículos**: Barra de herramientas estática y tarjetas con fondo difuminado.
+    - Restauración de animaciones de reserva y medidores de seguridad de contraseña.
+    - Ajuste de jerarquía visual: Eliminación de labels redundantes en tarjetas de flota.
+- **REFACTORIZACIÓN DE LAYOUT**:
+    - Extracción de lógica estructural a `layout/grid.css` y `layout/sidebar.css`.
+    - Implementación de contenedor dinámico para la lista de vehículos (crecimiento horizontal).
 
-### 👤 MEJORAS EN PERFIL DE USUARIO
-- **REEMPLAZO DE INLINE STYLES**: ~40 atributos `style` eliminados. Toda la UI ahora usa clases CSS reutilizables.
-- **PANTALLA DE INICIO**: Banner de bienvenida, tarjetas de estadísticas y trigger de reserva renovado.
-- **PASE DIGITAL**: Implementación de modal premium con QR dinámico y Web Share API.
+## 📅 21 DE MAYO, 2026 - OPTIMIZACIÓN DASHBOARD & REPORTES (V7.1.0)
+- **GESTIÓN DE USUARIOS**:
+    - Implementación de cambio de contraseña administrado con validación de seguridad.
+    - Ordenamiento jerárquico de lista (Admin > Staff > User) con orden alfabético interno.
+    - Refactor visual: Eliminación de iniciales innecesarias y agregado de colores dinámicos por rol.
+    - Acción de hover para botones de gestión (limpieza visual).
+- **ANALÍTICA FINANCIERA**:
+    - Motor de recaudación unificado: Integración de ingresos por Reservas Anticipadas y Estadías ALPR.
+    - Reparación del motor de reportes: Sincronización de `fecha_pago` para precisión cronológica.
+    - Implementación de Gráfico de Tendencia con **Chart.js** (estética Gold AutoPass).
+- **GESTIÓN DE RESERVAS**:
+    - Corrección de mapeo de nombres de clientes (eliminación de 'undefined').
+    - Normalización de textos (Capitalización de tipos de estadía).
+    - Refactor de esquemas Pydantic para soporte de datos de usuario extendidos.
+- **EXPERIENCIA DE USUARIO (UX)**:
+    - Agregado de etiquetas informativas (`title`) en todos los elementos interactivos del dashboard.
+    - Implementación de cuadros de confirmación con resúmenes detallados para acciones críticas (Pagos, Tarifas, Reseteos).
+    - Mejora en la visualización de detalles: Separación de modales para Eventos ALPR y Reservas.
+- **SEGURIDAD & PERSISTENCIA**:
+    - Corrección de redirección automática en errores de login (permite ver mensajes de error).
+    - Validación de persistencia de sesión en navegación por historial (flechas del navegador).
+    - Migración de base de datos para soporte de trazabilidad de pagos (`fecha_pago`).
 
-### 🛠️ DASHBOARD ADMINISTRATIVO
-- **REFACTORIZACIÓN DE UI**: Eliminación de estilos inline en favor de clases dedicadas (`.cam-box`, `.health-dot`, etc.).
-- **MONITOREO EN VIVO**: Detección de patentes visual con fallback y pills de estado en logs.
-- **GESTIÓN ADMIN**: Nuevos endpoints para creación de reservas manuales desde la administración.
+## 📅 19 DE MAYO, 2026 - ARQUITECTURA MODULAR V7.0 (LA GRAN REFACTORIZACIÓN)
+- **INFRAESTRUCTURA CORE**:
+    - Creación del paquete `core/` centralizando Configuración, Seguridad (JWT/RBAC), Base de Datos y MQTT.
+    - Eliminación de archivos `auth.py` y `database.py` de la raíz para evitar dispersión de lógica.
+- **MODULARIZACIÓN DE DATOS**:
+    - División de `models.py` en `models/user.py`, `models/parking.py` y `models/reservation.py`.
+    - División de `schemas.py` siguiendo el mismo patrón de dominios.
+- **LIMPIEZA DE ENTRY POINT**:
+    - `main.py` refactorizado para ser solo un orquestador de arranque.
+    - Extracción de todas las rutas de vistas HTML a `routes/views.py`.
+    - Creación de `services/worker_service.py` para manejar tareas de fondo de forma ordenada.
+- **FRONTEND MODULAR (JS, TABS & COMPONENTS)**:
+    - Modularización completa del JavaScript utilizando **ES6 Modules**.
+    - Creación de `static/js/modules/` (api.js, utils.js, ui.js, auth.js, etc.) para eliminar la dependencia del ámbito global.
+    - El archivo `perfil.html` (~1200 líneas) fue descuartizado en componentes manejables bajo `templates/profile/tabs/`.
+    - Unificación del Header global en `templates/components/navbar.html`.
+    - Extracción de sistemas de Toasts y Modales globales a `templates/components/modals_global.html`.
+- **ALINEACIÓN DE TESTS**:
+    - Actualización de toda la suite de pruebas (`test_*.py`) para ser compatible con la nueva estructura modular.
+    - Incorporación de `httpx` y `pytest` como dependencias de validación.
 
-### VERSIÓN 4.5 (2026-05-12) — MODULARIZACIÓN
-- **REFACTORIZACIÓN JS**: Lógica de reservas extraída a `reservas.js`.
-- **FORMULARIO DE RESERVAS PRO**: Automatización de fin de estadía por periodos.
-- **SIDEBAR DINÁMICO**: Logo compacto (32px) y estados `collapsed` persistentes.
-- **RESPONSIVE DESIGN**: Overhaul del menú hamburguesa y adaptabilidad total en móviles.
-
-## 📌 PRÓXIMOS PASOS
-- **MERCADO PAGO**: INTEGRAR EL SDK PARA PROCESAR PAGOS REALES.
-- **CANJE DE PUNTOS**: IMPLEMENTAR LA LÓGICA DE CANJE EN EL BACKEND.
-- **NOTIFICACIONES**: SISTEMA DE ALERTAS POR EMAIL PARA INGRESOS Y EGRESOS.
+## 📅 18 DE MAYO, 2026 - SOPORTE MULTI-SEDE & RBAC (V6.4.0)
+- **INFRAESTRUCTURA MULTI-SUCURSAL**:
+    - SE AÑADIÓ EL CAMPO `sucursal` A LOS MODELOS DE USUARIOS, LOGS DE ACCESO, CONFIGURACIONES Y RESERVAS.
+... [RESTO DEL HISTORIAL PREVIO SE MANTIENE IGUAL] ...

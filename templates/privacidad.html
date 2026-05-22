@@ -5,8 +5,8 @@
 {% block body_class %}bg-blur{% endblock %}
 
 {% block extra_head %}
-    <link rel="stylesheet" href="/static/css/landing.css">
-    <link rel="stylesheet" href="/static/css/legal.css">
+    <link rel="stylesheet" href="/static/css/pages/landing.css">
+    <link rel="stylesheet" href="/static/css/pages/legal.css">
 {% endblock %}
 
 {% block content %}
@@ -83,12 +83,12 @@
         </article>
     </div>
 
-    {% include "footer.html" %}
+    {% include "components/footer.html" %}
 
-    {% include "auth_modals.html" %}
+    {% include "components/auth_modals.html" %}
 {% endblock %}
 
 {% block extra_scripts %}
-    <script src="/static/js/auth.js"></script>
-    <script src="/static/js/landing.js"></script>
+    <script type="module" src="/static/js/auth.js"></script>
+    <script type="module" src="/static/js/landing.js"></script>
 {% endblock %}

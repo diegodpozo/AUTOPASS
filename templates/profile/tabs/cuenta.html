@@ -1,0 +1,193 @@
+<!-- SECCIÓN: MI CUENTA (v7.2.2 Unified Surface) -->
+<div id="section-perfil" class="profile-section">
+    
+    <!-- IDENTIDAD (BLOQUE SUPERIOR AISLADO) -->
+    <div class="account-identity-isolated mb-40">
+        <div class="profile-header-premium">
+            <div class="avatar-circle">
+                <span id="user-initials">--</span>
+            </div>
+            <div class="profile-info-main">
+                <h1 id="profile-full-name">Cargando...</h1>
+                <p class="text-label mt-10" id="user-member-since">Miembro desde: --/--/----</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUB DE GESTIÓN (CARD ÚNICA DE FORMULARIOS) -->
+    <div class="card account-hub-card">
+        <div class="account-hub-body">
+            <!-- PANEL IZQUIERDO: INFORMACIÓN -->
+            <div class="hub-section divider-right">
+                <div class="hub-section-title"><i class="fas fa-id-card"></i> DATOS PERSONALES</div>
+                
+                <div class="info-list-premium">
+                    <!-- NOMBRE -->
+                    <div id="item-nombre" class="info-item-row">
+                        <div class="info-item-icon"><i class="fas fa-user"></i></div>
+                        <div class="info-item-content">
+                            <div class="display-mode">
+                                <div class="flex-row justify-between align-center">
+                                    <div>
+                                        <label>Nombre/s</label>
+                                        <div class="value-text" id="display-nombre">---</div>
+                                    </div>
+                                    <button class="btn-edit" onclick="enterEditMode('nombre')"><i class="fas fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="edit-mode">
+                                <label>Editar Nombre</label>
+                                <input type="text" id="input-nombre" class="input-premium-sm" placeholder="Tu nombre">
+                                <div class="edit-actions">
+                                    <button class="btn btn-sm btn-outline" onclick="exitEditMode('nombre')">Cancelar</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveField('nombre', event)">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- APELLIDO -->
+                    <div id="item-apellido" class="info-item-row">
+                        <div class="info-item-icon"><i class="fas fa-user-tag"></i></div>
+                        <div class="info-item-content">
+                            <div class="display-mode">
+                                <div class="flex-row justify-between align-center">
+                                    <div>
+                                        <label>Apellido</label>
+                                        <div class="value-text" id="display-apellido">---</div>
+                                    </div>
+                                    <button class="btn-edit" onclick="enterEditMode('apellido')"><i class="fas fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="edit-mode">
+                                <label>Editar Apellido</label>
+                                <input type="text" id="input-apellido" class="input-premium-sm" placeholder="Tu apellido">
+                                <div class="edit-actions">
+                                    <button class="btn btn-sm btn-outline" onclick="exitEditMode('apellido')">Cancelar</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveField('apellido', event)">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DNI -->
+                    <div id="item-dni" class="info-item-row">
+                        <div class="info-item-icon"><i class="fas fa-address-card"></i></div>
+                        <div class="info-item-content">
+                            <div class="display-mode">
+                                <div class="flex-row justify-between align-center">
+                                    <div>
+                                        <label>DNI</label>
+                                        <div class="value-text" id="display-dni">---</div>
+                                    </div>
+                                    <button class="btn-edit" onclick="enterEditMode('dni')"><i class="fas fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="edit-mode">
+                                <label>Editar DNI</label>
+                                <input type="text" id="input-dni" class="input-premium-sm" placeholder="Tu DNI">
+                                <div class="edit-actions">
+                                    <button class="btn btn-sm btn-outline" onclick="exitEditMode('dni')">Cancelar</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveField('dni', event)">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL -->
+                    <div id="item-email" class="info-item-row">
+                        <div class="info-item-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="info-item-content">
+                            <div class="display-mode">
+                                <div class="flex-row justify-between align-center">
+                                    <div>
+                                        <label>Correo Electrónico</label>
+                                        <div class="value-text" id="display-email">---</div>
+                                    </div>
+                                    <button class="btn-edit" onclick="enterEditMode('email')"><i class="fas fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="edit-mode">
+                                <label>Editar Email</label>
+                                <input type="email" id="input-email" class="input-premium-sm" placeholder="ejemplo@correo.com">
+                                <div class="edit-actions">
+                                    <button class="btn btn-sm btn-outline" onclick="exitEditMode('email')">Cancelar</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveField('email', event)">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TELÉFONO -->
+                    <div id="item-telefono" class="info-item-row">
+                        <div class="info-item-icon"><i class="fas fa-phone-alt"></i></div>
+                        <div class="info-item-content">
+                            <div class="display-mode">
+                                <div class="flex-row justify-between align-center">
+                                    <div>
+                                        <label>Teléfono</label>
+                                        <div class="value-text" id="display-telefono">---</div>
+                                    </div>
+                                    <button class="btn-edit" onclick="enterEditMode('telefono')"><i class="fas fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="edit-mode">
+                                <label>Editar Teléfono</label>
+                                <input type="tel" id="input-telefono" class="input-premium-sm" placeholder="Tu teléfono">
+                                <div class="edit-actions">
+                                    <button class="btn btn-sm btn-outline" onclick="exitEditMode('telefono')">Cancelar</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveField('telefono', event)">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DERECHO: SEGURIDAD -->
+            <div class="hub-section">
+                <div class="hub-section-title"><i class="fas fa-shield-halved"></i> SEGURIDAD</div>
+                
+                <form onsubmit="changePassword(event)" class="form-security-premium">
+                    <div class="form-group-premium mb-15">
+                        <label>Contraseña Actual</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="current-password" class="input-premium-sm" placeholder="********" required>
+                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('current-password', this)"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group-premium mb-15">
+                        <label>Nueva Contraseña</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-key"></i>
+                            <input type="password" id="new-password" class="input-premium-sm" placeholder="********" required>
+                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('new-password', this)"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group-premium mb-20">
+                        <label>Confirmar Nueva</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-check-double"></i>
+                            <input type="password" id="confirm-new-password" class="input-premium-sm" placeholder="********" required>
+                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('confirm-new-password', this)"></i>
+                        </div>
+                    </div>
+
+                    <div class="password-requirements mb-15">
+                        <div id="req-len" class="req-item"><i class="far fa-circle"></i> 8+ caracteres</div>
+                        <div id="req-up" class="req-item"><i class="far fa-circle"></i> Al menos una mayúscula</div>
+                        <div id="req-spec" class="req-item"><i class="far fa-circle"></i> Un símbolo especial</div>
+                        <div id="req-match" class="req-item"><i class="far fa-circle"></i> Las contraseñas coinciden</div>
+                    </div>
+                    
+                    <div class="strength-meter-container mb-25"><div id="password-strength" class="strength-meter"></div></div>
+                    
+                    <button type="submit" class="btn btn-primary btn-compact"><i class="fas fa-shield-check"></i> ACTUALIZAR CONTRASEÑA</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

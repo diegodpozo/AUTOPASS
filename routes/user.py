@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
-import models, schemas, auth
-from database import get_db
+import models, schemas
+from core.database import get_db
+from core.security import get_current_user, get_password_hash, verify_password
+from core.config import settings
 from services.billing_service import BillingService
 from services.reservation_service import ReservationService
 
@@ -14,12 +16,12 @@ router = APIRouter(prefix="/v1/user", tags=["User Actions"])
 # --- PERFIL DE USUARIO ---
 
 @router.get("/me", response_model=schemas.UserBase)
-def get_me(current_user: models.User = Depends(auth.get_current_user)):
+def get_me(current_user: models.User = Depends(get_current_user)):
     """Retorna la información del perfil del usuario autenticado."""
     return current_user
 
 @router.put("/me", response_model=schemas.UserBase)
-def update_me(data: schemas.UserUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def update_me(data: schemas.UserUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Actualiza los datos personales del usuario."""
     from routes.parking import normalize_name
     if data.nombre: current_user.nombre = normalize_name(data.nombre)
@@ -32,23 +34,23 @@ def update_me(data: schemas.UserUpdate, db: Session = Depends(get_db), current_u
     return current_user
 
 @router.post("/change-password")
-def change_password(data: schemas.ChangePassword, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def change_password(data: schemas.ChangePassword, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Procesa el cambio de contraseña validando la anterior."""
-    if not auth.verify_password(data.current_password, current_user.password_hash):
+    if not verify_password(data.current_password, current_user.password_hash):
         raise HTTPException(status_code=400, detail="La contraseña actual ingresada es incorrecta")
-    current_user.password_hash = auth.get_password_hash(data.new_password)
+    current_user.password_hash = get_password_hash(data.new_password)
     db.commit()
     return {"status": "ok", "message": "Contraseña actualizada exitosamente"}
 
 # --- GESTIÓN DE FLOTA (VEHÍCULOS) ---
 
 @router.get("/vehicles")
-def get_user_vehicles(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def get_user_vehicles(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Lista todos los vehículos vinculados a la cuenta."""
     return db.query(models.Vehicle).filter(models.Vehicle.user_id == current_user.id).all()
 
 @router.post("/vehicles")
-def add_user_vehicle(patente: str, marca_modelo: str, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def add_user_vehicle(patente: str, marca_modelo: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Vincula un nuevo vehículo validando el formato de patente argentina/mercosur."""
     import re
     from routes.parking import normalize_plate, format_plate, normalize_name
@@ -69,7 +71,7 @@ def add_user_vehicle(patente: str, marca_modelo: str, db: Session = Depends(get_
     return {"status": "ok"}
 
 @router.delete("/vehicles/{patente}")
-def delete_user_vehicle(patente: str, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def delete_user_vehicle(patente: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Desvincula un vehículo de la cuenta del usuario."""
     from routes.parking import normalize_plate
     p_clean = normalize_plate(patente)
@@ -83,7 +85,7 @@ def delete_user_vehicle(patente: str, db: Session = Depends(get_db), current_use
 # --- MOVIMIENTOS Y PAGOS ---
 
 @router.get("/active-stays")
-def get_user_active_stays(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def get_user_active_stays(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Lista las estadías actuales (dentro del predio) para los vehículos del usuario."""
     user_plates = [v.patente for v in current_user.vehicles]
     res = []
@@ -97,7 +99,7 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
     return res
 
 @router.get("/payment-history")
-def get_user_payment_history(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def get_user_payment_history(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Historial cronológico de pagos realizados por el usuario."""
     user_plates = [v.patente for v in current_user.vehicles]
     return db.query(models.AccessLog).filter(
@@ -106,23 +108,40 @@ def get_user_payment_history(db: Session = Depends(get_db), current_user: models
         models.AccessLog.costo_estadia > 0
     ).order_by(models.AccessLog.id.desc()).all()
 
+@router.get("/rates")
+def get_current_rates(db: Session = Depends(get_db)):
+    """Retorna las tarifas vigentes para que el usuario pueda pre-calcular su estadía."""
+    keys = ["precio_hora", "precio_dia", "precio_semana", "precio_quincena", "precio_mes"]
+    settings = db.query(models.Settings).filter(models.Settings.clave.in_(keys)).all()
+    res = {s.clave.replace("precio_", ""): s.valor for s in settings}
+    # Asegurar que si faltan, tengan valores por defecto coherentes
+    defaults = {"hora": 1500, "dia": 15000, "semana": 70000, "quincena": 120000, "mes": 200000}
+    for k, v in defaults.items():
+        if k not in res: res[k] = v
+    return res
+
 # --- GESTIÓN DE RESERVAS ---
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
-def get_user_reservations(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def get_user_reservations(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Lista todas las reservas del usuario, actualizando estados automáticamente."""
     ReservationService.cleanup_overdue_reservations(db)
     ReservationService.auto_finalize_reservations(db, current_user.id)
     return db.query(models.Reservation).filter(models.Reservation.user_id == current_user.id).order_by(models.Reservation.id.desc()).all()
 
 @router.post("/reservations")
-def create_user_reservation(res: schemas.UserReservationCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def create_user_reservation(res: schemas.UserReservationCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Crea una nueva reserva y procesa el cobro si el saldo es suficiente."""
     vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente, models.Vehicle.user_id == current_user.id).first()
     if not vehicle: raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
     
     rate = BillingService.get_rate(db, res.tipo_estadia)
     start = datetime.datetime.fromisoformat(res.fecha_inicio)
+    
+    # REGLA: Mínimo 2 horas de anticipación
+    if (start - datetime.datetime.now()).total_seconds() < 7200:
+        raise HTTPException(status_code=400, detail="Las reservas deben realizarse con al menos 2 horas de anticipación.")
+
     end = datetime.datetime.fromisoformat(res.fecha_fin)
     duration_hours = (end - start).total_seconds() / 3600
 
@@ -151,14 +170,8 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     else:
         monto = math.ceil(duration_hours) * rate
 
-    # Proceso de pago automático con saldo
+    # La reserva se crea siempre en estado Pendiente (no se cobra automáticamente)
     estado_pago = "Pendiente"
-    if current_user.saldo >= monto:
-        current_user.saldo -= monto
-        estado_pago = "Pagado"
-        puntos_ganados = BillingService.calculate_points(monto)
-        current_user.puntos_acumulados += puntos_ganados
-        db.add(models.PointsLog(user_id=current_user.id, cantidad=puntos_ganados, motivo=f"Reserva: {res.patente}", fecha=datetime.datetime.now().isoformat()))
     
     sucursales_info = {
         "AUTOPASS Central": "Av. del Libertador 1200, CABA. Abierto 24hs.",
@@ -178,7 +191,7 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     return {"status": "ok", "monto": monto, "estado_pago": estado_pago}
 
 @router.patch("/reservations/{res_id}")
-def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Permite modificar una reserva existente ajustando saldo y puntos si corresponde."""
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == current_user.id).first()
     if not res: raise HTTPException(status_code=404, detail="Reserva no encontrada")
@@ -219,36 +232,43 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
             current_user.saldo -= diferencia
         else: current_user.saldo += abs(diferencia)
     else:
-        if current_user.saldo >= monto_nuevo:
-            current_user.saldo -= monto_nuevo
-            res.estado_pago = "Pagado"
-            puntos = BillingService.calculate_points(monto_nuevo)
-            current_user.puntos_acumulados += puntos
-            db.add(models.PointsLog(user_id=current_user.id, cantidad=puntos, motivo=f"Reserva: {res.patente}", fecha=datetime.datetime.now().isoformat()))
+        # Si la reserva no estaba pagada, se mantiene en estado Pendiente
+        res.estado_pago = "Pendiente"
 
     res.monto_total = monto_nuevo
     db.commit()
     return {"status": "ok", "monto_total": monto_nuevo, "estado_pago": res.estado_pago}
 
 @router.post("/reservations/{res_id}/pay")
-def pay_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def pay_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Abona una reserva pendiente con el saldo de la cuenta."""
     return ReservationService.pay_reservation(db, current_user, res_id)
 
 @router.post("/reservations/{res_id}/cancel")
-def cancel_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def cancel_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Cancela una reserva y reembolsa el monto si ya fue pagada."""
     return ReservationService.cancel_reservation(db, current_user, res_id)
 
 # --- PUNTOS Y FIDELIZACIÓN ---
 
 @router.get("/promotions", response_model=List[schemas.PromotionResponse])
-def get_promotions(db: Session = Depends(get_db)):
-    """Lista las promociones y beneficios vigentes."""
-    return db.query(models.Promotion).filter(models.Promotion.activa == True).all()
+def get_promotions(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """Lista las promociones y beneficios vigentes filtrados por la sede del usuario."""
+    q = db.query(models.Promotion).filter(models.Promotion.activa == True)
+    
+    if current_user.sucursal:
+        # Mostrar promociones de su sede o globales
+        from sqlalchemy import or_
+        q = q.filter(or_(models.Promotion.sucursal == current_user.sucursal, models.Promotion.sucursal == None))
+    else:
+        # Si el usuario no tiene sede (global), ve solo las globales? 
+        # O ve todas? Normalmente un usuario global vería todo.
+        pass
+        
+    return q.all()
 
 @router.post("/redeem/{promo_id}")
-def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Procesa el canje de puntos por un beneficio del catálogo."""
     promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id, models.Promotion.activa == True).first()
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
@@ -260,12 +280,36 @@ def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: mo
     return {"status": "ok", "message": f"Canje exitoso: {promo.titulo}"}
 
 @router.get("/points-history")
-def get_points_history(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    """Retorna el historial completo de movimientos de puntos del usuario."""
-    return db.query(models.PointsLog).filter(models.PointsLog.user_id == current_user.id).order_by(models.PointsLog.id.desc()).all()
+def get_points_history(page: int = 1, limit: int = 10, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """Retorna el historial de movimientos de puntos del usuario con paginación y totales."""
+    query = db.query(models.PointsLog).filter(models.PointsLog.user_id == current_user.id)
+    total = query.count()
+    
+    # Calcular totales históricos
+    earned = db.query(func.sum(models.PointsLog.cantidad)).filter(
+        models.PointsLog.user_id == current_user.id,
+        models.PointsLog.cantidad > 0
+    ).scalar() or 0
+    
+    redeemed = db.query(func.sum(models.PointsLog.cantidad)).filter(
+        models.PointsLog.user_id == current_user.id,
+        models.PointsLog.cantidad < 0
+    ).scalar() or 0
+
+    items = query.order_by(models.PointsLog.id.desc()).offset((page - 1) * limit).limit(limit).all()
+    
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": math.ceil(total / limit),
+        "total_earned": int(earned),
+        "total_redeemed": abs(int(redeemed))
+    }
 
 @router.post("/recharge-balance")
-def recharge_balance(data: schemas.RechargeBalance, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def recharge_balance(data: schemas.RechargeBalance, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Simula la carga de saldo en la cuenta del usuario."""
     if data.monto <= 0: raise HTTPException(status_code=400, detail="Monto inválido")
     current_user.saldo += data.monto

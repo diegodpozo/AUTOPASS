@@ -1,7 +1,7 @@
 @echo off
-title Setup Backend - AUTOPASS Professional v5.0
+title Setup Backend - AUTOPASS Modular Gold v7.0
 echo ======================================================
-echo   INSTALACION DEL ENTORNO PROFESIONAL (AUTOPASS v5.0)
+echo   INSTALACION DEL ENTORNO MODULAR (AUTOPASS v7.0)
 echo ======================================================
 echo.
 
@@ -36,14 +36,14 @@ echo [+] Actualizando PIP...
 python -m pip install --upgrade pip
 
 echo [+] Instalando dependencias desde requirements.txt...
-echo Nota: La instalacion de dependencias pesadas (OpenCV, EasyOCR) puede tardar unos minutos.
+echo Nota: La instalacion de dependencias pesadas (OpenCV, EasyOCR, Torch) puede tardar unos minutos.
 pip install -r requirements.txt
 
 :: 4. Configurar Variables de Entorno (.env)
 echo [+] Configurando archivo de variables de entorno (.env)...
 if not exist .env (
     echo # --- SEGURIDAD JWT --- > .env
-    echo SECRET_KEY=autopass_super_secret_key_2026_pro >> .env
+    echo SECRET_KEY=autopass_super_secret_key_2026_modular >> .env
     echo ALGORITHM=HS256 >> .env
     echo ACCESS_TOKEN_EXPIRE_MINUTES=1440 >> .env
     echo. >> .env
@@ -58,8 +58,6 @@ if not exist .env (
     echo. >> .env
     echo # --- DIRECTORIOS --- >> .env
     echo IMAGE_DIR=captured_images >> .env
-    echo STATIC_DIR=static >> .env
-    echo TEMPLATES_DIR=templates >> .env
     echo [OK] Archivo .env creado con valores por defecto.
 ) else (
     echo [!] El archivo .env ya existe, preservando configuracion actual.
@@ -67,18 +65,19 @@ if not exist .env (
 
 :: 5. Inicializar Base de Datos
 echo.
-echo [+] Inicializando Base de Datos, Esquemas y Usuario Admin...
+echo [+] Inicializando Base de Datos Modular y Usuario Admin...
 python init_db.py
 
 echo.
 echo ======================================================
-echo   INSTALACION COMPLETADA CON EXITO (v5.0)
+echo   INSTALACION COMPLETADA CON EXITO (v7.0 GOLD)
 echo ======================================================
 echo.
-echo Nueva Arquitectura Profesional (Layered Architecture):
-echo - Frontend: API Client Centralizado (JS)
-echo - Backend: Capa de Servicios y Repositorios
-echo - Base de Datos: Inicializacion Automatica (init_db)
+echo Arquitectura Limpia Modular (v7.0):
+echo - Core: Configuracion y Seguridad Centralizada
+echo - Domain Layers: Modelos y Esquemas divididos (User/Parking/Res)
+echo - Business Logic: Capa de Servicios agnostica (services/)
+echo - Modular Frontend: Plantillas Jinja2 por pestañas y componentes
 echo.
 echo Credenciales de Admin por defecto:
 echo Email: admin@autopass.com
