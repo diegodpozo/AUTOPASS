@@ -21,6 +21,6 @@ call venv\Scripts\activate
 echo [+] Iniciando Uvicorn en http://localhost:8000
 echo [+] (Presiona Ctrl+C para detener el servidor)
 echo.
-uvicorn main:app --reload
+python -m uvicorn main:app --reload
 
 pause
