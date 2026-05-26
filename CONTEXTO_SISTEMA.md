@@ -1,4 +1,4 @@
-# 🌐 Contexto del Sistema: AUTOPASS
+#  Contexto del Sistema: AUTOPASS
 
 Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente tras su transición a una **Arquitectura Limpia**.
 
@@ -24,7 +24,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
 4.  **Gestión de Accesos ALPR**:
     *   `alpr_service.py`: Servicio independiente de visión artificial que consume la API modular.
 
-## 🔐 Configuración y Seguridad
+##  Configuración y Seguridad
 - **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`).
 - **Token JWT**: Protección robusta de endpoints con validación de roles en tiempo real.
 
