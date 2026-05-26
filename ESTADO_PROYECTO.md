@@ -1,6 +1,6 @@
 # Estado del Proyecto: AUTOPASS (Actualizado 2026-05-22)
 
-### 🚀 Hitos Recientes (Mayo 2026) - Versión 7.2.5 (UI Refinements: Promotions & Security)
+###  Hitos Recientes (Mayo 2026) - Versión 7.2.5 (UI Refinements: Promotions & Security)
 - [x] **Restauración UI de Promociones**:
     - [x] Implementación de grilla responsiva para beneficios.
     - [x] Diseño de tarjetas con Glassmorphism y efectos hover premium.
@@ -10,7 +10,7 @@
     - [x] Rediseño de la caja de requerimientos de seguridad (flujo vertical).
     - [x] Eliminación total de estilos inline en favor de clases CSS modulares.
 
-### 🚀 Hitos Recientes (Mayo 2026) - Versión 7.2.2 (Unified Account Hub & Paginated Points)
+###  Hitos Recientes (Mayo 2026) - Versión 7.2.2 (Unified Account Hub & Paginated Points)
 - [x] **Refinamiento de UI en Perfil (v7.2.2)**:
     - [x] **Unified Account Hub**: Unificación de datos personales y seguridad en una sola interfaz premium de doble panel.
     - [x] **Paginación de Puntos**: Implementación de navegación en el historial de puntos (10 por página) con totales calculados en el backend.
@@ -25,7 +25,7 @@
     - [x] Restauración de estética de ticket físico (perforaciones, QR destacado y botón de cierre).
     - [x] Implementación de lógica de colores condicionales en movimientos de puntos.
 
-### 🚀 Hitos Recientes (Mayo 2026) - Versión 7.2.0 (Frontend Architecture & UI Refined)
+###  Hitos Recientes (Mayo 2026) - Versión 7.2.0 (Frontend Architecture & UI Refined)
 - [x] **Modularización Completa de CSS**:
     - [x] Implementación de arquitectura por capas: `base/`, `components/`, `layout/` y `pages/`.
     - [x] Creación de sistema de utilidades global (`utilities.css`).
@@ -51,13 +51,13 @@
     *   Actualización completa de la suite de tests (`test_*.py`) para el nuevo sistema modular.
     *   Soporte para ejecución de tests con `pytest` y `httpx`.
 
-### 📊 Cobertura de Funcionalidades
+###  Cobertura de Funcionalidades
 - **Seguridad**: RBAC con 4 niveles (Admin, Local Admin, Staff, User).
 - **Multi-Sede**: Aislamiento total de datos, tarifas y aforo por sucursal.
 - **Fidelización**: Sistema de puntos AutoPass con historial y canje de beneficios.
 - **Accesos**: ALPR híbrido (Patente + QR) con auditoría visual.
 
-### 🛠️ Próximos Pasos (Roadmap v7.x)
+###  Próximos Pasos (Roadmap v7.x)
 - [ ] Integración real con Mercado Pago (Webhooks).
 - [ ] Dashboard de Super-Admin con mapas de calor de ocupación multi-sede.
 - [ ] App Móvil nativa consumiendo los nuevos esquemas modulares.
