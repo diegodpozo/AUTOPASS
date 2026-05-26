@@ -27,9 +27,10 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 
 ## Inicio Rápido
 
-1. Instalar dependencias: `pip install -r requirements.txt`
-2. Inicializar DB: `python init_db.py`
-3. Arrancar: `uvicorn main:app --reload`
+1. **Instalar dependencias:** `pip install -r requirements.txt`
+2. **Inicializar DB:** `python init_db.py`
+3. **Arrancar Servidor:** `run_server.bat`
+4. **Arrancar Cámaras:** `run_camera_entry.bat` y `run_camera_exit.bat` (en terminales separadas).
 
 ## Tecnologías
 

@@ -25,10 +25,35 @@ Este paso crea las tablas y los roles iniciales (Admin Global).
 python init_db.py
 ```
 
-## 4. Ejecución del Servidor
+## 4. Ejecución del Servidor y Cámaras
+
+### Iniciar Servidor Principal
 ```bash
-uvicorn main:app --reload
+# Opción 1: Batch (Recomendado)
+.\run_server.bat
+
+# Opción 2: Manual
+.\venv\Scripts\python.exe -m uvicorn main:app --reload
 ```
+
+### Iniciar Cámaras (ALPR)
+Abre terminales separadas para cada cámara:
+
+**Cámara de Entrada:**
+```bash
+.\run_camera_entry.bat
+```
+
+**Cámara de Salida:**
+```bash
+.\run_camera_exit.bat
+```
+
+> **Configuración de IPWebcam (Celular):**
+> 1. Abre los archivos `.bat` con un editor de texto (Bloc de notas).
+> 2. Busca la línea `set VIDEO_SOURCE=http://TU_IP_CELULAR:8080/video`.
+> 3. Reemplaza `TU_IP_CELULAR` con la dirección IP que te muestra la aplicación IPWebcam en tu celular (ej: `192.168.1.50`).
+> 4. Guarda los cambios y ejecuta el script.
 
 ## 5. Verificación de Integridad
 Ejecuta los tests automáticos para asegurar que la modularización está operativa:
