@@ -40,4 +40,3 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 - **IA:** OpenCV + EasyOCR (Deep Learning).
 
 ---
-*AUTOPASS es una marca de ParkingTech. Hecho con ❤️ para la movilidad urbana.*
