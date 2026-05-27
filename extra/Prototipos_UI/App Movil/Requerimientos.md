@@ -1,13 +1,13 @@
-# 📱 Requerimientos: App Móvil de Usuario (Modelo ALPR & Flujo)
+# Requerimientos: App Móvil de Usuario (Modelo ALPR & Flujo)
 
 Esta aplicación está enfocada en el acceso "Hands-Free" mediante reconocimiento de patentes y la gestión de beneficios de fidelidad.
 
-## 🎯 Objetivos de la App
+## Objetivos de la App
 1. **Acceso Sin Fricción**: Eliminar la necesidad de interactuar con el celular al llegar (Apertura por Patente).
 2. **Reserva de Cupo**: Garantizar un lugar en el inventario global del estacionamiento.
 3. **Fidelización Activa**: Potenciar el uso del parking mediante puntos y cupones de descuento.
 
-## ✅ Requerimientos Funcionales (RF)
+## Requerimientos Funcionales (RF)
 
 ### 1. Gestión de Identidad Vehicular
 - **RF-01: Registro de Patente**: El usuario debe vincular su patente (matrícula) como "llave principal".
@@ -27,7 +27,7 @@ Esta aplicación está enfocada en el acceso "Hands-Free" mediante reconocimient
 - **RF-09: QR de Respaldo**: Generación de un código QR solo para casos donde el reconocimiento de patente falle.
 - **RF-10: Notificaciones Push**: Avisos de reserva confirmada, pago aprobado y alertas de aforo.
 
-## ⚙️ Requerimientos No Funcionales (RNF)
+## Requerimientos No Funcionales (RNF)
 - **RNF-01: Latencia de Validación**: El sistema debe validar la patente y ordenar la apertura en < 2 segundos.
 - **RNF-02: Seguridad de Pago**: No almacenar datos de tarjetas localmente; delegar todo el procesamiento a Mercado Pago.
 - **RNF-03: UX Minimalista**: Proceso de reserva completable en menos de 4 clics.

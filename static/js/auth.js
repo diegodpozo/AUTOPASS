@@ -19,4 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.onsubmit = auth.handleRegister;
     }
+
+    const recoveryForm = document.getElementById('recoveryForm');
+    if (recoveryForm) {
+        recoveryForm.onsubmit = auth.handleRecovery;
+    }
 });

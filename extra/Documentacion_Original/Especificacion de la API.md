@@ -1,13 +1,13 @@
-# 🚀 Especificación de la API: ParkingTech
+# Especificación de la API: ParkingTech
 
 Esta API centraliza la lógica de negocio y permite la interacción entre la App Móvil (Expo), el Módulo AI (Python), el Hardware (ESP32) y el Panel Administrativo.
 
-**Base URL**: `http://localhost:8000/v1` (Desarrollo)  
+**Base URL**: `http://localhost:8000/v1` (Desarrollo)
 **Protocolo**: REST (JSON) + WebSockets (Aforo Real-time)
 
 ---
 
-## 🔐 1. Autenticación y Usuario
+## 1. Autenticación y Usuario
 | Endpoint | Método | Descripción | Requerido por |
 | :--- | :--- | :--- | :--- |
 | `/auth/register` | `POST` | Registro de usuario y patente principal | App Móvil |
@@ -16,7 +16,7 @@ Esta API centraliza la lógica de negocio y permite la interacción entre la App
 
 ---
 
-## 📅 2. Reservas y Pagos (Mercado Pago)
+## 2. Reservas y Pagos (Mercado Pago)
 | Endpoint | Método | Descripción | Requerido por |
 | :--- | :--- | :--- | :--- |
 | `/reservations` | `POST` | Crear reserva y obtener `preference_id` de MP | App Móvil |
@@ -25,7 +25,7 @@ Esta API centraliza la lógica de negocio y permite la interacción entre la App
 
 ---
 
-## 📍 3. Aforo y Disponibilidad
+## 3. Aforo y Disponibilidad
 | Endpoint | Método | Descripción | Requerido por |
 | :--- | :--- | :--- | :--- |
 | `/parking/status` | `GET` | Capacidad total y ocupación actual | App / Web |
@@ -33,7 +33,7 @@ Esta API centraliza la lógica de negocio y permite la interacción entre la App
 
 ---
 
-## 🚧 4. Control de Acceso (ALPR & Hardware)
+## 4. Control de Acceso (ALPR & Hardware)
 | Endpoint | Método | Descripción | Requerido por |
 | :--- | :--- | :--- | :--- |
 | `/access/validate-plate`| `POST` | Valida patente detectada por AI para abrir barrera | Script Python |
@@ -41,7 +41,7 @@ Esta API centraliza la lógica de negocio y permite la interacción entre la App
 
 ---
 
-## 🎁 5. Fidelización y Promociones
+## 5. Fidelización y Promociones
 | Endpoint | Método | Descripción | Requerido por |
 | :--- | :--- | :--- | :--- |
 | `/user/points/log` | `GET` | Historial de ganancia y canje de puntos | App Móvil |
@@ -50,7 +50,7 @@ Esta API centraliza la lógica de negocio y permite la interacción entre la App
 
 ---
 
-## 🛠️ Ejemplos de Payload
+## Ejemplos de Payload
 
 ### Crear Reserva (`POST /reservations`)
 ```json

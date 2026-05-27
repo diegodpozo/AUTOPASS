@@ -16,18 +16,23 @@ export async function loadPromotionsAdmin() {
             <tr>
                 <td data-label="Beneficio">
                     <div class="flex-row items-center gap-10">
-                        <div class="header-icon-box xs">
-                            <i class="${p.icono || 'fas fa-gift'} text-dorado"></i>
+                        <div class="header-icon-box xs" style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2);">
+                            <i class="${p.icono || 'fas fa-gift'} text-dorado" style="font-size: 0.8rem;"></i>
                         </div>
-                        <b class="text-white">${p.titulo}</b>
+                        <div class="flex-col">
+                            <b class="text-white text-small">${p.titulo}</b>
+                            <span class="text-xs text-muted" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.descripcion}</span>
+                        </div>
                     </div>
                 </td>
-                <td data-label="Descripción"><div class="text-small text-muted" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.descripcion}</div></td>
-                <td data-label="Costo"><div class="points-badge-sm"><i class="fas fa-star"></i> ${p.costo_puntos}</div></td>
-                <td data-label="Sede"><span class="text-dorado text-small">${p.sucursal || 'Global'}</span></td>
-                <td data-label="Estado"><span class="badge-status badge-${p.activa ? 'active' : 'inactive'}">${p.activa ? 'ACTIVA' : 'INACTIVA'}</span></td>
+                <td data-label="Puntos" class="text-center">
+                    <div class="points-badge-sm mx-auto"><i class="fas fa-star"></i> ${p.costo_puntos}</div>
+                </td>
+                <td data-label="Estado" class="text-center hidden-mobile">
+                    <span class="badge-status badge-${p.activa ? 'active' : 'inactive'} mx-auto">${p.activa ? 'ACTIVA' : 'INACTIVA'}</span>
+                </td>
                 <td data-label="Acciones">
-                    <div class="flex-row gap-5">
+                    <div class="flex-row gap-8 justify-center">
                         <button class="btn-icon-premium sm" onclick="togglePromotion(${p.id})" title="${p.activa ? 'Desactivar' : 'Activar'}">
                             <i class="fas ${p.activa ? 'fa-toggle-on text-success' : 'fa-toggle-off text-muted'}"></i>
                         </button>
@@ -37,9 +42,9 @@ export async function loadPromotionsAdmin() {
                     </div>
                 </td>
             </tr>
-        `).join('') || '<tr><td colspan="6" class="text-center py-20">No hay promociones registradas.</td></tr>';
+        `).join('') || '<tr><td colspan="4" class="text-center py-20">No hay promociones registradas.</td></tr>';
     } else {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-20 text-danger">Error: ${res.error}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-danger">Error: ${res.error}</td></tr>`;
     }
 }
 

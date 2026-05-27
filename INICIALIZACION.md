@@ -1,4 +1,4 @@
-#  Guía de Inicialización: AUTOPASS
+# Guía de Inicialización: AUTOPASS
 
 Sigue estos pasos para poner en marcha el sistema bajo la nueva arquitectura modular.
 
@@ -27,17 +27,23 @@ python init_db.py
 
 ## 4. Ejecución del Servidor
 ```bash
-uvicorn main:app --reload
+run_server.bat
 ```
 
-## 5. Verificación de Integridad
+## 5. Ejecución del Servicio ALPR
+Para simular o capturar patentes desde tu celular (IP Webcam):
+1. Edita `run_alpr_entrada.bat` o `run_alpr_salida.bat`.
+2. Cambia la variable `IP_CELULAR` por la dirección que muestra la App.
+3. Ejecuta el archivo correspondiente.
+
+## 6. Verificación de Integridad
 Ejecuta los tests automáticos para asegurar que la modularización está operativa:
 ```bash
 .\venv\Scripts\python.exe test_user_flow.py
 ```
 
 ---
-### 🚦 Flujo de Prueba Rápido (ALPR)
+### Flujo de Prueba Rápido (ALPR)
 1. Inicia el servidor.
 2. Abre una terminal nueva y corre `python alpr_service.py` (simulará una cámara).
 3. Entra a `http://localhost:8000/dashboard` como admin (admin@autopass.com / admin123).

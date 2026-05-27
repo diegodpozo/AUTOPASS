@@ -5,33 +5,61 @@ import models, schemas
 from core.database import get_db
 from core.security import authenticate_user, create_access_token, get_password_hash
 from core.config import settings
+from services.email_service import EmailService
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
 
 @router.post("/register")
+# ... (rest of register)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """Procesa el registro de un nuevo usuario con datos normalizados."""
-    from routes.parking import normalize_name, normalize_dni
+# ... (inside register)
+    return {"status": "ok", "message": "Usuario registrado exitosamente"}
+
+@router.post("/forgot-password")
+def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Genera un token de recuperación y envía un correo al usuario."""
+    user = db.query(models.User).filter(models.User.email == request.email.lower().strip()).first()
+    if not user:
+        # Por seguridad, no revelamos si el correo existe o no
+        return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
     
-    # Verificación de duplicidad de correo
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="El correo electrónico ya se encuentra registrado")
-    
-    # Creación de usuario con hash de seguridad
-    new_user = models.User(
-        nombre=normalize_name(user.nombre),
-        apellido=normalize_name(user.apellido),
-        dni=normalize_dni(user.dni),
-        telefono=user.telefono,
-        email=user.email.lower().strip(),
-        password_hash=get_password_hash(user.password),
-        rol="user"
+    # Generar token con propósito de recuperación (30 min)
+    expires = datetime.timedelta(minutes=settings.RECOVERY_TOKEN_EXPIRE_MINUTES)
+    recovery_token = create_access_token(
+        data={"sub": user.email, "purpose": "recovery"},
+        expires_delta=expires
     )
     
-    db.add(new_user)
+    recovery_url = f"{settings.BASE_URL}/reset-password?token={recovery_token}"
+    EmailService.send_recovery_email(user.email, user.nombre, recovery_url)
+    
+    return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
+
+@router.post("/reset-password")
+def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Valida el token y actualiza la contraseña del usuario."""
+    from jose import jwt, JWTError
+    
+    try:
+        payload = jwt.decode(request.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        purpose: str = payload.get("purpose")
+        
+        if email is None or purpose != "recovery":
+            raise HTTPException(status_code=400, detail="Token de recuperación inválido o mal formado.")
+            
+    except JWTError:
+        raise HTTPException(status_code=400, detail="El enlace de recuperación ha expirado o es inválido.")
+    
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    
+    # Actualizar contraseña
+    user.password_hash = get_password_hash(request.new_password)
     db.commit()
-    return {"status": "ok", "message": "Usuario registrado exitosamente"}
+    
+    return {"status": "ok", "message": "Tu contraseña ha sido actualizada exitosamente. Ya podés iniciar sesión."}
 
 @router.post("/login")
 def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):

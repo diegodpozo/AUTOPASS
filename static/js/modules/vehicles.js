@@ -41,10 +41,10 @@ export async function loadVehicles() {
                         <div class="vehicle-brand">${v.marca_modelo}</div>
                     </div>
                 </div>
-                <button class="delete-btn-modern" title="Eliminar vehículo" onclick="deleteVehicle('${v.patente}')">
-                    <i class="fas fa-xmark"></i>
-                </button>
             </div>
+            <button class="delete-btn-modern" title="Eliminar vehículo" onclick="deleteVehicle('${v.patente}')">
+                <i class="fas fa-xmark"></i>
+            </button>
         </div>
     `).join('');
 
@@ -97,6 +97,7 @@ export async function addVehicle(e, isQuickAdd = false) {
         form.reset();
         
         if (isQuickAdd) {
+            if (window.hideQuickAddVehicle) window.hideQuickAddVehicle();
             if (typeof toggleReservaForm === 'function') {
                 const container = document.getElementById('reserva-form-container');
                 if (container) container.classList.remove('open');

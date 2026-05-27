@@ -1,123 +1,123 @@
-# 🗄️ Esquema de Base de Datos: ParkingTech (SQLite)
+# Esquema de Base de Datos: ParkingTech (SQLite)
 
 Este esquema está diseñado para SQLite y optimizado para el control de aforo por flujo y sistema de fidelización.
 
-## 🧜‍♂️ Diagrama de Entidad-Relación (DER)
+## Diagrama de Entidad-Relación (DER)
 
 ```mermaid
 erDiagram
-    USERS ||--o{ VEHICLES : "posee"
-    USERS ||--o{ RESERVATIONS : "realiza"
-    USERS ||--o{ POINTS_LOG : "acumula"
-    RESERVATIONS ||--o{ ACCESS_LOGS : "genera"
-    COUPONS ||--o{ RESERVATIONS : "aplica_a"
-    SETTINGS ||--o| SETTINGS : "configuración global"
+  USERS ||--o{ VEHICLES : "posee"
+  USERS ||--o{ RESERVATIONS : "realiza"
+  USERS ||--o{ POINTS_LOG : "acumula"
+  RESERVATIONS ||--o{ ACCESS_LOGS : "genera"
+  COUPONS ||--o{ RESERVATIONS : "aplica_a"
+  SETTINGS ||--o| SETTINGS : "configuración global"
 
-    USERS {
-        int id PK
-        string nombre
-        string email
-        string password_hash
-        int puntos_acumulados
-    }
+  USERS {
+  int id PK
+  string nombre
+  string email
+  string password_hash
+  int puntos_acumulados
+  }
 
-    VEHICLES {
-        int id PK
-        int user_id FK
-        string patente
-        string marca_modelo
-    }
+  VEHICLES {
+  int id PK
+  int user_id FK
+  string patente
+  string marca_modelo
+  }
 
-    RESERVATIONS {
-        int id PK
-        int user_id FK
-        string patente
-        string fecha_inicio
-        string fecha_fin
-        string dias_semana
-        float monto_total
-        string mp_preference_id
-        string estado_pago
-        string estado_reserva
-    }
+  RESERVATIONS {
+  int id PK
+  int user_id FK
+  string patente
+  string fecha_inicio
+  string fecha_fin
+  string dias_semana
+  float monto_total
+  string mp_preference_id
+  string estado_pago
+  string estado_reserva
+  }
 
-    PARKING_AFORO {
-        int id PK
-        int capacidad_total
-        int ocupacion_actual
-        string ultima_actualizacion
-    }
+  PARKING_AFORO {
+  int id PK
+  int capacidad_total
+  int ocupacion_actual
+  string ultima_actualizacion
+  }
 
-    POINTS_LOG {
-        int id PK
-        int user_id FK
-        int cantidad
-        string motivo
-        string fecha
-    }
+  POINTS_LOG {
+  int id PK
+  int user_id FK
+  int cantidad
+  string motivo
+  string fecha
+  }
 
-    COUPONS {
-        int id PK
-        string codigo
-        int descuento_porcentaje
-        string fecha_expiracion
-        boolean activo
-    }
+  COUPONS {
+  int id PK
+  string codigo
+  int descuento_porcentaje
+  string fecha_expiracion
+  boolean activo
+  }
 
-    ACCESS_LOGS {
-        int id PK
-        string patente_detectada
-        string tipo_evento
-        int reserva_id FK
-        string fecha_hora
-        string imagen_path
-        boolean pago_confirmado
-        float costo_estadia
-    }
+  ACCESS_LOGS {
+  int id PK
+  string patente_detectada
+  string tipo_evento
+  int reserva_id FK
+  string fecha_hora
+  string imagen_path
+  boolean pago_confirmado
+  float costo_estadia
+  }
 
-    SETTINGS {
-        int id PK
-        string clave
-        float valor
-    }
+  SETTINGS {
+  int id PK
+  string clave
+  float valor
+  }
 ```
 
-### 🔗 Explicación de las Relaciones
+### Explicación de las Relaciones
 
-1.  **Usuarios y Vehículos (1:N)**: Un usuario puede registrar múltiples patentes (ej: auto personal, de pareja o de trabajo). Cada vehículo pertenece a un único usuario para vincular la "llave" de acceso al perfil que paga.
-2.  **Usuarios y Reservas (1:N)**: Un usuario realiza múltiples reservas a lo largo del tiempo. Cada reserva guarda el `user_id` para gestionar el historial y los pagos de Mercado Pago.
-3.  **Usuarios e Historial de Puntos (1:N)**: Cada transacción de puntos (ganancia o canje) genera un registro vinculado al usuario. El saldo en `users.puntos_acumulados` es la suma de este historial.
-4.  **Cupones y Reservas (1:N)**: Un mismo código de cupón (ej: 'PROMO10') puede aplicarse a muchas reservas distintas, siempre que esté activo y dentro de su fecha de vigencia.
-5.  **Reservas y Registros de Acceso (1:N)**: Un registro de acceso ALPR puede estar vinculado a una reserva (si el usuario reservó previamente) o ser nulo (si el usuario entró "al paso"). Un reserva puede tener múltiples accesos (entradas/salidas).
-6.  **Aforo Global (Independiente)**: La tabla `parking_aforo` funciona como un contador maestro. Es actualizada por el Backend tras cada evento de entrada o salida exitosa detectado por las barreras.
-7.  **Configuraciones (Independiente)**: La tabla `settings` almacena valores dinámicos como el precio por hora o multas.
+1. **Usuarios y Vehículos (1:N)**: Un usuario puede registrar múltiples patentes (ej: auto personal, de pareja o de trabajo). Cada vehículo pertenece a un único usuario para vincular la "llave" de acceso al perfil que paga.
+2. **Usuarios y Reservas (1:N)**: Un usuario realiza múltiples reservas a lo largo del tiempo. Cada reserva guarda el `user_id` para gestionar el historial y los pagos de Mercado Pago.
+3. **Usuarios e Historial de Puntos (1:N)**: Cada transacción de puntos (ganancia o canje) genera un registro vinculado al usuario. El saldo en `users.puntos_acumulados` es la suma de este historial.
+4. **Cupones y Reservas (1:N)**: Un mismo código de cupón (ej: 'PROMO10') puede aplicarse a muchas reservas distintas, siempre que esté activo y dentro de su fecha de vigencia.
+5. **Reservas y Registros de Acceso (1:N)**: Un registro de acceso ALPR puede estar vinculado a una reserva (si el usuario reservó previamente) o ser nulo (si el usuario entró "al paso"). Un reserva puede tener múltiples accesos (entradas/salidas).
+6. **Aforo Global (Independiente)**: La tabla `parking_aforo` funciona como un contador maestro. Es actualizada por el Backend tras cada evento de entrada o salida exitosa detectado por las barreras.
+7. **Configuraciones (Independiente)**: La tabla `settings` almacena valores dinámicos como el precio por hora o multas.
 
 ---
 
-## 🔄 Diagrama de Flujo: Proceso de Acceso (ALPR)
+## Diagrama de Flujo: Proceso de Acceso (ALPR)
 
 ```mermaid
 graph TD
-    A[Vehículo llega a Barrera] --> B{ESP32 detecta auto?}
-    B -- Sí --> C[Activar Script ALPR]
-    C --> D[Capturar Frame IP Webcam]
-    D --> E[OCR: Reconocimiento de Patente]
-    E --> F[Enviar Patente a FastAPI]
-    F --> G{¿Tiene Reserva Activa?}
-    G -- Sí --> H[Autorizar Ingreso]
-    G -- No --> I{¿Hay Aforo Libre?}
-    I -- Sí --> H
-    I -- No --> J[LCD: Parking Lleno]
-    H --> K[MQTT: Enviar OPEN a ESP32]
-    K --> L[ESP32: Abrir Servomotor]
-    L --> M[Actualizar SQLite: Aforo - 1]
-    M --> N[Log: Registrar Acceso]
-    N --> O[Cerrar Barrera al pasar]
+  A[Vehículo llega a Barrera] --> B{ESP32 detecta auto?}
+  B -- Sí --> C[Activar Script ALPR]
+  C --> D[Capturar Frame IP Webcam]
+  D --> E[OCR: Reconocimiento de Patente]
+  E --> F[Enviar Patente a FastAPI]
+  F --> G{¿Tiene Reserva Activa?}
+  G -- Sí --> H[Autorizar Ingreso]
+  G -- No --> I{¿Hay Aforo Libre?}
+  I -- Sí --> H
+  I -- No --> J[LCD: Parking Lleno]
+  H --> K[MQTT: Enviar OPEN a ESP32]
+  K --> L[ESP32: Abrir Servomotor]
+  L --> M[Actualizar SQLite: Aforo - 1]
+  M --> N[Log: Registrar Acceso]
+  N --> O[Cerrar Barrera al pasar]
 ```
 
 ---
 
-## 📊 Tablas del Sistema
+## Tablas del Sistema
 
 ### 1. Usuarios (`users`)
 | Campo | Tipo | Descripción |

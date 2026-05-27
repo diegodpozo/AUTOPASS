@@ -1,41 +1,38 @@
 <section id="tab-promotions" class="tab-view" style="display: none;">
-    <div class="dashboard-card glass-premium">
-        <div class="card-header-premium">
-            <div class="header-left">
-                <div class="header-icon-box sm">
-                    <i class="fas fa-gift"></i>
+    <div class="content-wrapper">
+        <div class="card glass-premium mx-auto" style="max-width: 800px; overflow: hidden;">
+            <div class="card-header-premium">
+                <div class="header-info-group justify-center" style="flex: 1; margin-left: 140px;">
+                    <div class="header-icon"><i class="fas fa-gift"></i></div>
+                    <div class="header-text">
+                        <h3 style="color: var(--dorado);">PROMOCIONES</h3>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-dorado">Gestión de Promociones</h3>
-                    <p class="text-muted text-small">Creá y administrá beneficios para los usuarios de tu sede.</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary btn-sm" onclick="showCreatePromotionModal()">
+                        <i class="fas fa-plus"></i> NUEVA
+                    </button>
                 </div>
             </div>
-            <div class="header-actions">
-                <button class="btn btn-primary btn-sm" onclick="showCreatePromotionModal()">
-                    <i class="fas fa-plus"></i> NUEVA PROMOCIÓN
-                </button>
-            </div>
-        </div>
 
-        <div class="table-container mt-20">
-            <table class="table-premium">
-                <thead>
-                    <tr>
-                        <th>Beneficio</th>
-                        <th>Descripción</th>
-                        <th>Costo (Puntos)</th>
-                        <th>Sede</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="promotions-admin-table-body">
-                    <!-- Cargado dinámicamente -->
-                    <tr>
-                        <td colspan="6" class="text-center p-20">Cargando promociones...</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-container" style="padding: 0 10px 20px 10px;">
+                <table class="table-premium">
+                    <thead>
+                        <tr>
+                            <th>Beneficio</th>
+                            <th>Puntos</th>
+                            <th class="hidden-mobile">Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="promotions-admin-table-body">
+                        <!-- Cargado dinámicamente -->
+                        <tr>
+                            <td colspan="4" class="text-center p-20">Cargando promociones...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </section>

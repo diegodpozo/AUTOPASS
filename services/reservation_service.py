@@ -2,6 +2,7 @@ import datetime
 from sqlalchemy.orm import Session
 import models
 from services.billing_service import BillingService
+from services.email_service import EmailService
 from repositories.reservation_repository import ReservationRepository
 from repositories.user_repository import UserRepository
 from fastapi import HTTPException
@@ -61,6 +62,7 @@ class ReservationService:
         # Deducción de saldo y actualización de estado
         user.saldo -= res.monto_total
         res.estado_pago = "Pagado"
+        res.estado_reserva = "Activa"
         
         # Acreditación de puntos por lealtad
         puntos_ganados = BillingService.calculate_points(res.monto_total)
@@ -74,6 +76,19 @@ class ReservationService:
         ))
         
         db.commit()
+
+        # Enviar mail de confirmación
+        res_info = {
+            "id": res.id,
+            "sucursal": res.sucursal_nombre,
+            "direccion": res.sucursal_info,
+            "patente": res.patente,
+            "fecha_inicio": res.fecha_inicio,
+            "fecha_fin": res.fecha_fin,
+            "costo": res.monto_total
+        }
+        EmailService.send_reservation_confirmation(user.email, user.nombre, res_info)
+
         return {"status": "ok", "message": "Reserva abonada con éxito", "puntos_ganados": puntos_ganados}
 
     @staticmethod
