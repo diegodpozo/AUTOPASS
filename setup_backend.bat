@@ -36,7 +36,7 @@ echo [+] Actualizando PIP...
 python -m pip install --upgrade pip
 
 echo [+] Instalando dependencias desde requirements.txt...
-echo Nota: La instalacion de dependencias pesadas (OpenCV, EasyOCR, Torch) puede tardar unos minutos.
+echo Nota: La instalacion de dependencias (OpenCV, EasyOCR, Torch, QRCode) puede tardar unos minutos segun tu conexion.
 pip install -r requirements.txt
 
 :: 4. Configurar Variables de Entorno (.env)

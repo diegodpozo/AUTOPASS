@@ -10,8 +10,10 @@ pillow
 paho-mqtt
 requests
 opencv-python
+numpy
 easyocr
 torch
 torchvision
+qrcode
 httpx
 pytest
