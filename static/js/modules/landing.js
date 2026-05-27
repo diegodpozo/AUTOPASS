@@ -59,15 +59,24 @@ const DatosCarrusel = [
 
 export function InicializarCarrusel() {
     const Contenedor = document.getElementById('contenedorCarrusel');
+    const FraseActiva = document.getElementById('fraseActiva');
     if (!Contenedor || Contenedor.children.length > 0) return;
 
     DatosCarrusel.forEach((dato, i) => {
         const Item = document.createElement('div');
         Item.className = `item-carrusel ${i === 0 ? 'activo' : ''}`;
-        Item.style.backgroundImage = `url('${dato.imagen}')`;
-        Item.innerHTML = `<div class="leyenda-carrusel">${dato.leyenda}</div>`;
+        
+        const Bg = document.createElement('div');
+        Bg.className = 'carrusel-bg';
+        Bg.style.backgroundImage = `url('${dato.imagen}')`;
+        Item.appendChild(Bg);
+
         Contenedor.appendChild(Item);
     });
+
+    if (FraseActiva) {
+        FraseActiva.innerText = DatosCarrusel[0].leyenda;
+    }
 
     IniciarTemporizadorCarrusel();
 }
@@ -79,11 +88,20 @@ function IniciarTemporizadorCarrusel() {
 
 function RotarCarrusel(Direccion) {
     const Items = document.querySelectorAll('.item-carrusel');
+    const FraseActiva = document.getElementById('fraseActiva');
     if (Items.length === 0) return;
 
     Items[IndiceCarruselActual].classList.remove('activo');
     IndiceCarruselActual = (IndiceCarruselActual + Direccion + Items.length) % Items.length;
     Items[IndiceCarruselActual].classList.add('activo');
+
+    if (FraseActiva) {
+        FraseActiva.style.opacity = '0';
+        setTimeout(() => {
+            FraseActiva.innerText = DatosCarrusel[IndiceCarruselActual].leyenda;
+            FraseActiva.style.opacity = '1';
+        }, 500);
+    }
 }
 
 export function handleHeaderScroll() {
