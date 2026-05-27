@@ -413,18 +413,8 @@ nav#nav-menu {
     justify-content: flex-end;
     align-items: center;
     padding-bottom: 80px;
-}
-
-.carrusel-bg {
-    position: absolute;
-    top: -10px; /* Margen para evitar bordes blancos por el blur */
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
     background-size: cover;
     background-position: center;
-    filter: blur(6px) saturate(0.8);
-    z-index: 0;
 }
 
 .item-carrusel.activo {
@@ -438,38 +428,22 @@ nav#nav-menu {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.2); /* Fondo aun mas ligero para que no oscurezca */
+    background: rgba(0,0,0,0.5);
     z-index: 1;
-}
-
-.frases-carrusel-overlay {
-    position: absolute;
-    top: 150px; /* Arriba en la seccion */
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    z-index: 10;
-    pointer-events: none;
 }
 
 .leyenda-carrusel {
     position: relative;
     z-index: 2;
     font-family: 'Montserrat';
-    font-size: 1.9rem !important;
+    font-size: 2.2rem;
     font-weight: 800;
     color: var(--blanco);
     text-align: center;
     max-width: 80%;
     letter-spacing: 2px;
-    /* BORDE NEGRO PARA RESALTAR EL INTERIOR BLANCO */
-    text-shadow: 
-        -2px -2px 0 #000,  
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000,
-         0px 5px 15px rgba(0,0,0,0.8);
-    transition: all 0.5s ease-in-out;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.5);
+    animation: slideUp 1s ease-out;
 }
 
 /* SECCIÓN HERO */
@@ -517,42 +491,29 @@ nav#nav-menu {
     font-weight: 500;
 }
 
-.frase-parpadeante-hero {
-    margin-top: 30px;
-    font-family: 'Montserrat';
-    font-size: 1.8rem !important;
-    font-weight: 900;
-    color: var(--dorado);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    /* CONTORNO NEGRO PARA RESALTAR SOBRE EL FONDO */
-    text-shadow: 
-        -1.5px -1.5px 0 #000,  
-         1.5px -1.5px 0 #000,
-        -1.5px  1.5px 0 #000,
-         1.5px  1.5px 0 #000,
-         2px 4px 8px rgba(0,0,0,0.9);
-    animation: parpadeo-simple 2s infinite;
-}
-
-@keyframes parpadeo-simple {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.97); }
-}
-
-/* FRASE DESTACADA REEMPLAZADA POR DESCRIPCIÓN */
-.seccion-descripcion-sistema {
+/* FRASE DESTACADA */
+.seccion-frase-destacada {
     background: var(--negro);
-    padding: 60px 0;
+    padding: 40px 0;
     text-align: center;
     border-bottom: 1px solid var(--border-light);
+}
+
+.frase-parpadeante {
+    font-family: 'Montserrat';
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--dorado);
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    animation: parpadeo-dorado 2s infinite;
 }
 
 .descripcion-frase {
     color: var(--blanco);
     font-size: 1.1rem;
     max-width: 800px;
-    margin: 0 auto;
+    margin: 15px auto 0;
     line-height: 1.6;
     opacity: 0.9;
 }

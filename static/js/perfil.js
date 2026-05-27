@@ -44,7 +44,6 @@ window.toggleNuevoVinculo = ui.toggleNuevoVinculo;
 window.toggleHistorial = ui.toggleHistorial;
 window.openModal = ui.openModal;
 window.closeModal = ui.closeModal;
-window.togglePasswordVisibility = ui.togglePasswordVisibility;
 
 window.showSection = function(sectionId, el) {
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -140,6 +139,13 @@ window.togglePointsHistory = () => {
     if (!c) return;
     const isOpen = c.classList.toggle('open');
     if (a) a.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+};
+
+window.showQuickAddVehicle = () => {
+    const info = document.getElementById('quick-add-info');
+    const form = document.getElementById('quick-add-form-container');
+    if (info) info.style.display = 'none';
+    if (form) form.style.display = 'block';
 };
 
 window.hideQuickAddVehicle = () => {
