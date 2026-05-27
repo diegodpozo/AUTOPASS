@@ -1,4 +1,4 @@
-# AUTOPASS - Estacionamiento Inteligente (v7.0 Modular)
+# AUTOPASS
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
@@ -27,13 +27,10 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 
 ## Inicio Rápido
 
-1. Instalar dependencias: `pip install -r requirements.txt` (o usar `setup_backend.bat`)
-2. Inicializar DB: `python init_db.py`
-3. Arrancar Servidor: `run_server.bat`
-4. Ejecutar ALPR:
-  - Entrada: `run_alpr_entrada.bat`
-  - Salida: `run_alpr_salida.bat`
-  *(Nota: Editar los .bat para configurar la IP de tu celular con IP Webcam)*
+1. **Instalar dependencias:** `pip install -r requirements.txt`
+2. **Inicializar DB:** `python init_db.py`
+3. **Arrancar Servidor:** `run_server.bat`
+4. **Arrancar Cámaras:** `run_camera_entry.bat` y `run_camera_exit.bat` (en terminales separadas).
 
 ## Tecnologías
 
@@ -42,6 +39,3 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 - **Frontend:** Vanilla JS, CSS Moderno, Jinja2, Chart.js.
 - **IoT:** Paho-MQTT.
 - **IA:** OpenCV + EasyOCR (Deep Learning).
-
----
-
