@@ -44,6 +44,7 @@ window.toggleNuevoVinculo = ui.toggleNuevoVinculo;
 window.toggleHistorial = ui.toggleHistorial;
 window.openModal = ui.openModal;
 window.closeModal = ui.closeModal;
+window.togglePasswordVisibility = ui.togglePasswordVisibility;
 
 window.showSection = function(sectionId, el) {
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
