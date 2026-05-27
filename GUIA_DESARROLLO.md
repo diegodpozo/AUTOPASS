@@ -1,10 +1,10 @@
-# 🗺️ Guía de Desarrollo: Arquitectura Modular
+# Guía de Desarrollo: Arquitectura Modular
 
 Este documento sirve como mapa técnico tras la gran refactorización. Explica la ubicación de los recursos y las reglas de extensión del sistema.
 
 ---
 
-## 🏗️ Organización de Capas
+## Organización de Capas
 
 ### 1. `core/` (Infraestructura)
 Cualquier configuración que afecte a todo el sistema debe ir aquí.
@@ -20,7 +20,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 
 ---
 
-## 🛤️ Mapa de Rutas (Endpoints)
+## Mapa de Rutas (Endpoints)
 
 | Prefijo | Archivo | Responsabilidad |
 | :--- | :--- | :--- |
@@ -33,7 +33,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 
 ---
 
-## 🎨 Desarrollo de Frontend
+## Desarrollo de Frontend
 
 Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 - **Componentes HTML**: `templates/components/` (Navbar, Footers, Modales base).
@@ -41,18 +41,18 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 - **Scripts de Página**: `static/js/*.js`. Actúan como puentes, importando módulos y exponiendo funciones al ámbito global si es necesario.
 
 ### Reglas de JS:
-1.  **Usar ES6 Modules**: Usá `import` / `export`. No crees funciones globales directamente en los módulos.
-2.  **Modularización de API**: Toda petición a la red debe usar el módulo `api.js`.
-3.  **Type Module**: Siempre que añadas un script a un template, usá `<script type="module" src="...">`.
+1. **Usar ES6 Modules**: Usá `import` / `export`. No crees funciones globales directamente en los módulos.
+2. **Modularización de API**: Toda petición a la red debe usar el módulo `api.js`.
+3. **Type Module**: Siempre que añadas un script a un template, usá `<script type="module" src="...">`.
 
 ### Reglas de Estilo:
-1.  **Dorado AutoPass**: `#C5A059`.
-2.  **Glassmorphism**: Fondo con desenfoque y bordes semi-transparentes.
-3.  **Voseo**: "Registrate", "Cargá saldo", "Tus puntos".
+1. **Dorado AutoPass**: `#C5A059`.
+2. **Glassmorphism**: Fondo con desenfoque y bordes semi-transparentes.
+3. **Voseo**: "Registrate", "Cargá saldo", "Tus puntos".
 
 ---
 
-## 🧪 Pruebas (Tests)
+## Pruebas (Tests)
 Para correr las pruebas tras un cambio:
 ```bash
 .\venv\Scripts\python.exe test_user_flow.py

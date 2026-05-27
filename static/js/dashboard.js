@@ -19,8 +19,6 @@ window.toggleSidebar = ui.toggleSidebar;
 window.toggleManualOps = () => ui.toggleCollapsible('manual-ops-content', 'manual-ops-chevron', '400px');
 window.toggleOccupancy = () => ui.toggleCollapsible('occupancy-content', 'occupancy-chevron', '1000px');
 window.toggleUserList = () => ui.toggleCollapsible('user-list-collapsible', 'user-list-toggle-btn', '2000px');
-window.toggleRates = () => ui.toggleCollapsible('rates-content', 'rates-chevron', '600px');
-window.togglePlazas = () => ui.toggleCollapsible('plazas-content', 'plazas-chevron', '300px');
 
 // Global UI Modals
 window.openModal = baseUi.openModal;

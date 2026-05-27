@@ -15,6 +15,17 @@ class Settings:
     # Base de Datos
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./parking.db")
     
+    # SMTP (Mailtrap por defecto para desarrollo)
+    SMTP_SERVER: str = os.getenv("SMTP_SERVER", "sandbox.smtp.mailtrap.io")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 2525))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM: str = os.getenv("SMTP_FROM", "no-reply@autopass.com.ar")
+    
+    # Recuperación
+    RECOVERY_TOKEN_EXPIRE_MINUTES: int = 30
+    BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
+    
     # MQTT
     MQTT_BROKER: str = os.getenv("MQTT_BROKER", "broker.hivemq.com")
     MQTT_PORT: int = int(os.getenv("MQTT_PORT", 1883))

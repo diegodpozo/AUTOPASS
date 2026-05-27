@@ -97,15 +97,16 @@ export function closeMobileNav() {
 
 export function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
-    const body = document.body;
-    if (sidebar) {
-        sidebar.classList.toggle('collapsed');
-        body.classList.toggle('sidebar-collapsed');
+    const layout = document.querySelector('.layout-with-sidebar');
+    if (sidebar && layout) {
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        layout.classList.toggle('collapsed');
         
         const icon = sidebar.querySelector('.sidebar-toggle i');
         if (icon) {
-            icon.className = sidebar.classList.contains('collapsed') ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
+            icon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
         }
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
     }
 }
 

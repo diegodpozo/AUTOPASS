@@ -141,6 +141,13 @@ window.togglePointsHistory = () => {
     if (a) a.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
 };
 
+window.showQuickAddVehicle = () => {
+    const info = document.getElementById('quick-add-info');
+    const form = document.getElementById('quick-add-form-container');
+    if (info) info.style.display = 'none';
+    if (form) form.style.display = 'block';
+};
+
 window.hideQuickAddVehicle = () => {
     const info = document.getElementById('quick-add-info');
     const form = document.getElementById('quick-add-form-container');

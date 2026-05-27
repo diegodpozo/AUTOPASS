@@ -32,3 +32,7 @@ async def get_terminos(request: Request):
 @router.get("/privacidad", response_class=HTMLResponse)
 async def get_privacidad(request: Request):
     return templates.TemplateResponse(request=request, name="privacidad.html")
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def get_reset_password(request: Request):
+    return templates.TemplateResponse(request=request, name="reset_password.html")

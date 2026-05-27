@@ -1,99 +1,131 @@
-<!-- PESTAÑA: CONFIGURACIÓN -->
+<!-- PESTAÑA: CONFIGURACIÓN (Refactorizada v7.3.0) -->
 <div id="tab-settings" class="tab-view" style="display: none;">
-    <div class="settings-grid">
-        <!-- SECCIÓN: TARIFARIO -->
-        <div class="card">
-            <div class="card-header-premium" onclick="toggleRates()" style="cursor: pointer;" title="Configurar precios por modalidad">
-                <div class="header-info-group">
-                    <div class="header-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+    <div class="content-wrapper">
+        <div class="card glass-premium mx-auto" style="max-width: 800px; overflow: hidden;">
+            <div class="card-header-premium">
+                <div class="header-info-group justify-center">
+                    <div class="header-icon"><i class="fas fa-gears"></i></div>
                     <div class="header-text">
-                        <h3 style="color: var(--dorado);">TARIFAS</h3>
+                        <h3 style="color: var(--dorado);">CONFIGURACIÓN GENERAL</h3>
                     </div>
                 </div>
-                <i id="rates-chevron" class="fas fa-chevron-down" style="color: var(--dorado); transition: transform 0.3s;"></i>
             </div>
-            
-            <div id="rates-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out;">
-                <div class="settings-content">
-                    <div class="rates-grid" style="display: grid; grid-template-columns: repeat(2, auto); gap: 20px 60px; justify-content: center;">
-                        <div class="form-group-premium" style="width: 180px;">
-                            <label>VALOR POR HORA</label>
-                            <div class="input-with-icon" title="Precio base por hora de estacionamiento">
-                                <i class="fas fa-clock"></i>
-                                <input type="number" id="cfg-precio_hora" class="input-premium" placeholder="0">
-                            </div>
-                        </div>
-                        <div class="form-group-premium" style="width: 180px;">
-                            <label>VALOR POR DÍA</label>
-                            <div class="input-with-icon" title="Precio por estadía diaria (24hs)">
-                                <i class="fas fa-calendar-day"></i>
-                                <input type="number" id="cfg-precio_dia" class="input-premium" placeholder="0">
-                            </div>
-                        </div>
-                        <div class="form-group-premium" style="width: 180px;">
-                            <label>VALOR POR SEMANA</label>
-                            <div class="input-with-icon" title="Precio por abono semanal">
-                                <i class="fas fa-calendar-week"></i>
-                                <input type="number" id="cfg-precio_semana" class="input-premium" placeholder="0">
-                            </div>
-                        </div>
-                        <div class="form-group-premium" style="width: 180px;">
-                            <label>VALOR POR QUINCENA</label>
-                            <div class="input-with-icon" title="Precio por abono quincenal">
-                                <i class="fas fa-calendar-days"></i>
-                                <input type="number" id="cfg-precio_quincena" class="input-premium" placeholder="0">
-                            </div>
-                        </div>
-                        <div class="form-group-premium" style="width: 180px;">
-                            <label>VALOR MENSUAL</label>
-                            <div class="input-with-icon" title="Precio por abono mensual (cochera fija)">
-                                <i class="fas fa-calendar-check"></i>
-                                <input type="number" id="cfg-precio_mes" class="input-premium" placeholder="0">
-                            </div>
-                        </div>
-                    </div>
+
+            <div class="settings-content" style="padding: 35px; background: transparent;">
+                <div class="flex-row gap-30 items-start flex-col-mobile">
                     
-                    <div class="flex-row justify-center mt-30">
-                        <button class="btn btn-primary sm" onclick="saveAllRates()" style="padding: 10px 30px;" title="Guardar todos los cambios en el tarifario">
-                            ACTUALIZAR TARIFAS
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECCIÓN: PARÁMETROS DEL SISTEMA -->
-        <div class="grid-col" style="display: flex; flex-direction: column; gap: 25px; align-items: center;">
-            <div class="card" style="width: 250px;">
-                <div class="card-header-premium" onclick="togglePlazas()" style="cursor: pointer;" title="Configurar capacidad del predio">
-                    <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-gears"></i></div>
-                        <h3>PLAZAS</h3>
-                    </div>
-                    <i id="plazas-chevron" class="fas fa-chevron-down" style="color: var(--dorado); transition: transform 0.3s;"></i>
-                </div>
-                <div id="plazas-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out;">
-                    <div class="settings-content" style="display: flex; flex-direction: column; align-items: center; padding: 25px;">
-                        <div class="form-group-premium" style="width: 140px; margin-bottom: 0;">
-                            <label style="text-align: center;">CAPACIDAD</label>
-                            <div class="input-with-icon" title="Cantidad total de cocheras físicas en esta sede">
-                                <i class="fas fa-car"></i>
-                                <input type="number" id="cfg-capacidad_total" class="input-premium" placeholder="20" style="text-align: center; padding-left: 35px; padding-right: 15px;">
+                    <!-- PANEL IZQUIERDO: TARIFAS -->
+                    <div class="flex-1">
+                        <div class="flex-row justify-center items-center gap-10 mb-25">
+                            <div class="header-icon-box sm" style="width: 32px; height: 32px;">
+                                <i class="fas fa-hand-holding-dollar" style="font-size: 0.9rem;"></i>
+                            </div>
+                            <h4 class="uppercase fw-800 text-sm" style="letter-spacing: 1px; color: #eee;">Tarifas</h4>
+                        </div>
+                        
+                        <div class="rates-grid" style="display: grid; grid-template-columns: repeat(2, 160px); gap: 20px; justify-content: center;">
+                            <div class="form-group-premium">
+                                <label>HORA</label>
+                                <div class="input-with-icon" title="Precio base por hora de estacionamiento">
+                                    <i class="fas fa-clock"></i>
+                                    <input type="number" id="cfg-precio_hora" class="input-premium" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label>DÍA</label>
+                                <div class="input-with-icon" title="Precio por estadía diaria (24hs)">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <input type="number" id="cfg-precio_dia" class="input-premium" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label>SEMANAL</label>
+                                <div class="input-with-icon" title="Precio por abono semanal">
+                                    <i class="fas fa-calendar-week"></i>
+                                    <input type="number" id="cfg-precio_semana" class="input-premium" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label>QUINCENAL</label>
+                                <div class="input-with-icon" title="Precio por abono quincenal">
+                                    <i class="fas fa-calendar-days"></i>
+                                    <input type="number" id="cfg-precio_quincena" class="input-premium" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label>MENSUAL</label>
+                                <div class="input-with-icon" title="Precio por abono mensual fijo">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <input type="number" id="cfg-precio_mes" class="input-premium" placeholder="0">
+                                </div>
                             </div>
                         </div>
-                        <button class="btn btn-primary sm mt-20" onclick="saveSystemParam('capacidad_total')" style="padding: 10px 25px;" title="Actualizar capacidad del estacionamiento">
-                            ACTUALIZAR
-                        </button>
+                        
+                        <div class="mt-30 flex-row justify-center">
+                            <button class="btn btn-primary" onclick="saveAllRates()" style="padding: 12px 30px; width: auto; min-width: 200px;" title="Guardar todos los cambios en el tarifario">
+                                <i class="fas fa-save mr-10"></i> ACTUALIZAR TARIFAS
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- ZONA DE PELIGRO -->
-            <div class="card danger-zone-card" style="width: 250px; border: none; background: transparent;">
-                <div class="settings-content" style="padding: 0; display: flex; justify-content: center;">
-                    <button class="btn btn-outline btn-danger sm" onclick="resetSys()" style="width: 100%; padding: 12px !important;" title="¡ATENCIÓN! Resetea el sistema a valores iniciales">
-                        <i class="fas fa-trash-can"></i> REINICIAR SISTEMA
-                    </button>
+                    <!-- LÍNEA DIVISORIA (Escritorio) -->
+                    <div class="hidden-mobile" style="width: 1px; align-self: stretch; background: linear-gradient(180deg, transparent 0%, rgba(197,160,89,0.2) 50%, transparent 100%);"></div>
+
+                    <!-- PANEL DERECHO: PARÁMETROS Y CONTROL -->
+                    <div style="width: 360px;" class="flex-col gap-25">
+                        
+                        <!-- SECCIÓN: CAPACIDAD -->
+                        <div class="p-20">
+                            <div class="flex-row justify-center items-center gap-10 mb-20">
+                                <div class="header-icon-box sm" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-car" style="font-size: 0.9rem;"></i>
+                                </div>
+                                <h4 class="uppercase fw-800 text-sm" style="letter-spacing: 1px; color: #eee;">Capacidad</h4>
+                            </div>
+                            
+                            <div class="flex-col items-center">
+                                <div class="form-group-premium" style="width: 110px; margin-bottom: 0;">
+                                    <label style="text-align: center; display: block;">PLAZAS</label>
+                                    <div class="input-with-icon" title="Cantidad total de cocheras físicas en esta sede">
+                                        <i class="fas fa-hashtag"></i>
+                                        <input type="number" id="cfg-capacidad_total" class="input-premium" placeholder="--" style="text-align: center; padding-left: 35px; padding-right: 10px;">
+                                    </div>
+                                </div>
+                                
+                                <button class="btn btn-primary sm mt-20" onclick="saveSystemParam('capacidad_total')" style="padding: 10px 25px; width: auto; min-width: 160px;">
+                                    ACTUALIZAR
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- LÍNEA DIVISORIA HORIZONTAL -->
+                        <div style="height: 1px; width: 80%; margin: 0 auto; background: linear-gradient(90deg, transparent 0%, rgba(197,160,89,0.2) 50%, transparent 100%);"></div>
+
+                        <!-- SECCIÓN: UTILIDADES -->
+                        <div class="p-20">
+                            <div class="flex-row justify-center items-center gap-10 mb-20">
+                                <div class="header-icon-box sm" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-file-export" style="font-size: 0.9rem;"></i>
+                                </div>
+                                <h4 class="uppercase fw-800 text-sm" style="letter-spacing: 1px; color: #eee;">Auditoría</h4>
+                            </div>
+                            
+                            <div class="flex-col items-center">
+                                <p class="text-xs text-muted mb-15 text-center" style="max-width: 240px;">Exportá el historial completo de transacciones en formato CSV.</p>
+                                <button class="btn btn-outline sm" onclick="exportFinanceData()" style="border-color: rgba(255,255,255,0.1); width: auto; min-width: 160px;">
+                                    <i class="fas fa-download mr-10"></i> EXPORTAR
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ZONA DE PELIGRO -->
+                        <div class="mt-10 flex-row justify-center">
+                            <button class="btn btn-outline btn-danger sm" onclick="resetSys()" style="opacity: 0.6; padding: 10px 20px !important; border-style: dashed; width: auto; min-width: 160px;" title="Elimina logs y resetea ocupación">
+                                <i class="fas fa-trash-can mr-8"></i> REINICIAR
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

@@ -257,16 +257,23 @@ def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: 
 @router.get("/admin/settings")
 def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """Retorna las configuraciones vigentes. Los locales solo ven las de su sede."""
+    # 1. Obtener configuraciones de la tabla Settings
     q = db.query(models.Settings)
     if admin.rol != "admin":
         q = q.filter(models.Settings.sucursal == admin.sucursal)
     else:
-        # El admin global ve las globales (sucursal=None) por defecto, 
-        # o podríamos mostrarle todas. Por ahora, las globales.
         q = q.filter(models.Settings.sucursal == None)
         
     all_settings = q.all()
-    return {s.clave: s.valor for s in all_settings}
+    config_dict = {s.clave: s.valor for s in all_settings}
+
+    # 2. Obtener capacidad de la tabla ParkingAforo
+    sucursal = admin.sucursal if admin.rol != "admin" else None
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+    if aforo:
+        config_dict["capacidad_total"] = aforo.capacidad_total
+    
+    return config_dict
 
 @router.post("/settings/prices")
 def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):

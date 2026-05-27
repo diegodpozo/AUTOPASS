@@ -158,3 +158,36 @@ export async function handleRegister(e) {
         btn.disabled = false;
     }
 }
+
+export async function handleRecovery(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const email = document.getElementById('recovery-email').value;
+    const errorMsg = document.getElementById('recovery-error');
+    const successMsg = document.getElementById('recovery-success');
+    const originalText = btn.innerHTML;
+
+    errorMsg.style.display = 'none';
+    successMsg.style.display = 'none';
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Enviando...';
+    btn.disabled = true;
+
+    try {
+        const res = await api.post('/auth/forgot-password', { email });
+        
+        if (res && res.ok) {
+            successMsg.innerText = res.data.message;
+            successMsg.style.display = 'block';
+            e.target.reset();
+        } else {
+            errorMsg.innerText = res ? (res.error || 'Error al solicitar recuperación') : 'Error de conexión';
+            errorMsg.style.display = 'block';
+        }
+    } catch (err) {
+        errorMsg.innerText = 'Error inesperado. Intentá de nuevo más tarde.';
+        errorMsg.style.display = 'block';
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
