@@ -10,9 +10,37 @@ from services.email_service import EmailService
 router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
 
 @router.post("/register")
-# ... (rest of register)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-# ... (inside register)
+    """Registra un nuevo usuario en el sistema."""
+    # Verificar si el email ya existe
+    existing_user = db.query(models.User).filter(models.User.email == user.email.lower().strip()).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="El correo electrónico ya se encuentra registrado.")
+    
+    # Verificar si el DNI ya existe
+    existing_dni = db.query(models.User).filter(models.User.dni == user.dni).first()
+    if existing_dni:
+        raise HTTPException(status_code=400, detail="El DNI ya se encuentra registrado.")
+        
+    # Crear el nuevo usuario
+    new_user = models.User(
+        nombre=user.nombre,
+        apellido=user.apellido,
+        dni=user.dni,
+        telefono=user.telefono,
+        email=user.email.lower().strip(),
+        password_hash=get_password_hash(user.password),
+        rol="user"
+    )
+    
+    db.add(new_user)
+    try:
+        db.commit()
+        db.refresh(new_user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error interno al guardar el usuario.")
+    
     return {"status": "ok", "message": "Usuario registrado exitosamente"}
 
 @router.post("/forgot-password")

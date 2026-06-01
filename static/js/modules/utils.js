@@ -34,16 +34,32 @@ export function formatDate(isoStr) {
 }
 
 /**
- * Muestra una notificación temporal (Toast).
+ * Muestra una notificación persistente (Toast).
+ * Se cierra al hacer click en cualquier parte o presionar cualquier tecla.
  */
 export function showToast(msg, type = 'default') {
     const container = document.getElementById('toast-container'); 
     if (!container) return;
+    
     const t = document.createElement('div'); 
     t.className = `toast ${type}`; 
     t.innerText = msg;
     container.appendChild(t); 
-    setTimeout(() => t.remove(), 3000);
+
+    // Función unificada para remover el toast y sus listeners
+    const removeToast = () => {
+        if (t.parentNode) {
+            t.remove();
+            document.removeEventListener('click', removeToast);
+            document.removeEventListener('keydown', removeToast);
+        }
+    };
+
+    // Agregar listeners globales con un pequeño delay para evitar que el click actual lo cierre
+    setTimeout(() => {
+        document.addEventListener('click', removeToast);
+        document.addEventListener('keydown', removeToast);
+    }, 100);
 }
 
 /**
