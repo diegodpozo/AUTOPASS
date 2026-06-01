@@ -101,7 +101,7 @@ window.changePassword = async function(e) {
     const newPass = document.getElementById('new-password').value;
     const confirm = document.getElementById('confirm-new-password').value;
     
-    if (newPass !== confirm) return showToast('No coinciden');
+    if (newPass !== confirm) return showToast('Las contraseñas no coinciden', 'error');
 
     btn.disabled = true;
     if (await prof.changePassword(current, newPass)) {
