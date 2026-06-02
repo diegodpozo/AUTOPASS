@@ -12,13 +12,13 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `core/database.py`: Gestión de persistencia y sesiones.
     *   `core/mqtt.py`: Orquestador de comunicación con barreras físicas.
 
-2.  **Backend Multi-Sede (FastAPI - `routes/`)**: 
+2. **Backend Multi-Sucursal (FastAPI - `routes/`)**: 
     *   `routes/admin.py`: Gestión de usuarios y reservas con **aislamiento por sucursal**.
-    *   `routes/reports.py`: Analítica financiera segmentada por sede.
+    *   `routes/reports.py`: Analítica financiera segmentada por sucursal.
     *   `routes/views.py`: Router dedicado exclusivamente para el frontend Jinja2.
 
 3.  **Lógica de Negocio (`services/`)**:
-    *   `services/billing_service.py`: Lógica de cobro inteligente y tarifas por sede.
+    *   `services/billing_service.py`: Lógica de cobro inteligente y tarifas por sucursal.
     *   `services/worker_service.py`: Procesos de fondo para limpieza de reservas y tareas programadas.
 
 4.  **Gestión de Accesos ALPR**:

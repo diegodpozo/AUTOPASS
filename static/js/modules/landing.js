@@ -30,21 +30,34 @@ export function initMap() {
     L.marker(hqCoords, { icon: goldIcon }).addTo(mapInstance)
         .bindPopup('<b>AUTOPASS HQ</b><br>Av. del Libertador 1200, CABA').openPopup();
 
-    const points = [
-        { name: "AUTOPASS Ituzaingó", coords: [-34.6585, -58.6685], desc: "Estación Ituzaingó" },
-        { name: "AUTOPASS Castelar", coords: [-34.6485, -58.6350], desc: "Ctro. Comercial Castelar" },
-        { name: "AUTOPASS Morón", coords: [-34.6508, -58.6228], desc: "Área Central Morón" }
-    ];
-
-    points.forEach(p => {
-        const branchIcon = L.divIcon({
-            className: 'branch-icon',
-            html: `<div style="background-color: #C5A059; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px #C5A059;"></div>`,
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
-        });
-        L.marker(p.coords, { icon: branchIcon }).addTo(mapInstance).bindPopup(`<b>${p.name}</b><br>${p.desc}`);
-    });
+    // Cargar sucursales desde la API
+    fetch('/v1/parking/branches')
+        .then(res => res.json())
+        .then(branches => {
+            branches.forEach(p => {
+                if (!p.latitude || !p.longitude) return;
+                
+                const branchIcon = L.divIcon({
+                    className: 'branch-icon',
+                    html: `<div style="background-color: #C5A059; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px #C5A059;"></div>`,
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                });
+                
+                const popupContent = `
+                    <div style="text-align: center;">
+                        <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 40px; height: 40px; border-radius: 50%; margin-bottom: 5px;">
+                        <br><b>${p.nombre}</b><br>${p.direccion}<br>
+                        <small>${p.is_24h ? 'Abierto 24hs' : p.horario}</small>
+                    </div>
+                `;
+                
+                L.marker([p.latitude, p.longitude], { icon: branchIcon })
+                    .addTo(mapInstance)
+                    .bindPopup(popupContent);
+            });
+        })
+        .catch(err => console.error('Error al cargar sucursales para el mapa:', err));
 }
 
 const DatosCarrusel = [

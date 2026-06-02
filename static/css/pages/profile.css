@@ -1338,6 +1338,30 @@
     box-shadow: 0 20px 45px rgba(197, 160, 89, 0.15);
 }
 
+.branch-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(197, 160, 89, 0.1);
+    color: var(--dorado);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    border: 1px solid rgba(197, 160, 89, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+}
+
+.branch-badge.global {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+    border-color: rgba(46, 204, 113, 0.2);
+}
+
 .promo-header {
     padding: 25px 25px 15px;
     display: flex;

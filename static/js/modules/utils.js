@@ -34,32 +34,45 @@ export function formatDate(isoStr) {
 }
 
 /**
- * Muestra una notificación persistente (Toast).
- * Se cierra al hacer click en cualquier parte o presionar cualquier tecla.
+ * Muestra una notificación premium (Toast).
+ * Tipos: 'success', 'error', 'info', 'default'
  */
 export function showToast(msg, type = 'default') {
-    const container = document.getElementById('toast-container'); 
+    const container = document.getElementById('toast-container');
     if (!container) return;
-    
-    const t = document.createElement('div'); 
-    t.className = `toast ${type}`; 
-    t.innerText = msg;
-    container.appendChild(t); 
 
-    // Función unificada para remover el toast y sus listeners
-    const removeToast = () => {
-        if (t.parentNode) {
-            t.remove();
-            document.removeEventListener('click', removeToast);
-            document.removeEventListener('keydown', removeToast);
-        }
+    // Crear elemento
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+
+    // Asignar ícono según tipo
+    let icon = 'fa-bell';
+    if (type === 'success') icon = 'fa-circle-check';
+    else if (type === 'error') icon = 'fa-circle-exclamation';
+    else if (type === 'info') icon = 'fa-circle-info';
+
+    t.innerHTML = `
+        <i class="fas ${icon} toast-icon"></i>
+        <span>${msg}</span>
+    `;
+
+    container.appendChild(t);
+
+    // Función para cerrar con animación
+    const closeToast = () => {
+        if (t.classList.contains('hiding')) return;
+        t.classList.add('hiding');
+        setTimeout(() => { if (t.parentNode) t.remove(); }, 400);
     };
 
-    // Agregar listeners globales con un pequeño delay para evitar que el click actual lo cierre
-    setTimeout(() => {
-        document.addEventListener('click', removeToast);
-        document.addEventListener('keydown', removeToast);
-    }, 100);
+    // Auto-cierre tras 5 segundos
+    const autoClose = setTimeout(closeToast, 5000);
+
+    // Cierre manual al hacer click
+    t.onclick = () => {
+        clearTimeout(autoClose);
+        closeToast();
+    };
 }
 
 /**

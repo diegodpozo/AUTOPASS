@@ -25,7 +25,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 | Prefijo | Archivo | Responsabilidad |
 | :--- | :--- | :--- |
 | `/v1/auth` | `routes/auth.py` | Registro, Login, Gestión de Tokens. |
-| `/v1/admin` | `routes/admin.py` | Gestión RBAC, Usuarios de sede, Reservas manuales. |
+| `/v1/admin` | `routes/admin.py` | Gestión RBAC, Usuarios de sucursal, Reservas manuales. |
 | `/v1/user` | `routes/user.py` | Perfil, Vehículos, Carga de saldo, Reservas de cliente. |
 | `/v1/reports`| `routes/reports.py` | Resúmenes financieros y logs de acceso. |
 | `/v1/system` | `routes/system.py` | Salud del sistema, Video feeds, Reset. |
@@ -52,6 +52,22 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 
 ---
 
+## Convenciones Multi-Sucursal (Aislamiento)
+1. **Nombres Completos**: Al interactuar con la DB, usá siempre el nombre completo de la sucursal (ej: "AUTOPASS Castelar") para asegurar coincidencias exactas.
+2. **Geolocalización**: Toda nueva sucursal debe incluir coordenadas (Lat/Lng). Se recomienda usar el botón "BUSCAR" en el modal para autocompletar mediante Nominatim.
+3. **Fallback de Configuración**: Al buscar una configuración, si no existe para la sucursal actual, buscá siempre el valor global (`sucursal == None`) antes de fallar.
+3. **Seguridad en Rutas**: Usá siempre las dependencias `get_local_manager` o `get_operational_user` para asegurar que el usuario solo acceda a datos de su sucursal autorizada.
+4. **Contexto UI**: No hardcodees cargos; usá la lógica de `dashboard.js` que construye el cargo + sucursal dinámicamente desde la sesión.
+
+---
+
+## Estándares del Motor ALPR
+1. **Pre-procesamiento**: Toda imagen debe pasar por la cadena de filtros OpenCV antes del OCR.
+2. **Consenso**: Nunca valides una patente con un solo frame; requiere votación mayoritaria en ventana.
+3. **ROI**: Ajustá la región de interés si cambia la posición física de la cámara.
+
+---
+
 ## Pruebas (Tests)
 Para correr las pruebas tras un cambio:
 ```bash
@@ -59,3 +75,14 @@ Para correr las pruebas tras un cambio:
 .\venv\Scripts\python.exe test_multi_branch_rbac.py
 ```
 *Asegurate de que `init_db.py` se haya ejecutado al menos una vez.*
+
+---
+
+## Reglas de Oro para Desarrolladores
+1. **No queries en Rutas:** No hagas consultas complejas de SQLAlchemy en `routes/`. Mové esa lógica a un `Service` o `Repository`.
+2. **Validación en Schemas:** Si un campo es obligatorio o tiene un formato especial, validalo en el `Schema` usando `@field_validator`.
+3. **Configuración Única:** Si añadís una variable al `.env`, registrala en `core/config.py`.
+4. **Voseo Argentino:** Todo texto que vea el usuario final debe usar voseo (Ej: "Cargá tu saldo").
+5. **Gestión de Assets:** Al implementar carga de archivos (logos, capturas), usar siempre `static/uploads/` con subcarpetas temáticas y nombres basados en UUID para evitar sobrescrituras.
+6. **UI Premium Consistente:** Usar las clases `row-premium` para filas de tabla, `actions-reveal` para botones hover y `switch-premium` para estados binarios.
+7. **Mayúsculas en DB:** Las patentes siempre se normalizan a mayúsculas antes de guardarse.

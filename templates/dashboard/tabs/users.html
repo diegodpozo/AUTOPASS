@@ -24,7 +24,7 @@
             </div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon"><i class="fas fa-user-graduate"></i></div>
+            <div class="kpi-icon"><i class="fas fa-user"></i></div>
             <div class="kpi-data">
                 <span class="label">Clientes</span>
                 <span class="value" id="stat-customer-users">0</span>
@@ -33,14 +33,14 @@
     </div>
 
     <div class="card">
-        <div class="card-header-premium" onclick="toggleUserList()" style="cursor: pointer;">
+        <div class="card-header-premium">
             <div class="header-info-group">
                 <div class="header-icon"><i class="fas fa-address-book"></i></div>
                 <div class="header-text">
                     <h3>LISTA DE USUARIOS</h3>
                 </div>
             </div>
-            <div class="header-actions" onclick="event.stopPropagation()">
+            <div class="header-actions">
                 <div class="search-box-premium" title="Buscar por nombre, apellido, DNI o email">
                     <i class="fas fa-search"></i>
                     <input type="text" id="user-search" placeholder="Nombre, DNI o Email..." onkeyup="filterUserList()">
@@ -51,19 +51,16 @@
                         <option value="">TODOS</option>
                         <option value="user">CLIENTES</option>
                         <option value="staff">EMPLEADOS</option>
-                        <option value="local_admin">ADMIN SEDE</option>
+                        <option value="local_admin">ADMIN SUCURSAL</option>
                         <option value="admin">ADMIN GENERAL</option>
                     </select>
                 </div>
-                <button class="btn-premium sm btn-new-user-mobile-fix" onclick="openModal('modal-create-user')" title="Dar de alta un nuevo usuario o empleado">
+                <button class="btn-premium sm btn-new-user-mobile-fix" onclick="showCreateUserModal()" title="Dar de alta un nuevo usuario o empleado">
                     <i class="fas fa-plus"></i> NUEVO USUARIO
-                </button>
-                <button class="btn-icon-premium sm" id="user-list-toggle-btn" onclick="toggleUserList()" style="transform: rotate(180deg);" title="Expandir/Contraer lista de usuarios">
-                    <i class="fas fa-chevron-down"></i>
                 </button>
             </div>
         </div>
-        <div id="user-list-collapsible" class="collapsible-content expanded" style="max-height: 2000px; opacity: 1;">
+        <div class="card-body-premium">
             <div class="table-container">
                 <table>
                     <thead>
@@ -145,7 +142,7 @@
                         <select id="admin-user-rol" class="select-premium" style="width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px 15px 15px 45px; border-radius: 12px; outline: none; -webkit-appearance: none; cursor: pointer;" onchange="toggleBranchSelection()">
                             <option value="user" style="background: #111;">Cliente</option>
                             <option value="staff" style="background: #111;">Empleado</option>
-                            <option value="local_admin" style="background: #111;">Administrador de Sede</option>
+                            <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
                             <option value="admin" style="background: #111;">Administrador General</option>
                         </select>
                         <i class="fas fa-chevron-down" style="position: absolute; right: 15px; left: auto; color: #666; font-size: 0.7rem; pointer-events: none;"></i>

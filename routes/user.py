@@ -109,15 +109,32 @@ def get_user_payment_history(db: Session = Depends(get_db), current_user: models
     ).order_by(models.AccessLog.id.desc()).all()
 
 @router.get("/rates")
-def get_current_rates(db: Session = Depends(get_db)):
-    """Retorna las tarifas vigentes para que el usuario pueda pre-calcular su estadía."""
+def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
+    """Retorna las tarifas vigentes. Si hay sede, prioriza sus precios y completa con globales."""
     keys = ["precio_hora", "precio_dia", "precio_semana", "precio_quincena", "precio_mes"]
-    settings = db.query(models.Settings).filter(models.Settings.clave.in_(keys)).all()
-    res = {s.clave.replace("precio_", ""): s.valor for s in settings}
-    # Asegurar que si faltan, tengan valores por defecto coherentes
+    
+    # 1. Obtener tarifas globales (siempre sirven como base)
+    global_settings = db.query(models.Settings).filter(
+        models.Settings.clave.in_(keys),
+        models.Settings.sucursal == None
+    ).all()
+    
+    res = {s.clave.replace("precio_", ""): s.valor for s in global_settings}
+    
+    # 2. Si se especificó sucursal, sobreescribir con las de la sede
+    if sucursal:
+        branch_settings = db.query(models.Settings).filter(
+            models.Settings.clave.in_(keys),
+            models.Settings.sucursal == sucursal
+        ).all()
+        for s in branch_settings:
+            res[s.clave.replace("precio_", "")] = s.valor
+            
+    # 3. Asegurar valores mínimos si la DB está vacía
     defaults = {"hora": 1500, "dia": 15000, "semana": 70000, "quincena": 120000, "mes": 200000}
     for k, v in defaults.items():
         if k not in res: res[k] = v
+        
     return res
 
 # --- GESTIÓN DE RESERVAS ---
@@ -135,7 +152,8 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente, models.Vehicle.user_id == current_user.id).first()
     if not vehicle: raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
     
-    rate = BillingService.get_rate(db, res.tipo_estadia)
+    # Usar el nombre completo de la sede para buscar la tarifa
+    rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre)
     start = datetime.datetime.fromisoformat(res.fecha_inicio)
     
     # REGLA: Mínimo 2 horas de anticipación
@@ -211,7 +229,7 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
     if data.sucursal_nombre: res.sucursal_nombre = data.sucursal_nombre
 
     # Recalcular monto
-    rate = BillingService.get_rate(db, res.tipo_estadia)
+    rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre)
     duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
     if duration_hours <= 0: raise HTTPException(status_code=400, detail="Fechas inválidas")
 

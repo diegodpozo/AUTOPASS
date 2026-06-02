@@ -31,35 +31,86 @@ nav a {
     transition: color 0.3s;
 }
 
-/* --- TOASTS --- */
-#toast-container { 
-    position: fixed; 
-    top: 50%; 
-    right: 30px; 
-    transform: translateY(-50%); 
-    z-index: 9999; 
+/* --- TOASTS PREMIUM (Glassmorphism + Top-Right) --- */
+#toast-container {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    z-index: 10000;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    align-items: flex-end;
+    gap: 15px;
+    pointer-events: none; /* No bloquea clicks fuera de los toasts */
 }
-.toast { 
-    background: var(--gris); 
-    padding: 15px 25px; 
-    border-radius: 12px; 
-    border-left: 4px solid var(--dorado); 
-    color: #fff; 
-    font-weight: 600; 
-    animation: slideIn 0.3s; 
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    max-width: 350px;
-}
-.toast.error { border-left: 8px solid #483D8B; }
-.toast.success { border-left-color: #10b981; }
 
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.toast {
+    pointer-events: auto; /* Reactiva clicks para cerrar */
+    background: rgba(15, 15, 15, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 18px 25px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    min-width: 320px;
+    max-width: 450px;
+    cursor: pointer;
+    overflow: hidden;
+    animation: toast-entrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.toast:hover {
+    transform: translateY(-3px);
+    border-color: rgba(197, 160, 89, 0.3);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+}
+
+/* Tipos de Toasts (Sin bordes laterales) */
+.toast-icon {
+    font-size: 1.2rem;
+}
+
+.toast.success .toast-icon { color: #10b981; }
+.toast.error .toast-icon { color: #ef4444; }
+.toast.info .toast-icon { color: #3b82f6; }
+.toast.default .toast-icon { color: var(--dorado); }
+
+@keyframes toast-entrance {
+    0% { transform: translateX(120%) scale(0.8); opacity: 0; }
+    100% { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+@keyframes toast-exit {
+    0% { transform: translateX(0) scale(1); opacity: 1; }
+    100% { transform: translateX(120%) scale(0.8); opacity: 0; }
+}
+
+.toast.hiding {
+    animation: toast-exit 0.4s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+}
+
+/* RESPONSIVO */
+@media (max-width: 480px) {
+    #toast-container {
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        width: auto;
+    }
+    .toast {
+        min-width: 0;
+        width: 100%;
+    }
+}
 
 /* DISEÑO RESPONSIVO */
 @media (max-width: 480px) {

@@ -78,6 +78,7 @@ export async function handleLogin(e) {
         localStorage.setItem('rol', data.rol);
         localStorage.setItem('nombre', toTitle(data.nombre));
         localStorage.setItem('apellido', toTitle(data.apellido));
+        localStorage.setItem('sucursal', data.sucursal || '');
         
         const isStaffOrAdmin = ['admin', 'local_admin', 'staff'].includes(data.rol);
         window.location.href = isStaffOrAdmin ? '/dashboard' : '/perfil';

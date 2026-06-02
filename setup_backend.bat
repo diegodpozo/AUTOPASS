@@ -1,7 +1,7 @@
 @echo off
-title Setup Backend - AUTOPASS Modular Gold v7.0
+title Setup Backend - AUTOPASS Modular Gold v7.7.0
 echo ======================================================
-echo   INSTALACION DEL ENTORNO MODULAR (AUTOPASS v7.0)
+echo   INSTALACION DEL ENTORNO MODULAR (AUTOPASS v7.7.0)
 echo ======================================================
 echo.
 
@@ -56,7 +56,15 @@ if not exist .env (
     echo MQTT_TOPIC_ENTRADA=parking/barrera/entrada/control >> .env
     echo MQTT_TOPIC_SALIDA=parking/barrera/salida/control >> .env
     echo. >> .env
-    echo # --- DIRECTORIOS --- >> .env
+    echo # --- CONFIGURACION EMAIL (SMTP) --- >> .env
+    echo SMTP_SERVER=sandbox.smtp.mailtrap.io >> .env
+    echo SMTP_PORT=2525 >> .env
+    echo SMTP_USER=tu_usuario_mailtrap >> .env
+    echo SMTP_PASSWORD=tu_password_mailtrap >> .env
+    echo SMTP_FROM=no-reply@autopass.com.ar >> .env
+    echo. >> .env
+    echo # --- GENERAL --- >> .env
+    echo BASE_URL=http://localhost:8000 >> .env
     echo IMAGE_DIR=captured_images >> .env
     echo [OK] Archivo .env creado con valores por defecto.
 ) else (
@@ -70,14 +78,15 @@ python init_db.py
 
 echo.
 echo ======================================================
-echo   INSTALACION COMPLETADA CON EXITO (v7.0 GOLD)
+echo   INSTALACION COMPLETADA CON EXITO (v7.7.0 GOLD)
 echo ======================================================
 echo.
-echo Arquitectura Limpia Modular (v7.0):
+echo Arquitectura Limpia Modular (v7.7.0):
 echo - Core: Configuracion y Seguridad Centralizada
 echo - Domain Layers: Modelos y Esquemas divididos (User/Parking/Res)
 echo - Business Logic: Capa de Servicios agnostica (services/)
 echo - Modular Frontend: Plantillas Jinja2 por pestañas y componentes
+echo - Multi-Sucursal: Soporte nativo para Puntos AutoPass geolocalizados
 echo.
 echo Credenciales de Admin por defecto:
 echo Email: admin@autopass.com

@@ -9,6 +9,73 @@ import { showToast, showConfirm } from './utils.js';
 let userPage = 1;
 const userPageSize = 10;
 let allUsersData = [];
+let allBranchesData = []; // Cache local para sucursales
+let branchMap = null;
+let branchMarker = null;
+
+export function initBranchMap() {
+    const mapEl = document.getElementById('branch-map-picker');
+    if (!mapEl || branchMap || !window.L) return;
+
+    // Coordenadas iniciales (Buenos Aires / Morón)
+    const initialCoords = [-34.6508, -58.6228];
+    branchMap = L.map('branch-map-picker').setView(initialCoords, 13);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(branchMap);
+
+    branchMap.on('click', function(e) {
+        updateBranchMarker(e.latlng.lat, e.latlng.lng);
+    });
+}
+
+function updateBranchMarker(lat, lng) {
+    if (!branchMap) return;
+
+    if (branchMarker) {
+        branchMarker.setLatLng([lat, lng]);
+    } else {
+        const goldIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #C5A059; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #C5A059;"></div>`,
+            iconSize: [15, 15],
+            iconAnchor: [7, 7]
+        });
+        branchMarker = L.marker([lat, lng], { icon: goldIcon }).addTo(branchMap);
+    }
+
+    document.getElementById('branch-latitude').value = lat.toFixed(6);
+    document.getElementById('branch-longitude').value = lng.toFixed(6);
+}
+
+export async function searchAddress() {
+    const address = document.getElementById('branch-direccion').value;
+    if (!address) return showToast('Ingresá una dirección para buscar');
+
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+
+            initBranchMap(); // Asegurar que el mapa existe
+            updateBranchMarker(lat, lng);
+            branchMap.setView([lat, lng], 16);
+            showToast('Ubicación encontrada');
+        } else {
+            showToast('No se encontró la dirección. Intentá ser más específico.');
+        }
+    } catch (err) {
+        console.error('Error en geocoding:', err);
+        showToast('Error al buscar la dirección');
+    }
+}
 
 export async function loadUsers() {
     try {
@@ -81,6 +148,15 @@ export function renderUserTable(filteredData = null) {
             const puntosDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<div class="points-badge-sm mx-auto" style="display:inline-flex;"><i class="fas fa-star"></i> ${u.puntos_acumulados || 0}</div>`;
             const saldoDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<span class="text-success">$${(u.saldo || 0).toLocaleString()}</span>`;
 
+            // Personalización de etiquetas de rol
+            let roleLabel = (u.rol || 'user').toUpperCase();
+            const sedeLimpia = (u.sucursal || '').replace('AUTOPASS ', '').trim();
+
+            if (u.rol === 'admin') roleLabel = 'Admin Global';
+            else if (u.rol === 'local_admin') roleLabel = `Admin ${sedeLimpia || 'Sucursal'}`;
+            else if (u.rol === 'staff') roleLabel = `Empleado ${sedeLimpia || 'Sucursal'}`;
+            else if (u.rol === 'user') roleLabel = 'Cliente';
+
             return `
             <tr>
                 <td data-label="Usuario">
@@ -96,7 +172,7 @@ export function renderUserTable(filteredData = null) {
                         <span class="text-center"><i class="fas fa-envelope"></i> ${u.email || '---'}</span>
                     </div>
                 </td>
-                <td data-label="Rol" class="text-center"><span class="role-badge ${u.rol || 'user'} mx-auto">${(u.rol || 'USER').toUpperCase()}</span></td>
+                <td data-label="Rol" class="text-center"><span class="role-badge ${u.rol || 'user'} mx-auto">${roleLabel}</span></td>
                 <td data-label="Puntos" class="text-center">${puntosDisplay}</td>
                 <td data-label="Saldo" class="text-bold text-center">
                     <div class="flex-row justify-center w-full">
@@ -159,12 +235,6 @@ export function nextUserPage() {
     if (userPage < totalPages) { userPage++; renderUserTable(); } 
 }
 
-export function toggleBranchSelection() {
-    const rol = document.getElementById('admin-user-rol').value;
-    const row = document.getElementById('branch-selection-row');
-    if (row) row.style.display = (rol === 'staff' || rol === 'local_admin') ? 'flex' : 'none';
-}
-
 export async function openBarrier(gateId) {
     const confirm = await showConfirm('Apertura Forzada', `¿Abrir barrera de <b>${gateId}</b>?`);
     if (!confirm) return;
@@ -180,6 +250,60 @@ export async function openBarrier(gateId) {
     } else {
         showToast(`Error: ${res?.error || 'Desconocido'}`);
         if (iconEl) iconEl.src = '/static/images/barrera baja.png';
+    }
+}
+
+export function showCreateUserModal() {
+    const rol = localStorage.getItem('rol');
+    const sucursal = localStorage.getItem('sucursal') || '';
+    
+    const roleSelect = document.getElementById('admin-user-rol');
+    const branchRow = document.getElementById('branch-selection-row');
+    const branchSelect = document.getElementById('admin-user-sucursal');
+
+    if (!roleSelect) return;
+
+    // Reiniciar opciones
+    roleSelect.innerHTML = `
+        <option value="user" style="background: #111;">Cliente</option>
+        <option value="staff" style="background: #111;">Empleado</option>
+        <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
+        <option value="admin" style="background: #111;">Administrador General</option>
+    `;
+
+    if (rol === 'local_admin') {
+        // Los administradores locales solo crean personal para su punto
+        roleSelect.innerHTML = `
+            <option value="staff" style="background: #111;">Empleado</option>
+            <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
+        `;
+        
+        if (branchRow) branchRow.style.display = 'block';
+        if (branchSelect) {
+            branchSelect.innerHTML = `<option value="${sucursal}">${sucursal.toUpperCase()}</option>`;
+            branchSelect.value = sucursal;
+            branchSelect.disabled = true;
+        }
+    } else {
+        // Admin Global ve todo
+        if (branchRow) branchRow.style.display = 'none';
+        if (branchSelect) branchSelect.disabled = false;
+        roleSelect.value = 'user';
+    }
+
+    if (window.openModal) window.openModal('modal-create-user');
+}
+
+export function toggleBranchSelection() {
+    const rol = document.getElementById('admin-user-rol').value;
+    const branchRow = document.getElementById('branch-selection-row');
+    const userRol = localStorage.getItem('rol');
+
+    // Si el que está creando es un admin local, la fila de sede ya está visible y bloqueada
+    if (userRol === 'local_admin') return;
+
+    if (branchRow) {
+        branchRow.style.display = (rol === 'staff' || rol === 'local_admin') ? 'block' : 'none';
     }
 }
 
@@ -291,6 +415,224 @@ export async function deleteUserAdmin(id) {
     const res = await api.post(`/admin/users/${id}/delete`);
     if (res && res.ok) { showToast('Eliminado.'); if (window.loadUsers) window.loadUsers(); }
     else showToast(res?.error || 'Error');
+}
+
+// --- GESTIÓN DE SUCURSALES ---
+
+export function showCreateBranchModal() {
+    document.getElementById('form-add-branch').reset();
+    document.getElementById('branch-id-edit').value = '';
+    document.getElementById('branch-modal-title').innerText = 'NUEVA SUCURSAL';
+    document.getElementById('branch-modal-icon').className = 'fas fa-building';
+    document.getElementById('branch-logo-preview').querySelector('img').src = '/static/images/logo.png';
+    
+    if (window.openModal) window.openModal('modal-add-branch');
+
+    // Inicializar mapa (Morón por defecto)
+    setTimeout(() => {
+        initBranchMap();
+        if (branchMarker) {
+            branchMap.removeLayer(branchMarker);
+            branchMarker = null;
+        }
+        branchMap.setView([-34.6508, -58.6228], 13);
+    }, 300);
+}
+
+export async function loadBranches() {
+    try {
+        console.log("[*] Cargando sucursales...");
+        const res = await api.get('/admin/branches');
+        const tbody = document.getElementById('branches-table-body');
+        if (!tbody) return;
+
+        if (res && res.ok) {
+            allBranchesData = res.data || [];
+            if (allBranchesData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-40 text-muted">No hay sucursales registradas en la red.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allBranchesData.map(b => `
+                <tr class="row-premium">
+                    <td data-label="Sucursal">
+                        <div class="flex-row items-center gap-10">
+                            <div class="branch-logo-sm">
+                                <img src="${b.logo_url || '/static/images/logo.png'}" alt="Logo" onerror="this.src='/static/images/logo.png'">
+                            </div>
+                            <div class="flex-col">
+                                <b class="text-white text-small">${b.nombre}</b>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Dirección"><span class="text-xs text-light">${b.direccion}</span></td>
+                    <td data-label="Administrador" class="text-center">
+                        <div class="flex-row items-center justify-center gap-5">
+                            <i class="fas fa-user-tie text-xs text-muted"></i>
+                            <span class="text-xs font-bold text-dorado">${(b.admin_name || 'Sin asignar').toUpperCase()}</span>
+                        </div>
+                    </td>
+                    <td data-label="Teléfono" class="text-center hidden-mobile"><span class="text-xs font-mono">${b.telefono}</span></td>
+                    <td data-label="Horario" class="text-center">
+                        <div class="flex-row items-center justify-center gap-5">
+                            <i class="fas fa-clock text-xs text-muted"></i>
+                            <span class="text-xs">${b.is_24h ? '24hs' : b.horario}</span>
+                        </div>
+                    </td>
+                    <td data-label="Estado" class="text-center">
+                        <label class="switch-premium" title="${b.activa ? 'Sede Activa' : 'Sede Suspendida'}">
+                            <input type="checkbox" ${b.activa ? 'checked' : ''} onchange="toggleBranch(${b.id})">
+                            <span class="slider-premium"></span>
+                        </label>
+                    </td>
+                    <td data-label="Acciones">
+                        <div class="flex-row gap-8 justify-center actions-reveal">
+                            <button class="btn-icon-premium sm" onclick="editBranch(${b.id})" title="Editar">
+                                <i class="fas fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-icon-premium sm danger" onclick="deleteBranch(${b.id})" title="Eliminar">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-40 text-danger">Error al cargar sucursales: ${res?.error || 'Error desconocido'}</td></tr>`;
+        }
+    } catch (err) {
+        console.error('Error al cargar sucursales:', err);
+    }
+}
+
+export function editBranch(id) {
+    const b = allBranchesData.find(x => x.id === id);
+    if (!b) return;
+
+    document.getElementById('branch-id-edit').value = b.id;
+    document.getElementById('branch-nombre').value = b.nombre;
+    document.getElementById('branch-direccion').value = b.direccion;
+    document.getElementById('branch-telefono').value = b.telefono;
+    
+    // Coordenadas
+    const lat = b.latitude || -34.6508;
+    const lng = b.longitude || -58.6228;
+    document.getElementById('branch-latitude').value = lat;
+    document.getElementById('branch-longitude').value = lng;
+
+    // Configurar logo
+    const preview = document.querySelector('#branch-logo-preview img');
+    if (preview) {
+        preview.src = b.logo_url || '/static/images/logo.png';
+        preview.style.opacity = "1";
+    }
+    document.getElementById('branch-logo-file').value = ''; // Limpiar input file
+
+    document.getElementById('branch-is-24h').checked = b.is_24h;
+    document.getElementById('branch-horario').value = b.is_24h ? '' : b.horario;
+    document.getElementById('branch-horario').disabled = b.is_24h;
+
+    document.getElementById('branch-modal-title').innerText = 'EDITAR SUCURSAL';
+    document.getElementById('branch-modal-icon').className = 'fas fa-pen-to-square';
+    
+    if (window.openModal) window.openModal('modal-add-branch');
+
+    // Inicializar mapa y marcador
+    setTimeout(() => {
+        initBranchMap();
+        updateBranchMarker(lat, lng);
+        if (branchMap) branchMap.setView([lat, lng], 15);
+    }, 300);
+}
+
+export async function toggleBranch(id) {
+    const res = await api.post(`/admin/branches/${id}/toggle`);
+    if (res && res.ok) {
+        showToast(`Sucursal ${res.data.activa ? 'Activada' : 'Suspendida'}`);
+    } else {
+        showToast(res?.error || 'Error al cambiar estado');
+        loadBranches();
+    }
+}
+
+export function toggleBranchHorario(checkbox) {
+    const horarioInput = document.getElementById('branch-horario');
+    if (!horarioInput) return;
+    horarioInput.disabled = checkbox.checked;
+    if (checkbox.checked) {
+        horarioInput.value = '';
+        horarioInput.style.opacity = '0.5';
+    } else {
+        horarioInput.style.opacity = '1';
+    }
+}
+
+export function previewBranchLogo(input) {
+    const preview = document.querySelector('#branch-logo-preview img');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.opacity = "1";
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+export async function handleCreateBranch(event) {
+    event.preventDefault();
+    const btn = event.target.querySelector('button[type="submit"]');
+    const editId = document.getElementById('branch-id-edit').value;
+    
+    // Usar FormData para envío de archivos
+    const formData = new FormData();
+    formData.append('nombre', document.getElementById('branch-nombre').value);
+    formData.append('direccion', document.getElementById('branch-direccion').value);
+    formData.append('telefono', document.getElementById('branch-telefono').value);
+    formData.append('horario', document.getElementById('branch-horario').value || '---');
+    formData.append('is_24h', document.getElementById('branch-is-24h').checked);
+    
+    const lat = document.getElementById('branch-latitude').value;
+    const lng = document.getElementById('branch-longitude').value;
+    if (lat) formData.append('latitude', lat);
+    if (lng) formData.append('longitude', lng);
+    
+    const fileInput = document.getElementById('branch-logo-file');
+    if (fileInput.files[0]) {
+        formData.append('logo_file', fileInput.files[0]);
+    }
+
+    btn.disabled = true;
+    const url = editId ? `/admin/branches/${editId}` : '/admin/branches';
+    const method = editId ? 'patch' : 'post';
+    
+    // Llamada directa a fetch para manejar multipart/form-data correctamente si el wrapper api.js no lo hace
+    // Pero api.js parece soportar body instanceof FormData
+    const res = await api[method](url, formData);
+    
+    if (res && res.ok) {
+        showToast(editId ? 'Sucursal actualizada.' : 'Sucursal creada exitosamente.');
+        if (window.closeModal) window.closeModal('modal-add-branch');
+        event.target.reset();
+        document.getElementById('branch-logo-preview').querySelector('img').src = '/static/images/logo.png';
+        document.getElementById('branch-id-edit').value = '';
+        loadBranches();
+    } else {
+        showToast(`Error: ${res?.error || 'Desconocido'}`);
+    }
+    btn.disabled = false;
+}
+
+export async function deleteBranch(id) {
+    if (!await showConfirm('Eliminar Sucursal', '¿Estás seguro de eliminar esta sucursal? Esto no afectará los registros históricos pero impedirá nuevas operaciones en ella.')) return;
+    
+    const res = await api.delete(`/admin/branches/${id}`);
+    if (res && res.ok) {
+        showToast('Sucursal eliminada.');
+        loadBranches();
+    } else {
+        showToast(res?.error || 'Error al eliminar sucursal');
+    }
 }
 
 export function openPasswordModal(userId, userName) {

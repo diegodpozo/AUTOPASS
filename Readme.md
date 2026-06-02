@@ -2,10 +2,12 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v7.2.2)
-- **Unified Account Hub**: Nueva interfaz de gestión de cuenta con seguridad integrada y diseño de doble panel.
-- **Historial de Puntos Premium**: Implementación de navegación paginada y cálculos inteligentes en el backend.
-- **Refinamiento UI/UX**: Centrado simétrico total, iconografía alineada y validaciones de seguridad en tiempo real.
+## Últimas Actualizaciones (v7.7.0)
+- **Geolocalización Nativa**: Sucursales con coordenadas reales y selector de mapa interactivo.
+- **Buscador de Direcciones**: Integración con Nominatim API para geocoding simplificado.
+- **Unificación Terminológica**: Migración total a "Sucursal" en todo el ecosistema.
+- **Notificaciones Premium**: Sistema Glassmorphism en esquina superior derecha con iconos dinámicos.
+- **UX Hardening**: Protección anti-flicker de roles y simplificación de interfaces administrativas.
 
 ## Arquitectura del Sistema
 
@@ -19,7 +21,7 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 
 ## Características Principales
 
-- **Multi-Sede Nativo**: Gestión independiente de tarifas, aforo y personal por sucursal.
+- **Multi-Sucursal Nativo**: Gestión independiente de tarifas, aforo y personal por sucursal.
 - **Visión Artificial Híbrida**: Reconocimiento de patentes y códigos QR en tiempo real.
 - **RBAC (Role Based Access Control)**: Jerarquía de permisos (Admin, Local Admin, Staff, User).
 - **Fidelización**: Sistema de puntos AutoPass por consumo.

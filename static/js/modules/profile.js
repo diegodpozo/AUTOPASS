@@ -111,8 +111,15 @@ export async function loadPromotions() {
         return;
     }
 
-    grid.innerHTML = promos.map(p => `
+    grid.innerHTML = promos.map(p => {
+        const branchName = p.sucursal ? p.sucursal.replace('AUTOPASS ', '').toUpperCase() : 'GLOBAL';
+        const isGlobal = !p.sucursal;
+
+        return `
         <div class="promo-card">
+            <div class="branch-badge ${isGlobal ? 'global' : ''}">
+                <i class="fas ${isGlobal ? 'fa-globe' : 'fa-location-dot'}"></i> ${branchName}
+            </div>
             <div class="promo-header">
                 <div class="promo-icon"><i class="${p.icono}"></i></div>
                 <div class="promo-title">${p.titulo}</div>
@@ -125,7 +132,8 @@ export async function loadPromotions() {
                 <button class="btn-redeem" onclick="redeemPoints(${p.id}, ${p.costo_puntos})" 
                     ${currentPts < p.costo_puntos ? 'disabled' : ''}>CANJEAR</button>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 let currentPtsPage = 1;

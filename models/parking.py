@@ -34,3 +34,17 @@ class AccessLog(Base):
     sucursal = Column(String, nullable=True)
 
     reservation = relationship("Reservation", back_populates="access_logs")
+
+class ParkingBranch(Base):
+    """Puntos AutoPass (Sedes/Sucursales)"""
+    __tablename__ = "parking_branches"
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, unique=True, index=True)
+    direccion = Column(String)
+    telefono = Column(String)
+    horario = Column(String) # Ej: "07:00 a 23:00"
+    is_24h = Column(Boolean, default=False)
+    logo_url = Column(String, nullable=True) # Nueva columna para logos
+    activa = Column(Boolean, default=True) # Nueva columna para estado de la sede
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)

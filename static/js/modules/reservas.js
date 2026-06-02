@@ -39,6 +39,14 @@ export function initReservationForm() {
         typeSelect.addEventListener('change', (e) => updateFormGroups(e.target.value));
     }
 
+    const sucursalSelect = document.querySelector('.res-sucursal');
+    if (sucursalSelect) {
+        sucursalSelect.addEventListener('change', (e) => {
+            const sucursalId = e.target.value; // Enviar el nombre completo (ej: "AUTOPASS Castelar")
+            fetchRates(sucursalId);
+        });
+    }
+
     const hoursInput = document.querySelector('.res-hours-qty');
     if (hoursInput) {
         hoursInput.addEventListener('input', () => updateReservationPrice());
@@ -84,24 +92,39 @@ export async function refreshReservationFormState() {
     if (!container || !container.classList.contains('open')) return;
 
     fetchRates();
-    const res = await api.get('/user/vehicles');
-    if (!res.ok) return;
+    
+    // 1. Cargar Vehículos
+    const resVehicles = await api.get('/user/vehicles');
+    if (resVehicles.ok) {
+        const vehicles = resVehicles.data;
+        const noVehiclesSec = document.getElementById('reserva-no-vehicles');
+        const mainForm = document.getElementById('reserva-form-content');
 
-    const vehicles = res.data;
-    const noVehiclesSec = document.getElementById('reserva-no-vehicles');
-    const mainForm = document.getElementById('reserva-form-content');
+        if (vehicles.length === 0) {
+            if (noVehiclesSec) noVehiclesSec.style.display = 'block';
+            if (mainForm) mainForm.style.display = 'none';
+        } else {
+            if (noVehiclesSec) noVehiclesSec.style.display = 'none';
+            if (mainForm) mainForm.style.display = 'block';
+            const selects = document.querySelectorAll('.res-vehicle');
+            selects.forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">Seleccioná vehículo...</option>' + 
+                    vehicles.map(v => `<option value="${v.patente}">${v.patente} - ${v.marca_modelo}</option>`).join('');
+                if (currentVal) select.value = currentVal;
+            });
+        }
+    }
 
-    if (vehicles.length === 0) {
-        if (noVehiclesSec) noVehiclesSec.style.display = 'block';
-        if (mainForm) mainForm.style.display = 'none';
-    } else {
-        if (noVehiclesSec) noVehiclesSec.style.display = 'none';
-        if (mainForm) mainForm.style.display = 'block';
-        const selects = document.querySelectorAll('.res-vehicle');
-        selects.forEach(select => {
+    // 2. Cargar Sucursales Dinámicamente
+    const resBranches = await api.get('/admin/branches');
+    if (resBranches.ok) {
+        const branches = resBranches.data;
+        const sucursalSelects = document.querySelectorAll('.res-sucursal');
+        sucursalSelects.forEach(select => {
             const currentVal = select.value;
-            select.innerHTML = '<option value="">Seleccioná vehículo...</option>' + 
-                vehicles.map(v => `<option value="${v.patente}">${v.patente} - ${v.marca_modelo}</option>`).join('');
+            select.innerHTML = '<option value="">Seleccioná sucursal...</option>' + 
+                branches.map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
     }
@@ -150,11 +173,11 @@ export async function prepareEditReservation(id) {
 
     setTimeout(() => {
         const vehicleSelect = document.querySelector('.res-vehicle');
-        const sedeSelect = document.querySelector('.res-sede');
+        const sucursalSelect = document.querySelector('.res-sucursal');
         const typeSelect = document.querySelector('.res-type');
         
         if (vehicleSelect) vehicleSelect.value = r.patente;
-        if (sedeSelect) sedeSelect.value = r.sucursal_nombre;
+        if (sucursalSelect) sucursalSelect.value = r.sucursal_nombre;
         if (typeSelect) {
             typeSelect.value = r.tipo_estadia;
             updateFormGroups(r.tipo_estadia);
@@ -185,10 +208,12 @@ export async function prepareEditReservation(id) {
     }, 500);
 }
 
-export async function fetchRates() {
-    const res = await api.get('/user/rates');
+export async function fetchRates(sucursal = null) {
+    const url = sucursal ? `/user/rates?sucursal=${sucursal}` : '/user/rates';
+    const res = await api.get(url);
     if (res.ok) {
         currentRates = res.data;
+        updateReservationPrice();
     }
 }
 
@@ -204,8 +229,10 @@ export function updateReservationPrice() {
         if (type === 'hora') {
             const fecha = document.querySelector('.res-date-only')?.value;
             const hora = document.querySelector('.res-time-only')?.value;
-            const hoursQty = parseInt(document.querySelector('.res-hours-qty')?.value) || 1;
-            if (fecha && hora) {
+            const hoursQtyInput = document.querySelector('.res-hours-qty');
+            const hoursQty = parseInt(hoursQtyInput?.value);
+            
+            if (fecha && hora && !isNaN(hoursQty) && hoursQty > 0) {
                 inicio = new Date(`${fecha}T${hora}`);
                 fin = new Date(inicio.getTime() + hoursQty * 60 * 60 * 1000);
             }
@@ -548,7 +575,7 @@ export async function repeatReservation(patente, sucursal, tipo) {
     
     setTimeout(() => {
         const vSelect = document.querySelector('.res-vehicle');
-        const sSelect = document.querySelector('.res-sede');
+        const sSelect = document.querySelector('.res-sucursal');
         const tSelect = document.querySelector('.res-type');
         if (vSelect) vSelect.value = patente;
         if (sSelect) sSelect.value = sucursal;

@@ -25,7 +25,7 @@ AUTOPASS/
 │ ├── reservation.py # Validaciones de estadías
 │ └── auth.py # Esquemas de tokens
 ├── routes/ # Capa de Entrega (Endpoints)
-│ ├── admin.py # Gestión administrativa y sede
+│ ├── admin.py # Gestión administrativa y sucursal
 │ ├── auth.py # Login y Registro
 │ ├── parking.py # Control de accesos y barreras
 │ ├── reports.py # Analítica y finanzas
@@ -35,7 +35,7 @@ AUTOPASS/
 ├── services/ # Lógica de Negocio (Service Pattern)
 │ ├── billing_service.py # Cálculos financieros y deudas (Traza fecha_pago)
 │ ├── reservation_service.py # Lógica compleja de reservas
-│ ├── email_service.py # Comunicaciones SMTP y generación de QR (NUEVO)
+│ ├── email_service.py # Comunicaciones SMTP y generación de QR
 │ └── worker_service.py # Tareas en segundo plano (Background)
 ├── repositories/ # Capa de Acceso a Datos (Repository Pattern)
 │ ├── user_repository.py
@@ -65,8 +65,13 @@ Centraliza las dependencias críticas que atraviesan todo el proyecto.
 * **Seguridad:** Implementa **RBAC (Role-Based Access Control)** con 4 niveles: `admin`, `local_admin`, `staff`, `user`.
 
 ### 2. Capa de Datos (`models/` y `schemas/`)
-* **Models:** Representan las tablas físicas. La base es el aislamiento por `sucursal` para permitir el modelo multi-sede.
-* **Schemas:** Actúan como "filtros". Validan que los datos que entran y salen de la API cumplan con las reglas de negocio (ej: longitud de DNI, formato de patente).
+* **Models:** Representan las tablas físicas. La base es el aislamiento por `sucursal` para permitir el modelo multi-sucursal. Se incluye la entidad `ParkingBranch` (con soporte para `latitude` y `longitude`) para la gestión de la red.
+* **Schemas:** Actúan como "filtros". Validan que los datos que entran y salen de la API cumplan con las reglas de negocio (ej: coordenadas geográficas, formato de patente, carga de logos).
+
+### 🖼️ Gestión de Assets y Archivos
+* **Uploads Locales:** El sistema almacena logos de sucursales en `static/uploads/branches/` con nombres normalizados vía UUID para evitar colisiones.
+* **Geolocalización:** Integración con la API de **Nominatim** para la búsqueda de direcciones y **Leaflet** para la selección visual de coordenadas en el dashboard.
+* **Integración ALPR:** Almacenamiento cronológico de capturas en `captured_images/` vinculado a logs de auditoría.
 
 ### 3. Capa de Lógica (`services/`)
 Aquí reside la **Inteligencia de Negocio**. Los servicios son agnósticos a la HTTP; se encargan de:
@@ -98,6 +103,39 @@ Para una operación estándar como "Crear Reserva":
 5. **Models (`reservation.py`)**: Realiza el commit final en SQLite/PostgreSQL.
 6. **Response**: El router devuelve el objeto creado al cliente.
 
+## Seguridad y Control de Acceso (RBAC)
+
+El sistema utiliza un motor de seguridad basado en JWT y roles jerárquicos:
+
+1.  **Admin Global**: Acceso total a todas las sucursales, gestión de roles de administradores, y configuraciones base del sistema. Se enfoca en la gestión de alto nivel.
+2.  **Admin de Sucursal (local_admin)**: Gestión total de una sucursal específica (Tarifas, Personal, Reportes).
+3.  **Staff (Operativo)**: Acceso operativo (Monitoreo, Barreras, Ingresos).
+4.  **User (Cliente)**: Gestiona sus vehículos, reservas y puntos.
+
+### Hardening de Sesión e Interfaz
+Para garantizar la integridad visual y funcional, el sistema implementa:
+*   **Anti-Flicker Protection**: Inyección de clase de rol inmediata vía script inline al inicio del `<body>` en `dashboard.html`.
+*   **Sincronización de Contexto**: El backend inyecta la `sucursal` en el payload de login, que se persiste en `localStorage`.
+*   **Inicialización Resiliente**: El script de Dashboard prioriza la carga de identidad (cargo y sucursal) mediante un flujo defensivo.
+*   **Etiquetado Dinámico**: La cabecera se construye en tiempo real (ej: `Administrador` + `Morón`).
+
+---
+
+## Flujos de Datos Clave
+
+### 1. Motor de Reconocimiento ALPR (v7.6.0)
+El sistema de visión artificial ha sido evolucionado a una arquitectura de grado industrial:
+1.  **Captura Asíncrona**: Utiliza colas de prioridad para no bloquear el streaming de video.
+2.  **Pre-procesamiento OpenCV**: Aplica una cadena de filtros (CLAHE, Gaussian Blur, Adaptive Threshold).
+3.  **Algoritmo de Consenso**: Implementa una ventana de votación temporal para validación de patentes.
+4.  **ROI (Region of Interest)**: Recorta dinámicamente el área de la patente.
+
+### 2. Cálculo de Tarifas Dinámicas
+Al realizar una reserva, el cliente selecciona un "Punto AutoPass". El sistema:
+1. Consulta las tarifas de esa sucursal específica.
+2. Si no existen, aplica los precios base globales.
+3. Actualiza el presupuesto en tiempo real.
+
 ---
 
 ## Tecnologías Clave
@@ -106,18 +144,15 @@ Para una operación estándar como "Crear Reserva":
 * **SQLAlchemy:** ORM para abstracción de base de datos.
 * **EasyOCR + OpenCV:** Motor híbrido de visión artificial para patentes y QR.
 * **Paho MQTT:** Protocolo ligero para control de hardware (barreras).
-* **Jinja2:** Motor de plantillas con herencia para el frontend premium.
+* **Jinja2:** Motor de plantillas premium.
 * **Chart.js:** Visualización de analítica avanzada.
 
 ---
 
 ## Reglas de Oro para Desarrolladores
 
-1. **No queries en Rutas:** No hagas consultas complejas de SQLAlchemy en `routes/`. Mové esa lógica a un `Service` o `Repository`.
-2. **Validación en Schemas:** Si un campo es obligatorio o tiene un formato especial, validalo en el `Schema` usando `@field_validator`.
+1. **No queries en Rutas:** No hagas consultas complejas en `routes/`. Mové esa lógica a un `Service` o `Repository`.
+2. **Validación en Schemas:** Si un campo es obligatorio, validalo en el `Schema` usando `@field_validator`.
 3. **Configuración Única:** Si añadís una variable al `.env`, registrala en `core/config.py`.
 4. **Voseo Argentino:** Todo texto que vea el usuario final debe usar voseo (Ej: "Cargá tu saldo").
-5. **Mayúsculas en DB:** Las patentes siempre se normalizan a mayúsculas antes de guardarse.
-
----
-
+5. **Mayúsculas en DB:** Las patentes siempre se normalizan a mayúsculas.

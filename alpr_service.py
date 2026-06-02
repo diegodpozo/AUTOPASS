@@ -6,7 +6,9 @@ import os
 import re
 import base64
 import threading
+import queue
 import numpy as np
+from collections import Counter
 from dotenv import load_dotenv
 
 # --- CONFIGURACIÓN DE SEGURIDAD Y RENDIMIENTO ---
@@ -19,135 +21,187 @@ VIDEO_SOURCE = os.getenv("VIDEO_SOURCE", "0")
 if isinstance(VIDEO_SOURCE, str) and VIDEO_SOURCE.isdigit():
     VIDEO_SOURCE = int(VIDEO_SOURCE)
 
-# Forzamos los IDs que el dashboard espera
 GATE_TYPE = os.getenv("GATE_TYPE", "entrada").lower()
-GATE_ID = "ENTRADA_PRINCIPAL" if GATE_TYPE == "entrada" else "SALIDA_PRINCIPAL"
-
-print(f"[*] Configurando Nodo: {GATE_ID}")
-print(f"[*] Fuente de Video: {VIDEO_SOURCE}")
+GATE_ID = os.getenv("GATE_ID", "ENTRADA_PRINCIPAL" if GATE_TYPE == "entrada" else "SALIDA_PRINCIPAL")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-COOLDOWN_SECONDS = 15 
 
-# --- INICIALIZACIÓN DE MOTORES ---
-print(f"[*] Cargando Inteligencia Artificial...")
-reader = easyocr.Reader(['es', 'en'], gpu=False)
-qr_detector = cv2.QRCodeDetector()
+# Parámetros de Calidad y Consenso
+COOLDOWN_SECONDS = 12
+CONSENSUS_WINDOW = 6  # Número de frames para votar
+MIN_CONFIDENCE_VOTES = 3 # Votos mínimos para validar una patente
+OCR_INTERVAL = 0.3    # Intervalo entre escaneos de OCR (segundos)
 
-# --- VARIABLES DE ESTADO ---
-frame_to_process = None
-frame_to_stream = None
-last_detected_plate = ""
-last_detection_time = 0
-plate_buffer = [] 
+print(f"[*] Nodo ALPR Iniciado: {GATE_ID} ({GATE_TYPE.upper()})")
 
-def video_stream_worker():
-    global frame_to_stream
-    while True:
-        if frame_to_stream is not None:
+class ALPREngine:
+    def __init__(self):
+        print("[*] Inicializando Motores de IA (EasyOCR)...")
+        self.reader = easyocr.Reader(['es', 'en'], gpu=False)
+        self.qr_detector = cv2.QRCodeDetector()
+        self.plate_queue = queue.Queue(maxsize=10)
+        self.vote_buffer = []
+        self.last_validated_plate = ""
+        self.last_validation_time = 0
+        self.is_running = True
+
+    def preprocess_image(self, frame):
+        """Optimización de imagen para OCR usando OpenCV."""
+        # 1. Conversión a escala de grises
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        
+        # 2. Reducción de ruido con filtro Gaussiano
+        blur = cv2.GaussianBlur(gray, (5, 5), 0)
+        
+        # 3. Mejora de contraste (CLAHE - Contrast Limited Adaptive Histogram Equalization)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        contrast = clahe.apply(blur)
+        
+        # 4. Umbralización adaptativa para separar texto del fondo
+        thresh = cv2.adaptiveThreshold(contrast, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                      cv2.THRESH_BINARY, 11, 2)
+        
+        return thresh
+
+    def get_roi(self, frame):
+        """Define la Región de Interés (típicamente el tercio inferior/central)."""
+        h, w = frame.shape[:2]
+        # Tomamos el área donde suelen estar las patentes (centro y abajo)
+        roi = frame[int(h*0.2):int(h*0.9), int(w*0.1):int(w*0.9)]
+        return roi
+
+    def normalize_plate(self, text):
+        """Limpia y valida el formato de la patente."""
+        clean = re.sub(r'[^A-Z0-9]', '', text.upper())
+        # Formatos: ABC123 (viejas) o AB123CD (Mercosur)
+        if 6 <= len(clean) <= 7:
+            return clean
+        return None
+
+    def process_consensus(self, plate):
+        """Algoritmo de consenso por votación en ventana temporal."""
+        self.vote_buffer.append(plate)
+        if len(self.vote_buffer) > CONSENSUS_WINDOW:
+            self.vote_buffer.pop(0)
+
+        # Contar ocurrencias en la ventana actual
+        counts = Counter(self.vote_buffer)
+        most_common, num_votes = counts.most_common(1)[0]
+
+        if num_votes >= MIN_CONFIDENCE_VOTES:
+            now = time.time()
+            # Evitar duplicados inmediatos (cooldown)
+            if most_common != self.last_validated_plate or (now - self.last_validation_time > COOLDOWN_SECONDS):
+                self.last_validated_plate = most_common
+                self.last_validation_time = now
+                self.vote_buffer = [] # Limpiar buffer tras validación exitosa
+                return most_common
+        return None
+
+    def ocr_worker(self):
+        """Worker principal que procesa la cola de frames asincrónicamente."""
+        while self.is_running:
             try:
-                frame = frame_to_stream.copy()
-                frame_to_stream = None
-                view_frame = cv2.resize(frame, (640, 480))
-                _, buffer = cv2.imencode('.jpg', view_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 40])
-                img_base64 = base64.b64encode(buffer).decode('utf-8')
-                requests.post(f"{BACKEND_URL}/v1/system/update-frame/{GATE_ID}",
-                              json={"image": img_base64}, timeout=0.5)
-            except: pass
-        time.sleep(0.1)
-
-def ocr_worker():
-    global frame_to_process, last_detected_plate, last_detection_time, plate_buffer
-    print(f"[*] Escaneando accesos (QR/ALPR) en: {GATE_ID}")
-    
-    while True:
-        if frame_to_process is not None:
-            img_orig = frame_to_process
-            frame_to_process = None 
-            start_time = time.time()
-            
-            try:
-                # 1. INTENTO DE LECTURA QR (Prioridad absoluta)
-                data, bbox, _ = qr_detector.detectAndDecode(img_orig)
-                if data and data.startswith("AUTOPASS"):
-                    print(f"✅ [QR DETECTADO] >>> {data}")
-                    send_qr_to_backend(data)
-                    time.sleep(3) # Pausa larga para evitar lecturas dobles
+                frame = self.plate_queue.get(timeout=1)
+                
+                # 1. Detección de QR (Prioridad)
+                qr_data, _, _ = self.qr_detector.detectAndDecode(frame)
+                if qr_data and qr_data.startswith("AUTOPASS"):
+                    print(f"✅ [QR] >>> {qr_data}")
+                    self.send_event("qr", qr_data, frame)
+                    time.sleep(2)
                     continue
 
-                # 2. INTENTO DE LECTURA DE PATENTE (ALPR)
-                gray = cv2.cvtColor(img_orig, cv2.COLOR_BGR2GRAY)
-                res = reader.readtext(gray, detail=0, paragraph=False)
+                # 2. Detección de Patente
+                roi = self.get_roi(frame)
+                processed = self.preprocess_image(roi)
                 
-                for text in res:
-                    plate = normalize_plate(text)
+                # OCR sobre la imagen optimizada
+                results = self.reader.readtext(processed, detail=0, paragraph=False)
+                
+                for text in results:
+                    plate = self.normalize_plate(text)
                     if plate:
-                        plate_buffer.append(plate)
-                        if len(plate_buffer) > 5: plate_buffer.pop(0)
-                        
-                        if plate_buffer.count(plate) >= 2:
-                            now = time.time()
-                            if plate != last_detected_plate or (now - last_detection_time > COOLDOWN_SECONDS):
-                                print(f"🚗 [PATENTE DETECTADA] >>> {plate}")
-                                send_to_backend_async(plate, img_orig)
-                                last_detected_plate = plate
-                                last_detection_time = now
-                                plate_buffer = [] 
-            except: pass
-            
-            elapsed = time.time() - start_time
-            time.sleep(max(0.1, 0.4 - elapsed))
-        else:
-            time.sleep(0.1)
+                        validated = self.process_consensus(plate)
+                        if validated:
+                            print(f"🚗 [ALPR] >>> {validated} (Votos: {MIN_CONFIDENCE_VOTES}+)")
+                            self.send_event("plate", validated, frame)
+                            break # Una patente por frame es suficiente
 
-def normalize_plate(plate_text):
-    clean = re.sub(r'[^A-Z0-9]', '', plate_text.upper())
-    if len(clean) < 6 or len(clean) > 8: return None
-    return clean
+            except queue.Empty: continue
+            except Exception as e:
+                print(f"[!] Error en OCR Worker: {e}")
 
-def send_qr_to_backend(qr_data):
-    def _send():
+    def send_event(self, type, data, frame):
+        """Envía la detección al backend de forma asíncrona."""
+        def _request():
+            try:
+                _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                img_b64 = base64.b64encode(buffer).decode('utf-8')
+                
+                if type == "qr":
+                    payload = {"qr_data": data, "gate_id": GATE_ID}
+                    url = f"{BACKEND_URL}/v1/access/validate-qr"
+                else:
+                    payload = {"plate": data, "gate_id": GATE_ID, "image_base64": img_b64}
+                    endpoint = "/v1/access/validate-plate" if GATE_TYPE == "entrada" else "/v1/access/exit-plate"
+                    url = f"{BACKEND_URL}{endpoint}"
+                
+                requests.post(url, json=payload, timeout=5)
+            except Exception as e:
+                print(f"[!] Error enviando a backend: {e}")
+
+        threading.Thread(target=_request, daemon=True).start()
+
+# --- STREAMING DE VIDEO (MONITOREO) ---
+def stream_worker(cap):
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret: break
+        
+        # Redimensionar para el dashboard (ahorro de ancho de banda)
+        view_frame = cv2.resize(frame, (640, 480))
+        _, buffer = cv2.imencode('.jpg', view_frame, [cv2.IMWRITE_JPEG_QUALITY, 35])
+        img_b64 = base64.b64encode(buffer).decode('utf-8')
+        
         try:
-            resp = requests.post(f"{BACKEND_URL}/v1/access/validate-qr", 
-                         json={"qr_data": qr_data, "gate_id": GATE_ID}, 
-                         timeout=5)
-            if resp.status_code == 200:
-                print(f"📡 [SERVER] QR validado correctamente.")
-            else:
-                print(f"⚠️ [SERVER] Error validando QR: {resp.text}")
+            requests.post(f"{BACKEND_URL}/v1/system/update-frame/{GATE_ID}",
+                          json={"image": img_b64}, timeout=0.2)
         except: pass
-    threading.Thread(target=_send, daemon=True).start()
-
-def send_to_backend_async(plate, frame):
-    def _send():
-        try:
-            _, buffer = cv2.imencode(".jpg", frame)
-            img_base64 = base64.b64encode(buffer).decode('utf-8')
-            endpoint = "/v1/access/validate-plate" if GATE_TYPE == "entrada" else "/v1/access/exit-plate"
-            requests.post(f"{BACKEND_URL}{endpoint}", 
-                         json={"plate": plate, "gate_id": GATE_ID, "image_base64": img_base64}, 
-                         timeout=5)
-        except: pass
-    threading.Thread(target=_send, daemon=True).start()
+        time.sleep(0.1)
 
 def main():
-    global frame_to_process, frame_to_stream
+    engine = ALPREngine()
     cap = cv2.VideoCapture(VIDEO_SOURCE)
+    
     if not cap.isOpened():
-        print(f"[ERROR] No se pudo abrir la fuente de video")
+        print(f"[ERROR] No se pudo abrir {VIDEO_SOURCE}")
         return
 
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
-    threading.Thread(target=ocr_worker, daemon=True).start()
-    threading.Thread(target=video_stream_worker, daemon=True).start()
+    # Iniciar workers
+    threading.Thread(target=engine.ocr_worker, daemon=True).start()
+    threading.Thread(target=stream_worker, args=(cap,), daemon=True).start()
+
+    print(f"[*] Escaneando en {GATE_ID}. Presione 'q' para salir.")
     
-    print("[*] Sistema Híbrido Listo. Presione 'q' para salir.")
+    last_ocr_time = 0
     while True:
         ret, frame = cap.read()
         if not ret: break
-        frame_to_process = frame
-        frame_to_stream = frame
-        if cv2.waitKey(1) & 0xFF == ord('q'): break
+        
+        # Encolar frames para OCR con limitación de frecuencia
+        now = time.time()
+        if now - last_ocr_time > OCR_INTERVAL:
+            if not engine.plate_queue.full():
+                engine.plate_queue.put(frame.copy())
+                last_ocr_time = now
+
+        # Tecla de salida
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            engine.is_running = False
+            break
+
     cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()

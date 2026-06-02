@@ -18,7 +18,6 @@ window.closeMobileNav = ui.closeMobileNav;
 window.toggleSidebar = ui.toggleSidebar;
 window.toggleManualOps = () => ui.toggleCollapsible('manual-ops-content', 'manual-ops-chevron', '400px');
 window.toggleOccupancy = () => ui.toggleCollapsible('occupancy-content', 'occupancy-chevron', '1000px');
-window.toggleUserList = () => ui.toggleCollapsible('user-list-collapsible', 'user-list-toggle-btn', '2000px');
 
 // Global UI Modals
 window.openModal = baseUi.openModal;
@@ -40,6 +39,16 @@ window.deleteUserAdmin = admin.deleteUserAdmin;
 window.handleAdminCreateUser = admin.handleAdminCreateUser;
 window.openPasswordModal = admin.openPasswordModal;
 window.handleAdminChangePassword = admin.handleAdminChangePassword;
+
+// Branches
+window.loadBranches = admin.loadBranches;
+window.handleCreateBranch = admin.handleCreateBranch;
+window.deleteBranch = admin.deleteBranch;
+window.toggleBranchHorario = admin.toggleBranchHorario;
+window.editBranch = admin.editBranch;
+window.toggleBranch = admin.toggleBranch;
+window.previewBranchLogo = admin.previewBranchLogo;
+window.searchAddress = admin.searchAddress;
 
 // Promotions
 window.loadPromotionsAdmin = promos.loadPromotionsAdmin;
@@ -67,6 +76,9 @@ window.loadTabData = async (tabId) => {
             break;
         case 'promotions':
             promos.loadPromotionsAdmin();
+            break;
+        case 'branches':
+            admin.loadBranches();
             break;
         case 'settings':
             admin.loadSettings();
@@ -111,7 +123,7 @@ window.loadAdminReservations = async () => {
                         <div class="text-xs text-muted" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">${utils.formatDate(r.fecha_fin)}</div>
                     </div>
                 </td>
-                <td data-label="Sede/Tipo">
+                <td data-label="Sucursal/Tipo">
                     <div class="flex-col gap-8">
                         <div class="text-small text-dorado font-bold">${r.sucursal_nombre}</div>
                         <div class="text-xs text-muted uppercase" style="letter-spacing: 1px;">${utils.toTitle(r.tipo_estadia)}</div>
@@ -305,18 +317,63 @@ function renderRevenueChart(data, period) {
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    ui.initClock();
-    ui.checkSystemHealth();
-    
+    // 1. Actualizar inmediatamente la UI con lo que tengamos en localStorage
     const rol = localStorage.getItem('rol');
-    if (rol === 'staff' || rol === 'local_admin') document.body.classList.add('is-staff');
+    const sucursalRaw = localStorage.getItem('sucursal');
+    
+    // Debug: Eliminar en producción
+    console.log(`[*] Sesión: Rol=${rol}, Sede=${sucursalRaw}`);
+
+    // Limpieza profunda de la sede
+    let sucursalLimpia = '';
+    if (sucursalRaw && sucursalRaw !== 'null' && sucursalRaw !== 'undefined') {
+        sucursalLimpia = sucursalRaw.replace('AUTOPASS ', '').trim();
+    }
+    
+    // La clase de rol ya se aplica en el inline script de dashboard.html para evitar flicker
+    
+    const roleNameEl = document.getElementById('role-name');
+    const settingsTitleEl = document.getElementById('settings-title');
+
+    if (roleNameEl) {
+        let label = 'Personal Autorizado';
+        if (rol === 'admin') label = 'Administrador Global';
+        else if (rol === 'local_admin') label = `Administrador ${sucursalLimpia || 'Sucursal'}`;
+        else if (rol === 'staff') label = `Empleado ${sucursalLimpia || 'Sucursal'}`;
+        roleNameEl.innerText = label;
+    }
+
+    if (settingsTitleEl) {
+        if (rol === 'local_admin') {
+            settingsTitleEl.innerText = `CONFIGURACIÓN DE SUCURSAL: ${sucursalLimpia.toUpperCase() || 'MI PUNTO'}`;
+        } else {
+            settingsTitleEl.innerText = 'CONFIGURACIÓN GLOBAL DEL SISTEMA';
+        }
+    }
+
+    // 2. Iniciar servicios secundarios
+    try {
+        ui.initClock();
+        ui.checkSystemHealth();
+    } catch (e) { console.warn("Error en servicios UI:", e); }
 
     let lastTab = localStorage.getItem('activeAdminTab') || 'live';
-    const restrictedTabs = ['finance', 'settings']; // Staff no ve finanzas ni settings
-    if (rol === 'staff' && restrictedTabs.includes(lastTab)) lastTab = 'live';
+    
+    // Reglas de redirección por rol
+    const restrictedStaff = ['users', 'finance', 'promotions', 'settings'];
+    const restrictedAdmin = ['live', 'admin-reservations', 'finance', 'settings']; 
+
+    if (rol === 'staff' && restrictedStaff.includes(lastTab)) {
+        lastTab = 'live';
+    } else if (rol === 'admin' && restrictedAdmin.includes(lastTab)) {
+        lastTab = 'users'; 
+    }
 
     const activeItem = document.querySelector(`.nav-item[onclick*="'${lastTab}'"]`);
     if (activeItem) ui.switchTab(lastTab, activeItem);
+
+    // 3. Listeners de Formularios
+    document.getElementById('form-add-branch')?.addEventListener('submit', window.handleCreateBranch);
 
     setInterval(() => {
         if (localStorage.getItem('activeAdminTab') === 'live') {
@@ -349,6 +406,8 @@ window.manualExit = async (plate) => {
     else utils.showToast(res.error);
 };
 
+window.showCreateUserModal = admin.showCreateUserModal;
+window.showCreateBranchModal = admin.showCreateBranchModal;
 window.loadSettings = admin.loadSettings;
 window.saveAllRates = admin.saveAllRates;
 window.saveSystemParam = admin.saveSystemParam;
