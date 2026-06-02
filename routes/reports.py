@@ -26,10 +26,10 @@ def get_date_range(period: str, start: str = None, end: str = None):
 # --- ANALÍTICA FINANCIERA ---
 
 @router.get("/financial-summary")
-def get_financial_summary(period: str = "total", start: str = None, end: str = None, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Calcula el resumen de recaudación unificado (Estadías + Reservas)."""
+def get_financial_summary(period: str = "total", start: str = None, end: str = None, db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
+    """Calcula el resumen de recaudación unificado. Aislamiento por sede para staff/local_admin."""
     start_date, end_date = get_date_range(period, start, end)
-    sucursal = admin.sucursal if admin.rol != "admin" else None
+    sucursal = user.sucursal if user.rol != "admin" else None
 
     # 1. Recaudación de AccessLogs (Estadías directas)
     q_logs = db.query(

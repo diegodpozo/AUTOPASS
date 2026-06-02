@@ -25,7 +25,26 @@ Este paso crea las tablas y los roles iniciales (Admin Global).
 python init_db.py
 ```
 
-## 4. Ejecución del Servidor y Cámaras
+## 4. Credenciales por Defecto
+
+Para el primer acceso y testeo del sistema, utilizá las siguientes credenciales:
+
+| Rol | Email | Contraseña | Sucursal |
+| :--- | :--- | :--- | :--- |
+| **Admin Global** | `admin@autopass.com` | `admin123` | *Todas* |
+| **Admin Local** | `moron@autopass.com` | `admin123` | AUTOPASS Morón |
+| **Staff (Operativo)** | `staff@autopass.com` | `admin123` | AUTOPASS Morón |
+
+### Gestión de otros Roles (Admin Locales y Staff)
+El sistema utiliza una arquitectura **RBAC** (Control de Acceso Basado en Roles). Una vez dentro como Administrador Global, podés crear y gestionar los demás niveles desde la pestaña **Usuarios** del Dashboard:
+
+1.  **Administrador de Sucursal (local_admin):** Gestiona una sucursal específica (Tarifas, Empleados, Reportes).
+2.  **Empleado (staff):** Perfil operativo para monitoreo de barreras y registros manuales.
+3.  **Cliente (user):** Usuarios finales que realizan reservas y acumulan puntos.
+
+> **⚠️ SEGURIDAD:** Las contraseñas se guardan de forma encriptada (hashing) en la base de datos. Si olvidás la contraseña de un usuario administrativo, el Administrador Global puede restablecerla directamente desde el Dashboard.
+
+## 5. Ejecución del Servidor y Cámaras
 
 ### Iniciar Servidor Principal
 ```bash

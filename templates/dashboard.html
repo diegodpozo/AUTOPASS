@@ -18,6 +18,9 @@
             const isAuthorized = ['admin', 'local_admin', 'staff'].includes(rol);
             if (!token || !isAuthorized) {
                 window.location.href = '/';
+            } else {
+                // Aplicar clase de rol inmediatamente para evitar parpadeo (flicker)
+                document.body.classList.add('role-' + rol);
             }
         })();
     </script>
@@ -32,14 +35,15 @@
             <span>AUTOPASS</span>
         </div>
         <nav class="nav-group">
-            <div class="nav-item active" onclick="switchTab('live', this)" title="Ver monitoreo en tiempo real"><i class="fas fa-video"></i> <span class="nav-text">Monitoreo</span></div>
-            <div class="nav-item" onclick="switchTab('admin-reservations', this)" title="Gestionar reservas del sistema"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span></div>
+            <div class="nav-item active hide-admin" onclick="switchTab('live', this)" title="Ver monitoreo en tiempo real"><i class="fas fa-video"></i> <span class="nav-text">Monitoreo</span></div>
+            <div class="nav-item hide-admin" onclick="switchTab('admin-reservations', this)" title="Gestionar reservas del sistema"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span></div>
             
             <!-- SECCIONES EXCLUSIVAS ADMIN -->
             <div class="nav-item admin-only" onclick="switchTab('users', this)" title="Administrar usuarios y permisos"><i class="fas fa-users-gear"></i> <span class="nav-text">Gestión de Usuarios</span></div>
-            <div class="nav-item admin-only" onclick="switchTab('finance', this)" title="Ver analítica y reportes financieros"><i class="fas fa-chart-line"></i> <span class="nav-text">Reporte Financiero</span></div>
+            <div class="nav-item admin-only hide-admin" onclick="switchTab('finance', this)" title="Ver analítica y reportes financieros"><i class="fas fa-chart-line"></i> <span class="nav-text">Reporte Financiero</span></div>
             <div class="nav-item admin-only" onclick="switchTab('promotions', this)" title="Gestionar promociones y beneficios"><i class="fas fa-gift"></i> <span class="nav-text">Promociones</span></div>
-            <div class="nav-item admin-only" onclick="switchTab('settings', this)" title="Configurar parámetros del sistema"><i class="fas fa-gears"></i> <span class="nav-text">Configuración</span></div>
+            <div class="nav-item super-admin-only" onclick="switchTab('branches', this)" title="Gestionar sucursales de la red"><i class="fas fa-building-circle-check"></i> <span class="nav-text">Sucursales</span></div>
+            <div class="nav-item admin-only hide-admin" onclick="switchTab('settings', this)" title="Configurar parámetros del sistema"><i class="fas fa-gears"></i> <span class="nav-text">Configuración</span></div>
         </nav>
         <div class="sidebar-footer" onclick="logout()" title="Salir del sistema">
             <i class="fas fa-right-from-bracket"></i> <span>Cerrar Sesión</span>
@@ -72,9 +76,9 @@
                     </div>
                     <div class="clock-display" id="clock" title="Hora actual del sistema">00:00:00</div>
                 </div>
-                <div class="admin-badge" title="Sesión iniciada como Administrador">
+                <div class="admin-badge" title="Sesión iniciada">
                     <i class="fas fa-user-shield"></i>
-                    <span>Administrador</span>
+                    <span id="role-name">Cargando...</span>
                 </div>
             </div>
         </header>
@@ -87,6 +91,7 @@
                     {% include "dashboard/tabs/users.html" %}
                     {% include "dashboard/tabs/finance.html" %}
                     {% include "dashboard/tabs/promotions.html" %}
+                    {% include "dashboard/tabs/branches.html" %}
                     {% include "dashboard/tabs/settings.html" %}
                 </div>
             </div>
@@ -200,7 +205,7 @@
                     </div>
                     <div class="info-item">
                         <i class="fas fa-location-dot"></i>
-                        <div><label>SEDE</label><span id="res-detail-sucursal">---</span></div>
+                        <div><label>SUCURSAL</label><span id="res-detail-sucursal">---</span></div>
                     </div>
                     <div class="info-item">
                         <i class="fas fa-tags"></i>

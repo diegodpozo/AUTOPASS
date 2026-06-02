@@ -12,8 +12,12 @@ export async function loadPromotionsAdmin() {
 
     const res = await api.get('/admin/promotions');
     if (res.ok) {
-        tbody.innerHTML = res.data.map(p => `
-            <tr>
+        tbody.innerHTML = res.data.map(p => {
+            const branchLabel = p.sucursal ? p.sucursal.replace('AUTOPASS ', '') : 'Global';
+            const branchClass = p.sucursal ? 'text-dorado' : 'text-success';
+
+            return `
+            <tr class="row-premium">
                 <td data-label="Beneficio">
                     <div class="flex-row items-center gap-10">
                         <div class="header-icon-box xs" style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2);">
@@ -28,31 +32,61 @@ export async function loadPromotionsAdmin() {
                 <td data-label="Puntos" class="text-center">
                     <div class="points-badge-sm mx-auto"><i class="fas fa-star"></i> ${p.costo_puntos}</div>
                 </td>
+                <td data-label="Sucursal" class="text-center">
+                    <span class="text-xs font-bold ${branchClass}">${branchLabel.toUpperCase()}</span>
+                </td>
                 <td data-label="Estado" class="text-center hidden-mobile">
-                    <span class="badge-status badge-${p.activa ? 'active' : 'inactive'} mx-auto">${p.activa ? 'ACTIVA' : 'INACTIVA'}</span>
+                    <label class="switch-premium" title="${p.activa ? 'Promoción Activa' : 'Promoción Inactiva'}">
+                        <input type="checkbox" ${p.activa ? 'checked' : ''} onchange="togglePromotion(${p.id})">
+                        <span class="slider-premium"></span>
+                    </label>
                 </td>
                 <td data-label="Acciones">
-                    <div class="flex-row gap-8 justify-center">
-                        <button class="btn-icon-premium sm" onclick="togglePromotion(${p.id})" title="${p.activa ? 'Desactivar' : 'Activar'}">
-                            <i class="fas ${p.activa ? 'fa-toggle-on text-success' : 'fa-toggle-off text-muted'}"></i>
-                        </button>
+                    <div class="flex-row gap-8 justify-center actions-reveal">
                         <button class="btn-icon-premium sm danger btn-delete-promo" onclick="deletePromotion(${p.id})" title="Eliminar">
                             <i class="fas fa-xmark"></i>
                         </button>
                     </div>
                 </td>
-            </tr>
-        `).join('') || '<tr><td colspan="4" class="text-center py-20">No hay promociones registradas.</td></tr>';
+            </tr>`;
+        }).join('') || '<tr><td colspan="5" class="text-center py-20">No hay promociones registradas.</td></tr>';
     } else {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-danger">Error: ${res.error}</td></tr>`;
     }
 }
 
-export function showCreatePromotionModal() {
+export async function showCreatePromotionModal() {
     const rol = localStorage.getItem('rol');
+    const sucursal = localStorage.getItem('sucursal') || '';
     const field = document.querySelector('.admin-only-field');
+    const select = document.getElementById('promo-sucursal');
+    
     if (field) {
-        field.style.display = (rol === 'admin') ? 'block' : 'none';
+        field.style.display = 'block'; // Mostrar siempre para configurar
+    }
+
+    if (select) {
+        if (rol === 'admin') {
+            // Admin Global: Cargar todas las sucursales de la DB
+            const res = await api.get('/admin/branches');
+            if (res.ok) {
+                let options = '<option value="">Global (Todas)</option>';
+                res.data.forEach(b => {
+                    options += `<option value="${b.nombre}">${b.nombre.toUpperCase()}</option>`;
+                });
+                select.innerHTML = options;
+                select.disabled = false;
+                select.value = "";
+            }
+        } else if (rol === 'local_admin') {
+            // Admin Local: Solo su propia sucursal y bloqueado
+            select.innerHTML = `<option value="${sucursal}">${sucursal.toUpperCase()}</option>`;
+            select.value = sucursal;
+            select.disabled = true;
+        } else {
+            // Otros roles no deberían ver esto, pero por seguridad:
+            if (field) field.style.display = 'none';
+        }
     }
     
     // Reset icon picker

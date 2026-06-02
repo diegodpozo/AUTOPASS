@@ -19,3 +19,24 @@ class ParkingStatus(BaseModel):
     capacidad_total: int
     ocupacion_actual: int
     disponibilidad: int
+
+class BranchBase(BaseModel):
+    nombre: str
+    direccion: str
+    telefono: str
+    horario: str
+    is_24h: bool = False
+    logo_url: Optional[str] = None
+    activa: bool = True
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+class BranchCreate(BranchBase):
+    pass
+
+class BranchResponse(BranchBase):
+    id: int
+    admin_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True

@@ -409,6 +409,20 @@
     min-width: 110px;
 }
 
+#tab-branches table th:nth-child(2),
+#tab-branches table td:nth-child(2) {
+    min-width: 200px;
+}
+
+#tab-branches table th:nth-child(4),
+#tab-branches table td:nth-child(4) {
+    min-width: 130px;
+}
+
+#tab-branches .row-premium td {
+    padding: 15px 10px;
+}
+
 /* Columna de Vehículo en Ocupación (es la primera) */
 #occupancy-content table th:nth-child(1),
 #occupancy-content table td:nth-child(1) {
@@ -614,6 +628,25 @@ tr:hover .btn-delete-promo {
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 }
 
+/* --- ROLE BASED VISIBILITY --- */
+.role-staff .admin-only {
+    display: none !important;
+}
+
+.super-admin-only {
+    display: flex !important; /* Asegurar flex para nav-items */
+}
+
+/* Ocultar elementos de super-admin para otros roles */
+body:not(.role-admin) .super-admin-only {
+    display: none !important;
+}
+
+/* Ocultar elementos innecesarios para el Admin Global */
+.role-admin .hide-admin {
+    display: none !important;
+}
+
 /* FIX: Botón Nuevo Usuario en Móvil */
 @media (max-width: 768px) {
     .btn-new-user-mobile-fix {
@@ -628,3 +661,34 @@ tr:hover .btn-delete-promo {
         width: 100%;
     }
 }
+
+/* BRANCH LOGOS IN TABLE */
+.branch-logo-sm { 
+    width: 35px; 
+    height: 35px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    overflow: hidden; 
+    background: transparent;
+    border: none;
+}
+.branch-logo-sm img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+
+/* SWITCH PREMIUM */
+.switch-premium { position: relative; display: inline-block; width: 44px; height: 20px; }
+.switch-premium input { opacity: 0; width: 0; height: 0; }
+.slider-premium { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+.slider-premium:before { position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 2px; background-color: #888; transition: .4s; border-radius: 50%; }
+.switch-premium input:checked + .slider-premium { background-color: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.3); }
+.switch-premium input:checked + .slider-premium:before { transform: translateX(24px); background-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+.switch-premium input:focus + .slider-premium { box-shadow: 0 0 1px #10b981; }
+
+/* REVEAL ACTIONS ON HOVER */
+.actions-reveal { opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateX(10px); }
+.row-premium:hover .actions-reveal { opacity: 1; transform: translateX(0); }

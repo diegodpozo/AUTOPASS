@@ -21,6 +21,7 @@
                         <tr>
                             <th>Beneficio</th>
                             <th>Puntos</th>
+                            <th>Sucursal</th>
                             <th class="hidden-mobile">Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -51,21 +52,33 @@
         </div>
         <div class="modal-body">
             <form id="form-create-promotion" onsubmit="event.preventDefault(); handleCreatePromotion();">
-                <div class="form-group mb-15">
-                    <label class="text-dorado">Título del Beneficio</label>
-                    <input type="text" id="promo-titulo" class="input-premium" placeholder="Ej: 1 Hora Gratis" required>
-                </div>
-                <div class="form-group mb-15">
-                    <label class="text-dorado">Descripción</label>
-                    <textarea id="promo-descripcion" class="input-premium" rows="3" placeholder="Detalles del beneficio..." required></textarea>
-                </div>
-                <div class="grid-2-col gap-15">
+                <div class="form-row">
                     <div class="form-group">
-                        <label class="text-dorado">Puntos necesarios</label>
-                        <input type="number" id="promo-costo" class="input-premium" placeholder="500" required>
+                        <label>Título del Beneficio</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-tag"></i>
+                            <input type="text" id="promo-titulo" placeholder="Ej: 1 Hora Gratis" required>
+                        </div>
                     </div>
-                <div class="form-group mb-15">
-                    <label class="text-dorado">Seleccionar Ícono</label>
+                    <div class="form-group">
+                        <label>Puntos necesarios</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-star"></i>
+                            <input type="number" id="promo-costo" placeholder="500" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción del Beneficio</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-align-left" style="top: 15px; transform: none;"></i>
+                        <textarea id="promo-descripcion" rows="2" placeholder="Detalles del beneficio..." required style="padding-left: 45px;"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Seleccionar Ícono Visual</label>
                     <div class="icon-picker-grid" id="promo-icon-picker">
                         <div class="icon-option active" data-icon="fas fa-gift" onclick="selectPromoIcon(this)"><i class="fas fa-gift"></i></div>
                         <div class="icon-option" data-icon="fas fa-car" onclick="selectPromoIcon(this)"><i class="fas fa-car"></i></div>
@@ -82,21 +95,21 @@
                     </div>
                     <input type="hidden" id="promo-icono" value="fas fa-gift">
                 </div>
-                </div>
-                <div class="form-group mt-15 admin-only-field">
-                    <label class="text-dorado">Sede</label>
-                    <select id="promo-sucursal" class="input-premium">
-                        <option value="">Global (Todas)</option>
-                        <option value="AUTOPASS Central">AUTOPASS Central</option>
-                        <option value="AUTOPASS Ituzaingó">AUTOPASS Ituzaingó</option>
-                        <option value="AUTOPASS Castelar">AUTOPASS Castelar</option>
-                        <option value="AUTOPASS Morón">AUTOPASS Morón</option>
-                    </select>
+
+                <div class="form-group admin-only-field">
+                    <label>Sucursal Asignada</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-location-dot"></i>
+                        <select id="promo-sucursal" class="select-premium" style="width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px 15px 15px 45px; border-radius: 12px; outline: none; -webkit-appearance: none; cursor: pointer;">
+                            <option value="">Cargando sucursales...</option>
+                        </select>
+                        <i class="fas fa-chevron-down" style="position: absolute; right: 15px; left: auto; color: #666; font-size: 0.7rem; pointer-events: none;"></i>
+                    </div>
                 </div>
                 
-                <div class="flex-row gap-10 mt-30">
-                    <button type="button" class="btn btn-outline btn-full" onclick="closeModal('modal-create-promotion')">CANCELAR</button>
-                    <button type="submit" class="btn btn-primary btn-full">GUARDAR</button>
+                <div class="flex-row justify-center mt-30 gap-20">
+                    <button type="button" class="btn btn-outline" style="min-width: 140px;" onclick="closeModal('modal-create-promotion')">CANCELAR</button>
+                    <button type="submit" class="btn btn-primary" style="min-width: 140px;">GUARDAR</button>
                 </div>
             </form>
         </div>

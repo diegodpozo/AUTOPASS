@@ -43,6 +43,12 @@ def migrate_db():
         ],
         "parking_aforo": [
             ("sucursal", "TEXT")
+        ],
+        "parking_branches": [
+            ("logo_url", "TEXT"),
+            ("activa", "BOOLEAN DEFAULT 1"),
+            ("latitude", "FLOAT"),
+            ("longitude", "FLOAT")
         ]
     }
 
@@ -64,21 +70,50 @@ def seed_data():
     """Inserta datos iniciales críticos si no existen."""
     db = SessionLocal()
     try:
-        # 1. Usuario Administrador Global
-        admin = db.query(models.User).filter(models.User.email == "admin@autopass.com").first()
-        if not admin:
-            print("[*] Creando usuario Administrador Global...")
-            db.add(models.User(
-                nombre="Admin",
-                apellido="Global",
-                email="admin@autopass.com",
-                password_hash=get_password_hash("admin123"),
-                rol="admin",
-                dni="00000000",
-                telefono="1100000000",
-                puntos_acumulados=0,
-                saldo=0.0
-            ))
+        # 1. Usuarios Administrativos
+        users = [
+            {
+                "email": "admin@autopass.com",
+                "nombre": "Admin",
+                "apellido": "Global",
+                "rol": "admin",
+                "password": "admin123",
+                "sucursal": None
+            },
+            {
+                "email": "moron@autopass.com",
+                "nombre": "Admin",
+                "apellido": "Morón",
+                "rol": "local_admin",
+                "password": "admin123",
+                "sucursal": "AUTOPASS Morón"
+            },
+            {
+                "email": "staff@autopass.com",
+                "nombre": "Staff",
+                "apellido": "Operativo",
+                "rol": "staff",
+                "password": "admin123",
+                "sucursal": "AUTOPASS Morón"
+            }
+        ]
+
+        for u_data in users:
+            exists = db.query(models.User).filter(models.User.email == u_data["email"]).first()
+            if not exists:
+                print(f"[*] Creando usuario {u_data['rol'].upper()}: {u_data['email']}...")
+                db.add(models.User(
+                    nombre=u_data["nombre"],
+                    apellido=u_data["apellido"],
+                    email=u_data["email"],
+                    password_hash=get_password_hash(u_data["password"]),
+                    rol=u_data["rol"],
+                    dni="00000000",
+                    telefono="1100000000",
+                    puntos_acumulados=0,
+                    saldo=0.0,
+                    sucursal=u_data["sucursal"]
+                ))
         
         # 2. Configuración de Aforo Inicial (Global)
         aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == None).first()
@@ -113,6 +148,36 @@ def seed_data():
                 models.Promotion(titulo='Café Express', descripcion='Combo café y snack en sucursal.', costo_puntos=100, icono='fas fa-coffee', categoria='Gastronomía')
             ]
             db.add_all(promos)
+
+        # 5. Sucursales iniciales
+        if db.query(models.ParkingBranch).count() == 0:
+            print("[*] Cargando red de sucursales...")
+            branches = [
+                models.ParkingBranch(nombre='AUTOPASS Central', direccion='Av. del Libertador 1200, CABA', telefono='11 4567-8900', horario='24hs', is_24h=True, logo_url='/static/images/logo.png', latitude=-34.5888, longitude=-58.3900),
+                models.ParkingBranch(nombre='AUTOPASS Ituzaingó', direccion='Mariano Acosta 50, Ituzaingó', telefono='11 4567-8901', horario='07:00 a 23:00', is_24h=False, logo_url='/static/images/logo.png', latitude=-34.6585, longitude=-58.6685),
+                models.ParkingBranch(nombre='AUTOPASS Castelar', direccion='Montes de Oca 1220, Castelar', telefono='11 4567-8902', horario='24hs', is_24h=True, logo_url='/static/images/logo.png', latitude=-34.6485, longitude=-58.6350),
+                models.ParkingBranch(nombre='AUTOPASS Morón', direccion='Av. J. M. de Rosas 658, Morón', telefono='11 4567-8903', horario='07:00 a 00:00', is_24h=False, logo_url='/static/images/logo.png', latitude=-34.6508, longitude=-58.6228)
+            ]
+            db.add_all(branches)
+        else:
+            # Actualizar logos y coordenadas si existen pero están vacíos (por migración)
+            db.query(models.ParkingBranch).filter(models.ParkingBranch.logo_url == None).update({models.ParkingBranch.logo_url: "/static/images/logo.png"})
+            
+            # Parche de coordenadas para sucursales conocidas
+            coords_patch = {
+                'AUTOPASS Central': (-34.5888, -58.3900),
+                'AUTOPASS Ituzaingó': (-34.6585, -58.6685),
+                'AUTOPASS Castelar': (-34.6485, -58.6350),
+                'AUTOPASS Morón': (-34.6508, -58.6228)
+            }
+            for nombre, (lat, lng) in coords_patch.items():
+                db.query(models.ParkingBranch).filter(
+                    models.ParkingBranch.nombre == nombre,
+                    models.ParkingBranch.latitude == None
+                ).update({
+                    models.ParkingBranch.latitude: lat,
+                    models.ParkingBranch.longitude: lng
+                })
 
         db.commit()
         print("[OK] Datos maestros inicializados.")

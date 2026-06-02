@@ -1,9 +1,12 @@
 import datetime
 import math
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
+import os
+import shutil
+import uuid
 from core.database import get_db
 from core.security import get_local_manager, get_super_admin, get_operational_user, get_password_hash
 
@@ -13,10 +16,12 @@ router = APIRouter(prefix="/v1", tags=["Admin & Settings"])
 
 @router.get("/admin/users")
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Retorna la lista de usuarios. Los administradores locales solo ven a los de su sede."""
+    """Retorna la lista de usuarios. Los administradores locales solo ven personal de su sede."""
     q = db.query(models.User)
     if admin.rol != "admin":
         q = q.filter(models.User.sucursal == admin.sucursal)
+        # Los locales solo gestionan empleados y otros administradores de su punto
+        q = q.filter(models.User.rol.in_(["local_admin", "staff"]))
     return q.all()
 
 @router.post("/admin/users")
@@ -198,13 +203,13 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
     else:
         monto = math.ceil(duration_hours) * rate
 
-    sucursales_info = {
-        "AUTOPASS Central": "Av. del Libertador 1200, CABA. Abierto 24hs.",
-        "AUTOPASS Ituzaingó": "Punto de Acceso Estación Ituzaingó. Abierto 24hs.",
-        "AUTOPASS Castelar": "Centro Comercial Castelar. Abierto 24hs.",
-        "AUTOPASS Morón": "Plaza Oeste Shopping - Morón. Abierto 24hs."
-    }
-    info_sede = sucursales_info.get(data.sucursal_nombre, "Sede no especificada.")
+    # Buscar info de la sede en la DB
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == data.sucursal_nombre).first()
+    if branch:
+        horario_str = "Abierto 24hs" if branch.is_24h else branch.horario
+        info_sede = f"{branch.direccion}. {horario_str}."
+    else:
+        info_sede = "Sede no especificada."
 
     new_res = models.Reservation(
         user_id=data.user_id,
@@ -447,3 +452,124 @@ def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     db.delete(promo)
     db.commit()
     return {"status": "ok"}
+
+# --- GESTIÓN DE SUCURSALES (Puntos AutoPass) ---
+
+@router.get("/admin/branches", response_model=List[schemas.BranchResponse])
+def list_branches(db: Session = Depends(get_db)):
+    """Retorna la lista de todas las sucursales con el nombre de su administrador."""
+    branches = db.query(models.ParkingBranch).all()
+    
+    # Inyectar el nombre del administrador para cada sede
+    for b in branches:
+        admin_sede = db.query(models.User).filter(
+            models.User.sucursal == b.nombre,
+            models.User.rol == "local_admin"
+        ).first()
+        b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"
+        
+    return branches
+
+@router.post("/admin/branches")
+async def create_branch(
+    nombre: str = Form(...),
+    direccion: str = Form(...),
+    telefono: str = Form(...),
+    horario: str = Form(...),
+    is_24h: bool = Form(False),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    logo_file: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db), 
+    admin: models.User = Depends(get_super_admin)
+):
+    """Crea una nueva sucursal con carga de logo local."""
+    existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="La sucursal ya existe")
+    
+    logo_url = "/static/images/logo.png"
+    if logo_file:
+        file_ext = logo_file.filename.split(".")[-1]
+        file_name = f"branch_{uuid.uuid4()}.{file_ext}"
+        file_path = os.path.join("static", "uploads", "branches", file_name)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(logo_file.file, buffer)
+        logo_url = f"/static/uploads/branches/{file_name}"
+
+    new_branch = models.ParkingBranch(
+        nombre=nombre,
+        direccion=direccion,
+        telefono=telefono,
+        horario=horario,
+        is_24h=is_24h,
+        logo_url=logo_url,
+        activa=True,
+        latitude=latitude,
+        longitude=longitude
+    )
+    db.add(new_branch)
+    db.commit()
+    return {"status": "ok", "message": f"Sucursal '{new_branch.nombre}' creada"}
+
+@router.delete("/admin/branches/{branch_id}")
+def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
+    """Elimina una sucursal (Solo Super Admin)."""
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    if not branch:
+        raise HTTPException(status_code=404, detail="Sucursal no encontrada")
+    
+    db.delete(branch)
+    db.commit()
+    return {"status": "ok", "message": "Sucursal eliminada"}
+
+@router.patch("/admin/branches/{branch_id}")
+async def update_branch(
+    branch_id: int,
+    nombre: str = Form(...),
+    direccion: str = Form(...),
+    telefono: str = Form(...),
+    horario: str = Form(...),
+    is_24h: bool = Form(False),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    logo_file: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db), 
+    admin: models.User = Depends(get_super_admin)
+):
+    """Actualiza la información de una sucursal con soporte para nuevo logo."""
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    if not branch:
+        raise HTTPException(status_code=404, detail="Sucursal no encontrada")
+    
+    branch.nombre = nombre
+    branch.direccion = direccion
+    branch.telefono = telefono
+    branch.horario = horario
+    branch.is_24h = is_24h
+    branch.latitude = latitude
+    branch.longitude = longitude
+
+    if logo_file:
+        file_ext = logo_file.filename.split(".")[-1]
+        file_name = f"branch_{uuid.uuid4()}.{file_ext}"
+        file_path = os.path.join("static", "uploads", "branches", file_name)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(logo_file.file, buffer)
+        branch.logo_url = f"/static/uploads/branches/{file_name}"
+    
+    db.commit()
+    return {"status": "ok", "message": "Sucursal actualizada"}
+
+@router.post("/admin/branches/{branch_id}/toggle")
+def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
+    """Activa o suspende una sucursal."""
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    if not branch:
+        raise HTTPException(status_code=404, detail="Sucursal no encontrada")
+    
+    branch.activa = not branch.activa
+    db.commit()
+    return {"status": "ok", "activa": branch.activa}

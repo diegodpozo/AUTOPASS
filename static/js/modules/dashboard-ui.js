@@ -63,6 +63,7 @@ export function switchTab(tabId, element) {
             'users': 'Gestión de Usuarios',
             'finance': 'Reporte Financiero',
             'promotions': 'Promociones',
+            'branches': 'Gestión de Sucursales',
             'settings': 'Configuración'
         };
         titleEl.innerText = titles[tabId] || 'Dashboard';

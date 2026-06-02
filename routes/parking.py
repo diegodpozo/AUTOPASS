@@ -5,6 +5,7 @@ import os
 import base64
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from typing import List
 import models, schemas
 from core.database import get_db
 from core.security import get_operational_user, get_current_user
@@ -44,34 +45,74 @@ def normalize_dni(s: str):
 
 # --- ENDPOINTS DE ESTADO ---
 
+@router.get("/parking/branches", response_model=List[schemas.BranchResponse])
+def list_public_branches(db: Session = Depends(get_db)):
+    """Retorna la lista de sucursales activas para el mapa público."""
+    return db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
+
 @router.get("/parking/status", response_model=schemas.ParkingStatus)
-def get_parking_status(db: Session = Depends(get_db)):
-    """Retorna la disponibilidad actual de plazas en el predio."""
-    a = db.query(models.ParkingAforo).first()
-    if not a: return {"capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20}
-    return {"capacidad_total": a.capacidad_total, "ocupacion_actual": a.ocupacion_actual, "disponibilidad": a.capacidad_total - a.ocupacion_actual}
+def get_parking_status(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
+    """Retorna la disponibilidad actual de plazas. Aislamiento por sede."""
+    sucursal = user.sucursal if user.rol != "admin" else None
+    
+    a = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+    if not a: 
+        return {"capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20}
+    return {
+        "capacidad_total": a.capacidad_total, 
+        "ocupacion_actual": a.ocupacion_actual, 
+        "disponibilidad": a.capacidad_total - a.ocupacion_actual
+    }
 
 @router.get("/parking/current-occupancy")
-def current_occupancy(db: Session = Depends(get_db)):
-    """Lista todos los vehículos actualmente estacionados con su deuda calculada."""
-    entradas = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == "ENTRADA").all()
+def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
+    """Lista vehículos estacionados en la sede del usuario con deuda calculada."""
+    sucursal = user.sucursal if user.rol != "admin" else None
+    
+    q = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == "ENTRADA")
+    if sucursal:
+        q = q.filter(models.AccessLog.sucursal == sucursal)
+        
+    entradas = q.all()
     res = []
     for e in entradas:
-        tiene_salida = db.query(models.AccessLog).filter(models.AccessLog.patente_detectada == e.patente_detectada, models.AccessLog.tipo_evento == "SALIDA", models.AccessLog.fecha_hora > e.fecha_hora).first()
+        tiene_salida = db.query(models.AccessLog).filter(
+            models.AccessLog.patente_detectada == e.patente_detectada, 
+            models.AccessLog.tipo_evento == "SALIDA", 
+            models.AccessLog.fecha_hora > e.fecha_hora,
+            models.AccessLog.sucursal == e.sucursal
+        ).first()
+        
         if not tiene_salida:
             deuda = 0.0 if e.pago_confirmado else BillingService.calculate_debt(e.fecha_hora, db)
-            res.append({"patente": e.patente_detectada, "ingreso": e.fecha_hora, "deuda": deuda, "ya_pago": e.pago_confirmado, "es_reserva": e.reserva_id is not None})
+            res.append({
+                "patente": e.patente_detectada, 
+                "ingreso": e.fecha_hora, 
+                "deuda": deuda, 
+                "ya_pago": e.pago_confirmado, 
+                "es_reserva": e.reserva_id is not None,
+                "sucursal": e.sucursal
+            })
     return res
 
 # --- ENDPOINTS DE VALIDACIÓN ALPR ---
 
 @router.post("/access/validate-plate", response_model=schemas.AccessResponse)
 def validate_plate(data: schemas.PlateValidation, db: Session = Depends(get_db), request: Request = None):
-    """Valida una patente detectada para permitir o denegar el ingreso."""
+    """Valida una patente detectada. (Se asume que el gate_id identifica la sede)."""
     p = normalize_plate(data.plate)
-    ultimo = db.query(models.AccessLog).filter(models.AccessLog.patente_detectada == p).order_by(models.AccessLog.id.desc()).first()
+    # En un sistema real, el ALPR Service enviaría su sucursal_id
+    # Para la demo, intentamos inferir o usar la global
+    sucursal = data.gate_id.split('_')[0] if data.gate_id and '_' in data.gate_id else None
+    if sucursal == "ENTRADA": sucursal = None # Caso base
+    
+    ultimo = db.query(models.AccessLog).filter(
+        models.AccessLog.patente_detectada == p,
+        models.AccessLog.sucursal == sucursal
+    ).order_by(models.AccessLog.id.desc()).first()
+    
     if ultimo and ultimo.tipo_evento == "ENTRADA": 
-        return {"status": "denied", "message": "El vehículo ya figura dentro del predio"}
+        return {"status": "denied", "message": "El vehículo ya figura dentro de esta sede"}
     
     now = datetime.datetime.now()
     img_name = None
@@ -81,51 +122,85 @@ def validate_plate(data: schemas.PlateValidation, db: Session = Depends(get_db),
         with open(os.path.join(IMAGE_DIR, img_name), "wb") as f: 
             f.write(base64.b64decode(data.image_base64))
             
-    reserva = db.query(models.Reservation).filter(models.Reservation.patente == p, models.Reservation.estado_reserva == "Pendiente").first()
-    aforo = db.query(models.ParkingAforo).first()
+    # La reserva debe ser para esta sede o global
+    reserva = db.query(models.Reservation).filter(
+        models.Reservation.patente == p, 
+        models.Reservation.estado_reserva == "Pendiente"
+    ).filter(
+        (models.Reservation.sucursal_nombre == sucursal) | (models.Reservation.sucursal_nombre == None)
+    ).first()
+    
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+    if not aforo:
+        aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0)
+        db.add(aforo)
     
     if reserva or aforo.ocupacion_actual < aforo.capacidad_total:
         aforo.ocupacion_actual += 1
         if reserva: reserva.estado_reserva = "Activa"
-        db.add(models.AccessLog(patente_detectada=p, tipo_evento="ENTRADA", fecha_hora=now.isoformat(), imagen_path=img_name, reserva_id=reserva.id if reserva else None))
+        db.add(models.AccessLog(
+            patente_detectada=p, 
+            tipo_evento="ENTRADA", 
+            fecha_hora=now.isoformat(), 
+            imagen_path=img_name, 
+            reserva_id=reserva.id if reserva else None,
+            sucursal=sucursal
+        ))
         db.commit()
         
-        # Notificación IoT para apertura de barrera
+        # Notificación IoT (El topic podría incluir la sede)
         if request and hasattr(request.app, 'mqtt_client'):
-            request.app.mqtt_client.publish(MQTT_TOPIC_ENTRADA, json.dumps({"command": "OPEN", "plate": p, "timestamp": now.isoformat()}))
+            request.app.mqtt_client.publish(MQTT_TOPIC_ENTRADA, json.dumps({
+                "command": "OPEN", 
+                "plate": p, 
+                "sucursal": sucursal,
+                "timestamp": now.isoformat()
+            }))
             
-        return {"status": "allowed", "action": "OPEN_GATE", "message": f"Acceso permitido. Bienvenido {p}"}
-    return {"status": "denied", "message": "Capacidad máxima alcanzada"}
+        return {"status": "allowed", "action": "OPEN_GATE", "message": f"Acceso permitido en {sucursal or 'Global'}. Bienvenido {p}"}
+    return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
 
 @router.post("/access/exit-plate", response_model=schemas.AccessResponse)
 def exit_plate(data: schemas.PlateValidation, db: Session = Depends(get_db), request: Request = None):
-    """Valida la salida de un vehículo. Solo se permite si la deuda está saldada."""
+    """Valida la salida de un vehículo de la sede correspondiente."""
     p = normalize_plate(data.plate)
-    ultimo = db.query(models.AccessLog).filter(models.AccessLog.patente_detectada == p).order_by(models.AccessLog.id.desc()).first()
+    sucursal = data.gate_id.split('_')[0] if data.gate_id and '_' in data.gate_id else None
+    
+    ultimo = db.query(models.AccessLog).filter(
+        models.AccessLog.patente_detectada == p,
+        models.AccessLog.sucursal == sucursal
+    ).order_by(models.AccessLog.id.desc()).first()
+    
     if not ultimo or ultimo.tipo_evento != "ENTRADA": 
-        return {"status": "error", "message": "El vehículo no tiene registro de ingreso"}
+        return {"status": "error", "message": "El vehículo no tiene registro de ingreso en esta sede"}
     
     if not (ultimo.pago_confirmado or (ultimo.reservation and ultimo.reservation.estado_pago == "Pagado")):
-        return {"status": "denied", "message": "Deuda pendiente de pago"}
+        return {"status": "denied", "message": "Deuda pendiente de pago en esta sede"}
         
-    aforo = db.query(models.ParkingAforo).first()
-    if aforo.ocupacion_actual > 0: aforo.ocupacion_actual -= 1
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+    if aforo and aforo.ocupacion_actual > 0: aforo.ocupacion_actual -= 1
         
     now = datetime.datetime.now()
     if ultimo.reservation: ultimo.reservation.estado_reserva = "Completada"
-    db.add(models.AccessLog(patente_detectada=p, tipo_evento="SALIDA", fecha_hora=now.isoformat(), pago_confirmado=True))
+    db.add(models.AccessLog(patente_detectada=p, tipo_evento="SALIDA", fecha_hora=now.isoformat(), pago_confirmado=True, sucursal=sucursal))
     db.commit()
     
     if request and hasattr(request.app, 'mqtt_client'):
-        request.app.mqtt_client.publish(MQTT_TOPIC_SALIDA, json.dumps({"command": "OPEN", "plate": p, "timestamp": now.isoformat()}))
+        request.app.mqtt_client.publish(MQTT_TOPIC_SALIDA, json.dumps({
+            "command": "OPEN", 
+            "plate": p, 
+            "sucursal": sucursal,
+            "timestamp": now.isoformat()
+        }))
         
-    return {"status": "allowed", "action": "OPEN_GATE", "message": f"Salida autorizada. Adiós {p}"}
+    return {"status": "allowed", "action": "OPEN_GATE", "message": f"Salida autorizada en {sucursal or 'Global'}. Adiós {p}"}
 
 @router.post("/access/validate-qr", response_model=schemas.AccessResponse)
 def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), request: Request = None):
     """Valida un Pase Digital (QR) presentado en el tótem."""
     print(f"[*] Solicitud de validación QR recibida: {data.qr_data}")
     try:
+        sucursal = data.gate_id.split('_')[0] if data.gate_id and '_' in data.gate_id else None
         parts = data.qr_data.split('|')
         if len(parts) < 3 or parts[0] != "AUTOPASS":
             print(f"❌ [QR ERROR] Formato inválido: {data.qr_data}")
@@ -145,6 +220,11 @@ def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), reque
             print(f"❌ [QR ERROR] Patente no coincide. DB: {reserva.patente} vs QR: {patente_qr}")
             return {"status": "error", "message": "La patente del QR no coincide con la reserva"}
 
+        # La reserva debe ser para esta sede o global
+        if reserva.sucursal_nombre and sucursal and reserva.sucursal_nombre != sucursal:
+            print(f"❌ [QR ERROR] Reserva vinculada a {reserva.sucursal_nombre}, no a {sucursal}")
+            return {"status": "denied", "message": f"Esta reserva es válida únicamente para la sede {reserva.sucursal_nombre}"}
+
         if reserva.estado_pago != "Pagado":
             print(f"❌ [QR ERROR] Reserva {reserva_id} pendiente de pago")
             return {"status": "denied", "message": "La reserva no ha sido abonada"}
@@ -153,43 +233,47 @@ def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), reque
         gate_id = data.gate_id.upper() if data.gate_id else "ENTRADA"
         is_entry = "ENTRADA" in gate_id
         
-        print(f"[*] Procesando acceso por QR para Reserva #{reserva_id} ({reserva.patente}) en {gate_id}")
+        print(f"[*] Procesando acceso por QR para Reserva #{reserva_id} ({reserva.patente}) en {gate_id} ({sucursal or 'Global'})")
         
         if is_entry:
             if reserva.estado_reserva == "Activa":
-                return {"status": "denied", "message": "El vehículo ya se encuentra dentro del predio"}
+                return {"status": "denied", "message": "El vehículo ya se encuentra dentro de esta sede"}
             if reserva.estado_reserva == "Completada":
                  return {"status": "denied", "message": "Esta reserva ya fue utilizada y completada"}
             
-            aforo = db.query(models.ParkingAforo).first()
+            aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+            if not aforo:
+                aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0)
+                db.add(aforo)
+                
             if aforo.ocupacion_actual >= aforo.capacidad_total:
-                return {"status": "denied", "message": "Capacidad máxima alcanzada"}
+                return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
 
             aforo.ocupacion_actual += 1
             reserva.estado_reserva = "Activa"
             # Usamos siempre la patente de la reserva en la DB para el log
-            db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="ENTRADA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True))
+            db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="ENTRADA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True, sucursal=sucursal))
             db.commit()
             
             if request and hasattr(request.app, 'mqtt_client'):
-                request.app.mqtt_client.publish(MQTT_TOPIC_ENTRADA, json.dumps({"command": "OPEN", "plate": reserva.patente, "method": "QR", "timestamp": now.isoformat()}))
+                request.app.mqtt_client.publish(MQTT_TOPIC_ENTRADA, json.dumps({"command": "OPEN", "plate": reserva.patente, "method": "QR", "sucursal": sucursal, "timestamp": now.isoformat()}))
                 
-            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido. Bienvenido {reserva.patente}"}
+            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido en {sucursal or 'Global'}. Bienvenido {reserva.patente}"}
         else:
             if reserva.estado_reserva != "Activa":
                 return {"status": "error", "message": "No se registra un ingreso activo para esta reserva"}
                 
-            aforo = db.query(models.ParkingAforo).first()
-            if aforo.ocupacion_actual > 0: aforo.ocupacion_actual -= 1
+            aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+            if aforo and aforo.ocupacion_actual > 0: aforo.ocupacion_actual -= 1
             reserva.estado_reserva = "Completada"
             # Usamos siempre la patente de la reserva en la DB para el log
-            db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="SALIDA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True))
+            db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="SALIDA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True, sucursal=sucursal))
             db.commit()
             
             if request and hasattr(request.app, 'mqtt_client'):
-                request.app.mqtt_client.publish(MQTT_TOPIC_SALIDA, json.dumps({"command": "OPEN", "plate": reserva.patente, "method": "QR", "timestamp": now.isoformat()}))
+                request.app.mqtt_client.publish(MQTT_TOPIC_SALIDA, json.dumps({"command": "OPEN", "plate": reserva.patente, "method": "QR", "sucursal": sucursal, "timestamp": now.isoformat()}))
                 
-            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido. Adiós {reserva.patente}"}
+            return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido en {sucursal or 'Global'}. Adiós {reserva.patente}"}
             
     except Exception as e:
         return {"status": "error", "message": f"Error procesando QR: {str(e)}"}

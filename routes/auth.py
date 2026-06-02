@@ -111,5 +111,6 @@ def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer", 
         "rol": user.rol,
         "nombre": user.nombre,
-        "apellido": user.apellido
+        "apellido": user.apellido,
+        "sucursal": user.sucursal
     }
