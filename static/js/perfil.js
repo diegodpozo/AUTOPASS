@@ -155,12 +155,80 @@ window.hideQuickAddVehicle = () => {
     if (form) form.style.display = 'none';
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('balance-val') && localStorage.getItem('token')) {
-        prof.loadProfile();
-        v.loadVehicles();
-        res.loadReservations();
+        await prof.loadProfile();
+        await v.loadVehicles();
+        await res.loadReservations();
         res.initReservationForm();
+
+        // Verificar si venimos del mapa con una sucursal pre-seleccionada
+        const urlParams = new URLSearchParams(window.location.search);
+        const preBranch = urlParams.get('reserva_sucursal');
+        if (preBranch) {
+            console.log(`[*] Detectado parámetro de reserva: ${preBranch}`);
+            
+            // Asegurar que estamos en la sección de inicio
+            if (window.showSection) {
+                window.showSection('inicio', document.querySelector('.nav-item[onclick*="inicio"]'));
+            }
+
+            const autoFillSequence = async () => {
+                const container = document.getElementById('reserva-form-container');
+                if (!container) return;
+
+                // 1. Abrir el formulario (usar la función global expuesta)
+                if (!container.classList.contains('open') && window.toggleReservaForm) {
+                    await window.toggleReservaForm();
+                }
+
+                // 2. Intentar llenar campos (con reintentos si los selects están vacíos)
+                // No necesitamos llamar a refreshReservationFormState porque toggleReservaForm ya lo hace internamente
+                let attempts = 0;
+                const maxAttempts = 15; // Aumentar un poco el margen
+                
+                const fillFields = () => {
+                    const sucursalSelect = document.querySelector('.res-sucursal');
+                    const vehicleSelect = document.querySelector('.res-vehicle');
+                    
+                    // Verificar si las sucursales ya cargaron (más de 1 opción y que no sea el texto de carga)
+                    if (sucursalSelect && sucursalSelect.options.length > 1 && sucursalSelect.options[0].value === "") {
+                        console.log(`[*] Llenando campos para ${preBranch}`);
+                        
+                        // Seleccionar Sucursal
+                        const options = Array.from(sucursalSelect.options);
+                        const targetOption = options.find(opt => opt.value === preBranch);
+                        
+                        if (targetOption) {
+                            sucursalSelect.value = preBranch;
+                            sucursalSelect.dispatchEvent(new Event('change'));
+                        }
+
+                        // Seleccionar Vehículo (si solo hay uno registrado)
+                        if (vehicleSelect && vehicleSelect.options.length === 2) {
+                            vehicleSelect.selectedIndex = 1;
+                        }
+
+                        if (container) container.scrollIntoView({ behavior: 'smooth' });
+                        showToast(`Preparado para reservar en ${preBranch}`);
+                        return true;
+                    }
+                    
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(fillFields, 300);
+                    } else {
+                        console.warn("[!] No se pudo auto-completar: Tiempo de espera agotado.");
+                    }
+                    return false;
+                };
+
+                fillFields();
+            };
+
+            // Ejecutar secuencia
+            autoFillSequence();
+        }
 
         // Inicializar validación de contraseña en perfil
         initPasswordValidation(

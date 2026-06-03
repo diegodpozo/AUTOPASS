@@ -288,58 +288,78 @@ export function updateFormGroups(type) {
 }
 
 export async function createReservation(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
+    if (e) e.preventDefault();
+    console.group("AutoPass: Creando Reserva");
+    
+    // Usar document.querySelector para mayor robustez
+    const patenteEl = document.querySelector('.res-vehicle');
+    const sucursalEl = document.querySelector('.res-sucursal');
+    const tipoEl = document.querySelector('.res-type');
+    const btn = document.querySelector('.btn-confirm-premium');
+    
+    if (!patenteEl || !sucursalEl || !tipoEl || !btn) {
+        console.error("[!] Error: No se encontraron los campos del formulario.");
+        console.groupEnd();
+        return showToast('Error interno: Formulario incompleto');
+    }
+
+    const patente = patenteEl.value;
+    const sucursal = sucursalEl.value;
+    const tipo = tipoEl.value;
     const originalContent = btn.innerHTML;
     
-    const patente = e.target.querySelector('.res-vehicle').value;
-    const sucursal = e.target.querySelector('.res-sede').value;
-    const tipo = e.target.querySelector('.res-type').value;
-    
-    if (!patente) return showToast('Seleccioná un vehículo');
+    if (!patente) { console.groupEnd(); return showToast('Seleccioná un vehículo'); }
+    if (!sucursal) { console.groupEnd(); return showToast('Seleccioná una sucursal'); }
+    if (!tipo) { console.groupEnd(); return showToast('Seleccioná tipo de estadía'); }
 
     let inicio, fin;
 
-    if (tipo === 'hora') {
-        const fecha = e.target.querySelector('.res-date-only').value;
-        const hora = e.target.querySelector('.res-time-only').value;
-        const hoursQty = parseInt(e.target.querySelector('.res-hours-qty').value) || 1;
-        if (!fecha || !hora) return showToast('Seleccioná fecha y hora');
-        inicio = `${fecha} ${hora}`;
-        const now = new Date();
-        const startDt = new Date(inicio.replace(/-/g, "/"));
-        if ((startDt - now) < (2 * 60 * 60 * 1000)) return showToast('Mínimo 2 horas de anticipación.');
-        const endDt = new Date(startDt.getTime() + hoursQty * 60 * 60 * 1000);
-        fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} ${endDt.getHours().toString().padStart(2, '0')}:${endDt.getMinutes().toString().padStart(2, '0')}`;
-    } else if (tipo === 'dia') {
-        const fecha = e.target.querySelector('.res-day-only').value;
-        if (!fecha) return showToast('Seleccioná un día');
-        inicio = `${fecha} 00:00`;
-        const now = new Date();
-        const startDt = new Date(inicio.replace(/-/g, "/"));
-        if ((startDt - now) < (2 * 60 * 60 * 1000)) return showToast('Mínimo 2 horas de anticipación.');
-        fin = `${fecha} 23:59`;
-    } else {
-        const periods = { 'semana': 7, 'quincena': 15, 'mes': 30 };
-        const periodClasses = { 'semana': '.res-week-start', 'quincena': '.res-fortnight-start', 'mes': '.res-month-start' };
-        if (periods[tipo]) {
-            const selector = periodClasses[tipo];
-            const fecha = e.target.querySelector(selector).value;
-            if (!fecha) return showToast('Seleccioná día de inicio');
-            inicio = `${fecha} 00:00`;
-            const now = new Date();
-            const startDtCheck = new Date(fecha.replace(/-/g, "/"));
-            if ((startDtCheck - now) < (2 * 60 * 60 * 1000)) return showToast('Mínimo 2 horas de anticipación.');
-            const startDt = new Date(fecha.replace(/-/g, "/"));
-            const endDt = new Date(startDt.getTime() + (periods[tipo] - 1) * 24 * 60 * 60 * 1000);
-            fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} 23:59`;
-        } else {
-            inicio = e.target.querySelector('.res-start').value;
-            fin = e.target.querySelector('.res-end').value;
+    try {
+        if (tipo === 'hora') {
+            const fecha = document.querySelector('.res-date-only').value;
+            const hora = document.querySelector('.res-time-only').value;
+            const hoursQty = parseInt(document.querySelector('.res-hours-qty').value) || 1;
+            if (!fecha || !hora) { console.groupEnd(); return showToast('Seleccioná fecha y hora'); }
+            inicio = `${fecha} ${hora}`;
             const now = new Date();
             const startDt = new Date(inicio.replace(/-/g, "/"));
-            if ((startDt - now) < (2 * 60 * 60 * 1000)) return showToast('Mínimo 2 horas de anticipación.');
+            if ((startDt - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
+            const endDt = new Date(startDt.getTime() + hoursQty * 60 * 60 * 1000);
+            fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} ${endDt.getHours().toString().padStart(2, '0')}:${endDt.getMinutes().toString().padStart(2, '0')}`;
+        } else if (tipo === 'dia') {
+            const fecha = document.querySelector('.res-day-only').value;
+            if (!fecha) { console.groupEnd(); return showToast('Seleccioná un día'); }
+            inicio = `${fecha} 00:00`;
+            const now = new Date();
+            const startDt = new Date(inicio.replace(/-/g, "/"));
+            if ((startDt - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
+            fin = `${fecha} 23:59`;
+        } else {
+            const periods = { 'semana': 7, 'quincena': 15, 'mes': 30 };
+            const periodClasses = { 'semana': '.res-week-start', 'quincena': '.res-fortnight-start', 'mes': '.res-month-start' };
+            if (periods[tipo]) {
+                const selector = periodClasses[tipo];
+                const fecha = document.querySelector(selector).value;
+                if (!fecha) { console.groupEnd(); return showToast('Seleccioná día de inicio'); }
+                inicio = `${fecha} 00:00`;
+                const now = new Date();
+                const startDtCheck = new Date(fecha.replace(/-/g, "/"));
+                if ((startDtCheck - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
+                const startDt = new Date(fecha.replace(/-/g, "/"));
+                const endDt = new Date(startDt.getTime() + (periods[tipo] - 1) * 24 * 60 * 60 * 1000);
+                fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} 23:59`;
+            } else {
+                inicio = document.querySelector('.res-start').value;
+                fin = document.querySelector('.res-end').value;
+                const now = new Date();
+                const startDt = new Date(inicio.replace(/-/g, "/"));
+                if ((startDt - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
+            }
         }
+    } catch (err) {
+        console.error("[!] Error procesando fechas:", err);
+        console.groupEnd();
+        return showToast('Error en el formato de fecha');
     }
 
     const resumenHtml = `
@@ -355,27 +375,28 @@ export async function createReservation(e) {
             </div>
         </div>`;
 
-    if (!await showConfirm('REVISÁ TU RESERVA', resumenHtml)) return;
+    if (!await showConfirm('REVISÁ TU RESERVA', resumenHtml)) { console.groupEnd(); return; }
 
     btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> PROCESANDO...';
     btn.disabled = true;
 
     const payload = { patente, fecha_inicio: inicio, fecha_fin: fin, sucursal_nombre: sucursal, tipo_estadia: tipo };
-    const res = editingReservaId ? 
+    const result = editingReservaId ? 
         await api.patch(`/user/reservations/${editingReservaId}`, payload) : 
         await api.post('/user/reservations', payload);
 
-    if (res.ok) {
+    if (result.ok) {
         showToast(editingReservaId ? '¡Reserva actualizada!' : '¡Reserva creada con éxito!');
         resetReservaForm();
         toggleReservaForm();
         if (window.showSection) window.showSection('reservas', document.querySelector('.nav-item[onclick*="reservas"]'));
         else loadReservations();
         if (window.loadProfile) window.loadProfile();
-    } else { showToast(res.error || 'Error al procesar reserva'); }
+    } else { showToast(result.error || 'Error al procesar reserva'); }
     
     btn.innerHTML = originalContent;
     btn.disabled = false;
+    console.groupEnd();
 }
 
 export async function loadReservations() {
