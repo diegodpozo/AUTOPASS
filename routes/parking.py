@@ -45,10 +45,32 @@ def normalize_dni(s: str):
 
 # --- ENDPOINTS DE ESTADO ---
 
-@router.get("/parking/branches", response_model=List[schemas.BranchResponse])
+@router.get("/parking/branches", response_model=List[schemas.BranchPublicResponse])
 def list_public_branches(db: Session = Depends(get_db)):
-    """Retorna la lista de sucursales activas para el mapa público."""
-    return db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
+    """Retorna la lista de sucursales activas con su ocupación real para el mapa público."""
+    branches = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
+    
+    res = []
+    for b in branches:
+        # Buscar aforo para esta sucursal
+        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == b.nombre).first()
+        
+        # Mapear a BranchPublicResponse manualmente para incluir datos de aforo
+        res.append({
+            "id": b.id,
+            "nombre": b.nombre,
+            "direccion": b.direccion,
+            "telefono": b.telefono,
+            "horario": b.horario,
+            "is_24h": b.is_24h,
+            "logo_url": b.logo_url,
+            "activa": b.activa,
+            "latitude": b.latitude,
+            "longitude": b.longitude,
+            "ocupacion_actual": aforo.ocupacion_actual if aforo else 0,
+            "capacidad_total": aforo.capacidad_total if aforo else 20
+        })
+    return res
 
 @router.get("/parking/status", response_model=schemas.ParkingStatus)
 def get_parking_status(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):

@@ -1,26 +1,19 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-02)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-03)
 
-### 🚀 Hitos Recientes (Junio 2026) - Versión 7.7.0 (Sucursal UI & Notification Hardening)
+### 🚀 Hitos Recientes (Junio 2026) - Versión 7.8.0 (Interactive Maps & Admin Power)
+- [x] **Gestión Administrativa Pro**:
+    *   Edición completa de información de usuarios y personal desde el dashboard.
+    *   Validación de seguridad RBAC para cambios de jerarquía y sucursal.
+    *   Normalización automática de identidad (DNI sin puntos/espacios).
+- [x] **Mapa de Disponibilidad Inteligente**:
+    *   **Heat Map en Vivo**: Indicadores de ocupación real (Dorado/Naranja/Rojo) basados en aforo.
+    *   **Geolocalización Asistida**: Botón de ubicación para encontrar la sucursal más cercana (Haversine).
+    *   **Reserva One-Click**: Redirección inteligente desde el mapa al perfil con precarga de datos.
+- [x] **Hardening de Sesión y Login**:
+    *   Normalización de emails (lowercase/strip) en el proceso de autenticación.
+    *   Corrección de bug de DNIs duplicados en la inicialización de base de datos.
 - [x] **Unificación Terminológica**:
     *   Migración total de "Sede" a **"Sucursal"** en toda la interfaz (Admin y Cliente) y documentación.
-- [x] **Rediseño de Notificaciones (Toasts)**:
-    *   Sistema **Glassmorphism** en la esquina superior derecha con iconos dinámicos y auto-cierre.
-- [x] **Gestión de Sucursales (Puntos AutoPass)**:
-    *   [x] CRUD completo con logos circulares y sin marcos.
-    *   [x] **Geolocalización Nativa**: Soporte para coordenadas (Lat/Lng) por sucursal.
-    *   [x] **Selector de Mapa Interactivo**: Picker Leaflet integrado en el alta de sucursales.
-    *   [x] **Buscador de Direcciones**: Integración con API Nominatim para autocompletado de coordenadas.
-    *   [x] Configuración de horario simplificada con selector de 24hs integrado.
-    *   [x] Carga dinámica de sucursales en formularios de reserva y promociones.
-- [x] **Mapa de Red Dinámico**:
-    *   [x] API pública para consumo de puntos geolocalizados.
-    *   [x] Renderizado automático de sucursales en la landing page con popups informativos.
-- [x] **Hardening de UX en Dashboard**:
-    *   [x] Eliminación de parpadeo (flicker) de contenido no autorizado mediante inyección de clase de rol inmediata.
-    *   [x] Simplificación de lista de usuarios (eliminación de colapsables innecesarios).
-    *   [x] Restricción visual total de Reservas y Monitoreo para el Admin Global.
-- [x] **RBAC Reforzado**:
-    *   Bloqueo automático de sucursal para Administradores Locales en la creación de promociones.
 
 ### 🚀 Hitos Previos (Junio 2026) - Versión 7.6.5 (Branch Management & UI Unification)
 - [x] **Gestión de Sucursales (Puntos AutoPass)**:

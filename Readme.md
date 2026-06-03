@@ -2,13 +2,11 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v7.7.0)
-- **Geolocalización Nativa**: Sucursales con coordenadas reales y selector de mapa interactivo.
-- **Buscador de Direcciones**: Integración con Nominatim API para geocoding simplificado.
-- **Unificación Terminológica**: Migración total a "Sucursal" en todo el ecosistema.
-- **Notificaciones Premium**: Sistema Glassmorphism en esquina superior derecha con iconos dinámicos.
-- **UX Hardening**: Protección anti-flicker de roles y simplificación de interfaces administrativas.
-
+## Últimas Actualizaciones (v7.8.0)
+- **Mapa Interactivo**: Disponibilidad en tiempo real (Heat Map), geolocalización y reserva directa.
+- **Gestión Pro**: Edición completa de usuarios y normalización de datos maestros.
+- **Estabilidad**: Corrección de errores críticos en login, inicialización de DB y formularios.
+- **Geolocalización**: Algoritmo de proximidad para búsqueda de sucursales cercanas.
 ## Arquitectura del Sistema
 
 El proyecto sigue una estructura modular diseñada para el escalamiento y la alta mantenibilidad:

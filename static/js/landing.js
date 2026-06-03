@@ -4,11 +4,15 @@ import * as land from './modules/landing.js';
  * BRIDGE: landing.js
  */
 
-window.irAReserva = function() {
+window.irAReserva = function(branchName = null) {
     if (localStorage.getItem('token')) {
-        window.location.href = '/perfil';
+        let url = '/perfil';
+        if (branchName) {
+            url += `?reserva_sucursal=${encodeURIComponent(branchName)}`;
+        }
+        window.location.href = url;
     } else {
-        if (window.openModal) window.openModal('registerModal');
+        if (window.openModal) window.openModal('loginModal');
     }
 };
 

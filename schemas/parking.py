@@ -40,3 +40,11 @@ class BranchResponse(BranchBase):
 
     class Config:
         from_attributes = True
+
+class BranchPublicResponse(BranchBase):
+    id: int
+    ocupacion_actual: int = 0
+    capacidad_total: int = 20
+
+    class Config:
+        from_attributes = True

@@ -42,7 +42,7 @@
 
 <!-- MODAL: AGREGAR SUCURSAL -->
 <div id="modal-add-branch" class="modal" style="display: none;">
-    <div class="modal-content glass-premium" style="max-width: 500px;">
+    <div class="modal-content glass-premium" style="max-width: 850px;"> <!-- Ensanchado para layout horizontal -->
         <div class="modal-header">
             <div class="flex-row items-center gap-10">
                 <div class="header-icon-box sm">
@@ -52,103 +52,103 @@
             </div>
             <span class="close-btn" onclick="closeModal('modal-add-branch')"><i class="fas fa-xmark"></i></span>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 20px;">
             <form id="form-add-branch">
                 <input type="hidden" id="branch-id-edit">
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nombre</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-tag"></i>
-                            <input type="text" id="branch-nombre" placeholder="Ej: Central" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Teléfono</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-phone"></i>
-                            <input type="text" id="branch-telefono" placeholder="0800-444-AUTO" required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Dirección</label>
-                    <div class="flex-row gap-10">
-                        <div class="input-with-icon" style="flex: 1;">
-                            <i class="fas fa-map-location-dot"></i>
-                            <input type="text" id="branch-direccion" placeholder="Ej: Av. del Libertador 1200, CABA" required>
-                        </div>
-                        <button type="button" class="btn btn-secondary sm" onclick="searchAddress()" style="min-width: 100px;">
-                            <i class="fas fa-search-location"></i> BUSCAR
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Latitud</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-location-crosshairs"></i>
-                            <input type="number" step="any" id="branch-latitude" placeholder="-34.65..." required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Longitud</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-location-crosshairs"></i>
-                            <input type="number" step="any" id="branch-longitude" placeholder="-58.62..." required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Posicioná la sucursal en el mapa</label>
-                    <div id="branch-map-picker" style="height: 180px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 5px;"></div>
-                    <p class="text-xs text-muted mt-5"><i class="fas fa-info-circle"></i> Hace click en el mapa para marcar la ubicación exacta.</p>
-                </div>
-
-                <div class="form-group">
-                    <label>Logo de la Sucursal</label>
-                    <div class="flex-row gap-20 items-center mt-10">
-                        <div id="branch-logo-preview" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05);">
-                            <img src="/static/images/logo.png" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;">
-                        </div>
-                        <div class="flex-col flex-1">
-                            <label for="branch-logo-file" class="btn btn-outline sm" style="width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; border-style: dashed; background: rgba(255,255,255,0.02);">
-                                <i class="fas fa-cloud-arrow-up"></i> SELECCIONAR LOGO
-                            </label>
-                            <input type="file" id="branch-logo-file" accept="image/*" style="display: none;" onchange="previewBranchLogo(this)">
-                            <p class="text-xs text-muted mt-5">Subí el logo desde tu PC (.png, .jpg, .webp)</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group p-15" style="background: rgba(197, 160, 89, 0.03); border: 1px solid rgba(197, 160, 89, 0.1); border-radius: 12px;">
-                    <label class="mb-15">Seleccionar Horario</label>
-                    <div class="flex-row items-center gap-15">
-                        <div id="horario-input-container" style="flex: 1;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <!-- COLUMNA IZQUIERDA: IDENTIDAD Y UBICACIÓN -->
+                    <div class="flex-col gap-15">
+                        <h4 class="text-dorado text-xs mb-5" style="letter-spacing: 1px;">DATOS PRINCIPALES</h4>
+                        
+                        <div class="form-group">
+                            <label>Nombre de Sucursal</label>
                             <div class="input-with-icon">
-                                <i class="fas fa-clock"></i>
-                                <input type="text" id="branch-horario" placeholder="07:00 a 23:00" style="padding-left: 40px; font-size: 0.85rem;">
+                                <i class="fas fa-tag"></i>
+                                <input type="text" id="branch-nombre" placeholder="Ej: Central" required>
                             </div>
                         </div>
-                        <div class="flex-row items-center gap-10" style="background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); min-width: 110px; justify-content: center;">
-                            <span class="text-xs font-bold" style="color: var(--dorado);">24 HS</span>
-                            <label class="switch-premium">
-                                <input type="checkbox" id="branch-is-24h" onchange="toggleBranchHorario(this)">
-                                <span class="slider-premium"></span>
-                            </label>
+
+                        <div class="form-group">
+                            <label>Teléfono de Contacto</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-phone"></i>
+                                <input type="text" id="branch-telefono" placeholder="0800-444-AUTO" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <div class="flex-row gap-10">
+                                <div class="input-with-icon" style="flex: 1;">
+                                    <i class="fas fa-map-location-dot"></i>
+                                    <input type="text" id="branch-direccion" placeholder="Ej: Av. del Libertador 1200, CABA" required>
+                                </div>
+                                <button type="button" class="btn btn-secondary sm" onclick="searchAddress()" style="min-width: 80px; padding: 0 10px;">
+                                    <i class="fas fa-search-location"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Campos ocultos de coordenadas -->
+                        <input type="number" step="any" id="branch-latitude" style="display:none;" required>
+                        <input type="number" step="any" id="branch-longitude" style="display:none;" required>
+
+                        <div class="form-group">
+                            <label>Mapa de Ubicación</label>
+                            <div id="branch-map-picker" style="height: 140px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);"></div>
                         </div>
                     </div>
-                    <p class="text-xs text-muted mt-8">Si seleccionás 24hs, el rango se anula automáticamente.</p>
+
+                    <!-- COLUMNA DERECHA: LOGO Y HORARIOS -->
+                    <div class="flex-col gap-15">
+                        <h4 class="text-dorado text-xs mb-5" style="letter-spacing: 1px;">IDENTIDAD Y HORARIOS</h4>
+
+                        <div class="form-group">
+                            <label>Logo de la Sucursal</label>
+                            <div class="flex-row gap-15 items-center mt-5" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div id="branch-logo-preview" style="width: 65px; height: 65px; border-radius: 50%; overflow: hidden; background: #000; border: 1px solid var(--dorado);">
+                                    <img src="/static/images/logo.png" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <div class="flex-col flex-1">
+                                    <label for="branch-logo-file" class="btn btn-outline sm" style="width: 100%; cursor: pointer; font-size: 0.7rem;">
+                                        <i class="fas fa-upload"></i> SUBIR IMAGEN
+                                    </label>
+                                    <input type="file" id="branch-logo-file" accept="image/*" style="display: none;" onchange="previewBranchLogo(this)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group p-15" style="background: rgba(197, 160, 89, 0.05); border: 1px solid rgba(197, 160, 89, 0.1); border-radius: 12px;">
+                            <label class="mb-10">Horario Operativo</label>
+                            <div class="flex-col gap-10">
+                                <div id="horario-input-container">
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-clock"></i>
+                                        <input type="text" id="branch-horario" placeholder="07:00 a 23:00" style="padding-left: 40px; font-size: 0.85rem;">
+                                    </div>
+                                </div>
+                                <div class="flex-row items-center justify-between" style="background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 10px;">
+                                    <span class="text-xs font-bold" style="color: var(--dorado);">¿ABIERTO 24 HS?</span>
+                                    <label class="switch-premium">
+                                        <input type="checkbox" id="branch-is-24h" onchange="toggleBranchHorario(this)">
+                                        <span class="slider-premium"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs text-muted" style="line-height: 1.4;">
+                            <i class="fas fa-info-circle text-dorado"></i> 
+                            Asegurate de que la ubicación en el mapa sea exacta para los reportes de geolocalización.
+                        </p>
+                    </div>
                 </div>
 
-                <div class="flex-row justify-center mt-30 gap-20">
-                    <button type="button" class="btn btn-outline" style="min-width: 140px;" onclick="closeModal('modal-add-branch')">CANCELAR</button>
-                    <button type="submit" class="btn btn-primary" style="min-width: 140px;">
-                        <i class="fas fa-save"></i> GUARDAR
+                <div class="flex-row justify-center mt-25 gap-20">
+                    <button type="button" class="btn btn-outline" style="min-width: 120px;" onclick="closeModal('modal-add-branch')">CANCELAR</button>
+                    <button type="submit" class="btn btn-primary" style="min-width: 160px;">
+                        <i class="fas fa-save"></i> GUARDAR SUCURSAL
                     </button>
                 </div>
             </form>
