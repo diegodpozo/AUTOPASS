@@ -39,6 +39,9 @@ window.deleteUserAdmin = admin.deleteUserAdmin;
 window.handleAdminCreateUser = admin.handleAdminCreateUser;
 window.openPasswordModal = admin.openPasswordModal;
 window.handleAdminChangePassword = admin.handleAdminChangePassword;
+window.openEditUserModal = admin.openEditUserModal;
+window.toggleEditBranchSelection = admin.toggleEditBranchSelection;
+window.handleAdminEditUser = admin.handleAdminEditUser;
 
 // Branches
 window.loadBranches = admin.loadBranches;

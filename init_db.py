@@ -72,29 +72,44 @@ def seed_data():
     try:
         # 1. Usuarios Administrativos
         users = [
+            # ADM CENTRAL / GLOBAL
             {
                 "email": "admin@autopass.com",
-                "nombre": "Admin",
-                "apellido": "Global",
-                "rol": "admin",
-                "password": "admin123",
-                "sucursal": None
+                "nombre": "Admin", "apellido": "Global",
+                "rol": "admin", "password": "admin123",
+                "dni": "00000001", "sucursal": None
+            },
+            # ADM SUCURSALES
+            {
+                "email": "admcastelar@autopass.com",
+                "nombre": "Pablo", "apellido": "Valente",
+                "rol": "local_admin", "password": "admin123",
+                "dni": "11232444", "sucursal": "AUTOPASS Castelar"
             },
             {
-                "email": "moron@autopass.com",
-                "nombre": "Admin",
-                "apellido": "Morón",
-                "rol": "local_admin",
-                "password": "admin123",
-                "sucursal": "AUTOPASS Morón"
+                "email": "admituzaingo@autopass.com",
+                "nombre": "Luis", "apellido": "Lopez",
+                "rol": "local_admin", "password": "admin123",
+                "dni": "33202942", "sucursal": "AUTOPASS Ituzaingó"
             },
             {
-                "email": "staff@autopass.com",
-                "nombre": "Staff",
-                "apellido": "Operativo",
-                "rol": "staff",
-                "password": "admin123",
-                "sucursal": "AUTOPASS Morón"
+                "email": "admmoron@autopass.com",
+                "nombre": "Hector", "apellido": "Marquez",
+                "rol": "local_admin", "password": "admin123",
+                "dni": "31222124", "sucursal": "AUTOPASS Morón"
+            },
+            # STAFF SUCURSALES
+            {
+                "email": "empcastelar@autopass.com",
+                "nombre": "Florencia", "apellido": "Crespo",
+                "rol": "staff", "password": "admin123",
+                "dni": "11221242", "sucursal": "AUTOPASS Castelar"
+            },
+            {
+                "email": "empituzaingo@autopass.com",
+                "nombre": "Rodrigo", "apellido": "Vera",
+                "rol": "staff", "password": "admin123",
+                "dni": "24221521", "sucursal": "AUTOPASS Ituzaingó"
             }
         ]
 
@@ -108,12 +123,17 @@ def seed_data():
                     email=u_data["email"],
                     password_hash=get_password_hash(u_data["password"]),
                     rol=u_data["rol"],
-                    dni="00000000",
+                    dni=u_data["dni"],
                     telefono="1100000000",
                     puntos_acumulados=0,
                     saldo=0.0,
                     sucursal=u_data["sucursal"]
                 ))
+            else:
+                # Actualizar DNI si tiene puntos para cumplir con validación
+                if "." in (exists.dni or ""):
+                    exists.dni = exists.dni.replace(".", "")
+                    print(f"[*] Normalizando DNI de {exists.email}")
         
         # 2. Configuración de Aforo Inicial (Global)
         aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == None).first()

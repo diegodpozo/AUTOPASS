@@ -192,6 +192,96 @@
     </div>
 </div>
 
+<!-- MODAL: EDITAR USUARIO -->
+<div id="modal-edit-user" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close-btn" onclick="closeModal('modal-edit-user')"><i class="fas fa-xmark"></i></span>
+        <h2 class="text-dorado">EDITAR USUARIO</h2>
+        
+        <form id="adminEditUserForm" onsubmit="handleAdminEditUser(event)">
+            <input type="hidden" id="edit-user-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="edit-user-nombre" placeholder="Nombre/s" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Apellido</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user-tag"></i>
+                        <input type="text" id="edit-user-apellido" placeholder="Apellido" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="edit-user-email" placeholder="ejemplo@correo.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>DNI</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" id="edit-user-dni" placeholder="12345678" maxlength="8" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-phone"></i>
+                        <input type="text" id="edit-user-tel" placeholder="11 2233 4455" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user-shield"></i>
+                        <select id="edit-user-rol" class="select-premium" style="width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px 15px 15px 45px; border-radius: 12px; outline: none; -webkit-appearance: none; cursor: pointer;" onchange="toggleEditBranchSelection()">
+                            <option value="user" style="background: #111;">Cliente</option>
+                            <option value="staff" style="background: #111;">Empleado</option>
+                            <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
+                            <option value="admin" style="background: #111;">Administrador General</option>
+                        </select>
+                        <i class="fas fa-chevron-down" style="position: absolute; right: 15px; left: auto; color: #666; font-size: 0.7rem; pointer-events: none;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SELECCIÓN DE SUCURSAL (Solo para Staff o Admin Local) -->
+            <div id="edit-branch-selection-row" class="form-row" style="display: none; margin-top: 10px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Sucursal Asignada</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-location-dot"></i>
+                        <select id="edit-user-sucursal" class="select-premium" style="width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px 15px 15px 45px; border-radius: 12px; outline: none; -webkit-appearance: none; cursor: pointer;">
+                            <option value="AUTOPASS Central" style="background: #111;">AUTOPASS Central</option>
+                            <option value="AUTOPASS Ituzaingó" style="background: #111;">AUTOPASS Ituzaingó</option>
+                            <option value="AUTOPASS Castelar" style="background: #111;">AUTOPASS Castelar</option>
+                            <option value="AUTOPASS Morón" style="background: #111;">AUTOPASS Morón</option>
+                        </select>
+                        <i class="fas fa-chevron-down" style="position: absolute; right: 15px; left: auto; color: #666; font-size: 0.7rem; pointer-events: none;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-row justify-center mt-20 gap-20">
+                <button type="button" class="btn btn-outline" style="padding: 12px 30px; font-size: 0.75rem; min-width: 140px;" onclick="closeModal('modal-edit-user')">CANCELAR</button>
+                <button type="submit" class="btn btn-primary" style="padding: 12px 30px; font-size: 0.75rem; min-width: 140px;"><i class="fas fa-save"></i> GUARDAR CAMBIOS</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- MODAL: CAMBIAR CONTRASEÑA (ADMIN) -->
 <div id="modal-change-password-admin" class="modal" style="display: none;">
     <div class="modal-content" style="max-width: 400px;">

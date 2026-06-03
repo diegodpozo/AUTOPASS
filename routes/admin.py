@@ -57,6 +57,38 @@ def create_user_admin(user_data: schemas.UserCreate, rol: str = "user", db: Sess
     db.commit()
     return {"status": "ok", "message": f"Usuario {new_user.nombre} creado con rol {rol} en {new_user.sucursal or 'Global'}"}
 
+@router.patch("/admin/users/{user_id}")
+def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+    """Actualiza la información de un usuario desde el panel administrativo."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Restricciones de seguridad por rol
+    if admin.rol != "admin":
+        if user.sucursal != admin.sucursal:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
+        if user_data.rol and user_data.rol == "admin":
+            raise HTTPException(status_code=403, detail="No podés asignar el rol de Administrador Global")
+        if user_data.sucursal and user_data.sucursal != admin.sucursal:
+             raise HTTPException(status_code=403, detail="No podés cambiar la sucursal de un usuario fuera de tu jurisdicción")
+
+    # Actualizar campos permitidos
+    if user_data.nombre: user.nombre = user_data.nombre
+    if user_data.apellido: user.apellido = user_data.apellido
+    if user_data.email: user.email = user_data.email.lower().strip()
+    if user_data.dni: user.dni = user_data.dni
+    if user_data.telefono: user.telefono = user_data.telefono
+    if user_data.sucursal is not None: user.sucursal = user_data.sucursal
+    if user_data.rol: user.rol = user_data.rol
+
+    try:
+        db.commit()
+        return {"status": "ok", "message": "Usuario actualizado correctamente"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Error al actualizar el usuario (posible email o DNI duplicado)")
+
 @router.post("/admin/users/{user_id}/role")
 def change_user_role(user_id: int, nuevo_rol: str, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """Solo el Admin Global puede cambiar roles de nivel jerárquico."""

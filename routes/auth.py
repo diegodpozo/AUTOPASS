@@ -92,7 +92,9 @@ def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Dep
 @router.post("/login")
 def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """Autentica al usuario y retorna un token JWT de acceso."""
-    user = authenticate_user(db, form_data.email, form_data.password)
+    # Normalizar email para evitar errores de tipeo o mayúsculas
+    email_normalized = form_data.email.lower().strip()
+    user = authenticate_user(db, email_normalized, form_data.password)
     if not user:
         raise HTTPException(
             status_code=401,
