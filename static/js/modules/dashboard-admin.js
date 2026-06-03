@@ -181,6 +181,9 @@ export function renderUserTable(filteredData = null) {
                 </td>
                 <td data-label="Acciones">
                     <div class="flex-row gap-5 user-actions justify-center">
+                        <button class="btn-icon-premium sm" onclick="openEditUserModal(${u.id})" title="Editar Información">
+                            <i class="fas fa-user-pen"></i>
+                        </button>
                         <button class="btn-icon-premium sm" onclick="openPasswordModal(${u.id}, '${u.nombre} ${u.apellido}')" title="Cambiar Contraseña">
                             <i class="fas fa-key"></i>
                         </button>
@@ -660,3 +663,91 @@ export async function handleAdminChangePassword(event) {
     }
     btn.disabled = false;
 }
+
+export function openEditUserModal(userId) {
+    const u = allUsersData.find(x => x.id === userId);
+    if (!u) return;
+
+    document.getElementById('edit-user-id').value = u.id;
+    document.getElementById('edit-user-nombre').value = u.nombre;
+    document.getElementById('edit-user-apellido').value = u.apellido;
+    document.getElementById('edit-user-email').value = u.email;
+    document.getElementById('edit-user-dni').value = u.dni;
+    document.getElementById('edit-user-tel').value = u.telefono || '';
+    
+    const roleSelect = document.getElementById('edit-user-rol');
+    const myRol = localStorage.getItem('rol');
+    const mySucursal = localStorage.getItem('sucursal') || '';
+
+    if (myRol === 'local_admin') {
+        // Restricción para admin local
+        roleSelect.innerHTML = `
+            <option value="staff" style="background: #111;">Empleado</option>
+            <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
+        `;
+        const branchSelect = document.getElementById('edit-user-sucursal');
+        if (branchSelect) {
+            branchSelect.innerHTML = `<option value="${mySucursal}">${mySucursal.toUpperCase()}</option>`;
+            branchSelect.value = mySucursal;
+            branchSelect.disabled = true;
+        }
+    } else {
+        // Admin Global
+        roleSelect.innerHTML = `
+            <option value="user" style="background: #111;">Cliente</option>
+            <option value="staff" style="background: #111;">Empleado</option>
+            <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
+            <option value="admin" style="background: #111;">Administrador General</option>
+        `;
+    }
+
+    roleSelect.value = u.rol;
+    toggleEditBranchSelection();
+    
+    if (u.sucursal) {
+        const branchSelect = document.getElementById('edit-user-sucursal');
+        if (branchSelect) branchSelect.value = u.sucursal;
+    }
+
+    if (window.openModal) window.openModal('modal-edit-user');
+}
+
+export function toggleEditBranchSelection() {
+    const rol = document.getElementById('edit-user-rol').value;
+    const branchRow = document.getElementById('edit-branch-selection-row');
+    const userRol = localStorage.getItem('rol');
+
+    if (branchRow) {
+        branchRow.style.display = (rol === 'staff' || rol === 'local_admin') ? 'block' : 'none';
+    }
+}
+
+export async function handleAdminEditUser(event) {
+    event.preventDefault();
+    const btn = event.target.querySelector('button[type="submit"]');
+    const userId = document.getElementById('edit-user-id').value;
+    const rol = document.getElementById('edit-user-rol').value;
+    const sucursal = (rol === 'staff' || rol === 'local_admin') ? document.getElementById('edit-user-sucursal').value : null;
+
+    const payload = {
+        nombre: document.getElementById('edit-user-nombre').value,
+        apellido: document.getElementById('edit-user-apellido').value,
+        email: document.getElementById('edit-user-email').value,
+        dni: document.getElementById('edit-user-dni').value,
+        telefono: document.getElementById('edit-user-tel').value,
+        rol: rol,
+        sucursal: sucursal
+    };
+
+    btn.disabled = true;
+    const res = await api.patch(`/admin/users/${userId}`, payload);
+    if (res && res.ok) {
+        showToast('Información de usuario actualizada.');
+        if (window.closeModal) window.closeModal('modal-edit-user');
+        if (window.loadUsers) window.loadUsers(); 
+    } else {
+        showToast(`Error: ${res?.error || 'Desconocido'}`);
+    }
+    btn.disabled = false;
+}
+

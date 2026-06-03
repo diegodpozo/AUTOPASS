@@ -34,6 +34,15 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     direccion: Optional[str] = None
 
+class UserAdminUpdate(BaseModel):
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    email: Optional[str] = None
+    dni: Optional[str] = None
+    telefono: Optional[str] = None
+    sucursal: Optional[str] = None
+    rol: Optional[str] = None
+
 class UserCreate(UserBase):
     password: str
 

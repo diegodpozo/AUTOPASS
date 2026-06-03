@@ -1,5 +1,5 @@
 from .user import (
-    UserBase, UserUpdate, UserCreate, ChangePassword, UserLogin, 
+    UserBase, UserUpdate, UserAdminUpdate, UserCreate, ChangePassword, UserLogin, 
     RechargeBalance, UserPasswordChange, PromotionResponse, PromotionCreate
 )
 from .parking import PlateValidation, QRValidation, AccessResponse, ParkingStatus, BranchCreate, BranchResponse
