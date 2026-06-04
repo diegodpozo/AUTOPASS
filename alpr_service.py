@@ -25,13 +25,14 @@ GATE_TYPE = os.getenv("GATE_TYPE", "entrada").lower()
 GATE_ID = os.getenv("GATE_ID", "ENTRADA_PRINCIPAL" if GATE_TYPE == "entrada" else "SALIDA_PRINCIPAL")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-# Parámetros de Calidad y Consenso
-COOLDOWN_SECONDS = 12
-CONSENSUS_WINDOW = 6  # Número de frames para votar
-MIN_CONFIDENCE_VOTES = 3 # Votos mínimos para validar una patente
-OCR_INTERVAL = 0.3    # Intervalo entre escaneos de OCR (segundos)
+# Parámetros de Calidad y Consenso (Cargados desde .env)
+COOLDOWN_SECONDS = int(os.getenv("ALPR_COOLDOWN", 12))
+CONSENSUS_WINDOW = int(os.getenv("ALPR_CONSENSUS_WINDOW", 6))
+MIN_CONFIDENCE_VOTES = int(os.getenv("ALPR_MIN_CONFIDENCE", 3))
+OCR_INTERVAL = float(os.getenv("ALPR_OCR_INTERVAL", 0.3))
 
 print(f"[*] Nodo ALPR Iniciado: {GATE_ID} ({GATE_TYPE.upper()})")
+print(f"[*] Config IA: Cooldown={COOLDOWN_SECONDS}s, Ventana={CONSENSUS_WINDOW}, Votos Min={MIN_CONFIDENCE_VOTES}, Intervalo={OCR_INTERVAL}s")
 
 class ALPREngine:
     def __init__(self):

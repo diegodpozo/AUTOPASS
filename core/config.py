@@ -7,6 +7,12 @@ class Settings:
     PROJECT_NAME: str = "AUTOPASS Professional"
     VERSION: str = "4.5.0"
     
+    # Contacto
+    CONTACT_SUPPORT: str = "soporte@autopass.com.ar"
+    CONTACT_EXPANSION: str = "expansion@autopass.com.ar"
+    CONTACT_PRIVACY: str = "privacidad@autopass.com.ar"
+    CONTACT_INFO: str = "info@autopass.com.ar"
+    
     # Seguridad
     SECRET_KEY: str = os.getenv("SECRET_KEY", "tu_super_secreto_para_produccion")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
@@ -32,7 +38,13 @@ class Settings:
     MQTT_TOPIC_ENTRADA: str = os.getenv("MQTT_TOPIC_ENTRADA", "parking/barrera/entrada/control")
     MQTT_TOPIC_SALIDA: str = os.getenv("MQTT_TOPIC_SALIDA", "parking/barrera/salida/control")
     
-    # ALPR
-    IMAGE_DIR: str = "captured_images"
+    # Tarifas Fallback
+    DEFAULT_HOURLY_RATE: float = 1500.0
+    DEFAULT_BASE_RATE: float = 1000.0
+    
+    # Rutas de Assets
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    LOGO_PATH: str = os.path.join(BASE_DIR, "static", "images", "logo.png")
+    IMAGE_DIR: str = os.getenv("IMAGE_DIR", "captured_images")
 
 settings = Settings()

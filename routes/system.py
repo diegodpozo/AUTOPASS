@@ -114,8 +114,8 @@ def get_capture(log_id: int, db: Session = Depends(get_db), staff: models.User =
         if os.path.exists(full_path):
             return FileResponse(full_path)
             
-    # Fallback para demo
-    fallback_dir = "captured_images/INICIO"
+    # Fallback para demo (usando imágenes de static para evitar duplicidad)
+    fallback_dir = os.path.join("static", "images", "inicio")
     if os.path.exists(fallback_dir):
         files = os.listdir(fallback_dir)
         if files:

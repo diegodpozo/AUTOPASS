@@ -5,12 +5,13 @@
         <p>¿Qué planes tenés para hoy? Gestioná tu estacionamiento de forma rápida.</p>
     </div>
 
-    <div class="profile-main-grid">
-        <!-- ACCIONES RÁPIDAS Y RESERVA -->
-        <div class="grid-col">
+    <div class="portal-home-grid">
+        <!-- LADO IZQUIERDO: ACCIONES RÁPIDAS Y RESERVA -->
+        <div class="grid-col booking-side">
             <div class="card reserva-trigger-card" onclick="toggleReservaForm()">
                 <div class="reserva-trigger-content">
-                    <div class="flex-col gap-5">
+                    <div class="flex-row items-center gap-15">
+                        <i class="fas fa-calendar-check" style="font-size: 1.4rem;"></i>
                         <h2 class="trigger-title">RESERVAR AHORA</h2>
                     </div>
                     <i id="reserva-form-arrow" class="fas fa-chevron-down"></i>
@@ -18,6 +19,7 @@
             </div>
 
             <div id="reserva-form-container">
+                <!-- (Contenido del formulario de reserva ...) -->
                 <div class="modern-reservation-card">
                     <div class="card-header-premium">
                         <div class="header-icon" style="color: var(--dorado);"><i class="fas fa-calendar-plus"></i></div>
@@ -181,6 +183,7 @@
                 </div>
             </div>
 
+            <!-- Botones de Utilidad Secundaria -->
             <div class="quick-actions-grid mt-20">
                 <div class="action-btn-premium" onclick="openRechargeModal()">
                     <i class="fas fa-wallet"></i>
@@ -190,41 +193,18 @@
                     <i class="fas fa-gift"></i>
                     <span>Beneficios</span>
                 </div>
-                <div class="action-btn-premium" onclick="showSection('vehiculos', document.querySelector('.nav-item[onclick*=\'vehiculos\']'))">
-                    <i class="fas fa-car-side"></i>
-                    <span>Mis Autos</span>
-                </div>
-                <div class="action-btn-premium" onclick="showToast('Ubicación de sucursales próximamente...')">
-                    <i class="fas fa-map-location-dot"></i>
-                    <span>Mapa Sucursales</span>
-                </div>
             </div>
         </div>
 
-        <!-- ESTADÍSTICAS Y PROGRESO -->
-        <div class="grid-col">
-            <!-- PROGRESO DE PUNTOS -->
-            <div class="points-progress-card">
-                <div class="progress-header">
-                    <span class="progress-title">Mi Progreso</span>
-                    <span class="progress-target" id="points-next-reward">Prox: 500 pts</span>
+        <!-- LADO DERECHO: MAPA INTERACTIVO -->
+        <div class="grid-col map-and-stats-side">
+            <div class="card portal-map-card">
+                <div class="map-hint-floating">
+                    <span class="hint-pulse"></span>
+                    <span class="hint-text">¡Estacionamientos cerca!</span>
                 </div>
-                <div class="progress-bar-container">
-                    <div id="points-progress-bar" class="progress-bar-fill"></div>
-                </div>
-                <p class="progress-footer-text" id="points-progress-text">
-                    ¡Estás muy cerca de tu próximo beneficio AutoPass!
-                </p>
-            </div>
-
-            <div class="grid-stats-compact">
-                <div class="stat-card">
-                    <div class="label">Vehículos Vinculados</div>
-                    <div class="value" id="stat-vehicles">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">Reservas Activas</div>
-                    <div class="value" id="stat-reservations">0</div>
+                <div id="portal-map" class="portal-map-container">
+                    <!-- Leaflet renderiza aquí -->
                 </div>
             </div>
         </div>

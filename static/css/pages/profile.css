@@ -2325,5 +2325,145 @@
     font-size: 1.1rem;
 }
 
-.pts-amount.pos { color: #10b981; }
-.pts-amount.neg { color: #ef4444; }
+/* --- PORTAL HOME: MAP INTEGRATION --- */
+.portal-home-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 50/50 para que el mapa tenga buen tamaño */
+    gap: 30px;
+    align-items: start;
+    margin-top: 30px;
+}
+
+.portal-map-card {
+    background: #0a0a0a;
+    border: 1px solid rgba(197, 160, 89, 0.15);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    position: relative; /* Para el hint flotante */
+}
+
+.map-hint-floating {
+    position: absolute;
+    top: 30px; /* Ajuste específico para perfil solicitado: 30px */
+    right: 95px; /* Movido más a la izquierda (antes 70px) */
+    height: 34px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 0 15px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(197, 160, 89, 0.4);
+    pointer-events: none;
+    animation: fadeInSlide 1s ease forwards;
+}
+
+.leaflet-control-geolocation {
+    margin-top: 6px !important; /* Mantenemos el botón en su posición elevada */
+}
+
+.leaflet-control-geolocation button {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900 !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.hint-text {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--dorado);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.hint-pulse {
+    width: 8px;
+    height: 8px;
+    background: var(--dorado);
+    border-radius: 50%;
+    position: relative;
+}
+
+.hint-pulse::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: var(--dorado);
+    border-radius: 50%;
+    animation: hintPulseAnim 2s infinite;
+}
+
+@keyframes hintPulseAnim {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.portal-map-container {
+    height: 400px;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+}
+
+/* ESTILOS PREMIUM PARA POPUPS DE LEAFLET (PERFIL) */
+.leaflet-popup-content-wrapper {
+    background: #0a0a0a !important;
+    color: #fff !important;
+    border-radius: 18px !important;
+    padding: 0 !important;
+    border: 1px solid rgba(197, 160, 89, 0.3) !important;
+    box-shadow: 0 15px 45px rgba(0,0,0,0.6) !important;
+}
+
+.leaflet-popup-content {
+    margin: 0 !important;
+    width: auto !important;
+}
+
+.leaflet-popup-tip {
+    background: #0a0a0a !important;
+    border: 1px solid rgba(197, 160, 89, 0.3) !important;
+}
+
+.leaflet-popup-close-button {
+    color: #888 !important;
+    padding: 10px !important;
+    font-size: 1.2rem !important;
+    transition: 0.3s !important;
+}
+
+.leaflet-popup-close-button:hover {
+    color: var(--dorado) !important;
+    background: transparent !important;
+}
+
+.map-and-stats-side {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+@media (max-width: 1200px) {
+    .portal-home-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .portal-map-container {
+        height: 300px;
+    }
+}
