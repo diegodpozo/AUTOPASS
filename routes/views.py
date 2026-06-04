@@ -4,9 +4,13 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import models
 from core.database import get_db
+from core.config import settings
 
 router = APIRouter(tags=["Frontend Views"])
 templates = Jinja2Templates(directory="templates")
+
+# Inyectar configuraciones globales a todos los templates
+templates.env.globals["settings"] = settings
 
 @router.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):

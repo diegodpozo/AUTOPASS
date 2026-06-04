@@ -17,16 +17,18 @@ export function initBranchMap() {
     const mapEl = document.getElementById('branch-map-picker');
     if (!mapEl || branchMap || !window.L) return;
 
-    // Coordenadas iniciales (Buenos Aires / Morón)
-    const initialCoords = [-34.6508, -58.6228];
+    // Coordenadas iniciales (Buenos Aires)
+    const initialCoords = [-34.5888, -58.3900];
     branchMap = L.map('branch-map-picker').setView(initialCoords, 13);
 
+    // Tiles Premium (Dark Matter)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap',
         subdomains: 'abcd',
         maxZoom: 20
     }).addTo(branchMap);
 
+    // Click para ubicar manualmente
     branchMap.on('click', function(e) {
         updateBranchMarker(e.latlng.lat, e.latlng.lng);
     });

@@ -3,6 +3,8 @@ import math
 from sqlalchemy.orm import Session
 import models
 
+from core.config import settings
+
 # --- SERVICIO DE FACTURACIÓN Y PUNTOS ---
 
 class BillingService:
@@ -31,7 +33,7 @@ class BillingService:
                 models.Settings.sucursal == None
             ).first()
             
-        return float(setting.valor) if setting else 1000.0
+        return float(setting.valor) if setting else settings.DEFAULT_BASE_RATE
 
     @staticmethod
     def get_hourly_rate(db: Session, sucursal: str = None) -> float:
@@ -47,7 +49,7 @@ class BillingService:
                 models.Settings.sucursal == None
             ).first()
             
-        return float(setting.valor) if setting else 1500.0
+        return float(setting.valor) if setting else settings.DEFAULT_HOURLY_RATE
 
     @staticmethod
     def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None) -> float:
