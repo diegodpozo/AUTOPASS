@@ -28,6 +28,7 @@ def validate_plate(data: schemas.PlateValidation, db: Session = Depends(get_db),
         return {"status": "denied", "message": "El vehículo ya figura dentro de esta sede"}
     
     now = datetime.datetime.now()
+    now_str = now.isoformat()
     img_name = None
     if data.image_base64:
         img_name = f"{p}_{now.strftime('%H%M%S')}.jpg"
@@ -35,9 +36,13 @@ def validate_plate(data: schemas.PlateValidation, db: Session = Depends(get_db),
         with open(os.path.join(settings.IMAGE_DIR, img_name), "wb") as f: 
             f.write(base64.b64decode(data.image_base64))
             
+    # Buscamos reserva pagada que esté en el rango de tiempo actual
     reserva = db.query(models.Reservation).filter(
         models.Reservation.patente == p, 
-        models.Reservation.estado_reserva == "Pendiente"
+        models.Reservation.estado_pago == "Pagado",
+        models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+        models.Reservation.fecha_inicio <= now_str,
+        models.Reservation.fecha_fin >= now_str
     ).filter(
         (models.Reservation.sucursal_nombre == sucursal) | (models.Reservation.sucursal_nombre == None)
     ).first()
@@ -49,11 +54,14 @@ def validate_plate(data: schemas.PlateValidation, db: Session = Depends(get_db),
     
     if reserva or aforo.ocupacion_actual < aforo.capacidad_total:
         aforo.ocupacion_actual += 1
-        if reserva: reserva.estado_reserva = "Activa"
+        # Si es la primera vez que entra, marcamos como Activa
+        if reserva and reserva.estado_reserva == "Pendiente": 
+            reserva.estado_reserva = "Activa"
+            
         db.add(models.AccessLog(
             patente_detectada=p, 
             tipo_evento="ENTRADA", 
-            fecha_hora=now.isoformat(), 
+            fecha_hora=now_str, 
             imagen_path=img_name, 
             reserva_id=reserva.id if reserva else None,
             sucursal=sucursal
@@ -92,7 +100,8 @@ def exit_plate(data: schemas.PlateValidation, db: Session = Depends(get_db), req
     if aforo and aforo.ocupacion_actual > 0: aforo.ocupacion_actual -= 1
         
     now = datetime.datetime.now()
-    if ultimo.reservation: ultimo.reservation.estado_reserva = "Completada"
+    # No marcamos como completada aquí para permitir re-ingresos dentro del período de reserva.
+    # El estado "Completada" se asignará automáticamente por el sistema cuando expire el tiempo.
     db.add(models.AccessLog(patente_detectada=p, tipo_evento="SALIDA", fecha_hora=now.isoformat(), pago_confirmado=True, sucursal=sucursal))
     db.commit()
     
@@ -135,12 +144,24 @@ def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), reque
         gate_id = data.gate_id.upper() if data.gate_id else "ENTRADA"
         is_entry = "ENTRADA" in gate_id
         
+        # Verificar estado real en el predio
+        ultimo = db.query(models.AccessLog).filter(
+            models.AccessLog.patente_detectada == reserva.patente,
+            models.AccessLog.sucursal == sucursal
+        ).order_by(models.AccessLog.id.desc()).first()
+
         if is_entry:
-            if reserva.estado_reserva == "Activa":
+            if ultimo and ultimo.tipo_evento == "ENTRADA":
                 return {"status": "denied", "message": "El vehículo ya se encuentra dentro de esta sede"}
-            if reserva.estado_reserva == "Completada":
-                 return {"status": "denied", "message": "Esta reserva ya fue utilizada y completada"}
             
+            if reserva.estado_reserva == "Completada":
+                 return {"status": "denied", "message": "Esta reserva ya expiró"}
+            
+            # Verificar ventana de tiempo
+            now_str = now.isoformat()
+            if reserva.fecha_inicio > now_str or reserva.fecha_fin < now_str:
+                return {"status": "denied", "message": "La reserva no está vigente en este horario"}
+
             aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
             if not aforo:
                 aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0)
@@ -150,7 +171,9 @@ def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), reque
                 return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
 
             aforo.ocupacion_actual += 1
-            reserva.estado_reserva = "Activa"
+            if reserva.estado_reserva == "Pendiente":
+                reserva.estado_reserva = "Activa"
+
             db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="ENTRADA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True, sucursal=sucursal))
             db.commit()
             
@@ -159,12 +182,13 @@ def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), reque
                 
             return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido en {sucursal or 'Global'}. Bienvenido {reserva.patente}"}
         else:
-            if reserva.estado_reserva != "Activa":
-                return {"status": "error", "message": "No se registra un ingreso activo para esta reserva"}
+            if not ultimo or ultimo.tipo_evento != "ENTRADA":
+                return {"status": "error", "message": "No se registra un ingreso activo para esta patente"}
                 
             aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
             if aforo and aforo.ocupacion_actual > 0: aforo.ocupacion_actual -= 1
-            reserva.estado_reserva = "Completada"
+            
+            # No marcamos como completada aquí para permitir re-ingresos
             db.add(models.AccessLog(patente_detectada=reserva.patente, tipo_evento="SALIDA", fecha_hora=now.isoformat(), reserva_id=reserva.id, pago_confirmado=True, sucursal=sucursal))
             db.commit()
             

@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm } from './utils.js';
+import { showToast, showConfirm, formatDate } from './utils.js';
 
 /**
  * DASHBOARD ADMIN MODULE
@@ -410,9 +410,56 @@ export async function resetSys() {
     } else showToast(res?.error || 'Error');
 }
 
-export function exportFinanceData() {
-    showToast('Exportando reporte...');
-    setTimeout(() => showToast('Reporte descargado correctamente.'), 1500);
+export async function exportFinanceData() {
+    const period = document.getElementById('fin-period')?.value || 'month';
+    showToast('Generando reporte...');
+    
+    const res = await api.get(`/reports/payment-history?period=${period}&limit=0`);
+    if (!res || !res.ok) {
+        showToast('Error al obtener datos para exportar');
+        return;
+    }
+    
+    const data = res.data;
+    if (data.length === 0) {
+        showToast('No hay transacciones para exportar en este período');
+        return;
+    }
+    
+    // Generar CSV
+    const headers = ['Fecha y Hora', 'Vehículo / Patente', 'Monto Abonado', 'Método de Pago', 'Estado/Tipo'];
+    const rows = data.map(p => {
+        const dateStr = formatDate(p.fecha_pago);
+        const amount = p.costo_estadia;
+        const method = (p.tipo === 'Reserva' || p.tipo === 'Reembolso') ? 'MERCADO PAGO / ABONO' : 'SISTEMA DIGITAL';
+        const type = p.tipo;
+        return [
+            `"${dateStr}"`,
+            `"${p.patente_detectada}"`,
+            amount,
+            `"${method}"`,
+            `"${type}"`
+        ];
+    });
+    
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    
+    // Crear y descargar archivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    
+    const branchName = localStorage.getItem('sucursal') || 'global';
+    const cleanBranch = branchName.replace('AUTOPASS ', '').toLowerCase().replace(/\s+/g, '_');
+    link.setAttribute("download", `reporte_financiero_${cleanBranch}_${period}_${new Date().toISOString().split('T')[0]}.csv`);
+    
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Reporte descargado correctamente.');
 }
 
 export async function deleteUserAdmin(id) {

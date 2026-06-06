@@ -36,7 +36,7 @@ class ReservationService:
 
     @staticmethod
     def auto_finalize_reservations(db: Session, user_id: int):
-        """Marca como completadas las reservas cuyo tiempo de estadía ya expiró."""
+        """Marca como completadas las reservas de un usuario cuyo tiempo de estadía ya expiró."""
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         past_reservations = ReservationRepository.get_past_reservations(db, user_id, now_str)
         
@@ -44,6 +44,24 @@ class ReservationService:
             for r in past_reservations:
                 r.estado_reserva = "Completada"
             db.commit()
+
+    @staticmethod
+    def auto_finalize_all_reservations(db: Session):
+        """Marca como completadas TODAS las reservas vencidas del sistema."""
+        now_str = datetime.datetime.now().isoformat()
+        # Buscamos reservas que estén Pendientes o Activas pero cuya fecha_fin ya pasó
+        vencidas = db.query(models.Reservation).filter(
+            models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+            models.Reservation.fecha_fin < now_str
+        ).all()
+        
+        if vencidas:
+            print(f"[SYSTEM] Finalizando {len(vencidas)} reservas vencidas.")
+            for r in vencidas:
+                r.estado_reserva = "Completada"
+            db.commit()
+            return len(vencidas)
+        return 0
 
     @staticmethod
     def pay_reservation(db: Session, user: models.User, res_id: int):
@@ -63,6 +81,7 @@ class ReservationService:
         user.saldo -= res.monto_total
         res.estado_pago = "Pagado"
         res.estado_reserva = "Activa"
+        res.fecha_pago = datetime.datetime.now().isoformat()
         
         # Acreditación de puntos por lealtad
         puntos_ganados = BillingService.calculate_points(res.monto_total)
@@ -92,8 +111,54 @@ class ReservationService:
         return {"status": "ok", "message": "Reserva abonada con éxito", "puntos_ganados": puntos_ganados}
 
     @staticmethod
+    def simulate_refund(db: Session, res: models.Reservation):
+        """Calcula el reembolso potencial sin ejecutar la cancelación."""
+        # 1. VERIFICACIÓN DE PRESENCIA FÍSICA
+        vinc_log = db.query(models.AccessLog).filter(
+            models.AccessLog.patente_detectada == res.patente,
+            models.AccessLog.tipo_evento == "ENTRADA",
+            models.AccessLog.sucursal == res.sucursal_nombre
+        ).order_by(models.AccessLog.id.desc()).first()
+
+        es_presencial = False
+        if vinc_log:
+            salida = db.query(models.AccessLog).filter(
+                models.AccessLog.patente_detectada == res.patente,
+                models.AccessLog.tipo_evento == "SALIDA",
+                models.AccessLog.fecha_hora > vinc_log.fecha_hora
+            ).first()
+            if not salida:
+                es_presencial = True
+
+        if es_presencial:
+            return {"reembolso": 0.0, "error": "Vehículo en el predio"}
+
+        # 2. CÁLCULO DE REEMBOLSO
+        monto_a_reembolsar = 0.0
+        if res.estado_pago == "Pagado":
+            now = datetime.datetime.now()
+            start = datetime.datetime.fromisoformat(res.fecha_inicio)
+            end = datetime.datetime.fromisoformat(res.fecha_fin)
+
+            if now < start:
+                monto_a_reembolsar = res.monto_total
+            elif now > end:
+                monto_a_reembolsar = 0.0
+            else:
+                if res.tipo_estadia == "hora" and vinc_log:
+                    monto_a_reembolsar = 0.0
+                else:
+                    duracion_total = (end - start).total_seconds()
+                    tiempo_restante = (end - now).total_seconds()
+                    if duracion_total > 0:
+                        porcentaje_restante = max(0, tiempo_restante / duracion_total)
+                        monto_a_reembolsar = round(res.monto_total * porcentaje_restante, 2)
+        
+        return {"reembolso": monto_a_reembolsar, "error": None}
+
+    @staticmethod
     def cancel_reservation(db: Session, user: models.User, res_id: int):
-        """Cancela una reserva activa y gestiona reembolsos si correspondiera."""
+        """Cancela una reserva y gestiona reembolsos proporcionales."""
         res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
         
         if not res: 
@@ -102,29 +167,37 @@ class ReservationService:
         if res.estado_reserva == "Cancelada":
             return {"status": "ok", "message": "La reserva ya se encuentra cancelada"}
             
-        # Si no se pasó un usuario (ej: llamado desde admin), usamos el dueño de la reserva
-        target_user = user or res.user
+        # Usamos la simulación para obtener el monto
+        sim = ReservationService.simulate_refund(db, res)
+        if sim["error"]:
+            raise HTTPException(status_code=400, detail=sim["error"])
+        
+        monto_a_reembolsar = sim["reembolso"]
 
-        # Restricción: Los clientes no pueden cancelar reservas que ya están en curso (Activa)
-        if res.estado_reserva == "Activa" and user and user.rol == "user":
-            raise HTTPException(status_code=400, detail="No podés cancelar una reserva que ya está en curso. Contactá a soporte.")
+        # 3. EJECUCIÓN DEL REEMBOLSO
+        target_user = user or res.user
+        if monto_a_reembolsar > 0 and target_user:
+            target_user.saldo += monto_a_reembolsar
             
-        # Proceso de reembolso para reservas prepagas
-        if res.estado_pago == "Pagado" and target_user:
-            target_user.saldo += res.monto_total
-            
-            # Ajuste de puntos acreditados
-            puntos_a_descontar = BillingService.calculate_points(res.monto_total)
-            target_user.puntos_acumulados -= puntos_a_descontar
+            # Ajuste de puntos (solo sobre lo reembolsado)
+            puntos_a_descontar = BillingService.calculate_points(monto_a_reembolsar)
+            target_user.puntos_acumulados = max(0, target_user.puntos_acumulados - puntos_a_descontar)
             
             db.add(models.PointsLog(
                 user_id=target_user.id,
                 cantidad=-puntos_a_descontar,
-                motivo=f"Cancelación de Reserva: {res.patente}",
+                motivo=f"Reembolso por Cancelación (Proporcional): {res.patente}",
                 fecha=datetime.datetime.now().isoformat()
             ))
-            
+
         res.estado_reserva = "Cancelada"
-        res.estado_pago = "Cancelado"
+        res.estado_pago = "Reembolsado" if monto_a_reembolsar > 0 else "Cancelada"
+        res.monto_reembolsado = float(monto_a_reembolsar)
+        
+        if monto_a_reembolsar > 0:
+            res.fecha_pago = datetime.datetime.now().isoformat()
+            
         db.commit()
-        return {"status": "ok", "message": "Reserva cancelada y saldo reembolsado"}
+        
+        msg = f"Reserva cancelada. Reembolso: ${monto_a_reembolsar}" if monto_a_reembolsar > 0 else "Reserva cancelada sin reembolso."
+        return {"status": "ok", "message": msg, "reembolso": monto_a_reembolsar}

@@ -12,6 +12,8 @@ class Reservation(Base):
     fecha_fin = Column(String)
     dias_semana = Column(String, nullable=True) # Almacenamiento serializado: "0,1,2" (0=Lunes...)
     monto_total = Column(Float)
+    monto_reembolsado = Column(Float, default=0.0)
+    fecha_pago = Column(String, nullable=True) # Fecha de la transacción (pago o reembolso)
     mp_preference_id = Column(String, nullable=True) # ID de integración con Mercado Pago
     estado_pago = Column(String, default="Pendiente")
     estado_reserva = Column(String, default="Pendiente")

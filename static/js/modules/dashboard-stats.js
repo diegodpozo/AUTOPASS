@@ -38,7 +38,19 @@ export async function loadRecentLogs() {
     const tbody = document.getElementById('live-logs');
     if (!tbody) return;
 
-    tbody.innerHTML = res.data.slice(0, 10).map(log => {
+    const logs = res.data;
+    
+    // Actualizar patentes en tiempo real (Cajas de cámara)
+    const lastEntry = logs.find(l => l.tipo_evento === 'ENTRADA');
+    const lastExit = logs.find(l => l.tipo_evento === 'SALIDA');
+
+    const plateEntryEl = document.getElementById('plate-entry');
+    const plateExitEl = document.getElementById('plate-exit');
+
+    if (plateEntryEl && lastEntry) plateEntryEl.innerText = lastEntry.patente_detectada;
+    if (plateExitEl && lastExit) plateExitEl.innerText = lastExit.patente_detectada;
+
+    tbody.innerHTML = logs.slice(0, 10).map(log => {
         const time = new Date(log.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
         const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-dorado';
         const statusBadge = log.pago_confirmado ? 
@@ -85,6 +97,7 @@ export async function loadOccupancy() {
                 <td data-label="Acciones" class="text-center">
                     <div class="flex-row gap-5 justify-center">
                         ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}')" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
+                        <button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}')" title="Cancelar estadía (Cortesía 15 min)"><i class="fas fa-times"></i></button>
                         <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}')" title="Registrar salida manual de vehículo"><i class="fas fa-door-open"></i></button>
                     </div>
                 </td>
@@ -95,4 +108,18 @@ export async function loadOccupancy() {
     const debtEl = document.getElementById('occ-stat-debt');
     if (countEl) countEl.innerText = data.length;
     if (debtEl) debtEl.innerText = `$${totalDebt.toLocaleString('es-AR')}`;
+}
+
+export async function cancelStay(plate) {
+    const { showConfirm, showToast } = await import('./utils.js');
+    if (!await showConfirm('Cancelar Estadía', `¿Confirmás la cancelación de la estadía para <b>${plate}</b>?<br><small>Se aplicará cortesía de 15 min si corresponde.</small>`)) return;
+
+    const res = await api.post(`/admin/cancel-stay?plate=${plate}`);
+    if (res.ok) {
+        showToast(res.data.message, 'success');
+        loadOccupancy();
+        loadLiveStats();
+    } else {
+        showToast(res.error, 'error');
+    }
 }

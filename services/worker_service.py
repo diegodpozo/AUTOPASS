@@ -13,13 +13,16 @@ class WorkerService:
 
     @staticmethod
     def _reservation_cleanup_worker():
-        """Hilo de fondo que limpia reservas impagas periódicamente."""
-        print("[SYSTEM] Limpiador de reservas automáticas iniciado.")
+        """Hilo de fondo que limpia y finaliza reservas periódicamente."""
+        print("[SYSTEM] Hilo de mantenimiento de reservas iniciado.")
         while True:
             try:
                 db = SessionLocal()
+                # 1. Cancelar impagas que nunca iniciaron
                 ReservationService.cleanup_overdue_reservations(db)
+                # 2. Finalizar (Completar) reservas cuyo tiempo ya expiró
+                ReservationService.auto_finalize_all_reservations(db)
                 db.close()
             except Exception as e:
-                print(f"[ERROR] En el limpiador de reservas: {e}")
+                print(f"[ERROR] En el trabajador de reservas: {e}")
             time.sleep(300) # Ejecutar cada 5 minutos

@@ -17,7 +17,7 @@ def migrate_db():
         "access_logs": [("sucursal", "VARCHAR")],
         "settings": [("sucursal", "VARCHAR")],
         "parking_aforo": [("sucursal", "VARCHAR")],
-        "reservations": [("sucursal_nombre", "VARCHAR"), ("sucursal_info", "VARCHAR"), ("dias_semana", "VARCHAR"), ("cliente_nombre", "VARCHAR")],
+        "reservations": [("sucursal_nombre", "VARCHAR"), ("sucursal_info", "VARCHAR"), ("dias_semana", "VARCHAR"), ("cliente_nombre", "VARCHAR"), ("monto_reembolsado", "FLOAT DEFAULT 0.0"), ("fecha_pago", "VARCHAR")],
         "parking_branches": [("latitude", "FLOAT"), ("longitude", "FLOAT"), ("logo_url", "VARCHAR"), ("activa", "BOOLEAN DEFAULT 1")]
     }
 

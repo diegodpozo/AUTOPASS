@@ -55,7 +55,7 @@ def startup_event():
 app.include_router(auth)
 app.include_router(parking)
 app.include_router(reports)
-app.include_router(system)
+app.include_router(system, prefix="/v1/system")
 app.include_router(admin)
 app.include_router(user)
 
