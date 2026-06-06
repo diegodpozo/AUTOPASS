@@ -195,41 +195,97 @@ window.showLogDetail = async (logId) => {
 };
 
 let revenueChart = null;
+let currentFinancePage = 1;
+const financeLimit = 15;
 
-window.loadFinanceData = async () => {
+window.loadFinanceData = async (resetPage = true) => {
+    if (resetPage) currentFinancePage = 1;
     const period = document.getElementById('fin-period')?.value || 'month';
     
-    // 1. Cargar Resumen (KPIs)
+    // 1. Cargar Resumen (KPIs) - Siempre cargamos el total del periodo
     const resSum = await api.get(`/reports/financial-summary?period=${period}`);
     if (resSum.ok) {
         const data = resSum.data;
         const elTotal = document.getElementById('fin-total');
+        const elRefund = document.getElementById('fin-refunded');
         const elCount = document.getElementById('fin-count');
         const elAvg = document.getElementById('fin-avg');
 
         if (elTotal) elTotal.innerText = `$${data.total_recaudado.toLocaleString()}`;
+        if (elRefund) elRefund.innerText = `$${data.total_reembolsado.toLocaleString()}`;
         if (elCount) elCount.innerText = data.cantidad_pagos;
         if (elAvg) elAvg.innerText = `$${data.ticket_promedio.toLocaleString()}`;
+
+        const elProy = document.getElementById('fin-proyectado');
+        if (elProy) elProy.innerText = `$${data.ingresos_proyectados.toLocaleString()}`;
+
+        const elCancel = document.getElementById('fin-cancel-rate');
+        if (elCancel) elCancel.innerText = `${data.tasa_cancelacion || 0}%`;
+
+        const elNoShow = document.getElementById('fin-noshow');
+        if (elNoShow) elNoShow.innerText = `$${(data.ingresos_incumplimiento || 0).toLocaleString()}`;
+
+        // Desglose por canal
+        const d = data.desglose;
+        if (d) {
+            document.getElementById('fin-stay-monto').innerText = `$${(d.estadias?.monto || 0).toLocaleString()}`;
+            document.getElementById('fin-stay-count').innerText = d.estadias?.cantidad || 0;
+            document.getElementById('fin-stay-avg').innerText = `$${(d.estadias?.promedio || 0).toLocaleString()}`;
+
+            document.getElementById('fin-res-monto').innerText = `$${(d.reservas?.monto || 0).toLocaleString()}`;
+            document.getElementById('fin-res-count').innerText = d.reservas?.cantidad || 0;
+            document.getElementById('fin-res-avg').innerText = `$${(d.reservas?.promedio || 0).toLocaleString()}`;
+        }
     }
 
-    // 2. Cargar Historial de Pagos
-    const resHist = await api.get(`/reports/payment-history?period=${period}`);
+    // 2. Cargar Historial de Pagos (PAGINADO)
+    const resHist = await api.get(`/reports/payment-history?period=${period}&page=${currentFinancePage}&limit=${financeLimit}`);
     if (resHist.ok) {
         const tbody = document.getElementById('payment-list');
         if (tbody) {
-            tbody.innerHTML = resHist.data.map(p => `
-                <tr>
+            tbody.innerHTML = resHist.data.map(p => {
+                const isRefund = p.tipo === 'Reembolso';
+                const rowClass = isRefund ? 'row-refund' : '';
+                const amountClass = isRefund ? 'text-danger' : 'text-secondary';
+                const badgeClass = isRefund ? 'badge-danger-light' : 'badge-success-light';
+                
+                return `
+                <tr class="${rowClass}">
                     <td>${utils.formatDate(p.fecha_pago)}</td>
-                    <td><span class="plate-style">${p.patente_detectada}</span></td>
-                    <td class="text-bold text-secondary">$${p.costo_estadia.toLocaleString()}</td>
-                    <td><span class="text-small">${p.tipo === 'Reserva' ? 'MERCADO PAGO / ABONO' : 'SISTEMA DIGITAL'}</span></td>
-                    <td><span class="badge-success-light">${p.tipo.toUpperCase()}</span></td>
+                    <td><span class="plate-style">${p.patente_detectada}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
+                    <td class="text-bold ${amountClass}">$${p.costo_estadia.toLocaleString()}</td>
+                    <td><span class="text-small">${p.tipo === 'Reserva' || p.tipo === 'Reembolso' ? 'MERCADO PAGO / ABONO' : 'SISTEMA DIGITAL'}</span></td>
+                    <td><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
                 </tr>
-            `).join('') || '<tr><td colspan="5" class="text-center py-20">No hay transacciones en este período.</td></tr>';
+            `}).join('') || '<tr><td colspan="5" class="text-center py-20">No hay transacciones en este período.</td></tr>';
         }
 
-        // 3. Renderizar Gráfico
-        renderRevenueChart(resHist.data, period);
+        // 3. Actualizar UI Paginación
+        const prevBtn = document.getElementById('prev-fin-btn');
+        const nextBtn = document.getElementById('next-fin-btn');
+        const pageInfo = document.getElementById('fin-page-info');
+
+        if (prevBtn) prevBtn.disabled = currentFinancePage === 1;
+        if (nextBtn) nextBtn.disabled = resHist.data.length < financeLimit;
+        if (pageInfo) pageInfo.innerText = `Página ${currentFinancePage}`;
+
+        // 4. Renderizar Gráfico con el total de transacciones (sin paginación) para mostrar la tendencia real
+        const resChart = await api.get(`/reports/payment-history?period=${period}&limit=0`);
+        if (resChart.ok) {
+            renderRevenueChart(resChart.data, period);
+        }
+    }
+};
+
+window.nextFinancePage = () => {
+    currentFinancePage++;
+    window.loadFinanceData(false);
+};
+
+window.prevFinancePage = () => {
+    if (currentFinancePage > 1) {
+        currentFinancePage--;
+        window.loadFinanceData(false);
     }
 };
 
@@ -401,6 +457,8 @@ window.payOccupancy = async (plate) => {
     }
     else utils.showToast(res.error);
 };
+
+window.cancelStay = stats.cancelStay;
 
 window.manualExit = async (plate) => {
     if (!await showConfirm('Salida Manual', `¿Registrar salida de ${plate}?`)) return;

@@ -48,17 +48,31 @@ def get_parking_status(db: Session = Depends(get_db), user: models.User = Depend
 
 @router.get("/parking/current-occupancy")
 def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
-    """Lista vehículos estacionados en la sede del usuario con deuda calculada."""
+    """Lista vehículos estacionados en la sede del usuario con deuda calculada. Optimizado para unicidad y orden."""
     sucursal = user.sucursal if user.rol != "admin" else None
     
-    q = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == "ENTRADA")
+    # 1. Obtenemos las entradas más recientes por patente en la sede
+    # Usamos una subconsulta para encontrar el ID máximo de ENTRADA por patente
+    from sqlalchemy import func
+    subq = db.query(
+        models.AccessLog.patente_detectada,
+        func.max(models.AccessLog.id).label("max_id")
+    ).filter(models.AccessLog.tipo_evento == "ENTRADA")
+    
     if sucursal:
-        q = q.filter(models.AccessLog.sucursal == sucursal)
+        subq = subq.filter(models.AccessLog.sucursal == sucursal)
+    
+    subq = subq.group_by(models.AccessLog.patente_detectada).subquery()
+    
+    # 2. Consultamos los detalles de esas entradas
+    entradas = db.query(models.AccessLog).join(
+        subq, models.AccessLog.id == subq.c.max_id
+    ).order_by(models.AccessLog.fecha_hora.desc()).all()
         
-    entradas = q.all()
     res = []
     for e in entradas:
-        tiene_salida = db.query(models.AccessLog).filter(
+        # 3. Verificamos si esa entrada específica ya tiene una salida posterior
+        tiene_salida = db.query(models.AccessLog.id).filter(
             models.AccessLog.patente_detectada == e.patente_detectada, 
             models.AccessLog.tipo_evento == "SALIDA", 
             models.AccessLog.fecha_hora > e.fecha_hora,
@@ -66,7 +80,8 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
         ).first()
         
         if not tiene_salida:
-            deuda = 0.0 if e.pago_confirmado else BillingService.calculate_debt(e.fecha_hora, db)
+            # Ahora pasamos la sucursal para que el cálculo de deuda sea exacto por sede
+            deuda = 0.0 if e.pago_confirmado else BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal)
             res.append({
                 "patente": e.patente_detectada, 
                 "ingreso": e.fecha_hora, 

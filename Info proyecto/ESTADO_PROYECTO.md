@@ -1,18 +1,26 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-04)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-05)
 
-### 🚀 Hitos Recientes (Junio 2026) - Versión 7.9.0 (UI Refinement & Asset Optimization)
-- [x] **Optimización de Assets y Estructura**:
-    *   Renombramiento de carpetas de recursos a minúsculas (`static/images/inicio`) para estandarización.
-    *   Consolidación de imágenes de fallback: el sistema ahora usa assets de `static` para registros sin captura real, eliminando duplicidad en `captured_images`.
-- [x] **Experiencia de Mapa Premium (v2.0)**:
-    *   **Popups Rediseñados**: Nueva estética Dark & Gold con bordes suavizados y botones de reserva integrados.
-    *   **Lógica de Ocupación Refinada**: Mensajes cualitativos dinámicos ("Alta disponibilidad", "Lugares limitados", "Sucursal Completa") sin exponer contadores técnicos.
-    *   **Limpieza de UI**: Eliminación del marcador default "AUTOPASS HQ" para un inicio de mapa más limpio enfocado en sucursales.
-    *   **Guía Visual**: Implementación de *hints* flotantes permanentes en el mapa de Perfil e Inicio para asistir al usuario.
-- [x] **Refactorización de Panel de Inicio**:
-    *   Restructuración completa de la pestaña "Inicio" del cliente para máxima simplicidad.
-    *   Eliminación de widgets secundarios (Mi Progreso, Contadores redundantes).
-    *   Nueva tarjeta de acción principal **"RESERVAR AHORA"** con icono descriptivo y acceso directo a utilidades financieras.
+### 🚀 Hitos Recientes (Junio 2026) - Versión 8.0.0 (Smart Finance & Flexible Cancellations)
+- [x] **Motor Financiero Pro 2.0**:
+    *   **Paginación SQL Nativa**: Refactorización de reportes usando `UNION ALL` y paginación en base de datos para escalabilidad masiva.
+    *   **Recaudación Neta**: Implementación de lógica contable que resta reembolsos y cancelaciones del total bruto.
+    *   **Trazabilidad Granular**: Adición de la columna `monto_reembolsado` y `fecha_pago` en la base de datos para auditoría exacta de devoluciones y transacciones.
+    *   **FIX: Reportes Financieros**: Corrección de la lógica de fechas para usar el momento de la transacción (`fecha_pago`) en lugar del inicio de reserva, garantizando precisión diaria.
+    *   **KPIs de Eficiencia**: Nuevas métricas de "Tasa de Cancelación" e "Incumplimiento de Reservas" para análisis de abandono.
+    *   **Ingresos Proyectados**: Cálculo en tiempo real de la deuda acumulada de vehículos actualmente en el predio.
+- [x] **Gestión de Accesos & Ocupación**:
+    *   **Cancelación de Estadía**: Nueva funcionalidad "Cancelar Estadía" con regla de **15 minutos de cortesía** (sin cargo) y validación de deuda excedida.
+    *   **Multi-Ingreso de Reservas**: Soporte para que reservas de largo plazo (Día, Semana, Mes) puedan entrar y salir múltiples veces durante su vigencia.
+    *   **Optimización de Ocupación**: Lista de vehículos estacionados ahora con unicidad de patente y orden cronológico (ingresos recientes primero).
+- [x] **Política de Cancelación Inteligente**:
+    *   **Reembolsos Proporcionales**: Sistema automático que devuelve el dinero exacto del tiempo no utilizado (para todos los tipos de estadía).
+    *   **Bloqueo de Seguridad**: Restricción técnica que impide cancelar reservas si el vehículo se encuentra físicamente dentro del estacionamiento.
+    *   **Ajuste de Fidelización**: Deducción prorrateada de puntos AutoPass en caso de reembolso.
+- [x] **UI de Transparencia Financiera**:
+    *   **Previsualización de Reembolso**: Modal de confirmación que muestra al usuario el monto exacto a recuperar antes de cancelar.
+    *   **Dashboard Expandido**: Nueva cuadrícula de 5 columnas con trazabilidad visual de reembolsos (filas en rojo con montos negativos).
+
+### 🚀 Hitos Previos (Junio 2026) - Versión 7.9.0 (UI Refinement & Asset Optimization)
 
 ### 🚀 Hitos Previos (Junio 2026) - Versión 7.8.5 (Deep Modularization & Clean Logic)
 - [x] **Arquitectura de Rutas Micro-Modular**:

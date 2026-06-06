@@ -79,3 +79,57 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
     db.add(models.AccessLog(patente_detectada=p, tipo_evento="SALIDA", fecha_hora=datetime.datetime.now().isoformat(), pago_confirmado=True, sucursal=sucursal))
     db.commit()
     return {"status": "ok", "message": f"Salida manual registrada en {sucursal or 'Global'}: {p}"}
+
+@router.post("/cancel-stay")
+def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    """Cancela una estadía actual. Si está dentro de los 15 min de cortesía, no cobra."""
+    from routes.parking import normalize_plate
+    p = normalize_plate(plate)
+    sucursal = staff.sucursal
+    
+    ultimo = db.query(models.AccessLog).filter(
+        models.AccessLog.patente_detectada == p,
+        models.AccessLog.sucursal == sucursal
+    ).order_by(models.AccessLog.id.desc()).first()
+    
+    if not ultimo or ultimo.tipo_evento != "ENTRADA":
+        raise HTTPException(status_code=400, detail="El vehículo no figura como ingresado")
+    
+    # Verificar cortesía (15 minutos)
+    entrada_dt = datetime.datetime.fromisoformat(ultimo.fecha_hora)
+    minutos_transcurridos = (datetime.datetime.now() - entrada_dt).total_seconds() / 60
+    
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+    if aforo and aforo.ocupacion_actual > 0:
+        aforo.ocupacion_actual -= 1
+    
+    if minutos_transcurridos <= 15:
+        # Cortesía: Salida sin cargo
+        db.add(models.AccessLog(
+            patente_detectada=p, 
+            tipo_evento="SALIDA", 
+            fecha_hora=datetime.datetime.now().isoformat(), 
+            pago_confirmado=True, 
+            costo_estadia=0.0,
+            sucursal=sucursal
+        ))
+        msg = f"Estadía cancelada (Cortesía: {int(minutos_transcurridos)} min). Sin cargo."
+    else:
+        # Excedió cortesía: Se debe cobrar
+        if not ultimo.pago_confirmado:
+            from services.billing_service import BillingService
+            monto = BillingService.calculate_debt(ultimo.fecha_hora, db, sucursal=sucursal)
+            raise HTTPException(status_code=402, detail=f"Excedió cortesía ({int(minutos_transcurridos)} min). Debe abonar ${monto}")
+        
+        # Si ya pagó, registramos salida normal
+        db.add(models.AccessLog(
+            patente_detectada=p, 
+            tipo_evento="SALIDA", 
+            fecha_hora=datetime.datetime.now().isoformat(), 
+            pago_confirmado=True, 
+            sucursal=sucursal
+        ))
+        msg = "Salida registrada con éxito."
+
+    db.commit()
+    return {"status": "ok", "message": msg}

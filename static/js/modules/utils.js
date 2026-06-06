@@ -114,6 +114,16 @@ export function showConfirm(title, msg) {
 }
 
 /**
+ * Normaliza un texto para ID de sistema (Quita tildes y prefijos).
+ */
+export function normalizeSystemName(str) {
+    if (!str || str === 'null' || str === 'undefined') return '';
+    let clean = str.replace('AUTOPASS ', '').trim().toUpperCase();
+    // Quitar tildes/acentos
+    return clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
  * Filtra filas de una tabla basándose en una búsqueda.
  */
 export function filterTable(tbodyId, query) {

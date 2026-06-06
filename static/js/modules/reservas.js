@@ -490,7 +490,7 @@ export function renderReservaCard(r, isFeatured) {
         <div class="reserva-actions-ultra">
             ${r.estado_pago === 'Pagado' ? `<button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> MI PASE DIGITAL</button>` : `<button class="btn-ultra btn-ultra-primary" onclick="payReservation(${r.id})"><i class="fas fa-credit-card"></i> PAGAR AHORA</button>`}
             <button class="btn-ultra btn-ultra-secondary" onclick="prepareEditReservation(${r.id})" ${isStarted || r.estado_reserva === 'Activa' ? 'disabled' : ''}><i class="fas fa-pen"></i></button>
-            <button class="btn-ultra btn-ultra-danger" onclick="cancelReservation(${r.id})" ${isStarted || r.estado_reserva === 'Activa' ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
+            <button class="btn-ultra btn-ultra-danger" onclick="cancelReservation(${r.id})"><i class="fas fa-trash"></i></button>
         </div>
     </div>`;
 }
@@ -516,9 +516,28 @@ export function renderHistory(history) {
 }
 
 export async function cancelReservation(id) {
-    if (!await showConfirm('CANCELAR RESERVA', '¿Estás seguro? Esta acción no se puede deshacer.')) return;
+    // 1. Obtener previsualización del reembolso
+    const resSim = await api.get(`/user/reservations/${id}/cancel-simulation`);
+    let confirmMsg = '¿Estás seguro de cancelar esta reserva? Esta acción no se puede deshacer.';
+    
+    if (resSim.ok) {
+        const { reembolso, error } = resSim.data;
+        if (error) {
+            return showToast(`No se puede cancelar: ${error}`);
+        }
+        if (reembolso > 0) {
+            confirmMsg = `Al cancelar ahora, se te reembolsarán <b style="color:var(--dorado);">$${reembolso.toLocaleString()}</b> en tu saldo AutoPass.<br><br>¿Deseás continuar?`;
+        }
+    }
+
+    if (!await showConfirm('CANCELAR RESERVA', confirmMsg)) return;
+
     const res = await api.post(`/user/reservations/${id}/cancel`);
-    if (res.ok) { showToast('Reserva cancelada'); loadReservations(); if (window.loadProfile) window.loadProfile(); }
+    if (res.ok) { 
+        showToast('Reserva cancelada con éxito'); 
+        loadReservations(); 
+        if (window.loadProfile) window.loadProfile(); 
+    }
     else { showToast(res.error || 'Error al cancelar'); }
 }
 

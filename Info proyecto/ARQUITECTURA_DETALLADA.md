@@ -87,11 +87,22 @@ Es la puerta de entrada. Su única responsabilidad es recibir la petición, llam
 * **API:** Retorna JSON para el frontend o servicios ALPR.
 * **Views:** Renderiza plantillas Jinja2 para el navegador.
 
-### Módulo de Reportes e Interfaz (Dashboard Refined)
-- **Motor Financiero Unificado**: El sistema consolida ingresos de dos fuentes: `AccessLog` (cobros en sitio) y `Reservation` (abonos anticipados), proporcionando un flujo de caja real.
-- **Lógica Cronológica**: Priorización de `fecha_pago` sobre `fecha_hora`.
-- **Arquitectura de Modales**: Uso de visualizadores especializados (`modal-log-detail` para ALPR y `modal-res-detail` para Reservas) para evitar colisiones de contexto y mejorar la profundidad informativa.
-- **Gráficos Dinámicos**: Integración con **Chart.js** para visualización de tendencias de ingresos en tiempo real.
+### Módulo de Reportes e Interfaz (Financial Dashboard 2.0)
+- **Motor Financiero Unificado (SQL Pro)**: El sistema utiliza consultas `UNION ALL` con paginación a nivel de base de datos (`OFFSET/LIMIT`) para consolidar ingresos de `AccessLog`, `Reservation` y transacciones de `Reembolso`.
+- **Lógica Contable Neta**: Cálculo automático de **Recaudación Neta** (`Bruto - Reembolsos`) utilizando la columna `monto_reembolsado` para mantener precisión absoluta en devoluciones parciales.
+- **Analítica de Eficiencia**: Implementación de KPIs avanzados como **Tasa de Cancelación** e **Incumplimiento de Reservas** (No-Shows).
+- **Trazabilidad de Reembolsos**: Visualización detallada en el historial con montos negativos e identificadores específicos (`REF#`).
+- **Ingresos Proyectados**: Algoritmo que escanea vehículos actualmente en el predio para calcular deudas en tiempo real.
+
+### 🧠 Inteligencia de Negocio y Reembolsos
+El sistema implementa una política de cancelación flexible y automatizada:
+1. **Validación de Presencia Física**: Bloqueo absoluto de cancelación si el vehículo está dentro del predio (`ENTRADA` activa).
+2. **Reembolsos Proporcionales**: 
+   - **Pre-inicio**: 100% de devolución.
+   - **En curso (Activa)**: Devolución proporcional al tiempo/días restantes para todos los tipos de abono.
+   - **Reserva por Hora Usada**: 0% de devolución si se detecta que el vehículo ya ingresó al menos una vez.
+3. **Ajuste de Fidelización**: Deducción automática y prorrateada de puntos AutoPass acumulados al ejecutar el reembolso.
+4. **Endpoint de Simulación**: Permite previsualizar el monto exacto del reembolso en la UI sin afectar la base de datos.
 
 ---
 

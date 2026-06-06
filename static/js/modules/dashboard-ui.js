@@ -1,4 +1,5 @@
 import api from './api.js';
+import { normalizeSystemName } from './utils.js';
 
 /**
  * DASHBOARD UI MODULE
@@ -21,6 +22,7 @@ export function initClock() {
 export async function checkSystemHealth() {
     const mainDot = document.getElementById('health-db');
     const res = await api.get('/system/health');
+    const sucursalRaw = localStorage.getItem('sucursal') || '';
     
     if (res && res.ok) {
         const data = res.data;
@@ -34,17 +36,81 @@ export async function checkSystemHealth() {
         updateHealthNode('node-db', data.database === 'ONLINE');
         updateHealthNode('node-api', data.api === 'ONLINE');
         
-        const alprEntry = data.alpr?.ENTRADA_PRINCIPAL === 'ONLINE';
-        const alprExit = data.alpr?.SALIDA_PRINCIPAL === 'ONLINE';
-        updateHealthNode('node-ocr-entry', alprEntry);
-        updateHealthNode('node-ocr-exit', alprExit);
+        // Aislamiento: Buscar estados de la sucursal actual (Normalizado)
+        const sucursal = normalizeSystemName(sucursalRaw);
+        const entryKey = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA_PRINCIPAL';
+        const exitKey = sucursal ? `${sucursal}_SALIDA` : 'SALIDA_PRINCIPAL';
+
+        updateHealthNode('node-ocr-entry', data.alpr?.[entryKey] === 'ONLINE');
+        updateHealthNode('node-ocr-exit', data.alpr?.[exitKey] === 'ONLINE');
     }
 }
 
-function updateHealthNode(id, isOnline) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.className = isOnline ? 'dot online' : 'dot';
+let videoSockets = { entry: null, exit: null };
+
+export function initVideoStreams() {
+    const rol = localStorage.getItem('rol');
+    const sucursalRaw = localStorage.getItem('sucursal') || '';
+    const token = localStorage.getItem('token');
+    
+    // Si es admin global, no necesita ver las cámaras (según requerimiento)
+    if (rol === 'admin') {
+        console.log("[WS] El Administrador Global no tiene acceso a streaming de video local.");
+        return;
+    }
+
+    const sucursal = normalizeSystemName(sucursalRaw);
+    if (!sucursal) {
+        console.warn("[WS] No se pudo determinar la sede para el video.");
+        return;
+    }
+
+    console.log(`[*] Iniciando streaming operativo para sede: ${sucursal}`);
+    
+    const entryId = `${sucursal}_ENTRADA`;
+    const exitId = `${sucursal}_SALIDA`;
+
+    setupSocket('entry', entryId, token);
+    setupSocket('exit', exitId, token);
+}
+
+function setupSocket(type, cameraId, token) {
+    if (videoSockets[type]) {
+        videoSockets[type].close();
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/v1/system/ws/video/${cameraId}?token=${token}`;
+    
+    console.log(`[WS] Conectando ${type}: ${wsUrl}`);
+    
+    const socket = new WebSocket(wsUrl);
+    videoSockets[type] = socket;
+
+    socket.onopen = () => console.log(`[WS] ✅ Conectado: ${cameraId}`);
+
+    socket.onmessage = (event) => {
+        const img = document.getElementById(`cam-${type}`);
+        if (img) {
+            img.src = `data:image/jpeg;base64,${event.data}`;
+        }
+    };
+
+    socket.onclose = () => {
+        const tab = document.getElementById('tab-live');
+        if (tab && tab.classList.contains('active')) {
+            setTimeout(() => {
+                 // Solo reintentar si el socket sigue siendo el actual
+                 if (videoSockets[type] === socket) {
+                     setupSocket(type, cameraId, token);
+                 }
+            }, 5000);
+        }
+    };
+
+    socket.onerror = (err) => {
+        console.error(`WS Error [${cameraId}]:`, err);
+    };
 }
 
 export function switchTab(tabId, element) {
@@ -72,7 +138,17 @@ export function switchTab(tabId, element) {
     localStorage.setItem('activeAdminTab', tabId);
     if (window.loadTabData) window.loadTabData(tabId);
 
-    // Auto-cerrar menú en móviles tras seleccionar
+    if (tabId === 'live') {
+        initVideoStreams();
+    } else {
+        Object.keys(videoSockets).forEach(k => {
+            if (videoSockets[k]) {
+                videoSockets[k].close();
+                videoSockets[k] = null;
+            }
+        });
+    }
+
     if (window.innerWidth <= 768) {
         closeMobileNav();
     }
@@ -116,7 +192,6 @@ export function toggleCollapsible(contentId, chevronId, maxHeight = '400px') {
     const chevron = document.getElementById(chevronId);
     if (!content || !chevron) return;
 
-    // Sincronizamos con la clase 'expanded' para manejar la opacidad definida en CSS
     content.classList.toggle('expanded');
     const isExpanded = content.classList.contains('expanded');
 

@@ -128,6 +128,14 @@ def pay_reservation(res_id: int, db: Session = Depends(get_db), current_user: mo
     """Abona una reserva pendiente con el saldo de la cuenta."""
     return ReservationService.pay_reservation(db, current_user, res_id)
 
+@router.get("/reservations/{res_id}/cancel-simulation")
+def simulate_reservation_cancel(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """Simula la cancelación para previsualizar el monto de reembolso."""
+    res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == current_user.id).first()
+    if not res: raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    
+    return ReservationService.simulate_refund(db, res)
+
 @router.post("/reservations/{res_id}/cancel")
 def cancel_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Cancela una reserva y reembolsa el monto si ya fue pagada."""
