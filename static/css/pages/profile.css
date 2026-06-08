@@ -1690,7 +1690,7 @@
 }
 
 /* ==========================================================================
-   7. ADDITIONAL PREMIUM COMPONENTS (v7.2.1)
+   7. ADDITIONAL PREMIUM COMPONENTS (v8.1.0)
    ========================================================================== */
 
 /* --- HISTORY FILTERS (RESERVATIONS) --- */
@@ -1766,7 +1766,7 @@
     color: #000;
 }
 
-/* --- UNIFIED ACCOUNT SURFACE (v7.2.2) --- */
+/* --- UNIFIED ACCOUNT SURFACE (v8.1.0) --- */
 .account-hub-card {
     background: linear-gradient(145deg, #111 0%, #050505 100%) !important;
     border: 1px solid rgba(197, 160, 89, 0.15) !important;

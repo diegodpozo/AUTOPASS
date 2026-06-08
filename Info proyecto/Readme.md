@@ -2,7 +2,7 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v7.9.0)
+## Últimas Actualizaciones (v8.1.0)
 - **UI/UX Refined**: Panel de inicio minimalista, popups de mapa premium y lógica de ocupación cualitativa.
 - **Optimización de Assets**: Eliminación de imágenes duplicadas y estandarización de rutas en minúsculas.
 - **Persistencia Visual**: Mensajes de guía permanentes en mapas para mejorar la navegación del usuario.

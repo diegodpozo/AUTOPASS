@@ -37,7 +37,7 @@ GATE_ID = normalize_id(RAW_GATE_ID)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
 WS_BACKEND_URL = BACKEND_URL.replace("http", "ws") + f"/v1/system/ws/video/{GATE_ID}"
 
-print(f"[*] Nodo ALPR v3.7 (Screen-to-Screen) Iniciado: {GATE_ID}")
+print(f"[*] Nodo ALPR v8.1.0 (Screen-to-Screen) Iniciado: {GATE_ID}")
 
 # Parámetros Sensibles
 COOLDOWN_SECONDS = 6
@@ -47,11 +47,18 @@ OCR_INTERVAL = 0.15
 CONFIDENCE_THRESHOLD = 0.20 # Umbral bajo para compensar ruido de pantalla
 MOTION_THRESHOLD = 3000 
 PLATE_ALLOWLIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-ARG_PLATE_PATTERN = r'([A-Z]{2,3}\d{3}[A-Z]{0,2})' # Pattern más flexible
+# Patrones específicos de Mercosur y Argentina: 
+# 1. AAA 111 (Arg Antiguo) 
+# 2. AB 123 CD (Arg Mercosur)
+# 3. ABC1D23 (Brasil Mercosur)
+# 4. ABC 1234 (Uruguay Mercosur)
+# 5. ABCD 123 / 123 ABCD (Paraguay Mercosur)
+LATAM_PLATE_PATTERN = r'\b([A-Z]{3}\d{3}|[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|\d{3}[A-Z]{4})\b'
 
 class ALPREngine:
     def __init__(self):
         print("[*] Cargando motores de IA...")
+        # ... (unchanged)
         self.reader = easyocr.Reader(['en'], gpu=False) 
         self.qr_detector = cv2.QRCodeDetector()
         cascade_path = cv2.data.haarcascades + 'haarcascade_russian_plate_number.xml'
@@ -64,6 +71,19 @@ class ALPREngine:
         self.is_running = True
         self.executor = ThreadPoolExecutor(max_workers=3)
         self.prev_gray = None
+
+    def identify_country(self, plate, is_mercosur):
+        """Identifica el país probable basado en el formato y la franja azul."""
+        if not is_mercosur:
+            if re.match(r'^[A-Z]{3}\d{3}$', plate): return "ARGENTINA (Antigua)"
+            return "DESCONOCIDO"
+        
+        if re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$', plate): return "ARGENTINA (Mercosur)"
+        if re.match(r'^[A-Z]{3}\d[A-Z]\d{2}$', plate): return "BRASIL"
+        if re.match(r'^[A-Z]{3}\d{4}$', plate): return "URUGUAY"
+        if re.match(r'^[A-Z]{4}\d{3}$|^\d{3}[A-Z]{4}$', plate): return "PARAGUAY"
+        
+        return "MERCOSUR (Otro)"
 
     def detect_motion(self, frame):
         small = cv2.resize(frame, (320, 240))
@@ -81,35 +101,65 @@ class ALPREngine:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = cv2.resize(gray, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_LANCZOS4)
         
-        # 1. Filtro de Mediana: Excelente para quitar el "punteado" de los píxeles del monitor
+        # 1. Filtro de Mediana
         gray = cv2.medianBlur(gray, 3)
         
         # 2. Aumento de contraste radical
         clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(4,4))
         contrast = clahe.apply(gray)
         
-        # 3. Sharpening (Nitidez)
+        # 3. Sharpening
         kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
         sharpened = cv2.filter2D(contrast, -1, kernel)
         
-        # 4. Umbralización para dejar letras negras en fondo blanco
+        # 4. Umbralización Adaptativa
+        # v2 resultará en texto negro sobre fondo blanco si el original era oscuro sobre claro
         v2 = cv2.adaptiveThreshold(sharpened, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 13, 5)
         
-        return [sharpened, v2]
+        # 5. Inversión (Crucial para patentes viejas: letras blancas sobre fondo negro)
+        v2_inv = cv2.bitwise_not(v2)
+        
+        return [sharpened, v2, v2_inv]
 
     def find_plate_roi(self, frame):
         h, w = frame.shape[:2]
+        # Enfocamos en el centro de la imagen donde suele estar el vehículo
         main_roi = frame[int(h*0.1):int(h*0.9), int(w*0.05):int(w*0.95)]
+        rh, rw = main_roi.shape[:2]
         gray = cv2.cvtColor(main_roi, cv2.COLOR_BGR2GRAY)
         
-        # Intentar detectar la patente
+        # Intentar detectar la patente con cascada
         plates = self.plate_cascade.detectMultiScale(gray, 1.1, 4)
         candidates = []
         for (x, y, pw, ph) in plates:
-            pad = int(pw*0.1)
-            candidates.append(main_roi[max(0,y-pad):y+ph+pad, max(0,x-pad):x+pw+pad])
+            pad_w = int(pw*0.15)
+            pad_h = int(ph*0.2)
+            candidates.append(main_roi[max(0,y-pad_h):min(rh,y+ph+pad_h), max(0,x-pad_w):min(rw,x+pw+pad_w)])
             
-        return candidates if candidates else [main_roi]
+        # Si no hay candidatos por cascada, devolvemos el ROI principal y recortes centrales
+        if not candidates:
+            # Candidato 1: ROI completo
+            candidates.append(main_roi)
+            # Candidato 2: Franja central horizontal
+            candidates.append(main_roi[int(rh*0.3):int(rh*0.7), :])
+            
+        return candidates
+
+    def is_mercosur_candidate(self, roi):
+        """Detecta si un ROI tiene la franja azul característica del Mercosur."""
+        try:
+            hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+            # Azul Mercosur (aproximado en HSV)
+            lower_blue = np.array([100, 100, 50])
+            upper_blue = np.array([130, 255, 255])
+            mask = cv2.inRange(hsv, lower_blue, upper_blue)
+            
+            # Verificamos si hay una concentración de azul en la parte superior
+            h, w = mask.shape[:2]
+            top_strip = mask[0:int(h*0.3), :]
+            blue_ratio = np.sum(top_strip > 0) / top_strip.size
+            return blue_ratio > 0.1 # Al menos 10% de la franja superior es azul
+        except: return False
 
     def ocr_worker(self):
         while self.is_running:
@@ -124,8 +174,12 @@ class ALPREngine:
                 
                 rois = self.find_plate_roi(frame)
                 for roi in rois:
+                    is_mercosur = self.is_mercosur_candidate(roi)
                     variants = self.preprocess_for_screen(roi)
+                    
                     for var_idx, processed in enumerate(variants):
+                        # Si detectamos que es Mercosur, priorizamos la versión normal (negro sobre blanco)
+                        # Si NO es Mercosur, la versión invertida (v2_inv) podría ser la clave para patentes viejas
                         results = self.reader.readtext(processed, detail=1, allowlist=PLATE_ALLOWLIST)
                         if not results: continue
                         
@@ -134,15 +188,13 @@ class ALPREngine:
                         avg_conf = sum([r[2] for r in results]) / len(results)
                         
                         # Regex pesca
-                        match = re.search(ARG_PLATE_PATTERN, combined)
+                        match = re.search(LATAM_PLATE_PATTERN, combined)
                         if match:
                             plate = match.group(0)
-                            if len(plate) >= 6:
-                                print(f"🚗 [SCREEN MATCH] >>> {plate} (Conf: {avg_conf:.2f})")
-                                self.send_event("plate", plate, frame)
-                                return # Salimos tras éxito
-                        elif combined.strip():
-                            print(f"[DEBUG] Crudo: '{combined}' (Conf: {avg_conf:.2f})")
+                            country = self.identify_country(plate, is_mercosur)
+                            print(f"🚗 [{country} MATCH] >>> {plate} (Conf: {avg_conf:.2f})")
+                            self.send_event("plate", plate, frame)
+                            return 
             except queue.Empty: continue
             except Exception as e: pass
 

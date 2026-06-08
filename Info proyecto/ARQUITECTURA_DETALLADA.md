@@ -137,7 +137,7 @@ Para garantizar la integridad visual y funcional, el sistema implementa:
 
 ## Flujos de Datos Clave
 
-### 1. Motor de Reconocimiento ALPR (v7.6.0)
+### 1. Motor de Reconocimiento ALPR (v8.1.0)
 El sistema de visión artificial ha sido evolucionado a una arquitectura de grado industrial:
 1.  **Captura Asíncrona**: Utiliza colas de prioridad para no bloquear el streaming de video.
 2.  **Pre-procesamiento OpenCV**: Aplica una cadena de filtros (CLAHE, Gaussian Blur, Adaptive Threshold).

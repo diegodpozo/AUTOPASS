@@ -1,5 +1,11 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **JUNIO 08, 2026 - REGIONAL ALPR & UI NORMALIZATION (V8.1.0)**:
+    *   **Motor ALPR**: Soporte para patentes Mercosur (Brasil, Uruguay, Paraguay) con detección de franja azul.
+    *   **Normalización**: Formateo unificado de patentes en todo el sistema (`ABC 1D23`, `ABC 1234`).
+    *   **UI/UX**: Refinamiento de modales, mapas y dashboard financiero con recaudación neta.
+    *   **Clean Architecture**: Unificación de versiones en todo el ecosistema (Core, ALPR, Batches).
+
 - **JUNIO 05, 2026 - SMART FINANCE & FLEXIBLE CANCELLATIONS (V8.0.0)**:
   - **MOTOR DE REPORTES 2.0**:
     - REFACTORIZACIÓN SQL: IMPLEMENTACIÓN DE `UNION ALL` PARA UNIFICAR HISTORIAL DE ESTADÍAS Y RESERVAS EN UNA SOLA CONSULTA.

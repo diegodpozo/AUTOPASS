@@ -1,7 +1,7 @@
 @echo off
-title Setup Backend - AUTOPASS Modular Gold v7.7.0
+title Setup Backend - AUTOPASS Modular Gold v8.1.0
 echo ======================================================
-echo   INSTALACION DEL ENTORNO MODULAR (AUTOPASS v7.7.0)
+echo   INSTALACION DEL ENTORNO MODULAR (AUTOPASS v8.1.0)
 echo ======================================================
 echo.
 
@@ -78,10 +78,10 @@ python init_db.py
 
 echo.
 echo ======================================================
-echo   INSTALACION COMPLETADA CON EXITO (v7.7.0 GOLD)
+echo   INSTALACION COMPLETADA CON EXITO (v8.1.0 GOLD)
 echo ======================================================
 echo.
-echo Arquitectura Limpia Modular (v7.7.0):
+echo Arquitectura Limpia Modular (v8.1.0):
 echo - Core: Configuracion y Seguridad Centralizada
 echo - Domain Layers: Modelos y Esquemas divididos (User/Parking/Res)
 echo - Business Logic: Capa de Servicios agnostica (services/)
