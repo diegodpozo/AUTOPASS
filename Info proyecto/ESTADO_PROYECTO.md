@@ -1,6 +1,13 @@
 # Estado del Proyecto: AUTOPASS (Actualizado 2026-06-05)
 
-### 🚀 Hitos Recientes (Junio 2026) - Versión 8.0.0 (Smart Finance & Flexible Cancellations)
+### 🚀 Hitos Recientes (Junio 2026) - Versión 8.1.0 (Regional ALPR & UI Normalization)
+- [x] **Motor ALPR Regional Mercosur**:
+    *   **Soporte Multilingüe**: Expansión del motor de visión artificial para reconocer patentes de Argentina, Brasil, Uruguay y Paraguay.
+    *   **Detección Inteligente**: Implementación de detección de franja azul (Mercosur) y variantes de color (inversión para patentes antiguas) para alta precisión.
+    *   **Normalización Regional**: Nueva lógica de formateo (`formatPlate`) para visualizar correctamente patentes regionales (ej: Brasil `ABC 1D23`, Uruguay `ABC 1234`).
+- [x] **Consistencia de UI**:
+    *   **Normalización Global**: Aplicación de formatos de patentes unificados en todo el dashboard (listas en vivo, reservas, vehículos y reportes CSV).
+    *   **Limpieza de Consola**: Eliminación de registros de depuración para un entorno de producción profesional.
 - [x] **Motor Financiero Pro 2.0**:
     *   **Paginación SQL Nativa**: Refactorización de reportes usando `UNION ALL` y paginación en base de datos para escalabilidad masiva.
     *   **Recaudación Neta**: Implementación de lógica contable que resta reembolsos y cancelaciones del total bruto.
