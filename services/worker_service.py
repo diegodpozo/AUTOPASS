@@ -25,4 +25,4 @@ class WorkerService:
                 db.close()
             except Exception as e:
                 print(f"[ERROR] En el trabajador de reservas: {e}")
-            time.sleep(300) # Ejecutar cada 5 minutos
+            time.sleep(settings.MAINTENANCE_INTERVAL_SECONDS)

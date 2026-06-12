@@ -80,9 +80,16 @@ def seed_initial_data(db: Session):
         db.add(models.ParkingAforo(
             capacidad_total=20,
             ocupacion_actual=0,
+            capacidad_motos=10,
+            ocupacion_motos=0,
             ultima_actualizacion=datetime.datetime.now().isoformat(),
             sucursal=None
         ))
+    else:
+        # Parche para bases existentes sin columnas de motos
+        if aforo.capacidad_motos is None:
+            aforo.capacidad_motos = 10
+            aforo.ocupacion_motos = 0
 
     # 3. Tarifas Globales
     for clave, valor in DEFAULT_PRICES.items():

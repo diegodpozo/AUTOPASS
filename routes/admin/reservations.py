@@ -1,21 +1,23 @@
 import datetime
-import math
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
 from core.database import get_db
 from core.security import get_operational_user
+from services.reservation_service import ReservationService
 
 router = APIRouter()
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
-def list_reservations(sucursal: Optional[str] = Query(None), db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+def list_reservations(estado: Optional[str] = Query(None), sucursal: Optional[str] = Query(None), db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """Lista todas las reservas. Los locales solo ven las de su sede."""
-    from services.reservation_service import ReservationService
     ReservationService.cleanup_overdue_reservations(db)
     
     q = db.query(models.Reservation)
+
+    if estado:
+        q = q.filter(models.Reservation.estado_reserva == estado)
     
     if staff.rol != "admin":
         sucursal = staff.sucursal
@@ -45,8 +47,6 @@ def list_reservations(sucursal: Optional[str] = Query(None), db: Session = Depen
 @router.post("/reservations")
 def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """Permite al administrador o empleado crear una reserva manual."""
-    from services.billing_service import BillingService
-
     if staff.rol != "admin":
         data.sucursal_nombre = staff.sucursal
 
@@ -58,53 +58,18 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
         if not vehicle:
             raise HTTPException(status_code=400, detail="La patente no está vinculada a ese usuario")
 
-    start = datetime.datetime.fromisoformat(data.fecha_inicio)
-    end = datetime.datetime.fromisoformat(data.fecha_fin)
-    duration_hours = (end - start).total_seconds() / 3600
-    if duration_hours <= 0:
-        raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
-
-    rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre)
-    if data.tipo_estadia == "hora":
-        monto = math.ceil(duration_hours) * rate
-    elif data.tipo_estadia == "dia":
-        monto = max(1, math.ceil(duration_hours / 24)) * rate
-    elif data.tipo_estadia == "semana":
-        monto = math.ceil(duration_hours / (24 * 7)) * rate
-    elif data.tipo_estadia == "quincena":
-        monto = math.ceil(duration_hours / (24 * 15)) * rate
-    elif data.tipo_estadia == "mes":
-        monto = math.ceil(duration_hours / (24 * 30)) * rate
-    else:
-        monto = math.ceil(duration_hours) * rate
-
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == data.sucursal_nombre).first()
-    if branch:
-        horario_str = "Abierto 24hs" if branch.is_24h else branch.horario
-        info_sede = f"{branch.direccion}. {horario_str}."
-    else:
-        info_sede = "Sede no especificada."
-
-    new_res = models.Reservation(
-        user_id=data.user_id,
-        patente=data.patente,
-        fecha_inicio=data.fecha_inicio,
-        fecha_fin=data.fecha_fin,
-        monto_total=monto,
-        estado_pago="Pendiente",
-        estado_reserva="Pendiente",
-        tipo_estadia=data.tipo_estadia,
-        sucursal_nombre=data.sucursal_nombre,
-        sucursal_info=info_sede,
-        cliente_nombre=data.cliente_nombre
-    )
-    db.add(new_res)
-    db.commit()
-    return {"status": "ok", "id": new_res.id, "monto": monto}
+    try:
+        new_res = ReservationService.create_reservation(db, data)
+        return {"status": "ok", "id": new_res.id, "monto": new_res.monto_total}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/reservations/{res_id}/confirm-payment")
 def confirm_reservation_payment(res_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """Confirmación manual de pago."""
+    from services.billing_service import BillingService
+    from models.enums import PaymentStatus
+    
     reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
     if not reserva:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
@@ -112,7 +77,20 @@ def confirm_reservation_payment(res_id: int, db: Session = Depends(get_db), staf
     if staff.rol != "admin" and reserva.sucursal_nombre != staff.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
     
-    reserva.estado_pago = "Pagado"
+    if reserva.estado_pago != PaymentStatus.PAGADO:
+        reserva.estado_pago = PaymentStatus.PAGADO
+        
+        # Acreditación de puntos si hay un usuario vinculado
+        if reserva.user:
+            puntos_ganados = BillingService.calculate_points(reserva.monto_total)
+            reserva.user.puntos_acumulados += puntos_ganados
+            db.add(models.PointsLog(
+                user_id=reserva.user.id,
+                cantidad=puntos_ganados,
+                motivo=f"Abono Manual Reserva: {reserva.patente}",
+                fecha=datetime.datetime.now().isoformat()
+            ))
+
     db.commit()
     return {"status": "ok"}
 
@@ -125,8 +103,22 @@ def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: 
     if staff.rol != "admin" and reserva.sucursal_nombre != staff.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
         
-    from services.reservation_service import ReservationService
     result = ReservationService.cancel_reservation(db, None, res_id)
     if result["status"] == "ok":
         return result
     raise HTTPException(status_code=400, detail=result["message"])
+
+@router.patch("/reservations/{res_id}")
+def update_reservation_admin(res_id: int, data: schemas.ReservationUpdate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    """Permite editar una reserva existente."""
+    reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    
+    if staff.rol != "admin" and reserva.sucursal_nombre != staff.sucursal:
+        raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+
+    updated = ReservationService.update_reservation(db, res_id, data)
+    if updated:
+        return {"status": "ok", "monto_recalculado": updated.monto_total}
+    raise HTTPException(status_code=400, detail="No se pudo actualizar la reserva")

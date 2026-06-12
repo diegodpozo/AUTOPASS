@@ -1,5 +1,5 @@
 import api from './api.js';
-import { toTitle, formatDate, showToast, showConfirm } from './utils.js';
+import { toTitle, formatDate, formatPlate, showToast, showConfirm } from './utils.js';
 
 /**
  * RESERVAS MODULE
@@ -37,6 +37,11 @@ export function initReservationForm() {
     const typeSelect = document.querySelector('.res-type');
     if (typeSelect) {
         typeSelect.addEventListener('change', (e) => updateFormGroups(e.target.value));
+    }
+
+    const vehicleSelect = document.querySelector('.res-vehicle');
+    if (vehicleSelect) {
+        vehicleSelect.addEventListener('change', () => updateReservationPrice());
     }
 
     const sucursalSelect = document.querySelector('.res-sucursal');
@@ -87,6 +92,8 @@ export async function toggleReservaForm() {
     }
 }
 
+let userVehicles = [];
+
 export async function refreshReservationFormState() {
     const container = document.getElementById('reserva-form-container');
     if (!container || !container.classList.contains('open')) return;
@@ -96,11 +103,11 @@ export async function refreshReservationFormState() {
     // 1. Cargar Vehículos
     const resVehicles = await api.get('/user/vehicles');
     if (resVehicles.ok) {
-        const vehicles = resVehicles.data;
+        userVehicles = resVehicles.data;
         const noVehiclesSec = document.getElementById('reserva-no-vehicles');
         const mainForm = document.getElementById('reserva-form-content');
 
-        if (vehicles.length === 0) {
+        if (userVehicles.length === 0) {
             if (noVehiclesSec) noVehiclesSec.style.display = 'block';
             if (mainForm) mainForm.style.display = 'none';
         } else {
@@ -110,7 +117,7 @@ export async function refreshReservationFormState() {
             selects.forEach(select => {
                 const currentVal = select.value;
                 select.innerHTML = '<option value="">Seleccioná vehículo...</option>' + 
-                    vehicles.map(v => `<option value="${v.patente}">${v.patente} - ${v.marca_modelo}</option>`).join('');
+                    userVehicles.map(v => `<option value="${v.patente}">${formatPlate(v.patente)} - ${v.marca_modelo}</option>`).join('');
                 if (currentVal) select.value = currentVal;
             });
         }
@@ -219,10 +226,17 @@ export async function fetchRates(sucursal = null) {
 
 export function updateReservationPrice() {
     const typeSelect = document.querySelector('.res-type');
+    const vehicleSelect = document.querySelector('.res-vehicle');
     if (!typeSelect) return;
+    
     const type = typeSelect.value;
+    const patente = vehicleSelect?.value;
     const totalEl = document.getElementById('reserva-total-est');
     let total = 0;
+
+    // Determinar si es moto
+    const vehiculo = userVehicles.find(v => v.patente === patente);
+    const isMoto = vehiculo && vehiculo.tipo === 'Moto';
 
     let inicio, fin;
     try {
@@ -257,7 +271,8 @@ export function updateReservationPrice() {
 
         if (inicio && fin) {
             const durationHours = (fin - inicio) / 3600000;
-            const rate = currentRates[type] || 0;
+            const key = isMoto ? `${type}_moto` : type;
+            const rate = currentRates[key] || currentRates[type] || 0;
             
             if (type === 'hora') total = Math.ceil(durationHours) * rate;
             else if (type === 'dia') total = Math.max(1, Math.ceil(durationHours / 24)) * rate;
@@ -364,7 +379,7 @@ export async function createReservation(e) {
 
     const resumenHtml = `
         <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid rgba(197,160,89,0.2); margin-top: 10px;">
-            <div style="margin-bottom: 12px;"><i class="fas fa-car" style="color: var(--dorado);"></i> Vehículo: <b style="color: #fff;">${patente}</b></div>
+            <div style="margin-bottom: 12px;"><i class="fas fa-car" style="color: var(--dorado);"></i> Vehículo: <b style="color: #fff;">${formatPlate(patente)}</b></div>
             <div style="margin-bottom: 12px;"><i class="fas fa-location-dot" style="color: var(--dorado);"></i> Sucursal: <b style="color: #fff;">${sucursal}</b></div>
             <div style="margin-bottom: 12px;"><i class="fas fa-calendar-day" style="color: var(--dorado);"></i> Estadía: <b style="color: #fff; text-transform: capitalize;">${tipo}</b></div>
             <div style="margin-bottom: 12px;"><i class="fas fa-clock" style="color: var(--dorado);"></i> Desde: <b style="color: #eee;">${formatDate(inicio)}</b></div>
@@ -468,7 +483,7 @@ export function renderReservaCard(r, isFeatured) {
             <div class="reserva-info-main">
                 <span class="reserva-tag-id">RESERVA #${r.id}</span>
                 <div class="reserva-plate-container">
-                    <div class="plate-badge-premium">${r.patente}</div>
+                    <div class="plate-badge-premium">${formatPlate(r.patente)}</div>
                     ${isStarted && progress < 100 ? '<span class="status-badge-ultra active-pulse" style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid #10b981;">EN CURSO</span>' : ''}
                 </div>
             </div>
@@ -505,7 +520,7 @@ export function renderHistory(history) {
     list.innerHTML = paged.map(r => `
         <div class="historial-item">
             <div class="hist-icon"><i class="fas ${r.estado_reserva === 'Completada' ? 'fa-car-circle-check' : 'fa-ban'}"></i></div>
-            <div class="hist-main-info"><span class="hist-title">${r.sucursal_nombre}</span><div class="hist-subtitle-group"><span class="hist-plate-badge">${r.patente}</span><span class="hist-date-info">${formatDate(r.fecha_inicio).split(',')[0]}</span></div></div>
+            <div class="hist-main-info"><span class="hist-title">${r.sucursal_nombre}</span><div class="hist-subtitle-group"><span class="hist-plate-badge">${formatPlate(r.patente)}</span><span class="hist-date-info">${formatDate(r.fecha_inicio).split(',')[0]}</span></div></div>
             <div class="hist-amount-info"><span class="hist-value">$${r.monto_total.toLocaleString()}</span><div class="status-pill ${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</div></div>
             <div class="hist-actions-group"><button class="btn-repeat-express" onclick="repeatReservation('${r.patente}','${r.sucursal_nombre}','${r.tipo_estadia}')"><i class="fas fa-rotate-right"></i></button></div>
         </div>`).join('');
@@ -557,7 +572,7 @@ export async function showDigitalPass(id) {
     if (!r) return;
 
     document.getElementById('ticket-id-display').innerText = `#${r.id.toString().padStart(6, '0')}`;
-    document.getElementById('ticket-patente').innerText = r.patente;
+    document.getElementById('ticket-patente').innerText = formatPlate(r.patente);
     document.getElementById('ticket-vence').innerText = formatDate(r.fecha_fin).split(',')[0];
     document.getElementById('ticket-sucursal').innerText = r.sucursal_nombre;
     document.getElementById('ticket-direccion').innerText = r.sucursal_info || 'Dirección no disponible';

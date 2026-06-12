@@ -44,8 +44,9 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 
 ### Reglas de JS:
 1. **Usar ES6 Modules**: Usá `import` / `export`. No crees funciones globales directamente en los módulos.
-2. **Modularización de API**: Toda petición a la red debe usar el módulo `api.js`.
-3. **Type Module**: Siempre que añadas un script a un template, usá `<script type="module" src="...">`.
+2. **Validación de Datos**: Usá la función `validatePlate` de `static/js/modules/utils.js` para cualquier registro de patentes nuevo. No reescribas la lógica de validación.
+3. **Modularización de API**: Toda petición a la red debe usar el módulo `api.js`.
+4. **Type Module**: Siempre que añadas un script a un template, usá `<script type="module" src="...">`.
 
 ### Reglas de Estilo:
 1. **Dorado AutoPass**: `#C5A059`.
@@ -80,11 +81,26 @@ Para correr las pruebas tras un cambio:
 
 ---
 
-## Reglas de Oro para Desarrolladores
-1. **No queries en Rutas:** No hagas consultas complejas de SQLAlchemy en `routes/`. Mové esa lógica a un `Service` o `Repository`.
-2. **Validación en Schemas:** Si un campo es obligatorio o tiene un formato especial, validalo en el `Schema` usando `@field_validator`.
-3. **Configuración Única:** Si añadís una variable al `.env`, registrala en `core/config.py`.
-4. **Voseo Argentino:** Todo texto que vea el usuario final debe usar voseo (Ej: "Cargá tu saldo").
-5. **Gestión de Assets:** Al implementar carga de archivos (logos, capturas), usar siempre `static/uploads/` con subcarpetas temáticas y nombres basados en UUID para evitar sobrescrituras.
-6. **UI Premium Consistente:** Usar las clases `row-premium` para filas de tabla, `actions-reveal` para botones hover y `switch-premium` para estados binarios.
-7. **Mayúsculas en DB:** Las patentes siempre se normalizan a mayúsculas antes de guardarse.
+## ⚠️ MANDATOS ARQUITECTÓNICOS (V8.5.0+)
+Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cumplir estrictamente con lo siguiente:
+
+1. **Arquitectura Limpia (Clean Architecture):**
+   - **Rutas (`routes/`):** Deben ser "delgadas". Su única responsabilidad es recibir la solicitud HTTP, validar los parámetros (a través de `schemas/`), llamar al servicio correspondiente y retornar la respuesta.
+   - **Servicios (`services/`):** Aquí reside toda la lógica de negocio, cálculos, acceso a repositorios y orquestación de servicios (ej: billing + email).
+   - **Modelos (`models/`):** Solo entidades de base de datos y Enums. No deben contener lógica de API.
+
+2. **Cero Hardcoding:**
+   - Prohibido dejar valores configurables ("mágicos") dentro del código.
+   - Si un valor puede cambiar según el entorno o la sucursal (tiempos, URLs, umbrales de IA, tarifas), debe ir en `core/config.py` y cargarse desde el archivo `.env`.
+
+3. **Modularización:**
+   - Antes de crear un archivo nuevo, evaluá si la funcionalidad pertenece a un servicio existente o si justifica uno nuevo.
+   - Evitá el acoplamiento circular. Si un servicio necesita una función de utilidad de una ruta, mové esa función a `core/utils.py` o al directorio raíz de `routes/`.
+
+4. **Tipado Seguro:**
+   - Usar SIEMPRE los Enums definidos en `models/enums.py` para estados, roles y tipos de vehículos. No usar strings literales.
+
+5. **Testing Obligatorio:**
+   - Todo nuevo servicio o funcionalidad crítica debe incluir su prueba unitaria correspondiente en `tests/` utilizando la infraestructura de SQLite en memoria definida.
+
+---

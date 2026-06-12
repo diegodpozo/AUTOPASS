@@ -162,7 +162,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 1. Inicializar Mapa (Primero para asegurar visualización)
         try {
             if (document.getElementById('portal-map')) {
-                console.log("[MAP] Inicializando mapa del portal...");
                 initMap('portal-map');
             }
         } catch (e) {

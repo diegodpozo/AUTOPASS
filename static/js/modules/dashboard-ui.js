@@ -46,6 +46,28 @@ export async function checkSystemHealth() {
     }
 }
 
+/**
+ * Actualiza visualmente un nodo de salud (dot + texto).
+ */
+function updateHealthNode(id, isOnline) {
+    const node = document.getElementById(id);
+    if (!node) return;
+    
+    const dot = node.querySelector('.health-dot');
+    const label = node.querySelector('.health-label');
+    
+    if (dot) {
+        dot.style.background = isOnline ? '#10b981' : '#ef4444';
+        if (isOnline) dot.classList.add('online');
+        else dot.classList.remove('online');
+    }
+    
+    if (label) {
+        label.innerText = isOnline ? 'ONLINE' : 'OFFLINE';
+        label.style.color = isOnline ? '#10b981' : '#ef4444';
+    }
+}
+
 let videoSockets = { entry: null, exit: null };
 
 export function initVideoStreams() {
@@ -55,7 +77,6 @@ export function initVideoStreams() {
     
     // Si es admin global, no necesita ver las cámaras (según requerimiento)
     if (rol === 'admin') {
-        console.log("[WS] El Administrador Global no tiene acceso a streaming de video local.");
         return;
     }
 
@@ -65,8 +86,6 @@ export function initVideoStreams() {
         return;
     }
 
-    console.log(`[*] Iniciando streaming operativo para sede: ${sucursal}`);
-    
     const entryId = `${sucursal}_ENTRADA`;
     const exitId = `${sucursal}_SALIDA`;
 
@@ -82,12 +101,8 @@ function setupSocket(type, cameraId, token) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/v1/system/ws/video/${cameraId}?token=${token}`;
     
-    console.log(`[WS] Conectando ${type}: ${wsUrl}`);
-    
     const socket = new WebSocket(wsUrl);
     videoSockets[type] = socket;
-
-    socket.onopen = () => console.log(`[WS] ✅ Conectado: ${cameraId}`);
 
     socket.onmessage = (event) => {
         const img = document.getElementById(`cam-${type}`);
@@ -137,6 +152,17 @@ export function switchTab(tabId, element) {
     
     localStorage.setItem('activeAdminTab', tabId);
     if (window.loadTabData) window.loadTabData(tabId);
+
+    // Bucle de Diagnóstico para la pestaña de Configuración
+    if (tabId === 'settings') {
+        if (!window._diagInterval) {
+            window._diagInterval = setInterval(() => {
+                if (localStorage.getItem('activeAdminTab') === 'settings' && window.refreshSystemDiagnostics) {
+                    window.refreshSystemDiagnostics();
+                }
+            }, 5000);
+        }
+    }
 
     if (tabId === 'live') {
         initVideoStreams();

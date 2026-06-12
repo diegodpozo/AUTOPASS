@@ -6,6 +6,8 @@
 let mapInstance = null;
 let IndiceCarruselActual = 0;
 let IntervaloCarrusel = null;
+let IndiceFraseActual = 0;
+let IntervaloFrase = null;
 
 export function initMap(containerId = 'map') {
     const mapEl = document.getElementById(containerId);
@@ -158,16 +160,11 @@ export function InicializarCarrusel() {
         const Item = document.createElement('div');
         Item.className = `item-carrusel ${i === 0 ? 'activo' : ''}`;
         Item.style.backgroundImage = `url('${dato.imagen}')`;
-        Item.innerHTML = `<div class="leyenda-carrusel">${dato.leyenda}</div>`;
+        // Removed innerHTML with legend
         Contenedor.appendChild(Item);
     });
 
-    IniciarTemporizadorCarrusel();
-}
-
-function IniciarTemporizadorCarrusel() {
-    if (IntervaloCarrusel) clearInterval(IntervaloCarrusel);
-    IntervaloCarrusel = setInterval(() => RotarCarrusel(1), 5000);
+    IniciarTemporizadores();
 }
 
 function RotarCarrusel(Direccion) {
@@ -177,6 +174,23 @@ function RotarCarrusel(Direccion) {
     Items[IndiceCarruselActual].classList.remove('activo');
     IndiceCarruselActual = (IndiceCarruselActual + Direccion + Items.length) % Items.length;
     Items[IndiceCarruselActual].classList.add('activo');
+    
+    // Sincronizar frase con carrusel
+    IndiceFraseActual = IndiceCarruselActual;
+    const contenedor = document.getElementById('frase-animada');
+    if (contenedor) {
+        contenedor.innerText = DatosCarrusel[IndiceFraseActual].leyenda;
+    }
+}
+
+function IniciarTemporizadores() {
+    if (IntervaloCarrusel) clearInterval(IntervaloCarrusel);
+    
+    IntervaloCarrusel = setInterval(() => RotarCarrusel(1), 5000);
+    
+    // Inicializar primera frase
+    const contenedor = document.getElementById('frase-animada');
+    if (contenedor) contenedor.innerText = DatosCarrusel[0].leyenda;
 }
 
 export function handleHeaderScroll() {

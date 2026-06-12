@@ -37,16 +37,6 @@
                         <option value="Cancelada">Canceladas</option>
                     </select>
                 </div>
-                <div class="filter-group-premium" title="Filtrar por sucursal">
-                    <i class="fas fa-location-dot"></i>
-                    <select id="admin-res-filter-sucursal" class="select-premium-sm" onchange="loadAdminReservations()">
-                        <option value="">Todas las Sucursales</option>
-                        <option value="AUTOPASS Central">Sucursal Central</option>
-                        <option value="AUTOPASS Ituzaingó">Ituzaingó</option>
-                        <option value="AUTOPASS Castelar">Castelar</option>
-                        <option value="AUTOPASS Morón">Morón</option>
-                    </select>
-                </div>
                 <div class="search-box-premium" title="Buscar por patente, nombre o apellido">
                     <i class="fas fa-search"></i>
                     <input type="text" id="admin-res-search" placeholder="Buscar patente..." onkeyup="filterTable('admin-res-list', this.value)">
@@ -55,13 +45,13 @@
 
         </div>
         <div class="table-container">
-            <table>
+            <table class="table-centered">
                 <thead>
                     <tr>
                         <th>Cliente</th>
                         <th>Vehículo</th>
                         <th>Período</th>
-                        <th>Sucursal / Tipo</th>
+                        <th>Tipo</th>
                         <th>Monto</th>
                         <th>Estado Pago</th>
                         <th>Estado Reserva</th>
@@ -69,9 +59,197 @@
                     </tr>
                 </thead>
                 <tbody id="admin-res-list">
-                    <tr><td colspan="9" class="text-center py-20">Cargando reservas...</td></tr>
+                    <tr><td colspan="8" class="text-center py-20">Cargando reservas...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: EDITAR RESERVA -->
+<div id="modal-edit-reservation" class="modal">
+    <div class="modal-content" style="max-width: 700px; padding: 0; background: transparent; border: none;">
+        <div class="modern-reservation-card">
+            <div class="card-header-premium">
+                <div class="header-icon" style="color: var(--dorado);"><i class="fas fa-calendar-pen"></i></div>
+                <div class="header-text">
+                    <h3 id="edit-res-title" style="color: var(--dorado); margin: 0;">EDITAR RESERVA #000</h3>
+                    <p style="margin: 5px 0 0 0;">Gestión administrativa avanzada</p>
+                </div>
+                <button class="modal-close-top" onclick="closeModal('modal-edit-reservation')" style="position: static; margin-left: auto;">&times;</button>
+            </div>
+
+            <div id="reserva-form-content" style="padding: 30px;">
+                <form id="form-edit-reservation" onsubmit="handleAdminEditReservation(event)">
+                    <input type="hidden" id="edit-res-id">
+                    
+                    <div class="form-grid-premium">
+                        <!-- CAMPOS BÁSICOS -->
+                        <div class="form-group-premium">
+                            <label>Patente</label>
+                            <div class="select-wrapper-premium">
+                                <i class="fas fa-car-side"></i>
+                                <input type="text" id="edit-res-patente" class="input-premium-readonly" readonly style="padding-left: 42px;">
+                            </div>
+                        </div>
+                        <div class="form-group-premium">
+                            <label>Tipo de Estadía</label>
+                            <div class="select-wrapper-premium">
+                                <i class="fas fa-clock"></i>
+                                <select id="edit-res-tipo" required onchange="updateEditFormGroups(this.value)">
+                                    <option value="hora">HORA</option>
+                                    <option value="dia">DÍA</option>
+                                    <option value="semana">SEMANAL</option>
+                                    <option value="quincena">QUINCENAL</option>
+                                    <option value="mes">MENSUAL</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group-premium">
+                            <label>Estado Reserva</label>
+                            <div class="select-wrapper-premium">
+                                <i class="fas fa-flag-checkered"></i>
+                                <select id="edit-res-reserva">
+                                    <option value="Pendiente">PENDIENTE</option>
+                                    <option value="Activa">ACTIVA</option>
+                                    <option value="Completada">COMPLETADA</option>
+                                    <option value="Cancelada">CANCELADA</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- CAMPOS DINÁMICOS -->
+                        <div id="edit-dynamic-fields" class="full-width-premium">
+                            <!-- Hourly -->
+                            <div id="edit-hourly-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                                <div class="form-group-premium">
+                                    <label>Día</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-calendar-day"></i>
+                                        <input type="text" id="edit-res-date-only" class="input-premium flatpickr-input" placeholder="Fecha..." style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Hora Inicio</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-clock"></i>
+                                        <input type="time" id="edit-res-time-only" class="input-premium" style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Cant. Horas</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-stopwatch"></i>
+                                        <input type="number" id="edit-res-hours-qty" class="input-premium" min="1" max="24" placeholder="2" style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Daily -->
+                            <div id="edit-daily-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr; gap: 20px;">
+                                <div class="form-group-premium">
+                                    <label>Día de Estadía</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-calendar-check"></i>
+                                        <input type="text" id="edit-res-day-only" class="input-premium flatpickr-input" placeholder="Seleccioná día..." style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Weekly -->
+                            <div id="edit-weekly-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group-premium">
+                                    <label>Inicia el día</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <input type="text" id="edit-res-week-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Finaliza</label>
+                                    <input type="text" id="edit-res-week-end" class="input-premium-readonly" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Fortnight -->
+                            <div id="edit-fortnight-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group-premium">
+                                    <label>Inicia el día</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <input type="text" id="edit-res-fortnight-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Finaliza</label>
+                                    <input type="text" id="edit-res-fortnight-end" class="input-premium-readonly" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Month -->
+                            <div id="edit-month-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group-premium">
+                                    <label>Inicia el día</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <input type="text" id="edit-res-month-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Finaliza</label>
+                                    <input type="text" id="edit-res-month-end" class="input-premium-readonly" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Standard / Custom -->
+                            <div id="edit-standard-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group-premium">
+                                    <label>Inicio</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <input type="datetime-local" id="edit-res-inicio" class="input-premium" style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                                <div class="form-group-premium">
+                                    <label>Fin</label>
+                                    <div class="select-wrapper-premium">
+                                        <i class="fas fa-calendar-check"></i>
+                                        <input type="datetime-local" id="edit-res-fin" class="input-premium" style="padding-left: 42px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ESTADO DE PAGO (SIEMPRE VISIBLE) -->
+                        <div class="form-group-premium">
+                            <label>Estado de Pago</label>
+                            <div class="select-wrapper-premium">
+                                <i class="fas fa-money-bill-transfer"></i>
+                                <select id="edit-res-pago">
+                                    <option value="Pendiente">PENDIENTE</option>
+                                    <option value="Pagado">PAGADO</option>
+                                    <option value="Cancelado">CANCELADO</option>
+                                    <option value="Reembolsado">REEMBOLSADO</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reservation-footer-premium">
+                        <div class="price-summary-premium">
+                            <span class="total-label">Monto de la Estadía</span>
+                            <span class="total-amount" id="edit-res-monto-total">$ ---</span>
+                        </div>
+                        <div class="flex-row gap-15">
+                            <button type="button" class="btn btn-outline" onclick="closeModal('modal-edit-reservation')" style="border-radius: 12px; padding: 12px 25px;">DESCARTAR</button>
+                            <button type="submit" class="btn-confirm-premium">
+                                <span>GUARDAR CAMBIOS</span>
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

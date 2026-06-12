@@ -35,15 +35,18 @@ def get_user_payment_history(db: Session = Depends(get_db), current_user: models
 @router.get("/rates")
 def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
     """Retorna las tarifas vigentes. Si hay sede, prioriza sus precios y completa con globales."""
-    keys = ["precio_hora", "precio_dia", "precio_semana", "precio_quincena", "precio_mes"]
-    
+    keys = [
+        "precio_hora", "precio_dia", "precio_semana", "precio_quincena", "precio_mes",
+        "precio_hora_moto", "precio_dia_moto", "precio_semana_moto", "precio_quincena_moto", "precio_mes_moto"
+    ]
+
     global_settings = db.query(models.Settings).filter(
         models.Settings.clave.in_(keys),
         models.Settings.sucursal == None
     ).all()
-    
+
     res = {s.clave.replace("precio_", ""): s.valor for s in global_settings}
-    
+
     if sucursal:
         branch_settings = db.query(models.Settings).filter(
             models.Settings.clave.in_(keys),
@@ -51,7 +54,8 @@ def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
         ).all()
         for s in branch_settings:
             res[s.clave.replace("precio_", "")] = s.valor
-            
+
+    # Fallback de seguridad para asegurar que existan las claves básicas
     defaults = {"hora": 1500, "dia": 15000, "semana": 70000, "quincena": 120000, "mes": 200000}
     for k, v in defaults.items():
         if k not in res: res[k] = v

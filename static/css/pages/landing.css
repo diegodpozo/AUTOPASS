@@ -528,6 +528,16 @@ nav#nav-menu {
     50% { opacity: 0.3; text-shadow: none; }
 }
 
+#frase-animada {
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+#frase-animada.fade-out {
+    opacity: 0;
+}
+
+
 /* SECCIÓN DE CARACTERÍSTICAS */
 .features { 
     padding: 100px 10%; 

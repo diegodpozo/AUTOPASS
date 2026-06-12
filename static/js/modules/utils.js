@@ -124,6 +124,44 @@ export function normalizeSystemName(str) {
 }
 
 /**
+ * Aplica formato visual estándar a la patente Mercosur (Ej: AB 123 CD).
+ */
+export function formatPlate(p) {
+    if (!p) return '---';
+    // Limpiar caracteres especiales y a mayúsculas
+    let clean = p.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    // Formato AAA 111 (Arg Antigua)
+    if (clean.length === 6) return `${clean.slice(0, 3)} ${clean.slice(3)}`;
+    
+    // Formatos de 7 caracteres
+    if (clean.length === 7) {
+        // AB 123 CD (Arg Mercosur)
+        if (!isNaN(clean.substring(2, 5))) {
+            return `${clean.slice(0, 2)} ${clean.slice(2, 5)} ${clean.slice(5)}`;
+        }
+        // ABC 1D23 (Brasil Mercosur)
+        if (!isNaN(clean[3]) && isNaN(clean[4])) {
+            return `${clean.slice(0, 3)} ${clean.slice(3)}`;
+        }
+        // ABC 1234 (Uruguay)
+        if (!isNaN(clean.substring(3))) {
+            return `${clean.slice(0, 3)} ${clean.slice(3)}`;
+        }
+        // ABCD 123 (Paraguay Autos)
+        if (isNaN(clean.substring(0, 4)) && !isNaN(clean.substring(4))) {
+            return `${clean.slice(0, 4)} ${clean.slice(4)}`;
+        }
+        // 123 ABCD (Paraguay Motos)
+        if (!isNaN(clean.substring(0, 3)) && isNaN(clean.substring(3))) {
+            return `${clean.slice(0, 3)} ${clean.slice(3)}`;
+        }
+    }
+    
+    return clean;
+}
+
+/**
  * Filtra filas de una tabla basándose en una búsqueda.
  */
 export function filterTable(tbodyId, query) {
@@ -137,4 +175,32 @@ export function filterTable(tbodyId, query) {
         rows[i].style.display = text.includes(q) ? '' : 'none';
     }
 }
+
+/**
+ * Valida la patente según el tipo y país.
+ */
+export function validatePlate(plate, tipo) {
+    const p = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    if (tipo === 'Moto') {
+        // Argentina: 1 letra, 3 números, 3 letras (Ej: A123ABC)
+        const argMoto = /^[A-Z]{1}[0-9]{3}[A-Z]{3}$/;
+        return argMoto.test(p);
+    } else {
+        // Autos
+        // Argentina antigua: 3 letras, 3 números (AAA111)
+        const argOld = /^[A-Z]{3}[0-9]{3}$/;
+        // Argentina Mercosur: 2 letras, 3 números, 2 letras (AA111AA)
+        const argMercosur = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/;
+        // Brasil Mercosur: 3 letras, 1 número, 1 letra, 2 números (ABC1D23)
+        const braMercosur = /^[A-Z]{3}[0-9]{1}[A-Z]{1}[0-9]{2}$/;
+        // Paraguay: 4 letras, 3 números (ABCD123)
+        const par = /^[A-Z]{4}[0-9]{3}$/;
+        // Uruguay: 3 letras, 4 números (ABC1234)
+        const uru = /^[A-Z]{3}[0-9]{4}$/;
+        
+        return argOld.test(p) || argMercosur.test(p) || braMercosur.test(p) || par.test(p) || uru.test(p);
+    }
+}
+
 

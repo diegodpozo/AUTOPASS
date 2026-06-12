@@ -38,7 +38,7 @@ class EmailService:
         try:
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
-            msg["From"] = f"AutoPass <{settings.SMTP_FROM}>"
+            msg["From"] = f"{settings.PROJECT_NAME} <{settings.SMTP_FROM}>"
             msg["To"] = to_email
 
             part = MIMEText(html_content, "html")

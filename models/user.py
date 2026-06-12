@@ -32,6 +32,7 @@ class Vehicle(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     patente = Column(String, unique=True, index=True)
     marca_modelo = Column(String)
+    tipo = Column(String, default="Auto") # 'Auto' o 'Moto'
 
     owner = relationship("User", back_populates="vehicles")
 

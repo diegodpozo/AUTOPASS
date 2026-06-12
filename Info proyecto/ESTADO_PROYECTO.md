@@ -1,56 +1,38 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-05)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-12)
 
-### 🚀 Hitos Recientes (Junio 2026) - Versión 8.1.0 (Regional ALPR & UI Normalization)
-- [x] **Motor ALPR Regional Mercosur**:
-    *   **Soporte Multilingüe**: Expansión del motor de visión artificial para reconocer patentes de Argentina, Brasil, Uruguay y Paraguay.
-    *   **Detección Inteligente**: Implementación de detección de franja azul (Mercosur) y variantes de color (inversión para patentes antiguas) para alta precisión.
-    *   **Normalización Regional**: Nueva lógica de formateo (`formatPlate`) para visualizar correctamente patentes regionales (ej: Brasil `ABC 1D23`, Uruguay `ABC 1234`).
-- [x] **Consistencia de UI**:
-    *   **Normalización Global**: Aplicación de formatos de patentes unificados en todo el dashboard (listas en vivo, reservas, vehículos y reportes CSV).
-    *   **Limpieza de Consola**: Eliminación de registros de depuración para un entorno de producción profesional.
-- [x] **Motor Financiero Pro 2.0**:
-    *   **Paginación SQL Nativa**: Refactorización de reportes usando `UNION ALL` y paginación en base de datos para escalabilidad masiva.
-    *   **Recaudación Neta**: Implementación de lógica contable que resta reembolsos y cancelaciones del total bruto.
-    *   **Trazabilidad Granular**: Adición de la columna `monto_reembolsado` y `fecha_pago` en la base de datos para auditoría exacta de devoluciones y transacciones.
-    *   **FIX: Reportes Financieros**: Corrección de la lógica de fechas para usar el momento de la transacción (`fecha_pago`) en lugar del inicio de reserva, garantizando precisión diaria.
-    *   **KPIs de Eficiencia**: Nuevas métricas de "Tasa de Cancelación" e "Incumplimiento de Reservas" para análisis de abandono.
-    *   **Ingresos Proyectados**: Cálculo en tiempo real de la deuda acumulada de vehículos actualmente en el predio.
-- [x] **Gestión de Accesos & Ocupación**:
-    *   **Cancelación de Estadía**: Nueva funcionalidad "Cancelar Estadía" con regla de **15 minutos de cortesía** (sin cargo) y validación de deuda excedida.
-    *   **Multi-Ingreso de Reservas**: Soporte para que reservas de largo plazo (Día, Semana, Mes) puedan entrar y salir múltiples veces durante su vigencia.
-    *   **Optimización de Ocupación**: Lista de vehículos estacionados ahora con unicidad de patente y orden cronológico (ingresos recientes primero).
-- [x] **Política de Cancelación Inteligente**:
-    *   **Reembolsos Proporcionales**: Sistema automático que devuelve el dinero exacto del tiempo no utilizado (para todos los tipos de estadía).
-    *   **Bloqueo de Seguridad**: Restricción técnica que impide cancelar reservas si el vehículo se encuentra físicamente dentro del estacionamiento.
-    *   **Ajuste de Fidelización**: Deducción prorrateada de puntos AutoPass en caso de reembolso.
-- [x] **UI de Transparencia Financiera**:
-    *   **Previsualización de Reembolso**: Modal de confirmación que muestra al usuario el monto exacto a recuperar antes de cancelar.
-    *   **Dashboard Expandido**: Nueva cuadrícula de 5 columnas con trazabilidad visual de reembolsos (filas en rojo con montos negativos).
+### 🚀 Hitos Recientes (Junio 2026) - Versión 8.5.0 (UI/UX Refinement & System Diagnostics)
+- [x] **Simplificación de la UI de Configuración**: Eliminación de cabeceras redundantes e iconos de sección.
+- [x] **Mejoras Portal Cliente (v8.5.1)**: Formulario de vinculación colapsable, validación de patentes Mercosur y rediseño de formularios de reserva.
+- [x] **Nuevo Centro de Control y Diagnóstico**: Grilla premium para monitoreo en tiempo real de servicios core (Servidor, BD) y hardware (Barreras, Lectores de patente).
+- [x] **Consistencia en Gestión de Niveles**: Edición habilitada para Planta Baja y sincronización de iconos (Layer Group, Pen/Gear) en todo el módulo.
 
-### 🚀 Hitos Previos (Junio 2026) - Versión 7.9.0 (UI Refinement & Asset Optimization)
+### 🚀 Hitos Previos (Junio 2026) - Versión 8.3.3 (Configuration UI Overhaul)
+- [x] **Rediseño del Panel de Configuración**:
+    *   **Layout Minimalista**: Interfaz centrada, 2x2 para tarifas, inputs compactos.
+    *   **Navegación Intuitiva**: Sistema de pestañas y sub-pestañas (Autos/Motos).
+    *   **Gestión Vertical Mejorada**: Botones directos de Editar/Borrar para niveles.
+    *   **Refinamiento de Permisos**: Hiding de métricas operativas para Super Admin.
 
-### 🚀 Hitos Previos (Junio 2026) - Versión 7.8.5 (Deep Modularization & Clean Logic)
-- [x] **Arquitectura de Rutas Micro-Modular**:
-    *   Refactorización total de `routes/admin.py`, `routes/user.py` y `routes/parking.py` en paquetes de sub-módulos especializados.
-- [x] **Desacoplamiento de Comunicaciones**:
-    *   Migración de emails hardcodeados a plantillas Jinja2 en `templates/emails/`.
-- [x] **Configuración Centralizada Pro**:
-    *   Parámetros de IA (ALPR) movidos al entorno (.env).
+### 🚀 Hitos Previos (Junio 2026) - Versión 8.2.0 (Vertical Expansion & Bimodal Support)
+... [ESTO SE MANTIENE] ...
 
-### 🛠️ Arquitectura Actual
-- **Capas**: Clean Architecture con aislamiento por sucursal.
-- **Frontend**: Dashboard Premium (Gold & Black) con módulos ES6 y CSS por capas.
-- **Assets**: Organización optimizada en `static/` con fallback inteligente en Backend.
-- **Seguridad**: JWT + RBAC con persistencia de rol en el ciclo de vida del DOM.
+### 🚀 Hitos Previos (Junio 2026) - Versión 8.1.0 (Regional ALPR & UI Normalization)
+- [x] **Motor ALPR Regional Mercosur**: Soporte para patentes de Argentina, Brasil, Uruguay y Paraguay.
+- [x] **Motor Financiero Pro 2.0**: Paginación SQL nativa y cálculo de Recaudación Neta.
+- [x] **Política de Cancelación**: Reembolsos proporcionales y bloqueo por presencia física.
+
+### 🛠️ Arquitectura Actual (v8.2.0)
+- **Capas**: Clean Architecture con soporte nativo para jerarquías Sucursal -> Pisos.
+- **Seguridad**: JWT + RBAC con 4 niveles de acceso blindados.
+- **Frontend**: Dashboard Premium unificado (PB + Pisos + Tarifas).
 
 ### 📊 Cobertura de Funcionalidades
-- **Seguridad**: RBAC con 4 niveles (Admin, Local Admin, Staff, User).
-- **Multi-Sucursal**: Aislamiento total de datos, tarifas y aforo por sucursal.
-- **Fidelización**: Sistema de puntos AutoPass con historial y canje de beneficios.
-- **Accesos**: ALPR híbrido (Patente + QR) con auditoría visual y fallback de imágenes.
+- **Gestión**: Multi-sucursal y Multi-piso.
+- **Facturación**: Bimodal (Auto/Moto) con descuentos automáticos.
+- **Monitoreo**: ALPR en vivo con desglose de ocupación por nivel.
 
-### 📅 Próximos Pasos (Roadmap v7.x)
+### 📅 Próximos Pasos (Roadmap v8.x)
 - [ ] Integración real con Mercado Pago (Webhooks).
-- [ ] Dashboard de Super-Admin con mapas de calor de ocupación multi-sucursal.
-- [ ] App Móvil nativa consumiendo los nuevos esquemas modulares.
-- [ ] Implementación de WebSockets para notificaciones de entrada/salida en tiempo real.
+- [ ] Mapas de calor de ocupación por piso en el dashboard.
+- [ ] Implementación de WebSockets para actualizaciones de aforo instantáneas sin recarga.
+- [ ] Exportación de reportes detallados por nivel/piso.
