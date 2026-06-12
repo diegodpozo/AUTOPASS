@@ -5,7 +5,7 @@ load_dotenv()
 
 class Settings:
     PROJECT_NAME: str = "AUTOPASS Professional"
-    VERSION: str = "8.1.0"
+    VERSION: str = "8.5.0"
     
     # Contacto
     CONTACT_SUPPORT: str = "soporte@autopass.com.ar"
@@ -17,6 +17,7 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "tu_super_secreto_para_produccion")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1440))
+    ALLOWED_ORIGINS: list = os.getenv("ALLOWED_ORIGINS", "*").split(",")
     
     # Base de Datos
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./parking.db")
@@ -46,5 +47,9 @@ class Settings:
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     LOGO_PATH: str = os.path.join(BASE_DIR, "static", "images", "logo.png")
     IMAGE_DIR: str = os.getenv("IMAGE_DIR", "captured_images")
+
+    # Mantenimiento y Salud
+    MAINTENANCE_INTERVAL_SECONDS: int = int(os.getenv("MAINTENANCE_INTERVAL_SECONDS", 300))
+    HEARTBEAT_TIMEOUT_SECONDS: int = int(os.getenv("HEARTBEAT_TIMEOUT_SECONDS", 90))
 
 settings = Settings()

@@ -3,20 +3,25 @@ import models
 from core.database import SessionLocal, engine
 from core.seed import seed_initial_data
 
+from core.config import settings
+
 def create_tables():
     """Crea todas las tablas definidas en los modelos de SQLAlchemy."""
     models.Base.metadata.create_all(bind=engine)
 
 def migrate_db():
     """Ejecuta migraciones manuales para SQLite (agregado de columnas)."""
-    conn = sqlite3.connect("parking.db")
+    db_file = settings.DATABASE_URL.replace("sqlite:///./", "").replace("sqlite:///", "")
+    conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
     
     tables_to_check = {
         "users": [("is_blocked", "BOOLEAN DEFAULT 0"), ("sucursal", "VARCHAR"), ("direccion", "VARCHAR")],
-        "access_logs": [("sucursal", "VARCHAR")],
+        "access_logs": [("sucursal", "VARCHAR"), ("tipo_vehiculo", "VARCHAR DEFAULT 'Auto'"), ("floor_id", "INTEGER")],
         "settings": [("sucursal", "VARCHAR")],
-        "parking_aforo": [("sucursal", "VARCHAR")],
+        "parking_aforo": [("sucursal", "VARCHAR"), ("capacidad_motos", "INTEGER DEFAULT 10"), ("ocupacion_motos", "INTEGER DEFAULT 0")],
+        "parking_floors": [("branch_id", "INTEGER"), ("nombre", "VARCHAR"), ("capacidad_total", "INTEGER"), ("ocupacion_actual", "INTEGER"), ("capacidad_motos", "INTEGER"), ("ocupacion_motos", "INTEGER")],
+        "vehicles": [("tipo", "VARCHAR DEFAULT 'Auto'")],
         "reservations": [("sucursal_nombre", "VARCHAR"), ("sucursal_info", "VARCHAR"), ("dias_semana", "VARCHAR"), ("cliente_nombre", "VARCHAR"), ("monto_reembolsado", "FLOAT DEFAULT 0.0"), ("fecha_pago", "VARCHAR")],
         "parking_branches": [("latitude", "FLOAT"), ("longitude", "FLOAT"), ("logo_url", "VARCHAR"), ("activa", "BOOLEAN DEFAULT 1")]
     }

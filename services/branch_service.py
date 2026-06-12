@@ -1,0 +1,43 @@
+from sqlalchemy.orm import Session
+import models
+
+class BranchService:
+    @staticmethod
+    def get_branch_capacity_summary(db: Session, branch: models.ParkingBranch) -> dict:
+        """Calcula los totales de capacidad y ocupación (PB + Pisos)."""
+        pb_settings = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+        
+        cap_autos_pb = pb_settings.capacidad_total if pb_settings else 20
+        cap_motos_pb = pb_settings.capacidad_motos if pb_settings else 10
+        occ_autos_pb = pb_settings.ocupacion_actual if pb_settings else 0
+        occ_motos_pb = pb_settings.ocupacion_motos if pb_settings else 0
+
+        floors_cap_autos = sum(f.capacidad_total for f in branch.floors)
+        floors_cap_motos = sum(f.capacidad_motos for f in branch.floors)
+        floors_occ_autos = sum(f.ocupacion_actual for f in branch.floors)
+        floors_occ_motos = sum(f.ocupacion_motos for f in branch.floors)
+
+        return {
+            "capacidad_autos_total": cap_autos_pb + floors_cap_autos,
+            "capacidad_motos_total": cap_motos_pb + floors_cap_motos,
+            "ocupacion_autos_total": occ_autos_pb + floors_occ_autos,
+            "ocupacion_motos_total": occ_motos_pb + floors_occ_motos
+        }
+
+    @staticmethod
+    def list_branches_with_summary(db: Session):
+        """Lista todas las sucursales con su resumen administrativo."""
+        branches = db.query(models.ParkingBranch).all()
+        for b in branches:
+            # Administrador
+            admin_sede = db.query(models.User).filter(
+                models.User.sucursal == b.nombre,
+                models.User.rol == "local_admin"
+            ).first()
+            b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"
+
+            # Resumen
+            summary = BranchService.get_branch_capacity_summary(db, b)
+            for key, val in summary.items():
+                setattr(b, key, val)
+        return branches

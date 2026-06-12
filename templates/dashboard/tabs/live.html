@@ -114,25 +114,36 @@
         <div class="monitoring-side">
             <!-- ESTADÍSTICAS DE CAPACIDAD -->
             <div class="stats-vertical">
-                <div class="stat-card-premium" title="Cantidad de cocheras libres actualmente">
-                    <div class="stat-icon"><i class="fas fa-square-check"></i></div>
+                <div class="stat-card-premium" title="Disponibilidad de cocheras para autos">
+                    <div class="stat-icon"><i class="fas fa-car"></i></div>
                     <div class="stat-info">
-                        <span class="label">Disponibles</span>
+                        <span class="label">Autos Libres</span>
                         <span class="value" id="stat-free">--</span>
                     </div>
                     <div class="stat-progress">
                         <div class="progress-bar"><div id="bar-free" class="progress-fill" style="width: 0%"></div></div>
                     </div>
                 </div>
-                
-                <div class="stat-card-premium" title="Cantidad de vehículos dentro del predio">
-                    <div class="stat-icon"><i class="fas fa-car"></i></div>
+
+                <div class="stat-card-premium" title="Disponibilidad de lugares para motos">
+                    <div class="stat-icon"><i class="fas fa-motorcycle"></i></div>
                     <div class="stat-info">
-                        <span class="label">Ocupadas</span>
-                        <span class="value" id="stat-occupied">--</span>
+                        <span class="label">Motos Libres</span>
+                        <span class="value" id="stat-free-motos">--</span>
                     </div>
                     <div class="stat-progress">
-                        <div class="progress-bar"><div id="bar-occupied" class="progress-fill warning" style="width: 0%"></div></div>
+                        <div class="progress-bar"><div id="bar-free-motos" class="progress-fill warning" style="width: 0%"></div></div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-premium" title="Ocupación total del predio">
+                    <div class="stat-icon"><i class="fas fa-chart-pie"></i></div>
+                    <div class="stat-info">
+                        <span class="label">Ocupación Total</span>
+                        <span class="value" id="stat-occupied-percent">--%</span>
+                    </div>
+                    <div class="stat-progress">
+                        <div class="progress-bar"><div id="bar-occupied" class="progress-fill" style="width: 0%"></div></div>
                     </div>
                 </div>
             </div>

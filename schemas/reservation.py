@@ -31,6 +31,8 @@ class ReservationUpdate(BaseModel):
     patente: Optional[str] = None
     tipo_estadia: Optional[str] = None
     sucursal_nombre: Optional[str] = None
+    estado_pago: Optional[str] = None
+    estado_reserva: Optional[str] = None
 
 class UserReservationResponse(BaseModel):
     id: int

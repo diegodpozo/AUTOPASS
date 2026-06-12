@@ -6,42 +6,22 @@ from core.database import get_db
 from core.security import authenticate_user, create_access_token, get_password_hash
 from core.config import settings
 from services.email_service import EmailService
+from services.user_service import UserService
+from models.enums import UserRole
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
 
 @router.post("/register")
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """Registra un nuevo usuario en el sistema."""
-    # Verificar si el email ya existe
-    existing_user = db.query(models.User).filter(models.User.email == user.email.lower().strip()).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="El correo electrónico ya se encuentra registrado.")
-    
-    # Verificar si el DNI ya existe
-    existing_dni = db.query(models.User).filter(models.User.dni == user.dni).first()
-    if existing_dni:
-        raise HTTPException(status_code=400, detail="El DNI ya se encuentra registrado.")
-        
-    # Crear el nuevo usuario
-    new_user = models.User(
-        nombre=user.nombre,
-        apellido=user.apellido,
-        dni=user.dni,
-        telefono=user.telefono,
-        email=user.email.lower().strip(),
-        password_hash=get_password_hash(user.password),
-        rol="user"
-    )
-    
-    db.add(new_user)
+    # UserService ya maneja validaciones de duplicados y normalización
     try:
-        db.commit()
-        db.refresh(new_user)
+        new_user = UserService.create_user(db, user, rol=UserRole.USER)
+        return {"status": "ok", "message": "Usuario registrado exitosamente"}
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=500, detail="Error interno al guardar el usuario.")
-    
-    return {"status": "ok", "message": "Usuario registrado exitosamente"}
 
 @router.post("/forgot-password")
 def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = Depends(get_db)):
@@ -51,7 +31,7 @@ def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = D
         # Por seguridad, no revelamos si el correo existe o no
         return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
     
-    # Generar token con propósito de recuperación (30 min)
+    # Generar token con propósito de recuperación
     expires = datetime.timedelta(minutes=settings.RECOVERY_TOKEN_EXPIRE_MINUTES)
     recovery_token = create_access_token(
         data={"sub": user.email, "purpose": "recovery"},

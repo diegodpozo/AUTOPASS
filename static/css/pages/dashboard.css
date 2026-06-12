@@ -742,12 +742,10 @@ tr:hover .btn-delete-promo {
 }
 
 /* --- ROLE BASED VISIBILITY --- */
-.role-staff .admin-only {
+.role-staff .admin-only,
+.role-staff .local-admin-only,
+.role-staff .super-admin-only {
     display: none !important;
-}
-
-.super-admin-only {
-    display: flex !important; /* Asegurar flex para nav-items */
 }
 
 /* Ocultar elementos de super-admin para otros roles */
@@ -755,8 +753,13 @@ body:not(.role-admin) .super-admin-only {
     display: none !important;
 }
 
-/* Ocultar elementos innecesarios para el Admin Global */
-.role-admin .hide-admin {
+/* Ocultar elementos innecesarios para el Super Admin */
+.role-admin .hide-super-admin {
+    display: none !important;
+}
+
+/* Solo Local Admin ve configuración */
+body:not(.role-local_admin) .local-admin-only {
     display: none !important;
 }
 

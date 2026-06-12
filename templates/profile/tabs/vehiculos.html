@@ -1,26 +1,45 @@
 <!-- SECCIÓN: MIS VEHÍCULOS -->
 <div id="section-vehiculos" class="profile-section">
-    <div class="card welcome-card card-narrow" style="margin: 0 auto 40px; text-align: center;">
-        <div class="welcome-msg">
-            <h1><i class="fas fa-car-rear"></i> MIS VEHÍCULOS</h1>
+    <div class="flex-col items-center" style="margin-top: 20px;">
+        <!-- Trigger Card for Collapsible Form -->
+        <div class="register-trigger-card mb-30" onclick="toggleVehicleForm()" id="vehicle-form-trigger" style="background: var(--dorado); color: #000; border-radius: 15px; padding: 15px 40px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s;">
+            <i class="fas fa-plus-circle" style="font-size: 1.2rem;"></i>
+            <span style="font-weight: 900; letter-spacing: 1px;">NUEVO VEHÍCULO</span>
+            <i id="vehicle-form-arrow" class="fas fa-chevron-down" style="margin-left: 10px; font-size: 0.8rem; transition: transform 0.3s ease;"></i>
         </div>
-    </div>
 
-    <div class="flex-col items-center">
-        <div class="register-row-static">
-            <form id="add-vehicle-form" onsubmit="addVehicle(event)" class="form-compact-row-static">
-                <div class="form-group-premium flex-1">
-                    <label>Patente</label>
-                    <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase">
-                </div>
-                <div class="form-group-premium flex-1">
-                    <label>Marca / Modelo</label>
-                    <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm">
-                </div>
-                <button type="submit" class="btn btn-primary btn-add-vehicle" title="Vincular Vehículo">
-                    <span>AGREGAR</span> <i class="fas fa-check"></i>
-                </button>
-            </form>
+        <!-- Collapsible Container -->
+        <div id="vehicle-form-container" class="form-container-collapsible" style="width: 100%; max-width: 800px; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s ease; margin-top: 15px;">
+            <div class="card form-compact-premium" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(197, 160, 89, 0.2); padding: 30px; border-radius: 20px; margin-bottom: 30px;">
+                <form id="add-vehicle-form" onsubmit="addVehicle(event)">
+                    <div class="form-grid-premium">
+                        <div class="form-group-premium">
+                            <label>Tipo</label>
+                            <div class="select-wrapper-premium" style="width: 100%;">
+                                <i id="vehicle-type-icon" class="fas fa-car-side" style="left: 15px; display: none; color: var(--dorado); position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.9rem; opacity: 0.8;"></i>
+                                <select name="tipo" id="vehicle-type-select" class="input-premium" style="padding-left: 15px; transition: padding 0.3s;" required onchange="updateVehicleTypeIcon(this)">
+                                    <option value="" selected disabled>Seleccioná...</option>
+                                    <option value="Auto">Auto / Camioneta</option>
+                                    <option value="Moto">Motocicleta</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group-premium">
+                            <label>Marca / Modelo</label>
+                            <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium">
+                        </div>
+                        <div class="form-group-premium">
+                            <label>Patente</label>
+                            <input type="text" name="patente" placeholder="ABC 123" required class="input-premium uppercase">
+                        </div>
+                    </div>
+                    <div style="margin-top: 25px; display: flex; justify-content: center;">
+                        <button type="submit" class="btn-confirm-premium">
+                            <span>REGISTRAR VEHÍCULO</span> <i class="fas fa-check"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="card-vehicle-list-wrapper">

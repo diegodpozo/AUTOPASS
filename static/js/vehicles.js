@@ -7,6 +7,8 @@ import * as v from './modules/vehicles.js';
 window.loadVehicles = v.loadVehicles;
 window.addVehicle = v.addVehicle;
 window.deleteVehicle = v.deleteVehicle;
+window.toggleVehicleForm = v.toggleVehicleForm;
+window.updateVehicleTypeIcon = v.updateVehicleTypeIcon;
 
 window.toggleNuevoVinculo = function() {
     const container = document.getElementById('vinculo-container');

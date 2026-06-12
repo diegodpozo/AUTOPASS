@@ -5,6 +5,7 @@ from sqlalchemy import func
 import models
 from core.database import get_db
 from core.security import get_local_manager, get_operational_user
+from models.enums import UserRole, ReservationStatus, PaymentStatus, AccessEventType
 
 router = APIRouter(prefix="/v1/reports", tags=["Reports & Analytics"])
 
@@ -29,7 +30,7 @@ def get_date_range(period: str, start: str = None, end: str = None):
 def get_financial_summary(period: str = "total", start: str = None, end: str = None, db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
     """Calcula el resumen de recaudación unificado. Optimizado con filtros index-friendly."""
     start_date, end_date = get_date_range(period, start, end)
-    sucursal = user.sucursal if user.rol != "admin" else None
+    sucursal = user.sucursal if user.rol != UserRole.ADMIN else None
 
     # 1. Recaudación de AccessLogs (Estadías ALPR)
     q_logs = db.query(
@@ -54,7 +55,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     q_res_pagos = db.query(
         func.sum(models.Reservation.monto_total),
         func.count(models.Reservation.id)
-    ).filter(models.Reservation.estado_pago.in_(["Pagado", "Reembolsado"])) # Incluimos reembolsados para sumar su ingreso original
+    ).filter(models.Reservation.estado_pago.in_([PaymentStatus.PAGADO, PaymentStatus.REEMBOLSADO]))
 
     if sucursal: q_res_pagos = q_res_pagos.filter(models.Reservation.sucursal_nombre == sucursal)
     
@@ -73,8 +74,8 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     total_res_bruto = float(total_res_bruto or 0.0)
     count_res = count_res or 0
 
-    # Calculamos reembolsos (usamos la nueva columna monto_reembolsado para exactitud)
-    q_refunds = db.query(func.sum(models.Reservation.monto_reembolsado)).filter(models.Reservation.estado_pago == "Reembolsado")
+    # Calculamos reembolsos
+    q_refunds = db.query(func.sum(models.Reservation.monto_reembolsado)).filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
     if sucursal: q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre == sucursal)
     
     if start_date:
@@ -90,11 +91,11 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     
     total_refunds = float(q_refunds.scalar() or 0.0)
     
-    # Recaudación Neta de Reservas: Ingreso Bruto - Devoluciones
+    # Recaudación Neta de Reservas
     total_res_neto = max(0, total_res_bruto - total_refunds)
 
     # 3. Métricas de Cancelación e Incumplimiento
-    q_cancelled = db.query(models.Reservation).filter(models.Reservation.estado_reserva == "Cancelada")
+    q_cancelled = db.query(models.Reservation).filter(models.Reservation.estado_reserva == ReservationStatus.CANCELADA)
     q_total_res = db.query(func.count(models.Reservation.id))
     
     if sucursal:
@@ -110,20 +111,18 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     count_total_res = q_total_res.scalar() or 0
     tasa_cancelacion = round((count_cancelled / count_total_res * 100), 1) if count_total_res > 0 else 0
 
-    # Ingresos por Incumplimiento (Dinero que el negocio retuvo de reservas canceladas)
-    # Es la suma de lo cobrado originalmente menos lo que se devolvió efectivamente.
     ingresos_incumplimiento = 0.0
     for c in cancelled_list:
-        if c.estado_pago == "Cancelado": # Significa que se cobró pero no se devolvió (no-show o penalidad)
+        if c.estado_pago == PaymentStatus.CANCELADA:
             ingresos_incumplimiento += (c.monto_total or 0.0)
-        elif c.estado_pago == "Reembolsado": # Reembolso proporcional/parcial: retenemos la diferencia no devuelta
+        elif c.estado_pago == PaymentStatus.REEMBOLSADO:
             ingresos_incumplimiento += max(0.0, (c.monto_total or 0.0) - (c.monto_reembolsado or 0.0))
 
     total_final = round(total_logs + total_res_neto, 2)
     count_final = count_logs + count_res
 
     # 4. Ingresos Proyectados
-    q_parked = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == "ENTRADA")
+    q_parked = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
     if sucursal: q_parked = q_parked.filter(models.AccessLog.sucursal == sucursal)
     
     entradas = q_parked.all()
@@ -133,7 +132,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     for e in entradas:
         tiene_salida = db.query(models.AccessLog.id).filter(
             models.AccessLog.patente_detectada == e.patente_detectada,
-            models.AccessLog.tipo_evento == "SALIDA",
+            models.AccessLog.tipo_evento == AccessEventType.SALIDA,
             models.AccessLog.fecha_hora > e.fecha_hora,
             models.AccessLog.sucursal == e.sucursal
         ).first()
@@ -177,7 +176,7 @@ def get_payment_history(
     from sqlalchemy import union_all, literal_column
     
     start_date, end_date = get_date_range(period, start, end)
-    sucursal = admin.sucursal if admin.rol != "admin" else None
+    sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
     offset = (page - 1) * limit
 
     # 1. Estadías
@@ -204,7 +203,7 @@ def get_payment_history(
         models.Reservation.patente.label("patente"),
         models.Reservation.monto_total.label("monto"),
         literal_column("'Reserva'").label("tipo")
-    ).filter(models.Reservation.estado_pago == "Pagado")
+    ).filter(models.Reservation.estado_pago == PaymentStatus.PAGADO)
 
     if sucursal: q_res = q_res.filter(models.Reservation.sucursal_nombre == sucursal)
     if start_date:
@@ -225,7 +224,7 @@ def get_payment_history(
         models.Reservation.patente.label("patente"),
         (models.Reservation.monto_reembolsado * -1).label("monto"),
         literal_column("'Reembolso'").label("tipo")
-    ).filter(models.Reservation.estado_pago == "Reembolsado")
+    ).filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
 
     if sucursal: q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre == sucursal)
     if start_date:
@@ -264,7 +263,7 @@ def get_reports_access(patente: str = None, db: Session = Depends(get_db), staff
     """Consulta el historial de eventos ALPR. Aislamiento por sede."""
     q = db.query(models.AccessLog)
     
-    if staff.rol != "admin":
+    if staff.rol != UserRole.ADMIN:
         q = q.filter(models.AccessLog.sucursal == staff.sucursal)
         
     if patente: q = q.filter(models.AccessLog.patente_detectada.like(f"%{patente.upper()}%"))

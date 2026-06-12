@@ -4,6 +4,8 @@ from typing import List
 import models, schemas
 from core.database import get_db
 from core.security import get_local_manager, get_super_admin, get_password_hash
+from models.enums import UserRole
+from services.user_service import UserService
 
 router = APIRouter()
 
@@ -11,41 +13,20 @@ router = APIRouter()
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """Retorna la lista de usuarios. Los administradores locales solo ven personal de su sede."""
     q = db.query(models.User)
-    if admin.rol != "admin":
+    if admin.rol != UserRole.ADMIN:
         q = q.filter(models.User.sucursal == admin.sucursal)
-        q = q.filter(models.User.rol.in_(["local_admin", "staff"]))
+        q = q.filter(models.User.rol.in_([UserRole.LOCAL_ADMIN, UserRole.STAFF]))
     return q.all()
 
 @router.post("/users")
-def create_user_admin(user_data: schemas.UserCreate, rol: str = "user", db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """Permite al administrador crear un nuevo usuario. Los locales solo crean para su sede."""
-    from routes.parking import normalize_name, normalize_dni
-    
-    if admin.rol != "admin":
-        if rol == "admin": raise HTTPException(status_code=403, detail="No podés crear un Administrador Global")
+    if admin.rol != UserRole.ADMIN:
+        if rol == UserRole.ADMIN: 
+            raise HTTPException(status_code=403, detail="No podés crear un Administrador Global")
         user_data.sucursal = admin.sucursal
     
-    existing = db.query(models.User).filter(models.User.email == user_data.email.lower().strip()).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="El correo ya está registrado")
-    
-    if rol not in ["admin", "local_admin", "staff", "user"]:
-        raise HTTPException(status_code=400, detail="Rol no válido")
-
-    new_user = models.User(
-        nombre=normalize_name(user_data.nombre),
-        apellido=normalize_name(user_data.apellido),
-        dni=normalize_dni(user_data.dni),
-        telefono=user_data.telefono,
-        email=user_data.email.lower().strip(),
-        password_hash=get_password_hash(user_data.password),
-        rol=rol,
-        sucursal=user_data.sucursal
-    )
-    
-    db.add(new_user)
-    db.commit()
-    return {"status": "ok", "message": f"Usuario {new_user.nombre} creado con rol {rol} en {new_user.sucursal or 'Global'}"}
+    return UserService.create_user(db, user_data, rol, user_data.sucursal)
 
 @router.patch("/users/{user_id}")
 def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
@@ -54,34 +35,22 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    if admin.rol != "admin":
+    if admin.rol != UserRole.ADMIN:
         if user.sucursal != admin.sucursal:
             raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
-        if user_data.rol and user_data.rol == "admin":
+        if user_data.rol and user_data.rol == UserRole.ADMIN:
             raise HTTPException(status_code=403, detail="No podés asignar el rol de Administrador Global")
         if user_data.sucursal and user_data.sucursal != admin.sucursal:
              raise HTTPException(status_code=403, detail="No podés cambiar la sucursal de un usuario fuera de tu jurisdicción")
 
-    if user_data.nombre: user.nombre = user_data.nombre
-    if user_data.apellido: user.apellido = user_data.apellido
-    if user_data.email: user.email = user_data.email.lower().strip()
-    if user_data.dni: user.dni = user_data.dni
-    if user_data.telefono: user.telefono = user_data.telefono
-    if user_data.sucursal is not None: user.sucursal = user_data.sucursal
-    if user_data.rol: user.rol = user_data.rol
-
-    try:
-        db.commit()
+    updated = UserService.update_user(db, user_id, user_data)
+    if updated:
         return {"status": "ok", "message": "Usuario actualizado correctamente"}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Error al actualizar el usuario (posible email o DNI duplicado)")
+    raise HTTPException(status_code=400, detail="Error al actualizar el usuario")
 
 @router.post("/users/{user_id}/role")
-def change_user_role(user_id: int, nuevo_rol: str, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
+def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """Solo el Admin Global puede cambiar roles de nivel jerárquico."""
-    if nuevo_rol not in ["admin", "local_admin", "staff", "user"]:
-        raise HTTPException(status_code=400, detail="Rol no válido")
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     user.rol = nuevo_rol
@@ -95,7 +64,7 @@ def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    if admin.rol != "admin" and user.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and user.sucursal != admin.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
 
     if user.id == admin.id:
@@ -113,7 +82,7 @@ def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    if admin.rol != "admin" and user.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and user.sucursal != admin.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
         
     user.saldo = monto
@@ -127,7 +96,7 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    if admin.rol != "admin" and user.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and user.sucursal != admin.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
 
     user.password_hash = get_password_hash(payload.new_password)
@@ -138,11 +107,9 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
 @router.post("/users/{user_id}/delete")
 def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """Solo el Admin Global puede borrar cuentas definitivamente."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    if user.id == admin.id: raise HTTPException(status_code=400, detail="No podés eliminar tu propia cuenta")
+    if user_id == admin.id: 
+        raise HTTPException(status_code=400, detail="No podés eliminar tu propia cuenta")
     
-    db.query(models.Vehicle).filter(models.Vehicle.user_id == user_id).delete()
-    db.delete(user)
-    db.commit()
-    return {"status": "ok"}
+    if UserService.delete_user(db, user_id):
+        return {"status": "ok"}
+    raise HTTPException(status_code=404, detail="Usuario no encontrado")

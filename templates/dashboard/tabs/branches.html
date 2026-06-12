@@ -22,6 +22,7 @@
                             <th>Sucursal</th>
                             <th>Dirección</th>
                             <th>Administrador</th>
+                            <th class="text-center">Plazas (A/M)</th>
                             <th class="hidden-mobile">Teléfono</th>
                             <th>Horario</th>
                             <th>Estado</th>
@@ -39,6 +40,40 @@
         </div>
     </div>
 </section>
+
+<!-- MODAL: VER NIVELES DE SUCURSAL -->
+<div id="modal-branch-floors" class="modal" style="display: none;">
+    <div class="modal-content glass-premium" style="max-width: 700px;">
+        <div class="modal-header">
+            <div class="flex-row items-center gap-10">
+                <div class="header-icon-box sm">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3 style="color: var(--dorado);" id="branch-floors-title">NIVELES: SUCURSAL</h3>
+            </div>
+            <span class="close-btn" onclick="closeModal('modal-branch-floors')"><i class="fas fa-xmark"></i></span>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+            <div class="table-container">
+                <table class="table-premium">
+                    <thead>
+                        <tr>
+                            <th>Nivel / Nombre</th>
+                            <th class="text-center">Autos (Ocup/Cap)</th>
+                            <th class="text-center">Motos (Ocup/Cap)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="branch-floors-body">
+                        <!-- Dinámico JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex-row justify-center mt-20">
+                <button class="btn btn-outline" onclick="closeModal('modal-branch-floors')">CERRAR</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- MODAL: AGREGAR SUCURSAL -->
 <div id="modal-add-branch" class="modal" style="display: none;">

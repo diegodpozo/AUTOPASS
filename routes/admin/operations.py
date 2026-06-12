@@ -29,7 +29,7 @@ def open_barrier(gate_id: str, db: Session = Depends(get_db), staff: models.User
     raise HTTPException(status_code=503, detail="Servicio MQTT no disponible")
 
 @router.post("/manual-entry")
-def manual_entry(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """Registra un ingreso forzado al predio de la sede."""
     from routes.parking import normalize_plate
     p = normalize_plate(plate)
@@ -44,15 +44,38 @@ def manual_entry(plate: str, db: Session = Depends(get_db), staff: models.User =
     if ultimo and ultimo.tipo_evento == "ENTRADA":
         raise HTTPException(status_code=400, detail="El vehículo ya figura como ingresado en esta sede")
     
-    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
-    if not aforo:
-        aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0)
-        db.add(aforo)
-    
-    aforo.ocupacion_actual += 1
-    db.add(models.AccessLog(patente_detectada=p, tipo_evento="ENTRADA", fecha_hora=now.isoformat(), sucursal=sucursal))
+    # Manejo de Pisos
+    floor = None
+    if floor_id:
+        floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
+        if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
+        
+        if tipo_vehiculo == "Auto":
+            floor.ocupacion_actual += 1
+        else:
+            floor.ocupacion_motos += 1
+    else:
+        # Fallback a aforo global de sede si no hay pisos
+        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+        if not aforo:
+            aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
+            db.add(aforo)
+        
+        if tipo_vehiculo == "Auto":
+            aforo.ocupacion_actual += 1
+        else:
+            aforo.ocupacion_motos += 1
+
+    db.add(models.AccessLog(
+        patente_detectada=p, 
+        tipo_evento="ENTRADA", 
+        tipo_vehiculo=tipo_vehiculo, 
+        fecha_hora=now.isoformat(), 
+        sucursal=sucursal,
+        floor_id=floor_id
+    ))
     db.commit()
-    return {"status": "ok", "message": f"Ingreso manual registrado en {sucursal or 'Global'}: {p}"}
+    return {"status": "ok", "message": f"Ingreso manual registrado en {floor.nombre if floor else 'Planta Baja'}: {p} ({tipo_vehiculo})"}
 
 @router.post("/manual-exit")
 def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
@@ -73,10 +96,13 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         raise HTTPException(status_code=403, detail="DEUDA PENDIENTE en esta sede.")
     
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
-    if aforo and aforo.ocupacion_actual > 0: 
-        aforo.ocupacion_actual -= 1
+    if aforo:
+        if ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0:
+            aforo.ocupacion_actual -= 1
+        elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
+            aforo.ocupacion_motos -= 1
         
-    db.add(models.AccessLog(patente_detectada=p, tipo_evento="SALIDA", fecha_hora=datetime.datetime.now().isoformat(), pago_confirmado=True, sucursal=sucursal))
+    db.add(models.AccessLog(patente_detectada=p, tipo_evento="SALIDA", tipo_vehiculo=ultimo.tipo_vehiculo, fecha_hora=datetime.datetime.now().isoformat(), pago_confirmado=True, sucursal=sucursal))
     db.commit()
     return {"status": "ok", "message": f"Salida manual registrada en {sucursal or 'Global'}: {p}"}
 
@@ -100,14 +126,18 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
     minutos_transcurridos = (datetime.datetime.now() - entrada_dt).total_seconds() / 60
     
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
-    if aforo and aforo.ocupacion_actual > 0:
-        aforo.ocupacion_actual -= 1
+    if aforo:
+        if ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0:
+            aforo.ocupacion_actual -= 1
+        elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
+            aforo.ocupacion_motos -= 1
     
     if minutos_transcurridos <= 15:
         # Cortesía: Salida sin cargo
         db.add(models.AccessLog(
             patente_detectada=p, 
             tipo_evento="SALIDA", 
+            tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=datetime.datetime.now().isoformat(), 
             pago_confirmado=True, 
             costo_estadia=0.0,
@@ -118,13 +148,14 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
         # Excedió cortesía: Se debe cobrar
         if not ultimo.pago_confirmado:
             from services.billing_service import BillingService
-            monto = BillingService.calculate_debt(ultimo.fecha_hora, db, sucursal=sucursal)
+            monto = BillingService.calculate_debt(ultimo.fecha_hora, db, sucursal=sucursal, tipo_vehiculo=ultimo.tipo_vehiculo)
             raise HTTPException(status_code=402, detail=f"Excedió cortesía ({int(minutos_transcurridos)} min). Debe abonar ${monto}")
         
         # Si ya pagó, registramos salida normal
         db.add(models.AccessLog(
             patente_detectada=p, 
             tipo_evento="SALIDA", 
+            tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=datetime.datetime.now().isoformat(), 
             pago_confirmado=True, 
             sucursal=sucursal

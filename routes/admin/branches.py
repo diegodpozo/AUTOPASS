@@ -6,23 +6,56 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
 from core.database import get_db
-from core.security import get_super_admin
+from core.security import get_super_admin, get_local_manager
+from services.branch_service import BranchService
 
 router = APIRouter()
 
 @router.get("/branches", response_model=List[schemas.BranchResponse])
 def list_branches(db: Session = Depends(get_db)):
-    """Retorna la lista de todas las sucursales con el nombre de su administrador."""
-    branches = db.query(models.ParkingBranch).all()
+    """Retorna la lista de todas las sucursales con resumen de capacidad y ocupación."""
+    return BranchService.list_branches_with_summary(db)
+
+# --- GESTIÓN DE PISOS ---
+
+@router.post("/{branch_id}/floors", response_model=schemas.FloorResponse)
+def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+    """Agrega un nuevo piso a la sucursal."""
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    if not branch: raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
-    for b in branches:
-        admin_sede = db.query(models.User).filter(
-            models.User.sucursal == b.nombre,
-            models.User.rol == "local_admin"
-        ).first()
-        b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"
-        
-    return branches
+    new_floor = models.ParkingFloor(
+        branch_id=branch_id,
+        nombre=data.nombre,
+        capacidad_total=data.capacidad_total,
+        capacidad_motos=data.capacidad_motos
+    )
+    db.add(new_floor)
+    db.commit()
+    db.refresh(new_floor)
+    return new_floor
+
+@router.delete("/floors/{floor_id}")
+def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+    """Elimina un piso de la sucursal."""
+    floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
+    if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
+    
+    db.delete(floor)
+    db.commit()
+    return {"status": "ok"}
+
+@router.patch("/floors/{floor_id}", response_model=schemas.FloorResponse)
+def update_floor_capacity(floor_id: int, cap_autos: int, cap_motos: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+    """Actualiza la capacidad de un piso."""
+    floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
+    if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
+    
+    floor.capacidad_total = cap_autos
+    floor.capacidad_motos = cap_motos
+    db.commit()
+    db.refresh(floor)
+    return floor
 
 @router.post("/branches")
 async def create_branch(

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 import models
 from core.database import get_db
 from core.config import settings
+from models.enums import UserRole
 
 # --- CONFIGURACIÓN DE SEGURIDAD ---
 SECRET_KEY = settings.SECRET_KEY
@@ -70,19 +71,19 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 def get_super_admin(current_user: models.User = Depends(get_current_user)):
     """Valida si el usuario es Administrador Global (Control Total)."""
-    if current_user.rol != "admin":
+    if current_user.rol != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Requiere permisos de Administrador Global")
     return current_user
 
 def get_local_manager(current_user: models.User = Depends(get_current_user)):
     """Valida si el usuario es Administrador (Global o Local)."""
-    if current_user.rol not in ["admin", "local_admin"]:
+    if current_user.rol not in [UserRole.ADMIN, UserRole.LOCAL_ADMIN]:
         raise HTTPException(status_code=403, detail="Requiere permisos de gestión administrativa")
     return current_user
 
 def get_operational_user(current_user: models.User = Depends(get_current_user)):
     """Valida si el usuario es personal operativo (Admin, Local Admin o Staff)."""
-    if current_user.rol not in ["admin", "local_admin", "staff"]:
+    if current_user.rol not in [UserRole.ADMIN, UserRole.LOCAL_ADMIN, UserRole.STAFF]:
         raise HTTPException(status_code=403, detail="Acceso restringido a personal autorizado")
     return current_user
 

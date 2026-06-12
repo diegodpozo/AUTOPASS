@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm, formatDate } from './utils.js';
+import { showToast, showConfirm, formatDate, formatPlate } from './utils.js';
 
 /**
  * DASHBOARD ADMIN MODULE
@@ -350,6 +350,54 @@ export async function toggleUserBlock(id, nombre, currentlyBlocked) {
     else showToast(res?.error || 'Error');
 }
 
+export async function refreshSystemDiagnostics() {
+    try {
+        const res = await api.get('/system/health');
+        if (!res.ok) throw new Error("Health check failed");
+
+        const data = res.data;
+        const sucursal = (localStorage.getItem('sucursal') || '').replace('AUTOPASS ', '').toUpperCase().trim();
+
+        // 1. Núcleo y Barreras
+        const updateDot = (id, status) => {
+            const dot = document.getElementById(`diag-${id}-dot`);
+            if (!dot) return;
+            dot.className = status === 'ONLINE' ? 'status-dot-mini online' : 'status-dot-mini offline';
+        };
+
+        updateDot('api', data.api);
+        updateDot('db', data.database);
+        
+        // Barreras (Simulamos con API/MQTT por ahora)
+        updateDot('barrera-entrada', data.api);
+        updateDot('barrera-salida', data.api);
+
+        // 2. Lectores de Patente (ALPR)
+        const updateALPRDot = (type, status) => {
+            const dot = document.getElementById(`diag-cam-${type}-dot`);
+            if (!dot) return;
+            dot.className = status === 'ONLINE' ? 'status-dot-mini online' : 'status-dot-mini offline';
+        };
+
+        const entryKey = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA';
+        const exitKey = sucursal ? `${sucursal}_SALIDA` : 'SALIDA';
+
+        updateALPRDot('entrada', data.alpr[entryKey] || 'OFFLINE');
+        updateALPRDot('salida', data.alpr[exitKey] || 'OFFLINE');
+
+        // Overall Status
+        const overall = document.getElementById('sys-overall-status');
+        if (overall) {
+            const allOk = data.api === 'ONLINE' && data.database === 'ONLINE';
+            overall.innerText = allOk ? 'ESTABLE' : 'ALERTA';
+            overall.className = `badge-status ${allOk ? 'badge-success-light' : 'badge-danger-light'}`;
+        }
+
+    } catch (err) {
+        console.warn("Error en diagnóstico:", err);
+    }
+}
+
 export async function loadSettings() {
     const res = await api.get('/admin/settings');
     if (res.ok) {
@@ -358,25 +406,324 @@ export async function loadSettings() {
             const el = document.getElementById(`cfg-${key}`);
             if (el) el.value = cfg[key];
         });
+        loadFloors();
+        refreshSystemDiagnostics(); // Carga inicial
+    }
+}
+
+export function switchSettingsTab(tabId, btn) {
+    // 1. Alternar secciones
+    document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
+    const target = document.getElementById(`set-section-${tabId}`);
+    if (target) target.style.display = 'block';
+
+    // 2. Alternar botones
+    document.querySelectorAll('.btn-tab-mini').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+}
+
+export function switchRatesTab(type, btn) {
+    // 1. Alternar grupos
+    document.querySelectorAll('.rate-group').forEach(g => g.style.display = 'none');
+    const target = document.getElementById(`rate-group-${type}`);
+    if (target) target.style.display = 'block';
+
+    // 2. Alternar botones
+    document.querySelectorAll('.btn-tab-sub').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+}
+
+export async function loadFloors() {
+    const container = document.getElementById('building-architecture-grid');
+    if (!container) return;
+
+    const rol = localStorage.getItem('rol');
+    if (rol !== 'local_admin') return;
+
+    const resBranches = await api.get('/admin/branches');
+    const resSettings = await api.get('/admin/settings');
+    
+    if (!resBranches.ok) {
+        container.innerHTML = `<div class="text-center p-50 text-danger fw-800">ERROR DE CONEXIÓN</div>`;
+        return;
+    }
+
+    let mySucursal = resSettings.ok ? resSettings.data.sucursal_nombre : '';
+    if (!mySucursal) {
+        mySucursal = localStorage.getItem('sucursal') || '';
+        mySucursal = mySucursal.replace('AUTOPASS ', '').trim();
+    }
+
+    const branch = resBranches.data.find(b => 
+        b.nombre.trim().toLowerCase() === mySucursal.trim().toLowerCase() ||
+        b.nombre.trim().toLowerCase().includes(mySucursal.trim().toLowerCase())
+    );
+    
+    if (!branch) {
+        container.innerHTML = `<div class="text-center p-50 text-muted fw-800 uppercase">SEDE "${mySucursal}" NO IDENTIFICADA</div>`;
+        return;
+    }
+
+    const pbCapAutos = resSettings.ok ? (resSettings.data.capacidad_total || 20) : 20;
+    const pbCapMotos = resSettings.ok ? (resSettings.data.capacidad_motos || 10) : 10;
+    
+    // 1. BLOQUE PLANTA BAJA (L0)
+    let cardsHtml = `
+        <div class="level-block pb" id="level-block-pb">
+            <div class="level-indicator">
+                <i class="fas fa-layer-group level-icon-bg"></i>
+                <span class="level-code">L0</span>
+                <span class="level-label">GROUND</span>
+            </div>
+            <div class="level-main-content">
+                <div class="level-identity">
+                    <span class="level-title">PLANTA BAJA</span>
+                    <span class="level-subtitle">Acceso Principal</span>
+                </div>
+                <div class="level-stats-grid">
+                    <div class="stat-item">
+                        <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-car mr-5"></i> Autos</span>
+                        <div class="stat-val-box">
+                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled>
+                            <span class="stat-unit">u.</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-motorcycle mr-5"></i> Motos</span>
+                        <div class="stat-val-box">
+                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled>
+                            <span class="stat-unit">u.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="level-actions">
+                <button class="btn-icon-premium sm btn-edit-level" onclick="toggleLevelEdit('pb')" title="Editar Plazas">
+                    <i class="fas fa-pen-to-square"></i>
+                </button>
+                <button class="btn btn-primary sm btn-save-level" onclick="savePBCapacity()" style="display:none; height: 32px; border-radius: 8px;">
+                    APLICAR
+                </button>
+            </div>
+        </div>
+    `;
+
+    // 2. BLOQUES NIVELES SUPERIORES (L1, L2, ...)
+    if (branch.floors && branch.floors.length > 0) {
+        const sortedFloors = [...branch.floors].sort((a, b) => a.id - b.id);
+        
+        cardsHtml += sortedFloors.map((f, index) => `
+            <div class="level-block" id="level-block-${f.id}">
+                <div class="level-indicator">
+                    <i class="fas fa-layer-group level-icon-bg"></i>
+                    <span class="level-code">L${index + 1}</span>
+                    <span class="level-label">UPPER</span>
+                </div>
+                <div class="level-main-content">
+                    <div class="level-identity">
+                        <span class="level-title">${f.nombre.toUpperCase()}</span>
+                        <span class="level-subtitle">Sector Elevado</span>
+                    </div>
+                    <div class="level-stats-grid">
+                        <div class="stat-item">
+                            <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-car mr-5"></i> Autos</span>
+                            <div class="stat-val-box">
+                                <input type="number" id="cap-autos-${f.id}" class="stat-val-input" value="${f.capacidad_total}" min="0" disabled>
+                                <span class="stat-unit">u.</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-motorcycle mr-5"></i> Motos</span>
+                            <div class="stat-val-box">
+                                <input type="number" id="cap-motos-${f.id}" class="stat-val-input" value="${f.capacidad_motos}" min="0" disabled>
+                                <span class="stat-unit">u.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="level-actions">
+                    <button class="btn-icon-premium sm btn-edit-level" onclick="toggleLevelEdit(${f.id})" title="Editar Plazas">
+                        <i class="fas fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn btn-primary sm btn-save-level" onclick="updateFloorCapacity(${f.id})" style="display:none; height: 32px; border-radius: 8px;">
+                        APLICAR
+                    </button>
+                    <button class="btn-icon-premium sm" onclick="openEditFloorModal(${f.id})" title="Configuración Avanzada">
+                        <i class="fas fa-gear"></i>
+                    </button>
+                    <button class="btn-icon-premium sm danger" onclick="deleteFloor(${f.id})" title="Remover Nivel">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    container.innerHTML = cardsHtml;
+}
+
+export function toggleLevelEdit(id) {
+    const block = document.getElementById(`level-block-${id}`);
+    if (!block) return;
+
+    const isEditing = block.classList.toggle('editing');
+    // Encontrar todos los inputs dentro del nivel específico
+    const inputs = block.querySelectorAll('.stat-val-input');
+    const btnEdit = block.querySelector('.btn-edit-level');
+    const btnSave = block.querySelector('.btn-save-level');
+
+    inputs.forEach(inp => inp.disabled = !isEditing);
+    
+    if (isEditing) {
+        btnEdit.innerHTML = '<i class="fas fa-times"></i>';
+        btnEdit.classList.add('danger');
+        if (btnSave) btnSave.style.display = 'flex';
+        // Foco en el primer input si existe
+        if (inputs.length > 0) inputs[0].focus();
+    } else {
+        btnEdit.innerHTML = '<i class="fas fa-pen-to-square"></i>';
+        btnEdit.classList.remove('danger');
+        if (btnSave) btnSave.style.display = 'none';
+        loadFloors(); // Recargar para resetear estados
+    }
+}
+
+
+export async function savePBCapacity() {
+    const capAutos = document.getElementById('pb-cap-autos').value;
+    const capMotos = document.getElementById('pb-cap-motos').value;
+
+    if (!capAutos || !capMotos) return showToast('Completá las plazas de PB');
+
+    const resAutos = await api.post(`/admin/settings/prices?clave=capacidad_total&valor=${capAutos}`);
+    const resMotos = await api.post(`/admin/settings/prices?clave=capacidad_motos&valor=${capMotos}`);
+
+    if (resAutos.ok && resMotos.ok) {
+        showToast('Capacidad de Planta Baja actualizada');
+        loadFloors();
+    } else {
+        showToast('Error al actualizar Planta Baja');
+    }
+}
+
+export async function updateFloorCapacity(id) {
+    const capAutos = document.getElementById(`cap-autos-${id}`).value;
+    const capMotos = document.getElementById(`cap-motos-${id}`).value;
+
+    const res = await api.patch(`/admin/floors/${id}?cap_autos=${capAutos}&cap_motos=${capMotos}`);
+    if (res.ok) {
+        showToast('Capacidad de nivel actualizada');
+        loadFloors();
+    } else {
+        showToast(res.error || 'Error al actualizar nivel');
+    }
+}
+
+
+
+export function openAddFloorModal() {
+    document.getElementById('edit-floor-id').value = '';
+    document.getElementById('floor-nombre').value = '';
+    document.getElementById('floor-cap-autos').value = '20';
+    document.getElementById('floor-cap-motos').value = '10';
+    document.getElementById('floor-modal-title').innerText = 'NUEVO NIVEL';
+    document.getElementById('btn-floor-submit').innerText = 'CREAR NIVEL';
+    if (window.openModal) window.openModal('modal-add-floor');
+}
+
+export async function openEditFloorModal(id) {
+    const resBranches = await api.get('/admin/branches');
+    const mySucursal = localStorage.getItem('sucursal')?.replace('AUTOPASS ', '').trim() || '';
+    
+    const branch = resBranches.data.find(b => 
+        b.nombre.trim().toLowerCase() === mySucursal.trim().toLowerCase() ||
+        b.nombre.trim().toLowerCase().includes(mySucursal.trim().toLowerCase())
+    );
+    
+    if (!branch) return;
+    const floor = (branch.floors || []).find(f => f.id === id);
+    if (!floor) return;
+
+    document.getElementById('edit-floor-id').value = floor.id;
+    document.getElementById('floor-nombre').value = floor.nombre;
+    document.getElementById('floor-cap-autos').value = floor.capacidad_total;
+    document.getElementById('floor-cap-motos').value = floor.capacidad_motos;
+    
+    document.getElementById('floor-modal-title').innerText = 'EDITAR NIVEL';
+    document.getElementById('btn-floor-submit').innerText = 'GUARDAR CAMBIOS';
+    
+    if (window.openModal) window.openModal('modal-add-floor');
+}
+
+export async function handleCreateFloor(event) {
+    event.preventDefault();
+    const btn = event.target.querySelector('button[type="submit"]');
+    const editId = document.getElementById('edit-floor-id').value;
+    
+    // Necesitamos el branch_id
+    const resBranches = await api.get('/admin/branches');
+    const mySucursal = localStorage.getItem('sucursal')?.replace('AUTOPASS ', '').trim() || '';
+    
+    const branch = resBranches.data.find(b => 
+        b.nombre.trim().toLowerCase() === mySucursal.trim().toLowerCase() ||
+        b.nombre.trim().toLowerCase().includes(mySucursal.trim().toLowerCase())
+    );
+
+    if (!branch) return showToast('Error: No se pudo identificar la sucursal activa');
+
+    const payload = {
+        nombre: document.getElementById('floor-nombre').value,
+        capacidad_total: parseInt(document.getElementById('floor-cap-autos').value),
+        capacidad_motos: parseInt(document.getElementById('floor-cap-motos').value)
+    };
+
+    btn.disabled = true;
+    let res;
+    if (editId) {
+        res = await api.patch(`/admin/floors/${editId}?cap_autos=${payload.capacidad_total}&cap_motos=${payload.capacidad_motos}`);
+    } else {
+        res = await api.post(`/admin/${branch.id}/floors`, payload);
+    }
+
+    if (res.ok) {
+        showToast(editId ? 'Nivel actualizado' : 'Piso agregado correctamente');
+        if (window.closeModal) window.closeModal('modal-add-floor');
+        loadFloors();
+    } else {
+        showToast(res.error || 'Error al procesar');
+    }
+    btn.disabled = false;
+}
+
+export async function deleteFloor(id) {
+    if (!await showConfirm('Eliminar Piso', '¿Estás seguro? Se perderá la configuración de capacidad de este nivel.')) return;
+    
+    const res = await api.delete(`/admin/floors/${id}`);
+    if (res.ok) {
+        showToast('Piso eliminado');
+        loadFloors();
+    } else {
+        showToast(res.error || 'Error al eliminar');
     }
 }
 
 export async function saveAllRates() {
-    const keys = ['precio_hora', 'precio_dia', 'precio_semana', 'precio_quincena', 'precio_mes'];
+    const keys = [
+        'precio_hora', 'precio_dia', 'precio_semana', 'precio_mes',
+        'precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto'
+    ];
+    
     const labels = {
-        'precio_hora': 'Hora',
-        'precio_dia': 'Día',
-        'precio_semana': 'Semana',
-        'precio_quincena': 'Quincena',
-        'precio_mes': 'Mes'
+        'precio_hora': 'Hora (Auto)', 'precio_dia': 'Día (Auto)', 'precio_semana': 'Semana (Auto)', 'precio_mes': 'Mes (Auto)',
+        'precio_hora_moto': 'Hora (Moto)', 'precio_dia_moto': 'Día (Moto)', 'precio_semana_moto': 'Semana (Moto)', 'precio_mes_moto': 'Mes (Moto)'
     };
 
-    let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">';
+    let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
     keys.forEach(key => {
-        const val = document.getElementById(`cfg-${key}`).value || 0;
+        const val = document.getElementById(`cfg-${key}`)?.value || 0;
         summary += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #888;">${labels[key]}:</span>
-                        <b style="color: var(--dorado);">$${parseFloat(val).toLocaleString()}</b>
+                        <span style="color: #888; font-size: 0.75rem;">${labels[key]}:</span>
+                        <b style="color: var(--dorado); font-size: 0.75rem;">$${parseFloat(val).toLocaleString()}</b>
                     </div>`;
     });
     summary += '</div>';
@@ -385,20 +732,42 @@ export async function saveAllRates() {
 
     let success = true;
     for (const key of keys) {
-        const val = parseFloat(document.getElementById(`cfg-${key}`).value);
-        const res = await api.post(`/settings/prices?clave=${key}&valor=${val}`);
+        const input = document.getElementById(`cfg-${key}`);
+        if (!input) continue;
+        const val = parseFloat(input.value) || 0;
+        const res = await api.post(`/admin/settings/prices?clave=${key}&valor=${val}`);
         if (!res.ok) success = false;
     }
 
-    if (success) showToast('Tarifas actualizadas.');
+    if (success) showToast('Tarifas actualizadas correctamente.');
     else showToast('Error al actualizar algunas tarifas.');
 }
 
 export async function saveSystemParam(param) {
     const val = document.getElementById(`cfg-${param}`).value;
-    const res = await api.post(`/settings/prices?clave=${param}&valor=${val}`);
+    const res = await api.post(`/admin/settings/prices?clave=${param}&valor=${val}`);
     if (res.ok) showToast('Configuración guardada.');
     else showToast(res.error);
+}
+
+export async function saveCapacities() {
+    const capAutos = document.getElementById('cfg-capacidad_total').value;
+    const capMotos = document.getElementById('cfg-capacidad_motos').value;
+
+    if (!capAutos || !capMotos) return showToast('Completá ambos valores de plazas');
+
+    let success = true;
+    
+    // Actualizar Autos
+    const resAutos = await api.post(`/admin/settings/prices?clave=capacidad_total&valor=${capAutos}`);
+    if (!resAutos.ok) success = false;
+
+    // Actualizar Motos
+    const resMotos = await api.post(`/admin/settings/prices?clave=capacidad_motos&valor=${capMotos}`);
+    if (!resMotos.ok) success = false;
+
+    if (success) showToast('Plazas actualizadas correctamente.');
+    else showToast('Error al actualizar plazas.');
 }
 
 export async function resetSys() {
@@ -435,7 +804,7 @@ export async function exportFinanceData() {
         const type = p.tipo;
         return [
             `"${dateStr}"`,
-            `"${p.patente_detectada}"`,
+            `"${formatPlate(p.patente_detectada)}"`,
             amount,
             `"${method}"`,
             `"${type}"`
@@ -505,7 +874,34 @@ export async function loadBranches() {
                 return;
             }
 
-            tbody.innerHTML = allBranchesData.map(b => `
+            const rol = localStorage.getItem('rol');
+            const isAdmin = rol === 'admin';
+
+            tbody.innerHTML = allBranchesData.map(b => {
+                const plazasCell = isAdmin ? 
+                    `<td class="text-center"><span class="text-muted text-xs">---</span></td>` :
+                    `<td data-label="Plazas (A/M)" class="text-center">
+                        <div class="flex-col items-center">
+                            <div class="flex-row gap-5 items-center">
+                                <span class="text-xs ${b.ocupacion_autos_total >= b.capacidad_autos_total ? 'text-danger' : 'text-success'}">
+                                    <i class="fas fa-car"></i> ${b.ocupacion_autos_total}/${b.capacidad_autos_total}
+                                </span>
+                                <span class="text-xs ${b.ocupacion_motos_total >= b.capacidad_motos_total ? 'text-danger' : 'text-success'}">
+                                    <i class="fas fa-motorcycle"></i> ${b.ocupacion_motos_total}/${b.capacidad_motos_total}
+                                </span>
+                            </div>
+                            <div class="progress-bar-mini" style="width: 80px; height: 3px; background: rgba(255,255,255,0.05); margin-top: 5px; border-radius: 2px; overflow: hidden;">
+                                <div style="width: ${Math.min(100, (b.ocupacion_autos_total / (b.capacidad_autos_total || 1)) * 100)}%; height: 100%; background: var(--dorado);"></div>
+                            </div>
+                        </div>
+                    </td>`;
+
+                const levelsAction = isAdmin ? '' : `
+                    <button class="btn-icon-premium sm" onclick="showBranchFloors(${b.id})" title="Ver Niveles / Pisos">
+                        <i class="fas fa-layer-group"></i>
+                    </button>`;
+
+                return `
                 <tr class="row-premium">
                     <td data-label="Sucursal">
                         <div class="flex-row items-center gap-10">
@@ -524,6 +920,7 @@ export async function loadBranches() {
                             <span class="text-xs font-bold text-dorado">${(b.admin_name || 'Sin asignar').toUpperCase()}</span>
                         </div>
                     </td>
+                    ${plazasCell}
                     <td data-label="Teléfono" class="text-center hidden-mobile"><span class="text-xs font-mono">${b.telefono}</span></td>
                     <td data-label="Horario" class="text-center">
                         <div class="flex-row items-center justify-center gap-5">
@@ -539,22 +936,88 @@ export async function loadBranches() {
                     </td>
                     <td data-label="Acciones">
                         <div class="flex-row gap-8 justify-center actions-reveal">
-                            <button class="btn-icon-premium sm" onclick="editBranch(${b.id})" title="Editar">
+                            ${levelsAction}
+                            <button class="btn-icon-premium sm" onclick="editBranch(${b.id})" title="Editar Configuración">
                                 <i class="fas fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-icon-premium sm danger" onclick="deleteBranch(${b.id})" title="Eliminar">
+                            <button class="btn-icon-premium sm danger" onclick="deleteBranch(${b.id})" title="Eliminar Sucursal">
                                 <i class="fas fa-xmark"></i>
                             </button>
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `;}).join('');
         } else {
             tbody.innerHTML = `<tr><td colspan="7" class="text-center py-40 text-danger">Error al cargar sucursales: ${res?.error || 'Error desconocido'}</td></tr>`;
         }
     } catch (err) {
         console.error('Error al cargar sucursales:', err);
     }
+}
+
+export function showBranchFloors(id) {
+    const b = allBranchesData.find(x => x.id === id);
+    if (!b) return;
+
+    document.getElementById('branch-floors-title').innerText = `NIVELES: ${b.nombre.toUpperCase()}`;
+    const tbody = document.getElementById('branch-floors-body');
+    if (!tbody) return;
+
+    // Calcular Planta Baja (PB) - Restamos la ocupación de los pisos a la total reportada
+    const floorsSumAutos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_actual, 0);
+    const floorsSumMotos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_motos, 0);
+    
+    // b.ocupacion_autos_total es el total real de la sede (incluye PB)
+    const pbOccAutos = Math.max(0, b.ocupacion_autos_total - floorsSumAutos);
+    const pbOccMotos = Math.max(0, b.ocupacion_motos_total - floorsSumMotos);
+    
+    // La capacidad de PB es b.capacidad_autos_total - sum(cap_pisos)
+    const floorsCapAutos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_total, 0);
+    const floorsCapMotos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_motos, 0);
+    const pbCapAutos = b.capacidad_autos_total - floorsCapAutos;
+    const pbCapMotos = b.capacidad_motos_total - floorsCapMotos;
+
+    let rows = `
+        <tr class="row-premium" style="background: rgba(197,160,89,0.05);">
+            <td>
+                <div class="flex-col">
+                    <b class="text-dorado">PLANTA BAJA (PB)</b>
+                    <span class="text-xs text-muted">Acceso Principal</span>
+                </div>
+            </td>
+            <td class="text-center">
+                <span class="text-xs ${pbOccAutos >= pbCapAutos ? 'text-danger' : 'text-success'} font-bold">
+                    ${pbOccAutos} / ${pbCapAutos}
+                </span>
+            </td>
+            <td class="text-center">
+                <span class="text-xs ${pbOccMotos >= pbCapMotos ? 'text-danger' : 'text-success'} font-bold">
+                    ${pbOccMotos} / ${pbCapMotos}
+                </span>
+            </td>
+        </tr>
+    `;
+
+    if (b.floors && b.floors.length > 0) {
+        rows += b.floors.map(f => `
+            <tr class="row-premium">
+                <td><span class="text-white">${f.nombre}</span></td>
+                <td class="text-center">
+                    <span class="text-xs ${f.ocupacion_actual >= f.capacidad_total ? 'text-danger' : ''}">
+                        ${f.ocupacion_actual} / ${f.capacidad_total}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <span class="text-xs ${f.ocupacion_motos >= f.capacidad_motos ? 'text-danger' : ''}">
+                        ${f.ocupacion_motos} / ${f.capacidad_motos}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    tbody.innerHTML = rows;
+    if (window.openModal) window.openModal('modal-branch-floors');
 }
 
 export function editBranch(id) {

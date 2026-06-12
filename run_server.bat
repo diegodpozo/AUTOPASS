@@ -21,6 +21,10 @@ call venv\Scripts\activate
 echo [+] Iniciando Uvicorn en http://localhost:8000
 echo [+] (Presiona Ctrl+C para detener el servidor)
 echo.
+
+:: Abrir navegador automáticamente (Chrome)
+start chrome http://localhost:8000
+
 python -m uvicorn main:app --reload
 
 pause

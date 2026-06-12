@@ -40,12 +40,12 @@ WS_BACKEND_URL = BACKEND_URL.replace("http", "ws") + f"/v1/system/ws/video/{GATE
 print(f"[*] Nodo ALPR v8.1.0 (Screen-to-Screen) Iniciado: {GATE_ID}")
 
 # Parámetros Sensibles
-COOLDOWN_SECONDS = 6
-CONSENSUS_WINDOW = 4
-MIN_CONFIDENCE_VOTES = 1 # Para pruebas de pantalla, aceptamos la primera que pase el filtro
-OCR_INTERVAL = 0.15
-CONFIDENCE_THRESHOLD = 0.20 # Umbral bajo para compensar ruido de pantalla
-MOTION_THRESHOLD = 3000 
+COOLDOWN_SECONDS = int(os.getenv("ALPR_COOLDOWN", 6))
+CONSENSUS_WINDOW = int(os.getenv("ALPR_CONSENSUS_WINDOW", 4))
+MIN_CONFIDENCE_VOTES = int(os.getenv("ALPR_MIN_CONFIDENCE", 1)) 
+OCR_INTERVAL = float(os.getenv("ALPR_OCR_INTERVAL", 0.15))
+CONFIDENCE_THRESHOLD = float(os.getenv("ALPR_CONFIDENCE_THRESHOLD", 0.20))
+MOTION_THRESHOLD = int(os.getenv("ALPR_MOTION_THRESHOLD", 3000)) 
 PLATE_ALLOWLIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 # Patrones específicos de Mercosur y Argentina: 
 # 1. AAA 111 (Arg Antiguo) 
