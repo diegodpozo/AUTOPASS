@@ -25,3 +25,4 @@ class PaymentStatus(str, Enum):
     PAGADO = "Pagado"
     FALLIDO = "Fallido"
     REEMBOLSADO = "Reembolsado"
+    CANCELADO = "Cancelado"

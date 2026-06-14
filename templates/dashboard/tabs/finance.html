@@ -110,13 +110,31 @@
                         <div class="header-icon"><i class="fas fa-chart-line"></i></div>
                         <div class="header-text"><h3>TENDENCIA DE INGRESOS</h3></div>
                     </div>
-                    <div class="header-actions">
-                        <select id="fin-period" class="select-premium-sm" onchange="loadFinanceData()" title="Seleccionar período del reporte">
-                            <option value="day">HOY</option>
-                            <option value="week">ÚLTIMA SEMANA</option>
-                            <option value="month">ESTE MES</option>
-                            <option value="year">AÑO ACTUAL</option>
-                        </select>
+                    <div class="header-actions flex-row gap-10">
+                        <!-- Filtro de Tipo de Vehículo -->
+                        <div class="filter-group-premium">
+                            <i class="fas fa-car-side"></i>
+                            <select id="fin-vehicle-type" class="select-premium-sm" onchange="loadFinanceData()" title="Filtrar por tipo de vehículo">
+                                <option value="all">TODOS LOS VEHÍCULOS</option>
+                                <option value="Auto">SOLO AUTOS</option>
+                                <option value="Moto">SOLO MOTOS</option>
+                            </select>
+                        </div>
+
+                        <div id="fin-date-group" class="flex-row items-center gap-8" style="display: none;">
+                            <span class="text-xs text-dorado font-bold">FECHA:</span>
+                            <input type="date" id="fin-date" class="input-premium-sm" onchange="loadFinanceData()" title="Seleccionar fecha exacta" style="width: 150px; color-scheme: dark;">
+                        </div>
+                        <div class="filter-group-premium">
+                            <i class="fas fa-calendar-alt" style="z-index: 5;"></i>
+                            <select id="fin-period" class="select-premium-sm" onchange="toggleFinanceDateFilter()" title="Seleccionar período del reporte">
+                                <option value="day">HOY</option>
+                                <option value="specific">FECHA EXACTA</option>
+                                <option value="week">ÚLTIMA SEMANA</option>
+                                <option value="month">ESTE MES</option>
+                                <option value="year">AÑO ACTUAL</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="chart-wrapper">

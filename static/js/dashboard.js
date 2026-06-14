@@ -481,12 +481,35 @@ let revenueChart = null;
 let currentFinancePage = 1;
 const financeLimit = 15;
 
+window.toggleFinanceDateFilter = () => {
+    const period = document.getElementById('fin-period').value;
+    const dateGroup = document.getElementById('fin-date-group');
+    const dateInput = document.getElementById('fin-date');
+    
+    if (period === 'specific') {
+        dateGroup.style.display = 'flex';
+        if (!dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+    } else {
+        dateGroup.style.display = 'none';
+    }
+    window.loadFinanceData();
+};
+
 window.loadFinanceData = async (resetPage = true) => {
     if (resetPage) currentFinancePage = 1;
     const period = document.getElementById('fin-period')?.value || 'month';
+    const specificDate = document.getElementById('fin-date')?.value;
+    const vehicleType = document.getElementById('fin-vehicle-type')?.value || 'all';
     
-    // 1. Cargar Resumen (KPIs) - Siempre cargamos el total del periodo
-    const resSum = await api.get(`/reports/financial-summary?period=${period}`);
+    let urlParams = `period=${period}&vehicle_type=${vehicleType}`;
+    if (period === 'specific' && specificDate) {
+        urlParams = `period=day&start=${specificDate}T00:00:00&end=${specificDate}T23:59:59&vehicle_type=${vehicleType}`;
+    }
+    
+    // 1. Cargar Resumen (KPIs)
+    const resSum = await api.get(`/reports/financial-summary?${urlParams}`);
     if (resSum.ok) {
         const data = resSum.data;
         const elTotal = document.getElementById('fin-total');
@@ -522,7 +545,7 @@ window.loadFinanceData = async (resetPage = true) => {
     }
 
     // 2. Cargar Historial de Pagos (PAGINADO)
-    const resHist = await api.get(`/reports/payment-history?period=${period}&page=${currentFinancePage}&limit=${financeLimit}`);
+    const resHist = await api.get(`/reports/payment-history?${urlParams}&page=${currentFinancePage}&limit=${financeLimit}`);
     if (resHist.ok) {
         const tbody = document.getElementById('payment-list');
         if (tbody) {
@@ -553,7 +576,7 @@ window.loadFinanceData = async (resetPage = true) => {
         if (pageInfo) pageInfo.innerText = `Página ${currentFinancePage}`;
 
         // 4. Renderizar Gráfico con el total de transacciones (sin paginación) para mostrar la tendencia real
-        const resChart = await api.get(`/reports/payment-history?period=${period}&limit=0`);
+        const resChart = await api.get(`/reports/payment-history?${urlParams}&limit=0`);
         if (resChart.ok) {
             renderRevenueChart(resChart.data, period);
         }
@@ -579,25 +602,43 @@ function renderRevenueChart(data, period) {
 
     if (revenueChart) {
         revenueChart.destroy();
+        revenueChart = null;
+    }
+
+    // Si no hay datos, mostrar mensaje o gráfico vacío limpio
+    if (!data || data.length === 0) {
+        // Opcional: mostrar un mensaje en el canvas o simplemente un gráfico vacío
+        console.warn("No hay datos para el gráfico financiero");
     }
 
     // Agrupar y procesar datos cronológicamente
     const grouped = {};
     
-    // Clonamos y damos vuelta para procesar de más viejo a más nuevo en el gráfico
-    const sortedData = [...data].reverse();
+    // Función auxiliar para parsear fechas de forma segura
+    const parseDate = (str) => {
+        if (!str) return new Date(NaN);
+        // Normalizar formato: reemplaza espacios por T si es necesario (para Safari/otros)
+        return new Date(str.replace(' ', 'T'));
+    };
+
+    // Clonamos y ordenamos cronológicamente (antiguo a nuevo)
+    const sortedData = [...data].sort((a, b) => parseDate(a.fecha_pago) - parseDate(b.fecha_pago));
 
     sortedData.forEach(p => {
-        const date = new Date(p.fecha_pago || p.fecha_hora);
+        const date = parseDate(p.fecha_pago);
+        if (isNaN(date.getTime())) return;
+
         let label;
-        if (period === 'day') {
+        if (period === 'day' || period === 'specific') {
             label = date.getHours() + ':00';
         } else if (period === 'week' || period === 'month') {
             label = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
         } else {
             label = date.toLocaleDateString('es-AR', { month: 'short' });
         }
-        grouped[label] = (grouped[label] || 0) + p.costo_estadia;
+        
+        const monto = parseFloat(p.costo_estadia) || 0;
+        grouped[label] = (grouped[label] || 0) + monto;
     });
 
     const labels = Object.keys(grouped);
@@ -606,10 +647,10 @@ function renderRevenueChart(data, period) {
     revenueChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels: labels.length > 0 ? labels : ['Sin datos'],
             datasets: [{
                 label: 'Ingresos',
-                data: values,
+                data: values.length > 0 ? values : [0],
                 borderColor: '#C5A059',
                 backgroundColor: 'rgba(197, 160, 89, 0.1)',
                 borderWidth: 3,
@@ -634,7 +675,10 @@ function renderRevenueChart(data, period) {
                     borderWidth: 1,
                     displayColors: false,
                     callbacks: {
-                        label: (context) => ` Recaudado: $${context.parsed.y.toLocaleString()}`
+                        label: (context) => {
+                            const val = context.parsed.y || 0;
+                            return ` Recaudado: $${val.toLocaleString()}`;
+                        }
                     }
                 }
             },
