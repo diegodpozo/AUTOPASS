@@ -108,7 +108,7 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
 
 @router.post("/cancel-stay")
 def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Cancela una estadía actual. Si está dentro de los 15 min de cortesía, no cobra."""
+    """Cancela una estadía actual. Si está dentro de los 10 min de cortesía, no cobra."""
     from routes.parking import normalize_plate
     p = normalize_plate(plate)
     sucursal = staff.sucursal
@@ -121,18 +121,18 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
     if not ultimo or ultimo.tipo_evento != "ENTRADA":
         raise HTTPException(status_code=400, detail="El vehículo no figura como ingresado")
     
-    # Verificar cortesía (15 minutos)
+    # Verificar cortesía (10 minutos)
     entrada_dt = datetime.datetime.fromisoformat(ultimo.fecha_hora)
     minutos_transcurridos = (datetime.datetime.now() - entrada_dt).total_seconds() / 60
     
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
-    if aforo:
-        if ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0:
+    if (aforo):
+        if (ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0):
             aforo.ocupacion_actual -= 1
-        elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
+        elif (ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0):
             aforo.ocupacion_motos -= 1
     
-    if minutos_transcurridos <= 15:
+    if (minutos_transcurridos <= 10):
         # Cortesía: Salida sin cargo
         db.add(models.AccessLog(
             patente_detectada=p, 
@@ -146,7 +146,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
         msg = f"Estadía cancelada (Cortesía: {int(minutos_transcurridos)} min). Sin cargo."
     else:
         # Excedió cortesía: Se debe cobrar
-        if not ultimo.pago_confirmado:
+        if (not ultimo.pago_confirmado):
             from services.billing_service import BillingService
             monto = BillingService.calculate_debt(ultimo.fecha_hora, db, sucursal=sucursal, tipo_vehiculo=ultimo.tipo_vehiculo)
             raise HTTPException(status_code=402, detail=f"Excedió cortesía ({int(minutos_transcurridos)} min). Debe abonar ${monto}")

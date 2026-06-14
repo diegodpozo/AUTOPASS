@@ -81,7 +81,7 @@
                 <div class="header-actions">
                     <div class="search-box-premium">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="occ-search" placeholder="Buscar patente..." onkeyup="filterTable('occ-list', this.value)">
+                        <input type="text" id="occ-search" placeholder="Buscar patente..." onkeyup="filterOccupancy(this.value)">
                     </div>
                 </div>
             </div>
@@ -101,6 +101,8 @@
                     </tbody>
                 </table>
             </div>
+            <!-- Paginación Ocupación (Copia de live por consistencia) -->
+            <div id="occ-pagination-tab" class="pagination-premium" style="padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px;"></div>
         </div>
     </div>
 </div>

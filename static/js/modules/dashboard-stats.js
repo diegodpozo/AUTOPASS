@@ -26,22 +26,6 @@ export async function loadLiveStats() {
         // Ocupación Total y KPI Moto
         const occMotosEl = document.getElementById('occ-stat-motos');
         if (occMotosEl) occMotosEl.innerText = occMotos;
-
-        const totalCapacity = total + capMotos;
-        const totalOccupied = occupied + occMotos;
-        const occupiedPercent = totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
-
-        const occupiedPercentEl = document.getElementById('stat-occupied-percent');
-        if (occupiedPercentEl) occupiedPercentEl.innerText = `${occupiedPercent}%`;
-
-        const barOccupied = document.getElementById('bar-occupied');
-        if (barOccupied) {
-            barOccupied.style.width = `${occupiedPercent}%`;
-            // Color dinámico según carga
-            barOccupied.className = 'progress-fill';
-            if (occupiedPercent > 90) barOccupied.classList.add('danger');
-            else if (occupiedPercent > 70) barOccupied.classList.add('warning');
-        }
     }
 
     const resFinance = await api.get('/reports/financial-summary?period=day');
@@ -53,18 +37,21 @@ export async function loadLiveStats() {
     }
 }
 
+let fullLogsData = [];
+let filteredLogsData = [];
+let currentPageLogs = 1;
+const itemsPerPageLogs = 10;
+let currentLogsSearchQuery = '';
+
 export async function loadRecentLogs() {
     const res = await api.get('/reports/access');
     if (!res || !res.ok) return;
 
-    const tbody = document.getElementById('live-logs');
-    if (!tbody) return;
-
-    const logs = res.data;
+    fullLogsData = res.data;
     
     // Actualizar patentes en tiempo real (Cajas de cámara)
-    const lastEntry = logs.find(l => l.tipo_evento === 'ENTRADA');
-    const lastExit = logs.find(l => l.tipo_evento === 'SALIDA');
+    const lastEntry = fullLogsData.find(l => l.tipo_evento === 'ENTRADA');
+    const lastExit = fullLogsData.find(l => l.tipo_evento === 'SALIDA');
 
     const plateEntryEl = document.getElementById('plate-entry');
     const plateExitEl = document.getElementById('plate-exit');
@@ -72,7 +59,36 @@ export async function loadRecentLogs() {
     if (plateEntryEl && lastEntry) plateEntryEl.innerText = formatPlate(lastEntry.patente_detectada);
     if (plateExitEl && lastExit) plateExitEl.innerText = formatPlate(lastExit.patente_detectada);
 
-    tbody.innerHTML = logs.slice(0, 10).map(log => {
+    applyLogsFilter();
+}
+
+function applyLogsFilter() {
+    if (!currentLogsSearchQuery) {
+        filteredLogsData = [...fullLogsData];
+    } else {
+        const q = currentLogsSearchQuery.toLowerCase();
+        filteredLogsData = fullLogsData.filter(log => 
+            log.patente_detectada.toLowerCase().includes(q) || 
+            log.tipo_evento.toLowerCase().includes(q)
+        );
+    }
+    
+    const totalPages = Math.ceil(filteredLogsData.length / itemsPerPageLogs);
+    if (currentPageLogs > totalPages) currentPageLogs = 1;
+    if (currentPageLogs === 0 && totalPages > 0) currentPageLogs = 1;
+
+    renderLogsTable();
+}
+
+export function renderLogsTable() {
+    const tbody = document.getElementById('live-logs');
+    if (!tbody) return;
+
+    const start = (currentPageLogs - 1) * itemsPerPageLogs;
+    const end = start + itemsPerPageLogs;
+    const paginatedData = filteredLogsData.slice(start, end);
+
+    tbody.innerHTML = paginatedData.map(log => {
         const time = new Date(log.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
         const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-dorado';
         const statusBadge = log.pago_confirmado ? 
@@ -88,17 +104,62 @@ export async function loadRecentLogs() {
                 <td data-label="Info" class="text-center"><button class="btn-edit" onclick="showLogDetail(${log.id})" title="Ver detalle y captura del evento"><i class="fas fa-eye"></i></button></td>
             </tr>`;
     }).join('') || '<tr><td colspan="5" class="text-center py-20">No hay movimientos.</td></tr>';
+
+    renderLogsPagination();
 }
+
+function renderLogsPagination() {
+    const totalPages = Math.ceil(filteredLogsData.length / itemsPerPageLogs);
+    const container = document.getElementById('logs-pagination');
+    
+    if (!container) return;
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = `
+        <button class="btn-icon-premium sm" ${currentPageLogs === 1 ? 'disabled' : ''} onclick="changePageLogs(${currentPageLogs - 1})">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span class="text-xs text-light flex items-center px-10">Página ${currentPageLogs} de ${totalPages}</span>
+        <button class="btn-icon-premium sm" ${currentPageLogs === totalPages ? 'disabled' : ''} onclick="changePageLogs(${currentPageLogs + 1})">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `;
+    container.innerHTML = html;
+}
+
+window.changePageLogs = (page) => {
+    currentPageLogs = page;
+    renderLogsTable();
+    
+    // Subir automáticamente al principio de la lista de movimientos
+    const logsHeader = document.querySelector('.card-header-premium i.fa-list-ul')?.parentElement;
+    if (logsHeader) {
+        logsHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+};
+
+window.filterLogs = (query) => {
+    currentLogsSearchQuery = query;
+    currentPageLogs = 1;
+    applyLogsFilter();
+};
+
+let fullOccupancyData = [];
+let filteredOccupancyData = [];
+let currentPageOcc = 1;
+const itemsPerPageOcc = 10;
+let currentSearchQuery = '';
 
 export async function loadOccupancy() {
     const res = await api.get('/parking/current-occupancy');
     const resBranches = await api.get('/parking/branches');
     
     if (res.ok) {
-        const data = res.data;
-        const tbody = document.getElementById('occ-list');
-        if (!tbody) return;
-
+        fullOccupancyData = res.data;
+        
         // 1. Manejo de pisos en el formulario manual
         const mySucursal = localStorage.getItem('sucursal')?.replace('AUTOPASS ', '').trim() || '';
         const branch = resBranches.ok ? resBranches.data.find(b => b.nombre === mySucursal) : null;
@@ -118,57 +179,160 @@ export async function loadOccupancy() {
             if (floorGroup) floorGroup.style.display = 'none';
         }
 
-        let totalDebt = 0;
-        const now = new Date();
+        applyOccupancyFilter();
 
-        tbody.innerHTML = data.map(occ => {
-            const date = new Date(occ.ingreso);
-            const diffMs = now - date;
-            const duration = `${Math.floor(diffMs / 3600000)}h ${Math.floor((diffMs % 3600000) / 60000)}m`;
-            totalDebt += occ.deuda || 0;
-
-            const statusBadge = occ.ya_pago ? 
-                `<span class="badge badge-success-light">PAGO CONFIRMADO</span>` :
-                `<span class="badge badge-warning-light">$${occ.deuda.toLocaleString('es-AR')} PENDIENTE</span>`;
-
-            const floorInfo = occ.floor_nombre ? `<div class="text-xs text-muted mt-2">${occ.floor_nombre}</div>` : '';
-
-            return `
-            <tr>
-                <td data-label="Vehículo" class="text-center">
-                    <div class="flex-row items-center justify-center gap-8">
-                        <i class="fas ${occ.tipo_vehiculo === 'Moto' ? 'fa-motorcycle' : 'fa-car-side'} text-muted"></i>
-                        <div class="flex-col items-center">
-                            <span class="plate-style">${formatPlate(occ.patente)}</span>
-                            ${floorInfo}
-                        </div>
-                    </div>
-                </td>
-                <td data-label="Ingreso" class="text-center">${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
-                <td data-label="Permanencia" class="text-bold text-light text-center">${duration}</td>
-                <td data-label="Estado" class="text-center">${statusBadge}</td>
-                <td data-label="Acciones" class="text-center">
-                    <div class="flex-row gap-5 justify-center">
-                        ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}')" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
-                        <button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}')" title="Cancelar estadía (Cortesía 15 min)"><i class="fas fa-times"></i></button>
-                        <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}')" title="Registrar salida manual de vehículo"><i class="fas fa-door-open"></i></button>
-                    </div>
-                </td>
-            </tr>`;
-    }).join('') || '<tr><td colspan="5" class="text-center py-20">Sin vehículos.</td></tr>';
-
-    const countEl = document.getElementById('occ-stat-count');
-    const motosEl = document.getElementById('occ-stat-motos');
-    const debtEl = document.getElementById('occ-stat-debt');
-    if (countEl) countEl.innerText = data.filter(v => v.tipo_vehiculo !== 'Moto').length;
-    if (motosEl) motosEl.innerText = data.filter(v => v.tipo_vehiculo === 'Moto').length;
-    if (debtEl) debtEl.innerText = `$${totalDebt.toLocaleString('es-AR')}`;
+        const countEl = document.getElementById('occ-stat-count');
+        const motosEl = document.getElementById('occ-stat-motos');
+        const debtEl = document.getElementById('occ-stat-debt');
+        
+        let totalDebt = fullOccupancyData.reduce((acc, curr) => acc + (curr.deuda || 0), 0);
+        
+        if (countEl) countEl.innerText = fullOccupancyData.filter(v => v.tipo_vehiculo !== 'Moto').length;
+        if (motosEl) motosEl.innerText = fullOccupancyData.filter(v => v.tipo_vehiculo === 'Moto').length;
+        if (debtEl) debtEl.innerText = `$${totalDebt.toLocaleString('es-AR')}`;
     }
 }
 
-export async function cancelStay(plate) {
-    const { showConfirm, showToast } = await import('./utils.js');
-    if (!await showConfirm('Cancelar Estadía', `¿Confirmás la cancelación de la estadía para <b>${formatPlate(plate)}</b>?<br><small>Se aplicará cortesía de 15 min si corresponde.</small>`)) return;
+function applyOccupancyFilter() {
+    if (!currentSearchQuery) {
+        filteredOccupancyData = [...fullOccupancyData];
+    } else {
+        const q = currentSearchQuery.toLowerCase();
+        filteredOccupancyData = fullOccupancyData.filter(occ => 
+            occ.patente.toLowerCase().includes(q) || 
+            (occ.floor_nombre && occ.floor_nombre.toLowerCase().includes(q))
+        );
+    }
+    
+    // Si la página actual queda fuera de rango tras filtrar, volvemos a la 1
+    const totalPages = Math.ceil(filteredOccupancyData.length / itemsPerPageOcc);
+    if (currentPageOcc > totalPages) currentPageOcc = 1;
+    if (currentPageOcc === 0 && totalPages > 0) currentPageOcc = 1;
+
+    renderOccupancyTable();
+}
+
+export function renderOccupancyTable() {
+    const tbody = document.getElementById('occ-list');
+    if (!tbody) return;
+
+    const start = (currentPageOcc - 1) * itemsPerPageOcc;
+    const end = start + itemsPerPageOcc;
+    const paginatedData = filteredOccupancyData.slice(start, end);
+    const now = new Date();
+
+    tbody.innerHTML = paginatedData.map(occ => {
+        const date = new Date(occ.ingreso);
+        const diffMs = now - date;
+        const duration = `${Math.floor(diffMs / 3600000)}h ${Math.floor((diffMs % 3600000) / 60000)}m`;
+
+        const statusBadge = occ.ya_pago ? 
+            `<span class="badge badge-success-light">PAGO CONFIRMADO</span>` :
+            `<span class="badge badge-warning-light">$${occ.deuda.toLocaleString('es-AR')} PENDIENTE</span>`;
+
+        const floorInfo = occ.floor_nombre ? `<div class="text-xs text-muted mt-2">${occ.floor_nombre}</div>` : '';
+
+        return `
+        <tr>
+            <td data-label="Vehículo" class="text-center">
+                <div class="flex-col items-center">
+                    <span class="plate-style">${formatPlate(occ.patente)}</span>
+                    ${floorInfo}
+                </div>
+            </td>
+            <td data-label="Ingreso" class="text-center">${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
+            <td data-label="Permanencia" class="text-bold text-light text-center">${duration}</td>
+            <td data-label="Estado" class="text-center">${statusBadge}</td>
+            <td data-label="Acciones" class="text-center">
+                <div class="flex-row gap-5 justify-center">
+                    ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
+                    <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-door-open"></i></button>
+                    <button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${occ.deuda}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="5" class="text-center py-20">Sin vehículos.</td></tr>';
+
+    renderOccupancyPagination();
+}
+
+function renderOccupancyPagination() {
+    const totalPages = Math.ceil(filteredOccupancyData.length / itemsPerPageOcc);
+    const containers = [document.getElementById('occ-pagination'), document.getElementById('occ-pagination-tab')];
+    
+    containers.forEach(container => {
+        if (!container) return;
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = `
+            <button class="btn-icon-premium sm" ${currentPageOcc === 1 ? 'disabled' : ''} onclick="changePageOcc(${currentPageOcc - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="text-xs text-light flex items-center px-10">Página ${currentPageOcc} de ${totalPages}</span>
+            <button class="btn-icon-premium sm" ${currentPageOcc === totalPages ? 'disabled' : ''} onclick="changePageOcc(${currentPageOcc + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+        container.innerHTML = html;
+    });
+}
+
+window.changePageOcc = (page) => {
+    currentPageOcc = page;
+    renderOccupancyTable();
+    
+    // Subir automáticamente al principio de la lista
+    const activeTab = document.querySelector('.tab-view:not([style*="display: none"])');
+    if (activeTab) {
+        const listHeader = activeTab.querySelector('.card-header-premium i.fa-car-side')?.parentElement?.parentElement;
+        if (listHeader) {
+            listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+};
+
+window.filterOccupancy = (query) => {
+    currentSearchQuery = query;
+    currentPageOcc = 1;
+    applyOccupancyFilter();
+};
+
+
+
+export async function cancelStay(plate, type, debt, ingreso) {
+    const { showConfirm, showToast, formatPlate } = await import('./utils.js');
+    
+    // Calcular si está en cortesía (10 min) para mostrar deuda 0 en el mensaje
+    const entryDate = new Date(ingreso);
+    const minutesElapsed = (new Date() - entryDate) / 60000;
+    const displayDebt = minutesElapsed <= 10 ? 0 : debt;
+
+    // Confirmación mediante alerta premium (Estilo unificado)
+    const confirmed = await showConfirm(
+        '', 
+        `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
+            <div class="text-dorado" style="letter-spacing: 1px;">
+                ${formatPlate(plate)}
+            </div>
+            <div style="text-transform: uppercase;">
+                TIPO: ${type || 'AUTO'}
+            </div>
+            <div class="${displayDebt === 0 ? 'text-secondary' : 'text-danger'}" style="font-size: 1.1rem;">
+                DEUDA: $${(displayDebt || 0).toLocaleString('es-AR')}
+            </div>
+            <div style="opacity: 0.9; margin-top: 5px; font-size: 1.1rem;">
+                ¿Confirmar la cancelación?
+            </div>
+            <div style="font-size: 0.75rem; font-weight: 400; color: var(--blanco); margin-top: 5px;">
+                Cortesía de 10 min sin cargo.
+            </div>
+        </div>`
+    );
+
+    if (!confirmed) return;
 
     const res = await api.post(`/admin/cancel-stay?plate=${plate}`);
     if (res.ok) {

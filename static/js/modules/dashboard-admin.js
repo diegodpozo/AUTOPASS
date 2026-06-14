@@ -241,8 +241,19 @@ export function nextUserPage() {
 }
 
 export async function openBarrier(gateId) {
-    const confirm = await showConfirm('Apertura Forzada', `¿Abrir barrera de <b>${gateId}</b>?`);
-    if (!confirm) return;
+    // Confirmación mediante alerta premium (Estilo unificado)
+    const confirmed = await showConfirm(
+        '', 
+        `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
+            <div class="text-secondary" style="letter-spacing: 1px; text-transform: uppercase;">
+                BARRERA ${gateId}
+            </div>
+            <div style="opacity: 0.9; margin-top: 5px;">
+                ¿Abrir la barrera?
+            </div>
+        </div>`
+    );
+    if (!confirmed) return;
 
     const iconId = gateId === 'ENTRADA' ? 'icon-barrier-entry' : 'icon-barrier-exit';
     const iconEl = document.getElementById(iconId);

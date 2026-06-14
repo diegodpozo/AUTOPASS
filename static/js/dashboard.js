@@ -96,22 +96,48 @@ window.loadTabData = async (tabId) => {
 };
 
 window.manualEntry = async () => {
-    const plate = document.getElementById('manual-plate').value.trim().toUpperCase();
-    const type = document.getElementById('manual-type')?.value || 'Auto';
+    const plateInput = document.getElementById('manual-plate');
+    let plate = plateInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    let type = document.getElementById('manual-type')?.value || 'Auto';
     const floorId = document.getElementById('manual-floor')?.value;
+    
     if (!plate) return utils.showToast('Ingresá una patente');
+
+    // Detección automática de Moto (Formato: 1 letra, 3 números, 3 letras)
+    const isMoto = /^[A-Z]{1}[0-9]{3}[A-Z]{3}$/.test(plate);
+    if (isMoto) {
+        type = 'Moto';
+    }
+
+    // Confirmación mediante alerta premium (Estilo unificado)
+    const confirmed = await utils.showConfirm(
+        '', 
+        `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
+            <div class="text-dorado" style="letter-spacing: 1px;">
+                ${utils.formatPlate(plate)}
+            </div>
+            <div style="text-transform: uppercase;">
+                TIPO: ${isMoto ? 'MOTO' : 'AUTO'}
+            </div>
+            <div style="opacity: 0.9; margin-top: 5px;">
+                ¿Confirmar el registro?
+            </div>
+        </div>`
+    );
+    
+    if (!confirmed) return;
 
     let url = `/admin/manual-entry?plate=${plate}&tipo_vehiculo=${type}`;
     if (floorId) url += `&floor_id=${floorId}`;
 
     const res = await api.post(url);
     if (res.ok) {
-        utils.showToast('Ingreso registrado');
-        document.getElementById('manual-plate').value = '';
+        utils.showToast('Ingreso registrado con éxito', 'success');
+        plateInput.value = '';
         stats.loadOccupancy();
         stats.loadLiveStats();
     } else {
-        utils.showToast(res.error);
+        utils.showToast(res.error || 'Error al registrar ingreso', 'error');
     }
 };
 
@@ -763,8 +789,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 10000);
 });
 
-window.payOccupancy = async (plate) => {
-    if (!await showConfirm('Confirmar Pago', `¿Registrar pago manual para la patente <b>${plate}</b>?`)) return;
+window.payOccupancy = async (plate, amount) => {
+    // Confirmación mediante alerta premium (Estilo unificado)
+    const confirmed = await utils.showConfirm(
+        '', 
+        `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
+            <div class="text-dorado" style="letter-spacing: 1px;">
+                ${utils.formatPlate(plate)}
+            </div>
+            <div>
+                MONTO: $${(amount || 0).toLocaleString('es-AR')}
+            </div>
+            <div style="opacity: 0.9; margin-top: 5px;">
+                ¿Confirmar el pago?
+            </div>
+        </div>`
+    );
+
+    if (!confirmed) return;
 
     const res = await api.post(`/access/pay-stay?plate=${plate}`);
     if (res.ok) { 
@@ -780,10 +822,31 @@ window.payOccupancy = async (plate) => {
 
 window.cancelStay = stats.cancelStay;
 
-window.manualExit = async (plate) => {
-    if (!await showConfirm('Salida Manual', `¿Registrar salida de ${plate}?`)) return;
+window.manualExit = async (plate, type) => {
+    // Confirmación mediante alerta premium (Estilo unificado)
+    const confirmed = await utils.showConfirm(
+        '', 
+        `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
+            <div class="text-dorado" style="letter-spacing: 1px;">
+                ${utils.formatPlate(plate)}
+            </div>
+            <div style="text-transform: uppercase;">
+                TIPO: ${type || 'AUTO'}
+            </div>
+            <div style="opacity: 0.9; margin-top: 5px;">
+                ¿Confirmar la salida?
+            </div>
+        </div>`
+    );
+
+    if (!confirmed) return;
+    
     const res = await api.post(`/admin/manual-exit?plate=${plate}`);
-    if (res.ok) { utils.showToast('Salida registrada'); stats.loadOccupancy(); }
+    if (res.ok) { 
+        utils.showToast('Salida registrada'); 
+        stats.loadOccupancy(); 
+        stats.loadLiveStats();
+    }
     else utils.showToast(res.error);
 };
 
