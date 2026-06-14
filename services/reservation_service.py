@@ -264,7 +264,7 @@ class ReservationService:
             ))
 
         res.estado_reserva = ReservationStatus.CANCELADA
-        res.estado_pago = PaymentStatus.REEMBOLSADO if monto_a_reembolsar > 0 else PaymentStatus.CANCELADA
+        res.estado_pago = PaymentStatus.REEMBOLSADO if monto_a_reembolsar > 0 else PaymentStatus.CANCELADO
         res.monto_reembolsado = float(monto_a_reembolsar)
         
         if monto_a_reembolsar > 0:

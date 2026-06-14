@@ -71,19 +71,21 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 def get_super_admin(current_user: models.User = Depends(get_current_user)):
     """Valida si el usuario es Administrador Global (Control Total)."""
-    if current_user.rol != UserRole.ADMIN:
+    if str(current_user.rol) != UserRole.ADMIN.value:
         raise HTTPException(status_code=403, detail="Requiere permisos de Administrador Global")
     return current_user
 
 def get_local_manager(current_user: models.User = Depends(get_current_user)):
     """Valida si el usuario es Administrador (Global o Local)."""
-    if current_user.rol not in [UserRole.ADMIN, UserRole.LOCAL_ADMIN]:
+    role_str = str(current_user.rol)
+    if role_str not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value]:
         raise HTTPException(status_code=403, detail="Requiere permisos de gestión administrativa")
     return current_user
 
 def get_operational_user(current_user: models.User = Depends(get_current_user)):
     """Valida si el usuario es personal operativo (Admin, Local Admin o Staff)."""
-    if current_user.rol not in [UserRole.ADMIN, UserRole.LOCAL_ADMIN, UserRole.STAFF]:
+    role_str = str(current_user.rol)
+    if role_str not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
         raise HTTPException(status_code=403, detail="Acceso restringido a personal autorizado")
     return current_user
 

@@ -1,6 +1,9 @@
 # Estado del Proyecto: AUTOPASS (Actualizado 2026-06-12)
 
-### 🚀 Hitos Recientes (Junio 2026) - Versión 8.5.0 (UI/UX Refinement & System Diagnostics)
+### 🚀 Hitos Recientes (Junio 2026) - Versión 8.5.5 (Financial Analytics & User Control)
+- [x] **Gestión Administrativa Local**: Corrección de visibilidad de usuarios para `Local Admin`, permitiendo la gestión integral de clientes registrados (`USER`).
+- [x] **Reportes Financieros Avanzados**: Implementación de filtros por **Fecha Exacta** (calendario) y **Tipo de Vehículo** (Autos/Motos) sincronizados en KPIs y gráficos.
+- [x] **Robustez del Motor de Reportes**: Refactorización de consultas con subqueries SQL y normalización de nombres de sucursales (Filtros LIKE flexibles).
 - [x] **Simplificación de la UI de Configuración**: Eliminación de cabeceras redundantes e iconos de sección.
 - [x] **Mejoras Portal Cliente (v8.5.1)**: Formulario de vinculación colapsable, validación de patentes Mercosur y rediseño de formularios de reserva.
 - [x] **Nuevo Centro de Control y Diagnóstico**: Grilla premium para monitoreo en tiempo real de servicios core (Servidor, BD) y hardware (Barreras, Lectores de patente).
