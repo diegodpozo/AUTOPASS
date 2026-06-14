@@ -88,7 +88,12 @@ export function showConfirm(title, msg) {
 
         if (!modal || !btnOk || !btnCancel) return resolve(false);
 
-        titleEl.innerText = title || '¿Estás seguro?';
+        if (title === '') {
+            titleEl.style.display = 'none';
+        } else {
+            titleEl.style.display = 'block';
+            titleEl.innerText = title || '¿Estás seguro?';
+        }
         if (msg.includes('<')) {
             msgEl.innerHTML = msg;
         } else {
