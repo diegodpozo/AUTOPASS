@@ -102,7 +102,15 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
             aforo.ocupacion_motos -= 1
         
-    db.add(models.AccessLog(patente_detectada=p, tipo_evento="SALIDA", tipo_vehiculo=ultimo.tipo_vehiculo, fecha_hora=datetime.datetime.now().isoformat(), pago_confirmado=True, sucursal=sucursal))
+    db.add(models.AccessLog(
+        patente_detectada=p, 
+        tipo_evento="SALIDA", 
+        tipo_vehiculo=ultimo.tipo_vehiculo, 
+        fecha_hora=datetime.datetime.now().isoformat(), 
+        pago_confirmado=True, 
+        metodo_pago="CAJA",
+        sucursal=sucursal
+    ))
     db.commit()
     return {"status": "ok", "message": f"Salida manual registrada en {sucursal or 'Global'}: {p}"}
 

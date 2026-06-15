@@ -20,7 +20,8 @@ export const toTitle = s => {
  */
 export function formatDate(isoStr) {
     if (!isoStr) return '---';
-    const normalizedStr = isoStr.replace(/-/g, "/");
+    // Reemplazamos 'T' por un espacio para que el constructor de Date sea compatible universalmente
+    const normalizedStr = isoStr.replace('T', ' ').replace(/-/g, "/");
     const d = new Date(normalizedStr);
     
     if (isNaN(d.getTime())) return isoStr;

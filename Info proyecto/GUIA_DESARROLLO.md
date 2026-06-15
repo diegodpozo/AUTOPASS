@@ -52,22 +52,17 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 1. **Dorado AutoPass**: `#C5A059`.
 2. **Glassmorphism**: Fondo con desenfoque y bordes semi-transparentes.
 3. **Voseo**: "Registrate", "Cargá saldo", "Tus puntos".
+4. **Modo Edición (UI Pattern)**:
+   - Los campos de configuración (ej: tarifas) deben estar deshabilitados por defecto (`disabled`).
+   - Usar un botón único "EDITAR" que habilita los campos y cambia la etiqueta a "APLICAR".
+   - Al aplicar, disparar `showConfirm` con resumen. El sistema guarda y vuelve a bloquear los campos automáticamente.
+5. **Reportes Financieros**: Al agregar nuevos reportes o filtros, asegurar la integración de `vehicle_type` y `payment_method` ('all', 'DIGITAL', 'CAJA').
 
 ---
 
 ## Convenciones Multi-Sucursal (Aislamiento)
-1. **Nombres Completos**: Al interactuar con la DB, usá siempre el nombre completo de la sucursal (ej: "AUTOPASS Castelar") para asegurar coincidencias exactas.
-2. **Geolocalización**: Toda nueva sucursal debe incluir coordenadas (Lat/Lng). Se recomienda usar el botón "BUSCAR" en el modal para autocompletar mediante Nominatim.
-3. **Fallback de Configuración**: Al buscar una configuración, si no existe para la sucursal actual, buscá siempre el valor global (`sucursal == None`) antes de fallar.
-3. **Seguridad en Rutas**: Usá siempre las dependencias `get_local_manager` o `get_operational_user` para asegurar que el usuario solo acceda a datos de su sucursal autorizada.
-4. **Contexto UI**: No hardcodees cargos; usá la lógica de `dashboard.js` que construye el cargo + sucursal dinámicamente desde la sesión.
-
----
-
-## Estándares del Motor ALPR
-1. **Pre-procesamiento**: Toda imagen debe pasar por la cadena de filtros OpenCV antes del OCR.
-2. **Consenso**: Nunca valides una patente con un solo frame; requiere votación mayoritaria en ventana.
-3. **ROI**: Ajustá la región de interés si cambia la posición física de la cámara.
+1. **Nombres Completos**: Al interactuar con la DB, usá siempre el nombre completo de la sucursal.
+2. **Seguridad en Rutas**: Usá siempre las dependencias `get_local_manager` o `get_operational_user`.
 
 ---
 
@@ -77,30 +72,25 @@ Para correr las pruebas tras un cambio:
 .\venv\Scripts\python.exe test_user_flow.py
 .\venv\Scripts\python.exe test_multi_branch_rbac.py
 ```
-*Asegurate de que `init_db.py` se haya ejecutado al menos una vez.*
 
 ---
 
-## ⚠️ MANDATOS ARQUITECTÓNICOS (V8.5.0+)
+## ⚠️ MANDATOS ARQUITECTÓNICOS (V8.7.0+)
 Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cumplir estrictamente con lo siguiente:
 
 1. **Arquitectura Limpia (Clean Architecture):**
-   - **Rutas (`routes/`):** Deben ser "delgadas". Su única responsabilidad es recibir la solicitud HTTP, validar los parámetros (a través de `schemas/`), llamar al servicio correspondiente y retornar la respuesta.
-   - **Servicios (`services/`):** Aquí reside toda la lógica de negocio, cálculos, acceso a repositorios y orquestación de servicios (ej: billing + email).
-   - **Modelos (`models/`):** Solo entidades de base de datos y Enums. No deben contener lógica de API.
+   - **Rutas (`routes/`):** "Delgadas". Validación vía `schemas/`, llamada al servicio.
+   - **Servicios (`services/`):** Lógica de negocio pesada, orquestación.
+   - **Modelos (`models/`):** Entidades de BD y Enums.
 
 2. **Cero Hardcoding:**
-   - Prohibido dejar valores configurables ("mágicos") dentro del código.
-   - Si un valor puede cambiar según el entorno o la sucursal (tiempos, URLs, umbrales de IA, tarifas), debe ir en `core/config.py` y cargarse desde el archivo `.env`.
+   - Valores configurables deben ir en `core/config.py` cargados desde `.env`.
 
 3. **Modularización:**
-   - Antes de crear un archivo nuevo, evaluá si la funcionalidad pertenece a un servicio existente o si justifica uno nuevo.
-   - Evitá el acoplamiento circular. Si un servicio necesita una función de utilidad de una ruta, mové esa función a `core/utils.py` o al directorio raíz de `routes/`.
+   - Evitá el acoplamiento circular.
 
 4. **Tipado Seguro:**
-   - Usar SIEMPRE los Enums definidos en `models/enums.py` para estados, roles y tipos de vehículos. No usar strings literales.
+   - Usar SIEMPRE Enums (`models/enums.py`). Prohibido usar strings literales para estados o tipos.
 
 5. **Testing Obligatorio:**
-   - Todo nuevo servicio o funcionalidad crítica debe incluir su prueba unitaria correspondiente en `tests/` utilizando la infraestructura de SQLite en memoria definida.
-
----
+   - Todo nuevo servicio debe incluir pruebas en `tests/`.
