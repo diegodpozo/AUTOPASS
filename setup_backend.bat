@@ -1,10 +1,9 @@
 @echo off
-title Setup Backend - AUTOPASS Modular Gold v8.1.0
+title Setup Backend - AUTOPASS Modular Gold v8.7.0
 echo ======================================================
-echo   INSTALACION DEL ENTORNO MODULAR (AUTOPASS v8.1.0)
+echo   INSTALACION DEL ENTORNO MODULAR (AUTOPASS v8.7.0)
 echo ======================================================
 echo.
-
 :: 1. Verificar si Python está instalado
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
@@ -33,11 +32,20 @@ echo [+] Activando entorno virtual e instalando librerias...
 call venv\Scripts\activate
 
 echo [+] Actualizando PIP...
-python -m pip install --upgrade pip
+venv\Scripts\python.exe -m pip install --upgrade pip
 
 echo [+] Instalando dependencias desde requirements.txt...
 echo Nota: La instalacion de dependencias (OpenCV, EasyOCR, Torch, QRCode) puede tardar unos minutos segun tu conexion.
-pip install -r requirements.txt
+venv\Scripts\pip.exe install -r requirements.txt
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [!] La instalacion original fallo.
+    echo [+] Intentando instalacion de contingencia con python-bidi puro...
+    venv\Scripts\pip.exe install python-bidi==0.4.2
+    echo [+] Reintentando instalacion de dependencias...
+    venv\Scripts\pip.exe install -r requirements.txt
+)
 
 :: 4. Configurar Variables de Entorno (.env)
 echo [+] Configurando archivo de variables de entorno (.env)...
@@ -74,14 +82,14 @@ if not exist .env (
 :: 5. Inicializar Base de Datos
 echo.
 echo [+] Inicializando Base de Datos Modular y Usuario Admin...
-python init_db.py
+venv\Scripts\python.exe init_db.py
 
 echo.
 echo ======================================================
-echo   INSTALACION COMPLETADA CON EXITO (v8.1.0 GOLD)
+echo   INSTALACION COMPLETADA CON EXITO (v8.7.0 GOLD)
 echo ======================================================
 echo.
-echo Arquitectura Limpia Modular (v8.1.0):
+echo Arquitectura Limpia Modular (v8.7.0):
 echo - Core: Configuracion y Seguridad Centralizada
 echo - Domain Layers: Modelos y Esquemas divididos (User/Parking/Res)
 echo - Business Logic: Capa de Servicios agnostica (services/)
@@ -93,8 +101,8 @@ echo Email: admin@autopass.com
 echo Pass: admin123
 echo.
 echo Para iniciar el sistema:
-echo 1. Activa el entorno: call venv\Scripts\activate
-echo 2. Corre el server: uvicorn main:app --reload
+echo 1. Ejecuta el script: run_server.bat
+echo    (Este script abrira automaticamente tu navegador por defecto)
 echo.
 echo Acceso Web: http://localhost:8000
 echo.
