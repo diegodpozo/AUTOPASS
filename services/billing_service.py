@@ -121,6 +121,7 @@ class BillingService:
         
         # Confirmación de pago en el log
         log.pago_confirmado = True
+        log.metodo_pago = "DIGITAL"
         log.costo_estadia = monto_real
         log.fecha_pago = datetime.datetime.now().isoformat()
         

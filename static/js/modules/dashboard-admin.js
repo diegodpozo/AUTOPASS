@@ -478,42 +478,34 @@ export async function loadFloors() {
     const pbCapAutos = resSettings.ok ? (resSettings.data.capacidad_total || 20) : 20;
     const pbCapMotos = resSettings.ok ? (resSettings.data.capacidad_motos || 10) : 10;
     
-    // 1. BLOQUE PLANTA BAJA (L0)
+    // 1. BLOQUE PLANTA BAJA (PB)
     let cardsHtml = `
         <div class="level-block pb" id="level-block-pb">
             <div class="level-indicator">
-                <i class="fas fa-layer-group level-icon-bg"></i>
-                <span class="level-code">L0</span>
-                <span class="level-label">GROUND</span>
+                <span class="level-code">PB</span>
             </div>
-            <div class="level-main-content">
-                <div class="level-identity">
-                    <span class="level-title">PLANTA BAJA</span>
-                    <span class="level-subtitle">Acceso Principal</span>
-                </div>
-                <div class="level-stats-grid">
+            <div class="level-main-content" style="justify-content: center;">
+                <div class="level-stats-grid" style="gap: 50px;">
                     <div class="stat-item">
-                        <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-car mr-5"></i> Autos</span>
+                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-car mr-10 text-dorado" style="font-size: 1.2rem;"></i> Autos</span>
                         <div class="stat-val-box">
-                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled>
-                            <span class="stat-unit">u.</span>
+                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled style="width: 100px; font-size: 1.6rem;">
                         </div>
                     </div>
                     <div class="stat-item">
-                        <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-motorcycle mr-5"></i> Motos</span>
+                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-motorcycle mr-10 text-dorado" style="font-size: 1.2rem;"></i> Motos</span>
                         <div class="stat-val-box">
-                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled>
-                            <span class="stat-unit">u.</span>
+                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled style="width: 100px; font-size: 1.6rem;">
                         </div>
                     </div>
                 </div>
             </div>
             <div class="level-actions">
+                <button class="btn-icon-premium sm btn-save-level" onclick="savePBCapacity()" style="display:none;" title="Guardar Cambios">
+                    <i class="fas fa-floppy-disk"></i>
+                </button>
                 <button class="btn-icon-premium sm btn-edit-level" onclick="toggleLevelEdit('pb')" title="Editar Plazas">
                     <i class="fas fa-pen-to-square"></i>
-                </button>
-                <button class="btn btn-primary sm btn-save-level" onclick="savePBCapacity()" style="display:none; height: 32px; border-radius: 8px;">
-                    APLICAR
                 </button>
             </div>
         </div>
@@ -559,10 +551,11 @@ export async function loadFloors() {
                     <button class="btn btn-primary sm btn-save-level" onclick="updateFloorCapacity(${f.id})" style="display:none; height: 32px; border-radius: 8px;">
                         APLICAR
                     </button>
-                    <button class="btn-icon-premium sm" onclick="openEditFloorModal(${f.id})" title="Configuración Avanzada">
+                    <!-- Oculto para simplificar a un solo nivel -->
+                    <button class="btn-icon-premium sm" onclick="openEditFloorModal(${f.id})" title="Configuración Avanzada" style="display: none;">
                         <i class="fas fa-gear"></i>
                     </button>
-                    <button class="btn-icon-premium sm danger" onclick="deleteFloor(${f.id})" title="Remover Nivel">
+                    <button class="btn-icon-premium sm danger" onclick="deleteFloor(${f.id})" title="Remover Nivel" style="display: none;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -725,21 +718,21 @@ export async function saveAllRates() {
     ];
     
     const labels = {
-        'precio_hora': 'Hora (Auto)', 'precio_dia': 'Día (Auto)', 'precio_semana': 'Semana (Auto)', 'precio_mes': 'Mes (Auto)',
-        'precio_hora_moto': 'Hora (Moto)', 'precio_dia_moto': 'Día (Moto)', 'precio_semana_moto': 'Semana (Moto)', 'precio_mes_moto': 'Mes (Moto)'
+        'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
+        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes'
     };
 
     let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
     keys.forEach(key => {
         const val = document.getElementById(`cfg-${key}`)?.value || 0;
         summary += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #888; font-size: 0.75rem;">${labels[key]}:</span>
+                        <span style="color: #fff; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">${labels[key]}:</span>
                         <b style="color: var(--dorado); font-size: 0.75rem;">$${parseFloat(val).toLocaleString()}</b>
                     </div>`;
     });
     summary += '</div>';
 
-    if (!await showConfirm('Confirmar Tarifario', `¿Estás seguro de aplicar los siguientes valores?<br>${summary}`)) return;
+    if (!await showConfirm('Confirmar Tarifario', summary)) return;
 
     let success = true;
     for (const key of keys) {
@@ -750,8 +743,95 @@ export async function saveAllRates() {
         if (!res.ok) success = false;
     }
 
-    if (success) showToast('Tarifas actualizadas correctamente.');
+    if (success) {
+        showToast('Tarifas actualizadas correctamente.');
+        // Si hay grupos en edición, cerrarlos
+        document.querySelectorAll('.rate-group').forEach(g => {
+            g.classList.remove('editing');
+            g.querySelectorAll('input').forEach(i => i.disabled = true);
+        });
+        document.querySelectorAll('[id^="btn-save-rates-"]').forEach(b => b.style.display = 'none');
+        document.querySelectorAll('[id^="btn-edit-rates-"]').forEach(b => b.style.display = 'inline-flex');
+    }
     else showToast('Error al actualizar algunas tarifas.');
+}
+
+export function toggleRateEdit(type) {
+    const group = document.getElementById(`rate-group-${type}`);
+    const btn = document.getElementById(`btn-edit-rates-${type}`);
+    const inputs = group.querySelectorAll('input');
+
+    const isEditing = group.classList.contains('editing');
+
+    if (!isEditing) {
+        // Entrar en modo edición
+        inputs.forEach(input => input.disabled = false);
+        group.classList.add('editing');
+        btn.innerHTML = '<i class="fas fa-check mr-8"></i> APLICAR';
+        btn.style.borderColor = '#4CAF50';
+        btn.style.color = '#4CAF50';
+        if (inputs.length > 0) inputs[0].focus();
+    } else {
+        // Al presionar "APLICAR", disparamos el guardado
+        saveRateGroup(type);
+    }
+}
+
+export async function saveRateGroup(type) {
+    const group = document.getElementById(`rate-group-${type}`);
+    const btn = document.getElementById(`btn-edit-rates-${type}`);
+    const inputs = group.querySelectorAll('input');
+
+    const isAutos = type === 'autos';
+    const keys = isAutos ? 
+        ['precio_hora', 'precio_dia', 'precio_semana', 'precio_mes'] :
+        ['precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto'];
+
+    const labels = {
+        'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
+        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes'
+    };
+
+    let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
+    keys.forEach(key => {
+        const val = document.getElementById(`cfg-${key}`)?.value || 0;
+        summary += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="color: #fff; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">${labels[key]}:</span>
+                        <b style="color: var(--dorado); font-size: 0.75rem;">$${parseFloat(val).toLocaleString()}</b>
+                    </div>`;
+    });
+    summary += '</div>';
+
+    // Función para resetear la UI del grupo (bloquear)
+    const resetUI = () => {
+        inputs.forEach(input => input.disabled = true);
+        group.classList.remove('editing');
+        btn.innerHTML = '<i class="fas fa-edit mr-8"></i> EDITAR';
+        btn.style.borderColor = 'var(--dorado)';
+        btn.style.color = '#aaa';
+    };
+
+    if (!await showConfirm(`Confirmar Tarifas ${type.toUpperCase()}`, summary)) {
+        resetUI();
+        return;
+    }
+
+    let success = true;
+    for (const key of keys) {
+        const input = document.getElementById(`cfg-${key}`);
+        if (!input) continue;
+        const val = parseFloat(input.value) || 0;
+        const res = await api.post(`/admin/settings/prices?clave=${key}&valor=${val}`);
+        if (!res.ok) success = false;
+    }
+
+    if (success) {
+        showToast(`Tarifas de ${type} actualizadas correctamente.`);
+    } else {
+        showToast('Error al actualizar algunas tarifas.');
+    }
+    
+    resetUI();
 }
 
 export async function saveSystemParam(param) {

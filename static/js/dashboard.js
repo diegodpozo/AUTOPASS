@@ -13,11 +13,21 @@ import * as utils from './modules/utils.js';
 
 // UI & Navigation
 window.switchTab = ui.switchTab;
+window.switchMonitorTab = (tabId, element) => {
+    // Buttons
+    element.parentElement.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    element.classList.add('active');
+    
+    // Contents & Search Boxes
+    document.querySelectorAll('.monitor-tab-content').forEach(content => content.classList.remove('active'));
+    
+    const targetTable = document.getElementById(`monitor-tab-${tabId}`);
+    const targetSearch = document.getElementById(`search-container-${tabId}`);
+    
+    if (targetTable) targetTable.classList.add('active');
+    if (targetSearch) targetSearch.classList.add('active');
+};
 window.toggleMobileNav = ui.toggleMobileNav;
-window.closeMobileNav = ui.closeMobileNav;
-window.toggleSidebar = ui.toggleSidebar;
-window.toggleManualOps = () => ui.toggleCollapsible('manual-ops-content', 'manual-ops-chevron', '400px');
-window.toggleOccupancy = () => ui.toggleCollapsible('occupancy-content', 'occupancy-chevron', '1000px');
 
 // Global UI Modals
 window.openModal = baseUi.openModal;
@@ -528,10 +538,11 @@ window.loadFinanceData = async (resetPage = true) => {
     const period = document.getElementById('fin-period')?.value || 'month';
     const specificDate = document.getElementById('fin-date')?.value;
     const vehicleType = document.getElementById('fin-vehicle-type')?.value || 'all';
+    const paymentMethod = document.getElementById('fin-payment-method')?.value || 'all';
     
-    let urlParams = `period=${period}&vehicle_type=${vehicleType}`;
+    let urlParams = `period=${period}&vehicle_type=${vehicleType}&payment_method=${paymentMethod}`;
     if (period === 'specific' && specificDate) {
-        urlParams = `period=day&start=${specificDate}T00:00:00&end=${specificDate}T23:59:59&vehicle_type=${vehicleType}`;
+        urlParams = `period=day&start=${specificDate}T00:00:00&end=${specificDate}T23:59:59&vehicle_type=${vehicleType}&payment_method=${paymentMethod}`;
     }
     
     // 1. Cargar Resumen (KPIs)
@@ -581,12 +592,17 @@ window.loadFinanceData = async (resetPage = true) => {
                 const amountClass = isRefund ? 'text-danger' : 'text-secondary';
                 const badgeClass = isRefund ? 'badge-danger-light' : 'badge-success-light';
                 
+                let metodoPago = 'PAGO DIGITAL';
+                if (p.metodo === 'CAJA') {
+                    metodoPago = 'PAGO EN CAJA';
+                }
+
                 return `
                 <tr class="${rowClass}">
-                    <td>${utils.formatDate(p.fecha_pago)}</td>
+                    <td><span class="text-light">${utils.formatDate(p.fecha_pago)}</span></td>
                     <td><span class="plate-style">${p.patente_detectada}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
                     <td class="text-bold ${amountClass}">$${p.costo_estadia.toLocaleString()}</td>
-                    <td><span class="text-small">${p.tipo === 'Reserva' || p.tipo === 'Reembolso' ? 'MERCADO PAGO / ABONO' : 'SISTEMA DIGITAL'}</span></td>
+                    <td><span class="text-small">${metodoPago}</span></td>
                     <td><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
                 </tr>
             `}).join('') || '<tr><td colspan="5" class="text-center py-20">No hay transacciones en este período.</td></tr>';
@@ -854,6 +870,8 @@ window.createBranch = admin.handleCreateBranch;
 window.showCreateBranchModal = admin.showCreateBranchModal;
 window.loadSettings = admin.loadSettings;
 window.saveAllRates = admin.saveAllRates;
+window.toggleRateEdit = admin.toggleRateEdit;
+window.saveRateGroup = admin.saveRateGroup;
 window.saveCapacities = admin.saveCapacities;
 window.saveSystemParam = admin.saveSystemParam;
 window.resetSys = admin.resetSys;

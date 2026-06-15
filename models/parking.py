@@ -34,6 +34,7 @@ class AccessLog(Base):
     fecha_pago = Column(String, nullable=True) # Nueva columna para reportes financieros
     imagen_path = Column(String, nullable=True)
     pago_confirmado = Column(Boolean, default=False)
+    metodo_pago = Column(String, nullable=True) # 'DIGITAL' o 'CAJA'
     costo_estadia = Column(Float, default=0.0)
     sucursal = Column(String, nullable=True)
 

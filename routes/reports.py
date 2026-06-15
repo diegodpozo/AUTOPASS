@@ -27,8 +27,8 @@ def get_date_range(period: str, start: str = None, end: str = None):
 # --- ANALÍTICA FINANCIERA ---
 
 @router.get("/financial-summary")
-def get_financial_summary(period: str = "total", start: str = None, end: str = None, vehicle_type: str = "all", db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
-    """Calcula el resumen de recaudación unificado. Soporta filtrado por tipo de vehículo."""
+def get_financial_summary(period: str = "total", start: str = None, end: str = None, vehicle_type: str = "all", payment_method: str = "all", db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
+    """Calcula el resumen de recaudación unificado. Soporta filtrado por tipo de vehículo y método de pago."""
     start_date, end_date = get_date_range(period, start, end)
     sucursal = user.sucursal if str(user.rol) != UserRole.ADMIN.value else None
 
@@ -40,6 +40,9 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     
     if vehicle_type != "all":
         q_logs = q_logs.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+    
+    if payment_method != "all":
+        q_logs = q_logs.filter(models.AccessLog.metodo_pago == payment_method)
     
     if sucursal: 
         target_name = sucursal.replace('AUTOPASS ', '').strip()
@@ -56,7 +59,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     total_logs = float(total_logs or 0.0)
     count_logs = count_logs or 0
 
-    # 2. Recaudación de Reservations
+    # 2. Recaudación de Reservations (Siempre Digital)
     q_res_pagos = db.query(
         func.sum(models.Reservation.monto_total),
         func.count(models.Reservation.id)
@@ -66,69 +69,93 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
 
     if vehicle_type != "all":
         q_res_pagos = q_res_pagos.filter(models.Vehicle.tipo == vehicle_type)
-
-    if sucursal: 
-        target_name = sucursal.replace('AUTOPASS ', '').strip()
-        q_res_pagos = q_res_pagos.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
     
-    if start_date:
-        q_res_pagos = q_res_pagos.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
-    if end_date:
-        q_res_pagos = q_res_pagos.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
-
-    total_res_bruto, count_res = q_res_pagos.first()
-    total_res_bruto = float(total_res_bruto or 0.0)
-    count_res = count_res or 0
-
-    # Reembolsos
-    q_refunds = db.query(func.sum(models.Reservation.monto_reembolsado)).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
-    q_refunds = q_refunds.filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
-    
-    if vehicle_type != "all":
-        q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
+    # Si filtran por CAJA, las reservas no deberían sumar (son siempre digitales)
+    if payment_method == "CAJA":
+        total_res_bruto, count_res = 0.0, 0
+    else:
+        if sucursal: 
+            target_name = sucursal.replace('AUTOPASS ', '').strip()
+            q_res_pagos = q_res_pagos.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
         
-    if sucursal: 
-        target_name = sucursal.replace('AUTOPASS ', '').strip()
-        q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+        if start_date:
+            q_res_pagos = q_res_pagos.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
+        if end_date:
+            q_res_pagos = q_res_pagos.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
+
+        total_res_bruto, count_res = q_res_pagos.first()
+        total_res_bruto = float(total_res_bruto or 0.0)
+        count_res = count_res or 0
+
+    # Reembolsos (Siempre Digital)
+    if payment_method == "CAJA":
+        total_refunds = 0.0
+    else:
+        q_refunds = db.query(func.sum(models.Reservation.monto_reembolsado)).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
+        q_refunds = q_refunds.filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
+        
+        if vehicle_type != "all":
+            q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
+            
+        if sucursal: 
+            target_name = sucursal.replace('AUTOPASS ', '').strip()
+            q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+        
+        if start_date:
+            q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
+        if end_date:
+            q_refunds = q_refunds.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
+        
+        total_refunds = float(q_refunds.scalar() or 0.0)
     
-    if start_date:
-        q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
-    if end_date:
-        q_refunds = q_refunds.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
-    
-    total_refunds = float(q_refunds.scalar() or 0.0)
     total_res_neto = max(0, total_res_bruto - total_refunds)
 
-    # 3. Métricas de Cancelación
-    q_cancelled = db.query(models.Reservation).filter(models.Reservation.estado_reserva == ReservationStatus.CANCELADA)
-    q_total_res = db.query(func.count(models.Reservation.id))
-    
-    if sucursal:
-        target_name = sucursal.replace('AUTOPASS ', '').strip()
-        q_cancelled = q_cancelled.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
-        q_total_res = q_total_res.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
-    
-    if start_date:
-        q_cancelled = q_cancelled.filter(models.Reservation.fecha_inicio >= start_date)
-        q_total_res = q_total_res.filter(models.Reservation.fecha_inicio >= start_date)
+    # 3. Métricas de Cancelación (Siempre Digital en este contexto)
+    if payment_method == "CAJA":
+        tasa_cancelacion = 0
+        ingresos_incumplimiento = 0.0
+    else:
+        q_cancelled = db.query(models.Reservation).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True).filter(models.Reservation.estado_reserva == ReservationStatus.CANCELADA)
+        q_total_res = db.query(func.count(models.Reservation.id)).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
+        
+        if vehicle_type != "all":
+            q_cancelled = q_cancelled.filter(models.Vehicle.tipo == vehicle_type)
+            q_total_res = q_total_res.filter(models.Vehicle.tipo == vehicle_type)
 
-    cancelled_list = q_cancelled.all()
-    count_cancelled = len(cancelled_list)
-    count_total_res = q_total_res.scalar() or 0
-    tasa_cancelacion = round((count_cancelled / count_total_res * 100), 1) if count_total_res > 0 else 0
+        if sucursal:
+            target_name = sucursal.replace('AUTOPASS ', '').strip()
+            q_cancelled = q_cancelled.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+            q_total_res = q_total_res.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+        
+        if start_date:
+            q_cancelled = q_cancelled.filter(models.Reservation.fecha_inicio >= start_date)
+            q_total_res = q_total_res.filter(models.Reservation.fecha_inicio >= start_date)
+        if end_date:
+            q_cancelled = q_cancelled.filter(models.Reservation.fecha_inicio <= end_date)
+            q_total_res = q_total_res.filter(models.Reservation.fecha_inicio <= end_date)
 
-    ingresos_incumplimiento = 0.0
-    for c in cancelled_list:
-        if c.estado_pago == PaymentStatus.CANCELADO:
-            ingresos_incumplimiento += (c.monto_total or 0.0)
-        elif c.estado_pago == PaymentStatus.REEMBOLSADO:
-            ingresos_incumplimiento += max(0.0, (c.monto_total or 0.0) - (c.monto_reembolsado or 0.0))
+        cancelled_list = q_cancelled.all()
+        count_cancelled = len(cancelled_list)
+        count_total_res = q_total_res.scalar() or 0
+        tasa_cancelacion = round((count_cancelled / count_total_res * 100), 1) if count_total_res > 0 else 0
+
+        ingresos_incumplimiento = 0.0
+        for c in cancelled_list:
+            if c.estado_pago == PaymentStatus.CANCELADO:
+                ingresos_incumplimiento += (c.monto_total or 0.0)
+            elif c.estado_pago == PaymentStatus.REEMBOLSADO:
+                ingresos_incumplimiento += max(0.0, (c.monto_total or 0.0) - (c.monto_reembolsado or 0.0))
 
     total_final = round(total_logs + total_res_neto, 2)
     count_final = count_logs + count_res
 
-    # 4. Ingresos Proyectados
+    # 4. Ingresos Proyectados (Solo vehiculos que siguen ADENTRO ahora mismo)
+    # Por defecto, la proyeccion no discrimina metodo de pago futuro, pero filtramos por tipo si se pide
     q_parked = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
+    
+    if vehicle_type != "all":
+        q_parked = q_parked.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+
     if sucursal:
         target_name = sucursal.replace('AUTOPASS ', '').strip()
         q_parked = q_parked.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
@@ -139,7 +166,8 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     for e in entradas:
         tiene_salida = db.query(models.AccessLog.id).filter(models.AccessLog.patente_detectada == e.patente_detectada, models.AccessLog.tipo_evento == AccessEventType.SALIDA, models.AccessLog.fecha_hora > e.fecha_hora, models.AccessLog.sucursal == e.sucursal).first()
         if not tiene_salida and not e.pago_confirmado:
-            deuda_proyectada += BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal)
+            # CORRECCIÓN: Pasar el tipo de vehículo del log para usar la tarifa correcta (Auto vs Moto)
+            deuda_proyectada += BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
 
     return {
         "total_recaudado": total_final,
@@ -156,7 +184,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     }
 
 @router.get("/payment-history")
-def get_payment_history(period: str = "total", start: str = None, end: str = None, vehicle_type: str = "all", page: int = 1, limit: int = 20, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+def get_payment_history(period: str = "total", start: str = None, end: str = None, vehicle_type: str = "all", payment_method: str = "all", page: int = 1, limit: int = 20, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """Lista el historial de transacciones incluyendo Reembolsos con soporte para UNION ALL robusto."""
     from sqlalchemy import union_all, literal_column
     start_date, end_date = get_date_range(period, start, end)
@@ -169,49 +197,74 @@ def get_payment_history(period: str = "total", start: str = None, end: str = Non
         func.coalesce(models.AccessLog.fecha_pago, models.AccessLog.fecha_hora).label("fecha"),
         models.AccessLog.patente_detectada.label("patente"),
         models.AccessLog.costo_estadia.label("monto"),
-        literal_column("'Estadía'").label("tipo")
+        literal_column("'Estadía'").label("tipo"),
+        models.AccessLog.metodo_pago.label("metodo")
     ).filter(models.AccessLog.pago_confirmado == True, models.AccessLog.costo_estadia > 0)
     
     if vehicle_type != "all": q_logs = q_logs.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+    if payment_method != "all": q_logs = q_logs.filter(models.AccessLog.metodo_pago == payment_method)
+
     if sucursal: 
         target_name = sucursal.replace('AUTOPASS ', '').strip()
         q_logs = q_logs.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
     if start_date: q_logs = q_logs.filter((models.AccessLog.fecha_pago >= start_date) | ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
     if end_date: q_logs = q_logs.filter((models.AccessLog.fecha_pago <= end_date) | ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora <= end_date)))
 
-    # 2. Reservas
-    q_res = db.query(
-        literal_column("'R' || CAST(reservations.id AS TEXT)").label("id"),
-        func.coalesce(models.Reservation.fecha_pago, models.Reservation.fecha_inicio).label("fecha"),
-        models.Reservation.patente.label("patente"),
-        models.Reservation.monto_total.label("monto"),
-        literal_column("'Reserva'").label("tipo")
-    ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
-    
-    q_res = q_res.filter(models.Reservation.estado_pago == PaymentStatus.PAGADO)
-    if vehicle_type != "all": q_res = q_res.filter(models.Vehicle.tipo == vehicle_type)
-    if sucursal: 
-        target_name = sucursal.replace('AUTOPASS ', '').strip()
-        q_res = q_res.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
-    if start_date: q_res = q_res.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
-    if end_date: q_res = q_res.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
+    # 2. Reservas (Siempre Digital)
+    if payment_method == "CAJA":
+        q_res = db.query(
+            literal_column("'R'").label("id"),
+            literal_column("'1900-01-01'").label("fecha"),
+            literal_column("''").label("patente"),
+            literal_column("0.0").label("monto"),
+            literal_column("''").label("tipo"),
+            literal_column("''").label("metodo")
+        ).filter(literal_column("1=0"))
+    else:
+        q_res = db.query(
+            literal_column("'R' || CAST(reservations.id AS TEXT)").label("id"),
+            func.coalesce(models.Reservation.fecha_pago, models.Reservation.fecha_inicio).label("fecha"),
+            models.Reservation.patente.label("patente"),
+            models.Reservation.monto_total.label("monto"),
+            literal_column("'Reserva'").label("tipo"),
+            literal_column("'DIGITAL'").label("metodo")
+        ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
+        
+        q_res = q_res.filter(models.Reservation.estado_pago == PaymentStatus.PAGADO)
+        if vehicle_type != "all": q_res = q_res.filter(models.Vehicle.tipo == vehicle_type)
+        if sucursal: 
+            target_name = sucursal.replace('AUTOPASS ', '').strip()
+            q_res = q_res.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+        if start_date: q_res = q_res.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
+        if end_date: q_res = q_res.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
 
-    # 3. Reembolsos
-    q_refunds = db.query(
-        literal_column("'REF' || CAST(reservations.id AS TEXT)").label("id"),
-        func.coalesce(models.Reservation.fecha_pago, models.Reservation.fecha_inicio).label("fecha"),
-        models.Reservation.patente.label("patente"),
-        (models.Reservation.monto_reembolsado * -1).label("monto"),
-        literal_column("'Reembolso'").label("tipo")
-    ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
-    
-    q_refunds = q_refunds.filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
-    if vehicle_type != "all": q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
-    if sucursal: 
-        target_name = sucursal.replace('AUTOPASS ', '').strip()
-        q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
-    if start_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
-    if end_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
+    # 3. Reembolsos (Siempre Digital)
+    if payment_method == "CAJA":
+        q_refunds = db.query(
+            literal_column("'REF'").label("id"),
+            literal_column("'1900-01-01'").label("fecha"),
+            literal_column("''").label("patente"),
+            literal_column("0.0").label("monto"),
+            literal_column("''").label("tipo"),
+            literal_column("''").label("metodo")
+        ).filter(literal_column("1=0"))
+    else:
+        q_refunds = db.query(
+            literal_column("'REF' || CAST(reservations.id AS TEXT)").label("id"),
+            func.coalesce(models.Reservation.fecha_pago, models.Reservation.fecha_inicio).label("fecha"),
+            models.Reservation.patente.label("patente"),
+            (models.Reservation.monto_reembolsado * -1).label("monto"),
+            literal_column("'Reembolso'").label("tipo"),
+            literal_column("'DIGITAL'").label("metodo")
+        ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
+        
+        q_refunds = q_refunds.filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
+        if vehicle_type != "all": q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
+        if sucursal: 
+            target_name = sucursal.replace('AUTOPASS ', '').strip()
+            q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+        if start_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
+        if end_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
 
     # Combinamos usando subqueries para evitar problemas de binding
     combined = union_all(q_logs, q_res, q_refunds).subquery()
@@ -222,7 +275,8 @@ def get_payment_history(period: str = "total", start: str = None, end: str = Non
     else:
         results = query.order_by(combined.c.fecha.desc()).all()
 
-    return [{"id": r.id, "fecha_pago": r.fecha, "patente_detectada": r.patente, "costo_estadia": r.monto, "tipo": r.tipo} for r in results]
+    return [{"id": r.id, "fecha_pago": r.fecha, "patente_detectada": r.patente, "costo_estadia": r.monto, "tipo": r.tipo, "metodo": r.metodo} for r in results]
+
 
 # --- AUDITORÍA DE ACCESOS ---
 

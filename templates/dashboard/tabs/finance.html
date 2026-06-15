@@ -111,6 +111,16 @@
                         <div class="header-text"><h3>TENDENCIA DE INGRESOS</h3></div>
                     </div>
                     <div class="header-actions flex-row gap-10">
+                        <!-- Filtro de Método de Pago -->
+                        <div class="filter-group-premium">
+                            <i class="fas fa-wallet"></i>
+                            <select id="fin-payment-method" class="select-premium-sm" onchange="loadFinanceData()" title="Filtrar por método de pago">
+                                <option value="all">TODOS LOS PAGOS</option>
+                                <option value="DIGITAL">SOLO DIGITALES</option>
+                                <option value="CAJA">SOLO EN CAJA</option>
+                            </select>
+                        </div>
+
                         <!-- Filtro de Tipo de Vehículo -->
                         <div class="filter-group-premium">
                             <i class="fas fa-car-side"></i>
@@ -161,7 +171,7 @@
                     <thead>
                         <tr>
                             <th>Fecha y Hora</th>
-                            <th>Vehículo / Patente</th>
+                            <th>Patente</th>
                             <th>Monto Abonado</th>
                             <th>Método de Pago</th>
                             <th>Estado</th>
