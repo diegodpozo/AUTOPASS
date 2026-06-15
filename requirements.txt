@@ -56,7 +56,7 @@ pydantic==2.12.5
 pydantic_core==2.41.5
 PyMySQL==1.1.2
 pyparsing==3.3.2
-python-bidi==0.6.9
+python-bidi==0.4.2
 python-dotenv==1.2.2
 python-jose==3.5.0
 python-multipart==0.0.22
