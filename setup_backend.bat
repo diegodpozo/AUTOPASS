@@ -56,7 +56,11 @@ if not exist .env (
     echo [!] El archivo .env ya existe, preservando configuracion actual.
 )
 
-:: 5. Crear directorios necesarios
+:: 5. Inicializar Base de Datos
+echo [+] Inicializando base de datos...
+venv\Scripts\python.exe init_db.py
+
+:: 6. Crear directorios necesarios
 echo [+] Creando directorios de assets y uploads...
 if not exist captured_images mkdir captured_images
 if not exist static\uploads\branches mkdir static\uploads\branches
