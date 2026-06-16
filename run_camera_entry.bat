@@ -13,10 +13,13 @@ if "%SEDE%"=="" set SEDE=GLOBAL
 set GATE_TYPE=entrada
 set GATE_ID=%SEDE%_ENTRADA
 set BACKEND_URL=http://localhost:8000
+:: Cambia '0' por la URL de IPWebcam si usas el celular (ej: http://192.168.1.50:8080/video)
+set VIDEO_SOURCE=0
 
 echo.
 echo [*] Configurado para Sede: %SEDE%
 echo [*] ID de Puerta: %GATE_ID%
+echo [*] Fuente de Video: %VIDEO_SOURCE%
 echo [*] Iniciando servicio...
 echo.
 
