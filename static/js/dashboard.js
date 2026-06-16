@@ -45,6 +45,7 @@ window.prevUserPage = admin.prevUserPage;
 window.nextUserPage = admin.nextUserPage;
 window.toggleBranchSelection = admin.toggleBranchSelection;
 window.toggleUserBlock = admin.toggleUserBlock;
+window.showCreateUserModal = admin.showCreateUserModal;
 window.deleteUserAdmin = admin.deleteUserAdmin;
 window.handleAdminCreateUser = admin.handleAdminCreateUser;
 window.openPasswordModal = admin.openPasswordModal;

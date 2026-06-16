@@ -25,6 +25,6 @@ echo.
 :: Abrir navegador automaticamente (Navegador por defecto)
 start "" http://localhost:8000
 
-python -m uvicorn main:app --reload --reload-exclude "venv"
+python -m uvicorn main:app --reload --reload-dir core --reload-dir models --reload-dir routes --reload-dir services --reload-dir schemas --reload-dir templates --reload-dir static --reload-dir repositories --reload-include main.py
 
 pause
