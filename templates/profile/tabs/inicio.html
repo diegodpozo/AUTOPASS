@@ -2,41 +2,34 @@
 <div id="section-inicio" class="profile-section active">
     <div class="greeting-premium">
         <h2 id="welcome-greeting">¡HOLA!</h2>
-        <p>¿Qué planes tenés para hoy? Gestioná tu estacionamiento de forma rápida.</p>
+        <p>¡Realizá tu reserva rápido y de manera simple!</p>
     </div>
 
     <div class="portal-home-grid">
         <!-- LADO IZQUIERDO: ACCIONES RÁPIDAS Y RESERVA -->
         <div class="grid-col booking-side">
-            <div class="card reserva-trigger-card" onclick="toggleReservaForm()">
-                <div class="reserva-trigger-content">
-                    <div class="flex-row items-center gap-15">
-                        <i class="fas fa-calendar-check" style="font-size: 1.4rem;"></i>
-                        <h2 class="trigger-title">RESERVAR AHORA</h2>
-                    </div>
-                    <i id="reserva-form-arrow" class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-
-            <div id="reserva-form-container">
+            <div id="reserva-form-container" class="open" style="display: block; opacity: 1; max-width: 675px; margin: 0 auto;">
                 <!-- (Contenido del formulario de reserva ...) -->
                 <div class="modern-reservation-card">
-                    <div class="card-header-premium">
-                        <div class="header-icon" style="color: var(--dorado);"><i class="fas fa-calendar-plus"></i></div>
-                        <div class="header-text">
-                            <h3 style="color: var(--dorado);">GENERAR NUEVA RESERVA</h3>
-                            <p>Asegurá tu lugar en segundos.</p>
-                        </div>
-                    </div>
 
                     <!-- ESTADO SIN VEHÍCULOS -->
                     <div id="reserva-no-vehicles" style="display: none; padding: 40px 30px;">
                         <div class="empty-state-premium">
-                            <div class="empty-icon-box">
-                                <i class="fas fa-car-rear main-icon"></i>
-                                <div class="icon-pulse"></div>
+                            <div class="flex-row gap-20 items-center justify-center" style="flex-wrap: wrap; margin-bottom: 5px;">
+                                <div class="empty-icon-box" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-motorcycle main-icon" style="font-size: 1.5rem;"></i>
+                                    <div class="icon-pulse"></div>
+                                </div>
+                                <div class="empty-icon-box">
+                                    <i class="fas fa-car-rear main-icon"></i>
+                                    <div class="icon-pulse"></div>
+                                </div>
+                                <div class="empty-icon-box" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-truck-pickup main-icon" style="font-size: 1.5rem;"></i>
+                                    <div class="icon-pulse"></div>
+                                </div>
                             </div>
-                            <div id="quick-add-info">
+                            <div id="quick-add-info" style="display: none;">
                                 <h4>¡UPS! NO TENÉS VEHÍCULOS</h4>
                                 <p>Para reservar, primero vinculá una patente a tu cuenta.</p>
                                 <button class="btn btn-primary btn-sm mt-15" onclick="showQuickAddVehicle()">
@@ -44,38 +37,28 @@
                                 </button>
                             </div>
 
-                            <div id="quick-add-form-container" style="display: none; width: 100%; max-width: 450px; margin: 0 auto;">
-                                <h4 class="text-dorado">VINCULAR NUEVO VEHÍCULO</h4>
-                                <form id="quick-add-vehicle-form" onsubmit="addVehicle(event, true)" class="form-compact-premium mt-10" style="padding: 15px;">
+                            <div id="quick-add-form-container" style="width: 100%; max-width: 450px; margin: 5px auto 0;">
+                                <h4 class="text-dorado" style="text-align: center; margin-bottom: 30px;">NUEVO VEHÍCULO</h4>
+                                <form id="quick-add-vehicle-form" onsubmit="addVehicle(event, true)" class="form-compact-premium" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+                                     <input type="hidden" name="tipo" value="Auto">
                                      <div class="flex-col gap-10">
-                                         <!-- Tipo Centrado y arriba -->
-                                         <div class="form-group-premium" style="align-items: center; gap: 4px;">
-                                            <label style="text-align: center; font-size: 0.65rem;">Tipo</label>
-                                            <div class="select-wrapper-premium" style="width: 100%; max-width: 240px;">
-                                                <i id="quick-vehicle-type-icon" class="fas fa-car-side" style="left: 10px; display: none; color: var(--dorado); position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0.8;"></i>
-                                                <select name="tipo" id="quick-vehicle-type-select" class="input-premium-sm" style="padding: 8px 10px; transition: padding 0.3s; width: 100%; text-align-last: center; font-size: 0.8rem;" required onchange="updateVehicleTypeIcon(this, 'quick-')">
-                                                    <option value="" selected disabled>Seleccioná...</option>
-                                                    <option value="Auto">Auto / Camioneta</option>
-                                                    <option value="Moto">Motocicleta</option>
-                                                </select>
-                                            </div>
-                                         </div>
-                                         
-                                         <!-- Patente y Marca abajo -->
-                                         <div class="flex-row gap-8 flex-wrap-mobile">
-                                             <div class="form-group-premium flex-1" style="gap: 4px;">
-                                                 <label style="font-size: 0.65rem;">Patente</label>
-                                                 <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase" style="padding: 8px 10px !important;">
+                                         <!-- Patente y Marca -->
+                                         <div class="flex-row gap-8 flex-wrap-mobile" style="justify-content: center;">
+                                             <div class="form-group-premium" style="gap: 4px; flex: 0 0 30%;">
+                                                 <label style="font-size: 0.65rem; text-align: center; width: 100%; display: block;">Patente</label>
+                                                 <div class="select-wrapper-premium" style="width: 100%;">
+                                                     <i id="quick-vehicle-type-icon" class="fas fa-car-side" style="left: 10px; display: none; color: var(--dorado); position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0.8; z-index: 5;"></i>
+                                                     <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase" style="padding: 8px 10px !important; width: 100%; text-align: center;">
+                                                 </div>
                                              </div>
-                                             <div class="form-group-premium flex-1" style="gap: 4px;">
-                                                 <label style="font-size: 0.65rem;">Marca / Modelo</label>
-                                                 <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm" style="padding: 8px 10px !important;">
+                                             <div class="form-group-premium" style="gap: 4px; flex: 0 0 50%;">
+                                                 <label style="font-size: 0.65rem; text-align: center; width: 100%; display: block;">Marca / Modelo</label>
+                                                 <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm" style="padding: 8px 10px !important; text-align: center; width: 100%;">
                                              </div>
                                          </div>
                                      </div>
-                                     <div class="flex-row justify-center mt-15 gap-10">
-                                         <button type="button" class="btn btn-outline btn-sm" onclick="hideQuickAddVehicle()" style="padding: 6px 15px; font-size: 0.7rem;">CANCELAR</button>
-                                         <button type="submit" class="btn btn-primary btn-sm" style="padding: 6px 15px; font-size: 0.7rem;">GUARDAR</button>
+                                     <div class="flex-row justify-center mt-15">
+                                         <button type="submit" class="btn btn-primary btn-sm" style="padding: 8px 25px; font-size: 0.75rem; letter-spacing: 0.5px;">CONTINUAR</button>
                                      </div>
                                  </form>
                             </div>
@@ -83,37 +66,37 @@
                     </div>
 
                     <!-- FORMULARIO DE RESERVA -->
-                    <div id="reserva-form-content" style="padding: 30px;">
+                    <div id="reserva-form-content" style="display: none; padding: 40px;">
                         <form class="reservation-form-modern" onsubmit="createReservation(event)">
-                            <div class="form-grid-premium">
-                                <!-- Vehículo alineado a la izquierda -->
-                                <div class="form-group-premium full-width-premium">
-                                    <label>Vehículo</label>
-                                    <div class="select-wrapper-premium" style="width: 100%; max-width: 280px;">
-                                        <i class="fas fa-car"></i>
-                                        <select class="res-vehicle" required style="padding: 12px 15px 12px 42px; font-size: 0.9rem; text-align-last: left;">
+                            <div class="flex-col items-center gap-20">
+                                <!-- Vehículo centrado -->
+                                <div class="form-group-premium" style="width: 100%; max-width: 280px; align-items: center;">
+                                    <label style="text-align: center; width: 100%; display: block; font-size: 0.9rem;">Vehículo</label>
+                                    <div class="select-wrapper-premium" style="width: 100%;">
+                                        <i class="fas fa-car" style="left: 15px;"></i>
+                                        <select class="res-vehicle" required style="padding: 12px 15px 12px 42px !important; font-size: 0.9rem; text-align-last: center;">
                                             <option value="">Cargando flota...</option>
                                         </select>
                                     </div>
                                 </div>
                                 
-                                <!-- Punto y Tipo abajo, alineados a la izquierda -->
-                                <div class="full-width-premium" style="display: flex; justify-content: flex-start; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
-                                    <div class="form-group-premium" style="margin-bottom: 0; flex: 1; max-width: 190px;">
-                                        <label>Punto AutoPass</label>
+                                <!-- Punto y Tipo centrados -->
+                                <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; width: 100%;">
+                                    <div class="form-group-premium" style="margin-bottom: 0; flex: 1; max-width: 330px; align-items: center;">
+                                        <label style="text-align: center; width: 100%; display: block;">Punto AutoPass</label>
                                         <div class="select-wrapper-premium" style="width: 100%;">
-                                            <i class="fas fa-location-dot"></i>
-                                            <select class="res-sucursal" required style="padding: 10px 10px 10px 35px; font-size: 0.8rem; text-align-last: left;">
+                                            <i class="fas fa-location-dot" style="left: 15px;"></i>
+                                            <select class="res-sucursal" required style="padding: 12px 15px 12px 42px !important; font-size: 0.9rem; text-align-last: center;">
                                                 <option value="">Cargando sucursales...</option>
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="form-group-premium" style="margin-bottom: 0; flex: 1; max-width: 160px;">
-                                        <label>Tipo de Estadía</label>
+                                    <div class="form-group-premium" style="margin-bottom: 0; flex: 1; max-width: 144px; align-items: center;">
+                                        <label style="text-align: center; width: 100%; display: block;">Tipo de Estadía</label>
                                         <div class="select-wrapper-premium" style="width: 100%;">
-                                            <i class="fas fa-clock"></i>
-                                            <select class="res-type" required style="padding: 10px 10px 10px 35px; font-size: 0.8rem; text-align-last: left;">
-                                                <option value="" selected>Seleccioná...</option>
+                                            <i class="fas fa-clock" style="left: 15px;"></i>
+                                            <select class="res-type" required style="padding: 12px 15px 12px 42px !important; font-size: 0.9rem; text-align-last: center;">
+                                                <option value="" selected disabled hidden>Seleccioná...</option>
                                                 <option value="hora">Hora</option>
                                                 <option value="dia">Día</option>
                                                 <option value="semana">Semana</option>
@@ -125,80 +108,81 @@
                                 </div>
 
                                 <!-- CAMPOS DINÁMICOS SEGÚN TIPO DE RESERVA -->
-                                <div id="dynamic-fields-premium" class="full-width-premium">
-                                    <div id="hourly-fields" class="dynamic-row-premium" style="display:none;">
-                                        <div class="form-group-premium" style="flex: 1; max-width: 140px;">
-                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.8rem;">Día</label>
-                                            <input type="text" class="res-date-only input-premium" placeholder="Fecha..." style="padding: 8px; font-size: 0.8rem; text-align: center;">
+                                <div id="dynamic-fields-premium" style="width: 100%; display: flex; justify-content: center;">
+                                    <div id="hourly-fields" class="dynamic-row-premium" data-display="flex" style="display:none; gap: 20px; justify-content: center; width: 100%;">
+                                        <div class="form-group-premium" style="max-width: 120px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block;">Día</label>
+                                            <input type="text" class="res-date-only input-premium" placeholder="Fecha...">
                                         </div>
-                                        <div class="form-group-premium" style="flex: 1; max-width: 140px;">
-                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.8rem;">Hora Inicio</label>
-                                            <input type="time" class="res-time-only input-premium" style="padding: 8px; font-size: 0.8rem; text-align: center;">
+                                        <div class="form-group-premium" style="max-width: 100px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block;">Hora Inicio</label>
+                                            <input type="text" class="res-time-only input-premium" placeholder="12:00">
                                         </div>
-                                        <div class="form-group-premium" style="flex: 1; max-width: 140px;">
-                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.8rem;">Cantidad Horas</label>
-                                            <input type="number" class="res-hours-qty input-premium" min="1" max="24" placeholder="Ej: 2" style="padding: 8px; font-size: 0.8rem; text-align: center;">
+                                        <div class="form-group-premium" style="max-width: 60px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block;">Cantidad</label>
+                                            <input type="number" class="res-hours-qty input-premium" min="1" max="24" placeholder="2">
                                         </div>
                                     </div>
                                     
-                                    <div id="daily-fields" class="dynamic-row-premium" style="display:none; justify-content: center; width: 100%; margin-top: 10px;">
-                                        <div class="form-group-premium" style="align-items: center; display: flex; flex-direction: column; width: 100%; max-width: 300px;">
+                                    <div id="daily-fields" class="dynamic-row-premium" style="display:none; justify-content: center; width: 100%;">
+                                        <div class="form-group-premium" style="align-items: center; display: flex; flex-direction: column; width: 100%; max-width: 350px;">
                                             <label style="text-align: center; width: 100%; display: block;">Día de Estadía</label>
-                                            <input type="text" class="res-day-only input-premium" placeholder="Seleccioná día..." style="text-align: center; width: 100%;">
+                                            <input type="text" class="res-day-only input-premium" placeholder="Seleccioná día...">
                                         </div>
                                     </div>
 
-                                    <div id="weekly-fields" class="dynamic-row-premium" style="display:none;">
-                                        <div class="form-group-premium">
-                                            <label style="text-align: center; width: 100%; display: block;">Inicia el día</label>
+                                    <div id="weekly-fields" class="dynamic-row-premium" data-display="flex" style="display:none; justify-content: center; gap: 20px; width: 100%;">
+                                        <div class="form-group-premium" style="max-width: 180px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Inicia el día</label>
                                             <input type="text" class="res-week-start input-premium" placeholder="Fecha inicio...">
                                         </div>
-                                        <div class="form-group-premium">
-                                            <label style="text-align: center; width: 100%; display: block;">Finaliza</label>
+                                        <div class="form-group-premium" style="max-width: 180px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Finaliza</label>
                                             <input type="text" class="res-week-end input-premium-readonly" readonly>
                                         </div>
                                     </div>
-                                    <div id="fortnight-fields" class="dynamic-row-premium" style="display:none;">
-                                        <div class="form-group-premium">
-                                            <label style="text-align: center; width: 100%; display: block;">Inicia el día</label>
+                                    <!-- Otros campos similares centrados -->
+                                    <div id="fortnight-fields" class="dynamic-row-premium" data-display="flex" style="display:none; justify-content: center; gap: 20px; width: 100%;">
+                                        <div class="form-group-premium" style="max-width: 180px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Inicia el día</label>
                                             <input type="text" class="res-fortnight-start input-premium" placeholder="Fecha inicio...">
                                         </div>
-                                        <div class="form-group-premium">
-                                            <label style="text-align: center; width: 100%; display: block;">Finaliza</label>
+                                        <div class="form-group-premium" style="max-width: 180px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Finaliza</label>
                                             <input type="text" class="res-fortnight-end input-premium-readonly" readonly>
                                         </div>
                                     </div>
-                                    <div id="month-fields" class="dynamic-row-premium" style="display:none;">
-                                        <div class="form-group-premium">
-                                            <label style="text-align: center; width: 100%; display: block;">Inicia el día</label>
+                                    <div id="month-fields" class="dynamic-row-premium" data-display="flex" style="display:none; justify-content: center; gap: 20px; width: 100%;">
+                                        <div class="form-group-premium" style="max-width: 180px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Inicia el día</label>
                                             <input type="text" class="res-month-start input-premium" placeholder="Fecha inicio...">
                                         </div>
-                                        <div class="form-group-premium">
-                                            <label style="text-align: center; width: 100%; display: block;">Finaliza</label>
+                                        <div class="form-group-premium" style="max-width: 180px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Finaliza</label>
                                             <input type="text" class="res-month-end input-premium-readonly" readonly>
                                         </div>
                                     </div>
-                                    <div id="standard-fields" class="dynamic-row-premium" style="display:none;">
-                                        <div class="form-group-premium">
-                                            <label>Inicio</label>
+                                    <div id="standard-fields" class="dynamic-row-premium" data-display="flex" style="display:none; justify-content: center; gap: 20px; width: 100%;">
+                                        <div class="form-group-premium" style="max-width: 200px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Inicio</label>
                                             <input type="text" class="res-start input-premium" placeholder="Fecha y hora...">
                                         </div>
-                                        <div class="form-group-premium">
-                                            <label>Fin</label>
+                                        <div class="form-group-premium" style="max-width: 200px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block; font-size: 0.75rem;">Fin</label>
                                             <input type="text" class="res-end input-premium" placeholder="Fecha y hora...">
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="reservation-footer-premium">
-                                <div class="price-summary-premium">
-                                    <span class="total-label">Total Estimado:</span>
-                                    <span class="total-amount" id="reserva-total-est">$ ---</span>
+                            <div class="reservation-footer-premium" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; flex-direction: column; gap: 20px; align-items: center;">
+                                <div class="price-summary-premium" style="text-align: center;">
+                                    <span class="total-label" style="display: block; margin-bottom: 5px;">Total Estimado:</span>
+                                    <span class="total-amount" id="reserva-total-est" style="font-size: 2rem;">$ ---</span>
                                 </div>
-                                <button type="submit" class="btn-confirm-premium">
-                                    <span>CONFIRMAR RESERVA</span>
-                                    <i class="fas fa-chevron-right"></i>
+                                <button type="submit" class="btn-confirm-premium" style="width: 100%; max-width: 350px; justify-content: center; height: 55px; font-size: 1.1rem;">
+                                    <span>CONTINUAR</span>
+                                    <i class="fas fa-chevron-right" style="margin-left: 15px;"></i>
                                 </button>
                             </div>
                         </form>
@@ -219,15 +203,20 @@
             </div>
         </div>
 
-        <!-- LADO DERECHO: MAPA INTERACTIVO -->
         <div class="grid-col map-and-stats-side">
             <div class="card portal-map-card">
                 <div class="map-hint-floating">
                     <span class="hint-pulse"></span>
-                    <span class="hint-text">¡Estacionamientos cerca!</span>
+                    <span class="hint-text">¡Estacioná en tu zona!</span>
+                    <i class="fas fa-hand-point-down hand-pointing"></i>
                 </div>
                 <div id="portal-map" class="portal-map-container">
                     <!-- Leaflet renderiza aquí -->
+                </div>
+                <!-- Cuadro de información dinámica -->
+                <div class="map-overlay">
+                    <h4><i class="fas fa-building"></i> Playa</h4>
+                    <p>Cargando dirección...</p>
                 </div>
             </div>
         </div>

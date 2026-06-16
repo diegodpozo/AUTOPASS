@@ -663,10 +663,14 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 25px;
+    width: 100%;
+    table-layout: fixed;
 }
 
 .full-width-premium {
     grid-column: span 3;
+    width: 100%;
+    overflow: hidden;
 }
 
 .select-wrapper-premium {
@@ -707,11 +711,15 @@
     background: #111;
     border: 1.5px solid #222;
     color: #fff !important;
-    padding: 12px 15px;
+    padding: 12px 15px !important;
     border-radius: 12px;
-    font-size: 0.9rem;
+    font-size: 0.9rem !important;
+    font-weight: 600;
     transition: 0.3s;
     width: 100%;
+    text-align: center !important;
+    height: 48px;
+    box-sizing: border-box;
 }
 
 .input-premium:focus {
@@ -722,20 +730,27 @@
 .input-premium-readonly {
     background: rgba(255,255,255,0.03);
     border: 1.5px solid #1a1a1a;
-    color: var(--dorado) !important;
-    padding: 12px 15px;
+    color: #fff !important;
+    padding: 12px 15px !important;
     border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 700;
+    font-size: 0.9rem !important;
+    font-weight: 600;
     cursor: default;
     width: 100%;
+    text-align: center !important;
+    height: 48px;
+    box-sizing: border-box;
 }
 
 .dynamic-row-premium {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
     gap: 20px;
+    justify-content: flex-start;
     animation: fadeIn 0.4s ease;
+    width: 100%;
+    max-width: 440px;
+    box-sizing: border-box;
+    overflow: hidden; /* Ensure no content can push boundaries */
 }
 
 .reservation-footer-premium {
@@ -802,6 +817,8 @@
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    width: 100%;
+    max-width: 600px; /* Increased 20% from 500px */
 }
 
 .card-header-premium {
@@ -2361,27 +2378,81 @@
     background: #0a0a0a;
     border: 1px solid rgba(197, 160, 89, 0.15);
     border-radius: 24px;
-    overflow: hidden;
+    overflow: visible; /* Permitimos que el hint sobresalga */
     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
     position: relative; /* Para el hint flotante */
 }
 
 .map-hint-floating {
     position: absolute;
-    top: 30px; /* Ajuste específico para perfil solicitado: 30px */
-    right: 95px; /* Movido más a la izquierda (antes 70px) */
-    height: 34px;
+    top: -50px; /* Sincronizado con landing */
+    right: 35px; /* Movido más a la izquierda para centrar el dedo con el botón */
+    height: 38px;
     z-index: 100;
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(0, 0, 0, 0.95);
+    background: rgba(10, 10, 10, 0.95);
     backdrop-filter: blur(8px);
-    padding: 0 15px;
-    border-radius: 8px;
-    border: 1.5px solid rgba(197, 160, 89, 0.4);
+    padding: 0 18px;
+    border-radius: 12px;
+    border: 1.5px solid var(--dorado);
     pointer-events: none;
-    animation: fadeInSlide 1s ease forwards;
+    animation: fadeInSlideUp 1s ease forwards;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+/* MAP OVERLAY PARA DASHBOARD (v8.7.0) */
+.map-overlay {
+    position: absolute; 
+    bottom: 20px; 
+    left: 20px; 
+    z-index: 1000;
+    background: rgba(10, 10, 10, 0.9); 
+    padding: 15px 25px; 
+    border-radius: 12px;
+    border: 1.5px solid var(--dorado); 
+    backdrop-filter: blur(10px);
+    text-align: left;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: all 0.4s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.map-overlay.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.map-overlay h4 { color: var(--dorado); margin: 0 0 5px; font-size: 0.9rem; }
+.map-overlay p { 
+    margin: 0; 
+    font-size: 0.8rem; 
+    color: #eee; 
+    text-transform: capitalize; 
+}
+
+.hand-pointing {
+    position: absolute;
+    bottom: -22px;
+    right: 8px;
+    color: var(--dorado);
+    font-size: 1.2rem;
+    animation: handBounce 1.5s infinite;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+
+@keyframes handBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+}
+
+@keyframes fadeInSlideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .leaflet-control-geolocation {
