@@ -23,16 +23,28 @@ export function initReservationForm() {
     const commonConfig = {
         minDate: "today",
         disableMobile: "true",
+        altInput: true,
+        altFormat: "d-m-Y",
+        dateFormat: "Y-m-d",
         onChange: () => updateReservationPrice()
     };
 
-    flatpickr(".res-date-only", { ...commonConfig, dateFormat: "Y-m-d" });
-    flatpickr(".res-day-only", { ...commonConfig, dateFormat: "Y-m-d" });
-    flatpickr(".res-week-start", { ...commonConfig, dateFormat: "Y-m-d", onChange: (sd, ds) => updatePeriodEnd(ds, 7, '.res-week-end') });
-    flatpickr(".res-fortnight-start", { ...commonConfig, dateFormat: "Y-m-d", onChange: (sd, ds) => updatePeriodEnd(ds, 15, '.res-fortnight-end') });
-    flatpickr(".res-month-start", { ...commonConfig, dateFormat: "Y-m-d", onChange: (sd, ds) => updatePeriodEnd(ds, 30, '.res-month-end') });
-    flatpickr(".res-start", { ...commonConfig, enableTime: true, dateFormat: "Y-m-d H:i" });
-    flatpickr(".res-end", { ...commonConfig, enableTime: true, dateFormat: "Y-m-d H:i" });
+    flatpickr(".res-date-only", { ...commonConfig });
+    flatpickr(".res-day-only", { ...commonConfig });
+    flatpickr(".res-time-only", { 
+        enableTime: true, 
+        noCalendar: true, 
+        dateFormat: "H:i", 
+        defaultHour: 12, 
+        defaultMinute: 0,
+        disableMobile: "true",
+        onChange: () => updateReservationPrice()
+    });
+    flatpickr(".res-week-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 7, '.res-week-end') });
+    flatpickr(".res-fortnight-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 15, '.res-fortnight-end') });
+    flatpickr(".res-month-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 30, '.res-month-end') });
+    flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-Y H:i", dateFormat: "Y-m-d H:i" });
+    flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-Y H:i", dateFormat: "Y-m-d H:i" });
 
     const typeSelect = document.querySelector('.res-type');
     if (typeSelect) {
@@ -79,16 +91,49 @@ function updatePeriodEnd(startDateStr, days, targetSelector) {
 
 export async function toggleReservaForm() {
     const container = document.getElementById('reserva-form-container');
-    const arrow = document.getElementById('reserva-form-arrow');
-    if (!container) return;
+    const trigger = document.querySelector('.reserva-trigger-card');
+    if (!container || !trigger) return;
 
-    const isOpen = container.classList.toggle('open');
-    if (arrow) arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    const isOpen = container.classList.contains('open');
 
-    if (isOpen) {
-        await refreshReservationFormState();
+    if (!isOpen) {
+        // ABRIR: Ocultar trigger con fade y mostrar container
+        trigger.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        trigger.style.opacity = '0';
+        trigger.style.transform = 'translateY(-10px)';
+        
+        setTimeout(async () => {
+            trigger.style.display = 'none';
+            container.style.display = 'block';
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(10px)';
+            container.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            
+            // Forzar reflow para la transición
+            container.offsetHeight;
+            
+            container.classList.add('open');
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
+            
+            await refreshReservationFormState();
+        }, 300);
     } else {
-        resetReservaForm();
+        // CERRAR: Ocultar container y mostrar trigger
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            container.classList.remove('open');
+            container.style.display = 'none';
+            resetReservaForm();
+            
+            trigger.style.display = 'block';
+            // Forzar reflow
+            trigger.offsetHeight;
+            trigger.style.opacity = '1';
+            trigger.style.transform = 'translateY(0)';
+        }, 400);
     }
 }
 
@@ -96,7 +141,7 @@ let userVehicles = [];
 
 export async function refreshReservationFormState() {
     const container = document.getElementById('reserva-form-container');
-    if (!container || !container.classList.contains('open')) return;
+    if (!container) return;
 
     fetchRates();
     
@@ -116,7 +161,7 @@ export async function refreshReservationFormState() {
             const selects = document.querySelectorAll('.res-vehicle');
             selects.forEach(select => {
                 const currentVal = select.value;
-                select.innerHTML = '<option value="">Seleccioná vehículo...</option>' + 
+                select.innerHTML = '<option value="" selected disabled hidden>Seleccioná vehículo...</option>' + 
                     userVehicles.map(v => `<option value="${v.patente}">${formatPlate(v.patente)} - ${v.marca_modelo}</option>`).join('');
                 if (currentVal) select.value = currentVal;
             });
@@ -130,7 +175,7 @@ export async function refreshReservationFormState() {
         const sucursalSelects = document.querySelectorAll('.res-sucursal');
         sucursalSelects.forEach(select => {
             const currentVal = select.value;
-            select.innerHTML = '<option value="">Seleccioná sucursal...</option>' + 
+            select.innerHTML = '<option value="" selected disabled hidden>Seleccioná sucursal...</option>' + 
                 branches.map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
@@ -145,7 +190,7 @@ export function resetReservaForm() {
         updateFormGroups("");
     }
     const btnSpan = document.querySelector('.btn-confirm-premium span');
-    if (btnSpan) btnSpan.innerText = 'CONFIRMAR RESERVA';
+    if (btnSpan) btnSpan.innerText = 'CONTINUAR';
     const headerTitle = document.querySelector('.header-text h3');
     if (headerTitle) headerTitle.innerText = 'GENERAR NUEVA RESERVA';
     updateReservationPrice();
@@ -298,7 +343,10 @@ export function updateFormGroups(type) {
 
     Object.values(sections).forEach(s => { if(s) s.style.display = 'none'; });
     const activeSection = sections[type] || sections['standard'];
-    if (activeSection) activeSection.style.display = 'grid';
+    if (activeSection) {
+        // Usar el atributo data-display si existe, sino grid por defecto
+        activeSection.style.display = activeSection.dataset.display || 'grid';
+    }
     updateReservationPrice();
 }
 
@@ -378,15 +426,61 @@ export async function createReservation(e) {
     }
 
     const resumenHtml = `
-        <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid rgba(197,160,89,0.2); margin-top: 10px;">
-            <div style="margin-bottom: 12px;"><i class="fas fa-car" style="color: var(--dorado);"></i> Vehículo: <b style="color: #fff;">${formatPlate(patente)}</b></div>
-            <div style="margin-bottom: 12px;"><i class="fas fa-location-dot" style="color: var(--dorado);"></i> Sucursal: <b style="color: #fff;">${sucursal}</b></div>
-            <div style="margin-bottom: 12px;"><i class="fas fa-calendar-day" style="color: var(--dorado);"></i> Estadía: <b style="color: #fff; text-transform: capitalize;">${tipo}</b></div>
-            <div style="margin-bottom: 12px;"><i class="fas fa-clock" style="color: var(--dorado);"></i> Desde: <b style="color: #eee;">${formatDate(inicio)}</b></div>
-            <div style="margin-bottom: 12px;"><i class="fas fa-hourglass-end" style="color: var(--dorado);"></i> Hasta: <b style="color: #eee;">${formatDate(fin)}</b></div>
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;">
-                <span style="font-weight: 800;">TOTAL:</span>
-                <b style="color: var(--dorado); font-size: 1.2rem;">${document.getElementById('reserva-total-est').innerText}</b>
+        <div style="text-align: left; padding: 5px; font-family: 'Montserrat', sans-serif;">
+            
+            <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 35px;">
+                <!-- VEHÍCULO -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <i class="fas fa-car" style="color: var(--dorado); font-size: 1.1rem; width: 25px; text-align: center;"></i>
+                        <span style="color: #aaa; font-size: 0.95rem;">Vehículo</span>
+                    </div>
+                    <b style="color: #fff; font-size: 1.1rem; letter-spacing: 1px; font-family: 'Montserrat';">${formatPlate(patente)}</b>
+                </div>
+
+                <!-- SUCURSAL -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <i class="fas fa-location-dot" style="color: var(--dorado); font-size: 1.1rem; width: 25px; text-align: center;"></i>
+                        <span style="color: #aaa; font-size: 0.95rem;">Sucursal</span>
+                    </div>
+                    <b style="color: #fff; font-size: 0.95rem;">${sucursal}</b>
+                </div>
+
+                <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 5px 0;"></div>
+
+                <!-- TIPO -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <i class="fas fa-calendar-day" style="color: var(--dorado); font-size: 1.1rem; width: 25px; text-align: center;"></i>
+                        <span style="color: #aaa; font-size: 0.95rem;">Estadía</span>
+                    </div>
+                    <b style="color: #fff; text-transform: capitalize; font-size: 1rem;">${tipo}</b>
+                </div>
+
+                <!-- DESDE -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <i class="fas fa-clock" style="color: var(--dorado); font-size: 1.1rem; width: 25px; text-align: center;"></i>
+                        <span style="color: #aaa; font-size: 0.95rem;">Desde</span>
+                    </div>
+                    <b style="color: #eee; font-size: 0.95rem;">${formatDate(inicio)}</b>
+                </div>
+
+                <!-- HASTA -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i class="fas fa-hourglass-end" style="color: var(--dorado); font-size: 1.1rem; width: 25px; text-align: center;"></i>
+                        <span style="color: #aaa; font-size: 0.95rem;">Hasta</span>
+                    </div>
+                    <b style="color: #eee; font-size: 0.95rem;">${formatDate(fin)}</b>
+                </div>
+            </div>
+
+            <!-- TOTAL -->
+            <div style="padding-top: 25px; border-top: 2px solid rgba(197,160,89,0.2); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL ESTIMADO</span>
+                <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(197,160,89,0.3); font-family: 'Montserrat'; white-space: nowrap;">${document.getElementById('reserva-total-est').innerText}</b>
             </div>
         </div>`;
 

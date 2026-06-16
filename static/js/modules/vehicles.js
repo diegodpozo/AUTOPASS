@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm, formatPlate, validatePlate } from './utils.js';
+import { showToast, showConfirm, formatPlate, validatePlate, detectVehicleType } from './utils.js';
 import { toggleReservaForm } from './reservas.js'; 
 
 /**
@@ -13,6 +13,9 @@ export async function loadVehicles() {
     
     if (!list) return;
 
+    // Inicializar auto-detección si no se ha hecho
+    initAutoDetection();
+
     const res = await api.get('/user/vehicles');
     if (!res.ok) {
         list.innerHTML = '<p style="color: var(--danger);">Error al cargar flota.</p>';
@@ -24,9 +27,14 @@ export async function loadVehicles() {
     
     if (vehicles.length === 0) {
         list.innerHTML = `
-            <div class="empty-state-card" style="display: block; grid-column: 1 / -1; text-align: center; padding: 40px;">
-                <i class="fas fa-car-side" style="font-size: 3rem; color: #333; margin-bottom: 15px; display: block;"></i>
-                <p style="color: #666; font-weight: 600;">No tenés vehículos registrados aún.</p>
+            <div class="empty-state-card" style="display: flex; flex-direction: column; align-items: center; grid-column: 1 / -1; text-align: center; padding: 40px 0;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 25px; margin-bottom: 25px;">
+                    <i class="fas fa-motorcycle" style="font-size: 1.5rem; color: #444;"></i>
+                    <i class="fas fa-car-rear" style="font-size: 2.5rem; color: #444;"></i>
+                    <i class="fas fa-truck-pickup" style="font-size: 1.5rem; color: #444;"></i>
+                </div>
+                <h4 style="color: #fff; font-family: 'Montserrat'; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px;">¡UPS! NO TENÉS VEHÍCULOS</h4>
+                <p style="color: #666; font-size: 0.95rem; max-width: 300px; line-height: 1.5;">Agregá tu primer vehículo para empezar a operar en la red AutoPass.</p>
             </div>`;
         return;
     }
@@ -60,30 +68,49 @@ export async function loadVehicles() {
 
 export async function toggleVehicleForm() {
     const container = document.getElementById('vehicle-form-container');
-    const arrow = document.getElementById('vehicle-form-arrow');
     const trigger = document.getElementById('vehicle-form-trigger');
-    if (!container) return;
+    if (!container || !trigger) return;
 
-    const isOpen = container.classList.toggle('open');
-    if (arrow) arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-    if (trigger) trigger.classList.toggle('active');
+    const isHidden = container.style.display === 'none' || container.style.display === '';
+    
+    if (isHidden) {
+        // MOSTRAR FORM, OCULTAR BOTÓN
+        trigger.style.display = 'none';
+        container.style.display = 'block';
+        container.classList.add('open');
+    } else {
+        // OCULTAR FORM, MOSTRAR BOTÓN
+        container.style.display = 'none';
+        container.classList.remove('open');
+        trigger.style.display = 'flex';
+        const form = document.getElementById('add-vehicle-form');
+        if (form) form.reset();
+        updateVehicleTypeIcon('', '', form);
+    }
 }
 
-export function updateVehicleTypeIcon(select, prefix = '') {
+export function updateVehicleTypeIcon(typeValue, prefix = '', form = null) {
     const icon = document.getElementById(`${prefix}vehicle-type-icon`);
     if (!icon) return;
 
-    if (select.value === 'Auto') {
+    // Si no se pasa el form, intentamos encontrarlo por el icono
+    const targetForm = form || icon.closest('form');
+    if (!targetForm) return;
+
+    const plateInput = targetForm.querySelector('[name="patente"]');
+    if (!plateInput) return;
+
+    if (typeValue === 'Auto') {
         icon.className = 'fas fa-car-side';
         icon.style.display = 'block';
-        select.style.paddingLeft = '45px';
-    } else if (select.value === 'Moto') {
+        plateInput.style.paddingLeft = (prefix === 'quick-') ? '35px' : '45px';
+    } else if (typeValue === 'Moto') {
         icon.className = 'fas fa-motorcycle';
         icon.style.display = 'block';
-        select.style.paddingLeft = '45px';
+        plateInput.style.paddingLeft = (prefix === 'quick-') ? '35px' : '45px';
     } else {
         icon.style.display = 'none';
-        select.style.paddingLeft = '15px';
+        plateInput.style.paddingLeft = (prefix === 'quick-') ? '10px' : '15px';
     }
 }
 
@@ -104,13 +131,12 @@ export async function addVehicle(e, isQuickAdd = false) {
 
     // Validar formato de patente
     if (!validatePlate(patente, tipo)) {
-        showToast('Formato de patente no válido para el tipo de vehículo seleccionado.');
+        showToast('Formato de patente no válido.');
         return;
     }
 
     const resumenHtml = `
         <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid rgba(197, 160, 89, 0.2); margin-top: 10px;">
-            <p style="margin-bottom: 15px; color: #fff;">¿Estás seguro que los datos son correctos?</p>
             <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
                 <i class="fas fa-id-card" style="color: var(--dorado);"></i>
                 <span>Patente: <b style="color: #fff;">${formatPlate(patente)}</b></span>
@@ -120,7 +146,7 @@ export async function addVehicle(e, isQuickAdd = false) {
                 <span>Tipo: <b style="color: #fff;">${tipo}</b></span>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-car-rear" style="color: var(--dorado);"></i>
+                <i class="fas fa-tag" style="color: var(--dorado);"></i>
                 <span>Marca/Modelo: <b style="color: #fff;">${marca_modelo}</b></span>
             </div>
         </div>
@@ -137,27 +163,25 @@ export async function addVehicle(e, isQuickAdd = false) {
         showToast('Vehículo registrado con éxito');
         form.reset();
 
-        // Resetear icono y padding del selector
-        const typeSelect = document.getElementById('vehicle-type-select');
-        if (typeSelect) updateVehicleTypeIcon(typeSelect);
+        // Resetear icono y padding (tipo ahora es hidden)
+        updateVehicleTypeIcon('', isQuickAdd ? 'quick-' : '', form);
 
         if (isQuickAdd) {
-            if (window.hideQuickAddVehicle) window.hideQuickAddVehicle();
-            if (typeof toggleReservaForm === 'function') {
-                const container = document.getElementById('reserva-form-container');
-                if (container) container.classList.remove('open');
-                await toggleReservaForm();
+            // Refrescar estado para que aparezca el formulario de reserva
+            if (typeof window.refreshReservationFormState === 'function') {
+                await window.refreshReservationFormState();
             }
         } else {
-            // Cerrar el formulario si estaba abierto
+            // Cerrar el formulario si estaba abierto (en la pestaña de mis vehículos)
             const container = document.getElementById('vehicle-form-container');
             if (container && container.classList.contains('open')) {
-                toggleVehicleForm();
+                if (typeof window.toggleVehicleForm === 'function') window.toggleVehicleForm();
             }
         }
 
         await loadVehicles();
-    } else {
+    }
+ else {
         showToast(res.error || 'Error al registrar vehículo');
     }
 
@@ -180,4 +204,35 @@ export async function deleteVehicle(patente) {
     } else {
         showToast(res.error || 'Error al eliminar');
     }
+}
+
+/**
+ * Inicializa la detección automática de tipo de vehículo en los formularios.
+ */
+let autoDetectionInitialized = false;
+export function initAutoDetection() {
+    if (autoDetectionInitialized) return;
+
+    const attachListener = (formId, prefix = '') => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        const plateInput = form.querySelector('[name="patente"]');
+        const typeSelect = form.querySelector('[name="tipo"]');
+
+        if (plateInput && typeSelect) {
+            plateInput.addEventListener('input', (e) => {
+                const detectedType = detectVehicleType(e.target.value);
+                if (detectedType) {
+                    typeSelect.value = detectedType;
+                    updateVehicleTypeIcon(detectedType, prefix, form);
+                }
+            });
+        }
+    };
+
+    attachListener('add-vehicle-form');
+    attachListener('quick-add-vehicle-form', 'quick-');
+
+    autoDetectionInitialized = true;
 }
