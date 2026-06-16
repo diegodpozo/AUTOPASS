@@ -4,7 +4,6 @@
         <!-- SECCIÓN IZQUIERDA: CÁMARAS Y CONTROL -->
         <div class="monitoring-main">
             <div class="camera-grid">
-                <!-- ... (Cámaras se mantienen igual) ... -->
                 <div class="cam-box" id="cam-box-entry">
                     <div class="cam-overlay">
                         <div class="cam-status">
@@ -15,11 +14,10 @@
                     <div class="cam-feed-container">
                         <img id="cam-entry" src="/v1/system/video-feed/ENTRADA_PRINCIPAL" onerror="this.style.opacity='0';">
                         <div class="scan-line"></div>
-                    </div>
-                    <div class="cam-footer">
-                        <div class="plate-display">
-                            <span class="plate-label">PATENTE DETECTADA</span>
-                            <span class="plate-value" id="plate-entry">---</span>
+                        <!-- Overlay de patente dentro del video -->
+                        <div class="cam-plate-overlay" id="overlay-plate-entry">
+                            <span class="overlay-label">DETECTADA</span>
+                            <span class="overlay-value">---</span>
                         </div>
                     </div>
                 </div>
@@ -34,36 +32,48 @@
                     <div class="cam-feed-container">
                         <img id="cam-exit" src="/v1/system/video-feed/SALIDA_PRINCIPAL" onerror="this.style.opacity='0';">
                         <div class="scan-line"></div>
-                    </div>
-                    <div class="cam-footer">
-                        <div class="plate-display">
-                            <span class="plate-label">PATENTE DETECTADA</span>
-                            <span class="plate-value" id="plate-exit">---</span>
+                        <!-- Overlay de patente dentro del video -->
+                        <div class="cam-plate-overlay" id="overlay-plate-exit">
+                            <span class="overlay-label">DETECTADA</span>
+                            <span class="overlay-value">---</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- VEHÍCULOS EN EL PREDIO (Integrado) -->
+            <!-- CONTENEDOR DE PESTAÑAS PARA LISTADOS -->
             <div class="card mt-10">
-                <div class="card-header-premium" onclick="toggleOccupancy()" style="cursor: pointer;" title="Click para expandir/contraer lista de ocupación">
-                    <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-car-side"></i></div>
-                        <div class="header-text">
-                            <h3>VEHÍCULOS ESTACIONADOS</h3>
+                <div class="tabs-header-premium" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="tabs-buttons-group" style="display: flex; gap: 5px;">
+                        <button class="tab-btn active" onclick="switchMonitorTab('occ', this)">
+                            <i class="fas fa-car-side"></i> VEHÍCULOS ESTACIONADOS
+                        </button>
+                        <button class="tab-btn" onclick="switchMonitorTab('logs', this)">
+                            <i class="fas fa-list-ul"></i> ÚLTIMOS MOVIMIENTOS
+                        </button>
+                    </div>
+
+                    <!-- BUSCADORES INTEGRADOS EN LA CABECERA -->
+                    <div class="tabs-actions-group" style="padding-right: 15px;">
+                        <!-- Buscador Ocupación -->
+                        <div id="search-container-occ" class="monitor-tab-content active">
+                            <div class="search-box-premium sm" title="Filtrar vehículos por patente">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="occ-search" placeholder="Buscar patente..." onkeyup="filterOccupancy(this.value)">
+                            </div>
+                        </div>
+                        <!-- Buscador Movimientos -->
+                        <div id="search-container-logs" class="monitor-tab-content">
+                            <div class="search-box-premium sm" title="Filtrar movimientos recientes">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Buscar patente..." onkeyup="filterLogs(this.value)">
+                            </div>
                         </div>
                     </div>
-                    <div class="header-actions">
-                        <i id="occupancy-chevron" class="fas fa-chevron-down" style="color: var(--dorado); transition: transform 0.3s;"></i>
-                    </div>
                 </div>
-                <div id="occupancy-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out;">
-                <div style="padding: 15px 25px 0; display: flex; justify-content: flex-end;">
-                    <div class="search-box-premium" title="Filtrar vehículos por patente">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="occ-search" placeholder="Buscar patente..." onkeyup="filterOccupancy(this.value)">
-                    </div>
-                </div>
+
+                <!-- SUB-PESTAÑA: VEHÍCULOS ESTACIONADOS -->
+                <div id="monitor-tab-occ" class="monitor-tab-content active">
                     <div class="table-container">
                         <table>
                             <thead>
@@ -71,7 +81,7 @@
                                     <th>Vehículo</th>
                                     <th>Ingreso</th>
                                     <th>Permanencia</th>
-                                    <th>Estado / Deuda</th>
+                                    <th>Deuda</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -83,34 +93,22 @@
                     <!-- Paginación Ocupación -->
                     <div id="occ-pagination" class="pagination-premium" style="padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px;"></div>
                 </div>
-            </div>
 
-            <!-- ÚLTIMOS MOVIMIENTOS -->
-            <div class="card mt-10">
-                <div class="card-header-premium">
-                    <div class="header-info-group">
-                        <i class="fas fa-list-ul"></i>
-                        <h3>ÚLTIMOS MOVIMIENTOS</h3>
+                <!-- SUB-PESTAÑA: ÚLTIMOS MOVIMIENTOS -->
+                <div id="monitor-tab-logs" class="monitor-tab-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>Hora</th><th>Patente</th><th>Evento</th><th>Abono</th><th>Info</th></tr>
+                            </thead>
+                            <tbody id="live-logs">
+                                <tr><td colspan="5" class="text-center py-20">Esperando actividad...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="header-actions">
-                        <div class="search-box-premium" title="Filtrar movimientos recientes">
-                            <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Filtrar patente..." onkeyup="filterLogs(this.value)">
-                        </div>
-                    </div>
+                    <!-- Paginación Movimientos -->
+                    <div id="logs-pagination" class="pagination-premium" style="padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px;"></div>
                 </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr><th>Hora</th><th>Patente</th><th>Evento</th><th>Estado</th><th>Info</th></tr>
-                        </thead>
-                        <tbody id="live-logs">
-                            <tr><td colspan="5" class="text-center py-20">Esperando actividad...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Paginación Movimientos -->
-                <div id="logs-pagination" class="pagination-premium" style="padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px;"></div>
             </div>
         </div>
 
@@ -162,8 +160,8 @@
                                     <input type="text" id="manual-plate" placeholder="ABC-123" class="input-premium uppercase" style="height: 40px; font-size: 0.9rem; text-align: center;">
                                 </div>
                             </div>
-                            <button class="btn btn-premium sm" onclick="manualEntry()" style="width: 100%; height: 40px; gap: 8px;" title="Registrar ingreso de vehículo sin ALPR">
-                                <i class="fas fa-sign-in-alt"></i> <span style="font-size: 0.7rem;">REGISTRAR INGRESO</span>
+                            <button class="btn btn-premium sm" onclick="manualEntry()" style="width: 50px; height: 40px; justify-content: center;" title="Registrar ingreso de vehículo sin ALPR">
+                                <i class="fas fa-sign-in-alt"></i>
                             </button>
                         </div>
 

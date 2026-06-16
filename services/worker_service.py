@@ -1,6 +1,7 @@
 import threading
 import time
 from core.database import SessionLocal
+from core.config import settings
 from services.reservation_service import ReservationService
 
 class WorkerService:

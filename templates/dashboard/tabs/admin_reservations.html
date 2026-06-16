@@ -89,10 +89,10 @@
                             <label>Patente</label>
                             <div class="select-wrapper-premium">
                                 <i class="fas fa-car-side"></i>
-                                <input type="text" id="edit-res-patente" class="input-premium-readonly" readonly style="padding-left: 42px;">
+                                <input type="text" id="edit-res-patente" class="input-premium-readonly" readonly style="padding-left: 50px !important;">
                             </div>
                         </div>
-                        <div class="form-group-premium">
+                        <div class="form-group-premium" style="max-width: 120px;">
                             <label>Tipo de Estadía</label>
                             <div class="select-wrapper-premium">
                                 <i class="fas fa-clock"></i>
@@ -121,27 +121,18 @@
                         <!-- CAMPOS DINÁMICOS -->
                         <div id="edit-dynamic-fields" class="full-width-premium">
                             <!-- Hourly -->
-                            <div id="edit-hourly-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-                                <div class="form-group-premium">
-                                    <label>Día</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-calendar-day"></i>
-                                        <input type="text" id="edit-res-date-only" class="input-premium flatpickr-input" placeholder="Fecha..." style="padding-left: 42px;">
-                                    </div>
+                            <div id="edit-hourly-fields" class="dynamic-row-premium" data-display="flex" style="display:none; gap: 20px; justify-content: flex-start;">
+                                <div class="form-group-premium" style="max-width: 140px;">
+                                    <label style="text-align: center;">Día</label>
+                                    <input type="text" id="edit-res-date-only" class="input-premium flatpickr-input" placeholder="Fecha..." style="padding-left: 15px !important; padding-right: 15px !important; text-align: center;">
                                 </div>
-                                <div class="form-group-premium">
-                                    <label>Hora Inicio</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-clock"></i>
-                                        <input type="time" id="edit-res-time-only" class="input-premium" style="padding-left: 42px;">
-                                    </div>
+                                <div class="form-group-premium" style="max-width: 105px;">
+                                    <label style="text-align: center;">Hora Inicio</label>
+                                    <input type="text" id="edit-res-time-only" class="input-premium" placeholder="12:00" style="padding-left: 15px !important; padding-right: 15px !important; text-align: center;">
                                 </div>
-                                <div class="form-group-premium">
-                                    <label>Cant. Horas</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-stopwatch"></i>
-                                        <input type="number" id="edit-res-hours-qty" class="input-premium" min="1" max="24" placeholder="2" style="padding-left: 42px;">
-                                    </div>
+                                <div class="form-group-premium" style="max-width: 55px;">
+                                    <label style="text-align: center;">Cantidad</label>
+                                    <input type="number" id="edit-res-hours-qty" class="input-premium" min="1" max="24" placeholder="2" style="padding-left: 5px !important; padding-right: 5px !important; text-align: center;">
                                 </div>
                             </div>
 
@@ -149,10 +140,7 @@
                             <div id="edit-daily-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr; gap: 20px;">
                                 <div class="form-group-premium">
                                     <label>Día de Estadía</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-calendar-check"></i>
-                                        <input type="text" id="edit-res-day-only" class="input-premium flatpickr-input" placeholder="Seleccioná día..." style="padding-left: 42px;">
-                                    </div>
+                                    <input type="text" id="edit-res-day-only" class="input-premium flatpickr-input" placeholder="Seleccioná día..." style="padding-left: 15px !important;">
                                 </div>
                             </div>
 
@@ -160,14 +148,11 @@
                             <div id="edit-weekly-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div class="form-group-premium">
                                     <label>Inicia el día</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-calendar-plus"></i>
-                                        <input type="text" id="edit-res-week-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 42px;">
-                                    </div>
+                                    <input type="text" id="edit-res-week-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 15px !important;">
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Finaliza</label>
-                                    <input type="text" id="edit-res-week-end" class="input-premium-readonly" readonly>
+                                    <input type="text" id="edit-res-week-end" class="input-premium-readonly" readonly style="padding-left: 15px !important;">
                                 </div>
                             </div>
 
@@ -175,14 +160,11 @@
                             <div id="edit-fortnight-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div class="form-group-premium">
                                     <label>Inicia el día</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-calendar-plus"></i>
-                                        <input type="text" id="edit-res-fortnight-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 42px;">
-                                    </div>
+                                    <input type="text" id="edit-res-fortnight-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 15px !important;">
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Finaliza</label>
-                                    <input type="text" id="edit-res-fortnight-end" class="input-premium-readonly" readonly>
+                                    <input type="text" id="edit-res-fortnight-end" class="input-premium-readonly" readonly style="padding-left: 15px !important;">
                                 </div>
                             </div>
 
@@ -190,14 +172,11 @@
                             <div id="edit-month-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div class="form-group-premium">
                                     <label>Inicia el día</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-calendar-plus"></i>
-                                        <input type="text" id="edit-res-month-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 42px;">
-                                    </div>
+                                    <input type="text" id="edit-res-month-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 15px !important;">
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Finaliza</label>
-                                    <input type="text" id="edit-res-month-end" class="input-premium-readonly" readonly>
+                                    <input type="text" id="edit-res-month-end" class="input-premium-readonly" readonly style="padding-left: 15px !important;">
                                 </div>
                             </div>
 
@@ -205,17 +184,11 @@
                             <div id="edit-standard-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div class="form-group-premium">
                                     <label>Inicio</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-calendar-plus"></i>
-                                        <input type="datetime-local" id="edit-res-inicio" class="input-premium" style="padding-left: 42px;">
-                                    </div>
+                                    <input type="datetime-local" id="edit-res-inicio" class="input-premium" style="padding-left: 15px !important;">
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Fin</label>
-                                    <div class="select-wrapper-premium">
-                                        <i class="fas fa-calendar-check"></i>
-                                        <input type="datetime-local" id="edit-res-fin" class="input-premium" style="padding-left: 42px;">
-                                    </div>
+                                    <input type="datetime-local" id="edit-res-fin" class="input-premium" style="padding-left: 15px !important;">
                                 </div>
                             </div>
                         </div>

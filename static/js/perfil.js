@@ -58,7 +58,11 @@ window.showSection = function(sectionId, el) {
     if (sectionId === 'inicio') {
         prof.loadProfile();
         res.loadReservations();
-        res.refreshReservationFormState();
+        if (typeof res.refreshReservationFormState === 'function') {
+            res.refreshReservationFormState();
+        } else if (typeof window.refreshReservationFormState === 'function') {
+            window.refreshReservationFormState();
+        }
     }
     if (sectionId === 'perfil') prof.loadProfile();
     if (sectionId === 'vehiculos') v.loadVehicles();
@@ -173,6 +177,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         await v.loadVehicles();
         await res.loadReservations();
         res.initReservationForm();
+        
+        // Refrescar estado de los formularios de reserva/vehículos (ahora siempre visibles)
+        if (typeof res.refreshReservationFormState === 'function') {
+            await res.refreshReservationFormState();
+        }
 
         // 3. Verificar si venimos del mapa con una sucursal pre-seleccionada
         const urlParams = new URLSearchParams(window.location.search);

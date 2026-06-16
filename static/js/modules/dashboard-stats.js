@@ -53,11 +53,41 @@ export async function loadRecentLogs() {
     const lastEntry = fullLogsData.find(l => l.tipo_evento === 'ENTRADA');
     const lastExit = fullLogsData.find(l => l.tipo_evento === 'SALIDA');
 
-    const plateEntryEl = document.getElementById('plate-entry');
-    const plateExitEl = document.getElementById('plate-exit');
+    const updateCameraDisplay = (log, type) => {
+        const plateFooterEl = document.getElementById(`plate-${type}`);
+        const overlayEl = document.getElementById(`overlay-plate-${type}`);
+        const camBox = document.getElementById(`cam-box-${type}`);
+        
+        if (log) {
+            const plate = formatPlate(log.patente_detectada);
+            
+            // 1. Actualizar Footer (Persistente)
+            if (plateFooterEl) plateFooterEl.innerText = plate;
 
-    if (plateEntryEl && lastEntry) plateEntryEl.innerText = formatPlate(lastEntry.patente_detectada);
-    if (plateExitEl && lastExit) plateExitEl.innerText = formatPlate(lastExit.patente_detectada);
+            // 2. Manejar Overlay Interno (Persistente en esquina)
+            if (overlayEl) {
+                const overlayValue = overlayEl.querySelector('.overlay-value');
+                const lastPlate = overlayEl.getAttribute('data-last-plate');
+
+                // Siempre mostrar la última detectada
+                if (overlayValue) overlayValue.innerText = plate;
+                overlayEl.classList.add('active');
+
+                // Si es una patente nueva, disparar animación de detección
+                if (plate !== lastPlate) {
+                    overlayEl.setAttribute('data-last-plate', plate);
+                    
+                    if (camBox) {
+                        camBox.classList.add('detecting');
+                        setTimeout(() => camBox.classList.remove('detecting'), 3000);
+                    }
+                }
+            }
+        }
+    };
+
+    updateCameraDisplay(lastEntry, 'entry');
+    updateCameraDisplay(lastExit, 'exit');
 
     applyLogsFilter();
 }
@@ -90,17 +120,17 @@ export function renderLogsTable() {
 
     tbody.innerHTML = paginatedData.map(log => {
         const time = new Date(log.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-        const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-dorado';
+        const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-danger';
         const statusBadge = log.pago_confirmado ? 
             `<span class="badge badge-success-light">PAGADO</span>` : 
             `<span class="badge badge-danger-light">PENDIENTE</span>`;
 
         return `
-            <tr>
+            <tr class="row-animate">
                 <td data-label="Hora" class="text-center">${time}</td>
                 <td data-label="Patente" class="text-center"><span class="plate-style">${formatPlate(log.patente_detectada)}</span></td>
                 <td data-label="Evento" class="${badgeClass} text-bold text-center">${log.tipo_evento}</td>
-                <td data-label="Estado" class="text-center">${statusBadge}</td>
+                <td data-label="Abono" class="text-center">${statusBadge}</td>
                 <td data-label="Info" class="text-center"><button class="btn-edit" onclick="showLogDetail(${log.id})" title="Ver detalle y captura del evento"><i class="fas fa-eye"></i></button></td>
             </tr>`;
     }).join('') || '<tr><td colspan="5" class="text-center py-20">No hay movimientos.</td></tr>';
@@ -133,12 +163,6 @@ function renderLogsPagination() {
 window.changePageLogs = (page) => {
     currentPageLogs = page;
     renderLogsTable();
-    
-    // Subir automáticamente al principio de la lista de movimientos
-    const logsHeader = document.querySelector('.card-header-premium i.fa-list-ul')?.parentElement;
-    if (logsHeader) {
-        logsHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
 };
 
 window.filterLogs = (query) => {
@@ -227,13 +251,13 @@ export function renderOccupancyTable() {
         const duration = `${Math.floor(diffMs / 3600000)}h ${Math.floor((diffMs % 3600000) / 60000)}m`;
 
         const statusBadge = occ.ya_pago ? 
-            `<span class="badge badge-success-light">PAGO CONFIRMADO</span>` :
-            `<span class="badge badge-warning-light">$${occ.deuda.toLocaleString('es-AR')} PENDIENTE</span>`;
+            `<span class="text-secondary text-bold">PAGADO</span>` :
+            `<span class="text-danger text-bold">$${occ.deuda.toLocaleString('es-AR')}</span>`;
 
         const floorInfo = occ.floor_nombre ? `<div class="text-xs text-muted mt-2">${occ.floor_nombre}</div>` : '';
 
         return `
-        <tr>
+        <tr class="row-animate">
             <td data-label="Vehículo" class="text-center">
                 <div class="flex-col items-center">
                     <span class="plate-style">${formatPlate(occ.patente)}</span>
@@ -242,7 +266,7 @@ export function renderOccupancyTable() {
             </td>
             <td data-label="Ingreso" class="text-center">${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
             <td data-label="Permanencia" class="text-bold text-light text-center">${duration}</td>
-            <td data-label="Estado" class="text-center">${statusBadge}</td>
+            <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">
                 <div class="flex-row gap-5 justify-center">
                     ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
@@ -283,15 +307,6 @@ function renderOccupancyPagination() {
 window.changePageOcc = (page) => {
     currentPageOcc = page;
     renderOccupancyTable();
-    
-    // Subir automáticamente al principio de la lista
-    const activeTab = document.querySelector('.tab-view:not([style*="display: none"])');
-    if (activeTab) {
-        const listHeader = activeTab.querySelector('.card-header-premium i.fa-car-side')?.parentElement?.parentElement;
-        if (listHeader) {
-            listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
 };
 
 window.filterOccupancy = (query) => {

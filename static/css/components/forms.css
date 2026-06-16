@@ -44,6 +44,17 @@ input:focus, select:focus { border-color: var(--dorado); background: #050505; }
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Fix para iconos nativos (reloj/calendario) en fondos oscuros */
+input::-webkit-calendar-picker-indicator {
+    filter: invert(1) sepia(100%) saturate(500%) hue-rotate(10deg);
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
 .input-premium:focus {
     border-color: var(--dorado);
     background: rgba(197, 160, 89, 0.05);
