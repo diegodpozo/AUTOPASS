@@ -17,9 +17,10 @@ from routes.views import router as views_router
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 app.mqtt_client = mqtt_client # Inyección para acceso global
 
-# Directorio para imágenes
-if not os.path.exists(settings.IMAGE_DIR):
-    os.makedirs(settings.IMAGE_DIR)
+# Directorio para imágenes y uploads
+for path in [settings.IMAGE_DIR, os.path.join("static", "uploads", "branches")]:
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
 
 # Montaje de archivos estáticos
 app.mount("/images", StaticFiles(directory=settings.IMAGE_DIR), name="images")

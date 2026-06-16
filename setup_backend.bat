@@ -50,39 +50,16 @@ if %errorlevel% neq 0 (
 :: 4. Configurar Variables de Entorno (.env)
 echo [+] Configurando archivo de variables de entorno (.env)...
 if not exist .env (
-    echo # --- SEGURIDAD JWT --- > .env
-    echo SECRET_KEY=autopass_super_secret_key_2026_modular >> .env
-    echo ALGORITHM=HS256 >> .env
-    echo ACCESS_TOKEN_EXPIRE_MINUTES=1440 >> .env
-    echo. >> .env
-    echo # --- BASE DE DATOS --- >> .env
-    echo DATABASE_URL=sqlite:///./parking.db >> .env
-    echo. >> .env
-    echo # --- BROKER MQTT --- >> .env
-    echo MQTT_BROKER=broker.hivemq.com >> .env
-    echo MQTT_PORT=1883 >> .env
-    echo MQTT_TOPIC_ENTRADA=parking/barrera/entrada/control >> .env
-    echo MQTT_TOPIC_SALIDA=parking/barrera/salida/control >> .env
-    echo. >> .env
-    echo # --- CONFIGURACION EMAIL (SMTP) --- >> .env
-    echo SMTP_SERVER=sandbox.smtp.mailtrap.io >> .env
-    echo SMTP_PORT=2525 >> .env
-    echo SMTP_USER=tu_usuario_mailtrap >> .env
-    echo SMTP_PASSWORD=tu_password_mailtrap >> .env
-    echo SMTP_FROM=no-reply@autopass.com.ar >> .env
-    echo. >> .env
-    echo # --- GENERAL --- >> .env
-    echo BASE_URL=http://localhost:8000 >> .env
-    echo IMAGE_DIR=captured_images >> .env
-    echo [OK] Archivo .env creado con valores por defecto.
+    copy .env.example .env >nul
+    echo [OK] Archivo .env creado desde .env.example.
 ) else (
     echo [!] El archivo .env ya existe, preservando configuracion actual.
 )
 
-:: 5. Inicializar Base de Datos
-echo.
-echo [+] Inicializando Base de Datos Modular y Usuario Admin...
-venv\Scripts\python.exe init_db.py
+:: 5. Crear directorios necesarios
+echo [+] Creando directorios de assets y uploads...
+if not exist captured_images mkdir captured_images
+if not exist static\uploads\branches mkdir static\uploads\branches
 
 echo.
 echo ======================================================
