@@ -209,4 +209,29 @@ export function validatePlate(plate, tipo) {
     }
 }
 
+/**
+ * Detecta el tipo de vehículo según la patente.
+ */
+export function detectVehicleType(plate) {
+    if (!plate) return null;
+    const p = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    // Si cumple el patrón de moto Argentina, es Moto
+    const argMoto = /^[A-Z]{1}[0-9]{3}[A-Z]{3}$/;
+    if (argMoto.test(p)) return 'Moto';
+    
+    // Si cumple cualquiera de los de auto, es Auto
+    const argOld = /^[A-Z]{3}[0-9]{3}$/;
+    const argMercosur = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/;
+    const braMercosur = /^[A-Z]{3}[0-9]{1}[A-Z]{1}[0-9]{2}$/;
+    const par = /^[A-Z]{4}[0-9]{3}$/;
+    const uru = /^[A-Z]{3}[0-9]{4}$/;
+    
+    if (argOld.test(p) || argMercosur.test(p) || braMercosur.test(p) || par.test(p) || uru.test(p)) {
+        return 'Auto';
+    }
+    
+    return null; // Indeterminado
+}
+
 

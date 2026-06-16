@@ -9,6 +9,15 @@ let IntervaloCarrusel = null;
 let IndiceFraseActual = 0;
 let IntervaloFrase = null;
 
+function formatAddress(addr) {
+    if (!addr) return '';
+    // Si no tiene coma, intentamos poner una después del número de la calle
+    if (!addr.includes(',')) {
+        return addr.replace(/(\d+)\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+)$/, '$1, $2');
+    }
+    return addr;
+}
+
 export function initMap(containerId = 'map') {
     const mapEl = document.getElementById(containerId);
     if (!mapEl || !window.L) return;
@@ -36,7 +45,7 @@ export function initMap(containerId = 'map') {
                            align-items: center; justify-content: center; 
                            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
                            transition: all 0.3s ease; outline: none; font-size: 0.9rem;">
-                <i class="fas fa-arrow-right-long"></i>
+                <i class="fas fa-location-crosshairs"></i>
             </button>`;
         
         div.onmouseover = () => { 
@@ -90,11 +99,13 @@ export function initMap(containerId = 'map') {
                     iconAnchor: [7, 7]
                 });
                 
+                const formattedAddr = formatAddress(p.direccion);
+
                 const popupContent = `
                     <div style="text-align: center; min-width: 200px; padding: 10px; background: #0a0a0a; border-radius: 15px;">
                         <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 55px; height: 55px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #C5A059; padding: 3px; background: #000;">
                         <br><b style="font-size: 1.15rem; color: #fff; font-family: 'Montserrat'; letter-spacing: 0.5px;">${p.nombre}</b>
-                        <br><span style="color: #888; font-size: 0.8rem; display: block; margin-top: 2px;">${p.direccion}</span>
+                        <br><span style="color: #888; font-size: 0.8rem; display: block; margin-top: 2px; text-transform: capitalize;">${formattedAddr}</span>
                         
                         <div style="margin: 15px 0; padding: 12px; background: rgba(197, 160, 89, 0.03); border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.15);">
                             <b style="color: ${statusColor}; font-size: 0.85rem; display: block; margin-bottom: 6px; letter-spacing: 1px;">${statusText.toUpperCase()}</b>
@@ -119,6 +130,21 @@ export function initMap(containerId = 'map') {
                     .addTo(newMapInstance)
                     .bindPopup(popupContent);
                 
+                // Actualizar overlay dinámico al abrir/cerrar sucursal
+                marker.on('popupopen', () => {
+                    const overlay = document.querySelector('.map-overlay');
+                    if (overlay) {
+                        overlay.querySelector('h4').innerHTML = `<i class="fas fa-building"></i> ${p.nombre}`;
+                        overlay.querySelector('p').innerText = formattedAddr;
+                        overlay.classList.add('active');
+                    }
+                });
+
+                marker.on('popupclose', () => {
+                    const overlay = document.querySelector('.map-overlay');
+                    if (overlay) overlay.classList.remove('active');
+                });
+
                 // Guardar referencia al marcador (específico por containerId)
                 if (!p.markers) p.markers = {};
                 p.markers[containerId] = marker;

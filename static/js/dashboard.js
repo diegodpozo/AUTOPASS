@@ -308,7 +308,10 @@ window.updateEditFormGroups = (type) => {
 
     Object.values(sections).forEach(s => { if(s) s.style.display = 'none'; });
     const activeSection = sections[type] || sections['standard'];
-    if (activeSection) activeSection.style.display = 'grid';
+    if (activeSection) {
+        // Usar el atributo data-display si existe, sino grid por defecto
+        activeSection.style.display = activeSection.dataset.display || 'grid';
+    }
     window.updateEditReservationPrice();
 };
 
@@ -332,14 +335,28 @@ window.openEditReservationModal = (resId) => {
 
     // Inicializar Flatpickrs si es necesario
     if (window.flatpickr && !window.editPickersInitialized) {
-        const common = { disableMobile: "true", dateFormat: "Y-m-d", onChange: () => window.updateEditReservationPrice() };
+        const common = { 
+            disableMobile: "true", 
+            altInput: true,
+            altFormat: "d-m-Y",
+            dateFormat: "Y-m-d", 
+            onChange: () => window.updateEditReservationPrice() 
+        };
         flatpickr("#edit-res-date-only", common);
         flatpickr("#edit-res-day-only", common);
+        flatpickr("#edit-res-time-only", { 
+            enableTime: true, 
+            noCalendar: true, 
+            dateFormat: "H:i", 
+            defaultHour: 12, 
+            defaultMinute: 0,
+            disableMobile: "true",
+            onChange: () => window.updateEditReservationPrice() 
+        });
         flatpickr("#edit-res-week-start", { ...common, onChange: (sd, ds) => updateEditPeriodEnd(ds, 7, '#edit-res-week-end') });
         flatpickr("#edit-res-fortnight-start", { ...common, onChange: (sd, ds) => updateEditPeriodEnd(ds, 15, '#edit-res-fortnight-end') });
         flatpickr("#edit-res-month-start", { ...common, onChange: (sd, ds) => updateEditPeriodEnd(ds, 30, '#edit-res-month-end') });
         
-        document.getElementById('edit-res-time-only')?.addEventListener('change', () => window.updateEditReservationPrice());
         document.getElementById('edit-res-hours-qty')?.addEventListener('input', () => window.updateEditReservationPrice());
         
         window.editPickersInitialized = true;
