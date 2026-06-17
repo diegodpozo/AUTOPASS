@@ -1,12 +1,164 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import text
+from typing import List, Dict
 import models, schemas
 from core.database import get_db
-from core.security import get_operational_user
+from core.security import get_operational_user, decode_access_token
 from services.billing_service import BillingService
+from services.notification_service import NotificationService
+import unicodedata
 
 router = APIRouter()
+
+def normalize_name(text: str):
+    if not text: return ""
+    text = text.upper().replace("AUTOPASS ", "").strip()
+    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+
+class OccupancyManager:
+    def __init__(self):
+        # sucursal_name (normalized) -> list of active websockets
+        # Global admin uses "GLOBAL"
+        self.active_connections: Dict[str, List[WebSocket]] = {}
+
+    async def connect(self, websocket: WebSocket, user: models.User):
+        await websocket.accept()
+        sucursal = normalize_name(user.sucursal) if user.rol != "admin" else "GLOBAL"
+        
+        if sucursal not in self.active_connections:
+            self.active_connections[sucursal] = []
+        self.active_connections[sucursal].append(websocket)
+        return sucursal
+
+    def disconnect(self, websocket: WebSocket, sucursal: str):
+        if sucursal in self.active_connections:
+            try:
+                self.active_connections[sucursal].remove(websocket)
+            except ValueError: pass
+
+    async def broadcast_update(self, db: Session, sucursal_norm: str = None):
+        """Envía el estado actual de aforo a todos los interesados."""
+        # Si se pasa sucursal_norm, notificamos a esa sede y a GLOBAL
+        targets = ["GLOBAL"]
+        if sucursal_norm and sucursal_norm != "GLOBAL":
+            targets.append(sucursal_norm)
+            
+        for target in targets:
+            if target not in self.active_connections or not self.active_connections[target]:
+                continue
+                
+            # Obtener datos de aforo para el target
+            if target == "GLOBAL":
+                # Resumen para admin global
+                data = self._get_global_status(db)
+            else:
+                # Datos específicos de la sede
+                data = self._get_branch_status(db, target)
+                
+            # Enviar a todos los sockets de este target
+            disconnected = []
+            for connection in self.active_connections[target]:
+                try:
+                    await connection.send_json(data)
+                except:
+                    disconnected.append(connection)
+            
+            for conn in disconnected:
+                self.disconnect(conn, target)
+
+    def _get_global_status(self, db: Session):
+        branches = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
+        res = []
+        for b in branches:
+            if b.floors:
+                cap_total = sum(f.capacidad_total for f in b.floors)
+                occ_total = sum(f.ocupacion_actual for f in b.floors)
+                cap_motos = sum(f.capacidad_motos for f in b.floors)
+                occ_motos = sum(f.ocupacion_motos for f in b.floors)
+            else:
+                a = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == b.nombre).first()
+                cap_total = a.capacidad_total if a else 20
+                occ_total = a.ocupacion_actual if a else 0
+                cap_motos = a.capacidad_motos if a else 10
+                occ_motos = a.ocupacion_motos if a else 0
+            res.append({"id": b.id, "nombre": b.nombre, "ocupacion": occ_total, "capacidad": cap_total})
+        return {"type": "GLOBAL_UPDATE", "branches": res}
+
+    def _get_branch_status(self, db: Session, sucursal_norm: str):
+        # Buscar sucursal por nombre normalizado
+        # Primero buscamos en ParkingBranch para ver si tiene pisos
+        branches = db.query(models.ParkingBranch).all()
+        branch = None
+        for b in branches:
+            if normalize_name(b.nombre) == sucursal_norm:
+                branch = b
+                break
+        
+        if branch and branch.floors:
+            cap_total = sum(f.capacidad_total for f in branch.floors)
+            occ_total = sum(f.ocupacion_actual for f in branch.floors)
+            cap_motos = sum(f.capacidad_motos for f in branch.floors)
+            occ_motos = sum(f.ocupacion_motos for f in branch.floors)
+        else:
+            # Fallback a ParkingAforo si no hay branch o pisos
+            # Pero ParkingAforo.sucursal no está normalizada, así que buscamos todas
+            aforos = db.query(models.ParkingAforo).all()
+            a = None
+            for af in aforos:
+                if normalize_name(af.sucursal) == sucursal_norm:
+                    a = af
+                    break
+            
+            if not a:
+                return {"type": "BRANCH_UPDATE", "data": {"capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20}}
+            
+            cap_total = a.capacidad_total
+            occ_total = a.ocupacion_actual
+            cap_motos = a.capacidad_motos
+            occ_motos = a.ocupacion_motos
+
+        return {
+            "type": "BRANCH_UPDATE",
+            "data": {
+                "capacidad_total": cap_total, 
+                "ocupacion_actual": occ_total, 
+                "capacidad_motos": cap_motos,
+                "ocupacion_motos": occ_motos,
+                "disponibilidad": cap_total - occ_total,
+                "disponibilidad_motos": cap_motos - occ_motos
+            }
+        }
+
+occupancy_manager = OccupancyManager()
+NotificationService.set_occupancy_manager(occupancy_manager)
+
+@router.websocket("/parking/ws")
+async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
+    if not token:
+        await websocket.close(code=4008)
+        return
+
+    try:
+        payload = decode_access_token(token)
+        db = next(get_db())
+        user = db.query(models.User).filter(models.User.email == payload.get("sub")).first()
+        if not user:
+            await websocket.close(code=4008)
+            return
+            
+        sucursal = await occupancy_manager.connect(websocket, user)
+        
+        # Enviar primer estado inmediatamente
+        await occupancy_manager.broadcast_update(db, sucursal if sucursal != "GLOBAL" else None)
+        
+        try:
+            while True:
+                await websocket.receive_text() # Keepalive
+        except WebSocketDisconnect:
+            occupancy_manager.disconnect(websocket, sucursal)
+    except:
+        await websocket.close(code=4008)
 
 @router.get("/parking/branches", response_model=List[schemas.BranchPublicResponse])
 def list_public_branches(db: Session = Depends(get_db)):

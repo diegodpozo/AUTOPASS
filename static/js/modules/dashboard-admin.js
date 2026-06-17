@@ -81,6 +81,13 @@ export async function searchAddress() {
 
 export async function loadUsers() {
     try {
+        // Restricción visual de filtros para Admin Local (Eliminación física)
+        const myRol = localStorage.getItem('rol');
+        if (myRol !== 'admin') {
+            const adminOption = document.querySelector('#user-filter-rol option[value="admin"]');
+            if (adminOption) adminOption.remove();
+        }
+
         const res = await api.get('/admin/users');
         if (res && res.ok) {
             
@@ -431,6 +438,11 @@ export function switchSettingsTab(tabId, btn) {
     // 2. Alternar botones
     document.querySelectorAll('.btn-tab-mini').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+
+    // 3. Carga específica de monitoreo
+    if (tabId === 'monitoring' && window.loadCameraSettings) {
+        window.loadCameraSettings();
+    }
 }
 
 export function switchRatesTab(type, btn) {
@@ -714,12 +726,14 @@ export async function deleteFloor(id) {
 export async function saveAllRates() {
     const keys = [
         'precio_hora', 'precio_dia', 'precio_semana', 'precio_mes',
-        'precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto'
+        'precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto',
+        'precio_hora_camioneta', 'precio_dia_camioneta', 'precio_semana_camioneta', 'precio_mes_camioneta'
     ];
     
     const labels = {
         'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
-        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes'
+        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes',
+        'precio_hora_camioneta': 'Hora', 'precio_dia_camioneta': 'Día', 'precio_semana_camioneta': 'Semana', 'precio_mes_camioneta': 'Mes'
     };
 
     let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
@@ -783,13 +797,17 @@ export async function saveRateGroup(type) {
     const inputs = group.querySelectorAll('input');
 
     const isAutos = type === 'autos';
+    const isMotos = type === 'motos';
     const keys = isAutos ? 
         ['precio_hora', 'precio_dia', 'precio_semana', 'precio_mes'] :
-        ['precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto'];
+        (isMotos ? 
+            ['precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto'] :
+            ['precio_hora_camioneta', 'precio_dia_camioneta', 'precio_semana_camioneta', 'precio_mes_camioneta']);
 
     const labels = {
         'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
-        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes'
+        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes',
+        'precio_hora_camioneta': 'Hora', 'precio_dia_camioneta': 'Día', 'precio_semana_camioneta': 'Semana', 'precio_mes_camioneta': 'Mes'
     };
 
     let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
@@ -1283,11 +1301,19 @@ export function openEditUserModal(userId) {
     const mySucursal = localStorage.getItem('sucursal') || '';
 
     if (myRol === 'local_admin') {
-        // Restricción para admin local
-        roleSelect.innerHTML = `
-            <option value="staff" style="background: #111;">Empleado</option>
-            <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
-        `;
+        if (u.rol === 'user') {
+            // Si es un cliente, el admin local no puede cambiarle el rol
+            roleSelect.innerHTML = `<option value="user" style="background: #111;">Cliente</option>`;
+            roleSelect.disabled = true;
+        } else {
+            // Restricción para admin local con personal
+            roleSelect.innerHTML = `
+                <option value="staff" style="background: #111;">Empleado</option>
+                <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
+            `;
+            roleSelect.disabled = false;
+        }
+        
         const branchSelect = document.getElementById('edit-user-sucursal');
         if (branchSelect) {
             branchSelect.innerHTML = `<option value="${mySucursal}">${mySucursal.toUpperCase()}</option>`;
@@ -1296,6 +1322,7 @@ export function openEditUserModal(userId) {
         }
     } else {
         // Admin Global
+        roleSelect.disabled = false;
         roleSelect.innerHTML = `
             <option value="user" style="background: #111;">Cliente</option>
             <option value="staff" style="background: #111;">Empleado</option>

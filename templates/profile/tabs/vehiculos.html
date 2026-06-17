@@ -12,8 +12,20 @@
             <div class="card form-compact-premium" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(197, 160, 89, 0.2); padding: 30px; border-radius: 20px; margin-bottom: 30px;">
                 <h4 class="text-dorado" style="text-align: center; margin-bottom: 25px; font-weight: 800; letter-spacing: 1px; font-size: 1rem;">NUEVO VEHÍCULO</h4>
                 <form id="add-vehicle-form" onsubmit="addVehicle(event)">
-                    <input type="hidden" name="tipo" value="Auto">
                     <div class="flex-col gap-15">
+                        <!-- Selector de Tipo -->
+                        <div class="form-group-premium" style="gap: 4px; margin-bottom: 5px;">
+                            <label style="font-size: 0.65rem; text-align: center; width: 100%; display: block;">Tipo de Vehículo</label>
+                            <div class="select-wrapper-premium" style="width: 100%; max-width: 250px; margin: 0 auto;">
+                                <i id="vehicle-type-icon" class="fas fa-car-side" style="left: 10px; color: var(--dorado); position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0.8; z-index: 5;"></i>
+                                <select name="tipo" class="input-premium-sm" style="padding-left: 35px !important; text-align: center;" onchange="updateVehicleTypeIcon(this.value, '', this.form)">
+                                    <option value="Auto">Auto</option>
+                                    <option value="Moto">Moto</option>
+                                    <option value="Camioneta">Camioneta</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <!-- Patente y Marca -->
                         <div class="flex-row gap-10 flex-wrap-mobile" style="justify-content: center;">
                             <div class="form-group-premium" style="gap: 4px; flex: 0 0 35%;">

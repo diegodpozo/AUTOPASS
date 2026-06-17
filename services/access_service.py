@@ -8,6 +8,13 @@ import models
 import schemas
 from core.config import settings
 from models.enums import VehicleType, AccessEventType, ReservationStatus, PaymentStatus
+from services.notification_service import NotificationService
+import unicodedata
+
+def normalize_name(text: str):
+    if not text: return ""
+    text = text.upper().replace("AUTOPASS ", "").strip()
+    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
 
 class AccessService:
     @staticmethod
@@ -91,6 +98,7 @@ class AccessService:
                 sucursal=sucursal
             ))
             db.commit()
+            NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
             
             cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
                 "command": "OPEN", 
@@ -136,6 +144,7 @@ class AccessService:
             sucursal=sucursal
         ))
         db.commit()
+        NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
         cls._publish_mqtt(request, settings.MQTT_TOPIC_SALIDA, {
             "command": "OPEN", 
@@ -223,6 +232,7 @@ class AccessService:
                     sucursal=sucursal
                 ))
                 db.commit()
+                NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
                     "command": "OPEN", "plate": reserva.patente, "method": "QR", "sucursal": sucursal, "timestamp": now.isoformat()
@@ -250,6 +260,7 @@ class AccessService:
                     sucursal=sucursal
                 ))
                 db.commit()
+                NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 cls._publish_mqtt(request, settings.MQTT_TOPIC_SALIDA, {
                     "command": "OPEN", "plate": reserva.patente, "method": "QR", "sucursal": sucursal, "timestamp": now.isoformat()

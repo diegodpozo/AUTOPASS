@@ -18,7 +18,8 @@ class Settings(Base):
     __tablename__ = "settings"
     id = Column(Integer, primary_key=True, index=True)
     clave = Column(String) # Removido unique=True para permitir variantes por sede
-    valor = Column(Float)
+    valor = Column(Float, nullable=True)
+    valor_str = Column(String, nullable=True) # Para configuraciones de texto (IPs, etc)
     sucursal = Column(String, nullable=True) # None = Configuración Global
 
 class AccessLog(Base):

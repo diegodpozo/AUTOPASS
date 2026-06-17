@@ -18,7 +18,7 @@ def migrate_db():
     tables_to_check = {
         "users": [("is_blocked", "BOOLEAN DEFAULT 0"), ("sucursal", "VARCHAR"), ("direccion", "VARCHAR")],
         "access_logs": [("sucursal", "VARCHAR"), ("tipo_vehiculo", "VARCHAR DEFAULT 'Auto'"), ("floor_id", "INTEGER"), ("metodo_pago", "VARCHAR"), ("fecha_pago", "VARCHAR")],
-        "settings": [("sucursal", "VARCHAR")],
+        "settings": [("sucursal", "VARCHAR"), ("valor_str", "VARCHAR")],
         "parking_aforo": [("sucursal", "VARCHAR"), ("capacidad_motos", "INTEGER DEFAULT 10"), ("ocupacion_motos", "INTEGER DEFAULT 0")],
         "parking_floors": [("branch_id", "INTEGER"), ("nombre", "VARCHAR"), ("capacidad_total", "INTEGER"), ("ocupacion_actual", "INTEGER"), ("capacidad_motos", "INTEGER"), ("ocupacion_motos", "INTEGER")],
         "vehicles": [("tipo", "VARCHAR DEFAULT 'Auto'")],

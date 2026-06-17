@@ -794,6 +794,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         ui.initClock();
         ui.checkSystemHealth();
+        // Iniciar WebSocket de Aforo
+        stats.initOccupancyWS();
     } catch (e) { console.warn("Error en servicios UI:", e); }
 
     let lastTab = localStorage.getItem('activeAdminTab') || 'live';
@@ -813,14 +815,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Listeners de Formularios
     document.getElementById('form-add-branch')?.addEventListener('submit', window.handleCreateBranch);
-
-    setInterval(() => {
-        if (localStorage.getItem('activeAdminTab') === 'live') {
-            stats.loadLiveStats();
-            stats.loadRecentLogs();
-            stats.loadOccupancy();
-        }
-    }, 10000);
 });
 
 window.payOccupancy = async (plate, amount) => {
@@ -900,6 +894,15 @@ window.openAddFloorModal = admin.openAddFloorModal;
 window.openEditFloorModal = admin.openEditFloorModal;
 window.handleCreateFloor = admin.handleCreateFloor;
 window.deleteFloor = admin.deleteFloor;
-window.updateFloorCapacity = admin.updateFloorCapacity;
+window.updatePBCapacity = admin.updatePBCapacity;
 window.savePBCapacity = admin.savePBCapacity;
 window.toggleLevelEdit = admin.toggleLevelEdit;
+
+// Cameras
+window.openCameraConfig = ui.openCameraConfig;
+window.toggleCameraService = ui.toggleCameraService;
+window.handleSaveCamConfig = ui.handleSaveCamConfig;
+window.loadCameraSettings = ui.loadCameraSettings;
+window.saveCameraSettings = ui.saveCameraSettings;
+window.toggleCameraServiceSettings = ui.toggleCameraServiceSettings;
+

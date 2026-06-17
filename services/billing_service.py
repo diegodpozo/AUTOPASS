@@ -22,9 +22,11 @@ class BillingService:
         }
         clave = setting_map.get(tipo, "precio_hora")
         
-        # Si es moto, buscamos la clave específica (ej: precio_hora_moto)
+        # Ajustar clave según tipo de vehículo
         if tipo_vehiculo == VehicleType.MOTO:
             clave = f"{clave}_moto"
+        elif tipo_vehiculo == VehicleType.CAMIONETA:
+            clave = f"{clave}_camioneta"
         
         # Buscar tarifa por sede
         setting = db.query(models.Settings).filter(
@@ -47,6 +49,8 @@ class BillingService:
         clave = "precio_hora"
         if tipo_vehiculo == "Moto":
             clave = "precio_hora_moto"
+        elif tipo_vehiculo == "Camioneta":
+            clave = "precio_hora_camioneta"
 
         setting = db.query(models.Settings).filter(
             models.Settings.clave == clave,

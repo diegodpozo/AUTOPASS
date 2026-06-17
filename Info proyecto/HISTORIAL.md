@@ -1,5 +1,30 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **JUNIO 17, 2026 - UX/UI REFINEMENT & RBAC (V9.1.5)**:
+    *   **Rediseño Monitoreo**: Evolución de la pestaña de cámaras a un layout de grilla "Premium" con mejores indicadores de estado y visualización técnica mejorada.
+    *   **Filtros Financieros**: Se añadió soporte para "Camionetas" en el reporte financiero del dashboard admin.
+    *   **Seguridad UI (RBAC)**: Se eliminó la posibilidad de que un Administrador Local filtre o asigne el rol de Administrador General, endureciendo las reglas de visualización por jerarquía.
+    *   **Fix de Estructura**: Corrección definitiva de solapamiento de pestañas en el panel de configuración.
+
+- **JUNIO 17, 2026 - TRIMODAL PRICING & CAMIONETAS (V9.1.0)**:
+    *   **Soporte para Camionetas**: Se integró "Camioneta" como tipo de vehículo oficial en el Enum, Base de Datos y Servicios.
+    *   **Tarifario Trimodal**: Nueva pestaña en Configuración para gestionar los precios específicos de camionetas.
+    *   **UI Updates**: Actualización de los formularios de usuario para permitir la selección de tipo de vehículo, rompiendo la dependencia exclusiva de la auto-detección por patente.
+    *   **Iconografía**: Inclusión del icono `fa-truck-pickup` en todo el flujo de usuario y dashboard.
+
+- **JUNIO 17, 2026 - REAL-TIME & SETTINGS OVERHAUL (V9.0.0)**:
+    *   **Centralización de Cámaras**: Se movió la configuración de IPs y el control de servicios ALPR de la pestaña "Monitoreo" a una nueva sub-pestaña en "Configuración".
+    *   **Aforo Real-time**: Implementación de WebSockets para la actualización instantánea del aforo en el dashboard, reemplazando el polling de 10 segundos.
+    *   **Notification Service**: Creación de un servicio de notificaciones asíncronas para disparar eventos de WebSocket desde la lógica de negocio (`AccessService`).
+    *   **UX Clean-up**: Se eliminaron botones de configuración de la vista de video para una experiencia de monitoreo más limpia ("Premium").
+    *   **Fix Estructural**: Corrección de IDs y etiquetas en `settings.html` que causaban solapamiento de contenido entre pestañas.
+
+- **JUNIO 17, 2026 - VIDEO STREAM OPTIMIZATION & DASHBOARD FIXES (V8.9.5)**:
+    *   **Corrección de Visibilidad**: Eliminación de la lógica `onerror` que ocultaba los feeds de video; ahora el sistema restaura la opacidad al recibir el primer frame por WebSocket.
+    *   **Placeholder Eficiente**: Uso de GIFs transparentes como placeholders para evitar errores 404 y mejorar la percepción de carga.
+    *   **Seguridad WS**: Implementada validación preventiva de tokens en el frontend antes de abrir sockets de video para evitar colisiones con nodos ALPR.
+    *   **Configuración Castelar**: Puesta en marcha exitosa de los nodos ALPR para entrada (IP) y salida (Local) en la sucursal Castelar.
+
 - **JUNIO 16, 2026 - UI/UX REFINEMENT & FORM NORMALIZATION (V8.8.5)**:
     *   **Normalización de Formularios**: Estandarización de `height` (48px), `padding` (12px 15px) y `font-size` (0.9rem) en todos los inputs de reserva para asegurar una alineación perfecta.
     *   **Confirmación Minimalista**: Rediseño del alerta de confirmación de reserva eliminando marcos internos, simplificando la jerarquía visual y centrando la atención en el total estimado.

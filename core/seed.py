@@ -37,7 +37,19 @@ DEFAULT_PRICES = {
     "precio_dia": 15000.0,
     "precio_semana": 70000.0,
     "precio_quincena": 120000.0,
-    "precio_mes": 200000.0
+    "precio_mes": 200000.0,
+    
+    "precio_hora_moto": 800.0,
+    "precio_dia_moto": 8000.0,
+    "precio_semana_moto": 35000.0,
+    "precio_quincena_moto": 60000.0,
+    "precio_mes_moto": 100000.0,
+
+    "precio_hora_camioneta": 2000.0,
+    "precio_dia_camioneta": 20000.0,
+    "precio_semana_camioneta": 90000.0,
+    "precio_quincena_camioneta": 150000.0,
+    "precio_mes_camioneta": 250000.0
 }
 
 # --- PROMOCIONES INICIALES ---

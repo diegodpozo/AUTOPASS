@@ -103,11 +103,15 @@ export function updateVehicleTypeIcon(typeValue, prefix = '', form = null) {
     if (typeValue === 'Auto') {
         icon.className = 'fas fa-car-side';
         icon.style.display = 'block';
-        plateInput.style.paddingLeft = (prefix === 'quick-') ? '35px' : '45px';
+        if (plateInput) plateInput.style.paddingLeft = (prefix === 'quick-') ? '35px' : '45px';
     } else if (typeValue === 'Moto') {
         icon.className = 'fas fa-motorcycle';
         icon.style.display = 'block';
-        plateInput.style.paddingLeft = (prefix === 'quick-') ? '35px' : '45px';
+        if (plateInput) plateInput.style.paddingLeft = (prefix === 'quick-') ? '35px' : '45px';
+    } else if (typeValue === 'Camioneta') {
+        icon.className = 'fas fa-truck-pickup';
+        icon.style.display = 'block';
+        if (plateInput) plateInput.style.paddingLeft = (prefix === 'quick-') ? '35px' : '45px';
     } else {
         icon.style.display = 'none';
         plateInput.style.paddingLeft = (prefix === 'quick-') ? '10px' : '15px';
