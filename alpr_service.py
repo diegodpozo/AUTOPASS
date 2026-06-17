@@ -12,6 +12,7 @@ import asyncio
 import websockets
 import json
 import unicodedata
+import warnings
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
@@ -19,6 +20,7 @@ from dotenv import load_dotenv
 # --- CONFIGURACIÓN DE SEGURIDAD Y RENDIMIENTO ---
 os.environ["OPENCV_LOG_LEVEL"] = "ERROR"
 os.environ["FFMPEG_LOG_LEVEL"] = "quiet"
+warnings.filterwarnings("ignore", category=UserWarning, module="torch")
 load_dotenv()
 
 # --- CONFIGURACIÓN DEL SERVICIO ---
@@ -213,6 +215,9 @@ class ALPREngine:
 class VideoStreamer:
     def __init__(self, source):
         self.cap = cv2.VideoCapture(source)
+        # Optimizaciones para cámaras IP (evitar lag por buffer)
+        if isinstance(source, str) and source.startswith("http"):
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         self.current_frame = None
         self.is_running = True
         self.lock = threading.Lock()
@@ -222,42 +227,70 @@ class VideoStreamer:
     def _update(self):
         while self.is_running:
             ret, frame = self.cap.read()
-            if not ret: break
+            if not ret: 
+                time.sleep(1) # Reintento
+                continue
             with self.lock: self.current_frame = frame
     def get_frame(self):
         with self.lock: return self.current_frame.copy() if self.current_frame is not None else None
 
 async def ws_monitoring_worker(streamer):
+    print(f"[*] Intentando conectar streaming a: {WS_BACKEND_URL}")
     while streamer.is_running:
         try:
-            async with websockets.connect(WS_BACKEND_URL) as websocket:
+            async with websockets.connect(WS_BACKEND_URL, ping_interval=20, ping_timeout=20) as websocket:
+                print(f"[*] WS Conectado exitosamente para streaming en {GATE_ID}")
+                frame_count = 0
                 while streamer.is_running:
                     frame = streamer.get_frame()
                     if frame is not None:
-                        view_frame = cv2.resize(frame, (640, 360))
-                        _, buffer = cv2.imencode('.jpg', view_frame, [cv2.IMWRITE_JPEG_QUALITY, 45])
-                        await websocket.send(base64.b64encode(buffer).decode('utf-8'))
-                    await asyncio.sleep(0.12)
-        except Exception: await asyncio.sleep(5)
+                        try:
+                            view_frame = cv2.resize(frame, (640, 360))
+                            _, buffer = cv2.imencode('.jpg', view_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+                            await websocket.send(base64.b64encode(buffer).decode('utf-8'))
+                            frame_count += 1
+                            if frame_count % 100 == 0:
+                                print(f"[*] Streaming {GATE_ID}: {frame_count} frames enviados.")
+                        except Exception as fe:
+                            print(f"[!] Error al procesar/enviar frame ({GATE_ID}): {fe}")
+                            break # Romper bucle interno para reconectar
+                    await asyncio.sleep(0.05)
+        except Exception as e: 
+            print(f"[!] WS Streaming Error ({GATE_ID}): {type(e).__name__} - {e}")
+            await asyncio.sleep(5)
 
 def main():
-    streamer = VideoStreamer(VIDEO_SOURCE).start()
-    engine = ALPREngine()
-    threading.Thread(target=engine.ocr_worker, daemon=True).start()
-    threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer),), daemon=True).start()
-    print(f"[*] Escaneando en {GATE_ID}. 'Ctrl+C' para salir.")
-    last_ocr_time = 0
-    while True:
-        frame = streamer.get_frame()
-        if frame is None:
-            time.sleep(0.1); continue
-        now = time.time()
-        if now - last_ocr_time > OCR_INTERVAL:
-            if engine.detect_motion(frame):
-                if not engine.frame_queue.full():
-                    engine.frame_queue.put(frame)
-                    last_ocr_time = now
-        time.sleep(0.01)
+    print(f"[*] Iniciando VideoStreamer con fuente: {VIDEO_SOURCE}")
+    try:
+        streamer = VideoStreamer(VIDEO_SOURCE).start()
+    except Exception as e:
+        print(f"[!] Error FATAL al iniciar VideoStreamer: {e}")
+        return
+    
+    # Verificar si la cámara realmente abrió
+    time.sleep(2)
+    if streamer.get_frame() is None:
+        print(f"[!] ADVERTENCIA: No se recibe imagen de la fuente {VIDEO_SOURCE}. Verificá la URL o el dispositivo.")
+
+    try:
+        engine = ALPREngine()
+        threading.Thread(target=engine.ocr_worker, daemon=True).start()
+        threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer),), daemon=True).start()
+        print(f"[*] Bucle de escaneo activo en {GATE_ID}. 'Ctrl+C' para salir.")
+        last_ocr_time = 0
+        while True:
+            frame = streamer.get_frame()
+            if frame is None:
+                time.sleep(0.1); continue
+            now = time.time()
+            if now - last_ocr_time > OCR_INTERVAL:
+                if engine.detect_motion(frame):
+                    if not engine.frame_queue.full():
+                        engine.frame_queue.put(frame)
+                        last_ocr_time = now
+            time.sleep(0.01)
+    except Exception as e:
+        print(f"[!] Error FATAL en el bucle principal: {e}")
 
 if __name__ == "__main__":
     try: main()

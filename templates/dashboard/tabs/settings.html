@@ -266,6 +266,9 @@
                 <button class="btn-tab-mini" onclick="switchSettingsTab('floors', this)">
                     <i class="fas fa-layer-group mr-8"></i> PLAZAS
                 </button>
+                <button class="btn-tab-mini" onclick="switchSettingsTab('monitoring', this)">
+                    <i class="fas fa-video mr-8"></i> MONITOREO
+                </button>
                 <button class="btn-tab-mini" onclick="switchSettingsTab('system', this)">
                     <i class="fas fa-microchip mr-8"></i> SISTEMA
                 </button>
@@ -276,13 +279,16 @@
                 <!-- SECCIÓN 1: TARIFARIO (BIMODAL) -->
                 <div id="set-section-rates" class="settings-section">
                     
-                    <!-- SUB-TABS AUTOS/MOTOS -->
+                    <!-- SUB-TABS AUTOS/MOTOS/CAMIONETAS -->
                     <div class="flex-row justify-center gap-20 mb-30" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <button class="btn-tab-sub active" onclick="switchRatesTab('autos', this)">
                             <i class="fas fa-car mr-8"></i> AUTOS
                         </button>
                         <button class="btn-tab-sub" onclick="switchRatesTab('motos', this)">
                             <i class="fas fa-motorcycle mr-8"></i> MOTOS
+                        </button>
+                        <button class="btn-tab-sub" onclick="switchRatesTab('camionetas', this)">
+                            <i class="fas fa-truck-pickup mr-8"></i> CAMIONETAS
                         </button>
                     </div>
 
@@ -363,6 +369,45 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- GRUPO CAMIONETAS -->
+                    <div id="rate-group-camionetas" class="rate-group" style="display: none;">
+                        <div class="flex-row justify-end mb-15">
+                            <button id="btn-edit-rates-camionetas" class="btn-tab-sub" onclick="toggleRateEdit('camionetas')" style="border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem;">
+                                <i class="fas fa-edit mr-8"></i> EDITAR
+                            </button>
+                        </div>
+                        <div class="rates-form-grid">
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">FRACCIÓN HORA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-clock"></i>
+                                    <input type="number" id="cfg-precio_hora_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ESTADÍA DIARIA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <input type="number" id="cfg-precio_dia_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO SEMANAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-week"></i>
+                                    <input type="number" id="cfg-precio_semana_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO MENSUAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <input type="number" id="cfg-precio_mes_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- SECCIÓN 2: GESTIÓN DE PLAZAS (Simplified) -->
@@ -376,7 +421,114 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN 3: ESTADO DEL SISTEMA (v8.5.0 - Grilla Premium) -->
+                <!-- SECCIÓN 3: CONFIGURACIÓN DE CÁMARAS (v9.1.0) -->
+                <div id="set-section-monitoring" class="settings-section" style="display: none;">
+                    <div class="mx-auto mt-10" style="max-width: 850px;">
+                        
+                        <!-- Encabezado de Sección -->
+                        <div class="flex-col items-center mb-30 text-center">
+                            <div class="header-icon-box lg mb-15">
+                                <i class="fas fa-video text-dorado"></i>
+                            </div>
+                            <h3 class="text-white text-md uppercase tracking-widest fw-800">Gestión de Nodos ALPR</h3>
+                            <p class="text-muted text-xs mt-5" style="max-width: 500px;">
+                                Configurá las fuentes de video para los lectores de patente. 
+                                Podés usar índices de cámara local (0, 1) o URLs de streaming IP (RTSP/HTTP).
+                            </p>
+                        </div>
+
+                        <!-- Grilla de Cámaras -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 25px;">
+                            
+                            <!-- Cámara Entrada -->
+                            <div class="card glass-premium p-25" style="border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--dorado); opacity: 0.5;"></div>
+                                
+                                <div class="flex-row justify-between items-start mb-25">
+                                    <div class="flex-col">
+                                        <div class="flex-row items-center gap-10">
+                                            <i class="fas fa-sign-in-alt text-dorado"></i>
+                                            <b class="text-white text-xs uppercase tracking-wider">Cámara de Entrada</b>
+                                        </div>
+                                        <span class="text-xxs text-muted mt-3">Identificación de ingresos</span>
+                                    </div>
+                                    <div id="cam-status-entrada-badge">
+                                        <!-- Badge de estado dinámico -->
+                                    </div>
+                                </div>
+
+                                <div class="form-group-premium mb-20">
+                                    <label class="text-xxs mb-8 block text-muted font-bold">URL / ÍNDICE DE FUENTE</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-link"></i>
+                                        <input type="text" id="cam-source-entrada" class="input-premium" placeholder="http://192.168.1.50:8080/video" style="font-family: var(--font-mono); font-size: 0.75rem;">
+                                    </div>
+                                </div>
+
+                                <div class="flex-row justify-between items-center pt-15" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                                    <span class="text-xxs text-muted italic">Cambios requieren reinicio de servicio</span>
+                                    <div class="flex-row gap-10">
+                                        <button class="btn btn-outline sm" onclick="saveCameraSettings('ENTRADA')" title="Guardar Dirección">
+                                            <i class="fas fa-floppy-disk mr-5"></i> GUARDAR
+                                        </button>
+                                        <div id="cam-actions-entrada">
+                                            <!-- Botones de control dinámicos -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cámara Salida -->
+                            <div class="card glass-premium p-25" style="border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #444; opacity: 0.5;"></div>
+                                
+                                <div class="flex-row justify-between items-start mb-25">
+                                    <div class="flex-col">
+                                        <div class="flex-row items-center gap-10">
+                                            <i class="fas fa-sign-out-alt text-muted"></i>
+                                            <b class="text-white text-xs uppercase tracking-wider">Cámara de Salida</b>
+                                        </div>
+                                        <span class="text-xxs text-muted mt-3">Validación de egresos</span>
+                                    </div>
+                                    <div id="cam-status-salida-badge">
+                                        <!-- Badge de estado dinámico -->
+                                    </div>
+                                </div>
+
+                                <div class="form-group-premium mb-20">
+                                    <label class="text-xxs mb-8 block text-muted font-bold">URL / ÍNDICE DE FUENTE</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-link"></i>
+                                        <input type="text" id="cam-source-salida" class="input-premium" placeholder="0" style="font-family: var(--font-mono); font-size: 0.75rem;">
+                                    </div>
+                                </div>
+
+                                <div class="flex-row justify-between items-center pt-15" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                                    <span class="text-xxs text-muted italic">Cambios requieren reinicio de servicio</span>
+                                    <div class="flex-row gap-10">
+                                        <button class="btn btn-outline sm" onclick="saveCameraSettings('SALIDA')" title="Guardar Dirección">
+                                            <i class="fas fa-floppy-disk mr-5"></i> GUARDAR
+                                        </button>
+                                        <div id="cam-actions-salida">
+                                            <!-- Botones de control dinámicos -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Tip de Ayuda -->
+                        <div class="card glass-premium mt-30 p-15 flex-row items-center gap-15" style="border: 1px dashed rgba(255,255,255,0.1); background: rgba(197,160,89,0.02);">
+                            <i class="fas fa-circle-info text-dorado" style="font-size: 1.2rem; opacity: 0.5;"></i>
+                            <p class="text-xxs text-muted leading-relaxed">
+                                <b>RECOMENDACIÓN:</b> Aseguráte de que la cámara tenga buena iluminación y que la patente ocupe al menos el 20% del ancho del cuadro para una detección óptima por parte de los motores de IA.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 4: ESTADO DEL SISTEMA -->
                 <div id="set-section-system" class="settings-section" style="display: none;">
                     <div class="mx-auto mt-20" style="max-width: 650px;">
                         

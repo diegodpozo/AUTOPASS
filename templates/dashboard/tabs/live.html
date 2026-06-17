@@ -7,12 +7,12 @@
                 <div class="cam-box" id="cam-box-entry">
                     <div class="cam-overlay">
                         <div class="cam-status">
-                            <span class="live-indicator"></span>
+                            <span class="live-indicator" id="indicator-entry"></span>
                             <span class="cam-label">ENTRADA</span>
                         </div>
                     </div>
                     <div class="cam-feed-container">
-                        <img id="cam-entry" src="/v1/system/video-feed/ENTRADA_PRINCIPAL" onerror="this.style.opacity='0';">
+                        <img id="cam-entry" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="opacity: 1;">
                         <div class="scan-line"></div>
                         <!-- Overlay de patente dentro del video -->
                         <div class="cam-plate-overlay" id="overlay-plate-entry">
@@ -25,12 +25,12 @@
                 <div class="cam-box" id="cam-box-exit">
                     <div class="cam-overlay">
                         <div class="cam-status">
-                            <span class="live-indicator"></span>
+                            <span class="live-indicator" id="indicator-exit"></span>
                             <span class="cam-label">SALIDA</span>
                         </div>
                     </div>
                     <div class="cam-feed-container">
-                        <img id="cam-exit" src="/v1/system/video-feed/SALIDA_PRINCIPAL" onerror="this.style.opacity='0';">
+                        <img id="cam-exit" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="opacity: 1;">
                         <div class="scan-line"></div>
                         <!-- Overlay de patente dentro del video -->
                         <div class="cam-plate-overlay" id="overlay-plate-exit">
@@ -190,4 +190,6 @@
 
         </div>
     </div>
+</div>
+
 </div>

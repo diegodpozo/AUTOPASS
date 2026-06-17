@@ -2,11 +2,14 @@ import os
 import datetime
 import base64
 import asyncio
+import subprocess
+import sys
 from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Dict, List
+from pydantic import BaseModel
 import models
 import unicodedata
 from core.database import get_db
@@ -14,6 +17,30 @@ from core.security import get_super_admin, get_operational_user, decode_access_t
 from core.config import settings
 
 router = APIRouter(tags=["System & Health"])
+
+# --- GESTIÓN DE PROCESOS DE CÁMARA (ALPR) ---
+CAMERA_PROCESSES: Dict[str, subprocess.Popen] = {}
+
+class CameraConfig(BaseModel):
+    gate_id: str
+    source: str
+
+def get_sys_executable():
+    return sys.executable
+
+def stop_all_cameras():
+    """Detiene todos los servicios ALPR activos. Llamado al apagar el servidor."""
+    for gate_id in list(CAMERA_PROCESSES.keys()):
+        try:
+            proc = CAMERA_PROCESSES[gate_id]
+            if proc.poll() is None:
+                if os.name == 'nt':
+                    subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    proc.terminate()
+            print(f"[System] Cámara {gate_id} detenida correctamente.")
+        except: pass
+    CAMERA_PROCESSES.clear()
 
 # --- GESTIÓN DE WEBSOCKETS CON AISLAMIENTO ---
 
@@ -91,20 +118,26 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
     if not user:
         # Los nodos ALPR solo aceptan la conexión si vienen de una fuente permitida (esto se refina en firewall)
         # Para esta implementación, aceptamos el nodo y lo tratamos como "Sender"
+        print(f"[WS] Nodo ALPR conectado: {camera_id}")
         await websocket.accept()
         try:
             while True:
                 data = await websocket.receive_text()
                 await manager.broadcast_frame(camera_id, data)
-        except WebSocketDisconnect: pass
+        except WebSocketDisconnect:
+            print(f"[WS] Nodo ALPR desconectado: {camera_id}")
+        except Exception as e:
+            print(f"[WS] Error en nodo ALPR {camera_id}: {e}")
     else:
         # Es un espectador (Admin/Staff), validar sucursal
+        print(f"[WS] Espectador conectado: {user.email} -> {camera_id}")
         success = await manager.connect(websocket, camera_id, user)
         if success:
             try:
                 while True:
                     await websocket.receive_text() # Mantener viva pero ignorar subidas de viewers
             except WebSocketDisconnect:
+                print(f"[WS] Espectador desconectado: {user.email} -> {camera_id}")
                 manager.disconnect(websocket, camera_id)
 
 # --- RESTO DE ENDPOINTS (Mantenidos igual pero con lógica de aislamiento aplicada) ---
@@ -196,3 +229,104 @@ def get_capture(log_id: int, db: Session = Depends(get_db), staff: models.User =
         full_path = os.path.abspath(os.path.join(settings.IMAGE_DIR, log.imagen_path))
         if os.path.exists(full_path): return FileResponse(full_path)
     return FileResponse(os.path.join("static", "images", "logo.png"))
+
+# --- ENDPOINTS DE CONFIGURACIÓN Y CONTROL DE CÁMARAS ---
+
+@router.get("/camera-config/{gate_id}")
+def get_camera_config(gate_id: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    gate_id = gate_id.upper()
+    # Aislamiento por sucursal
+    if staff.rol != "admin" and staff.sucursal:
+        branch_prefix = gate_id.split('_')[0]
+        if branch_prefix != normalize_system_name(staff.sucursal):
+             raise HTTPException(status_code=403, detail="No tenés acceso a esta configuración")
+             
+    setting = db.query(models.Settings).filter(
+        models.Settings.clave == f"CAMERA_SOURCE_{gate_id}"
+    ).first()
+    
+    source = setting.valor_str if setting else "0"
+    is_running = gate_id in CAMERA_PROCESSES and CAMERA_PROCESSES[gate_id].poll() is None
+    
+    return {"gate_id": gate_id, "source": source, "is_running": is_running}
+
+@router.post("/camera-config")
+def set_camera_config(config: CameraConfig, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    gate_id = config.gate_id.upper()
+    # Aislamiento
+    if staff.rol != "admin":
+        branch_prefix = normalize_system_name(staff.sucursal)
+        if not gate_id.startswith(branch_prefix):
+            raise HTTPException(status_code=403, detail="No tenés acceso a esta configuración")
+            
+    setting = db.query(models.Settings).filter(
+        models.Settings.clave == f"CAMERA_SOURCE_{gate_id}"
+    ).first()
+    
+    if not setting:
+        setting = models.Settings(clave=f"CAMERA_SOURCE_{gate_id}", valor_str=config.source, sucursal=staff.sucursal)
+        db.add(setting)
+    else:
+        setting.valor_str = config.source
+    
+    db.commit()
+    return {"status": "ok", "message": "Configuración guardada"}
+
+@router.post("/camera-service/{gate_id}/{action}")
+def control_camera_service(gate_id: str, action: str, request: Request, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    gate_id = gate_id.upper()
+    # Aislamiento
+    if staff.rol != "admin":
+        branch_prefix = normalize_system_name(staff.sucursal)
+        if not gate_id.startswith(branch_prefix):
+            raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
+
+    if action == "start":
+        if gate_id in CAMERA_PROCESSES and CAMERA_PROCESSES[gate_id].poll() is None:
+            return {"status": "error", "message": "Ya está en ejecución"}
+            
+        setting = db.query(models.Settings).filter(models.Settings.clave == f"CAMERA_SOURCE_{gate_id}").first()
+        source = setting.valor_str if setting else "0"
+        
+        # Obtener la URL base del backend dinámicamente
+        base_url = str(request.base_url).rstrip("/")
+        
+        env = os.environ.copy()
+        env["GATE_ID"] = gate_id
+        env["VIDEO_SOURCE"] = source
+        env["GATE_TYPE"] = "entrada" if "ENTRADA" in gate_id else "salida"
+        env["BACKEND_URL"] = base_url
+        
+        try:
+            print(f"[*] Iniciando ALPR para {gate_id} con fuente: {source}")
+            print(f"[*] Backend URL inyectada: {base_url}")
+            proc = subprocess.Popen(
+                [sys.executable, "alpr_service.py"],
+                env=env,
+                stdout=None, # Permitir que salga a la consola del server para debug
+                stderr=None,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
+            )
+            CAMERA_PROCESSES[gate_id] = proc
+            return {"status": "ok", "message": "Servicio iniciado"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+            
+    elif action == "stop":
+        if gate_id not in CAMERA_PROCESSES:
+            return {"status": "error", "message": "No está en ejecución"}
+            
+        proc = CAMERA_PROCESSES[gate_id]
+        try:
+            if proc.poll() is None:
+                if os.name == 'nt':
+                    subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    proc.terminate()
+            if gate_id in CAMERA_PROCESSES:
+                del CAMERA_PROCESSES[gate_id]
+            return {"status": "ok", "message": "Servicio detenido"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+            
+    return {"status": "error", "message": "Acción no válida"}

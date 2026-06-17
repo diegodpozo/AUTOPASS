@@ -51,6 +51,12 @@ def startup_event():
     except Exception as e: 
         print(f"Error en fase de inicio (MQTT/DB): {e}")
 
+@app.on_event("shutdown")
+def shutdown_event():
+    """Limpieza de recursos al apagar el servidor."""
+    print("[System] Apagando servidor, limpiando recursos...")
+    system.stop_all_cameras()
+
 # --- REGISTRO DE RUTAS ---
 # API v1
 app.include_router(auth)

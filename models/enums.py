@@ -9,6 +9,7 @@ class UserRole(str, Enum):
 class VehicleType(str, Enum):
     AUTO = "Auto"
     MOTO = "Moto"
+    CAMIONETA = "Camioneta"
 
 class AccessEventType(str, Enum):
     ENTRADA = "ENTRADA"

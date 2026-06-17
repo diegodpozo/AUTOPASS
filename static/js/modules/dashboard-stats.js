@@ -6,6 +6,35 @@ import { formatDate, formatPlate } from './utils.js';
  * Carga de datos en tiempo real, ocupación y métricas.
  */
 
+export function initOccupancyWS() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/v1/parking/ws?token=${token}`;
+    
+    const socket = new WebSocket(wsUrl);
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('[WS Occupancy] Update received:', data);
+        
+        // Refrescar componentes clave
+        loadLiveStats();
+        loadRecentLogs();
+        loadOccupancy();
+    };
+
+    socket.onclose = () => {
+        console.warn('[WS Occupancy] Connection closed. Retrying in 5s...');
+        setTimeout(initOccupancyWS, 5000);
+    };
+
+    socket.onerror = (err) => {
+        console.error('[WS Occupancy] Error:', err);
+    };
+}
+
 export async function loadLiveStats() {
     const resStatus = await api.get('/parking/status');
     if (resStatus && resStatus.ok) {

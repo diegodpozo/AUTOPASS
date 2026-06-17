@@ -1,5 +1,5 @@
 import api from './api.js';
-import { normalizeSystemName } from './utils.js';
+import { normalizeSystemName, showToast } from './utils.js';
 
 /**
  * DASHBOARD UI MODULE
@@ -41,8 +41,17 @@ export async function checkSystemHealth() {
         const entryKey = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA_PRINCIPAL';
         const exitKey = sucursal ? `${sucursal}_SALIDA` : 'SALIDA_PRINCIPAL';
 
-        updateHealthNode('node-ocr-entry', data.alpr?.[entryKey] === 'ONLINE');
-        updateHealthNode('node-ocr-exit', data.alpr?.[exitKey] === 'ONLINE');
+        const entryOnline = data.alpr?.[entryKey] === 'ONLINE';
+        const exitOnline = data.alpr?.[exitKey] === 'ONLINE';
+
+        updateHealthNode('node-ocr-entry', entryOnline);
+        updateHealthNode('node-ocr-exit', exitOnline);
+
+        // Actualizar indicadores "LIVE" sobre los cuadros de video
+        const indEntry = document.getElementById('indicator-entry');
+        const indExit = document.getElementById('indicator-exit');
+        if (indEntry) indEntry.className = entryOnline ? 'live-indicator online' : 'live-indicator';
+        if (indExit) indExit.className = exitOnline ? 'live-indicator online' : 'live-indicator';
     }
 }
 
@@ -71,23 +80,15 @@ function updateHealthNode(id, isOnline) {
 let videoSockets = { entry: null, exit: null };
 
 export function initVideoStreams() {
-    const rol = localStorage.getItem('rol');
     const sucursalRaw = localStorage.getItem('sucursal') || '';
     const token = localStorage.getItem('token');
     
-    // Si es admin global, no necesita ver las cámaras (según requerimiento)
-    if (rol === 'admin') {
-        return;
-    }
-
+    // Normalizar la sucursal para armar los IDs de cámara
     const sucursal = normalizeSystemName(sucursalRaw);
-    if (!sucursal) {
-        console.warn("[WS] No se pudo determinar la sede para el video.");
-        return;
-    }
-
-    const entryId = `${sucursal}_ENTRADA`;
-    const exitId = `${sucursal}_SALIDA`;
+    
+    // Si no hay sucursal (Admin Global), usamos los IDs principales
+    const entryId = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA_PRINCIPAL';
+    const exitId = sucursal ? `${sucursal}_SALIDA` : 'SALIDA_PRINCIPAL';
 
     setupSocket('entry', entryId, token);
     setupSocket('exit', exitId, token);
@@ -101,6 +102,12 @@ function setupSocket(type, cameraId, token) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/v1/system/ws/video/${cameraId}?token=${token}`;
     
+    // Si no hay token, no intentamos conectar para evitar entrar en modo "sender" (ALPR Node)
+    if (!token) {
+        console.warn(`[WS] Abortando conexión para ${cameraId}: Token no encontrado.`);
+        return;
+    }
+
     const socket = new WebSocket(wsUrl);
     videoSockets[type] = socket;
 
@@ -108,6 +115,10 @@ function setupSocket(type, cameraId, token) {
         const img = document.getElementById(`cam-${type}`);
         if (img) {
             img.src = `data:image/jpeg;base64,${event.data}`;
+            // Si el onerror del HTML la ocultó (opacity:0), la volvemos a mostrar
+            if (img.style.opacity === '0') {
+                img.style.opacity = '1';
+            }
         }
     };
 
@@ -227,5 +238,168 @@ export function toggleCollapsible(contentId, chevronId, maxHeight = '400px') {
     } else {
         content.style.maxHeight = '0px';
         chevron.style.transform = 'rotate(0deg)';
+    }
+}
+
+/**
+ * GESTIÓN DE CÁMARAS (V8.9.5 - MIGRADO A SETTINGS)
+ */
+
+export async function loadCameraSettings() {
+    const sucursalRaw = localStorage.getItem('sucursal') || '';
+    const sucursal = normalizeSystemName(sucursalRaw);
+    
+    const gates = ['ENTRADA', 'SALIDA'];
+    
+    for (const type of gates) {
+        const gateId = sucursal ? `${sucursal}_${type}` : `${type}_PRINCIPAL`;
+        const res = await api.get(`/system/camera-config/${gateId}`);
+        
+        if (res.ok) {
+            const sourceInput = document.getElementById(`cam-source-${type.toLowerCase()}`);
+            if (sourceInput) sourceInput.value = res.data.source;
+            updateCameraServiceSettingsUI(type, gateId, res.data.is_running);
+        }
+    }
+}
+
+export function updateCameraServiceSettingsUI(type, gateId, isRunning) {
+    const typeLower = type.toLowerCase();
+    const badgeEl = document.getElementById(`cam-status-${typeLower}-badge`);
+    const actionsEl = document.getElementById(`cam-actions-${typeLower}`);
+    
+    if (!badgeEl || !actionsEl) return;
+    
+    if (isRunning) {
+        badgeEl.innerHTML = `<span class="badge-status badge-success-light"><i class="fas fa-check-circle mr-5"></i> ONLINE</span>`;
+        actionsEl.innerHTML = `
+            <button class="btn btn-outline danger sm" onclick="toggleCameraServiceSettings('${type}', '${gateId}', 'stop')" title="Detener Servicio">
+                <i class="fas fa-stop"></i>
+            </button>
+        `;
+    } else {
+        badgeEl.innerHTML = `<span class="badge-status badge-danger-light"><i class="fas fa-times-circle mr-5"></i> OFFLINE</span>`;
+        actionsEl.innerHTML = `
+            <button class="btn btn-outline success sm" onclick="toggleCameraServiceSettings('${type}', '${gateId}', 'start')" title="Iniciar Servicio">
+                <i class="fas fa-play"></i>
+            </button>
+        `;
+    }
+}
+
+export async function toggleCameraServiceSettings(type, gateId, action) {
+    const res = await api.post(`/system/camera-service/${gateId}/${action}`);
+    if (res.ok) {
+        showToast(res.data.message, 'success');
+        updateCameraServiceSettingsUI(type, gateId, action === 'start');
+        if (action === 'start') {
+            initVideoStreams(); // Refrescar feeds en la otra pestaña
+        }
+    } else {
+        showToast(res.error || 'Error en el servicio', 'error');
+    }
+}
+
+export async function saveCameraSettings(type) {
+    const sucursalRaw = localStorage.getItem('sucursal') || '';
+    const sucursal = normalizeSystemName(sucursalRaw);
+    const gateId = sucursal ? `${sucursal}_${type}` : `${type}_PRINCIPAL`;
+    
+    const source = document.getElementById(`cam-source-${type.toLowerCase()}`).value;
+    
+    const res = await api.post('/system/camera-config', { gate_id: gateId, source: source });
+    if (res.ok) {
+        showToast(`Configuración de ${type} guardada`, 'success');
+        initVideoStreams();
+    } else {
+        showToast(res.error || 'Error al guardar', 'error');
+    }
+}
+
+/**
+ * LEGACY - GESTIÓN DE CÁMARAS (CONFIGURACIÓN Y SERVICIO)
+ */
+
+export async function openCameraConfig(type) {
+    const sucursalRaw = localStorage.getItem('sucursal') || '';
+    const sucursal = normalizeSystemName(sucursalRaw);
+    const gateId = sucursal ? `${sucursal}_${type}` : `${type}_PRINCIPAL`;
+    
+    const gateInput = document.getElementById('cam-config-gate');
+    const titleEl = document.getElementById('cam-config-title');
+    if (gateInput) gateInput.value = gateId;
+    if (titleEl) titleEl.innerText = `CONFIGURAR ${type}`;
+    
+    const res = await api.get(`/system/camera-config/${gateId}`);
+    if (res.ok) {
+        const sourceInput = document.getElementById('cam-config-source');
+        if (sourceInput) sourceInput.value = res.data.source;
+        updateCameraServiceUI(gateId, res.data.is_running);
+    }
+    
+    if (window.openModal) window.openModal('modal-cam-config');
+}
+
+export function updateCameraServiceUI(gateId, isRunning) {
+    const statusEl = document.getElementById('cam-service-status');
+    const actionsEl = document.getElementById('cam-service-actions');
+    if (!statusEl || !actionsEl) return;
+    
+    if (isRunning) {
+        statusEl.innerText = 'EJECUTÁNDOSE';
+        statusEl.style.color = '#10b981';
+        actionsEl.innerHTML = `
+            <button type="button" class="btn-icon-premium sm danger" onclick="toggleCameraService('${gateId}', 'stop')" title="Detener Servicio">
+                <i class="fas fa-stop"></i>
+            </button>
+        `;
+    } else {
+        statusEl.innerText = 'DETENIDO';
+        statusEl.style.color = '#ef4444';
+        actionsEl.innerHTML = `
+            <button type="button" class="btn-icon-premium sm secondary" onclick="toggleCameraService('${gateId}', 'start')" title="Iniciar Servicio">
+                <i class="fas fa-play" style="color: #10b981;"></i>
+            </button>
+        `;
+    }
+}
+
+export async function toggleCameraService(gateId, action) {
+    const statusEl = document.getElementById('cam-service-status');
+    if (statusEl) statusEl.innerText = action === 'start' ? 'INICIANDO...' : 'DETENIENDO...';
+    
+    const res = await api.post(`/system/camera-service/${gateId}/${action}`);
+    if (res.ok) {
+        if (window.showToast) window.showToast(res.data.message, 'success');
+        updateCameraServiceUI(gateId, action === 'start');
+        
+        // Si iniciamos, cerramos el modal para ver el feed
+        if (action === 'start') {
+            setTimeout(() => {
+                if (window.closeModal) window.closeModal('modal-cam-config');
+                initVideoStreams();
+            }, 1000);
+        }
+    } else {
+        if (window.showToast) window.showToast(res.error || 'Error en el servicio', 'error');
+        // Refrescar estado real por si hubo error
+        const statusRes = await api.get(`/system/camera-config/${gateId}`);
+        if (statusRes.ok) updateCameraServiceUI(gateId, statusRes.data.is_running);
+    }
+}
+
+export async function handleSaveCamConfig(event) {
+    event.preventDefault();
+    const gateId = document.getElementById('cam-config-gate').value;
+    const source = document.getElementById('cam-config-source').value;
+    
+    const res = await api.post('/system/camera-config', { gate_id: gateId, source: source });
+    if (res.ok) {
+        if (window.showToast) window.showToast('Configuración guardada', 'success');
+        if (window.closeModal) window.closeModal('modal-cam-config');
+        // Refrescar streams por si cambió la IP
+        initVideoStreams();
+    } else {
+        if (window.showToast) window.showToast(res.error || 'Error al guardar', 'error');
     }
 }
