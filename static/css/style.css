@@ -44,7 +44,7 @@ nav a {
 }
 
 .toast {
-    pointer-events: auto; /* Reactiva clicks para cerrar */
+    pointer-events: auto; /* REACTIVA CLICKS PARA CERRAR */
     background: rgba(15, 15, 15, 0.85);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
@@ -53,14 +53,14 @@ nav a {
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: #fff;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 1.7rem;
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
     gap: 15px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-    min-width: 320px;
-    max-width: 450px;
+    min-width: 640px;
+    max-width: 900px;
     cursor: pointer;
     overflow: hidden;
     animation: toast-entrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -74,13 +74,13 @@ nav a {
     box-shadow: 0 20px 45px rgba(0,0,0,0.6);
 }
 
-/* Tipos de Toasts (Sin bordes laterales) */
+/* TIPOS DE TOASTS (SIN BORDES LATERALES) */
 .toast-icon {
-    font-size: 1.2rem;
+    font-size: 2.4rem;
 }
 
 .toast.success .toast-icon { color: #10b981; }
-.toast.error .toast-icon { color: #ef4444; }
+.toast.error .toast-icon { color: #483d8b; }
 .toast.info .toast-icon { color: #3b82f6; }
 .toast.default .toast-icon { color: var(--dorado); }
 

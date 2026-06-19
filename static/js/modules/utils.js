@@ -66,14 +66,24 @@ export function showToast(msg, type = 'default') {
         setTimeout(() => { if (t.parentNode) t.remove(); }, 400);
     };
 
-    // Auto-cierre tras 5 segundos
-    const autoClose = setTimeout(closeToast, 5000);
-
-    // Cierre manual al hacer click
-    t.onclick = () => {
-        clearTimeout(autoClose);
-        closeToast();
+    // Cierre al hacer click en cualquier parte de la pantalla
+    const handleDocumentClick = (e) => {
+        if (!t.contains(e.target)) {
+            closeToast();
+            document.removeEventListener('click', handleDocumentClick);
+        }
     };
+    
+    document.addEventListener('click', handleDocumentClick);
+    
+    // Limpiar listener si el toast se remueve de otra forma
+    const observer = new MutationObserver(() => {
+        if (!t.parentNode) {
+            document.removeEventListener('click', handleDocumentClick);
+            observer.disconnect();
+        }
+    });
+    observer.observe(container, { childList: true });
 }
 
 /**
@@ -233,5 +243,3 @@ export function detectVehicleType(plate) {
     
     return null; // Indeterminado
 }
-
-
