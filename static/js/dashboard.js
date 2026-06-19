@@ -905,4 +905,5 @@ window.handleSaveCamConfig = ui.handleSaveCamConfig;
 window.loadCameraSettings = ui.loadCameraSettings;
 window.saveCameraSettings = ui.saveCameraSettings;
 window.toggleCameraServiceSettings = ui.toggleCameraServiceSettings;
+window.toggleCameraLink = ui.toggleCameraLink;
 

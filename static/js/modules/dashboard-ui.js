@@ -256,8 +256,17 @@ export async function loadCameraSettings() {
         const res = await api.get(`/system/camera-config/${gateId}`);
         
         if (res.ok) {
-            const sourceInput = document.getElementById(`cam-source-${type.toLowerCase()}`);
-            if (sourceInput) sourceInput.value = res.data.source;
+            const typeLower = type.toLowerCase();
+            const sourceInput = document.getElementById(`cam-source-${typeLower}`);
+            if (sourceInput) {
+                sourceInput.value = res.data.source;
+                // Si ya tiene valor, bloqueamos el input y ponemos icono de editar
+                if (res.data.source) {
+                    sourceInput.disabled = true;
+                    const btn = document.getElementById(`btn-save-cam-${typeLower}`);
+                    if (btn) btn.innerHTML = '<i class="fas fa-pen" style="font-size: 0.9rem;"></i>';
+                }
+            }
             updateCameraServiceSettingsUI(type, gateId, res.data.is_running);
         }
     }
@@ -273,14 +282,14 @@ export function updateCameraServiceSettingsUI(type, gateId, isRunning) {
     if (isRunning) {
         badgeEl.innerHTML = `<span class="badge-status badge-success-light"><i class="fas fa-check-circle mr-5"></i> ONLINE</span>`;
         actionsEl.innerHTML = `
-            <button class="btn btn-outline danger sm" onclick="toggleCameraServiceSettings('${type}', '${gateId}', 'stop')" title="Detener Servicio">
+            <button class="btn btn-outline danger sm" onclick="toggleCameraServiceSettings('${type}', '${gateId}', 'stop')" title="Detener Servicio" style="padding: 5px 12px; font-size: 0.65rem;">
                 <i class="fas fa-stop"></i>
             </button>
         `;
     } else {
         badgeEl.innerHTML = `<span class="badge-status badge-danger-light"><i class="fas fa-times-circle mr-5"></i> OFFLINE</span>`;
         actionsEl.innerHTML = `
-            <button class="btn btn-outline success sm" onclick="toggleCameraServiceSettings('${type}', '${gateId}', 'start')" title="Iniciar Servicio">
+            <button class="btn btn-outline success sm" onclick="toggleCameraServiceSettings('${type}', '${gateId}', 'start')" title="Iniciar Servicio" style="padding: 5px 12px; font-size: 0.65rem;">
                 <i class="fas fa-play"></i>
             </button>
         `;
@@ -300,22 +309,49 @@ export async function toggleCameraServiceSettings(type, gateId, action) {
     }
 }
 
-export async function saveCameraSettings(type) {
+export async function saveCameraSettings(type, btn) {
+    const typeLower = type.toLowerCase();
+    const input = document.getElementById(`cam-source-${typeLower}`);
+    
+    // Si el input está bloqueado, lo desbloqueamos para editar
+    if (input && input.disabled) {
+        input.disabled = false;
+        input.focus();
+        if (btn) btn.innerHTML = '<i class="fas fa-check" style="font-size: 1.1rem;"></i>';
+        return;
+    }
+
     const sucursalRaw = localStorage.getItem('sucursal') || '';
     const sucursal = normalizeSystemName(sucursalRaw);
     const gateId = sucursal ? `${sucursal}_${type}` : `${type}_PRINCIPAL`;
-    
-    const source = document.getElementById(`cam-source-${type.toLowerCase()}`).value;
-    
+
+    const source = input.value;
+
     const res = await api.post('/system/camera-config', { gate_id: gateId, source: source });
     if (res.ok) {
         showToast(`Configuración de ${type} guardada`, 'success');
+        // Bloqueamos el input y cambiamos el icono a Lápiz (Editar)
+        if (input) input.disabled = true;
+        if (btn) btn.innerHTML = '<i class="fas fa-pen" style="font-size: 0.9rem;"></i>';
         initVideoStreams();
     } else {
         showToast(res.error || 'Error al guardar', 'error');
     }
 }
 
+/**
+ * UI: TOGGLE LINK CAMARA (v9.1.5)
+ */
+export function toggleCameraLink(type, show) {
+    const typeLower = type.toLowerCase();
+    const btnLink = document.getElementById(`btn-link-${typeLower}`);
+    const wrapper = document.getElementById(`wrapper-link-${typeLower}`);
+
+    if (btnLink && wrapper) {
+        btnLink.style.display = show ? 'none' : 'flex';
+        wrapper.style.display = show ? 'flex' : 'none';
+    }
+}
 /**
  * LEGACY - GESTIÓN DE CÁMARAS (CONFIGURACIÓN Y SERVICIO)
  */
