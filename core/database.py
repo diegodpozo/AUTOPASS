@@ -4,21 +4,21 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from core.config import settings
 
-# --- CONFIGURACIÓN DE BASE DE DATOS ---
+# --- CONFIGURACION DE BASE DE DATOS ---
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-# Creación del motor de base de datos
+# CREACION DEL MOTOR DE BASE DE DATOS
 engine_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=engine_args)
 
-# Fábrica de sesiones
+# FABRICA DE SESIONES
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Clase base para modelos ORM
+# CLASE BASE PARA MODELOS ORM
 Base = declarative_base()
 
 def get_db():
-    """Dependencia para inyectar la sesión de DB en los endpoints de FastAPI."""
+    """DEPENDENCIA PARA INYECTAR LA SESION DE DB EN LOS ENDPOINTS DE FASTAPI."""
     db = SessionLocal()
     try:
         yield db
@@ -26,6 +26,6 @@ def get_db():
         db.close()
 
 def init_db():
-    """Sincroniza y crea las tablas definidas en los modelos si no existen."""
+    """SINCRONIZA Y CREA LAS TABLAS DEFINIDAS EN LOS MODELOS SI NO EXISTEN."""
     import models
     Base.metadata.create_all(bind=engine)

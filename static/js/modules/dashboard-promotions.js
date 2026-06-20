@@ -2,8 +2,8 @@ import api from './api.js';
 import { showToast, showConfirm } from './utils.js';
 
 /**
- * DASHBOARD PROMOTIONS MODULE
- * Gestión de beneficios y promociones para el sistema de fidelización.
+ * PANEL PROMOTIONS MODULO
+ * GESTION DE BENEFICIOS Y PROMOCIONES PARA EL SISTEMA DE FIDELIZACION.
  */
 
 export async function loadPromotionsAdmin() {
@@ -62,12 +62,12 @@ export async function showCreatePromotionModal() {
     const select = document.getElementById('promo-sucursal');
     
     if (field) {
-        field.style.display = 'block'; // Mostrar siempre para configurar
+        field.style.display = 'block'; // MOSTRAR SIEMPRE PARA CONFIGURAR
     }
 
     if (select) {
         if (rol === 'admin') {
-            // Admin Global: Cargar todas las sucursales de la DB
+            //ADMIN GLOBAL: CARGAR TODAS LAS SUCURSALES DE LA DB
             const res = await api.get('/admin/branches');
             if (res.ok) {
                 let options = '<option value="">Global (Todas)</option>';
@@ -79,17 +79,17 @@ export async function showCreatePromotionModal() {
                 select.value = "";
             }
         } else if (rol === 'local_admin') {
-            // Admin Local: Solo su propia sucursal y bloqueado
+            // ADMIN LOCAL: SOLO SU PROPIA SUCURSAL Y BLOQUEADO
             select.innerHTML = `<option value="${sucursal}">${sucursal.toUpperCase()}</option>`;
             select.value = sucursal;
             select.disabled = true;
         } else {
-            // Otros roles no deberían ver esto, pero por seguridad:
+            //OTROS ROLES NO DEBERIAN VER ESTO, PERO POR SEGURIDAD:
             if (field) field.style.display = 'none';
         }
     }
     
-    // Reset icon picker
+    // RESET ICON PICKER
     document.querySelectorAll('.icon-option').forEach(opt => opt.classList.remove('active'));
     const defaultOpt = document.querySelector('.icon-option[data-icon="fas fa-gift"]');
     if (defaultOpt) defaultOpt.classList.add('active');

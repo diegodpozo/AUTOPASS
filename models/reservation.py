@@ -3,18 +3,18 @@ from sqlalchemy.orm import relationship
 from core.database import Base
 
 class Reservation(Base):
-    """Registro de estadías programadas o recurrentes."""
+    """REGISTRO DE ESTADIAS PROGRAMADAS O RECURRENTES."""
     __tablename__ = "reservations"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     patente = Column(String)
     fecha_inicio = Column(String)
     fecha_fin = Column(String)
-    dias_semana = Column(String, nullable=True) # Almacenamiento serializado: "0,1,2" (0=Lunes...)
+    dias_semana = Column(String, nullable=True) # ALMACENAMIENTO SERIALIZADO: "0,1,2" (0=LUNES...)
     monto_total = Column(Float)
     monto_reembolsado = Column(Float, default=0.0)
-    fecha_pago = Column(String, nullable=True) # Fecha de la transacción (pago o reembolso)
-    mp_preference_id = Column(String, nullable=True) # ID de integración con Mercado Pago
+    fecha_pago = Column(String, nullable=True) # FECHA DE LA TRANSACCION (PAGO O REEMBOLSO)
+    mp_preference_id = Column(String, nullable=True) # ID DE INTEGRACION CON MERCADO PAGO
     estado_pago = Column(String, default="Pendiente")
     estado_reserva = Column(String, default="Pendiente")
     sucursal_nombre = Column(String, nullable=True)
@@ -26,7 +26,7 @@ class Reservation(Base):
     access_logs = relationship("AccessLog", back_populates="reservation")
 
 class Coupon(Base):
-    """Gestión de cupones de descuento para reservas."""
+    """GESTION DE CUPONES DE DESCUENTO PARA RESERVAS."""
     __tablename__ = "coupons"
     id = Column(Integer, primary_key=True, index=True)
     codigo = Column(String, unique=True, index=True)

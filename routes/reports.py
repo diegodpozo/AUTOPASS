@@ -24,15 +24,15 @@ def get_date_range(period: str, start: str = None, end: str = None):
             start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
     return start_date, end_date
 
-# --- ANALÍTICA FINANCIERA ---
+# --- ANALITICA FINANCIERA ---
 
 @router.get("/financial-summary")
 def get_financial_summary(period: str = "total", start: str = None, end: str = None, vehicle_type: str = "all", payment_method: str = "all", db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
-    """Calcula el resumen de recaudación unificado. Soporta filtrado por tipo de vehículo y método de pago."""
+    """CALCULA EL RESUMEN DE RECAUDACION UNIFICADO. SOPORTA FILTRADO POR TIPO DE VEHICULO Y METODO DE PAGO."""
     start_date, end_date = get_date_range(period, start, end)
     sucursal = user.sucursal if str(user.rol) != UserRole.ADMIN.value else None
 
-    # 1. Recaudación de AccessLogs (Estadías ALPR)
+    # 1. RECAUDACION DE ACCESSLOGS (ESTADIAS ALPR)
     q_logs = db.query(
         func.sum(models.AccessLog.costo_estadia),
         func.count(models.AccessLog.id)
@@ -59,7 +59,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     total_logs = float(total_logs or 0.0)
     count_logs = count_logs or 0
 
-    # 2. Recaudación de Reservations (Siempre Digital)
+    # 2. RECAUDACION DE RESERVATIONS (SIEMPRE DIGITAL)
     q_res_pagos = db.query(
         func.sum(models.Reservation.monto_total),
         func.count(models.Reservation.id)
@@ -70,7 +70,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     if vehicle_type != "all":
         q_res_pagos = q_res_pagos.filter(models.Vehicle.tipo == vehicle_type)
     
-    # Si filtran por CAJA, las reservas no deberían sumar (son siempre digitales)
+    # SI FILTRAN POR CAJA, LAS RESERVAS NO DEBERIAN SUMAR (SON SIEMPRE DIGITALES)
     if payment_method == "CAJA":
         total_res_bruto, count_res = 0.0, 0
     else:
@@ -87,7 +87,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
         total_res_bruto = float(total_res_bruto or 0.0)
         count_res = count_res or 0
 
-    # Reembolsos (Siempre Digital)
+    # REEMBOLSOS (SIEMPRE DIGITAL)
     if payment_method == "CAJA":
         total_refunds = 0.0
     else:
@@ -110,7 +110,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     
     total_res_neto = max(0, total_res_bruto - total_refunds)
 
-    # 3. Métricas de Cancelación (Siempre Digital en este contexto)
+    # 3. METRICAS DE CANCELACION (SIEMPRE DIGITAL EN ESTE CONTEXTO)
     if payment_method == "CAJA":
         tasa_cancelacion = 0
         ingresos_incumplimiento = 0.0
@@ -149,8 +149,8 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     total_final = round(total_logs + total_res_neto, 2)
     count_final = count_logs + count_res
 
-    # 4. Ingresos Proyectados (Solo vehiculos que siguen ADENTRO ahora mismo)
-    # Por defecto, la proyeccion no discrimina metodo de pago futuro, pero filtramos por tipo si se pide
+    # 4. INGRESOS PROYECTADOS (SOLO VEHICULOS QUE SIGUEN ADENTRO AHORA MISMO)
+    # POR DEFECTO, LA PROYECCION NO DISCRIMINA METODO DE PAGO FUTURO, PERO FILTRAMOS POR TIPO SI SE PIDE
     q_parked = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
     
     if vehicle_type != "all":
@@ -166,7 +166,7 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
     for e in entradas:
         tiene_salida = db.query(models.AccessLog.id).filter(models.AccessLog.patente_detectada == e.patente_detectada, models.AccessLog.tipo_evento == AccessEventType.SALIDA, models.AccessLog.fecha_hora > e.fecha_hora, models.AccessLog.sucursal == e.sucursal).first()
         if not tiene_salida and not e.pago_confirmado:
-            # CORRECCIÓN: Pasar el tipo de vehículo del log para usar la tarifa correcta (Auto vs Moto)
+            # CORRECCION: PASAR EL TIPO DE VEHICULO DEL LOG PARA USAR LA TARIFA CORRECTA (AUTO VS MOTO)
             deuda_proyectada += BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
 
     return {
@@ -185,13 +185,13 @@ def get_financial_summary(period: str = "total", start: str = None, end: str = N
 
 @router.get("/payment-history")
 def get_payment_history(period: str = "total", start: str = None, end: str = None, vehicle_type: str = "all", payment_method: str = "all", page: int = 1, limit: int = 20, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Lista el historial de transacciones incluyendo Reembolsos con soporte para UNION ALL robusto."""
+    """LISTA EL HISTORIAL DE TRANSACCIONES INCLUYENDO REEMBOLSOS CON SOPORTE PARA UNION ALL ROBUSTO."""
     from sqlalchemy import union_all, literal_column
     start_date, end_date = get_date_range(period, start, end)
     sucursal = admin.sucursal if str(admin.rol) != UserRole.ADMIN.value else None
     offset = (page - 1) * limit
 
-    # 1. Estadías
+    # 1. ESTADIAS
     q_logs = db.query(
         literal_column("'L' || CAST(access_logs.id AS TEXT)").label("id"),
         func.coalesce(models.AccessLog.fecha_pago, models.AccessLog.fecha_hora).label("fecha"),
@@ -210,7 +210,7 @@ def get_payment_history(period: str = "total", start: str = None, end: str = Non
     if start_date: q_logs = q_logs.filter((models.AccessLog.fecha_pago >= start_date) | ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
     if end_date: q_logs = q_logs.filter((models.AccessLog.fecha_pago <= end_date) | ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora <= end_date)))
 
-    # 2. Reservas (Siempre Digital)
+    # 2. RESERVAS (SIEMPRE DIGITAL)
     if payment_method == "CAJA":
         q_res = db.query(
             literal_column("'R'").label("id"),
@@ -238,7 +238,7 @@ def get_payment_history(period: str = "total", start: str = None, end: str = Non
         if start_date: q_res = q_res.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
         if end_date: q_res = q_res.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
 
-    # 3. Reembolsos (Siempre Digital)
+    # 3. REEMBOLSOS (SIEMPRE DIGITAL)
     if payment_method == "CAJA":
         q_refunds = db.query(
             literal_column("'REF'").label("id"),
@@ -266,7 +266,7 @@ def get_payment_history(period: str = "total", start: str = None, end: str = Non
         if start_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
         if end_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
 
-    # Combinamos usando subqueries para evitar problemas de binding
+    # COMBINAMOS USANDO SUBQUERIES PARA EVITAR PROBLEMAS DE BINDING
     combined = union_all(q_logs, q_res, q_refunds).subquery()
     query = db.query(combined)
     
@@ -278,11 +278,11 @@ def get_payment_history(period: str = "total", start: str = None, end: str = Non
     return [{"id": r.id, "fecha_pago": r.fecha, "patente_detectada": r.patente, "costo_estadia": r.monto, "tipo": r.tipo, "metodo": r.metodo} for r in results]
 
 
-# --- AUDITORÍA DE ACCESOS ---
+# --- AUDITORIA DE ACCESOS ---
 
 @router.get("/access")
 def get_reports_access(patente: str = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Consulta el historial de eventos ALPR."""
+    """CONSULTA EL HISTORIAL DE EVENTOS ALPR."""
     q = db.query(models.AccessLog)
     if str(staff.rol) != UserRole.ADMIN.value:
         target_name = staff.sucursal.replace('AUTOPASS ', '').strip()

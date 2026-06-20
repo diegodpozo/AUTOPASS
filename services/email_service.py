@@ -9,20 +9,20 @@ from core.config import settings
 import threading
 import os
 
-# Configuración de Jinja2 para emails
+# CONFIGURACION DE JINJA2 PARA EMAILS
 template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "emails")
 jinja_env = Environment(loader=FileSystemLoader(template_dir))
 
 class EmailService:
     @staticmethod
     def _render_template(template_name: str, **context):
-        """Renderiza un template de Jinja2 con el contexto provisto."""
+        """RENDERIZA UN TEMPLATE DE JINJA2 CON EL CONTEXTO PROVISTO."""
         template = jinja_env.get_template(template_name)
         return template.render(**context)
 
     @staticmethod
     def _get_logo_base64():
-        """Lee el logo desde el sistema de archivos (configurado en settings) y lo convierte a base64."""
+        """LEE EL LOGO DESDE EL SISTEMA DE ARCHIVOS (CONFIGURADO EN SETTINGS) Y LO CONVIERTE A BASE64."""
         try:
             if os.path.exists(settings.LOGO_PATH):
                 with open(settings.LOGO_PATH, "rb") as image_file:
@@ -34,7 +34,7 @@ class EmailService:
 
     @staticmethod
     def _send_email(to_email: str, subject: str, html_content: str):
-        """Método interno para envío sincrónico (ejecutado en un hilo)."""
+        """METODO INTERNO PARA ENVIO SINCRONICO (EJECUTADO EN UN HILO)."""
         try:
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
@@ -54,7 +54,7 @@ class EmailService:
 
     @staticmethod
     def send_async_email(to_email: str, subject: str, html_content: str):
-        """Envía un correo de forma asíncrona para no bloquear la respuesta de la API."""
+        """ENVIA UN CORREO DE FORMA ASINCRONA PARA NO BLOQUEAR LA RESPUESTA DE LA API."""
         thread = threading.Thread(
             target=EmailService._send_email, 
             args=(to_email, subject, html_content),
@@ -64,7 +64,7 @@ class EmailService:
 
     @staticmethod
     def send_recovery_email(to_email: str, user_name: str, recovery_url: str):
-        """Envía el correo de recuperación de contraseña."""
+        """ENVIA EL CORREO DE RECUPERACION DE CONTRASENA."""
         subject = "Recuperá tu contraseña - AutoPass"
         html_content = EmailService._render_template(
             "recovery.html", 
@@ -75,10 +75,10 @@ class EmailService:
 
     @staticmethod
     def send_reservation_confirmation(to_email: str, user_name: str, res_data: dict):
-        """Envía la confirmación de reserva con el logo cargado dinámicamente."""
+        """ENVIA LA CONFIRMACION DE RESERVA CON EL LOGO CARGADO DINAMICAMENTE."""
         subject = f"Tu Pase Digital - Reserva #{res_data['id']} - AUTOPASS"
         
-        # Generar código QR
+        # GENERAR CODIGO QR
         qr_content = f"AUTOPASS|ID:{res_data['id']}|PLATE:{res_data['patente']}"
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
         qr.add_data(qr_content)
@@ -90,7 +90,7 @@ class EmailService:
         qr_base64 = base64.b64encode(buffered.getvalue()).decode()
         qr_data_url = f"data:image/png;base64,{qr_base64}"
 
-        # Logo dinámico desde archivo físico
+        # LOGO DINAMICO DESDE ARCHIVO FISICO
         logo_base64 = EmailService._get_logo_base64()
 
         html_content = EmailService._render_template(

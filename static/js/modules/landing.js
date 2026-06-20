@@ -1,6 +1,6 @@
 /**
- * LANDING MODULE
- * Lógica para el carrusel, mapa y navegación de la landing page.
+ * LANDING MODULO
+ * LOGICA PARA EL CARRUSEL, MAPA Y NAVEGACION DE LA LANDING PAGE.
  */
 
 let mapInstance = null;
@@ -11,7 +11,7 @@ let IntervaloFrase = null;
 
 function formatAddress(addr) {
     if (!addr) return '';
-    // Si no tiene coma, intentamos poner una después del número de la calle
+    // SI NO TIENE COMA, INTENTAMOS PONER UNA DESPUES DEL NUMERO DE LA CALLE
     if (!addr.includes(',')) {
         return addr.replace(/(\d+)\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+)$/, '$1, $2');
     }
@@ -31,10 +31,10 @@ export function initMap(containerId = 'map') {
         maxZoom: 20
     }).addTo(newMapInstance);
 
-    // Si es el mapa principal de la landing, guardamos la instancia global para geolocalización
+    // SI ES EL MAPA PRINCIPAL DE LA LANDING, GUARDAMOS LA INSTANCIA GLOBAL PARA GEOLOCALIZACION
     if (containerId === 'map') mapInstance = newMapInstance;
 
-    // Agregar Botón de Mi Ubicación en el mapa (Top-Right para evitar conflicto con Zoom)
+    // AGREGAR BOTON DE MI UBICACION EN EL MAPA (TOP-RIGHT PARA EVITAR CONFLICTO CON ZOOM)
     const locationBtn = L.control({ position: 'topright' });
     locationBtn.onAdd = function() {
         const div = L.DomUtil.create('div', 'leaflet-control-geolocation');
@@ -65,26 +65,26 @@ export function initMap(containerId = 'map') {
     };
     locationBtn.addTo(newMapInstance);
 
-    // Cargar sucursales desde la API
+    //CARGAR SUCURSALES DESDE LA API
     fetch('/v1/parking/branches')
         .then(res => res.json())
         .then(branches => {
-            window.allBranchesMap = branches; // Guardar para geolocalización
+            window.allBranchesMap = branches; // GUARDAR PARA GEOLOCALIZACION
             branches.forEach(p => {
                 if (!p.latitude || !p.longitude) return;
                 
-                // Determinar color y mensaje por disponibilidad
+                // DETERMINAR COLOR Y MENSAJE POR DISPONIBILIDAD
                 const pct = (p.ocupacion_actual / p.capacidad_total) * 100;
-                let statusColor = '#C5A059'; // Disponible (Dorado)
+                let statusColor = '#C5A059'; // DISPONIBLE (DORADO)
                 let statusText = 'Alta disponibilidad';
                 let statusDesc = 'Hay lugares disponibles para vos.';
                 
                 if (pct >= 100) {
-                    statusColor = '#ff4444'; // Lleno (Rojo)
+                    statusColor = '#ff4444'; // LLENO (ROJO)
                     statusText = 'Sucursal Completa';
                     statusDesc = 'No hay disponibilidad en este momento.';
                 } else if (pct >= 85) {
-                    statusColor = '#ffbb33'; // Casi lleno (Naranja)
+                    statusColor = '#ffbb33'; // CASI LLENO (NARANJA)
                     statusText = 'Lugares limitados';
                     statusDesc = 'Quedan pocas plazas. ¡Reservá ahora!';
                 } else if (pct > 50) {
@@ -130,7 +130,7 @@ export function initMap(containerId = 'map') {
                     .addTo(newMapInstance)
                     .bindPopup(popupContent);
                 
-                // Actualizar overlay dinámico al abrir/cerrar sucursal
+                // ACTUALIZAR OVERLAY DINAMICO AL ABRIR/CERRAR SUCURSAL
                 marker.on('popupopen', () => {
                     const overlay = document.querySelector('.map-overlay');
                     if (overlay) {
@@ -145,12 +145,12 @@ export function initMap(containerId = 'map') {
                     if (overlay) overlay.classList.remove('active');
                 });
 
-                // Guardar referencia al marcador (específico por containerId)
+                // GUARDAR REFERENCIA AL MARCADOR (ESPECIFICO POR CONTAINERID)
                 if (!p.markers) p.markers = {};
                 p.markers[containerId] = marker;
             });
 
-            // Lógica para Localización Automática (vía URL param) - Solo en el mapa principal
+            // LOGICA PARA LOCALIZACION AUTOMATICA (VIA URL PARAM) - SOLO EN EL MAPA PRINCIPAL
             if (containerId === 'map') {
                 const urlParams = new URLSearchParams(window.location.search);
                 const branchToFind = urlParams.get('branch');
@@ -186,7 +186,7 @@ export function InicializarCarrusel() {
         const Item = document.createElement('div');
         Item.className = `item-carrusel ${i === 0 ? 'activo' : ''}`;
         Item.style.backgroundImage = `url('${dato.imagen}')`;
-        // Removed innerHTML with legend
+        //REMOVED INNERHTML CON LEGEND
         Contenedor.appendChild(Item);
     });
 
@@ -201,7 +201,7 @@ function RotarCarrusel(Direccion) {
     IndiceCarruselActual = (IndiceCarruselActual + Direccion + Items.length) % Items.length;
     Items[IndiceCarruselActual].classList.add('activo');
     
-    // Sincronizar frase con carrusel
+    // SINCRONIZAR FRASE CON CARRUSEL
     IndiceFraseActual = IndiceCarruselActual;
     const contenedor = document.getElementById('frase-animada');
     if (contenedor) {
@@ -214,7 +214,7 @@ function IniciarTemporizadores() {
     
     IntervaloCarrusel = setInterval(() => RotarCarrusel(1), 5000);
     
-    // Inicializar primera frase
+    // INICIALIZAR PRIMERA FRASE
     const contenedor = document.getElementById('frase-animada');
     if (contenedor) contenedor.innerText = DatosCarrusel[0].leyenda;
 }
@@ -239,10 +239,10 @@ export function checkAuthState() {
     }
 }
 
-// --- GEOLOCALIZACIÓN Y DISTANCIA ---
+// --- GEOLOCALIZACION Y DISTANCIA ---
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radio de la Tierra en km
+    const R = 6371; // RADIO DE LA TIERRA EN KM
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = 
@@ -259,7 +259,7 @@ export function findNearestBranch(targetMap = null) {
         return alert('Tu navegador no soporta geolocalización.');
     }
 
-    // Usar showToast si está disponible
+    // USAR SHOWTOAST SI ESTA DISPONIBLE
     const toast = (msg) => {
         if (window.showToast) window.showToast(msg);
         else console.log(msg);
@@ -288,9 +288,9 @@ export function findNearestBranch(targetMap = null) {
         if (nearest && activeMap) {
             activeMap.setView([nearest.latitude, nearest.longitude], 15);
             
-            // Efecto visual: Resaltar marcador (Intentar encontrar el div por ID si existe)
-            // Nota: En multi-mapa el ID podría repetirse si no se maneja bien, 
-            // pero Leaflet maneja sus propios estados.
+            // EFECTO VISUAL: RESALTAR MARCADOR (INTENTAR ENCONTRAR EL DIV POR ID SI EXISTE)
+            // NOTA: EN MULTI-MAPA EL ID PODRIA REPETIRSE SI NO SE MANEJA BIEN, 
+            // PERO LEAFLET MANEJA SUS PROPIOS ESTADOS.
             
             nearest.markers && Object.values(nearest.markers).forEach(m => {
                 if (m._map === activeMap) m.openPopup();

@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.get("/active-stays")
 def get_user_active_stays(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Lista las estadías actuales (dentro del predio) para los vehículos del usuario."""
+    """LISTA LAS ESTADIAS ACTUALES (DENTRO DEL PREDIO) PARA LOS VEHICULOS DEL USUARIO."""
     user_plates = [v.patente for v in current_user.vehicles]
     res = []
     for p in user_plates:
@@ -24,7 +24,7 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
 
 @router.get("/payment-history")
 def get_user_payment_history(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Historial cronológico de pagos realizados por el usuario."""
+    """HISTORIAL CRONOLOGICO DE PAGOS REALIZADOS POR EL USUARIO."""
     user_plates = [v.patente for v in current_user.vehicles]
     return db.query(models.AccessLog).filter(
         models.AccessLog.patente_detectada.in_(user_plates),
@@ -34,7 +34,7 @@ def get_user_payment_history(db: Session = Depends(get_db), current_user: models
 
 @router.get("/rates")
 def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
-    """Retorna las tarifas vigentes. Si hay sede, prioriza sus precios y completa con globales."""
+    """RETORNA LAS TARIFAS VIGENTES. SI HAY SEDE, PRIORIZA SUS PRECIOS Y COMPLETA CON GLOBALES."""
     keys = [
         "precio_hora", "precio_dia", "precio_semana", "precio_quincena", "precio_mes",
         "precio_hora_moto", "precio_dia_moto", "precio_semana_moto", "precio_quincena_moto", "precio_mes_moto"
@@ -55,7 +55,7 @@ def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
         for s in branch_settings:
             res[s.clave.replace("precio_", "")] = s.valor
 
-    # Fallback de seguridad para asegurar que existan las claves básicas
+    # FALLBACK DE SEGURIDAD PARA ASEGURAR QUE EXISTAN LAS CLAVES BASICAS
     defaults = {"hora": 1500, "dia": 15000, "semana": 70000, "quincena": 120000, "mes": 200000}
     for k, v in defaults.items():
         if k not in res: res[k] = v
@@ -64,7 +64,7 @@ def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
 
 @router.post("/recharge-balance")
 def recharge_balance(data: schemas.RechargeBalance, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Simula la carga de saldo en la cuenta del usuario."""
+    """SIMULA LA CARGA DE SALDO EN LA CUENTA DEL USUARIO."""
     if data.monto <= 0: raise HTTPException(status_code=400, detail="Monto inválido")
     current_user.saldo += data.monto
     db.commit()

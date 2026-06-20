@@ -13,14 +13,14 @@ router = APIRouter()
 
 @router.get("/branches", response_model=List[schemas.BranchResponse])
 def list_branches(db: Session = Depends(get_db)):
-    """Retorna la lista de todas las sucursales con resumen de capacidad y ocupación."""
+    """RETORNA LA LISTA DE TODAS LAS SUCURSALES CON RESUMEN DE CAPACIDAD Y OCUPACION."""
     return BranchService.list_branches_with_summary(db)
 
-# --- GESTIÓN DE PISOS ---
+# --- GESTION DE PISOS ---
 
 @router.post("/{branch_id}/floors", response_model=schemas.FloorResponse)
 def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Agrega un nuevo piso a la sucursal."""
+    """AGREGA UN NUEVO PISO A LA SUCURSAL."""
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
     if not branch: raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
@@ -37,7 +37,7 @@ def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(g
 
 @router.delete("/floors/{floor_id}")
 def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Elimina un piso de la sucursal."""
+    """ELIMINA UN PISO DE LA SUCURSAL."""
     floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
@@ -47,7 +47,7 @@ def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.Use
 
 @router.patch("/floors/{floor_id}", response_model=schemas.FloorResponse)
 def update_floor_capacity(floor_id: int, cap_autos: int, cap_motos: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Actualiza la capacidad de un piso."""
+    """ACTUALIZA LA CAPACIDAD DE UN PISO."""
     floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
@@ -70,7 +70,7 @@ async def create_branch(
     db: Session = Depends(get_db), 
     admin: models.User = Depends(get_super_admin)
 ):
-    """Crea una nueva sucursal con carga de logo local."""
+    """CREA UNA NUEVA SUCURSAL CON CARGA DE LOGO LOCAL."""
     existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre).first()
     if existing:
         raise HTTPException(status_code=400, detail="La sucursal ya existe")
@@ -102,7 +102,7 @@ async def create_branch(
 
 @router.delete("/branches/{branch_id}")
 def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """Elimina una sucursal (Solo Super Admin)."""
+    """ELIMINA UNA SUCURSAL (SOLO SUPER ADMIN)."""
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
@@ -125,7 +125,7 @@ async def update_branch(
     db: Session = Depends(get_db), 
     admin: models.User = Depends(get_super_admin)
 ):
-    """Actualiza la información de una sucursal con soporte para nuevo logo."""
+    """ACTUALIZA LA INFORMACION DE UNA SUCURSAL CON SOPORTE PARA NUEVO LOGO."""
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
@@ -152,7 +152,7 @@ async def update_branch(
 
 @router.post("/branches/{branch_id}/toggle")
 def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """Activa o suspende una sucursal."""
+    """ACTIVA O SUSPENDE UNA SUCURSAL."""
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")

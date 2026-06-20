@@ -60,10 +60,10 @@ INITIAL_PROMOS = [
 ]
 
 def seed_initial_data(db: Session):
-    """Orquestador de seeding para datos maestros."""
+    """ORQUESTADOR DE SEEDING PARA DATOS MAESTROS."""
     print("[*] Iniciando proceso de Seeding...")
     
-    # 1. Usuarios
+    # 1. USUARIOS
     for u_data in INITIAL_USERS:
         exists = db.query(models.User).filter(models.User.email == u_data["email"]).first()
         if not exists:
@@ -85,7 +85,7 @@ def seed_initial_data(db: Session):
                 exists.dni = exists.dni.replace(".", "")
                 print(f"    - Normalizando DNI: {exists.email}")
 
-    # 2. Aforo Global
+    #2. AFORO GLOBAL
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == None).first()
     if not aforo:
         print("    - Inicializando capacidad global")
@@ -98,24 +98,24 @@ def seed_initial_data(db: Session):
             sucursal=None
         ))
     else:
-        # Parche para bases existentes sin columnas de motos
+        # PARCHE PARA BASES EXISTENTES SIN COLUMNAS DE MOTOS
         if aforo.capacidad_motos is None:
             aforo.capacidad_motos = 10
             aforo.ocupacion_motos = 0
 
-    # 3. Tarifas Globales
+    # 3. TARIFAS GLOBALES
     for clave, valor in DEFAULT_PRICES.items():
         exists = db.query(models.Settings).filter(models.Settings.clave == clave, models.Settings.sucursal == None).first()
         if not exists:
             db.add(models.Settings(clave=clave, valor=valor, sucursal=None))
 
-    # 4. Promociones
+    # 4. PROMOCIONES
     if db.query(models.Promotion).count() == 0:
         print("    - Cargando catálogo de beneficios")
         for p in INITIAL_PROMOS:
             db.add(models.Promotion(**p))
 
-    # 5. Sucursales (Red Inicial)
+    # 5. SUCURSALES (RED INICIAL)
     if db.query(models.ParkingBranch).count() == 0:
         red_inicial = [
             {"nombre": "AUTOPASS Central", "direccion": "Av. del Libertador 1200, CABA", "telefono": "11 4567-8900", "horario": "24hs", "is_24h": True, "latitude": -34.5888, "longitude": -58.3900},
@@ -127,7 +127,7 @@ def seed_initial_data(db: Session):
             print(f"    - Agregando sucursal: {s['nombre']}")
             db.add(models.ParkingBranch(**s, logo_url="/static/images/logo.png"))
     else:
-        # Parches para datos existentes
+        # PARCHES PARA DATOS EXISTENTES
         db.query(models.ParkingBranch).filter(models.ParkingBranch.logo_url == None).update({models.ParkingBranch.logo_url: "/static/images/logo.png"})
         coords_patch = {
             'AUTOPASS Central': (-34.5888, -58.3900),

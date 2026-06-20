@@ -1,8 +1,8 @@
 import * as auth from './modules/auth.js';
 
 /**
- * BRIDGE: auth.js
- * Expone la lógica de autenticación al ámbito global y maneja la inicialización de formularios.
+ * PUENTE: AUTH.JS
+ * EXPONE LA LOGICA DE AUTENTICACION AL AMBITO GLOBAL Y MANEJA LA INICIALIZACION DE FORMULARIOS.
  */
 
 window.initPasswordValidation = auth.initPasswordValidation;

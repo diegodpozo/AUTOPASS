@@ -1,7 +1,7 @@
 import * as land from './modules/landing.js';
 
 /**
- * BRIDGE: landing.js
+ * PUENTE: LANDING.JS
  */
 
 window.irAReserva = function(branchName = null) {
@@ -11,13 +11,13 @@ window.irAReserva = function(branchName = null) {
         return;
     }
 
-    // Si YA estamos en el portal, no recargar, actuar directamente sobre la UI
+    //SI YA ESTAMOS EN EL PORTAL, NO RECARGAR, ACTUAR DIRECTAMENTE SOBRE LA UI
     if (window.location.pathname.includes('/perfil') && window.fillReservationForm) {
         window.fillReservationForm(branchName);
         return;
     }
 
-    // Si estamos fuera, redirigir normalmente
+    // SI ESTAMOS FUERA, REDIRIGIR NORMALMENTE
     let url = '/perfil';
     if (branchName) {
         url += `?reserva_sucursal=${encodeURIComponent(branchName)}`;
@@ -26,13 +26,13 @@ window.irAReserva = function(branchName = null) {
 };
 
 /**
- * Función de utilidad para llenar el formulario de reserva sin recargar la página.
- * Se expone globalmente para ser usada por el mapa integrado.
+ * FUNCION DE UTILIDAD PARA LLENAR EL FORMULARIO DE RESERVA SIN RECARGAR LA PAGINA.
+ * SE EXPONE GLOBALMENTE PARA SER USADA POR EL MAPA INTEGRADO.
  */
 window.fillReservationForm = async function(branchName) {
     console.log(`[fillReservationForm] Intentando auto-llenado local para: ${branchName}`);
     
-    // 1. Asegurar sección de inicio
+    // 1. ASEGURAR SECCION DE INICIO
     if (window.showSection) {
         window.showSection('inicio', document.querySelector('.nav-item[onclick*="inicio"]'));
     }
@@ -43,13 +43,13 @@ window.fillReservationForm = async function(branchName) {
         return;
     }
 
-    // 2. Abrir formulario si está cerrado
+    // 2. ABRIR FORMULARIO SI ESTA CERRADO
     if (!container.classList.contains('open') && window.toggleReservaForm) {
         console.log("[fillReservationForm] Abriendo formulario...");
         await window.toggleReservaForm();
     }
 
-    // 3. Secuencia de llenado con reintentos (por carga asíncrona de sucursales)
+    // 3. SECUENCIA DE LLENADO CON REINTENTOS (POR CARGA ASINCRONA DE SUCURSALES)
     let attempts = 0;
     const maxAttempts = 15;
     
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('map')) land.initMap();
     if (document.getElementById('contenedorCarrusel')) land.InicializarCarrusel();
 
-    // Menu móvil events
+    // MENU MOVIL EVENTS
     const nav = document.getElementById('nav-menu');
     const btn = document.querySelector('.mobile-menu-btn');
     if (nav) {

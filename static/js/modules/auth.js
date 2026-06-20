@@ -3,8 +3,8 @@ import { toTitle, showToast } from './utils.js';
 import { switchModal } from './ui.js';
 
 /**
- * AUTH MODULE
- * Lógica de inicio de sesión, registro y validación de seguridad.
+ * AUTH MODULO
+ * LOGICA DE INICIO DE SESION, REGISTRO Y VALIDACION DE SEGURIDAD.
  */
 
 export function initPasswordValidation(passId, confirmId, strengthId, reqLenId, reqUpId, reqSpecId, reqMatchId) {

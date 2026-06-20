@@ -1,4 +1,4 @@
-import datetime
+import datetime 
 import json
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post("/open-barrier")
 def open_barrier(gate_id: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user), request: Request = None):
-    """Envía un comando de apertura manual a la barrera vía MQTT."""
+    """ENVIA UN COMANDO DE APERTURA MANUAL UN LA BARRERA VIA MQTT."""
     from core.config import settings
     
     topic = settings.MQTT_TOPIC_ENTRADA if gate_id.upper() == "ENTRADA" else settings.MQTT_TOPIC_SALIDA
@@ -30,7 +30,7 @@ def open_barrier(gate_id: str, db: Session = Depends(get_db), staff: models.User
 
 @router.post("/manual-entry")
 def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Registra un ingreso forzado al predio de la sede."""
+    """REGISTRA UN INGRESO FORZADO AL PREDIO DE LA SEDE."""
     from routes.parking import normalize_plate
     p = normalize_plate(plate)
     now = datetime.datetime.now()
@@ -44,7 +44,7 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
     if ultimo and ultimo.tipo_evento == "ENTRADA":
         raise HTTPException(status_code=400, detail="El vehículo ya figura como ingresado en esta sede")
     
-    # Manejo de Pisos
+    # MANEJO DE PISOS
     floor = None
     if floor_id:
         floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
@@ -55,7 +55,7 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
         else:
             floor.ocupacion_motos += 1
     else:
-        # Fallback a aforo global de sede si no hay pisos
+        #FALLBACK UN AFORO GLOBAL DE SEDE SI NO HAY PISOS
         aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
         if not aforo:
             aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
@@ -79,7 +79,7 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
 
 @router.post("/manual-exit")
 def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Registra una salida manual de la sede."""
+    """REGISTRA UNA SALIDA MANUAL DE LA SEDE."""
     from routes.parking import normalize_plate
     p = normalize_plate(plate)
     sucursal = staff.sucursal
@@ -116,7 +116,7 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
 
 @router.post("/cancel-stay")
 def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Cancela una estadía actual. Si está dentro de los 10 min de cortesía, no cobra."""
+    """CANCELA UNA ESTADIA ACTUAL. SI ESTA DENTRO DE LOS 10 MIN DE CORTESIA, NO COBRA."""
     from routes.parking import normalize_plate
     p = normalize_plate(plate)
     sucursal = staff.sucursal
@@ -129,7 +129,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
     if not ultimo or ultimo.tipo_evento != "ENTRADA":
         raise HTTPException(status_code=400, detail="El vehículo no figura como ingresado")
     
-    # Verificar cortesía (10 minutos)
+    # VERIFICAR CORTESIA (10 MINUTOS)
     entrada_dt = datetime.datetime.fromisoformat(ultimo.fecha_hora)
     minutos_transcurridos = (datetime.datetime.now() - entrada_dt).total_seconds() / 60
     
@@ -141,7 +141,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
             aforo.ocupacion_motos -= 1
     
     if (minutos_transcurridos <= 10):
-        # Cortesía: Salida sin cargo
+        # CORTESIA: SALIDA SIN CARGO
         db.add(models.AccessLog(
             patente_detectada=p, 
             tipo_evento="SALIDA", 
@@ -153,13 +153,13 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
         ))
         msg = f"Estadía cancelada (Cortesía: {int(minutos_transcurridos)} min). Sin cargo."
     else:
-        # Excedió cortesía: Se debe cobrar
+        # EXCEDIO CORTESIA: SE DEBE COBRAR
         if (not ultimo.pago_confirmado):
             from services.billing_service import BillingService
             monto = BillingService.calculate_debt(ultimo.fecha_hora, db, sucursal=sucursal, tipo_vehiculo=ultimo.tipo_vehiculo)
             raise HTTPException(status_code=402, detail=f"Excedió cortesía ({int(minutos_transcurridos)} min). Debe abonar ${monto}")
         
-        # Si ya pagó, registramos salida normal
+        # SI YA PAGO, REGISTRAMOS SALIDA NORMAL
         db.add(models.AccessLog(
             patente_detectada=p, 
             tipo_evento="SALIDA", 

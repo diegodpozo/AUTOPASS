@@ -5,8 +5,8 @@ from .admin import router as admin_router
 from .user import router as user_router
 from .auth import router as auth_router
 
-# --- EXPOSICIÓN DE ROUTERS MODULARIZADOS ---
-# Se definen alias para facilitar la importación desde main.py
+# --- EXPOSICION DE ROUTERS MODULARIZADOS ---
+# SE DEFINEN ALIAS PARA FACILITAR LA IMPORTACION DESDE MAIN.PY
 
 parking = parking_router
 reports = reports_router

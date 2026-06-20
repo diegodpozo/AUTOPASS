@@ -18,7 +18,7 @@ from core.config import settings
 
 router = APIRouter(tags=["System & Health"])
 
-# --- GESTIÓN DE PROCESOS DE CÁMARA (ALPR) ---
+# --- GESTION DE PROCESOS DE CAMARA (ALPR) ---
 CAMERA_PROCESSES: Dict[str, subprocess.Popen] = {}
 
 class CameraConfig(BaseModel):
@@ -29,7 +29,7 @@ def get_sys_executable():
     return sys.executable
 
 def stop_all_cameras():
-    """Detiene todos los servicios ALPR activos. Llamado al apagar el servidor."""
+    """DETIENE TODOS LOS SERVICIOS ALPR ACTIVOS. LLAMADO AL APAGAR EL SERVIDOR."""
     for gate_id in list(CAMERA_PROCESSES.keys()):
         try:
             proc = CAMERA_PROCESSES[gate_id]
@@ -42,31 +42,31 @@ def stop_all_cameras():
         except: pass
     CAMERA_PROCESSES.clear()
 
-# --- GESTIÓN DE WEBSOCKETS CON AISLAMIENTO ---
+# --- GESTION DE WEBSOCKETS CON AISLAMIENTO ---
 
 def normalize_system_name(text: str):
-    """Normalización idéntica a la del Frontend y ALPR Service."""
+    """NORMALIZACION IDENTICA A LA DEL FRONTEND Y ALPR SERVICE."""
     if not text: return ""
     text = text.upper().replace("AUTOPASS ", "").strip()
     return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
 
 class ConnectionManager:
     def __init__(self):
-        # camera_id -> list of active websockets (viewers)
+        #CAMARA_ID -> LISTA DE WEBSOCKETS ACTIVOS (ESPECTADORES)
         self.active_connections: Dict[str, List[WebSocket]] = {}
-        # camera_id -> last frame (for new viewers)
+        #CAMARA_ID -> ULTIMO FRAME (PARA NUEVOS ESPECTADORES)
         self.last_frames: Dict[str, str] = {}
 
     async def connect(self, websocket: WebSocket, camera_id: str, user: models.User):
-        """Valida permisos antes de conectar."""
-        # Aislamiento: El camera_id ya viene normalizado del frontend (ej: ITUZAINGO_ENTRADA)
+        """VALIDA PERMISOS ANTES DE CONECTAR."""
+        #AISLAMIENTO: EL CAMARA_ID YA VIENE NORMALIZADO DEL FRONTEND (EJ: ITUZAINGO_ENTRADA)
         if user.rol != "admin":
             branch_prefix = camera_id.split('_')[0] if '_' in camera_id else ""
             user_branch_norm = normalize_system_name(user.sucursal)
             
             if branch_prefix and user_branch_norm and branch_prefix != user_branch_norm:
                 print(f"[WS Auth] Bloqueado: Usuario de {user_branch_norm} intentó ver {branch_prefix}")
-                await websocket.close(code=4003) # Forbidden
+                await websocket.close(code=4003) #PROHIBIDO
                 return False
 
         await websocket.accept()
@@ -102,22 +102,22 @@ manager = ConnectionManager()
 @router.websocket("/ws/video/{camera_id}")
 async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: str = Query(None)):
     """
-    Endpoint WebSocket con seguridad por Token y Sucursal.
+    ENDPOINT WEBSOCKET CON SEGURIDAD POR TOKEN Y SUCURSAL.
     """
     camera_id = camera_id.upper()
     user = None
     if token:
         try:
-            # Validar token para viewers (Frontend)
+            #VALIDAR TOKEN PARA ESPECTADORES (FRONTEND)
             payload = decode_access_token(token)
             db = next(get_db())
             user = db.query(models.User).filter(models.User.email == payload.get("sub")).first()
         except: pass
 
-    # Si no hay usuario (es un nodo ALPR) o es un usuario válido
+    # SI NO HAY USUARIO (ES UN NODO ALPR) O ES UN USUARIO VALIDO
     if not user:
-        # Los nodos ALPR solo aceptan la conexión si vienen de una fuente permitida (esto se refina en firewall)
-        # Para esta implementación, aceptamos el nodo y lo tratamos como "Sender"
+        # LOS NODOS ALPR SOLO ACEPTAN LA CONEXION SI VIENEN DE UNA FUENTE PERMITIDA (ESTO SE REFINA EN FIREWALL)
+        #PARA ESTA IMPLEMENTACION, TRATAMOS EL NODO COMO EMISOR
         print(f"[WS] Nodo ALPR conectado: {camera_id}")
         await websocket.accept()
         try:
@@ -129,18 +129,18 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
         except Exception as e:
             print(f"[WS] Error en nodo ALPR {camera_id}: {e}")
     else:
-        # Es un espectador (Admin/Staff), validar sucursal
+        # ES UN ESPECTADOR (ADMIN/STAFF), VALIDAR SUCURSAL
         print(f"[WS] Espectador conectado: {user.email} -> {camera_id}")
         success = await manager.connect(websocket, camera_id, user)
         if success:
             try:
                 while True:
-                    await websocket.receive_text() # Mantener viva pero ignorar subidas de viewers
+                    await websocket.receive_text() #MANTENER VIVA PERO IGNORAR SUBIDAS DE ESPECTADORES
             except WebSocketDisconnect:
                 print(f"[WS] Espectador desconectado: {user.email} -> {camera_id}")
                 manager.disconnect(websocket, camera_id)
 
-# --- RESTO DE ENDPOINTS (Mantenidos igual pero con lógica de aislamiento aplicada) ---
+# --- RESTO DE ENDPOINTS (MANTENIDOS IGUAL PERO CON LOGICA DE AISLAMIENTO APLICADA) ---
 
 @router.get("/health")
 def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
@@ -151,13 +151,13 @@ def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_o
     now = datetime.datetime.now()
     alpr_status = {}
     
-    # Aislamiento en el estado de salud
+    # AISLAMIENTO EN EL ESTADO DE SALUD
     if staff.rol == "admin":
-        # Super admin ve todo
+        #SUPER ADMIN VE TODO
         for gate, ts in ALPR_HEARTBEATS.items():
             alpr_status[gate] = "ONLINE" if (now - ts).total_seconds() < 90 else "OFFLINE"
     else:
-        # Staff solo ve sus cámaras
+        # STAFF SOLO VE SUS CAMARAS
         prefix = f"{staff.sucursal.upper()}_" if staff.sucursal else ""
         gates_to_check = [f"{prefix}ENTRADA", f"{prefix}SALIDA"]
         for gate in gates_to_check:
@@ -199,7 +199,7 @@ async def update_frame_http(camera_id: str, request: Request):
 
 @router.get("/video-feed/{camera_id}")
 async def video_feed_legacy(camera_id: str, staff: models.User = Depends(get_operational_user)):
-    """Fallback con validación de sucursal."""
+    """FALLBACK CON VALIDACION DE SUCURSAL."""
     if staff.rol != "admin" and staff.sucursal:
         branch_prefix = camera_id.split('_')[0]
         if branch_prefix.upper() != staff.sucursal.upper():
@@ -230,12 +230,12 @@ def get_capture(log_id: int, db: Session = Depends(get_db), staff: models.User =
         if os.path.exists(full_path): return FileResponse(full_path)
     return FileResponse(os.path.join("static", "images", "logo.png"))
 
-# --- ENDPOINTS DE CONFIGURACIÓN Y CONTROL DE CÁMARAS ---
+# --- ENDPOINTS DE CONFIGURACION Y CONTROL DE CAMARAS ---
 
 @router.get("/camera-config/{gate_id}")
 def get_camera_config(gate_id: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     gate_id = gate_id.upper()
-    # Aislamiento por sucursal
+    # AISLAMIENTO POR SUCURSAL
     if staff.rol != "admin" and staff.sucursal:
         branch_prefix = gate_id.split('_')[0]
         if branch_prefix != normalize_system_name(staff.sucursal):
@@ -253,7 +253,7 @@ def get_camera_config(gate_id: str, db: Session = Depends(get_db), staff: models
 @router.post("/camera-config")
 def set_camera_config(config: CameraConfig, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     gate_id = config.gate_id.upper()
-    # Aislamiento
+    # AISLAMIENTO
     if staff.rol != "admin":
         branch_prefix = normalize_system_name(staff.sucursal)
         if not gate_id.startswith(branch_prefix):
@@ -275,7 +275,7 @@ def set_camera_config(config: CameraConfig, db: Session = Depends(get_db), staff
 @router.post("/camera-service/{gate_id}/{action}")
 def control_camera_service(gate_id: str, action: str, request: Request, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     gate_id = gate_id.upper()
-    # Aislamiento
+    # AISLAMIENTO
     if staff.rol != "admin":
         branch_prefix = normalize_system_name(staff.sucursal)
         if not gate_id.startswith(branch_prefix):
@@ -288,7 +288,7 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
         setting = db.query(models.Settings).filter(models.Settings.clave == f"CAMERA_SOURCE_{gate_id}").first()
         source = setting.valor_str if setting else "0"
         
-        # Obtener la URL base del backend dinámicamente
+        # OBTENER LA URL BASE DEL BACKEND DINAMICAMENTE
         base_url = str(request.base_url).rstrip("/")
         
         env = os.environ.copy()
@@ -303,7 +303,7 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
             proc = subprocess.Popen(
                 [sys.executable, "alpr_service.py"],
                 env=env,
-                stdout=None, # Permitir que salga a la consola del server para debug
+                stdout=None, # PERMITIR QUE SALGA A LA CONSOLA DEL SERVER PARA DEBUG
                 stderr=None,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
             )

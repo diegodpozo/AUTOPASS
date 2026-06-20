@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from core.database import Base
 
 class User(Base):
-    """Modelo para la gestión de usuarios y administradores."""
+    """MODELO PARA LA GESTION DE USUARIOS Y ADMINISTRADORES."""
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String)
@@ -11,33 +11,33 @@ class User(Base):
     dni = Column(String, unique=True, index=True)
     telefono = Column(String)
     email = Column(String, unique=True, index=True)
-    patente = Column(String, nullable=True) # Referencia rápida de patente principal
+    patente = Column(String, nullable=True) # REFERENCIA RAPIDA DE PATENTE PRINCIPAL
     direccion = Column(String, nullable=True)
     password_hash = Column(String)
-    rol = Column(String, default="user") # 'admin', 'local_admin', 'staff', 'user'
-    sucursal = Column(String, nullable=True) # None para admin global, o nombre de la sede
+    rol = Column(String, default="user") #'ADMIN', 'LOCAL_ADMIN', 'STAFF', 'USER'
+    sucursal = Column(String, nullable=True) #NONE PARA ADMIN GLOBAL, O NOMBRE DE LA SEDE
     puntos_acumulados = Column(Integer, default=0)
     saldo = Column(Float, default=0.0)
     is_blocked = Column(Boolean, default=False)
 
-    # Relaciones
+    # RELACIONES
     vehicles = relationship("Vehicle", back_populates="owner")
     reservations = relationship("Reservation", back_populates="user")
     points_logs = relationship("PointsLog", back_populates="user")
 
 class Vehicle(Base):
-    """Entidad para la gestión de flota por usuario."""
+    """ENTIDAD PARA LA GESTION DE FLOTA POR USUARIO."""
     __tablename__ = "vehicles"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     patente = Column(String, unique=True, index=True)
     marca_modelo = Column(String)
-    tipo = Column(String, default="Auto") # 'Auto' o 'Moto'
+    tipo = Column(String, default="Auto") # 'AUTO' O 'MOTO'
 
     owner = relationship("User", back_populates="vehicles")
 
 class PointsLog(Base):
-    """Historial de movimientos del sistema de fidelización."""
+    """HISTORIAL DE MOVIMIENTOS DEL SISTEMA DE FIDELIZACION."""
     __tablename__ = "points_log"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
@@ -48,7 +48,7 @@ class PointsLog(Base):
     user = relationship("User", back_populates="points_logs")
 
 class Promotion(Base):
-    """Catálogo de beneficios canjeables por puntos."""
+    """CATALOGO DE BENEFICIOS CANJEABLES POR PUNTOS."""
     __tablename__ = "promotions"
     id = Column(Integer, primary_key=True, index=True)
     titulo = Column(String)
@@ -57,4 +57,4 @@ class Promotion(Base):
     icono = Column(String, default="fas fa-gift")
     categoria = Column(String, default="Beneficio")
     activa = Column(Boolean, default=True, server_default="1")
-    sucursal = Column(String, nullable=True) # None para global, o nombre de la sede
+    sucursal = Column(String, nullable=True) # NONE PARA GLOBAL, O NOMBRE DE LA SEDE

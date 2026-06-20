@@ -1,4 +1,4 @@
-import datetime
+import datetime 
 import json
 import base64
 import os
@@ -51,14 +51,14 @@ class AccessService:
         if ultimo and ultimo.tipo_evento == AccessEventType.ENTRADA: 
             return {"status": "denied", "message": "El vehículo ya figura dentro de esta sede"}
         
-        # Determinar tipo de vehículo
+        # DETERMINAR TIPO DE VEHICULO
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == p).first()
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
         now = datetime.datetime.now()
         img_name = cls._save_image(p, data.image_base64)
                 
-        # Buscamos reserva pagada que esté en el rango de tiempo actual
+        # BUSCAMOS RESERVA PAGADA QUE ESTE EN EL RANGO DE TIEMPO ACTUAL
         now_str = now.isoformat()
         reserva = db.query(models.Reservation).filter(
             models.Reservation.patente == p, 
@@ -75,7 +75,7 @@ class AccessService:
             aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
             db.add(aforo)
         
-        # Validar capacidad según tipo
+        # VALIDAR CAPACIDAD SEGUN TIPO
         capacidad = aforo.capacidad_total if tipo_vehiculo == VehicleType.AUTO else aforo.capacidad_motos
         ocupacion = aforo.ocupacion_actual if tipo_vehiculo == VehicleType.AUTO else aforo.ocupacion_motos
 

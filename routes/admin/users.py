@@ -11,21 +11,21 @@ router = APIRouter()
 
 @router.get("/users")
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Retorna la lista de usuarios. Los administradores locales ven personal de su sede y clientes registrados."""
+    """RETORNA LA LISTA DE USUARIOS. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES REGISTRADOS."""
     q = db.query(models.User)
     if str(admin.rol) != UserRole.ADMIN.value:
         from sqlalchemy import or_
         q = q.filter(
             or_(
-                models.User.rol == UserRole.USER,  # Clientes registrados son visibles para todos los gestores
-                models.User.sucursal == admin.sucursal # Personal y clientes específicos de la sede
+                models.User.rol == UserRole.USER,  # CLIENTES REGISTRADOS SON VISIBLES PARA TODOS LOS GESTORES
+                models.User.sucursal == admin.sucursal # PERSONAL Y CLIENTES ESPECIFICOS DE LA SEDE
             )
         )
     return q.all()
 
 @router.post("/users")
 def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Permite al administrador crear un nuevo usuario. Los locales solo crean para su sede."""
+    """PERMITE AL ADMINISTRADOR CREAR UN NUEVO USUARIO. LOS LOCALES SOLO CREAN PARA SU SEDE."""
     if str(admin.rol) != UserRole.ADMIN.value:
         if rol == UserRole.ADMIN: 
             raise HTTPException(status_code=403, detail="No podés crear un Administrador Global")
@@ -35,7 +35,7 @@ def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.US
 
 @router.patch("/users/{user_id}")
 def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Actualiza la información de un usuario desde el panel administrativo."""
+    """ACTUALIZA LA INFORMACION DE UN USUARIO DESDE EL PANEL ADMINISTRATIVO."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -55,7 +55,7 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
 
 @router.post("/users/{user_id}/role")
 def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """Solo el Admin Global puede cambiar roles de nivel jerárquico."""
+    """SOLO EL ADMIN GLOBAL PUEDE CAMBIAR ROLES DE NIVEL JERARQUICO."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     user.rol = nuevo_rol
@@ -64,7 +64,7 @@ def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(ge
 
 @router.post("/users/{user_id}/toggle-block")
 def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Alterna el estado de bloqueo. Los locales solo bloquean a su gente."""
+    """ALTERNA EL ESTADO DE BLOQUEO. LOS LOCALES SOLO BLOQUEAN A SU GENTE."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -83,7 +83,7 @@ def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models
 
 @router.post("/users/{user_id}/balance")
 def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Ajusta el saldo de un usuario."""
+    """AJUSTA EL SALDO DE UN USUARIO."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
@@ -96,7 +96,7 @@ def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db
 
 @router.post("/users/{user_id}/password")
 def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Permite al administrador cambiar la contraseña de un usuario."""
+    """PERMITE AL ADMINISTRADOR CAMBIAR LA CONTRASENA DE UN USUARIO."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -111,7 +111,7 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
 @router.delete("/users/{user_id}")
 @router.post("/users/{user_id}/delete")
 def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """Solo el Admin Global puede borrar cuentas definitivamente."""
+    """SOLO EL ADMIN GLOBAL PUEDE BORRAR CUENTAS DEFINITIVAMENTE."""
     if user_id == admin.id: 
         raise HTTPException(status_code=400, detail="No podés eliminar tu propia cuenta")
     

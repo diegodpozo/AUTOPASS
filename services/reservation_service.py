@@ -9,12 +9,12 @@ from repositories.user_repository import UserRepository
 from fastapi import HTTPException
 from models.enums import ReservationStatus, PaymentStatus, VehicleType, AccessEventType
 
-# --- SERVICIO DE GESTIÓN DE RESERVAS ---
+# --- SERVICIO DE GESTION DE RESERVAS ---
 
 class ReservationService:
     @staticmethod
     def create_reservation(db: Session, data: schemas.AdminReservationCreate) -> models.Reservation:
-        """Crea una nueva reserva manual desde el panel administrativo."""
+        """CREA UNA NUEVA RESERVA MANUAL DESDE EL PANEL ADMINISTRATIVO."""
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente).first()
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
@@ -46,7 +46,7 @@ class ReservationService:
 
     @staticmethod
     def update_reservation(db: Session, res_id: int, data: schemas.ReservationUpdate) -> models.Reservation:
-        """Actualiza los datos de una reserva y recalcula montos si es necesario."""
+        """ACTUALIZA LOS DATOS DE UNA RESERVA Y RECALCULA MONTOS SI ES NECESARIO."""
         res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
         if not res:
             return None
@@ -60,7 +60,7 @@ class ReservationService:
         if hasattr(data, 'estado_pago') and data.estado_pago: res.estado_pago = data.estado_pago
         if hasattr(data, 'estado_reserva') and data.estado_reserva: res.estado_reserva = data.estado_reserva
 
-        # Recalcular puntos si cambia a PAGADO
+        #RECALCULAR PUNTOS SI CAMBIA UN PAGADO
         if old_pago != PaymentStatus.PAGADO and res.estado_pago == PaymentStatus.PAGADO and res.user:
             puntos_ganados = BillingService.calculate_points(res.monto_total)
             res.user.puntos_acumulados += puntos_ganados
@@ -71,7 +71,7 @@ class ReservationService:
                 fecha=datetime.datetime.now().isoformat()
             ))
 
-        # Recalcular monto
+        # RECALCULAR MONTO
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
         
@@ -86,9 +86,9 @@ class ReservationService:
 
     @staticmethod
     def cleanup_overdue_reservations(db: Session):
-        """Cancela automáticamente reservas impagas cuyo tiempo de inicio ya pasó con un margen de gracia."""
+        """CANCELA AUTOMATICAMENTE RESERVAS IMPAGAS CUYO TIEMPO DE INICIO YA PASO CON UN MARGEN DE GRACIA."""
         now = datetime.datetime.now()
-        # Damos un margen de 2 horas de gracia desde la hora de inicio antes de cancelar
+        # DAMOS UN MARGEN DE 2 HORAS DE GRACIA DESDE LA HORA DE INICIO ANTES DE CANCELAR
         grace_cutoff = now - datetime.timedelta(hours=2)
         cutoff_str = grace_cutoff.strftime("%Y-%m-%d %H:%M")
         
@@ -110,7 +110,7 @@ class ReservationService:
 
     @staticmethod
     def auto_finalize_reservations(db: Session, user_id: int):
-        """Marca como completadas las reservas de un usuario cuyo tiempo de estadía ya expiró."""
+        """MARCA COMO COMPLETADAS LAS RESERVAS DE UN USUARIO CUYO TIEMPO DE ESTADIA YA EXPIRO."""
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         past_reservations = ReservationRepository.get_past_reservations(db, user_id, now_str)
         
@@ -121,9 +121,9 @@ class ReservationService:
 
     @staticmethod
     def auto_finalize_all_reservations(db: Session):
-        """Marca como completadas TODAS las reservas vencidas del sistema."""
+        """MARCA COMO COMPLETADAS TODAS LAS RESERVAS VENCIDAS DEL SISTEMA."""
         now_str = datetime.datetime.now().isoformat()
-        # Buscamos reservas que estén Pendientes o Activas pero cuya fecha_fin ya pasó
+        # BUSCAMOS RESERVAS QUE ESTEN PENDIENTES O ACTIVAS PERO CUYA FECHA_FIN YA PASO
         vencidas = db.query(models.Reservation).filter(
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_fin < now_str
@@ -139,7 +139,7 @@ class ReservationService:
 
     @staticmethod
     def pay_reservation(db: Session, user: models.User, res_id: int):
-        """Abona una reserva utilizando el saldo disponible del usuario."""
+        """ABONA UNA RESERVA UTILIZANDO EL SALDO DISPONIBLE DEL USUARIO."""
         res = ReservationRepository.get_by_user_and_id(db, user.id, res_id)
         
         if not res: 
@@ -151,13 +151,13 @@ class ReservationService:
         if user.saldo < res.monto_total:
             raise HTTPException(status_code=400, detail="Saldo insuficiente en su cuenta AutoPass")
         
-        # Deducción de saldo y actualización de estado
+        # DEDUCCION DE SALDO Y ACTUALIZACION DE ESTADO
         user.saldo -= res.monto_total
         res.estado_pago = PaymentStatus.PAGADO
         res.estado_reserva = ReservationStatus.ACTIVA
         res.fecha_pago = datetime.datetime.now().isoformat()
         
-        # Acreditación de puntos por lealtad
+        # ACREDITACION DE PUNTOS POR LEALTAD
         puntos_ganados = BillingService.calculate_points(res.monto_total)
         user.puntos_acumulados += puntos_ganados
         
@@ -170,7 +170,7 @@ class ReservationService:
         
         db.commit()
 
-        # Enviar mail de confirmación
+        # ENVIAR MAIL DE CONFIRMACION
         res_info = {
             "id": res.id,
             "sucursal": res.sucursal_nombre,
@@ -186,8 +186,8 @@ class ReservationService:
 
     @staticmethod
     def simulate_refund(db: Session, res: models.Reservation):
-        """Calcula el reembolso potencial sin ejecutar la cancelación."""
-        # 1. VERIFICACIÓN DE PRESENCIA FÍSICA
+        """CALCULA EL REEMBOLSO POTENCIAL SIN EJECUTAR LA CANCELACION."""
+        # 1. VERIFICACION DE PRESENCIA FISICA
         vinc_log = db.query(models.AccessLog).filter(
             models.AccessLog.patente_detectada == res.patente,
             models.AccessLog.tipo_evento == AccessEventType.ENTRADA,
@@ -207,7 +207,7 @@ class ReservationService:
         if es_presencial:
             return {"reembolso": 0.0, "error": "Vehículo en el predio"}
 
-        # 2. CÁLCULO DE REEMBOLSO
+        # 2. CALCULO DE REEMBOLSO
         monto_a_reembolsar = 0.0
         if res.estado_pago == PaymentStatus.PAGADO:
             now = datetime.datetime.now()
@@ -232,7 +232,7 @@ class ReservationService:
 
     @staticmethod
     def cancel_reservation(db: Session, user: models.User, res_id: int):
-        """Cancela una reserva y gestiona reembolsos proporcionales."""
+        """CANCELA UNA RESERVA Y GESTIONA REEMBOLSOS PROPORCIONALES."""
         res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
         
         if not res: 
@@ -241,19 +241,19 @@ class ReservationService:
         if res.estado_reserva == ReservationStatus.CANCELADA:
             return {"status": "ok", "message": "La reserva ya se encuentra cancelada"}
             
-        # Usamos la simulación para obtener el monto
+        # USAMOS LA SIMULACION PARA OBTENER EL MONTO
         sim = ReservationService.simulate_refund(db, res)
         if sim["error"]:
             raise HTTPException(status_code=400, detail=sim["error"])
         
         monto_a_reembolsar = sim["reembolso"]
 
-        # 3. EJECUCIÓN DEL REEMBOLSO
+        # 3. EJECUCION DEL REEMBOLSO
         target_user = user or res.user
         if monto_a_reembolsar > 0 and target_user:
             target_user.saldo += monto_a_reembolsar
             
-            # Ajuste de puntos (solo sobre lo reembolsado)
+            # AJUSTE DE PUNTOS (SOLO SOBRE LO REEMBOLSADO)
             puntos_a_descontar = BillingService.calculate_points(monto_a_reembolsar)
             target_user.puntos_acumulados = max(0, target_user.puntos_acumulados - puntos_a_descontar)
             

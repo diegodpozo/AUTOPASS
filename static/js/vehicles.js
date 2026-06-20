@@ -1,7 +1,7 @@
 import * as v from './modules/vehicles.js';
 
 /**
- * BRIDGE: vehicles.js
+ * PUENTE: VEHICLES.JS
  */
 
 window.loadVehicles = v.loadVehicles;

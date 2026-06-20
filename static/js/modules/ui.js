@@ -1,10 +1,10 @@
 /**
- * UI MODULE
- * Gestión de elementos comunes de la interfaz (Modales, Sidebar, Password).
+ * UI MODULO
+ * GESTION DE ELEMENTOS COMUNES DE LA INTERFAZ (MODALES, SIDEBAR, PASSWORD).
  */
 
 /**
- * Abre un modal por ID.
+ * ABRE UN MODAL POR ID.
  */
 export function openModal(id) {
     const el = document.getElementById(id);
@@ -15,7 +15,7 @@ export function openModal(id) {
 }
 
 /**
- * Cierra un modal por ID.
+ * CIERRA UN MODAL POR ID.
  */
 export function closeModal(id) {
     const el = document.getElementById(id);
@@ -25,7 +25,7 @@ export function closeModal(id) {
 }
 
 /**
- * Intercambia un modal por otro.
+ * INTERCAMBIA UN MODAL POR OTRO.
  */
 export function switchModal(oldId, newId) { 
     closeModal(oldId); 
@@ -33,7 +33,7 @@ export function switchModal(oldId, newId) {
 }
 
 /**
- * Alterna visibilidad de campos de contraseña.
+ * ALTERNA VISIBILIDAD DE CAMPOS DE CONTRASENA.
  */
 export function togglePasswordVisibility(inputId, iconEl) {
     const input = document.getElementById(inputId);
@@ -51,7 +51,7 @@ export function togglePasswordVisibility(inputId, iconEl) {
 }
 
 /**
- * Lógica del Sidebar (Escritorio y Móvil).
+ * LOGICA DEL SIDEBAR (ESCRITORIO Y MOVIL).
  */
 export function toggleSidebar() {
     const layout = document.querySelector('.layout-with-sidebar');
@@ -110,7 +110,7 @@ export function toggleHistorial() {
 }
 
 /**
- * Cierra la sesión del usuario.
+ * CIERRA LA SESION DEL USUARIO.
  */
 export function logout() {
     localStorage.clear();

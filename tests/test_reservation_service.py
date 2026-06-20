@@ -6,7 +6,7 @@ from models.enums import ReservationStatus, PaymentStatus, VehicleType
 from services.reservation_service import ReservationService
 from schemas import AdminReservationCreate
 
-# Setup test database
+#CONFIGURACION DE BASE DE DATOS DE PRUEBA
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -20,7 +20,7 @@ def db():
     Base.metadata.drop_all(bind=engine)
 
 def test_create_reservation_success(db):
-    # Setup Branch
+    #CONFIGURAR SUCURSAL
     branch = ParkingBranch(nombre="TestBranch", direccion="Calle Falsa 123", horario="24hs")
     db.add(branch)
     db.commit()

@@ -18,8 +18,8 @@ def normalize_name(text: str):
 
 class OccupancyManager:
     def __init__(self):
-        # sucursal_name (normalized) -> list of active websockets
-        # Global admin uses "GLOBAL"
+        #SUCURSAL_NAME (NORMALIZADO) -> LISTA DE WEBSOCKETS ACTIVOS
+        #ADMIN GLOBAL USA "GLOBAL"
         self.active_connections: Dict[str, List[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, user: models.User):
@@ -38,8 +38,8 @@ class OccupancyManager:
             except ValueError: pass
 
     async def broadcast_update(self, db: Session, sucursal_norm: str = None):
-        """Envía el estado actual de aforo a todos los interesados."""
-        # Si se pasa sucursal_norm, notificamos a esa sede y a GLOBAL
+        """ENVIA EL ESTADO ACTUAL DE AFORO UN TODOS LOS INTERESADOS."""
+        #SI SE PASA SUCURSAL_NORM, NOTIFICAMOS UN ESA SEDE Y UN GLOBAL
         targets = ["GLOBAL"]
         if sucursal_norm and sucursal_norm != "GLOBAL":
             targets.append(sucursal_norm)
@@ -48,15 +48,15 @@ class OccupancyManager:
             if target not in self.active_connections or not self.active_connections[target]:
                 continue
                 
-            # Obtener datos de aforo para el target
+            # OBTENER DATOS DE AFORO PARA EL TARGET
             if target == "GLOBAL":
-                # Resumen para admin global
+                #RESUMEN PARA ADMIN GLOBAL
                 data = self._get_global_status(db)
             else:
-                # Datos específicos de la sede
+                # DATOS ESPECIFICOS DE LA SEDE
                 data = self._get_branch_status(db, target)
                 
-            # Enviar a todos los sockets de este target
+            # ENVIAR A TODOS LOS SOCKETS DE ESTE TARGET
             disconnected = []
             for connection in self.active_connections[target]:
                 try:
@@ -86,8 +86,8 @@ class OccupancyManager:
         return {"type": "GLOBAL_UPDATE", "branches": res}
 
     def _get_branch_status(self, db: Session, sucursal_norm: str):
-        # Buscar sucursal por nombre normalizado
-        # Primero buscamos en ParkingBranch para ver si tiene pisos
+        # BUSCAR SUCURSAL POR NOMBRE NORMALIZADO
+        # PRIMERO BUSCAMOS EN PARKINGBRANCH PARA VER SI TIENE PISOS
         branches = db.query(models.ParkingBranch).all()
         branch = None
         for b in branches:
@@ -101,8 +101,8 @@ class OccupancyManager:
             cap_motos = sum(f.capacidad_motos for f in branch.floors)
             occ_motos = sum(f.ocupacion_motos for f in branch.floors)
         else:
-            # Fallback a ParkingAforo si no hay branch o pisos
-            # Pero ParkingAforo.sucursal no está normalizada, así que buscamos todas
+            #FALLBACK UN PARKINGAFORO SI NO HAY SUCURSAL O PISOS
+            # PERO PARKINGAFORO.SUCURSAL NO ESTA NORMALIZADA, ASI QUE BUSCAMOS TODAS
             aforos = db.query(models.ParkingAforo).all()
             a = None
             for af in aforos:
@@ -149,12 +149,12 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
             
         sucursal = await occupancy_manager.connect(websocket, user)
         
-        # Enviar primer estado inmediatamente
+        # ENVIAR PRIMER ESTADO INMEDIATAMENTE
         await occupancy_manager.broadcast_update(db, sucursal if sucursal != "GLOBAL" else None)
         
         try:
             while True:
-                await websocket.receive_text() # Keepalive
+                await websocket.receive_text() #MANTENER VIVA
         except WebSocketDisconnect:
             occupancy_manager.disconnect(websocket, sucursal)
     except:
@@ -162,12 +162,12 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
 
 @router.get("/parking/branches", response_model=List[schemas.BranchPublicResponse])
 def list_public_branches(db: Session = Depends(get_db)):
-    """Retorna la lista de sucursales activas con su ocupación real para el mapa público."""
+    """RETORNA LA LISTA DE SUCURSALES ACTIVAS CON SU OCUPACION REAL PARA EL MAPA PUBLICO."""
     branches = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
     
     res = []
     for b in branches:
-        # Si tiene pisos, sumamos sus capacidades
+        # SI TIENE PISOS, SUMAMOS SUS CAPACIDADES
         if b.floors:
             cap_total = sum(f.capacidad_total for f in b.floors)
             occ_total = sum(f.ocupacion_actual for f in b.floors)
@@ -203,10 +203,10 @@ def list_public_branches(db: Session = Depends(get_db)):
 
 @router.get("/parking/status", response_model=schemas.ParkingStatus)
 def get_parking_status(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
-    """Retorna la disponibilidad actual de plazas. Aislamiento por sede y soporte para pisos."""
+    """RETORNA LA DISPONIBILIDAD ACTUAL DE PLAZAS. AISLAMIENTO POR SEDE Y SOPORTE PARA PISOS."""
     sucursal_nombre = user.sucursal if user.rol != "admin" else None
     
-    # Buscar sucursal por nombre para acceder a sus pisos
+    # BUSCAR SUCURSAL POR NOMBRE PARA ACCEDER A SUS PISOS
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
     
     if branch and branch.floors:
@@ -237,11 +237,11 @@ def get_parking_status(db: Session = Depends(get_db), user: models.User = Depend
 
 @router.get("/parking/current-occupancy")
 def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
-    """Lista vehículos estacionados en la sede del usuario con deuda calculada. Optimizado para unicidad y orden."""
+    """LISTA VEHICULOS ESTACIONADOS EN LA SEDE DEL USUARIO CON DEUDA CALCULADA. OPTIMIZADO PARA UNICIDAD Y ORDEN."""
     sucursal = user.sucursal if user.rol != "admin" else None
     
-    # 1. Obtenemos las entradas más recientes por patente en la sede
-    # Usamos una subconsulta para encontrar el ID máximo de ENTRADA por patente
+    # 1. OBTENEMOS LAS ENTRADAS MAS RECIENTES POR PATENTE EN LA SEDE
+    # USAMOS UNA SUBCONSULTA PARA ENCONTRAR EL ID MAXIMO DE ENTRADA POR PATENTE
     from sqlalchemy import func
     subq = db.query(
         models.AccessLog.patente_detectada,
@@ -253,14 +253,14 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
     
     subq = subq.group_by(models.AccessLog.patente_detectada).subquery()
     
-    # 2. Consultamos los detalles de esas entradas
+    # 2. CONSULTAMOS LOS DETALLES DE ESAS ENTRADAS
     entradas = db.query(models.AccessLog).join(
         subq, models.AccessLog.id == subq.c.max_id
     ).order_by(models.AccessLog.fecha_hora.desc()).all()
         
     res = []
     for e in entradas:
-        # 3. Verificamos si esa entrada específica ya tiene una salida posterior
+        # 3. VERIFICAMOS SI ESA ENTRADA ESPECIFICA YA TIENE UNA SALIDA POSTERIOR
         tiene_salida = db.query(models.AccessLog.id).filter(
             models.AccessLog.patente_detectada == e.patente_detectada, 
             models.AccessLog.tipo_evento == "SALIDA", 
@@ -269,7 +269,7 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
         ).first()
         
         if not tiene_salida:
-            # Ahora pasamos la sucursal para que el cálculo de deuda sea exacto por sede
+            # AHORA PASAMOS LA SUCURSAL PARA QUE EL CALCULO DE DEUDA SEA EXACTO POR SEDE
             deuda = 0.0 if e.pago_confirmado else BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
             
             floor_name = None

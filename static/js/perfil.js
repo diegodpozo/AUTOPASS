@@ -7,11 +7,11 @@ import { showToast } from './modules/utils.js';
 import { initMap } from './modules/landing.js';
 
 /**
- * BRIDGE: perfil.js
- * Orquestador principal del portal de usuario.
+ * PUENTE: PERFIL.JS
+ * ORQUESTADOR PRINCIPAL DEL PORTAL DE USUARIO.
  */
 
-// Perfil
+// PERFIL
 window.loadProfile = prof.loadProfile;
 window.loadPointsData = prof.loadPointsData;
 window.redeemPoints = prof.redeemPoints;
@@ -19,7 +19,7 @@ window.loadPointsHistory = prof.loadPointsHistory;
 window.changePtsPage = prof.changePtsPage;
 window.loadPromotions = prof.loadPromotions;
 
-// Reservas
+// RESERVAS
 window.loadReservations = res.loadReservations;
 window.initReservationForm = res.initReservationForm;
 window.toggleReservaForm = res.toggleReservaForm;
@@ -35,12 +35,12 @@ window.applyHistoryFilters = res.applyHistoryFilters;
 window.resetHistoryFilters = res.resetHistoryFilters;
 window.historialPage = res.historialPage;
 
-// Vehículos
+// VEHICULOS
 window.loadVehicles = v.loadVehicles;
 window.addVehicle = v.addVehicle;
 window.deleteVehicle = v.deleteVehicle;
 
-// UI Helpers (vienen de ui.js o logic local)
+//UI HELPERS (VIENEN DE UI.JS O LOGICA LOCAL)
 window.toggleNuevoVinculo = ui.toggleNuevoVinculo;
 window.toggleHistorial = ui.toggleHistorial;
 window.openModal = ui.openModal;
@@ -163,7 +163,7 @@ window.hideQuickAddVehicle = () => {
 document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('balance-val') && localStorage.getItem('token')) {
         
-        // 1. Inicializar Mapa (Primero para asegurar visualización)
+        // 1. INICIALIZAR MAPA (PRIMERO PARA ASEGURAR VISUALIZACION)
         try {
             if (document.getElementById('portal-map')) {
                 initMap('portal-map');
@@ -172,18 +172,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error("[MAP ERROR] No se pudo cargar el mapa:", e);
         }
 
-        // 2. Cargar Datos
+        // 2. CARGAR DATOS
         await prof.loadProfile();
         await v.loadVehicles();
         await res.loadReservations();
         res.initReservationForm();
         
-        // Refrescar estado de los formularios de reserva/vehículos (ahora siempre visibles)
+        // REFRESCAR ESTADO DE LOS FORMULARIOS DE RESERVA/VEHICULOS (AHORA SIEMPRE VISIBLES)
         if (typeof res.refreshReservationFormState === 'function') {
             await res.refreshReservationFormState();
         }
 
-        // 3. Verificar si venimos del mapa con una sucursal pre-seleccionada
+        // 3. VERIFICAR SI VENIMOS DEL MAPA CON UNA SUCURSAL PRE-SELECCIONADA
         const urlParams = new URLSearchParams(window.location.search);
         const preBranch = urlParams.get('reserva_sucursal');
         if (preBranch) {
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             autoFillSequence();
         }
 
-        // 4. Inicializar validación de contraseña
+        //4. INICIALIZAR VALIDACION DE CONTRASENA
         initPasswordValidation(
             'new-password', 'confirm-new-password', 'password-strength', 
             'req-len', 'req-up', 'req-spec', 'req-match'

@@ -4,7 +4,7 @@ import models
 class BranchService:
     @staticmethod
     def get_branch_capacity_summary(db: Session, branch: models.ParkingBranch) -> dict:
-        """Calcula los totales de capacidad y ocupación (PB + Pisos)."""
+        """CALCULA LOS TOTALES DE CAPACIDAD Y OCUPACION (PB + PISOS)."""
         pb_settings = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
         
         cap_autos_pb = pb_settings.capacidad_total if pb_settings else 20
@@ -26,17 +26,17 @@ class BranchService:
 
     @staticmethod
     def list_branches_with_summary(db: Session):
-        """Lista todas las sucursales con su resumen administrativo."""
+        """LISTA TODAS LAS SUCURSALES CON SU RESUMEN ADMINISTRATIVO."""
         branches = db.query(models.ParkingBranch).all()
         for b in branches:
-            # Administrador
+            # ADMINISTRADOR
             admin_sede = db.query(models.User).filter(
                 models.User.sucursal == b.nombre,
                 models.User.rol == "local_admin"
             ).first()
             b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"
 
-            # Resumen
+            # RESUMEN
             summary = BranchService.get_branch_capacity_summary(db, b)
             for key, val in summary.items():
                 setattr(b, key, val)

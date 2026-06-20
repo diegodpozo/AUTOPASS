@@ -1,35 +1,35 @@
 import re
 
 def normalize_plate(p: str): 
-    """Elimina caracteres especiales y convierte a mayúsculas."""
+    """ELIMINA CARACTERES ESPECIALES Y CONVIERTE A MAYUSCULAS."""
     if not p: return ""
     return re.sub(r'[^A-Z0-9]', '', p.upper())
 
 def format_plate(p: str):
-    """Aplica formato visual estándar a la patente Mercosur."""
+    """APLICA FORMATO VISUAL ESTANDAR A LA PATENTE MERCOSUR."""
     clean = normalize_plate(p)
-    # Formato AAA 111 (Arg Antigua)
+    # FORMATO AAA 111 (ARG ANTIGUA)
     if len(clean) == 6: return f"{clean[:3]} {clean[3:]}"
-    # Formato AB 123 CD (Arg Mercosur)
+    # FORMATO AB 123 CD (ARG MERCOSUR)
     if len(clean) == 7 and clean[2:5].isdigit(): return f"{clean[:2]} {clean[2:5]} {clean[5:]}"
-    # Formato ABC 1D23 (Brasil Mercosur)
+    # FORMATO ABC 1D23 (BRASIL MERCOSUR)
     if len(clean) == 7 and clean[3].isdigit() and clean[4].isalpha(): return f"{clean[:3]} {clean[3:]}"
-    # Formato ABC 1234 (Uruguay)
+    # FORMATO ABC 1234 (URUGUAY)
     if len(clean) == 7 and clean[3:].isdigit(): return f"{clean[:3]} {clean[3:]}"
-    # Formato ABCD 123 (Paraguay Autos)
+    # FORMATO ABCD 123 (PARAGUAY AUTOS)
     if len(clean) == 7 and clean[:4].isalpha() and clean[4:].isdigit(): return f"{clean[:4]} {clean[4:]}"
-    # Formato 123 ABCD (Paraguay Motos)
+    # FORMATO 123 ABCD (PARAGUAY MOTOS)
     if len(clean) == 7 and clean[:3].isdigit() and clean[3:].isalpha(): return f"{clean[:3]} {clean[3:]}"
     
     return clean
 
 def normalize_name(s: str):
-    """Formatea nombres y apellidos."""
+    """FORMATEA NOMBRES Y APELLIDOS."""
     if not s: return ""
     return s.strip().title()
 
 def normalize_dni(s: str):
-    """Aplica formato de puntos al DNI para visualización."""
+    """APLICA FORMATO DE PUNTOS AL DNI PARA VISUALIZACION."""
     if not s: return ""
     clean = re.sub(r'[^0-9]', '', s)
     if len(clean) == 7: return f"{clean[0]}.{clean[1:4]}.{clean[4:]}"

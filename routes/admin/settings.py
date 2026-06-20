@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/settings")
 def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Retorna las configuraciones vigentes. Los locales solo ven las de su sede."""
+    """RETORNA LAS CONFIGURACIONES VIGENTES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
     q = db.query(models.Settings)
     if admin.rol != "admin":
         q = q.filter(models.Settings.sucursal == admin.sucursal)
@@ -32,7 +32,7 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
 
 @router.post("/settings/prices")
 def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Actualiza o crea un valor de configuración para la sede del administrador."""
+    """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR."""
     sucursal = admin.sucursal if admin.rol != "admin" else None
 
     if clave in ["capacidad_total", "capacidad_motos"]:

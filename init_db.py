@@ -6,11 +6,11 @@ from core.seed import seed_initial_data
 from core.config import settings
 
 def create_tables():
-    """Crea todas las tablas definidas en los modelos de SQLAlchemy."""
+    """CREA TODAS LAS TABLAS DEFINIDAS EN LOS MODELOS DE SQLALCHEMY."""
     models.Base.metadata.create_all(bind=engine)
 
 def migrate_db():
-    """Ejecuta migraciones manuales para SQLite (agregado de columnas)."""
+    """EJECUTA MIGRACIONES MANUALES PARA SQLITE (AGREGADO DE COLUMNAS)."""
     db_file = settings.DATABASE_URL.replace("sqlite:///./", "").replace("sqlite:///", "")
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
@@ -41,7 +41,7 @@ def migrate_db():
     conn.close()
 
 def seed_data():
-    """Llamada al orquestador de seeding modular."""
+    """LLAMADA AL ORQUESTADOR DE SEEDING MODULAR."""
     db = SessionLocal()
     try:
         seed_initial_data(db)

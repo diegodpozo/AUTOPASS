@@ -13,8 +13,8 @@ router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
 
 @router.post("/register")
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """Registra un nuevo usuario en el sistema."""
-    # UserService ya maneja validaciones de duplicados y normalización
+    """REGISTRA UN NUEVO USUARIO EN EL SISTEMA."""
+    # USERSERVICE YA MANEJA VALIDACIONES DE DUPLICADOS Y NORMALIZACION
     try:
         new_user = UserService.create_user(db, user, rol=UserRole.USER)
         return {"status": "ok", "message": "Usuario registrado exitosamente"}
@@ -25,13 +25,13 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/forgot-password")
 def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = Depends(get_db)):
-    """Genera un token de recuperación y envía un correo al usuario."""
+    """GENERA UN TOKEN DE RECUPERACION Y ENVIA UN CORREO AL USUARIO."""
     user = db.query(models.User).filter(models.User.email == request.email.lower().strip()).first()
     if not user:
-        # Por seguridad, no revelamos si el correo existe o no
+        #POR SEGURIDAD, NO REVELAMOS SI EL CORREO EXISTE O NO
         return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
     
-    # Generar token con propósito de recuperación
+    # GENERAR TOKEN CON PROPOSITO DE RECUPERACION
     expires = datetime.timedelta(minutes=settings.RECOVERY_TOKEN_EXPIRE_MINUTES)
     recovery_token = create_access_token(
         data={"sub": user.email, "purpose": "recovery"},
@@ -45,7 +45,7 @@ def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = D
 
 @router.post("/reset-password")
 def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Depends(get_db)):
-    """Valida el token y actualiza la contraseña del usuario."""
+    """VALIDA EL TOKEN Y ACTUALIZA LA CONTRASENA DEL USUARIO."""
     from jose import jwt, JWTError
     
     try:
@@ -63,7 +63,7 @@ def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Dep
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
     
-    # Actualizar contraseña
+    # ACTUALIZAR CONTRASENA
     user.password_hash = get_password_hash(request.new_password)
     db.commit()
     
@@ -71,8 +71,8 @@ def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Dep
 
 @router.post("/login")
 def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
-    """Autentica al usuario y retorna un token JWT de acceso."""
-    # Normalizar email para evitar errores de tipeo o mayúsculas
+    """AUTENTICA AL USUARIO Y RETORNA UN TOKEN JWT DE ACCESO."""
+    # NORMALIZAR EMAIL PARA EVITAR ERRORES DE TIPEO O MAYUSCULAS
     email_normalized = form_data.email.lower().strip()
     user = authenticate_user(db, email_normalized, form_data.password)
     if not user:
