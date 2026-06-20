@@ -1,7 +1,7 @@
 import { showToast } from './modules/utils.js';
 
 /**
- * CONTACTO BRIDGE
+ * CONTACTO PUENTE
  */
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -2,8 +2,8 @@ import api from './api.js';
 import { toTitle, formatDate, formatPlate, showToast, showConfirm } from './utils.js';
 
 /**
- * RESERVAS MODULE
- * Lógica compleja de gestión de reservas, tarifas y pases digitales.
+ * RESERVAS MODULO
+ * LOGICA COMPLEJA DE GESTION DE RESERVAS, TARIFAS Y PASES DIGITALES.
  */
 
 let historialCurrentPage = 1;
@@ -15,7 +15,7 @@ let historyData = [];
 export function initReservationForm() {
     if (!window.flatpickr) return;
 
-    // Configurar idioma español globalmente si está cargado
+    // CONFIGURAR IDIOMA ESPANOL GLOBALMENTE SI ESTA CARGADO
     if (window.flatpickr.l10ns?.es) {
         window.flatpickr.localize(window.flatpickr.l10ns.es);
     }
@@ -59,7 +59,7 @@ export function initReservationForm() {
     const sucursalSelect = document.querySelector('.res-sucursal');
     if (sucursalSelect) {
         sucursalSelect.addEventListener('change', (e) => {
-            const sucursalId = e.target.value; // Enviar el nombre completo (ej: "AUTOPASS Castelar")
+            const sucursalId = e.target.value; // ENVIAR EL NOMBRE COMPLETO (EJ: "AUTOPASS CASTELAR")
             fetchRates(sucursalId);
         });
     }
@@ -97,7 +97,7 @@ export async function toggleReservaForm() {
     const isOpen = container.classList.contains('open');
 
     if (!isOpen) {
-        // ABRIR: Ocultar trigger con fade y mostrar container
+        // ABRIR: OCULTAR TRIGGER CON FADE Y MOSTRAR CONTAINER
         trigger.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         trigger.style.opacity = '0';
         trigger.style.transform = 'translateY(-10px)';
@@ -109,7 +109,7 @@ export async function toggleReservaForm() {
             container.style.transform = 'translateY(10px)';
             container.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
             
-            // Forzar reflow para la transición
+            // FORZAR REFLOW PARA LA TRANSICION
             container.offsetHeight;
             
             container.classList.add('open');
@@ -119,7 +119,7 @@ export async function toggleReservaForm() {
             await refreshReservationFormState();
         }, 300);
     } else {
-        // CERRAR: Ocultar container y mostrar trigger
+        // CERRAR: OCULTAR CONTAINER Y MOSTRAR TRIGGER
         container.style.opacity = '0';
         container.style.transform = 'translateY(10px)';
         
@@ -129,7 +129,7 @@ export async function toggleReservaForm() {
             resetReservaForm();
             
             trigger.style.display = 'block';
-            // Forzar reflow
+            // FORZAR REFLOW
             trigger.offsetHeight;
             trigger.style.opacity = '1';
             trigger.style.transform = 'translateY(0)';
@@ -145,7 +145,7 @@ export async function refreshReservationFormState() {
 
     fetchRates();
     
-    // 1. Cargar Vehículos
+    // 1. CARGAR VEHICULOS
     const resVehicles = await api.get('/user/vehicles');
     if (resVehicles.ok) {
         userVehicles = resVehicles.data;
@@ -168,7 +168,7 @@ export async function refreshReservationFormState() {
         }
     }
 
-    // 2. Cargar Sucursales Dinámicamente
+    // 2. CARGAR SUCURSALES DINAMICAMENTE
     const resBranches = await api.get('/admin/branches');
     if (resBranches.ok) {
         const branches = resBranches.data;
@@ -279,7 +279,7 @@ export function updateReservationPrice() {
     const totalEl = document.getElementById('reserva-total-est');
     let total = 0;
 
-    // Determinar si es moto
+    // DETERMINAR SI ES MOTO
     const vehiculo = userVehicles.find(v => v.patente === patente);
     const isMoto = vehiculo && vehiculo.tipo === 'Moto';
 
@@ -344,7 +344,7 @@ export function updateFormGroups(type) {
     Object.values(sections).forEach(s => { if(s) s.style.display = 'none'; });
     const activeSection = sections[type] || sections['standard'];
     if (activeSection) {
-        // Usar el atributo data-display si existe, sino grid por defecto
+        // USAR EL ATRIBUTO DATA-DISPLAY SI EXISTE, SINO GRID POR DEFECTO
         activeSection.style.display = activeSection.dataset.display || 'grid';
     }
     updateReservationPrice();
@@ -354,7 +354,7 @@ export async function createReservation(e) {
     if (e) e.preventDefault();
     console.group("AutoPass: Creando Reserva");
     
-    // Usar document.querySelector para mayor robustez
+    // USAR DOCUMENT.QUERYSELECTOR PARA MAYOR ROBUSTEZ
     const patenteEl = document.querySelector('.res-vehicle');
     const sucursalEl = document.querySelector('.res-sucursal');
     const tipoEl = document.querySelector('.res-type');
@@ -625,7 +625,7 @@ export function renderHistory(history) {
 }
 
 export async function cancelReservation(id) {
-    // 1. Obtener previsualización del reembolso
+    // 1. OBTENER PREVISUALIZACION DEL REEMBOLSO
     const resSim = await api.get(`/user/reservations/${id}/cancel-simulation`);
     let confirmMsg = '¿Estás seguro de cancelar esta reserva? Esta acción no se puede deshacer.';
     

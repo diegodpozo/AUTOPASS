@@ -17,13 +17,13 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 
-# --- CONFIGURACIÓN DE SEGURIDAD Y RENDIMIENTO ---
+# --- CONFIGURACION DE SEGURIDAD Y RENDIMIENTO ---
 os.environ["OPENCV_LOG_LEVEL"] = "ERROR"
 os.environ["FFMPEG_LOG_LEVEL"] = "quiet"
 warnings.filterwarnings("ignore", category=UserWarning, module="torch")
 load_dotenv()
 
-# --- CONFIGURACIÓN DEL SERVICIO ---
+# --- CONFIGURACION DEL SERVICIO ---
 VIDEO_SOURCE = os.getenv("VIDEO_SOURCE", "0")
 if isinstance(VIDEO_SOURCE, str) and VIDEO_SOURCE.isdigit():
     VIDEO_SOURCE = int(VIDEO_SOURCE)
@@ -41,7 +41,7 @@ WS_BACKEND_URL = BACKEND_URL.replace("http", "ws") + f"/v1/system/ws/video/{GATE
 
 print(f"[*] Nodo ALPR v8.1.0 (Screen-to-Screen) Iniciado: {GATE_ID}")
 
-# Parámetros Sensibles
+# PARAMETROS SENSIBLES
 COOLDOWN_SECONDS = int(os.getenv("ALPR_COOLDOWN", 6))
 CONSENSUS_WINDOW = int(os.getenv("ALPR_CONSENSUS_WINDOW", 4))
 MIN_CONFIDENCE_VOTES = int(os.getenv("ALPR_MIN_CONFIDENCE", 1)) 
@@ -49,18 +49,18 @@ OCR_INTERVAL = float(os.getenv("ALPR_OCR_INTERVAL", 0.15))
 CONFIDENCE_THRESHOLD = float(os.getenv("ALPR_CONFIDENCE_THRESHOLD", 0.20))
 MOTION_THRESHOLD = int(os.getenv("ALPR_MOTION_THRESHOLD", 3000)) 
 PLATE_ALLOWLIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-# Patrones específicos de Mercosur y Argentina: 
-# 1. AAA 111 (Arg Antiguo) 
-# 2. AB 123 CD (Arg Mercosur)
-# 3. ABC1D23 (Brasil Mercosur)
-# 4. ABC 1234 (Uruguay Mercosur)
-# 5. ABCD 123 / 123 ABCD (Paraguay Mercosur)
+# PATRONES ESPECIFICOS DE MERCOSUR Y ARGENTINA: 
+# 1. AAA 111 (ARG ANTIGUO) 
+# 2. AB 123 CD (ARG MERCOSUR)
+# 3. ABC1D23 (BRASIL MERCOSUR)
+# 4. ABC 1234 (URUGUAY MERCOSUR)
+# 5. ABCD 123 / 123 ABCD (PARAGUAY MERCOSUR)
 LATAM_PLATE_PATTERN = r'\b([A-Z]{3}\d{3}|[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|\d{3}[A-Z]{4})\b'
 
 class ALPREngine:
     def __init__(self):
         print("[*] Cargando motores de IA...")
-        # ... (unchanged)
+        # ... (UNCHANGED)
         self.reader = easyocr.Reader(['en'], gpu=False) 
         self.qr_detector = cv2.QRCodeDetector()
         cascade_path = cv2.data.haarcascades + 'haarcascade_russian_plate_number.xml'
@@ -75,7 +75,7 @@ class ALPREngine:
         self.prev_gray = None
 
     def identify_country(self, plate, is_mercosur):
-        """Identifica el país probable basado en el formato y la franja azul."""
+        """IDENTIFICA EL PAIS PROBABLE BASADO EN EL FORMATO Y LA FRANJA AZUL."""
         if not is_mercosur:
             if re.match(r'^[A-Z]{3}\d{3}$', plate): return "ARGENTINA (Antigua)"
             return "DESCONOCIDO"
@@ -99,38 +99,38 @@ class ALPREngine:
         return motion_score > MOTION_THRESHOLD
 
     def preprocess_for_screen(self, img):
-        """Optimizado para quitar el efecto Moiré y ruido de píxeles de pantallas."""
+        """OPTIMIZADO PARA QUITAR EL EFECTO MOIRE Y RUIDO DE PIXELES DE PANTALLAS."""
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = cv2.resize(gray, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_LANCZOS4)
         
-        # 1. Filtro de Mediana
+        # 1. FILTRO DE MEDIANA
         gray = cv2.medianBlur(gray, 3)
         
-        # 2. Aumento de contraste radical
+        # 2. AUMENTO DE CONTRASTE RADICAL
         clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(4,4))
         contrast = clahe.apply(gray)
         
-        # 3. Sharpening
+        # 3. SHARPENING
         kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
         sharpened = cv2.filter2D(contrast, -1, kernel)
         
-        # 4. Umbralización Adaptativa
-        # v2 resultará en texto negro sobre fondo blanco si el original era oscuro sobre claro
+        # 4. UMBRALIZACION ADAPTATIVA
+        # V2 RESULTARA EN TEXTO NEGRO SOBRE FONDO BLANCO SI EL ORIGINAL ERA OSCURO SOBRE CLARO
         v2 = cv2.adaptiveThreshold(sharpened, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 13, 5)
         
-        # 5. Inversión (Crucial para patentes viejas: letras blancas sobre fondo negro)
+        # 5. INVERSION (CRUCIAL PARA PATENTES VIEJAS: LETRAS BLANCAS SOBRE FONDO NEGRO)
         v2_inv = cv2.bitwise_not(v2)
         
         return [sharpened, v2, v2_inv]
 
     def find_plate_roi(self, frame):
         h, w = frame.shape[:2]
-        # Enfocamos en el centro de la imagen donde suele estar el vehículo
+        # ENFOCAMOS EN EL CENTRO DE LA IMAGEN DONDE SUELE ESTAR EL VEHICULO
         main_roi = frame[int(h*0.1):int(h*0.9), int(w*0.05):int(w*0.95)]
         rh, rw = main_roi.shape[:2]
         gray = cv2.cvtColor(main_roi, cv2.COLOR_BGR2GRAY)
         
-        # Intentar detectar la patente con cascada
+        # INTENTAR DETECTAR LA PATENTE CON CASCADA
         plates = self.plate_cascade.detectMultiScale(gray, 1.1, 4)
         candidates = []
         for (x, y, pw, ph) in plates:
@@ -138,29 +138,29 @@ class ALPREngine:
             pad_h = int(ph*0.2)
             candidates.append(main_roi[max(0,y-pad_h):min(rh,y+ph+pad_h), max(0,x-pad_w):min(rw,x+pw+pad_w)])
             
-        # Si no hay candidatos por cascada, devolvemos el ROI principal y recortes centrales
+        # SI NO HAY CANDIDATOS POR CASCADA, DEVOLVEMOS EL ROI PRINCIPAL Y RECORTES CENTRALES
         if not candidates:
-            # Candidato 1: ROI completo
+            # CANDIDATO 1: ROI COMPLETO
             candidates.append(main_roi)
-            # Candidato 2: Franja central horizontal
+            # CANDIDATO 2: FRANJA CENTRAL HORIZONTAL
             candidates.append(main_roi[int(rh*0.3):int(rh*0.7), :])
             
         return candidates
 
     def is_mercosur_candidate(self, roi):
-        """Detecta si un ROI tiene la franja azul característica del Mercosur."""
+        """DETECTA SI UN ROI TIENE LA FRANJA AZUL CARACTERISTICA DEL MERCOSUR."""
         try:
             hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            # Azul Mercosur (aproximado en HSV)
+            # AZUL MERCOSUR (APROXIMADO EN HSV)
             lower_blue = np.array([100, 100, 50])
             upper_blue = np.array([130, 255, 255])
             mask = cv2.inRange(hsv, lower_blue, upper_blue)
             
-            # Verificamos si hay una concentración de azul en la parte superior
+            # VERIFICAMOS SI HAY UNA CONCENTRACION DE AZUL EN LA PARTE SUPERIOR
             h, w = mask.shape[:2]
             top_strip = mask[0:int(h*0.3), :]
             blue_ratio = np.sum(top_strip > 0) / top_strip.size
-            return blue_ratio > 0.1 # Al menos 10% de la franja superior es azul
+            return blue_ratio > 0.1 # AL MENOS 10% DE LA FRANJA SUPERIOR ES AZUL
         except: return False
 
     def ocr_worker(self):
@@ -168,7 +168,7 @@ class ALPREngine:
             try:
                 frame = self.frame_queue.get(timeout=1)
                 
-                # QR detection
+                # QR DETECTION
                 qr_data, _, _ = self.qr_detector.detectAndDecode(frame)
                 if qr_data:
                     self.send_event("qr", qr_data, frame)
@@ -180,8 +180,8 @@ class ALPREngine:
                     variants = self.preprocess_for_screen(roi)
                     
                     for var_idx, processed in enumerate(variants):
-                        # Si detectamos que es Mercosur, priorizamos la versión normal (negro sobre blanco)
-                        # Si NO es Mercosur, la versión invertida (v2_inv) podría ser la clave para patentes viejas
+                        # SI DETECTAMOS QUE ES MERCOSUR, PRIORIZAMOS LA VERSION NORMAL (NEGRO SOBRE BLANCO)
+                        # SI NO ES MERCOSUR, LA VERSION INVERTIDA (V2_INV) PODRIA SER LA CLAVE PARA PATENTES VIEJAS
                         results = self.reader.readtext(processed, detail=1, allowlist=PLATE_ALLOWLIST)
                         if not results: continue
                         
@@ -189,7 +189,7 @@ class ALPREngine:
                         combined = "".join([r[1] for r in results])
                         avg_conf = sum([r[2] for r in results]) / len(results)
                         
-                        # Regex pesca
+                        # REGEX PESCA
                         match = re.search(LATAM_PLATE_PATTERN, combined)
                         if match:
                             plate = match.group(0)
@@ -215,7 +215,7 @@ class ALPREngine:
 class VideoStreamer:
     def __init__(self, source):
         self.cap = cv2.VideoCapture(source)
-        # Optimizaciones para cámaras IP (evitar lag por buffer)
+        # OPTIMIZACIONES PARA CAMARAS IP (EVITAR LAG POR BUFFER)
         if isinstance(source, str) and source.startswith("http"):
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         self.current_frame = None
@@ -228,7 +228,7 @@ class VideoStreamer:
         while self.is_running:
             ret, frame = self.cap.read()
             if not ret: 
-                time.sleep(1) # Reintento
+                time.sleep(1) # REINTENTO
                 continue
             with self.lock: self.current_frame = frame
     def get_frame(self):
@@ -253,7 +253,7 @@ async def ws_monitoring_worker(streamer):
                                 print(f"[*] Streaming {GATE_ID}: {frame_count} frames enviados.")
                         except Exception as fe:
                             print(f"[!] Error al procesar/enviar frame ({GATE_ID}): {fe}")
-                            break # Romper bucle interno para reconectar
+                            break # ROMPER BUCLE INTERNO PARA RECONECTAR
                     await asyncio.sleep(0.05)
         except Exception as e: 
             print(f"[!] WS Streaming Error ({GATE_ID}): {type(e).__name__} - {e}")
@@ -267,7 +267,7 @@ def main():
         print(f"[!] Error FATAL al iniciar VideoStreamer: {e}")
         return
     
-    # Verificar si la cámara realmente abrió
+    # VERIFICAR SI LA CAMARA REALMENTE ABRIO
     time.sleep(2)
     if streamer.get_frame() is None:
         print(f"[!] ADVERTENCIA: No se recibe imagen de la fuente {VIDEO_SOURCE}. Verificá la URL o el dispositivo.")

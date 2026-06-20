@@ -9,24 +9,24 @@ from core.mqtt import mqtt_client
 from services.worker_service import WorkerService
 import models
 
-# Importación de Routers
+# IMPORTACION DE ROUTERS
 from routes import parking, reports, system, admin, user, auth
 from routes.views import router as views_router
 
-# --- CONFIGURACIÓN DE LA APLICACIÓN ---
+# --- CONFIGURACION DE LA APLICACION ---
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
-app.mqtt_client = mqtt_client # Inyección para acceso global
+app.mqtt_client = mqtt_client #INYECCION PARA ACCESO GLOBAL
 
-# Directorio para imágenes y uploads
+# DIRECTORIO PARA IMAGENES Y UPLOADS
 for path in [settings.IMAGE_DIR, os.path.join("static", "uploads", "branches")]:
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-# Montaje de archivos estáticos
+# MONTAJE DE ARCHIVOS ESTATICOS
 app.mount("/images", StaticFiles(directory=settings.IMAGE_DIR), name="images")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Middlewares
+# MIDDLEWARES
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -36,16 +36,16 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_event():
-    """Inicialización de servicios al arrancar el servidor."""
+    """INICIALIZACION DE SERVICIOS AL ARRANCAR EL SERVIDOR."""
     try:
         # MQTT
         mqtt_client.connect_async(settings.MQTT_BROKER, settings.MQTT_PORT, 60)
         mqtt_client.loop_start()
         
-        # Base de Datos
+        # BASE DE DATOS
         models.Base.metadata.create_all(bind=engine)
         
-        # Background Workers
+        # BACKGROUND WORKERS
         WorkerService.start_reservation_cleanup()
         
     except Exception as e: 
@@ -53,12 +53,12 @@ def startup_event():
 
 @app.on_event("shutdown")
 def shutdown_event():
-    """Limpieza de recursos al apagar el servidor."""
+    """LIMPIEZA DE RECURSOS AL APAGAR EL SERVIDOR."""
     print("[System] Apagando servidor, limpiando recursos...")
     system.stop_all_cameras()
 
 # --- REGISTRO DE RUTAS ---
-# API v1
+# API V1
 app.include_router(auth)
 app.include_router(parking)
 app.include_router(reports)
@@ -66,5 +66,5 @@ app.include_router(system, prefix="/v1/system")
 app.include_router(admin)
 app.include_router(user)
 
-# Frontend
+# FRONTEND
 app.include_router(views_router)

@@ -1,10 +1,10 @@
 /**
- * UTILS MODULE
- * Funciones de utilidad transversales para todo el sistema.
+ * UTILS MODULO
+ * FUNCIONES DE UTILIDAD TRANSVERSALES PARA TODO EL SISTEMA.
  */
 
 /**
- * Convierte un string a Formato de Título (Capitalización de cada palabra).
+ * CONVIERTE UN STRING A FORMATO DE TITULO (CAPITALIZACION DE CADA PALABRA).
  */
 export const toTitle = s => {
     if (!s || typeof s !== 'string') return '---';
@@ -16,11 +16,11 @@ export const toTitle = s => {
 };
 
 /**
- * Formatea una fecha ISO o string (YYYY-MM-DD HH:MM) a formato legible (DD/MM/YYYY HH:MM).
+ * FORMATEA UNA FECHA ISO O STRING (YYYY-MM-DD HH:MM) A FORMATO LEGIBLE (DD/MM/YYYY HH:MM).
  */
 export function formatDate(isoStr) {
     if (!isoStr) return '---';
-    // Reemplazamos 'T' por un espacio para que el constructor de Date sea compatible universalmente
+    // REEMPLAZAMOS 'T' POR UN ESPACIO PARA QUE EL CONSTRUCTOR DE DATE SEA COMPATIBLE UNIVERSALMENTE
     const normalizedStr = isoStr.replace('T', ' ').replace(/-/g, "/");
     const d = new Date(normalizedStr);
     
@@ -35,18 +35,18 @@ export function formatDate(isoStr) {
 }
 
 /**
- * Muestra una notificación premium (Toast).
- * Tipos: 'success', 'error', 'info', 'default'
+ * MUESTRA UNA NOTIFICACION PREMIUM (TOAST).
+ * TIPOS: 'SUCCESS', 'ERROR', 'INFO', 'POR DEFECTO'
  */
 export function showToast(msg, type = 'default') {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
-    // Crear elemento
+    // CREAR ELEMENTO
     const t = document.createElement('div');
     t.className = `toast ${type}`;
 
-    // Asignar ícono según tipo
+    // ASIGNAR ICONO SEGUN TIPO
     let icon = 'fa-bell';
     if (type === 'success') icon = 'fa-circle-check';
     else if (type === 'error') icon = 'fa-circle-exclamation';
@@ -59,14 +59,14 @@ export function showToast(msg, type = 'default') {
 
     container.appendChild(t);
 
-    // Función para cerrar con animación
+    // FUNCION PARA CERRAR CON ANIMACION
     const closeToast = () => {
         if (t.classList.contains('hiding')) return;
         t.classList.add('hiding');
         setTimeout(() => { if (t.parentNode) t.remove(); }, 400);
     };
 
-    // Cierre al hacer click en cualquier parte de la pantalla
+    // CIERRE AL HACER CLICK EN CUALQUIER PARTE DE LA PANTALLA
     const handleDocumentClick = (e) => {
         if (!t.contains(e.target)) {
             closeToast();
@@ -76,7 +76,7 @@ export function showToast(msg, type = 'default') {
     
     document.addEventListener('click', handleDocumentClick);
     
-    // Limpiar listener si el toast se remueve de otra forma
+    // LIMPIAR LISTENER SI EL TOAST SE REMUEVE DE OTRA FORMA
     const observer = new MutationObserver(() => {
         if (!t.parentNode) {
             document.removeEventListener('click', handleDocumentClick);
@@ -87,7 +87,7 @@ export function showToast(msg, type = 'default') {
 }
 
 /**
- * Muestra un modal de confirmación con promesa.
+ * MUESTRA UN MODAL DE CONFIRMACION CON PROMESA.
  */
 export function showConfirm(title, msg) {
     return new Promise((resolve) => {
@@ -130,45 +130,45 @@ export function showConfirm(title, msg) {
 }
 
 /**
- * Normaliza un texto para ID de sistema (Quita tildes y prefijos).
+ * NORMALIZA UN TEXTO PARA ID DE SISTEMA (QUITA TILDES Y PREFIJOS).
  */
 export function normalizeSystemName(str) {
     if (!str || str === 'null' || str === 'undefined') return '';
     let clean = str.replace('AUTOPASS ', '').trim().toUpperCase();
-    // Quitar tildes/acentos
+    // QUITAR TILDES/ACENTOS
     return clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 /**
- * Aplica formato visual estándar a la patente Mercosur (Ej: AB 123 CD).
+ * APLICA FORMATO VISUAL ESTANDAR A LA PATENTE MERCOSUR (EJ: AB 123 CD).
  */
 export function formatPlate(p) {
     if (!p) return '---';
-    // Limpiar caracteres especiales y a mayúsculas
+    // LIMPIAR CARACTERES ESPECIALES Y A MAYUSCULAS
     let clean = p.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
-    // Formato AAA 111 (Arg Antigua)
+    // FORMATO AAA 111 (ARG ANTIGUA)
     if (clean.length === 6) return `${clean.slice(0, 3)} ${clean.slice(3)}`;
     
-    // Formatos de 7 caracteres
+    // FORMATOS DE 7 CARACTERES
     if (clean.length === 7) {
-        // AB 123 CD (Arg Mercosur)
+        // AB 123 CD (ARG MERCOSUR)
         if (!isNaN(clean.substring(2, 5))) {
             return `${clean.slice(0, 2)} ${clean.slice(2, 5)} ${clean.slice(5)}`;
         }
-        // ABC 1D23 (Brasil Mercosur)
+        // ABC 1D23 (BRASIL MERCOSUR)
         if (!isNaN(clean[3]) && isNaN(clean[4])) {
             return `${clean.slice(0, 3)} ${clean.slice(3)}`;
         }
-        // ABC 1234 (Uruguay)
+        // ABC 1234 (URUGUAY)
         if (!isNaN(clean.substring(3))) {
             return `${clean.slice(0, 3)} ${clean.slice(3)}`;
         }
-        // ABCD 123 (Paraguay Autos)
+        // ABCD 123 (PARAGUAY AUTOS)
         if (isNaN(clean.substring(0, 4)) && !isNaN(clean.substring(4))) {
             return `${clean.slice(0, 4)} ${clean.slice(4)}`;
         }
-        // 123 ABCD (Paraguay Motos)
+        // 123 ABCD (PARAGUAY MOTOS)
         if (!isNaN(clean.substring(0, 3)) && isNaN(clean.substring(3))) {
             return `${clean.slice(0, 3)} ${clean.slice(3)}`;
         }
@@ -178,7 +178,7 @@ export function formatPlate(p) {
 }
 
 /**
- * Filtra filas de una tabla basándose en una búsqueda.
+ * FILTRA FILAS DE UNA TABLA BASANDOSE EN UNA BUSQUEDA.
  */
 export function filterTable(tbodyId, query) {
     const tbody = document.getElementById(tbodyId);
@@ -193,26 +193,26 @@ export function filterTable(tbodyId, query) {
 }
 
 /**
- * Valida la patente según el tipo y país.
+ * VALIDA LA PATENTE SEGUN EL TIPO Y PAIS.
  */
 export function validatePlate(plate, tipo) {
     const p = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
     if (tipo === 'Moto') {
-        // Argentina: 1 letra, 3 números, 3 letras (Ej: A123ABC)
+        // ARGENTINA: 1 LETRA, 3 NUMEROS, 3 LETRAS (EJ: A123ABC)
         const argMoto = /^[A-Z]{1}[0-9]{3}[A-Z]{3}$/;
         return argMoto.test(p);
     } else {
-        // Autos
-        // Argentina antigua: 3 letras, 3 números (AAA111)
+        // AUTOS
+        // ARGENTINA ANTIGUA: 3 LETRAS, 3 NUMEROS (AAA111)
         const argOld = /^[A-Z]{3}[0-9]{3}$/;
-        // Argentina Mercosur: 2 letras, 3 números, 2 letras (AA111AA)
+        // ARGENTINA MERCOSUR: 2 LETRAS, 3 NUMEROS, 2 LETRAS (AA111AA)
         const argMercosur = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/;
-        // Brasil Mercosur: 3 letras, 1 número, 1 letra, 2 números (ABC1D23)
+        // BRASIL MERCOSUR: 3 LETRAS, 1 NUMERO, 1 LETRA, 2 NUMEROS (ABC1D23)
         const braMercosur = /^[A-Z]{3}[0-9]{1}[A-Z]{1}[0-9]{2}$/;
-        // Paraguay: 4 letras, 3 números (ABCD123)
+        // PARAGUAY: 4 LETRAS, 3 NUMEROS (ABCD123)
         const par = /^[A-Z]{4}[0-9]{3}$/;
-        // Uruguay: 3 letras, 4 números (ABC1234)
+        // URUGUAY: 3 LETRAS, 4 NUMEROS (ABC1234)
         const uru = /^[A-Z]{3}[0-9]{4}$/;
         
         return argOld.test(p) || argMercosur.test(p) || braMercosur.test(p) || par.test(p) || uru.test(p);
@@ -220,17 +220,17 @@ export function validatePlate(plate, tipo) {
 }
 
 /**
- * Detecta el tipo de vehículo según la patente.
+ * DETECTA EL TIPO DE VEHICULO SEGUN LA PATENTE.
  */
 export function detectVehicleType(plate) {
     if (!plate) return null;
     const p = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
-    // Si cumple el patrón de moto Argentina, es Moto
+    // SI CUMPLE EL PATRON DE MOTO ARGENTINA, ES MOTO
     const argMoto = /^[A-Z]{1}[0-9]{3}[A-Z]{3}$/;
     if (argMoto.test(p)) return 'Moto';
     
-    // Si cumple cualquiera de los de auto, es Auto
+    // SI CUMPLE CUALQUIERA DE LOS DE AUTO, ES AUTO
     const argOld = /^[A-Z]{3}[0-9]{3}$/;
     const argMercosur = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/;
     const braMercosur = /^[A-Z]{3}[0-9]{1}[A-Z]{1}[0-9]{2}$/;
@@ -241,5 +241,5 @@ export function detectVehicleType(plate) {
         return 'Auto';
     }
     
-    return null; // Indeterminado
+    return null; // INDETERMINADO
 }

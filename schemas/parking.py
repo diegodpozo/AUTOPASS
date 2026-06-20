@@ -58,7 +58,7 @@ class BranchResponse(BranchBase):
     id: int
     admin_name: Optional[str] = None
     floors: List[FloorResponse] = []
-    # Campos calculados para resumen
+    # CAMPOS CALCULADOS PARA RESUMEN
     capacidad_autos_total: int = 0
     capacidad_motos_total: int = 0
     ocupacion_autos_total: int = 0

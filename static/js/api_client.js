@@ -1,8 +1,8 @@
 import api from './modules/api.js';
 
 /**
- * BRIDGE: api_client.js
- * Mantiene compatibilidad global con el sistema antiguo mientras migramos a módulos.
+ * PUENTE: API_CLIENT.JS
+ * MANTIENE COMPATIBILIDAD GLOBAL CON EL SISTEMA ANTIGUO MIENTRAS MIGRAMOS UN MODULOS.
  */
 window.apiClient = api;
-window.API_BASE = '/v1'; // Por si algún script aún lo usa directamente
+window.API_BASE = '/v1'; // POR SI ALGUN SCRIPT AUN LO USA DIRECTAMENTE

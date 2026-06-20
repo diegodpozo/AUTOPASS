@@ -7,18 +7,18 @@ import api from './modules/api.js';
 import * as utils from './modules/utils.js';
 
 /**
- * BRIDGE: dashboard.js
- * Mantiene la interfaz operativa centralizando la lógica modular.
+ * PUENTE: DASHBOARD.JS
+ * MANTIENE LA INTERFAZ OPERATIVA CENTRALIZANDO LA LOGICA MODULAR.
  */
 
-// UI & Navigation
+//UI & NAVEGACION
 window.switchTab = ui.switchTab;
 window.switchMonitorTab = (tabId, element) => {
-    // Buttons
+    //BOTONES
     element.parentElement.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     element.classList.add('active');
     
-    // Contents & Search Boxes
+    //CONTENIDOS & BUSQUEDA CAJAS
     document.querySelectorAll('.monitor-tab-content').forEach(content => content.classList.remove('active'));
     
     const targetTable = document.getElementById(`monitor-tab-${tabId}`);
@@ -29,15 +29,15 @@ window.switchMonitorTab = (tabId, element) => {
 };
 window.toggleMobileNav = ui.toggleMobileNav;
 
-// Global UI Modals
+//GLOBAL UI MODALS
 window.openModal = baseUi.openModal;
 window.closeModal = baseUi.closeModal;
 
-// Utilities
+// UTILITIES
 window.filterTable = utils.filterTable;
 window.formatDate = utils.formatDate;
 
-// Admin Actions & Settings
+//ADMIN ACTIONS & AJUSTES
 window.openBarrier = admin.openBarrier;
 window.loadUsers = admin.loadUsers;
 window.filterUserList = admin.filterUserList;
@@ -54,12 +54,12 @@ window.openEditUserModal = admin.openEditUserModal;
 window.toggleEditBranchSelection = admin.toggleEditBranchSelection;
 window.handleAdminEditUser = admin.handleAdminEditUser;
 
-// Settings & Navigation
+//AJUSTES & NAVEGACION
 window.switchSettingsTab = admin.switchSettingsTab;
 window.switchRatesTab = admin.switchRatesTab;
 window.refreshSystemDiagnostics = admin.refreshSystemDiagnostics;
 
-// Branches
+// BRANCHES
 window.loadBranches = admin.loadBranches;
 window.handleCreateBranch = admin.handleCreateBranch;
 window.deleteBranch = admin.deleteBranch;
@@ -70,7 +70,7 @@ window.toggleBranch = admin.toggleBranch;
 window.previewBranchLogo = admin.previewBranchLogo;
 window.searchAddress = admin.searchAddress;
 
-// Promotions
+// PROMOTIONS
 window.loadPromotionsAdmin = promos.loadPromotionsAdmin;
 window.showCreatePromotionModal = promos.showCreatePromotionModal;
 window.handleCreatePromotion = promos.handleCreatePromotion;
@@ -114,13 +114,13 @@ window.manualEntry = async () => {
     
     if (!plate) return utils.showToast('Ingresá una patente');
 
-    // Detección automática de Moto (Formato: 1 letra, 3 números, 3 letras)
+    // DETECCION AUTOMATICA DE MOTO (FORMATO: 1 LETRA, 3 NUMEROS, 3 LETRAS)
     const isMoto = /^[A-Z]{1}[0-9]{3}[A-Z]{3}$/.test(plate);
     if (isMoto) {
         type = 'Moto';
     }
 
-    // Confirmación mediante alerta premium (Estilo unificado)
+    // CONFIRMACION MEDIANTE ALERTA PREMIUM (ESTILO UNIFICADO)
     const confirmed = await utils.showConfirm(
         '', 
         `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
@@ -160,7 +160,7 @@ window.loadAdminReservations = async () => {
         const tbody = document.getElementById('admin-res-list');
         if (!tbody) return;
         
-        // Guardamos globalmente para consulta de detalle sin re-petición si es necesario
+        // GUARDAMOS GLOBALMENTE PARA CONSULTA DE DETALLE SIN RE-PETICION SI ES NECESARIO
         window.allReservations = res.data;
 
         tbody.innerHTML = res.data.map(r => `
@@ -227,7 +227,7 @@ window.updateEditReservationPrice = async () => {
             const startMap = { 'semana': 'edit-res-week-start', 'quincena': 'edit-res-fortnight-start', 'mes': 'edit-res-month-start' };
             const startVal = document.getElementById(startMap[type]).value;
             
-            // Si no hay fecha, no mostrar precio todavía
+            //SI NO HAY FECHA, NO MOSTRAR PRECIO TODAVIA
             if (!startVal) {
                 const elMonto = document.getElementById('edit-res-monto-total');
                 if (elMonto) elMonto.innerText = `$ ---`;
@@ -247,7 +247,7 @@ window.updateEditReservationPrice = async () => {
         }
 
         if (inicio && fin && !isNaN(inicio.getTime()) && !isNaN(fin.getTime())) {
-            // Lógica específica: Para 'hora', solo mostrar si hay cantidad de horas válida
+            // LOGICA ESPECIFICA: PARA 'HORA', SOLO MOSTRAR SI HAY CANTIDAD DE HORAS VALIDA
             if (type === 'hora') {
                 const qty = parseInt(document.getElementById('edit-res-hours-qty').value);
                 if (isNaN(qty) || qty <= 0) {
@@ -259,7 +259,7 @@ window.updateEditReservationPrice = async () => {
 
             const durationHours = (fin - inicio) / 3600000;
             
-            // Usar API para obtener tarifas actualizadas de la sucursal
+            // USAR API PARA OBTENER TARIFAS ACTUALIZADAS DE LA SUCURSAL
             const resRates = await api.get(`/admin/branches`);
             let rates = { hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
             
@@ -310,7 +310,7 @@ window.updateEditFormGroups = (type) => {
     Object.values(sections).forEach(s => { if(s) s.style.display = 'none'; });
     const activeSection = sections[type] || sections['standard'];
     if (activeSection) {
-        // Usar el atributo data-display si existe, sino grid por defecto
+        // USAR EL ATRIBUTO DATA-DISPLAY SI EXISTE, SINO GRID POR DEFECTO
         activeSection.style.display = activeSection.dataset.display || 'grid';
     }
     window.updateEditReservationPrice();
@@ -334,7 +334,7 @@ window.openEditReservationModal = (resId) => {
     const r = window.allReservations?.find(x => x.id === resId);
     if (!r) return;
 
-    // Inicializar Flatpickrs si es necesario
+    // INICIALIZAR FLATPICKRS SI ES NECESARIO
     if (window.flatpickr && !window.editPickersInitialized) {
         const common = { 
             disableMobile: "true", 
@@ -372,7 +372,7 @@ window.openEditReservationModal = (resId) => {
 
     window.updateEditFormGroups(r.tipo_estadia);
 
-    // Poblar campos dinámicos
+    // POBLAR CAMPOS DINAMICOS
     const startParts = r.fecha_inicio.split(' ');
     const dateOnly = startParts[0];
     const timeOnly = startParts[1] ? startParts[1].substring(0, 5) : "00:00";
@@ -507,7 +507,7 @@ window.showReservationDetail = (resId) => {
 };
 
 window.showLogDetail = async (logId) => {
-    // Si no tenemos los logs cargados o necesitamos refrescar, pedimos
+    // SI NO TENEMOS LOS LOGS CARGADOS O NECESITAMOS REFRESCAR, PEDIMOS
     const res = await api.get('/reports/access');
     if (!res.ok) return;
     
@@ -524,7 +524,7 @@ window.showLogDetail = async (logId) => {
     const imgEl = document.getElementById('audit-image');
     if (imgEl) {
         imgEl.src = `/v1/system/capture/${logId}?t=${Date.now()}`;
-        // Ocultar overlay si no hay captura real
+        //OCULTAR OVERLAY SI NO HAY CAPTURA REAL
         document.getElementById('audit-overlay-container').style.display = 'block';
     }
     
@@ -563,7 +563,7 @@ window.loadFinanceData = async (resetPage = true) => {
         urlParams = `period=day&start=${specificDate}T00:00:00&end=${specificDate}T23:59:59&vehicle_type=${vehicleType}&payment_method=${paymentMethod}`;
     }
     
-    // 1. Cargar Resumen (KPIs)
+    // 1. CARGAR RESUMEN (KPIS)
     const resSum = await api.get(`/reports/financial-summary?${urlParams}`);
     if (resSum.ok) {
         const data = resSum.data;
@@ -586,7 +586,7 @@ window.loadFinanceData = async (resetPage = true) => {
         const elNoShow = document.getElementById('fin-noshow');
         if (elNoShow) elNoShow.innerText = `$${(data.ingresos_incumplimiento || 0).toLocaleString()}`;
 
-        // Desglose por canal
+        // DESGLOSE POR CANAL
         const d = data.desglose;
         if (d) {
             document.getElementById('fin-stay-monto').innerText = `$${(d.estadias?.monto || 0).toLocaleString()}`;
@@ -599,7 +599,7 @@ window.loadFinanceData = async (resetPage = true) => {
         }
     }
 
-    // 2. Cargar Historial de Pagos (PAGINADO)
+    // 2. CARGAR HISTORIAL DE PAGOS (PAGINADO)
     const resHist = await api.get(`/reports/payment-history?${urlParams}&page=${currentFinancePage}&limit=${financeLimit}`);
     if (resHist.ok) {
         const tbody = document.getElementById('payment-list');
@@ -626,7 +626,7 @@ window.loadFinanceData = async (resetPage = true) => {
             `}).join('') || '<tr><td colspan="5" class="text-center py-20">No hay transacciones en este período.</td></tr>';
         }
 
-        // 3. Actualizar UI Paginación
+        //3. ACTUALIZAR UI PAGINACION
         const prevBtn = document.getElementById('prev-fin-btn');
         const nextBtn = document.getElementById('next-fin-btn');
         const pageInfo = document.getElementById('fin-page-info');
@@ -635,7 +635,7 @@ window.loadFinanceData = async (resetPage = true) => {
         if (nextBtn) nextBtn.disabled = resHist.data.length < financeLimit;
         if (pageInfo) pageInfo.innerText = `Página ${currentFinancePage}`;
 
-        // 4. Renderizar Gráfico con el total de transacciones (sin paginación) para mostrar la tendencia real
+        // 4. RENDERIZAR GRAFICO CON EL TOTAL DE TRANSACCIONES (SIN PAGINACION) PARA MOSTRAR LA TENDENCIA REAL
         const resChart = await api.get(`/reports/payment-history?${urlParams}&limit=0`);
         if (resChart.ok) {
             renderRevenueChart(resChart.data, period);
@@ -665,23 +665,23 @@ function renderRevenueChart(data, period) {
         revenueChart = null;
     }
 
-    // Si no hay datos, mostrar mensaje o gráfico vacío limpio
+    // SI NO HAY DATOS, MOSTRAR MENSAJE O GRAFICO VACIO LIMPIO
     if (!data || data.length === 0) {
-        // Opcional: mostrar un mensaje en el canvas o simplemente un gráfico vacío
+        // OPCIONAL: MOSTRAR UN MENSAJE EN EL CANVAS O SIMPLEMENTE UN GRAFICO VACIO
         console.warn("No hay datos para el gráfico financiero");
     }
 
-    // Agrupar y procesar datos cronológicamente
+    // AGRUPAR Y PROCESAR DATOS CRONOLOGICAMENTE
     const grouped = {};
     
-    // Función auxiliar para parsear fechas de forma segura
+    // FUNCION AUXILIAR PARA PARSEAR FECHAS DE FORMA SEGURA
     const parseDate = (str) => {
         if (!str) return new Date(NaN);
-        // Normalizar formato: reemplaza espacios por T si es necesario (para Safari/otros)
+        // NORMALIZAR FORMATO: REEMPLAZA ESPACIOS POR T SI ES NECESARIO (PARA SAFARI/OTROS)
         return new Date(str.replace(' ', 'T'));
     };
 
-    // Clonamos y ordenamos cronológicamente (antiguo a nuevo)
+    // CLONAMOS Y ORDENAMOS CRONOLOGICAMENTE (ANTIGUO A NUEVO)
     const sortedData = [...data].sort((a, b) => parseDate(a.fecha_pago) - parseDate(b.fecha_pago));
 
     sortedData.forEach(p => {
@@ -763,17 +763,17 @@ function renderRevenueChart(data, period) {
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Actualizar inmediatamente la UI con lo que tengamos en localStorage
+    // 1. ACTUALIZAR INMEDIATAMENTE LA UI CON LO QUE TENGAMOS EN LOCALSTORAGE
     const rol = localStorage.getItem('rol');
     const sucursalRaw = localStorage.getItem('sucursal');
     
-    // Limpieza profunda de la sede
+    // LIMPIEZA PROFUNDA DE LA SEDE
     let sucursalLimpia = '';
     if (sucursalRaw && sucursalRaw !== 'null' && sucursalRaw !== 'undefined') {
         sucursalLimpia = sucursalRaw.replace('AUTOPASS ', '').trim();
     }
     
-    // La clase de rol ya se aplica en el inline script de dashboard.html para evitar flicker
+    // LA CLASE DE ROL YA SE APLICA EN EL INLINE SCRIPT DE DASHBOARD.HTML PARA EVITAR FLICKER
     
     const roleNameEl = document.getElementById('role-name');
     const settingsTitleEl = document.getElementById('settings-title');
@@ -790,17 +790,17 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsTitleEl.innerText = 'CONFIGURACIÓN';
     }
 
-    // 2. Iniciar servicios secundarios
+    // 2. INICIAR SERVICIOS SECUNDARIOS
     try {
         ui.initClock();
         ui.checkSystemHealth();
-        // Iniciar WebSocket de Aforo
+        // INICIAR WEBSOCKET DE AFORO
         stats.initOccupancyWS();
     } catch (e) { console.warn("Error en servicios UI:", e); }
 
     let lastTab = localStorage.getItem('activeAdminTab') || 'live';
     
-    // Reglas de redirección por rol
+    // REGLAS DE REDIRECCION POR ROL
     const restrictedStaff = ['users', 'finance', 'promotions', 'settings'];
     const restrictedAdmin = ['live', 'admin-reservations', 'finance', 'settings']; 
 
@@ -813,12 +813,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeItem = document.querySelector(`.nav-item[onclick*="'${lastTab}'"]`);
     if (activeItem) ui.switchTab(lastTab, activeItem);
 
-    // 3. Listeners de Formularios
+    // 3. LISTENERS DE FORMULARIOS
     document.getElementById('form-add-branch')?.addEventListener('submit', window.handleCreateBranch);
 });
 
 window.payOccupancy = async (plate, amount) => {
-    // Confirmación mediante alerta premium (Estilo unificado)
+    // CONFIRMACION MEDIANTE ALERTA PREMIUM (ESTILO UNIFICADO)
     const confirmed = await utils.showConfirm(
         '', 
         `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
@@ -851,7 +851,7 @@ window.payOccupancy = async (plate, amount) => {
 window.cancelStay = stats.cancelStay;
 
 window.manualExit = async (plate, type) => {
-    // Confirmación mediante alerta premium (Estilo unificado)
+    // CONFIRMACION MEDIANTE ALERTA PREMIUM (ESTILO UNIFICADO)
     const confirmed = await utils.showConfirm(
         '', 
         `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
@@ -889,7 +889,7 @@ window.saveSystemParam = admin.saveSystemParam;
 window.resetSys = admin.resetSys;
 window.exportFinanceData = admin.exportFinanceData;
 
-// Floors
+// FLOORS
 window.openAddFloorModal = admin.openAddFloorModal;
 window.openEditFloorModal = admin.openEditFloorModal;
 window.handleCreateFloor = admin.handleCreateFloor;
@@ -898,7 +898,7 @@ window.updatePBCapacity = admin.updatePBCapacity;
 window.savePBCapacity = admin.savePBCapacity;
 window.toggleLevelEdit = admin.toggleLevelEdit;
 
-// Cameras
+// CAMERAS
 window.openCameraConfig = ui.openCameraConfig;
 window.toggleCameraService = ui.toggleCameraService;
 window.handleSaveCamConfig = ui.handleSaveCamConfig;

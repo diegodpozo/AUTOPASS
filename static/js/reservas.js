@@ -1,8 +1,8 @@
 import * as res from './modules/reservas.js';
 
 /**
- * BRIDGE: reservas.js
- * Mantiene compatibilidad global con eventos inline.
+ * PUENTE: RESERVAS.JS
+ * MANTIENE COMPATIBILIDAD GLOBAL CON EVENTOS INLINE.
  */
 
 window.toggleReservaForm = res.toggleReservaForm;
@@ -19,14 +19,14 @@ window.cancelReservation = res.cancelReservation;
 window.payReservation = res.payReservation;
 window.historialPage = res.historialPage;
 
-// UI Helpers movidos al módulo
+//UI HELPERS MOVIDOS AL MODULO
 window.showDigitalPass = res.showDigitalPass;
 window.closeDigitalPass = res.closeDigitalPass;
 window.shareTicket = res.shareTicket;
 window.repeatReservation = res.repeatReservation;
 window.resetHistoryFilters = res.resetHistoryFilters;
 
-// Refresco automático
+// REFRESCO AUTOMATICO
 setInterval(() => {
     const token = localStorage.getItem('token');
     if (token && (document.getElementById('section-reservas')?.classList.contains('active') || document.getElementById('section-inicio')?.classList.contains('active'))) {

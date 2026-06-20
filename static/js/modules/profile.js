@@ -3,8 +3,8 @@ import { toTitle, formatDate, showToast, showConfirm } from './utils.js';
 import { closeModal } from './ui.js';
 
 /**
- * PROFILE MODULE
- * Gestión de perfil de usuario, puntos y recarga de saldo.
+ * PERFIL MODULO
+ * GESTION DE PERFIL DE USUARIO, PUNTOS Y RECARGA DE SALDO.
  */
 
 export async function loadProfile() {
@@ -167,10 +167,10 @@ export async function loadPointsHistory(page = 1) {
                 </div>`;
         }).join('');
 
-        // Actualizar Navegación
+        // ACTUALIZAR NAVEGACION
         const pag = document.getElementById('pts-pagination');
         if (pag) {
-            pag.style.display = 'flex'; // Siempre mostrar si hay items
+            pag.style.display = 'flex'; // SIEMPRE MOSTRAR SI HAY ITEMS
             document.getElementById('pts-page-info').innerText = `Página ${page} de ${pages || 1}`;
             document.getElementById('btn-pts-prev').disabled = page === 1;
             document.getElementById('btn-pts-next').disabled = page >= pages;

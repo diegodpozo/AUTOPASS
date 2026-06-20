@@ -7,7 +7,7 @@ from services.access_service import AccessService
 from schemas import PlateValidation
 from core.database import get_db
 
-# Setup test database
+#CONFIGURACION DE BASE DE DATOS DE PRUEBA
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -21,13 +21,13 @@ def db():
     Base.metadata.drop_all(bind=engine)
 
 def test_validate_plate_success(db):
-    # Setup: Create necessary entities (Vehicle, ParkingAforo)
-    # This is a simplified test; in a full suite, you'd mock or seed proper data
+    #CONFIGURACION: CREAR ENTIDADES NECESARIAS (VEHICULO, PARKINGAFORO)
+    #ESTA ES UNA PRUEBA SIMPLIFICADA; EN UNA SUITE COMPLETA, SE SIMULARIAN O SEMBRARIAN DATOS ADECUADOS
     data = PlateValidation(plate="ABC1234", gate_id="TEST_ENTRADA")
     
-    # Run test
+    #EJECUTAR PRUEBA
     result = AccessService.validate_plate(db, data)
     
-    # Assert
+    #VERIFICAR
     assert result["status"] == "allowed"
     assert "Acceso permitido" in result["message"]

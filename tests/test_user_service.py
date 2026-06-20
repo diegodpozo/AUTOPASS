@@ -6,7 +6,7 @@ from models.enums import UserRole
 from services.user_service import UserService
 from schemas import UserCreate, UserAdminUpdate
 
-# Setup test database
+#CONFIGURACION DE BASE DE DATOS DE PRUEBA
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

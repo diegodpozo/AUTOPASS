@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
 def list_reservations(estado: Optional[str] = Query(None), sucursal: Optional[str] = Query(None), db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Lista todas las reservas. Los locales solo ven las de su sede."""
+    """LISTA TODAS LAS RESERVAS. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
     ReservationService.cleanup_overdue_reservations(db)
     
     q = db.query(models.Reservation)
@@ -46,7 +46,7 @@ def list_reservations(estado: Optional[str] = Query(None), sucursal: Optional[st
 
 @router.post("/reservations")
 def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Permite al administrador o empleado crear una reserva manual."""
+    """PERMITE AL ADMINISTRADOR O EMPLEADO CREAR UNA RESERVA MANUAL."""
     if staff.rol != "admin":
         data.sucursal_nombre = staff.sucursal
 
@@ -66,7 +66,7 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
 
 @router.post("/reservations/{res_id}/confirm-payment")
 def confirm_reservation_payment(res_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Confirmación manual de pago."""
+    """CONFIRMACION MANUAL DE PAGO."""
     from services.billing_service import BillingService
     from models.enums import PaymentStatus
     
@@ -80,7 +80,7 @@ def confirm_reservation_payment(res_id: int, db: Session = Depends(get_db), staf
     if reserva.estado_pago != PaymentStatus.PAGADO:
         reserva.estado_pago = PaymentStatus.PAGADO
         
-        # Acreditación de puntos si hay un usuario vinculado
+        # ACREDITACION DE PUNTOS SI HAY UN USUARIO VINCULADO
         if reserva.user:
             puntos_ganados = BillingService.calculate_points(reserva.monto_total)
             reserva.user.puntos_acumulados += puntos_ganados
@@ -96,7 +96,7 @@ def confirm_reservation_payment(res_id: int, db: Session = Depends(get_db), staf
 
 @router.post("/reservations/{res_id}/cancel")
 def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Cancelación manual."""
+    """CANCELACION MANUAL."""
     reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
     if not reserva: raise HTTPException(status_code=404, detail="Reserva no encontrada")
     
@@ -110,7 +110,7 @@ def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: 
 
 @router.patch("/reservations/{res_id}")
 def update_reservation_admin(res_id: int, data: schemas.ReservationUpdate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """Permite editar una reserva existente."""
+    """PERMITE EDITAR UNA RESERVA EXISTENTE."""
     reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
     if not reserva:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")

@@ -13,14 +13,14 @@ router = APIRouter()
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
 def get_user_reservations(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Lista todas las reservas del usuario, actualizando estados automáticamente."""
+    """LISTA TODAS LAS RESERVAS DEL USUARIO, ACTUALIZANDO ESTADOS AUTOMATICAMENTE."""
     ReservationService.cleanup_overdue_reservations(db)
     ReservationService.auto_finalize_reservations(db, current_user.id)
     return db.query(models.Reservation).filter(models.Reservation.user_id == current_user.id).order_by(models.Reservation.id.desc()).all()
 
 @router.post("/reservations")
 def create_user_reservation(res: schemas.UserReservationCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Crea una nueva reserva y procesa el cobro si el saldo es suficiente."""
+    """CREA UNA NUEVA RESERVA Y PROCESA EL COBRO SI EL SALDO ES SUFICIENTE."""
     vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente, models.Vehicle.user_id == current_user.id).first()
     if not vehicle: raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
     
@@ -78,7 +78,7 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
 
 @router.patch("/reservations/{res_id}")
 def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Permite modificar una reserva existente ajustando saldo y puntos si corresponde."""
+    """PERMITE MODIFICAR UNA RESERVA EXISTENTE AJUSTANDO SALDO Y PUNTOS SI CORRESPONDE."""
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == current_user.id).first()
     if not res: raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
@@ -125,12 +125,12 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
 
 @router.post("/reservations/{res_id}/pay")
 def pay_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Abona una reserva pendiente con el saldo de la cuenta."""
+    """ABONA UNA RESERVA PENDIENTE CON EL SALDO DE LA CUENTA."""
     return ReservationService.pay_reservation(db, current_user, res_id)
 
 @router.get("/reservations/{res_id}/cancel-simulation")
 def simulate_reservation_cancel(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Simula la cancelación para previsualizar el monto de reembolso."""
+    """SIMULA LA CANCELACION PARA PREVISUALIZAR EL MONTO DE REEMBOLSO."""
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == current_user.id).first()
     if not res: raise HTTPException(status_code=404, detail="Reserva no encontrada")
     
@@ -138,5 +138,5 @@ def simulate_reservation_cancel(res_id: int, db: Session = Depends(get_db), curr
 
 @router.post("/reservations/{res_id}/cancel")
 def cancel_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Cancela una reserva y reembolsa el monto si ya fue pagada."""
+    """CANCELA UNA RESERVA Y REEMBOLSA EL MONTO SI YA FUE PAGADA."""
     return ReservationService.cancel_reservation(db, current_user, res_id)

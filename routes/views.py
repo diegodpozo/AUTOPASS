@@ -9,7 +9,7 @@ from core.config import settings
 router = APIRouter(tags=["Frontend Views"])
 templates = Jinja2Templates(directory="templates")
 
-# Inyectar configuraciones globales a todos los templates
+# INYECTAR CONFIGURACIONES GLOBALES A TODOS LOS TEMPLATES
 templates.env.globals["settings"] = settings
 
 @router.get("/", response_class=HTMLResponse)

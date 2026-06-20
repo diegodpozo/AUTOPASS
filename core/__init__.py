@@ -1,1 +1,1 @@
-# Package core init file
+# PACKAGE CORE INIT FILE

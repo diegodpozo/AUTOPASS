@@ -3,8 +3,8 @@ import { showToast, showConfirm, formatPlate, validatePlate, detectVehicleType }
 import { toggleReservaForm } from './reservas.js'; 
 
 /**
- * VEHICLES MODULE
- * Gestión de la flota vehicular del usuario.
+ * VEHICLES MODULO
+ * GESTION DE LA FLOTA VEHICULAR DEL USUARIO.
  */
 
 export async function loadVehicles() {
@@ -13,7 +13,7 @@ export async function loadVehicles() {
     
     if (!list) return;
 
-    // Inicializar auto-detección si no se ha hecho
+    // INICIALIZAR AUTO-DETECCION SI NO SE HA HECHO
     initAutoDetection();
 
     const res = await api.get('/user/vehicles');
@@ -56,7 +56,7 @@ export async function loadVehicles() {
         </div>
     `).join('');
 
-    // Actualizar selectores en formularios de reserva
+    // ACTUALIZAR SELECTORES EN FORMULARIOS DE RESERVA
     const selects = document.querySelectorAll('.res-vehicle');
     selects.forEach(select => {
         const currentVal = select.value;
@@ -74,12 +74,12 @@ export async function toggleVehicleForm() {
     const isHidden = container.style.display === 'none' || container.style.display === '';
     
     if (isHidden) {
-        // MOSTRAR FORM, OCULTAR BOTÓN
+        // MOSTRAR FORM, OCULTAR BOTON
         trigger.style.display = 'none';
         container.style.display = 'block';
         container.classList.add('open');
     } else {
-        // OCULTAR FORM, MOSTRAR BOTÓN
+        // OCULTAR FORM, MOSTRAR BOTON
         container.style.display = 'none';
         container.classList.remove('open');
         trigger.style.display = 'flex';
@@ -93,7 +93,7 @@ export function updateVehicleTypeIcon(typeValue, prefix = '', form = null) {
     const icon = document.getElementById(`${prefix}vehicle-type-icon`);
     if (!icon) return;
 
-    // Si no se pasa el form, intentamos encontrarlo por el icono
+    // SI NO SE PASA EL FORM, INTENTAMOS ENCONTRARLO POR EL ICONO
     const targetForm = form || icon.closest('form');
     if (!targetForm) return;
 
@@ -133,7 +133,7 @@ export async function addVehicle(e, isQuickAdd = false) {
         return;
     }
 
-    // Validar formato de patente
+    // VALIDAR FORMATO DE PATENTE
     if (!validatePlate(patente, tipo)) {
         showToast('Formato de patente no válido.');
         return;
@@ -167,16 +167,16 @@ export async function addVehicle(e, isQuickAdd = false) {
         showToast('Vehículo registrado con éxito');
         form.reset();
 
-        // Resetear icono y padding (tipo ahora es hidden)
+        // RESETEAR ICONO Y PADDING (TIPO AHORA ES HIDDEN)
         updateVehicleTypeIcon('', isQuickAdd ? 'quick-' : '', form);
 
         if (isQuickAdd) {
-            // Refrescar estado para que aparezca el formulario de reserva
+            // REFRESCAR ESTADO PARA QUE APAREZCA EL FORMULARIO DE RESERVA
             if (typeof window.refreshReservationFormState === 'function') {
                 await window.refreshReservationFormState();
             }
         } else {
-            // Cerrar el formulario si estaba abierto (en la pestaña de mis vehículos)
+            // CERRAR EL FORMULARIO SI ESTABA ABIERTO (EN LA PESTANA DE MIS VEHICULOS)
             const container = document.getElementById('vehicle-form-container');
             if (container && container.classList.contains('open')) {
                 if (typeof window.toggleVehicleForm === 'function') window.toggleVehicleForm();
@@ -211,7 +211,7 @@ export async function deleteVehicle(patente) {
 }
 
 /**
- * Inicializa la detección automática de tipo de vehículo en los formularios.
+ * INICIALIZA LA DETECCION AUTOMATICA DE TIPO DE VEHICULO EN LOS FORMULARIOS.
  */
 let autoDetectionInitialized = false;
 export function initAutoDetection() {

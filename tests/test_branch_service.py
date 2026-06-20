@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Base, ParkingBranch, ParkingAforo, ParkingFloor
 from services.branch_service import BranchService
 
-# Setup test database
+#CONFIGURACION DE BASE DE DATOS DE PRUEBA
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -31,7 +31,7 @@ def test_get_branch_capacity_summary(db):
     
     summary = BranchService.get_branch_capacity_summary(db, branch)
     
-    # 20 (PB) + 10 (Piso) = 30
+    # 20 (PB) + 10 (PISO) = 30
     assert summary["capacidad_autos_total"] == 30
-    # 10 (PB) + 5 (Piso) = 15
+    # 10 (PB) + 5 (PISO) = 15
     assert summary["capacidad_motos_total"] == 15

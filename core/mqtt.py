@@ -3,11 +3,11 @@ from paho.mqtt.enums import CallbackAPIVersion
 from core.config import settings
 
 def get_mqtt_client():
-    """Configura e inicializa el cliente MQTT."""
+    """CONFIGURA E INICIALIZA EL CLIENTE MQTT."""
     client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
     
-    # Podrías agregar callbacks globales aquí
-    # client.on_connect = on_connect
+    # PODRIAS AGREGAR CALLBACKS GLOBALES AQUI
+    #CLIENT.ON_CONNECT = ON_CONNECT
     
     return client
 

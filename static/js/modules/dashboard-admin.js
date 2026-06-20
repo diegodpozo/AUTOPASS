@@ -2,14 +2,14 @@ import api from './api.js';
 import { showToast, showConfirm, formatDate, formatPlate } from './utils.js';
 
 /**
- * DASHBOARD ADMIN MODULE
- * Operaciones administrativas, gestión de usuarios y configuraciones.
+ * PANEL ADMIN MODULO
+ * OPERACIONES ADMINISTRATIVAS, GESTION DE USUARIOS Y CONFIGURACIONES.
  */
 
 let userPage = 1;
 const userPageSize = 10;
 let allUsersData = [];
-let allBranchesData = []; // Cache local para sucursales
+let allBranchesData = []; // CACHE LOCAL PARA SUCURSALES
 let branchMap = null;
 let branchMarker = null;
 
@@ -17,18 +17,18 @@ export function initBranchMap() {
     const mapEl = document.getElementById('branch-map-picker');
     if (!mapEl || branchMap || !window.L) return;
 
-    // Coordenadas iniciales (Buenos Aires)
+    // COORDENADAS INICIALES (BUENOS AIRES)
     const initialCoords = [-34.5888, -58.3900];
     branchMap = L.map('branch-map-picker').setView(initialCoords, 13);
 
-    // Tiles Premium (Dark Matter)
+    // TILES PREMIUM (DARK MATTER)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap',
         subdomains: 'abcd',
         maxZoom: 20
     }).addTo(branchMap);
 
-    // Click para ubicar manualmente
+    // CLICK PARA UBICAR MANUALMENTE
     branchMap.on('click', function(e) {
         updateBranchMarker(e.latlng.lat, e.latlng.lng);
     });
@@ -66,7 +66,7 @@ export async function searchAddress() {
             const lat = parseFloat(data[0].lat);
             const lng = parseFloat(data[0].lon);
 
-            initBranchMap(); // Asegurar que el mapa existe
+            initBranchMap(); // ASEGURAR QUE EL MAPA EXISTE
             updateBranchMarker(lat, lng);
             branchMap.setView([lat, lng], 16);
             showToast('Ubicación encontrada');
@@ -81,7 +81,7 @@ export async function searchAddress() {
 
 export async function loadUsers() {
     try {
-        // Restricción visual de filtros para Admin Local (Eliminación física)
+        // RESTRICCION VISUAL DE FILTROS PARA ADMIN LOCAL (ELIMINACION FISICA)
         const myRol = localStorage.getItem('rol');
         if (myRol !== 'admin') {
             const adminOption = document.querySelector('#user-filter-rol option[value="admin"]');
@@ -91,7 +91,7 @@ export async function loadUsers() {
         const res = await api.get('/admin/users');
         if (res && res.ok) {
             
-            // Definimos la jerarquía de roles para el ordenamiento
+            // DEFINIMOS LA JERARQUIA DE ROLES PARA EL ORDENAMIENTO
             const roleOrder = {
                 'admin': 1,
                 'local_admin': 2,
@@ -99,7 +99,7 @@ export async function loadUsers() {
                 'user': 4
             };
 
-            // Ordenamos la data por rol y luego por nombre/apellido
+            // ORDENAMOS LA DATA POR ROL Y LUEGO POR NOMBRE/APELLIDO
             allUsersData = (res.data || []).sort((a, b) => {
                 const orderA = roleOrder[a.rol] || 99;
                 const orderB = roleOrder[b.rol] || 99;
@@ -157,7 +157,7 @@ export function renderUserTable(filteredData = null) {
             const puntosDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<div class="points-badge-sm mx-auto" style="display:inline-flex;"><i class="fas fa-star"></i> ${u.puntos_acumulados || 0}</div>`;
             const saldoDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<span class="text-success">$${(u.saldo || 0).toLocaleString()}</span>`;
 
-            // Personalización de etiquetas de rol
+            // PERSONALIZACION DE ETIQUETAS DE ROL
             let roleLabel = (u.rol || 'user').toUpperCase();
             const sedeLimpia = (u.sucursal || '').replace('AUTOPASS ', '').trim();
 
@@ -248,7 +248,7 @@ export function nextUserPage() {
 }
 
 export async function openBarrier(gateId) {
-    // Confirmación mediante alerta premium (Estilo unificado)
+    // CONFIRMACION MEDIANTE ALERTA PREMIUM (ESTILO UNIFICADO)
     const confirmed = await showConfirm(
         '', 
         `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
@@ -286,7 +286,7 @@ export function showCreateUserModal() {
 
     if (!roleSelect) return;
 
-    // Reiniciar opciones
+    // REINICIAR OPCIONES
     roleSelect.innerHTML = `
         <option value="user" style="background: #111;">Cliente</option>
         <option value="staff" style="background: #111;">Empleado</option>
@@ -295,7 +295,7 @@ export function showCreateUserModal() {
     `;
 
     if (rol === 'local_admin') {
-        // Los administradores locales solo crean personal para su punto
+        // LOS ADMINISTRADORES LOCALES SOLO CREAN PERSONAL PARA SU PUNTO
         roleSelect.innerHTML = `
             <option value="staff" style="background: #111;">Empleado</option>
             <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
@@ -308,7 +308,7 @@ export function showCreateUserModal() {
             branchSelect.disabled = true;
         }
     } else {
-        // Admin Global ve todo
+        //ADMIN GLOBAL VE TODO
         if (branchRow) branchRow.style.display = 'none';
         if (branchSelect) branchSelect.disabled = false;
         roleSelect.value = 'user';
@@ -322,7 +322,7 @@ export function toggleBranchSelection() {
     const branchRow = document.getElementById('branch-selection-row');
     const userRol = localStorage.getItem('rol');
 
-    // Si el que está creando es un admin local, la fila de sede ya está visible y bloqueada
+    // SI EL QUE ESTA CREANDO ES UN ADMIN LOCAL, LA FILA DE SEDE YA ESTA VISIBLE Y BLOQUEADA
     if (userRol === 'local_admin') return;
 
     if (branchRow) {
@@ -376,7 +376,7 @@ export async function refreshSystemDiagnostics() {
         const data = res.data;
         const sucursal = (localStorage.getItem('sucursal') || '').replace('AUTOPASS ', '').toUpperCase().trim();
 
-        // 1. Núcleo y Barreras
+        // 1. NUCLEO Y BARRERAS
         const updateDot = (id, status) => {
             const dot = document.getElementById(`diag-${id}-dot`);
             if (!dot) return;
@@ -386,11 +386,11 @@ export async function refreshSystemDiagnostics() {
         updateDot('api', data.api);
         updateDot('db', data.database);
         
-        // Barreras (Simulamos con API/MQTT por ahora)
+        // BARRERAS (SIMULAMOS CON API/MQTT POR AHORA)
         updateDot('barrera-entrada', data.api);
         updateDot('barrera-salida', data.api);
 
-        // 2. Lectores de Patente (ALPR)
+        // 2. LECTORES DE PATENTE (ALPR)
         const updateALPRDot = (type, status) => {
             const dot = document.getElementById(`diag-cam-${type}-dot`);
             if (!dot) return;
@@ -403,7 +403,7 @@ export async function refreshSystemDiagnostics() {
         updateALPRDot('entrada', data.alpr[entryKey] || 'OFFLINE');
         updateALPRDot('salida', data.alpr[exitKey] || 'OFFLINE');
 
-        // Overall Status
+        // OVERALL STATUS
         const overall = document.getElementById('sys-overall-status');
         if (overall) {
             const allOk = data.api === 'ONLINE' && data.database === 'ONLINE';
@@ -425,33 +425,33 @@ export async function loadSettings() {
             if (el) el.value = cfg[key];
         });
         loadFloors();
-        refreshSystemDiagnostics(); // Carga inicial
+        refreshSystemDiagnostics(); // CARGA INICIAL
     }
 }
 
 export function switchSettingsTab(tabId, btn) {
-    // 1. Alternar secciones
+    // 1. ALTERNAR SECCIONES
     document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
     const target = document.getElementById(`set-section-${tabId}`);
     if (target) target.style.display = 'block';
 
-    // 2. Alternar botones
+    // 2. ALTERNAR BOTONES
     document.querySelectorAll('.btn-tab-mini').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
-    // 3. Carga específica de monitoreo
+    // 3. CARGA ESPECIFICA DE MONITOREO
     if (tabId === 'monitoring' && window.loadCameraSettings) {
         window.loadCameraSettings();
     }
 }
 
 export function switchRatesTab(type, btn) {
-    // 1. Alternar grupos
+    // 1. ALTERNAR GRUPOS
     document.querySelectorAll('.rate-group').forEach(g => g.style.display = 'none');
     const target = document.getElementById(`rate-group-${type}`);
     if (target) target.style.display = 'block';
 
-    // 2. Alternar botones
+    // 2. ALTERNAR BOTONES
     document.querySelectorAll('.btn-tab-sub').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
 }
@@ -583,7 +583,7 @@ export function toggleLevelEdit(id) {
     if (!block) return;
 
     const isEditing = block.classList.toggle('editing');
-    // Encontrar todos los inputs dentro del nivel específico
+    // ENCONTRAR TODOS LOS INPUTS DENTRO DEL NIVEL ESPECIFICO
     const inputs = block.querySelectorAll('.stat-val-input');
     const btnEdit = block.querySelector('.btn-edit-level');
     const btnSave = block.querySelector('.btn-save-level');
@@ -594,13 +594,13 @@ export function toggleLevelEdit(id) {
         btnEdit.innerHTML = '<i class="fas fa-times"></i>';
         btnEdit.classList.add('danger');
         if (btnSave) btnSave.style.display = 'flex';
-        // Foco en el primer input si existe
+        // FOCO EN EL PRIMER INPUT SI EXISTE
         if (inputs.length > 0) inputs[0].focus();
     } else {
         btnEdit.innerHTML = '<i class="fas fa-pen-to-square"></i>';
         btnEdit.classList.remove('danger');
         if (btnSave) btnSave.style.display = 'none';
-        loadFloors(); // Recargar para resetear estados
+        loadFloors(); // RECARGAR PARA RESETEAR ESTADOS
     }
 }
 
@@ -676,7 +676,7 @@ export async function handleCreateFloor(event) {
     const btn = event.target.querySelector('button[type="submit"]');
     const editId = document.getElementById('edit-floor-id').value;
     
-    // Necesitamos el branch_id
+    //NECESITAMOS EL BRANCH_ID
     const resBranches = await api.get('/admin/branches');
     const mySucursal = localStorage.getItem('sucursal')?.replace('AUTOPASS ', '').trim() || '';
     
@@ -759,7 +759,7 @@ export async function saveAllRates() {
 
     if (success) {
         showToast('Tarifas actualizadas correctamente.');
-        // Si hay grupos en edición, cerrarlos
+        // SI HAY GRUPOS EN EDICION, CERRARLOS
         document.querySelectorAll('.rate-group').forEach(g => {
             g.classList.remove('editing');
             g.querySelectorAll('input').forEach(i => i.disabled = true);
@@ -778,7 +778,7 @@ export function toggleRateEdit(type) {
     const isEditing = group.classList.contains('editing');
 
     if (!isEditing) {
-        // Entrar en modo edición
+        // ENTRAR EN MODO EDICION
         inputs.forEach(input => input.disabled = false);
         group.classList.add('editing');
         btn.innerHTML = '<i class="fas fa-check mr-8"></i> APLICAR';
@@ -786,7 +786,7 @@ export function toggleRateEdit(type) {
         btn.style.color = '#4CAF50';
         if (inputs.length > 0) inputs[0].focus();
     } else {
-        // Al presionar "APLICAR", disparamos el guardado
+        // AL PRESIONAR "APLICAR", DISPARAMOS EL GUARDADO
         saveRateGroup(type);
     }
 }
@@ -820,7 +820,7 @@ export async function saveRateGroup(type) {
     });
     summary += '</div>';
 
-    // Función para resetear la UI del grupo (bloquear)
+    // FUNCION PARA RESETEAR LA UI DEL GRUPO (BLOQUEAR)
     const resetUI = () => {
         inputs.forEach(input => input.disabled = true);
         group.classList.remove('editing');
@@ -867,11 +867,11 @@ export async function saveCapacities() {
 
     let success = true;
     
-    // Actualizar Autos
+    // ACTUALIZAR AUTOS
     const resAutos = await api.post(`/admin/settings/prices?clave=capacidad_total&valor=${capAutos}`);
     if (!resAutos.ok) success = false;
 
-    // Actualizar Motos
+    // ACTUALIZAR MOTOS
     const resMotos = await api.post(`/admin/settings/prices?clave=capacidad_motos&valor=${capMotos}`);
     if (!resMotos.ok) success = false;
 
@@ -904,7 +904,7 @@ export async function exportFinanceData() {
         return;
     }
     
-    // Generar CSV
+    // GENERAR CSV
     const headers = ['Fecha y Hora', 'Vehículo / Patente', 'Monto Abonado', 'Método de Pago', 'Estado/Tipo'];
     const rows = data.map(p => {
         const dateStr = formatDate(p.fecha_pago);
@@ -922,7 +922,7 @@ export async function exportFinanceData() {
     
     const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
     
-    // Crear y descargar archivo
+    // CREAR Y DESCARGAR ARCHIVO
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -947,7 +947,7 @@ export async function deleteUserAdmin(id) {
     else showToast(res?.error || 'Error');
 }
 
-// --- GESTIÓN DE SUCURSALES ---
+// --- GESTION DE SUCURSALES ---
 
 export function showCreateBranchModal() {
     document.getElementById('form-add-branch').reset();
@@ -958,7 +958,7 @@ export function showCreateBranchModal() {
     
     if (window.openModal) window.openModal('modal-add-branch');
 
-    // Inicializar mapa (Morón por defecto)
+    // INICIALIZAR MAPA (MORON POR DEFECTO)
     setTimeout(() => {
         initBranchMap();
         if (branchMarker) {
@@ -1072,15 +1072,15 @@ export function showBranchFloors(id) {
     const tbody = document.getElementById('branch-floors-body');
     if (!tbody) return;
 
-    // Calcular Planta Baja (PB) - Restamos la ocupación de los pisos a la total reportada
+    // CALCULAR PLANTA BAJA (PB) - RESTAMOS LA OCUPACION DE LOS PISOS A LA TOTAL REPORTADA
     const floorsSumAutos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_actual, 0);
     const floorsSumMotos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_motos, 0);
     
-    // b.ocupacion_autos_total es el total real de la sede (incluye PB)
+    // B.OCUPACION_AUTOS_TOTAL ES EL TOTAL REAL DE LA SEDE (INCLUYE PB)
     const pbOccAutos = Math.max(0, b.ocupacion_autos_total - floorsSumAutos);
     const pbOccMotos = Math.max(0, b.ocupacion_motos_total - floorsSumMotos);
     
-    // La capacidad de PB es b.capacidad_autos_total - sum(cap_pisos)
+    // LA CAPACIDAD DE PB ES B.CAPACIDAD_AUTOS_TOTAL - SUM(CAP_PISOS)
     const floorsCapAutos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_total, 0);
     const floorsCapMotos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_motos, 0);
     const pbCapAutos = b.capacidad_autos_total - floorsCapAutos;
@@ -1138,19 +1138,19 @@ export function editBranch(id) {
     document.getElementById('branch-direccion').value = b.direccion;
     document.getElementById('branch-telefono').value = b.telefono;
     
-    // Coordenadas
+    // COORDENADAS
     const lat = b.latitude || -34.6508;
     const lng = b.longitude || -58.6228;
     document.getElementById('branch-latitude').value = lat;
     document.getElementById('branch-longitude').value = lng;
 
-    // Configurar logo
+    // CONFIGURAR LOGO
     const preview = document.querySelector('#branch-logo-preview img');
     if (preview) {
         preview.src = b.logo_url || '/static/images/logo.png';
         preview.style.opacity = "1";
     }
-    document.getElementById('branch-logo-file').value = ''; // Limpiar input file
+    document.getElementById('branch-logo-file').value = ''; // LIMPIAR INPUT FILE
 
     document.getElementById('branch-is-24h').checked = b.is_24h;
     document.getElementById('branch-horario').value = b.is_24h ? '' : b.horario;
@@ -1161,7 +1161,7 @@ export function editBranch(id) {
     
     if (window.openModal) window.openModal('modal-add-branch');
 
-    // Inicializar mapa y marcador
+    // INICIALIZAR MAPA Y MARCADOR
     setTimeout(() => {
         initBranchMap();
         updateBranchMarker(lat, lng);
@@ -1208,7 +1208,7 @@ export async function handleCreateBranch(event) {
     const btn = event.target.querySelector('button[type="submit"]');
     const editId = document.getElementById('branch-id-edit').value;
     
-    // Usar FormData para envío de archivos
+    // USAR FORMDATA PARA ENVIO DE ARCHIVOS
     const formData = new FormData();
     formData.append('nombre', document.getElementById('branch-nombre').value);
     formData.append('direccion', document.getElementById('branch-direccion').value);
@@ -1230,8 +1230,8 @@ export async function handleCreateBranch(event) {
     const url = editId ? `/admin/branches/${editId}` : '/admin/branches';
     const method = editId ? 'patch' : 'post';
     
-    // Llamada directa a fetch para manejar multipart/form-data correctamente si el wrapper api.js no lo hace
-    // Pero api.js parece soportar body instanceof FormData
+    //LLAMADA DIRECTA UN FETCH PARA MANEJAR MULTIPART/FORM-DATA CORRECTAMENTE SI EL WRAPPER API.JS NO LO HACE
+    // PERO API.JS PARECE SOPORTAR BODY INSTANCEOF FORMDATA
     const res = await api[method](url, formData);
     
     if (res && res.ok) {
@@ -1302,11 +1302,11 @@ export function openEditUserModal(userId) {
 
     if (myRol === 'local_admin') {
         if (u.rol === 'user') {
-            // Si es un cliente, el admin local no puede cambiarle el rol
+            //SI ES UN CLIENTE, EL ADMIN LOCAL NO PUEDE CAMBIARLE EL ROL
             roleSelect.innerHTML = `<option value="user" style="background: #111;">Cliente</option>`;
             roleSelect.disabled = true;
         } else {
-            // Restricción para admin local con personal
+            // RESTRICCION PARA ADMIN LOCAL CON PERSONAL
             roleSelect.innerHTML = `
                 <option value="staff" style="background: #111;">Empleado</option>
                 <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
@@ -1321,7 +1321,7 @@ export function openEditUserModal(userId) {
             branchSelect.disabled = true;
         }
     } else {
-        // Admin Global
+        //ADMIN GLOBAL
         roleSelect.disabled = false;
         roleSelect.innerHTML = `
             <option value="user" style="background: #111;">Cliente</option>

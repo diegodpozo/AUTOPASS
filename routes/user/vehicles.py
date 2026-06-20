@@ -9,12 +9,12 @@ router = APIRouter()
 
 @router.get("/vehicles")
 def get_user_vehicles(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Lista todos los vehículos vinculados a la cuenta."""
+    """LISTA TODOS LOS VEHICULOS VINCULADOS A LA CUENTA."""
     return db.query(models.Vehicle).filter(models.Vehicle.user_id == current_user.id).all()
 
 @router.post("/vehicles")
 def add_user_vehicle(patente: str, marca_modelo: str, tipo: str = "Auto", db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Vincula un nuevo vehículo validando el formato de patente argentina/mercosur."""
+    """VINCULA UN NUEVO VEHICULO VALIDANDO EL FORMATO DE PATENTE ARGENTINA/MERCOSUR."""
     import re
     from routes.parking import normalize_plate, format_plate, normalize_name
     
@@ -22,8 +22,8 @@ def add_user_vehicle(patente: str, marca_modelo: str, tipo: str = "Auto", db: Se
         raise HTTPException(status_code=400, detail="Tipo de vehículo inválido. Use 'Auto' o 'Moto'.")
 
     p_clean = normalize_plate(patente)
-    # Patentes de autos (3 letras 3 números o 2 letras 3 números 2 letras)
-    # Patentes de motos (1 letra 3 números 3 letras o similar) - Simplificamos validación o permitimos ambas
+    # PATENTES DE AUTOS (3 LETRAS 3 NUMEROS O 2 LETRAS 3 NUMEROS 2 LETRAS)
+    # PATENTES DE MOTOS (1 LETRA 3 NUMEROS 3 LETRAS O SIMILAR) - SIMPLIFICAMOS VALIDACION O PERMITIMOS AMBAS
     old_format = re.match(r'^[A-Z]{3}[0-9]{3}$', p_clean)
     new_format = re.match(r'^[A-Z]{2}[0-9]{3}[A-Z]{2}$', p_clean)
     moto_format = re.match(r'^[0-9]{3}[A-Z]{3}$', p_clean) or re.match(r'^[A-Z]{1}[0-9]{3}[A-Z]{3}$', p_clean)
@@ -46,7 +46,7 @@ def add_user_vehicle(patente: str, marca_modelo: str, tipo: str = "Auto", db: Se
 
 @router.delete("/vehicles/{patente}")
 def delete_user_vehicle(patente: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Desvincula un vehículo de la cuenta del usuario."""
+    """DESVINCULA UN VEHICULO DE LA CUENTA DEL USUARIO."""
     from routes.parking import normalize_plate
     p_clean = normalize_plate(patente)
     vehicle = db.query(models.Vehicle).filter(func.replace(models.Vehicle.patente, ' ', '') == p_clean, models.Vehicle.user_id == current_user.id).first()

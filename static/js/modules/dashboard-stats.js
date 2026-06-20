@@ -2,8 +2,8 @@ import api from './api.js';
 import { formatDate, formatPlate } from './utils.js';
 
 /**
- * DASHBOARD STATS MODULE
- * Carga de datos en tiempo real, ocupación y métricas.
+ * PANEL ESTADISTICAS MODULO
+ * CARGA DE DATOS EN TIEMPO REAL, OCUPACION Y METRICAS.
  */
 
 export function initOccupancyWS() {
@@ -19,7 +19,7 @@ export function initOccupancyWS() {
         const data = JSON.parse(event.data);
         console.log('[WS Occupancy] Update received:', data);
         
-        // Refrescar componentes clave
+        // REFRESCAR COMPONENTES CLAVE
         loadLiveStats();
         loadRecentLogs();
         loadOccupancy();
@@ -40,19 +40,19 @@ export async function loadLiveStats() {
     if (resStatus && resStatus.ok) {
         const { disponibilidad: free, ocupacion_actual: occupied, capacidad_total: total, ocupacion_motos: occMotos, capacidad_motos: capMotos, disponibilidad_motos: freeMotos } = resStatus.data;
 
-        // Autos
+        // AUTOS
         const freeEl = document.getElementById('stat-free');
         if (freeEl) freeEl.innerText = free;
         const barFree = document.getElementById('bar-free');
         if (barFree) barFree.style.width = `${(free / total) * 100}%`;
 
-        // Motos
+        // MOTOS
         const freeMotosEl = document.getElementById('stat-free-motos');
         if (freeMotosEl) freeMotosEl.innerText = freeMotos;
         const barFreeMotos = document.getElementById('bar-free-motos');
         if (barFreeMotos) barFreeMotos.style.width = `${(freeMotos / capMotos) * 100}%`;
 
-        // Ocupación Total y KPI Moto
+        // OCUPACION TOTAL Y KPI MOTO
         const occMotosEl = document.getElementById('occ-stat-motos');
         if (occMotosEl) occMotosEl.innerText = occMotos;
     }
@@ -78,7 +78,7 @@ export async function loadRecentLogs() {
 
     fullLogsData = res.data;
     
-    // Actualizar patentes en tiempo real (Cajas de cámara)
+    // ACTUALIZAR PATENTES EN TIEMPO REAL (CAJAS DE CAMARA)
     const lastEntry = fullLogsData.find(l => l.tipo_evento === 'ENTRADA');
     const lastExit = fullLogsData.find(l => l.tipo_evento === 'SALIDA');
 
@@ -90,19 +90,19 @@ export async function loadRecentLogs() {
         if (log) {
             const plate = formatPlate(log.patente_detectada);
             
-            // 1. Actualizar Footer (Persistente)
+            // 1. ACTUALIZAR FOOTER (PERSISTENTE)
             if (plateFooterEl) plateFooterEl.innerText = plate;
 
-            // 2. Manejar Overlay Interno (Persistente en esquina)
+            // 2. MANEJAR OVERLAY INTERNO (PERSISTENTE EN ESQUINA)
             if (overlayEl) {
                 const overlayValue = overlayEl.querySelector('.overlay-value');
                 const lastPlate = overlayEl.getAttribute('data-last-plate');
 
-                // Siempre mostrar la última detectada
+                // SIEMPRE MOSTRAR LA ULTIMA DETECTADA
                 if (overlayValue) overlayValue.innerText = plate;
                 overlayEl.classList.add('active');
 
-                // Si es una patente nueva, disparar animación de detección
+                // SI ES UNA PATENTE NUEVA, DISPARAR ANIMACION DE DETECCION
                 if (plate !== lastPlate) {
                     overlayEl.setAttribute('data-last-plate', plate);
                     
@@ -213,7 +213,7 @@ export async function loadOccupancy() {
     if (res.ok) {
         fullOccupancyData = res.data;
         
-        // 1. Manejo de pisos en el formulario manual
+        // 1. MANEJO DE PISOS EN EL FORMULARIO MANUAL
         const mySucursal = localStorage.getItem('sucursal')?.replace('AUTOPASS ', '').trim() || '';
         const branch = resBranches.ok ? resBranches.data.find(b => b.nombre === mySucursal) : null;
         
@@ -257,7 +257,7 @@ function applyOccupancyFilter() {
         );
     }
     
-    // Si la página actual queda fuera de rango tras filtrar, volvemos a la 1
+    // SI LA PAGINA ACTUAL QUEDA FUERA DE RANGO TRAS FILTRAR, VOLVEMOS A LA 1
     const totalPages = Math.ceil(filteredOccupancyData.length / itemsPerPageOcc);
     if (currentPageOcc > totalPages) currentPageOcc = 1;
     if (currentPageOcc === 0 && totalPages > 0) currentPageOcc = 1;
@@ -349,12 +349,12 @@ window.filterOccupancy = (query) => {
 export async function cancelStay(plate, type, debt, ingreso) {
     const { showConfirm, showToast, formatPlate } = await import('./utils.js');
     
-    // Calcular si está en cortesía (10 min) para mostrar deuda 0 en el mensaje
+    // CALCULAR SI ESTA EN CORTESIA (10 MIN) PARA MOSTRAR DEUDA 0 EN EL MENSAJE
     const entryDate = new Date(ingreso);
     const minutesElapsed = (new Date() - entryDate) / 60000;
     const displayDebt = minutesElapsed <= 10 ? 0 : debt;
 
-    // Confirmación mediante alerta premium (Estilo unificado)
+    // CONFIRMACION MEDIANTE ALERTA PREMIUM (ESTILO UNIFICADO)
     const confirmed = await showConfirm(
         '', 
         `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">

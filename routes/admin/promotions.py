@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/promotions", response_model=List[schemas.PromotionResponse])
 def list_promotions_admin(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Lista todas las promociones. Los locales solo ven las de su sede."""
+    """LISTA TODAS LAS PROMOCIONES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
     q = db.query(models.Promotion)
     if admin.rol != "admin":
         q = q.filter(models.Promotion.sucursal == admin.sucursal)
@@ -23,7 +23,7 @@ def list_promotions_admin(db: Session = Depends(get_db), admin: models.User = De
 
 @router.post("/promotions")
 def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Crea una nueva promoción vinculada a la sede del administrador."""
+    """CREA UNA NUEVA PROMOCION VINCULADA A LA SEDE DEL ADMINISTRADOR."""
     sucursal = admin.sucursal if admin.rol != "admin" else data.sucursal
     
     new_promo = models.Promotion(
@@ -40,7 +40,7 @@ def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db
 
 @router.post("/promotions/{promo_id}/toggle")
 def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Activa o desactiva una promoción."""
+    """ACTIVA O DESACTIVA UNA PROMOCION."""
     promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     
@@ -53,7 +53,7 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
 
 @router.delete("/promotions/{promo_id}")
 def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """Elimina una promoción permanentemente."""
+    """ELIMINA UNA PROMOCION PERMANENTEMENTE."""
     promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     

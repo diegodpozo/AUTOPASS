@@ -5,7 +5,7 @@ from models import Base
 from models.enums import VehicleType
 from services.billing_service import BillingService
 
-# Setup test database
+#CONFIGURACION DE BASE DE DATOS DE PRUEBA
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -19,11 +19,11 @@ def db():
     Base.metadata.drop_all(bind=engine)
 
 def test_calculate_total_amount_hora(db):
-    # Mocking necessary settings or just testing math logic
-    # In a real scenario, seed Settings table
+    #SIMULANDO AJUSTES NECESARIOS O SOLO PROBANDO LOGICA MATEMATICA
+    #EN UN ESCENARIO REAL, SEMBRAR TABLA DE AJUSTES
     monto = BillingService.calculate_total_amount(
         db, "hora", "2026-06-12T10:00:00", "2026-06-12T12:00:00", 
         tipo_vehiculo=VehicleType.AUTO
     )
-    # Default base rate is 1000, 2 hours = 2000
+    #LA TARIFA BASE POR DEFECTO ES 1000, 2 HORAS = 2000
     assert monto == 2000.0

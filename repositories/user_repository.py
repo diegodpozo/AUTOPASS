@@ -1,27 +1,27 @@
 from sqlalchemy.orm import Session
 import models
 
-# --- REPOSITORIO DE USUARIOS (ACCESO A DATOS) ---
+#--- REPOSITORIO DE USUARIOS (ACCESO UN DATOS) ---
 
 class UserRepository:
     @staticmethod
     def get_by_id(db: Session, user_id: int) -> models.User:
-        """Obtiene un usuario por su identificador único."""
+        """OBTIENE UN USUARIO POR SU IDENTIFICADOR UNICO."""
         return db.query(models.User).filter(models.User.id == user_id).first()
 
     @staticmethod
     def get_by_email(db: Session, email: str) -> models.User:
-        """Busca un usuario por su dirección de correo electrónico."""
+        """BUSCA UN USUARIO POR SU DIRECCION DE CORREO ELECTRONICO."""
         return db.query(models.User).filter(models.User.email == email.lower().strip()).first()
 
     @staticmethod
     def update_balance(db: Session, user: models.User, amount: float):
-        """Actualiza el saldo de la cuenta de un usuario."""
+        """ACTUALIZA EL SALDO DE LA CUENTA DE UN USUARIO."""
         user.saldo += amount
         db.commit()
 
     @staticmethod
     def add_points(db: Session, user: models.User, points: int):
-        """Incrementa el puntaje acumulado de fidelización."""
+        """INCREMENTA EL PUNTAJE ACUMULADO DE FIDELIZACION."""
         user.puntos_acumulados += points
         db.commit()

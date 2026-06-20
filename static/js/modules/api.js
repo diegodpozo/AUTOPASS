@@ -1,6 +1,6 @@
 /**
- * API MODULE
- * Centralización de peticiones HTTP con manejo de tokens y errores.
+ * API MODULO
+ * CENTRALIZACION DE PETICIONES HTTP CON MANEJO DE TOKENS Y ERRORES.
  */
 
 const API_BASE = '/v1';

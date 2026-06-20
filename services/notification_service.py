@@ -11,15 +11,15 @@ class NotificationService:
 
     @classmethod
     def notify_occupancy_change(cls, db: Session, sucursal_norm: Optional[str] = None):
-        """Dispara la notificación de aforo de forma asíncrona."""
+        """DISPARA LA NOTIFICACION DE AFORO DE FORMA ASINCRONA."""
         if cls._occupancy_manager:
             try:
-                # Obtenemos el loop actual para programar la tarea
+                # OBTENEMOS EL LOOP ACTUAL PARA PROGRAMAR LA TAREA
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     loop.create_task(cls._occupancy_manager.broadcast_update(db, sucursal_norm))
                 else:
-                    # Si no hay loop corriendo (test o script), ignoramos o corremos uno
+                    #SI NO HAY LOOP CORRIENDO (PRUEBA O SCRIPT), IGNORAMOS O CORREMOS UNO
                     pass
             except Exception as e:
                 print(f"[NotificationService] Error al notificar: {e}")

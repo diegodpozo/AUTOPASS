@@ -2,8 +2,8 @@ import api from './api.js';
 import { normalizeSystemName, showToast } from './utils.js';
 
 /**
- * DASHBOARD UI MODULE
- * Gestión de elementos visuales, navegación y salud del sistema.
+ * PANEL UI MODULO
+ * GESTION DE ELEMENTOS VISUALES, NAVEGACION Y SALUD DEL SISTEMA.
  */
 
 export function initClock() {
@@ -36,7 +36,7 @@ export async function checkSystemHealth() {
         updateHealthNode('node-db', data.database === 'ONLINE');
         updateHealthNode('node-api', data.api === 'ONLINE');
         
-        // Aislamiento: Buscar estados de la sucursal actual (Normalizado)
+        // AISLAMIENTO: BUSCAR ESTADOS DE LA SUCURSAL ACTUAL (NORMALIZADO)
         const sucursal = normalizeSystemName(sucursalRaw);
         const entryKey = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA_PRINCIPAL';
         const exitKey = sucursal ? `${sucursal}_SALIDA` : 'SALIDA_PRINCIPAL';
@@ -47,7 +47,7 @@ export async function checkSystemHealth() {
         updateHealthNode('node-ocr-entry', entryOnline);
         updateHealthNode('node-ocr-exit', exitOnline);
 
-        // Actualizar indicadores "LIVE" sobre los cuadros de video
+        // ACTUALIZAR INDICADORES "LIVE" SOBRE LOS CUADROS DE VIDEO
         const indEntry = document.getElementById('indicator-entry');
         const indExit = document.getElementById('indicator-exit');
         if (indEntry) indEntry.className = entryOnline ? 'live-indicator online' : 'live-indicator';
@@ -56,7 +56,7 @@ export async function checkSystemHealth() {
 }
 
 /**
- * Actualiza visualmente un nodo de salud (dot + texto).
+ * ACTUALIZA VISUALMENTE UN NODO DE SALUD (DOT + TEXTO).
  */
 function updateHealthNode(id, isOnline) {
     const node = document.getElementById(id);
@@ -83,10 +83,10 @@ export function initVideoStreams() {
     const sucursalRaw = localStorage.getItem('sucursal') || '';
     const token = localStorage.getItem('token');
     
-    // Normalizar la sucursal para armar los IDs de cámara
+    // NORMALIZAR LA SUCURSAL PARA ARMAR LOS IDS DE CAMARA
     const sucursal = normalizeSystemName(sucursalRaw);
     
-    // Si no hay sucursal (Admin Global), usamos los IDs principales
+    //SI NO HAY SUCURSAL (ADMIN GLOBAL), USAMOS LOS IDS PRINCIPALES
     const entryId = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA_PRINCIPAL';
     const exitId = sucursal ? `${sucursal}_SALIDA` : 'SALIDA_PRINCIPAL';
 
@@ -102,7 +102,7 @@ function setupSocket(type, cameraId, token) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/v1/system/ws/video/${cameraId}?token=${token}`;
     
-    // Si no hay token, no intentamos conectar para evitar entrar en modo "sender" (ALPR Node)
+    //SI NO HAY TOKEN, NO INTENTAMOS CONECTAR PARA EVITAR ENTRAR EN MODO "EMISOR" (ALPR NODE)
     if (!token) {
         console.warn(`[WS] Abortando conexión para ${cameraId}: Token no encontrado.`);
         return;
@@ -115,7 +115,7 @@ function setupSocket(type, cameraId, token) {
         const img = document.getElementById(`cam-${type}`);
         if (img) {
             img.src = `data:image/jpeg;base64,${event.data}`;
-            // Si el onerror del HTML la ocultó (opacity:0), la volvemos a mostrar
+            // SI EL ONERROR DEL HTML LA OCULTO (OPACITY:0), LA VOLVEMOS A MOSTRAR
             if (img.style.opacity === '0') {
                 img.style.opacity = '1';
             }
@@ -126,7 +126,7 @@ function setupSocket(type, cameraId, token) {
         const tab = document.getElementById('tab-live');
         if (tab && tab.classList.contains('active')) {
             setTimeout(() => {
-                 // Solo reintentar si el socket sigue siendo el actual
+                 // SOLO REINTENTAR SI EL SOCKET SIGUE SIENDO EL ACTUAL
                  if (videoSockets[type] === socket) {
                      setupSocket(type, cameraId, token);
                  }
@@ -164,7 +164,7 @@ export function switchTab(tabId, element) {
     localStorage.setItem('activeAdminTab', tabId);
     if (window.loadTabData) window.loadTabData(tabId);
 
-    // Bucle de Diagnóstico para la pestaña de Configuración
+    // BUCLE DE DIAGNOSTICO PARA LA PESTANA DE CONFIGURACION
     if (tabId === 'settings') {
         if (!window._diagInterval) {
             window._diagInterval = setInterval(() => {
@@ -242,7 +242,7 @@ export function toggleCollapsible(contentId, chevronId, maxHeight = '400px') {
 }
 
 /**
- * GESTIÓN DE CÁMARAS (V8.9.5 - MIGRADO A SETTINGS)
+ * GESTION DE CAMARAS (V8.9.5 - MIGRADO UN AJUSTES)
  */
 
 export async function loadCameraSettings() {
@@ -260,7 +260,7 @@ export async function loadCameraSettings() {
             const sourceInput = document.getElementById(`cam-source-${typeLower}`);
             if (sourceInput) {
                 sourceInput.value = res.data.source;
-                // Si ya tiene valor, bloqueamos el input y ponemos icono de editar
+                // SI YA TIENE VALOR, BLOQUEAMOS EL INPUT Y PONEMOS ICONO DE EDITAR
                 if (res.data.source) {
                     sourceInput.disabled = true;
                     const btn = document.getElementById(`btn-save-cam-${typeLower}`);
@@ -302,7 +302,7 @@ export async function toggleCameraServiceSettings(type, gateId, action) {
         showToast(res.data.message, 'success');
         updateCameraServiceSettingsUI(type, gateId, action === 'start');
         if (action === 'start') {
-            initVideoStreams(); // Refrescar feeds en la otra pestaña
+            initVideoStreams(); // REFRESCAR FEEDS EN LA OTRA PESTANA
         }
     } else {
         showToast(res.error || 'Error en el servicio', 'error');
@@ -313,7 +313,7 @@ export async function saveCameraSettings(type, btn) {
     const typeLower = type.toLowerCase();
     const input = document.getElementById(`cam-source-${typeLower}`);
     
-    // Si el input está bloqueado, lo desbloqueamos para editar
+    // SI EL INPUT ESTA BLOQUEADO, LO DESBLOQUEAMOS PARA EDITAR
     if (input && input.disabled) {
         input.disabled = false;
         input.focus();
@@ -330,7 +330,7 @@ export async function saveCameraSettings(type, btn) {
     const res = await api.post('/system/camera-config', { gate_id: gateId, source: source });
     if (res.ok) {
         showToast(`Configuración de ${type} guardada`, 'success');
-        // Bloqueamos el input y cambiamos el icono a Lápiz (Editar)
+        // BLOQUEAMOS EL INPUT Y CAMBIAMOS EL ICONO A LAPIZ (EDITAR)
         if (input) input.disabled = true;
         if (btn) btn.innerHTML = '<i class="fas fa-pen" style="font-size: 0.9rem;"></i>';
         initVideoStreams();
@@ -340,7 +340,7 @@ export async function saveCameraSettings(type, btn) {
 }
 
 /**
- * UI: TOGGLE LINK CAMARA (v9.1.5)
+ * UI: TOGGLE LINK CAMARA (V9.1.5)
  */
 export function toggleCameraLink(type, show) {
     const typeLower = type.toLowerCase();
@@ -353,7 +353,7 @@ export function toggleCameraLink(type, show) {
     }
 }
 /**
- * LEGACY - GESTIÓN DE CÁMARAS (CONFIGURACIÓN Y SERVICIO)
+ * LEGACY - GESTION DE CAMARAS (CONFIGURACION Y SERVICIO)
  */
 
 export async function openCameraConfig(type) {
@@ -409,7 +409,7 @@ export async function toggleCameraService(gateId, action) {
         if (window.showToast) window.showToast(res.data.message, 'success');
         updateCameraServiceUI(gateId, action === 'start');
         
-        // Si iniciamos, cerramos el modal para ver el feed
+        // SI INICIAMOS, CERRAMOS EL MODAL PARA VER EL FEED
         if (action === 'start') {
             setTimeout(() => {
                 if (window.closeModal) window.closeModal('modal-cam-config');
@@ -418,7 +418,7 @@ export async function toggleCameraService(gateId, action) {
         }
     } else {
         if (window.showToast) window.showToast(res.error || 'Error en el servicio', 'error');
-        // Refrescar estado real por si hubo error
+        // REFRESCAR ESTADO REAL POR SI HUBO ERROR
         const statusRes = await api.get(`/system/camera-config/${gateId}`);
         if (statusRes.ok) updateCameraServiceUI(gateId, statusRes.data.is_running);
     }
@@ -433,7 +433,7 @@ export async function handleSaveCamConfig(event) {
     if (res.ok) {
         if (window.showToast) window.showToast('Configuración guardada', 'success');
         if (window.closeModal) window.closeModal('modal-cam-config');
-        // Refrescar streams por si cambió la IP
+        // REFRESCAR STREAMS POR SI CAMBIO LA IP
         initVideoStreams();
     } else {
         if (window.showToast) window.showToast(res.error || 'Error al guardar', 'error');
