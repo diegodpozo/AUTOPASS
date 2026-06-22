@@ -213,11 +213,13 @@ class ALPREngine:
         except: pass
 
 class VideoStreamer:
-    def __init__(self, source):
+    def __init__(self, source, target_width=640):
         self.cap = cv2.VideoCapture(source)
-        # OPTIMIZACIONES PARA CAMARAS IP (EVITAR LAG POR BUFFER)
         if isinstance(source, str) and source.startswith("http"):
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.target_width = target_width
         self.current_frame = None
         self.is_running = True
         self.lock = threading.Lock()
@@ -226,13 +228,23 @@ class VideoStreamer:
         return self
     def _update(self):
         while self.is_running:
-            ret, frame = self.cap.read()
-            if not ret: 
-                time.sleep(1) # REINTENTO
-                continue
-            with self.lock: self.current_frame = frame
+            try:
+                ret, frame = self.cap.read()
+                if not ret:
+                    time.sleep(1)
+                    continue
+                h, w = frame.shape[:2]
+                if w > self.target_width:
+                    scale = self.target_width / w
+                    new_w = self.target_width
+                    new_h = int(h * scale)
+                    frame = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+                with self.lock: self.current_frame = frame
+            except Exception:
+                time.sleep(1)
     def get_frame(self):
-        with self.lock: return self.current_frame.copy() if self.current_frame is not None else None
+        with self.lock:
+            return self.current_frame.copy() if self.current_frame is not None else None
 
 async def ws_monitoring_worker(streamer):
     print(f"[*] Intentando conectar streaming a: {WS_BACKEND_URL}")
@@ -262,7 +274,7 @@ async def ws_monitoring_worker(streamer):
 def main():
     print(f"[*] Iniciando VideoStreamer con fuente: {VIDEO_SOURCE}")
     try:
-        streamer = VideoStreamer(VIDEO_SOURCE).start()
+        streamer = VideoStreamer(VIDEO_SOURCE, target_width=640).start()
     except Exception as e:
         print(f"[!] Error FATAL al iniciar VideoStreamer: {e}")
         return

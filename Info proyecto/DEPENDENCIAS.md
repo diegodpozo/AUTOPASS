@@ -38,6 +38,16 @@ Puedes instalar todas las dependencias ejecutando:
 pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt requests opencv-python easyocr
 ```
 
+### Post-instalación (Parche necesario)
+
+EasyOCR 1.7.2 requiere `get_display` desde `bidi`, pero `python-bidi` no lo exporta a nivel de paquete. Ejecutá este script después de instalar dependencias:
+
+```bash
+python scripts/patch_bidi.py
+```
+
+Esto agrega el import faltante en `bidi/__init__.py` automáticamente.
+
 ## Resumen de Versiones (pip freeze)
 Para asegurar la reproducibilidad, se recomienda el uso de un entorno virtual (`venv`). Las versiones principales probadas son:
 - FastAPI >= 0.100.0
