@@ -29,9 +29,10 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 ## Inicio Rápido
 
 1. **Instalar dependencias:** `pip install -r requirements.txt`
-2. **Inicializar DB:** `python init_db.py` (Maneja migraciones automáticas).
+2. **Parche EasyOCR:** `python scripts/patch_bidi.py` (Corrige error de importación de `bidi`).
+3. **Inicializar DB:** `python init_db.py` (Maneja migraciones automáticas).
 3. **Arrancar Servidor:** `run_server.bat`
-4. **Arrancar Cámaras:** `run_camera_entry.bat` y `run_camera_exit.bat`.
+4. **Arrancar Cámaras:** Configurar IPs desde Dashboard (Ajustes > Monitoreo) y presionar Play (▶). El backend inicia el servicio automáticamente.
 
 ## Tecnologías
 

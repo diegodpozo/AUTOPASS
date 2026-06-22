@@ -10,6 +10,11 @@ Sigue estos pasos para poner en marcha el sistema bajo la nueva arquitectura mod
 .\venv\Scripts\python.exe -m pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt requests opencv-python easyocr httpx pytest
 ```
 
+> **⚠️ POST-INSTALACIÓN:** Después de instalar dependencias, ejecutá el siguiente parche para evitar un error de importación de EasyOCR:
+> ```bash
+> .\venv\Scripts\python.exe scripts\patch_bidi.py
+> ```
+
 ## 2. Configuración de Entorno
 Crea o edita el archivo `.env` en la raíz:
 ```env
@@ -57,23 +62,14 @@ El sistema utiliza una arquitectura **RBAC** (Control de Acceso Basado en Roles)
 ```
 
 ### Iniciar Cámaras (ALPR)
-Abre terminales separadas para cada cámara:
 
-**Cámara de Entrada:**
-```bash
-.\run_camera_entry.bat
-```
+Las cámaras se configuran y controlan directamente desde el Dashboard en **Ajustes > Monitoreo**:
 
-**Cámara de Salida:**
-```bash
-.\run_camera_exit.bat
-```
+1. Ingresá la IP de la cámara en el campo correspondiente (Entrada/Salida).
+2. Presioná **Guardar**.
+3. Presioná **Play** (▶) en la cámara deseada — el backend inicia automáticamente el servicio `alpr_service.py` como proceso hijo.
 
-> **Configuración de IPWebcam (Celular):**
-> 1. Abre los archivos `.bat` con un editor de texto (Bloc de notas).
-> 2. Busca la línea `set VIDEO_SOURCE=http://TU_IP_CELULAR:8080/video`.
-> 3. Reemplaza `TU_IP_CELULAR` con la dirección IP que te muestra la aplicación IPWebcam en tu celular (ej: `192.168.1.50`).
-> 4. Guarda los cambios y ejecuta el script.
+No es necesario ejecutar nada en terminal.
 
 ## 5. Verificación de Integridad
 Ejecuta los tests automáticos para asegurar que la modularización está operativa:

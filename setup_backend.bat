@@ -47,7 +47,11 @@ if %errorlevel% neq 0 (
     venv\Scripts\pip.exe install -r requirements.txt
 )
 
-:: 4. Configurar Variables de Entorno (.env)
+:: 4. Aplicar parche de bidi (EasyOCR compatibility)
+echo [+] Aplicando parche de compatibilidad EasyOCR + python-bidi...
+venv\Scripts\python.exe scripts\patch_bidi.py
+
+:: 5. Configurar Variables de Entorno (.env)
 echo [+] Configurando archivo de variables de entorno (.env)...
 if not exist .env (
     copy .env.example .env >nul
@@ -84,6 +88,7 @@ echo.
 echo Para iniciar el sistema:
 echo 1. Ejecuta el script: run_server.bat
 echo    (Este script abrira automaticamente tu navegador por defecto)
+echo 2. Para camaras, configuralas desde el Dashboard (Ajustes > Monitoreo)
 echo.
 echo Acceso Web: http://localhost:8000
 echo.
