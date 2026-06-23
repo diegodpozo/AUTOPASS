@@ -55,6 +55,12 @@ class ReservationService:
     @staticmethod
     def create_reservation(db: Session, data: schemas.AdminReservationCreate) -> models.Reservation:
         """CREA UNA NUEVA RESERVA MANUAL DESDE EL PANEL ADMINISTRATIVO."""
+        # DEBUG: registrar payload admin para verificar sucursal
+        try:
+            print(f"[ADMIN RES CREATE] user_id={getattr(data,'user_id',None)} patente={getattr(data,'patente',None)} sucursal_nombre={getattr(data,'sucursal_nombre',None)}")
+        except Exception:
+            pass
+        
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente).first()
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
@@ -235,8 +241,10 @@ class ReservationService:
     def simulate_refund(db: Session, res: models.Reservation):
         """CALCULA EL REEMBOLSO POTENCIAL SIN EJECUTAR LA CANCELACION."""
         # 1. VERIFICACION DE PRESENCIA FISICA
+        import re
+        norm_pat = re.sub(r'[^A-Z0-9]', '', (res.patente or '').upper())
         vinc_log = db.query(models.AccessLog).filter(
-            models.AccessLog.patente_detectada == res.patente,
+            models.AccessLog.normalized_patente == norm_pat,
             models.AccessLog.tipo_evento == AccessEventType.ENTRADA,
             models.AccessLog.sucursal == res.sucursal_nombre
         ).order_by(models.AccessLog.id.desc()).first()
@@ -244,7 +252,7 @@ class ReservationService:
         es_presencial = False
         if vinc_log:
             salida = db.query(models.AccessLog).filter(
-                models.AccessLog.patente_detectada == res.patente,
+                models.AccessLog.normalized_patente == norm_pat,
                 models.AccessLog.tipo_evento == AccessEventType.SALIDA,
                 models.AccessLog.fecha_hora > vinc_log.fecha_hora
             ).first()

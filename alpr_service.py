@@ -30,6 +30,8 @@ if isinstance(VIDEO_SOURCE, str) and VIDEO_SOURCE.isdigit():
 
 GATE_TYPE = os.getenv("GATE_TYPE", "entrada").lower()
 RAW_GATE_ID = os.getenv("GATE_ID", "ENTRADA_PRINCIPAL" if GATE_TYPE == "entrada" else "SALIDA_PRINCIPAL")
+FORCE_OCR = os.getenv("ALPR_FORCE_OCR", "false").lower() in ("1", "true", "yes")
+print(f"[ALPR CONFIG] VIDEO_SOURCE={VIDEO_SOURCE} GATE_TYPE={GATE_TYPE} GATE_ID={RAW_GATE_ID} FORCE_OCR={FORCE_OCR}")
 
 def normalize_id(text):
     text = text.upper().replace("AUTOPASS ", "").strip()
@@ -42,7 +44,7 @@ WS_BACKEND_URL = BACKEND_URL.replace("http", "ws") + f"/v1/system/ws/video/{GATE
 print(f"[*] Nodo ALPR v8.1.0 (Screen-to-Screen) Iniciado: {GATE_ID}")
 
 # PARAMETROS SENSIBLES
-COOLDOWN_SECONDS = int(os.getenv("ALPR_COOLDOWN", 6))
+COOLDOWN_SECONDS = int(os.getenv("ALPR_COOLDOWN", 10))
 CONSENSUS_WINDOW = int(os.getenv("ALPR_CONSENSUS_WINDOW", 4))
 MIN_CONFIDENCE_VOTES = int(os.getenv("ALPR_MIN_CONFIDENCE", 1)) 
 OCR_INTERVAL = float(os.getenv("ALPR_OCR_INTERVAL", 0.15))
@@ -88,6 +90,8 @@ class ALPREngine:
         return "MERCOSUR (Otro)"
 
     def detect_motion(self, frame):
+        if FORCE_OCR:
+            return True
         small = cv2.resize(frame, (320, 240))
         gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
         if self.prev_gray is None:
@@ -167,10 +171,12 @@ class ALPREngine:
         while self.is_running:
             try:
                 frame = self.frame_queue.get(timeout=1)
+                print(f"[ALPR OCR] Procesando frame desde queue. queue_size={self.frame_queue.qsize()}")
                 
                 # QR DETECTION
                 qr_data, _, _ = self.qr_detector.detectAndDecode(frame)
                 if qr_data:
+                    print(f"[ALPR OCR] QR detectado: len={len(qr_data)} preview={qr_data[:80]}")
                     self.send_event("qr", qr_data, frame)
                     time.sleep(1); continue
                 
@@ -201,6 +207,17 @@ class ALPREngine:
             except Exception as e: pass
 
     def send_event(self, type, data, frame):
+        # Evitar reprocesar el mismo QR/patente en un corto periodo (debounce)
+        try:
+            key = f"{type}:" + re.sub(r'\s+', '', str(data)).upper()
+            now = time.time()
+            if self.last_validated_plate == key and (now - getattr(self, 'last_validation_time', 0)) < COOLDOWN_SECONDS:
+                print(f"[ALPR] Ignorando evento duplicado {key} dentro de cooldown")
+                return
+            self.last_validated_plate = key
+            self.last_validation_time = now
+        except Exception:
+            pass
         self.executor.submit(self._dispatch_request, type, data, frame)
 
     def _dispatch_request(self, type, data, frame):
@@ -209,8 +226,16 @@ class ALPREngine:
             img_b64 = base64.b64encode(buffer).decode('utf-8')
             endpoint = "/v1/access/validate-plate" if GATE_TYPE == "entrada" else "/v1/access/exit-plate"
             if type == "qr": endpoint = "/v1/access/validate-qr"
-            requests.post(f"{BACKEND_URL}{endpoint}", json={"gate_id": GATE_ID, "image_base64": img_b64, "plate" if type!="qr" else "qr_data": data}, timeout=3)
-        except: pass
+            payload_key = "plate" if type != "qr" else "qr_data"
+            payload = {"gate_id": GATE_ID, "image_base64": img_b64, payload_key: data}
+            print(f"[ALPR -> BACKEND] POST {BACKEND_URL}{endpoint} payload_keys={list(payload.keys())}")
+            try:
+                resp = requests.post(f"{BACKEND_URL}{endpoint}", json=payload, timeout=5)
+                print(f"[ALPR -> BACKEND] Response {resp.status_code}: {resp.text[:200]}")
+            except Exception as re:
+                print(f"[ALPR ERROR] Error enviando petición al backend: {type(re).__name__} - {re}")
+        except Exception as e:
+            print(f"[ALPR ERROR] Error preparando/serializando frame: {type(e).__name__} - {e}")
 
 class VideoStreamer:
     def __init__(self, source, target_width=640):
@@ -295,11 +320,39 @@ def main():
             if frame is None:
                 time.sleep(0.1); continue
             now = time.time()
+
+            # QUICK QR CHECK: detect QR on a small fast-resized frame to react faster than OCR
+            try:
+                small = cv2.resize(frame, (320, 240))
+                qr_data, _, _ = engine.qr_detector.detectAndDecode(small)
+                if qr_data:
+                    print(f"[ALPR QUICK QR] QR detectado en main loop: len={len(qr_data)} preview={qr_data[:80]}")
+                    engine.send_event("qr", qr_data, frame)
+                    last_ocr_time = now
+                    time.sleep(0.05)
+                    continue
+            except Exception:
+                pass
+
             if now - last_ocr_time > OCR_INTERVAL:
                 if engine.detect_motion(frame):
-                    if not engine.frame_queue.full():
-                        engine.frame_queue.put(frame)
-                        last_ocr_time = now
+                    # enqueue or drop-oldest policy when full (prefer recent frames)
+                    try:
+                        if not engine.frame_queue.full():
+                            engine.frame_queue.put(frame)
+                            print(f"[ALPR] Frame encolado. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
+                            last_ocr_time = now
+                        else:
+                            # drop the oldest frame to make room for newest
+                            try:
+                                engine.frame_queue.get_nowait()
+                                engine.frame_queue.put(frame)
+                                print(f"[ALPR] frame_queue lleno. descartado el más antiguo y encolado el nuevo. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
+                                last_ocr_time = now
+                            except Exception:
+                                print(f"[ALPR] frame_queue lleno. descartando frame. t={now:.3f}")
+                    except Exception:
+                        print(f"[ALPR] Error gestionando frame_queue. t={now:.3f}")
             time.sleep(0.01)
     except Exception as e:
         print(f"[!] Error FATAL en el bucle principal: {e}")

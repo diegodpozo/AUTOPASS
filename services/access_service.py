@@ -3,6 +3,7 @@ import json
 import base64
 import os
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from fastapi import Request
 import models
 import schemas
@@ -39,12 +40,27 @@ class AccessService:
     @classmethod
     def validate_plate(cls, db: Session, data: schemas.PlateValidation, request: Request = None) -> dict:
         from routes.parking.utils import normalize_plate
+        # Log request for debugging ALPR integration
+        try:
+            print(f"[ACCESS SERVICE] validate_plate called. gate_id={getattr(data, 'gate_id', None)} plate_present={'plate' in data.__dict__}")
+        except Exception:
+            pass
         p = normalize_plate(data.plate)
-        sucursal = data.gate_id.split('_')[0] if data.gate_id and '_' in data.gate_id else None
-        if sucursal == "ENTRADA": sucursal = None
+        # Normalizar sucursal a partir de gate_id: intentar mapear a nombre completo en parking_branches
+        sucursal = None
+        if data.gate_id and '_' in data.gate_id:
+            suc_short = data.gate_id.split('_')[0]
+            if suc_short == "ENTRADA":
+                sucursal = None
+            else:
+                try:
+                    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{suc_short}%")).first()
+                    sucursal = branch.nombre if branch else suc_short
+                except Exception:
+                    sucursal = suc_short
         
         ultimo = db.query(models.AccessLog).filter(
-            models.AccessLog.patente_detectada == p,
+            models.AccessLog.normalized_patente == p,
             models.AccessLog.sucursal == sucursal
         ).order_by(models.AccessLog.id.desc()).first()
         
@@ -61,7 +77,7 @@ class AccessService:
         # BUSCAMOS RESERVA PAGADA QUE ESTE EN EL RANGO DE TIEMPO ACTUAL
         now_str = now.isoformat()
         reserva = db.query(models.Reservation).filter(
-            models.Reservation.patente == p, 
+            func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
             models.Reservation.estado_pago == PaymentStatus.PAGADO,
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_inicio <= now_str,
@@ -99,14 +115,17 @@ class AccessService:
             
         db.add(models.AccessLog(
             patente_detectada=p, 
+            normalized_patente=p,
             tipo_evento=AccessEventType.ENTRADA, 
             tipo_vehiculo=tipo_vehiculo,
             fecha_hora=now_str, 
             imagen_path=img_name, 
             reserva_id=reserva.id if reserva else None,
+            pago_confirmado=True if (reserva and reserva.estado_pago == PaymentStatus.PAGADO) else False,
             sucursal=sucursal
         ))
         db.commit()
+        print(f"[ACCESS SERVICE] Notificando cambio de aforo para sucursal={sucursal}")
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
         cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
@@ -122,10 +141,20 @@ class AccessService:
     def exit_plate(cls, db: Session, data: schemas.PlateValidation, request: Request = None) -> dict:
         from routes.parking.utils import normalize_plate
         p = normalize_plate(data.plate)
-        sucursal = data.gate_id.split('_')[0] if data.gate_id and '_' in data.gate_id else None
-        
+        sucursal = None
+        if data.gate_id and '_' in data.gate_id:
+            suc_short = data.gate_id.split('_')[0]
+            sucursal = None if suc_short == 'ENTRADA' else suc_short
+            if sucursal:
+                try:
+                    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal}%")).first()
+                    if branch:
+                        sucursal = branch.nombre
+                except Exception:
+                    pass
+
         ultimo = db.query(models.AccessLog).filter(
-            models.AccessLog.patente_detectada == p,
+            models.AccessLog.normalized_patente == p,
             models.AccessLog.sucursal == sucursal
         ).order_by(models.AccessLog.id.desc()).first()
         
@@ -152,6 +181,7 @@ class AccessService:
         now = datetime.datetime.now()
         db.add(models.AccessLog(
             patente_detectada=p, 
+            normalized_patente=p,
             tipo_evento=AccessEventType.SALIDA, 
             tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=now.isoformat(), 
@@ -173,8 +203,23 @@ class AccessService:
     @classmethod
     def validate_qr(cls, db: Session, data: schemas.QRValidation, request: Request = None) -> dict:
         from routes.parking.utils import normalize_plate
+        # Log request for debugging QR integration
         try:
-            sucursal = data.gate_id.split('_')[0] if data.gate_id and '_' in data.gate_id else None
+            print(f"[ACCESS SERVICE] validate_qr called. gate_id={getattr(data, 'gate_id', None)} qr_len={len(getattr(data, 'qr_data',''))}")
+        except Exception:
+            pass
+        try:
+            sucursal = None
+            if data.gate_id and '_' in data.gate_id:
+                suc_short = data.gate_id.split('_')[0]
+                sucursal = None if suc_short == 'ENTRADA' else suc_short
+                if sucursal:
+                    try:
+                        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal}%")).first()
+                        if branch:
+                            sucursal = branch.nombre
+                    except Exception:
+                        pass
             parts = data.qr_data.split('|')
             if len(parts) < 3 or parts[0] != "AUTOPASS":
                 return {"status": "error", "message": "Formato de QR inválido"}
@@ -203,7 +248,7 @@ class AccessService:
             is_entry = "ENTRADA" in gate_id
             
             ultimo = db.query(models.AccessLog).filter(
-                models.AccessLog.patente_detectada == reserva.patente,
+                models.AccessLog.patente_detectada == patente_qr,
                 models.AccessLog.sucursal == sucursal
             ).order_by(models.AccessLog.id.desc()).first()
 
@@ -245,7 +290,8 @@ class AccessService:
                         aforo.ocupacion_motos += 1
 
                 db.add(models.AccessLog(
-                    patente_detectada=reserva.patente, 
+                    patente_detectada=normalize_plate(reserva.patente), 
+                    normalized_patente=normalize_plate(reserva.patente),
                     tipo_evento=AccessEventType.ENTRADA, 
                     tipo_vehiculo=tipo_vehiculo,
                     fecha_hora=now.isoformat(), 
@@ -254,6 +300,7 @@ class AccessService:
                     sucursal=sucursal
                 ))
                 db.commit()
+                print(f"[ACCESS SERVICE] Notificando cambio de aforo (QR) para sucursal={sucursal}")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
@@ -280,7 +327,8 @@ class AccessService:
                             aforo.ocupacion_motos -= 1
                 
                 db.add(models.AccessLog(
-                    patente_detectada=reserva.patente, 
+                    patente_detectada=normalize_plate(reserva.patente), 
+                    normalized_patente=normalize_plate(reserva.patente),
                     tipo_evento=AccessEventType.SALIDA, 
                     tipo_vehiculo=ultimo.tipo_vehiculo,
                     fecha_hora=now.isoformat(), 
@@ -289,6 +337,7 @@ class AccessService:
                     sucursal=sucursal
                 ))
                 db.commit()
+                print(f"[ACCESS SERVICE] Notificando cambio de aforo (QR SALIDA) para sucursal={sucursal}")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 cls._publish_mqtt(request, settings.MQTT_TOPIC_SALIDA, {

@@ -29,6 +29,10 @@ class OccupancyManager:
         if sucursal not in self.active_connections:
             self.active_connections[sucursal] = []
         self.active_connections[sucursal].append(websocket)
+        try:
+            print(f"[WS] Conexión establecida: user={user.email} sucursal={sucursal}")
+        except Exception:
+            pass
         return sucursal
 
     def disconnect(self, websocket: WebSocket, sucursal: str):
@@ -148,6 +152,13 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
             return
             
         sucursal = await occupancy_manager.connect(websocket, user)
+        
+        # Registrar el event loop principal para permitir notificaciones desde hilos sincrónicos
+        try:
+            import services.notification_service as notif
+            notif.NotificationService.set_event_loop(asyncio.get_running_loop())
+        except Exception:
+            pass
         
         # ENVIAR PRIMER ESTADO INMEDIATAMENTE
         await occupancy_manager.broadcast_update(db, sucursal if sucursal != "GLOBAL" else None)
@@ -276,6 +287,13 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
             if e.floor:
                 floor_name = e.floor.nombre
 
+            # incluir info de reserva (si existe) para el frontend
+            reserva_info = None
+            if e.reserva_id:
+                r = db.query(models.Reservation).filter(models.Reservation.id == e.reserva_id).first()
+                if r:
+                    reserva_info = {"id": r.id, "tipo_estadia": r.tipo_estadia, "estado_pago": r.estado_pago}
+
             res.append({
                 "patente": e.patente_detectada, 
                 "tipo_vehiculo": e.tipo_vehiculo,
@@ -283,6 +301,7 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
                 "deuda": deuda, 
                 "ya_pago": e.pago_confirmado, 
                 "es_reserva": e.reserva_id is not None,
+                "reserva": reserva_info,
                 "sucursal": e.sucursal,
                 "floor_nombre": floor_name
             })

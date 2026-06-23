@@ -2,6 +2,7 @@ import datetime
 import json
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 import models
 from core.database import get_db
 from core.security import get_operational_user
@@ -32,18 +33,30 @@ def open_barrier(gate_id: str, db: Session = Depends(get_db), staff: models.User
 def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """REGISTRA UN INGRESO FORZADO AL PREDIO DE LA SEDE."""
     from routes.parking import normalize_plate
+    from models.enums import PaymentStatus, ReservationStatus
     p = normalize_plate(plate)
     now = datetime.datetime.now()
     sucursal = staff.sucursal
     
     ultimo = db.query(models.AccessLog).filter(
-        models.AccessLog.patente_detectada == p,
+        func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == p,
         models.AccessLog.sucursal == sucursal
     ).order_by(models.AccessLog.id.desc()).first()
     
     if ultimo and ultimo.tipo_evento == "ENTRADA":
-        raise HTTPException(status_code=400, detail="El vehículo ya figura como ingresado en esta sede")
+        # Reusar registro existente para evitar duplicados cuando hay reserva activa o entrada previa
+        return {"status": "ok", "message": "El vehículo ya figura como ingresado en esta sede; se reutilizó el registro", "access_log_id": ultimo.id}
     
+    # Buscar reserva activa y pagada para esta patente/sucursal
+    now_str = now.isoformat()
+    reserva = db.query(models.Reservation).filter(
+        func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
+        models.Reservation.estado_pago == PaymentStatus.PAGADO,
+        models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+        models.Reservation.fecha_inicio <= now_str,
+        models.Reservation.fecha_fin >= now_str
+    ).filter((models.Reservation.sucursal_nombre == sucursal) | (models.Reservation.sucursal_nombre == None)).first()
+
     # MANEJO DE PISOS
     floor = None
     if floor_id:
@@ -68,13 +81,25 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
 
     db.add(models.AccessLog(
         patente_detectada=p, 
+        normalized_patente=p,
         tipo_evento="ENTRADA", 
         tipo_vehiculo=tipo_vehiculo, 
         fecha_hora=now.isoformat(), 
         sucursal=sucursal,
-        floor_id=floor_id
+        floor_id=floor_id,
+        reserva_id=reserva.id if reserva else None,
+        pago_confirmado=True if reserva and reserva.estado_pago == PaymentStatus.PAGADO else False
     ))
     db.commit()
+    # Notificar cambio de aforo para actualizar dashboards
+    try:
+        from services.notification_service import NotificationService
+        from services.access_service import normalize_name as _normalize_name
+        norm = _normalize_name(sucursal)
+        print(f"[ADMIN OPS] Notificando cambio de aforo (manual entry) para sucursal={sucursal} norm={norm}")
+        NotificationService.notify_occupancy_change(db, norm)
+    except Exception as e:
+        print(f"[ADMIN OPS] Error notifying occupancy: {e}")
     return {"status": "ok", "message": f"Ingreso manual registrado en {floor.nombre if floor else 'Planta Baja'}: {p} ({tipo_vehiculo})"}
 
 @router.post("/manual-exit")
@@ -85,7 +110,7 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
     sucursal = staff.sucursal
     
     ultimo = db.query(models.AccessLog).filter(
-        models.AccessLog.patente_detectada == p,
+        func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == p,
         models.AccessLog.sucursal == sucursal
     ).order_by(models.AccessLog.id.desc()).first()
     
@@ -104,6 +129,7 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         
     db.add(models.AccessLog(
         patente_detectada=p, 
+        normalized_patente=p,
         tipo_evento="SALIDA", 
         tipo_vehiculo=ultimo.tipo_vehiculo, 
         fecha_hora=datetime.datetime.now().isoformat(), 
@@ -112,6 +138,14 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         sucursal=sucursal
     ))
     db.commit()
+    try:
+        from services.notification_service import NotificationService
+        from services.access_service import normalize_name as _normalize_name
+        norm = _normalize_name(sucursal)
+        print(f"[ADMIN OPS] Notificando cambio de aforo (manual exit) para sucursal={sucursal} norm={norm}")
+        NotificationService.notify_occupancy_change(db, norm)
+    except Exception as e:
+        print(f"[ADMIN OPS] Error notifying occupancy: {e}")
     return {"status": "ok", "message": f"Salida manual registrada en {sucursal or 'Global'}: {p}"}
 
 @router.post("/cancel-stay")
@@ -122,7 +156,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
     sucursal = staff.sucursal
     
     ultimo = db.query(models.AccessLog).filter(
-        models.AccessLog.patente_detectada == p,
+        func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == p,
         models.AccessLog.sucursal == sucursal
     ).order_by(models.AccessLog.id.desc()).first()
     

@@ -44,3 +44,14 @@
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.
 - **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago.
 - **Monitoreo**: ALPR en vivo con gestión centralizada y aforo real-time.
+
+### Cambios técnicos recientes (2026-06-23)
+- ALPR: Quick QR detection añadido para captura rápida de códigos QR; cooldown/debounce de **10s** para suprimir eventos duplicados.
+- ALPR: Cola de frames con `maxsize=4` y política "drop-oldest" para evitar stalls en cámaras de alto FPS.
+- Normalización: Se agregó `normalized_patente` (columna e índice) y se ejecutaron scripts de backfill para normalizar accesos y vincular reservas pagas.
+- Manual entry/exit: Reuso de registro ENTRADA y asociación automática a reserva pagada (marca `pago_confirmado`) evitando duplicados.
+- Notifications / WS: `NotificationService` ahora registra el loop de uvicorn y usa `run_coroutine_threadsafe` para programar broadcasts. Logs en conexión: `[WS] Conexión establecida: user=... sucursal=...`.
+- Frontend: El dashboard oculta el botón "Cancelar estadía" para reservas no horarias pagas y requiere conexión WS para actualizaciones automáticas (sin F5).
+
+**Operacional:** Reiniciar backend (uvicorn) y proceso ALPR tras desplegar cambios; verificar WS abierto en `/v1/parking/ws` para recibir actualizaciones en tiempo real.
+

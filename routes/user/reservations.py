@@ -22,6 +22,12 @@ def get_user_reservations(db: Session = Depends(get_db), current_user: models.Us
 @router.post("/reservations")
 def create_user_reservation(res: schemas.UserReservationCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """CREA UNA NUEVA RESERVA Y PROCESA EL COBRO SI EL SALDO ES SUFICIENTE."""
+    # DEBUG LOG: registrar payload entrante para diagnosticar mismatches de sucursal
+    try:
+        print(f"[RESERVATION CREATE] user={getattr(current_user,'id',None)} email={getattr(current_user,'email',None)} payload_sucursal={getattr(res,'sucursal_nombre',None)} payload_patente={getattr(res,'patente',None)}")
+    except Exception:
+        pass
+
     vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente, models.Vehicle.user_id == current_user.id).first()
     if not vehicle: raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
     

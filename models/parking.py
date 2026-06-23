@@ -27,6 +27,7 @@ class AccessLog(Base):
     __tablename__ = "access_logs"
     id = Column(Integer, primary_key=True, index=True)
     patente_detectada = Column(String)
+    normalized_patente = Column(String, index=True, nullable=True)
     tipo_evento = Column(String) # 'ENTRADA' O 'SALIDA'
     tipo_vehiculo = Column(String, default="Auto") # 'AUTO' O 'MOTO'
     reserva_id = Column(Integer, ForeignKey("reservations.id"), nullable=True)
