@@ -9,7 +9,7 @@ Este documento sirve como mapa técnico tras la gran refactorización. Explica l
 ### 1. `core/` (Infraestructura)
 Cualquier configuración que afecte a todo el sistema debe ir aquí.
 - **Seguridad**: Si añadís un nuevo rol, registralo en `core/security.py`.
-- **Config**: Si añadís una API Key o variable al `.env`, definila en `core/config.py`.
+- **Config**: Si añadís una API Key o variable al `.env`, definila en `core/config.py`. E.g., `RESERVA_HORA_MIN_SEGUNDOS` para tiempo mínimo de anticipación en reservas por hora.
 
 ### 2. `models/` y `schemas/` (Datos)
 - **Regla**: Siempre que crees una tabla nueva, hacelo en un archivo dentro de `models/` y exportalo en `models/__init__.py`.
@@ -17,6 +17,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 
 ### 3. `services/` (Cerebro)
 - **IMPORTANTE**: No pongas lógica de cálculo de precios o validación de stock en los routers. Creá un método estático en un servicio dentro de `services/`.
+- **Aforo por Reserva**: Las reservas no horarias (Día/Semana/Quincena/Mes) descuentan la plaza del aforo al pagar (`pay_reservation`). La salida física NO libera la plaza — la liberación ocurre al vencer (`auto_finalize_all_reservations`) o al cancelar. Para reservas por hora, la plaza se descuenta al entrar y se libera al salir (comportamiento tradicional).
 
 ---
 
@@ -75,7 +76,7 @@ Para correr las pruebas tras un cambio:
 
 ---
 
-## ⚠️ MANDATOS ARQUITECTÓNICOS (V8.7.0+)
+## ⚠️ MANDATOS ARQUITECTÓNICOS (V9.2.0+)
 Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cumplir estrictamente con lo siguiente:
 
 1. **Arquitectura Limpia (Clean Architecture):**
@@ -94,3 +95,8 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
 
 5. **Testing Obligatorio:**
    - Todo nuevo servicio debe incluir pruebas en `tests/`.
+
+6. **Aforo Diferenciado por Tipo de Reserva:**
+   - **Reservas por hora**: La plaza se descuenta al entrar (en `AccessService`) y se libera al salir.
+   - **Reservas no horarias (Día/Semana/Quincena/Mes)**: La plaza se descuenta al pagar (en `pay_reservation`) y se libera solo al vencer (`auto_finalize_all_reservations`) o cancelar. La salida física nunca debe modificar el aforo para estas reservas.
+   - Usar siempre los helpers `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` en `reservation_service.py` para gestionar estas operaciones.

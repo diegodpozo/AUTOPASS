@@ -205,8 +205,8 @@ export async function prepareEditReservation(id) {
 
     const now = new Date();
     const start = new Date(r.fecha_inicio.replace(/-/g, "/"));
-    if ((start - now) < 7200000) {
-        return showToast('No se puede modificar con menos de 2 horas de antelación');
+    if (r.tipo_estadia === 'hora' && (start - now) < 3600000) {
+        return showToast('No se puede modificar con menos de 1 hora de antelación');
     }
 
     editingReservaId = id;
@@ -386,16 +386,13 @@ export async function createReservation(e) {
             inicio = `${fecha} ${hora}`;
             const now = new Date();
             const startDt = new Date(inicio.replace(/-/g, "/"));
-            if ((startDt - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
+            if ((startDt - now) < 3600000) { console.groupEnd(); return showToast('Mínimo 1 hora de anticipación.'); }
             const endDt = new Date(startDt.getTime() + hoursQty * 60 * 60 * 1000);
             fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} ${endDt.getHours().toString().padStart(2, '0')}:${endDt.getMinutes().toString().padStart(2, '0')}`;
         } else if (tipo === 'dia') {
             const fecha = document.querySelector('.res-day-only').value;
             if (!fecha) { console.groupEnd(); return showToast('Seleccioná un día'); }
             inicio = `${fecha} 00:00`;
-            const now = new Date();
-            const startDt = new Date(inicio.replace(/-/g, "/"));
-            if ((startDt - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
             fin = `${fecha} 23:59`;
         } else {
             const periods = { 'semana': 7, 'quincena': 15, 'mes': 30 };
@@ -406,8 +403,6 @@ export async function createReservation(e) {
                 if (!fecha) { console.groupEnd(); return showToast('Seleccioná día de inicio'); }
                 inicio = `${fecha} 00:00`;
                 const now = new Date();
-                const startDtCheck = new Date(fecha.replace(/-/g, "/"));
-                if ((startDtCheck - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
                 const startDt = new Date(fecha.replace(/-/g, "/"));
                 const endDt = new Date(startDt.getTime() + (periods[tipo] - 1) * 24 * 60 * 60 * 1000);
                 fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} 23:59`;
@@ -415,8 +410,6 @@ export async function createReservation(e) {
                 inicio = document.querySelector('.res-start').value;
                 fin = document.querySelector('.res-end').value;
                 const now = new Date();
-                const startDt = new Date(inicio.replace(/-/g, "/"));
-                if ((startDt - now) < (2 * 60 * 60 * 1000)) { console.groupEnd(); return showToast('Mínimo 2 horas de anticipación.'); }
             }
         }
     } catch (err) {

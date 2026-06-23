@@ -1,5 +1,13 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **JUNIO 23, 2026 - RESERVAS & AFORO INTELIGENTE (V9.2.0)**:
+    *   **Aforo por Reserva No Horaria**: Las reservas de Día/Semana/Quincena/Mes descuentan la plaza del aforo al momento del pago. La plaza se libera solo al vencer el período o al cancelar, permitiendo al cliente entrar y salir libremente sin perder su lugar.
+    *   **Restricción de Anticipación Selectiva**: Solo las reservas por hora requieren anticipación mínima (1 hora configurable). Las de período largo no tienen restricción.
+    *   **Liberación Automática al Vencer**: El WorkerService libera la plaza automáticamente cuando la reserva expira, incluso si el vehículo nunca ingresó.
+    *   **Salida Física sin Liberación**: La salida por ALPR/QR ya no libera la plaza de reservas no horarias — la gestión de aforo queda a cargo del ciclo de vida de la reserva.
+    *   **Parametrización**: Nueva variable de entorno `RESERVA_HORA_MIN_SEGUNDOS` (default 3600) para configurar el tiempo mínimo de anticipación en reservas por hora.
+    *   **Validación Sincronizada**: Frontend y backend validan consistentemente: solo reservas por hora con 1 hora de anticipación; el resto sin restricción.
+
 - **JUNIO 17, 2026 - UX/UI REFINEMENT & RBAC (V9.1.5)**:
     *   **Rediseño Monitoreo**: Evolución de la pestaña de cámaras a un layout de grilla "Premium" con mejores indicadores de estado y visualización técnica mejorada.
     *   **Filtros Financieros**: Se añadió soporte para "Camionetas" en el reporte financiero del dashboard admin.

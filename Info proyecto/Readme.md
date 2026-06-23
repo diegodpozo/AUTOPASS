@@ -2,11 +2,12 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v8.2.0)
+## Últimas Actualizaciones (v9.2.0)
+- **Aforo Inteligente con Reservas**: Las reservas de Día/Semana/Quincena/Mes descuentan la plaza del aforo al pagar y la liberan solo al vencer o cancelar. El cliente puede entrar y salir libremente sin perder su lugar.
+- **Restricción de Anticipación Selectiva**: Solo las reservas por hora requieren anticipación (1 hora configurable vía `RESERVA_HORA_MIN_SEGUNDOS`). Las de período largo no tienen restricción.
 - **Gestión Vertical (Multi-Piso)**: Soporte para múltiples niveles por sucursal con control de aforo independiente.
-- **Soporte Bimodal (Autos/Motos)**: Identificación y facturación diferenciada para motocicletas con tarifas reducidas.
+- **Soporte Trimodal (Autos/Motos/Camionetas)**: Identificación y facturación diferenciada para motocicletas y camionetas con tarifas reducidas.
 - **RBAC Operativo Refinado**: Separación estricta de roles; Super Admin (Gestión de Red) y Local Admin (Control total de sucursal/pisos/tarifas).
-- **UI de Gestión Unificada**: Nueva tabla de niveles que integra la Planta Baja (PB) con pisos superiores para una administración centralizada.
 
 ## Arquitectura del Sistema
 
@@ -15,7 +16,7 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 - **`core/`**: Infraestructura crítica (Configuración, Seguridad JWT/RBAC, DB, MQTT).
 - **`models/` & `schemas/`**: Capa de datos organizada por dominios (Usuarios, Parking, Reservas). Se incluye la nueva entidad **`ParkingFloor`**.
 - **`routes/`**: Controladores de API y entrega de Vistas HTML.
-- **`services/`**: Inteligencia de negocio y procesos de fondo (Facturación bimodal).
+- **`services/`**: Inteligencia de negocio y procesos de fondo (Facturación trimodal, aforo por reservas, WebSockets).
 - **`templates/`**: Frontend modular basado en Jinja2 con componentes reutilizables.
 
 ## Características Principales

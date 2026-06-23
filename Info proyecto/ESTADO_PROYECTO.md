@@ -1,6 +1,14 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-17)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-23)
 
-### 🚀 Hitos Recientes (Junio 2026) - Versión 9.1.5 (UX/UI Refinement & RBAC)
+### 🚀 Hitos Recientes (Junio 2026) - Versión 9.2.0 (Reservas & Aforo Inteligente)
+- [x] **Reserva de Aforo en Pago**: Las reservas de tipo Día, Semana, Quincena y Mes descuentan la plaza del aforo al momento del pago, liberándola solo al vencimiento o cancelación.
+- [x] **Tránsito Libre con Reserva**: Los clientes con reserva no horaria pueden entrar y salir libremente durante el período sin perder la plaza reservada.
+- [x] **Liberación Automática al Vencer**: El sistema libera la plaza automáticamente cuando la reserva expira, incluso si el vehículo nunca ingresó.
+- [x] **Restricción de Anticipación por Tipo**: Las reservas por hora requieren 1 hora de anticipación; las de Día/Semana/Quincena/Mes no tienen restricción horaria.
+- [x] **Parametrización de Tiempo Mínimo**: El tiempo mínimo de anticipación para reservas por hora ahora es configurable vía variable de entorno (`RESERVA_HORA_MIN_SEGUNDOS`).
+- [x] **Validación Sincronizada Frontend/Backend**: Las validaciones de anticipación en el frontend se actualizaron para coincidir con la lógica del backend (solo por hora, 1 hora).
+
+### 🚀 Hitos Previos (Junio 2026) - Versión 9.1.5 (UX/UI Refinement & RBAC)
 - [x] **Monitoring UI Redesign**: Rediseño total de la pestaña de Monitoreo en Ajustes usando un layout de grilla bimodal, iconografía técnica mejorada y tipografía monospace para fuentes de video.
 - [x] **Financial Filter Expansion**: Integración de "Camionetas" en los filtros de reportes financieros para auditoría trimodal completa.
 - [x] **RBAC UI Hardening**: Restricción física de opciones de "Administrador General" para usuarios con rol de Admin Local en filtros y edición de roles.

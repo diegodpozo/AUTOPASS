@@ -22,6 +22,7 @@ DATABASE_URL=sqlite:///./parking.db
 SECRET_KEY=tu_secreto_aqui
 MQTT_BROKER=broker.hivemq.com
 IMAGE_DIR=captured_images
+RESERVA_HORA_MIN_SEGUNDOS=3600  # Tiempo mínimo de anticipación para reservas por hora (en segundos)
 ```
 
 ## 3. Preparación de Base de Datos
