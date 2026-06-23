@@ -144,7 +144,7 @@
 }
 
 .strength-meter.strength-weak { background: var(--danger); width: 33%; }
-.strength-meter.strength-medium { background: #f59e0b; width: 66%; }
+.strength-meter.strength-medium { background: var(--warning); width: 66%; }
 .strength-meter.strength-strong { background: var(--secondary); width: 100%; }
 
 /* ESTILOS ESPECIALES DEL MODAL DE CONFIRMACIÓN */
