@@ -122,6 +122,7 @@ async def update_branch(
     latitude: Optional[float] = Form(None),
     longitude: Optional[float] = Form(None),
     logo_file: Optional[UploadFile] = File(None),
+    logo_clear: Optional[bool] = Form(False),
     db: Session = Depends(get_db), 
     admin: models.User = Depends(get_super_admin)
 ):
@@ -139,6 +140,12 @@ async def update_branch(
     branch.longitude = longitude
 
     if logo_file:
+        # Borrar logo anterior si existe
+        if branch.logo_url and branch.logo_url != '/static/images/logo.png':
+            old_path = os.path.join(branch.logo_url.lstrip('/'))
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        # Guardar nuevo logo
         file_ext = logo_file.filename.split(".")[-1]
         file_name = f"branch_{uuid.uuid4()}.{file_ext}"
         file_path = os.path.join("static", "uploads", "branches", file_name)
@@ -146,6 +153,13 @@ async def update_branch(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(logo_file.file, buffer)
         branch.logo_url = f"/static/uploads/branches/{file_name}"
+    elif logo_clear:
+        # Borrar logo sin reemplazar
+        if branch.logo_url and branch.logo_url != '/static/images/logo.png':
+            old_path = branch.logo_url.lstrip('/')
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        branch.logo_url = '/static/images/logo.png'
     
     db.commit()
     return {"status": "ok", "message": "Sucursal actualizada"}

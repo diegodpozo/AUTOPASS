@@ -79,9 +79,9 @@ nav a {
     font-size: 2.4rem;
 }
 
-.toast.success .toast-icon { color: #10b981; }
-.toast.error .toast-icon { color: #483d8b; }
-.toast.info .toast-icon { color: #3b82f6; }
+.toast.success .toast-icon { color: var(--secondary); }
+.toast.error .toast-icon { color: var(--danger); }
+.toast.info .toast-icon { color: var(--info); }
 .toast.default .toast-icon { color: var(--dorado); }
 
 @keyframes toast-entrance {

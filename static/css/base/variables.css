@@ -1,16 +1,22 @@
 :root {
-    --dorado: #C5A059;
-    --dorado-dark: #A68045;
+    /* Paleta Obsidian & Champagne Gold (Overhaul v9.2.0) */
+    --dorado: #dfba6b;
+    --dorado-dark: #b89047;
     --blanco: #FFFFFF;
     --negro: #000000;
-    --gris: #1A1A1A;
-    --gris-fondo: #0A0A0A;
-    --gris-card: #161616;
-    --gris-sidebar: #111111;
-    --border: rgba(197, 160, 89, 0.2);
-    --border-light: rgba(197, 160, 89, 0.1);
-    --danger: #ef4444;
-    --secondary: #10b981;
+    --gris: #1a1e26;
+    --gris-fondo: #08090c;
+    --gris-card: #11141b;
+    --gris-sidebar: #0b0d10;
+    --border: rgba(223, 186, 107, 0.25);
+    --border-light: rgba(223, 186, 107, 0.12);
+    
+    /* Colores Semánticos Premium (No genéricos) */
+    --danger: #f43f5e;
+    --secondary: #05c46b;
+    --warning: #fbbf24;
+    --info: #6366f1;
+    
     --font-mono: 'JetBrains Mono', monospace;
     
     /* Escala Tipográfica */

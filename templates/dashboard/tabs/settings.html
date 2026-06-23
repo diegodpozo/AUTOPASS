@@ -251,6 +251,73 @@
         -webkit-appearance: none;
         margin: 0;
     }
+
+    /* CONFIGURACIÓN DE MONITOREO (OVERHAUL UX/UI) */
+    .camera-settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 650px) {
+        .camera-settings-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .camera-card-premium {
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 22px 20px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .camera-card-premium:hover {
+        background: rgba(197, 160, 89, 0.01);
+        border-color: rgba(197, 160, 89, 0.35);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    /* Botones de control dinámicos (Play/Stop) en el footer */
+    #cam-actions-entrada .btn,
+    #cam-actions-salida .btn {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        font-size: 0.85rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.3s ease !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+    }
+    #cam-actions-entrada .btn.success,
+    #cam-actions-salida .btn.success {
+        background: rgba(16, 185, 129, 0.1) !important;
+        color: #10b981 !important;
+        border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    }
+    #cam-actions-entrada .btn.success:hover,
+    #cam-actions-salida .btn.success:hover {
+        background: #10b981 !important;
+        color: #000 !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.3) !important;
+        transform: scale(1.05);
+    }
+    #cam-actions-entrada .btn.danger,
+    #cam-actions-salida .btn.danger {
+        background: rgba(239, 68, 68, 0.1) !important;
+        color: #ef4444 !important;
+        border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    }
+    #cam-actions-entrada .btn.danger:hover,
+    #cam-actions-salida .btn.danger:hover {
+        background: #ef4444 !important;
+        color: #fff !important;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.3) !important;
+        transform: scale(1.05);
+    }
 </style>
 
 <!-- PESTAÑA: CONFIGURACIÓN (Overhaul v8.3.3) -->
@@ -427,94 +494,67 @@
                 <div id="set-section-monitoring" class="settings-section" style="display: none;">
                     <div class="mt-10">
 
-                        <!-- Grilla de Cámaras (v9.1.6 - Full Width Inputs) -->
-                        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                        <!-- Grilla de Cámaras (Refactored UX/UI) -->
+                        <div class="camera-settings-grid">
                             
                             <!-- Cámara Entrada -->
-                            <div class="card glass-premium p-20" style="border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
-                                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--dorado); opacity: 0.5;"></div>
+                            <div class="camera-card-premium">
                                 
-                                <div class="flex-row justify-between items-center mb-20">
-                                    <div class="flex-row items-center gap-15">
-                                        <div class="header-icon-box sm" style="background: rgba(197, 160, 89, 0.1);">
-                                            <i class="fas fa-sign-in-alt text-dorado"></i>
-                                        </div>
-                                        <div class="flex-col">
-                                            <b class="text-white text-xs uppercase tracking-wider">Cámara de Entrada</b>
-                                            <span class="text-muted" style="font-size: 0.6rem; letter-spacing: 1px;">ORIGEN DE VIDEO (IP / USB / FILE)</span>
-                                        </div>
-                                    </div>
+                                <div class="flex-row justify-between items-center mb-15">
+                                    <b class="text-white text-xs uppercase tracking-wider">ENTRADA</b>
                                     <div id="cam-status-entrada-badge">
                                         <!-- Badge de estado dinámico -->
                                     </div>
                                 </div>
 
-                                <div class="flex-row gap-15 items-center" style="width: 100%;">
+                                <div class="flex-row gap-10 items-center" style="width: 100%;">
                                     <div class="form-group-premium mb-0 flex-1" style="max-width: none !important; width: 100% !important;">
                                         <div class="input-with-icon" style="width: 100% !important; max-width: none !important;">
-                                            <i class="fas fa-link"></i>
-                                            <input type="text" id="cam-source-entrada" class="input-premium" placeholder="http://192.168.1.50:8080/video" style="font-family: var(--font-mono); font-size: 0.9rem; text-align: left !important; padding-left: 45px !important; height: 48px; width: 100% !important; max-width: none !important;">
+                                            <i class="fas fa-link" style="font-size: 0.8rem; left: 14px;"></i>
+                                            <input type="text" id="cam-source-entrada" class="input-premium" placeholder="http://192.168.1.50:8080/video" style="font-family: var(--font-mono); font-size: 0.8rem; text-align: left !important; padding-left: 38px !important; height: 40px; width: 100% !important; max-width: none !important; border-radius: 10px;">
                                         </div>
                                     </div>
-                                    <button id="btn-save-cam-entrada" class="btn btn-primary" onclick="saveCameraSettings('ENTRADA', this)" style="height: 48px; width: 60px; padding: 0; display: flex; align-items: center; justify-content: center; min-width: 60px; flex-shrink: 0;">
-                                        <i class="fas fa-check" style="font-size: 1.1rem;"></i>
+                                    <button id="btn-save-cam-entrada" class="btn-icon-premium" onclick="saveCameraSettings('ENTRADA', this)" style="flex-shrink: 0; width: 40px; height: 40px;" title="Editar Fuente">
+                                        <i class="fas fa-check" style="font-size: 0.9rem;"></i>
                                     </button>
                                 </div>
 
-                                <div class="flex-row justify-end items-center mt-20 pt-15" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                                <div class="flex-row justify-end items-center mt-15 pt-12" style="border-top: 1px solid rgba(255,255,255,0.05);">
                                     <div id="cam-actions-entrada" class="flex-row gap-5">
-                                        <!-- Botones de control dinámicos -->
+                                        <!-- Botón de control dinámico -->
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Cámara Salida -->
-                            <div class="card glass-premium p-20" style="border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
-                                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #444; opacity: 0.5;"></div>
+                            <div class="camera-card-premium">
                                 
-                                <div class="flex-row justify-between items-center mb-20">
-                                    <div class="flex-row items-center gap-15">
-                                        <div class="header-icon-box sm" style="background: rgba(255,255,255,0.05);">
-                                            <i class="fas fa-sign-out-alt text-muted"></i>
-                                        </div>
-                                        <div class="flex-col">
-                                            <b class="text-white text-xs uppercase tracking-wider">Cámara de Salida</b>
-                                            <span class="text-muted" style="font-size: 0.6rem; letter-spacing: 1px;">ORIGEN DE VIDEO (IP / USB / FILE)</span>
-                                        </div>
-                                    </div>
+                                <div class="flex-row justify-between items-center mb-15">
+                                    <b class="text-white text-xs uppercase tracking-wider">SALIDA</b>
                                     <div id="cam-status-salida-badge">
                                         <!-- Badge de estado dinámico -->
                                     </div>
                                 </div>
 
-                                <div class="flex-row gap-15 items-center" style="width: 100%;">
+                                <div class="flex-row gap-10 items-center" style="width: 100%;">
                                     <div class="form-group-premium mb-0 flex-1" style="max-width: none !important; width: 100% !important;">
                                         <div class="input-with-icon" style="width: 100% !important; max-width: none !important;">
-                                            <i class="fas fa-link"></i>
-                                            <input type="text" id="cam-source-salida" class="input-premium" placeholder="http://192.168.1.50:8080/video" style="font-family: var(--font-mono); font-size: 0.9rem; text-align: left !important; padding-left: 45px !important; height: 48px; width: 100% !important; max-width: none !important;">
+                                            <i class="fas fa-link" style="font-size: 0.8rem; left: 14px;"></i>
+                                            <input type="text" id="cam-source-salida" class="input-premium" placeholder="http://192.168.1.50:8080/video" style="font-family: var(--font-mono); font-size: 0.8rem; text-align: left !important; padding-left: 38px !important; height: 40px; width: 100% !important; max-width: none !important; border-radius: 10px;">
                                         </div>
                                     </div>
-                                    <button id="btn-save-cam-salida" class="btn btn-primary" onclick="saveCameraSettings('SALIDA', this)" style="height: 48px; width: 60px; padding: 0; display: flex; align-items: center; justify-content: center; min-width: 60px; flex-shrink: 0;">
-                                        <i class="fas fa-check" style="font-size: 1.1rem;"></i>
+                                    <button id="btn-save-cam-salida" class="btn-icon-premium" onclick="saveCameraSettings('SALIDA', this)" style="flex-shrink: 0; width: 40px; height: 40px;" title="Editar Fuente">
+                                        <i class="fas fa-check" style="font-size: 0.9rem;"></i>
                                     </button>
                                 </div>
 
-                                <div class="flex-row justify-end items-center mt-20 pt-15" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                                <div class="flex-row justify-end items-center mt-15 pt-12" style="border-top: 1px solid rgba(255,255,255,0.05);">
                                     <div id="cam-actions-salida" class="flex-row gap-5">
-                                        <!-- Botones de control dinámicos -->
+                                        <!-- Botón de control dinámico -->
                                     </div>
                                 </div>
                             </div>
-                            </div>
 
-                        </div>
-
-                        <!-- Tip de Ayuda -->
-                        <div class="card glass-premium mt-30 p-15 flex-row items-center gap-15" style="border: 1px dashed rgba(255,255,255,0.1); background: rgba(197,160,89,0.02);">
-                            <i class="fas fa-circle-info text-dorado" style="font-size: 1.2rem; opacity: 0.5;"></i>
-                            <p class="text-xxs text-muted leading-relaxed">
-                                <b>RECOMENDACIÓN:</b> Aseguráte de que la cámara tenga buena iluminación y que la patente ocupe al menos el 20% del ancho del cuadro para una detección óptima por parte de los motores de IA.
-                            </p>
                         </div>
                     </div>
                 </div>

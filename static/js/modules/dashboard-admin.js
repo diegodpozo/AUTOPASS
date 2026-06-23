@@ -1146,11 +1146,13 @@ export function editBranch(id) {
 
     // CONFIGURAR LOGO
     const preview = document.querySelector('#branch-logo-preview img');
+    const hasLogo = b.logo_url && b.logo_url !== '/static/images/logo.png';
     if (preview) {
         preview.src = b.logo_url || '/static/images/logo.png';
         preview.style.opacity = "1";
     }
     document.getElementById('branch-logo-file').value = ''; // LIMPIAR INPUT FILE
+    document.getElementById('btn-clear-logo').style.display = hasLogo ? 'block' : 'none';
 
     document.getElementById('branch-is-24h').checked = b.is_24h;
     document.getElementById('branch-horario').value = b.is_24h ? '' : b.horario;
@@ -1201,6 +1203,15 @@ export function previewBranchLogo(input) {
         }
         reader.readAsDataURL(input.files[0]);
     }
+    document.getElementById('btn-clear-logo').style.display = 'block';
+}
+
+export function clearBranchLogo() {
+    const preview = document.querySelector('#branch-logo-preview img');
+    preview.src = '/static/images/logo.png';
+    document.getElementById('branch-logo-file').value = '';
+    document.getElementById('btn-clear-logo').style.display = 'none';
+    document.getElementById('branch-logo-clear').value = 'true';
 }
 
 export async function handleCreateBranch(event) {
@@ -1226,6 +1237,11 @@ export async function handleCreateBranch(event) {
         formData.append('logo_file', fileInput.files[0]);
     }
 
+    const logoClear = document.getElementById('branch-logo-clear');
+    if (logoClear && logoClear.value === 'true') {
+        formData.append('logo_clear', 'true');
+    }
+
     btn.disabled = true;
     const url = editId ? `/admin/branches/${editId}` : '/admin/branches';
     const method = editId ? 'patch' : 'post';
@@ -1240,6 +1256,8 @@ export async function handleCreateBranch(event) {
         event.target.reset();
         document.getElementById('branch-logo-preview').querySelector('img').src = '/static/images/logo.png';
         document.getElementById('branch-id-edit').value = '';
+        document.getElementById('branch-logo-clear').value = 'false';
+        document.getElementById('btn-clear-logo').style.display = 'none';
         loadBranches();
     } else {
         showToast(`Error: ${res?.error || 'Desconocido'}`);

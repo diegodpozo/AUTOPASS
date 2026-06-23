@@ -48,7 +48,7 @@
 }
 
 .btn-sm { padding: 8px 18px; font-size: 0.75rem; border-radius: 8px; }
-.btn-warning { border-color: #f59e0b; color: #f59e0b; }
+.btn-warning { border-color: var(--warning); color: var(--warning); }
 .btn-full { width: 100%; justify-content: center; }
 
 /* --- BOTONES PREMIUM --- */

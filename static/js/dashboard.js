@@ -68,6 +68,7 @@ window.editBranch = admin.editBranch;
 window.showBranchFloors = admin.showBranchFloors;
 window.toggleBranch = admin.toggleBranch;
 window.previewBranchLogo = admin.previewBranchLogo;
+window.clearBranchLogo = admin.clearBranchLogo;
 window.searchAddress = admin.searchAddress;
 
 // PROMOTIONS

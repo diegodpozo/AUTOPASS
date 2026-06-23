@@ -1,6 +1,6 @@
 <section id="tab-branches" class="tab-view" style="display: none;">
     <div class="content-wrapper">
-        <div class="card glass-premium mx-auto" style="max-width: 1000px; overflow: hidden;">
+        <div class="card glass-premium mx-auto" style="max-width: 1200px;">
             <div class="card-header-premium">
                 <div class="header-info-group justify-center" style="flex: 1; margin-left: 140px;">
                     <div class="header-icon"><i class="fas fa-building-shield"></i></div>
@@ -90,6 +90,7 @@
         <div class="modal-body" style="padding: 20px;">
             <form id="form-add-branch">
                 <input type="hidden" id="branch-id-edit">
+                <input type="hidden" id="branch-logo-clear" value="false">
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                     <!-- COLUMNA IZQUIERDA: IDENTIDAD Y UBICACIÓN -->
@@ -137,13 +138,14 @@
 
                     <!-- COLUMNA DERECHA: LOGO Y HORARIOS -->
                     <div class="flex-col gap-15">
-                        <h4 class="text-dorado text-xs mb-5" style="letter-spacing: 1px;">IDENTIDAD Y HORARIOS</h4>
-
                         <div class="form-group">
                             <label>Logo de la Sucursal</label>
                             <div class="flex-row gap-15 items-center mt-5" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                                <div id="branch-logo-preview" style="width: 65px; height: 65px; border-radius: 50%; overflow: hidden; background: #000; border: 1px solid var(--dorado);">
-                                    <img src="/static/images/logo.png" style="width: 100%; height: 100%; object-fit: cover;">
+                                <div style="position: relative;">
+                                    <div id="branch-logo-preview" style="width: 65px; height: 65px; border-radius: 50%; overflow: hidden; background: #000; border: 1px solid var(--dorado);">
+                                        <img src="/static/images/logo.png" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                    <button type="button" id="btn-clear-logo" onclick="clearBranchLogo()" title="Eliminar logo" style="display: none; position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: #ef4444; color: #fff; border: 2px solid #000; cursor: pointer; font-size: 0.65rem; line-height: 1; padding: 0; z-index: 5;"><i class="fas fa-xmark"></i></button>
                                 </div>
                                 <div class="flex-col flex-1">
                                     <label for="branch-logo-file" class="btn btn-outline sm" style="width: 100%; cursor: pointer; font-size: 0.7rem;">
