@@ -79,36 +79,44 @@ class AccessService:
         capacidad = aforo.capacidad_total if tipo_vehiculo == VehicleType.AUTO else aforo.capacidad_motos
         ocupacion = aforo.ocupacion_actual if tipo_vehiculo == VehicleType.AUTO else aforo.ocupacion_motos
 
-        if reserva or ocupacion < capacidad:
+        if reserva:
+            # RESERVA NO HORARIA: la plaza ya se reservó en el pago, no incrementar
+            if reserva.tipo_estadia == "hora":
+                if tipo_vehiculo == VehicleType.AUTO:
+                    aforo.ocupacion_actual += 1
+                else:
+                    aforo.ocupacion_motos += 1
+
+            if reserva.estado_reserva == ReservationStatus.PENDIENTE: 
+                reserva.estado_reserva = ReservationStatus.ACTIVA
+        elif ocupacion < capacidad:
             if tipo_vehiculo == VehicleType.AUTO:
                 aforo.ocupacion_actual += 1
             else:
                 aforo.ocupacion_motos += 1
-
-            if reserva and reserva.estado_reserva == ReservationStatus.PENDIENTE: 
-                reserva.estado_reserva = ReservationStatus.ACTIVA
-                
-            db.add(models.AccessLog(
-                patente_detectada=p, 
-                tipo_evento=AccessEventType.ENTRADA, 
-                tipo_vehiculo=tipo_vehiculo,
-                fecha_hora=now_str, 
-                imagen_path=img_name, 
-                reserva_id=reserva.id if reserva else None,
-                sucursal=sucursal
-            ))
-            db.commit()
-            NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
+        else:
+            return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
             
-            cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
-                "command": "OPEN", 
-                "plate": p, 
-                "sucursal": sucursal,
-                "timestamp": now.isoformat()
-            })
-                
-            return {"status": "allowed", "action": "OPEN_GATE", "message": f"Acceso permitido en {sucursal or 'Global'}. Bienvenido {p}"}
-        return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
+        db.add(models.AccessLog(
+            patente_detectada=p, 
+            tipo_evento=AccessEventType.ENTRADA, 
+            tipo_vehiculo=tipo_vehiculo,
+            fecha_hora=now_str, 
+            imagen_path=img_name, 
+            reserva_id=reserva.id if reserva else None,
+            sucursal=sucursal
+        ))
+        db.commit()
+        NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
+        
+        cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
+            "command": "OPEN", 
+            "plate": p, 
+            "sucursal": sucursal,
+            "timestamp": now.isoformat()
+        })
+            
+        return {"status": "allowed", "action": "OPEN_GATE", "message": f"Acceso permitido en {sucursal or 'Global'}. Bienvenido {p}"}
 
     @classmethod
     def exit_plate(cls, db: Session, data: schemas.PlateValidation, request: Request = None) -> dict:
@@ -129,10 +137,17 @@ class AccessService:
             
         aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
         if aforo:
-            if ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
-                aforo.ocupacion_actual -= 1
-            elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
-                aforo.ocupacion_motos -= 1
+            # SI TIENE RESERVA NO HORARIA PAGADA, LA PLAZA LA LIBERA SOLO AUTO_FINALIZE
+            reserva_no_horaria = db.query(models.Reservation).filter(
+                models.Reservation.patente == p,
+                models.Reservation.tipo_estadia != "hora",
+                models.Reservation.estado_pago == PaymentStatus.PAGADO
+            ).first()
+            if not reserva_no_horaria:
+                if ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
+                    aforo.ocupacion_actual -= 1
+                elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
+                    aforo.ocupacion_motos -= 1
             
         now = datetime.datetime.now()
         db.add(models.AccessLog(
@@ -211,16 +226,23 @@ class AccessService:
                 capacidad = aforo.capacidad_total if tipo_vehiculo == VehicleType.AUTO else aforo.capacidad_motos
                 ocupacion = aforo.ocupacion_actual if tipo_vehiculo == VehicleType.AUTO else aforo.ocupacion_motos
                     
-                if ocupacion >= capacidad:
+                if not reserva and ocupacion >= capacidad:
                     return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
 
-                if tipo_vehiculo == VehicleType.AUTO:
-                    aforo.ocupacion_actual += 1
+                # RESERVA NO HORARIA: la plaza ya se reservó en el pago, no incrementar
+                if reserva:
+                    if reserva.tipo_estadia == "hora":
+                        if tipo_vehiculo == VehicleType.AUTO:
+                            aforo.ocupacion_actual += 1
+                        else:
+                            aforo.ocupacion_motos += 1
+                    if reserva.estado_reserva == ReservationStatus.PENDIENTE:
+                        reserva.estado_reserva = ReservationStatus.ACTIVA
                 else:
-                    aforo.ocupacion_motos += 1
-
-                if reserva.estado_reserva == ReservationStatus.PENDIENTE:
-                    reserva.estado_reserva = ReservationStatus.ACTIVA
+                    if tipo_vehiculo == VehicleType.AUTO:
+                        aforo.ocupacion_actual += 1
+                    else:
+                        aforo.ocupacion_motos += 1
 
                 db.add(models.AccessLog(
                     patente_detectada=reserva.patente, 
@@ -245,10 +267,17 @@ class AccessService:
                     
                 aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
                 if aforo:
-                    if ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
-                        aforo.ocupacion_actual -= 1
-                    elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
-                        aforo.ocupacion_motos -= 1
+                    # SI TIENE RESERVA NO HORARIA PAGADA, LA PLAZA LA LIBERA SOLO AUTO_FINALIZE
+                    reserva_no_horaria = db.query(models.Reservation).filter(
+                        models.Reservation.patente == reserva.patente,
+                        models.Reservation.tipo_estadia != "hora",
+                        models.Reservation.estado_pago == PaymentStatus.PAGADO
+                    ).first()
+                    if not reserva_no_horaria:
+                        if ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
+                            aforo.ocupacion_actual -= 1
+                        elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
+                            aforo.ocupacion_motos -= 1
                 
                 db.add(models.AccessLog(
                     patente_detectada=reserva.patente, 

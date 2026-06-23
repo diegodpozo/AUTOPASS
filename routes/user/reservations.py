@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
+from core.config import settings
 from core.database import get_db
 from core.security import get_current_user
 from services.billing_service import BillingService
@@ -27,8 +28,8 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre)
     start = datetime.datetime.fromisoformat(res.fecha_inicio)
     
-    if (start - datetime.datetime.now()).total_seconds() < 7200:
-        raise HTTPException(status_code=400, detail="Las reservas deben realizarse con al menos 2 horas de anticipación.")
+    if res.tipo_estadia == "hora" and (start - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+        raise HTTPException(status_code=400, detail="Las reservas por hora deben realizarse con al menos 1 hora de anticipación.")
 
     end = datetime.datetime.fromisoformat(res.fecha_fin)
     duration_hours = (end - start).total_seconds() / 3600
@@ -82,8 +83,9 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == current_user.id).first()
     if not res: raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
-    if (datetime.datetime.fromisoformat(res.fecha_inicio) - datetime.datetime.now()).total_seconds() < 7200:
-        raise HTTPException(status_code=400, detail="No se puede modificar con menos de 2 horas de antelación")
+    tipo_efectivo = data.tipo_estadia if data.tipo_estadia else res.tipo_estadia
+    if tipo_efectivo == "hora" and (datetime.datetime.fromisoformat(res.fecha_inicio) - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+        raise HTTPException(status_code=400, detail="No se puede modificar una reserva por hora con menos de 1 hora de antelación")
 
     monto_anterior, ya_pagado = res.monto_total, res.estado_pago == "Pagado"
 

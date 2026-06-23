@@ -4,10 +4,50 @@ import models
 import schemas
 from services.billing_service import BillingService
 from services.email_service import EmailService
+from services.notification_service import NotificationService
 from repositories.reservation_repository import ReservationRepository
 from repositories.user_repository import UserRepository
 from fastapi import HTTPException
 from models.enums import ReservationStatus, PaymentStatus, VehicleType, AccessEventType
+
+# --- HELPERS DE AFORO ---
+
+def _normalizar_sucursal(text: str) -> str:
+    if not text: return ""
+    import unicodedata
+    text = text.upper().replace("AUTOPASS ", "").strip()
+    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+
+def _reservar_plaza_en_aforo(db: Session, res: "models.Reservation"):
+    """RESERVA UNA PLAZA EN EL AFORO DE LA SUCURSAL CUANDO SE PAGA UNA RESERVA NO HORARIA."""
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == res.sucursal_nombre).first()
+    if not aforo:
+        aforo = models.ParkingAforo(sucursal=res.sucursal_nombre, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
+        db.add(aforo)
+
+    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
+    if vehiculo and vehiculo.tipo == VehicleType.MOTO:
+        aforo.ocupacion_motos += 1
+    else:
+        aforo.ocupacion_actual += 1
+    db.commit()
+    NotificationService.notify_occupancy_change(db, _normalizar_sucursal(res.sucursal_nombre))
+
+def _liberar_plaza_en_aforo(db: Session, res: "models.Reservation"):
+    """LIBERA UNA PLAZA EN EL AFORO CUANDO SE CANCELA UNA RESERVA NO HORARIA."""
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == res.sucursal_nombre).first()
+    if not aforo:
+        return
+
+    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
+    if vehiculo and vehiculo.tipo == VehicleType.MOTO:
+        if aforo.ocupacion_motos > 0:
+            aforo.ocupacion_motos -= 1
+    else:
+        if aforo.ocupacion_actual > 0:
+            aforo.ocupacion_actual -= 1
+    db.commit()
+    NotificationService.notify_occupancy_change(db, _normalizar_sucursal(res.sucursal_nombre))
 
 # --- SERVICIO DE GESTION DE RESERVAS ---
 
@@ -88,14 +128,14 @@ class ReservationService:
     def cleanup_overdue_reservations(db: Session):
         """CANCELA AUTOMATICAMENTE RESERVAS IMPAGAS CUYO TIEMPO DE INICIO YA PASO CON UN MARGEN DE GRACIA."""
         now = datetime.datetime.now()
-        # DAMOS UN MARGEN DE 2 HORAS DE GRACIA DESDE LA HORA DE INICIO ANTES DE CANCELAR
         grace_cutoff = now - datetime.timedelta(hours=2)
         cutoff_str = grace_cutoff.strftime("%Y-%m-%d %H:%M")
         
         overdue = db.query(models.Reservation).filter(
             models.Reservation.estado_pago == PaymentStatus.PENDIENTE,
             models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
-            models.Reservation.fecha_inicio <= cutoff_str
+            models.Reservation.fecha_inicio <= cutoff_str,
+            models.Reservation.tipo_estadia == "hora"
         ).all()
         
         if overdue:
@@ -133,6 +173,9 @@ class ReservationService:
             print(f"[SYSTEM] Finalizando {len(vencidas)} reservas vencidas.")
             for r in vencidas:
                 r.estado_reserva = ReservationStatus.COMPLETADA
+                # LIBERAR PLAZA SI ES NO HORARIA (NUNCA SE LIBERA EN SALIDA FISICA)
+                if r.tipo_estadia != "hora" and r.sucursal_nombre:
+                    _liberar_plaza_en_aforo(db, r)
             db.commit()
             return len(vencidas)
         return 0
@@ -169,6 +212,10 @@ class ReservationService:
         ))
         
         db.commit()
+
+        # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS (DIA/SEMANA/QUINCENA/MES)
+        if res.tipo_estadia != "hora" and res.sucursal_nombre:
+            _reservar_plaza_en_aforo(db, res)
 
         # ENVIAR MAIL DE CONFIRMACION
         res_info = {
@@ -272,6 +319,9 @@ class ReservationService:
             res.fecha_pago = datetime.datetime.now().isoformat()
             
         db.commit()
+
+        if res.tipo_estadia != "hora" and res.sucursal_nombre:
+            _liberar_plaza_en_aforo(db, res)
         
         msg = f"Reserva cancelada. Reembolso: ${monto_a_reembolsar}" if monto_a_reembolsar > 0 else "Reserva cancelada sin reembolso."
         return {"status": "ok", "message": msg, "reembolso": monto_a_reembolsar}

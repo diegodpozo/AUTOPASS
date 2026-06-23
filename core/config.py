@@ -5,7 +5,7 @@ load_dotenv()
 
 class Settings:
     PROJECT_NAME: str = "AUTOPASS Professional"
-    VERSION: str = "8.5.0"
+    VERSION: str = "9.2.0"
     
     # CONTACTO
     CONTACT_SUPPORT: str = "soporte@autopass.com.ar"
@@ -47,6 +47,9 @@ class Settings:
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     LOGO_PATH: str = os.path.join(BASE_DIR, "static", "images", "logo.png")
     IMAGE_DIR: str = os.getenv("IMAGE_DIR", "captured_images")
+
+    # RESERVAS
+    RESERVA_HORA_MIN_SEGUNDOS: int = int(os.getenv("RESERVA_HORA_MIN_SEGUNDOS", 3600))
 
     # MANTENIMIENTO Y SALUD
     MAINTENANCE_INTERVAL_SECONDS: int = int(os.getenv("MAINTENANCE_INTERVAL_SECONDS", 300))
