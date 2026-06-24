@@ -11,8 +11,8 @@ if not os.path.exists(bidi_init):
 with open(bidi_init, "r", encoding="utf-8") as f:
     content = f.read()
 
-if "from .algorithm import get_display" in content:
-    print("[*] Parche bidi ya aplicado.")
+if "from .algorithm import get_display" in content and content.index("from .algorithm import get_display") < content.index("def main()"):
+    print("[*] Parche bidi ya aplicado correctamente (a nivel de modulo).")
     sys.exit(0)
 
 content = content.replace(
