@@ -50,9 +50,14 @@ export async function loadVehicles() {
                     </div>
                 </div>
             </div>
-            <button class="delete-btn-modern" title="Eliminar vehículo" onclick="deleteVehicle('${v.patente}')">
-                <i class="fas fa-xmark"></i>
-            </button>
+            <div class="vehicle-actions-overlay">
+                <button class="fav-btn-modern ${v.is_favorite ? 'active' : ''}" title="${v.is_favorite ? 'Quitar favorito' : 'Marcar como favorito'}" onclick="setFavoriteVehicle('${v.patente}')">
+                    <i class="fas fa-star"></i>
+                </button>
+                <button class="delete-btn-modern" title="Eliminar vehículo" onclick="deleteVehicle('${v.patente}')">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
         </div>
     `).join('');
 
@@ -64,6 +69,15 @@ export async function loadVehicles() {
             vehicles.map(v => `<option value="${v.patente}">${formatPlate(v.patente)} - ${v.marca_modelo}</option>`).join('');
         if (currentVal) select.value = currentVal;
     });
+    // AUTO-SELECT SI TIENE UN SOLO VEHICULO O UNO MARCADO COMO FAVORITO
+    if (vehicles.length === 1) {
+        selects.forEach(select => select.value = vehicles[0].patente);
+    } else {
+        const fav = vehicles.find(v => v.is_favorite);
+        if (fav) {
+            selects.forEach(select => select.value = fav.patente);
+        }
+    }
 }
 
 export async function toggleVehicleForm() {
@@ -191,6 +205,17 @@ export async function addVehicle(e, isQuickAdd = false) {
 
     btn.innerHTML = originalContent;
     btn.disabled = false;
+}
+
+export async function setFavoriteVehicle(patente) {
+    const res = await api.post(`/user/vehicles/${encodeURIComponent(patente)}/favorite`);
+    if (res.ok) {
+        await loadVehicles();
+        if (window.refreshReservationFormState) window.refreshReservationFormState();
+        showToast(res.data.is_favorite ? 'Vehículo marcado como favorito' : 'Favorito removido');
+    } else {
+        showToast(res.error || 'Error al actualizar favorito');
+    }
 }
 
 export async function deleteVehicle(patente) {

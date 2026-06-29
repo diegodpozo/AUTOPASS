@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .env
 .gemini/
-parking.db
+
 Captura de pantalla*.jpg
 *.sqlite
 .venv/
