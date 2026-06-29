@@ -165,6 +165,17 @@ export async function refreshReservationFormState() {
                     userVehicles.map(v => `<option value="${v.patente}">${formatPlate(v.patente)} - ${v.marca_modelo}</option>`).join('');
                 if (currentVal) select.value = currentVal;
             });
+            // AUTO-SELECT SI TIENE UN SOLO VEHICULO O UNO MARCADO COMO FAVORITO
+            if (userVehicles.length === 1) {
+                selects.forEach(select => select.value = userVehicles[0].patente);
+                updateReservationPrice();
+            } else {
+                const fav = userVehicles.find(v => v.is_favorite);
+                if (fav) {
+                    selects.forEach(select => select.value = fav.patente);
+                    updateReservationPrice();
+                }
+            }
         }
     }
 

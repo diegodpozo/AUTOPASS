@@ -39,6 +39,7 @@ window.historialPage = res.historialPage;
 window.loadVehicles = v.loadVehicles;
 window.addVehicle = v.addVehicle;
 window.deleteVehicle = v.deleteVehicle;
+window.setFavoriteVehicle = v.setFavoriteVehicle;
 
 //UI HELPERS (VIENEN DE UI.JS O LOGICA LOCAL)
 window.toggleNuevoVinculo = ui.toggleNuevoVinculo;
