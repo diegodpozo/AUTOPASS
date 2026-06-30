@@ -183,10 +183,12 @@
 }
 
 .progress-fill {
-    height: 100%; background: var(--secondary); transition: width 1s ease;
+    height: 100%; background: var(--secondary); transition: width 1s ease, background 1s ease;
 }
 
-.progress-fill.warning { background: var(--dorado); }
+.progress-fill.warning { background: var(--warning); }
+.progress-fill.orange { background: var(--dorado); }
+.progress-fill.danger { background: var(--danger); }
 
 /* --- HEALTH CARD SPECIFICS --- */
 .health-list {

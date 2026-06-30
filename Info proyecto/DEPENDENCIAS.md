@@ -25,8 +25,15 @@ Este documento detalla las librerías y herramientas necesarias para el funciona
 - **`torch` / `torchvision`**: (Instalados automáticamente por EasyOCR) Motor de Deep Learning.
 
 ### Comunicación y Utilidades
-- **`paho-mqtt`**: Cliente para la comunicación con el broker MQTT (apertura de barreras).
+- **`paho-mqtt`**: Cliente para la comunicación con el broker MQTT (apertura de barreras). Usa `CallbackAPIVersion.VERSION2`.
 - **`requests`**: Realización de peticiones HTTP entre servicios.
+- **`email-validator`**: Validación de direcciones de email en registro y recuperación de contraseña.
+- **`aiofiles`**: Operaciones de archivo asíncronas (guardado de imágenes capturadas).
+- **`python-multipart`**: Soporte para subida de archivos (logos de sucursales, fotos).
+
+### Frontend (CDN - no requieren instalación pip)
+- **Leaflet.js**: Mapa interactivo para selector de coordenadas de sucursales.
+- **Chart.js**: Gráficos en dashboard de reportes financieros.
 
 ---
 
@@ -35,7 +42,7 @@ Este documento detalla las librerías y herramientas necesarias para el funciona
 Puedes instalar todas las dependencias ejecutando:
 
 ```bash
-pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt requests opencv-python easyocr
+pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt requests opencv-python easyocr email-validator aiofiles python-multipart
 ```
 
 ### Post-instalación (Parche necesario)

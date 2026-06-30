@@ -40,29 +40,32 @@ export async function loadLiveStats() {
     if (resStatus && resStatus.ok) {
         const { disponibilidad: free, ocupacion_actual: occupied, capacidad_total: total, ocupacion_motos: occMotos, capacidad_motos: capMotos, disponibilidad_motos: freeMotos, disponibilidad_camionetas: freeCamionetas, capacidad_camionetas: capCamionetas, ocupacion_camionetas: occCamionetas } = resStatus.data;
 
+        // HELPER PARA COLOR DE BARRA SEGUN DISPONIBILIDAD
+        function setBarFill(bar, pct) {
+            bar.style.width = `${pct}%`;
+            bar.className = 'progress-fill';
+            if (pct <= 10) bar.classList.add('danger');
+            else if (pct <= 25) bar.classList.add('orange');
+            else if (pct <= 50) bar.classList.add('warning');
+        }
+
         // AUTOS
         const freeEl = document.getElementById('stat-free');
         if (freeEl) freeEl.innerText = formatNum(free);
-        const totalEl = document.getElementById('stat-free-total');
-        if (totalEl) totalEl.innerText = `Tot. Disp. ${formatNum(total)}`;
         const barFree = document.getElementById('bar-free');
-        if (barFree) barFree.style.width = `${(free / total) * 100}%`;
+        if (barFree) setBarFill(barFree, (free / total) * 100);
 
         // MOTOS
         const freeMotosEl = document.getElementById('stat-free-motos');
         if (freeMotosEl) freeMotosEl.innerText = formatNum(freeMotos);
-        const totalMotosEl = document.getElementById('stat-free-motos-total');
-        if (totalMotosEl) totalMotosEl.innerText = `Tot. Disp. ${formatNum(capMotos)}`;
         const barFreeMotos = document.getElementById('bar-free-motos');
-        if (barFreeMotos) barFreeMotos.style.width = `${(freeMotos / capMotos) * 100}%`;
+        if (barFreeMotos) setBarFill(barFreeMotos, (freeMotos / capMotos) * 100);
 
         // CAMIONETAS
         const freeCamionetasEl = document.getElementById('stat-free-camionetas');
         if (freeCamionetasEl) freeCamionetasEl.innerText = formatNum(freeCamionetas);
-        const totalCamionetasEl = document.getElementById('stat-free-camionetas-total');
-        if (totalCamionetasEl) totalCamionetasEl.innerText = `Tot. Disp. ${formatNum(capCamionetas)}`;
         const barFreeCamionetas = document.getElementById('bar-free-camionetas');
-        if (barFreeCamionetas) barFreeCamionetas.style.width = `${(freeCamionetas / capCamionetas) * 100}%`;
+        if (barFreeCamionetas) setBarFill(barFreeCamionetas, (freeCamionetas / capCamionetas) * 100);
 
         // OCUPACION TOTAL Y KPI MOTO
         const occMotosEl = document.getElementById('occ-stat-motos');

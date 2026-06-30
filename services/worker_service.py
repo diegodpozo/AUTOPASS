@@ -137,6 +137,11 @@ class WorkerService:
                     res.estado_reserva = ReservationStatus.ACTIVA
                     db.commit()
 
+                # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS PAGADAS QUE INICIAN AHORA
+                if pagada and res.tipo_estadia != "hora" and res.sucursal_nombre:
+                    from services.reservation_service import _reservar_plaza_en_aforo
+                    _reservar_plaza_en_aforo(db, res)
+
                 titulo = "Tu reserva ya comenzó!"
                 mensaje = f"Reserva #{res.id} en {res.sucursal_nombre} - Patente {res.patente}. "
                 if pagada:

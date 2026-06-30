@@ -21,8 +21,18 @@ Crea o edita el archivo `.env` en la raíz:
 DATABASE_URL=sqlite:///./parking.db
 SECRET_KEY=tu_secreto_aqui
 MQTT_BROKER=broker.hivemq.com
+MQTT_TOPIC_ENTRADA=autopass/entrada
+MQTT_TOPIC_SALIDA=autopass/salida
 IMAGE_DIR=captured_images
 RESERVA_HORA_MIN_SEGUNDOS=3600  # Tiempo mínimo de anticipación para reservas por hora (en segundos)
+MAINTENANCE_INTERVAL_SECONDS=300  # Intervalo de limpieza de reservas vencidas
+
+# Email (para recuperación de contraseña y confirmaciones)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=tu_email@gmail.com
+SMTP_PASSWORD=tu_password
+EMAIL_FROM=noreply@autopass.com
 ```
 
 ## 3. Preparación de Base de Datos
@@ -81,6 +91,27 @@ Ejecuta los tests automáticos para asegurar que la modularización está operat
 ---
 ### 🚦 Flujo de Prueba Rápido (ALPR)
 1. Inicia el servidor.
-2. Abre una terminal nueva y corre `python alpr_service.py` (simulará una cámara).
+2. Abre una terminal nueva y corre `python alpr_service.py` (modo `SCREEN_TO_SCREEN`, simulará una cámara con video de archivo).
 3. Entra a `http://localhost:8000/dashboard` como admin (admin@autopass.com / admin123).
 4. En la pestaña **Live**, deberías ver el stream simulado y las detecciones ingresando a la base de datos modular.
+
+### 🎬 Modo Simulación (Sin Cámaras)
+Si no tenés cámaras IP, ejecutá `alpr_service.py` directamente:
+```bash
+python alpr_service.py
+```
+Esto usa `SCREEN_TO_SCREEN` mode: reproduce un video desde `videos/` y simula detecciones. Las patentes se enviarán al backend como si fueran de una cámara real.
+
+Para cambiar el video simulado, editá `alpr_service.py` y modificá la ruta del archivo de video.
+
+### 🔄 Scripts de Migración y Utilidad
+```bash
+# Normalizar todas las patentes en access_logs
+python scripts/backfill_normalize_all_access_logs.py
+
+# Vincular reservas pagadas a access_logs existentes
+python scripts/backfill_attach_reservations.py
+
+# Consultar patente específica en access_logs
+python scripts/query_access_logs.py
+```
