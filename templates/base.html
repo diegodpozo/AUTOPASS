@@ -42,9 +42,12 @@
 
     <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link rel="stylesheet" href="/static/css/components/footer.css">
+    <link rel="stylesheet" href="/static/css/components/virtual_time.css">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+
+    {% include "components/virtual_time_banner.html" %}
 
     {% block content %}{% endblock %}
 

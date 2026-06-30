@@ -10,6 +10,8 @@ class ParkingAforo(Base):
     ocupacion_actual = Column(Integer, default=0) # PARA AUTOS
     capacidad_motos = Column(Integer, default=10)
     ocupacion_motos = Column(Integer, default=0)
+    capacidad_camionetas = Column(Integer, default=5)
+    ocupacion_camionetas = Column(Integer, default=0)
     ultima_actualizacion = Column(String)
     sucursal = Column(String, unique=True, nullable=True)
 
@@ -69,5 +71,7 @@ class ParkingFloor(Base):
     ocupacion_actual = Column(Integer, default=0)
     capacidad_motos = Column(Integer, default=10)
     ocupacion_motos = Column(Integer, default=0)
+    capacidad_camionetas = Column(Integer, default=5)
+    ocupacion_camionetas = Column(Integer, default=0)
 
     branch = relationship("ParkingBranch", back_populates="floors")

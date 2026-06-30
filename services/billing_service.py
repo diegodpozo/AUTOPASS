@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models
 
 from core.config import settings
+from services.time_service import TimeService
 
 # --- SERVICIO DE FACTURACION Y PUNTOS ---
 
@@ -71,7 +72,7 @@ class BillingService:
         precio_hora = BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
         entrada_dt = datetime.datetime.fromisoformat(entry_time_str)
         
-        delta = datetime.datetime.now() - entrada_dt
+        delta = TimeService.now() - entrada_dt
         horas_transcurridas = delta.total_seconds() / 3600
         
         # COBRO POR BLOQUES DE HORA (REDONDEO HACIA ARRIBA, MINIMO 1 HORA)

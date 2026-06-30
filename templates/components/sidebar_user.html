@@ -11,6 +11,11 @@
         <div class="nav-item" onclick="showSection('vehiculos', this); closeMobileNav()"><i class="fas fa-car-side"></i> <span class="nav-text">Mis Vehículos</span></div>
         <div class="nav-item" onclick="showSection('reservas', this); closeMobileNav()"><i class="fas fa-calendar-check"></i> <span class="nav-text">Mis Reservas</span></div>
         <div class="nav-item" onclick="showSection('puntos', this); closeMobileNav()"><i class="fas fa-star"></i> <span class="nav-text">Mis Puntos</span></div>
+        <div class="nav-item notification-nav-item" onclick="showSection('notificaciones', this); closeMobileNav(); loadNotifications()">
+            <i class="fas fa-bell"></i>
+            <span class="nav-text">Notificaciones</span>
+            <span id="notif-badge-sidebar" class="notif-badge" style="display:none;">0</span>
+        </div>
         <div class="nav-item" onclick="showSection('perfil', this); closeMobileNav()"><i class="fas fa-user-gear"></i> <span class="nav-text">Mi Cuenta</span></div>
     </nav>
     <div class="sidebar-footer" onclick="logout()">

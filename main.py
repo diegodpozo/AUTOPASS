@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from core.config import settings
-from core.database import engine
+from core.database import engine, init_db
 from core.mqtt import mqtt_client
 from services.worker_service import WorkerService
 import models
@@ -43,10 +43,11 @@ def startup_event():
         mqtt_client.loop_start()
         
         # BASE DE DATOS
-        models.Base.metadata.create_all(bind=engine)
+        init_db()
         
         # BACKGROUND WORKERS
         WorkerService.start_reservation_cleanup()
+        WorkerService.start_notification_worker()
         
     except Exception as e: 
         print(f"Error en fase de inicio (MQTT/DB): {e}")

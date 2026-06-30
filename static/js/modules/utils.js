@@ -6,6 +6,16 @@
 /**
  * CONVIERTE UN STRING A FORMATO DE TITULO (CAPITALIZACION DE CADA PALABRA).
  */
+/**
+ * FORMATEA UN NUMERO CON SEPARADORES DE MILES (LOCALE ES-AR).
+ */
+export const formatNum = (n) => {
+    if (n === undefined || n === null) return '0';
+    const num = typeof n === 'number' ? n : parseFloat(n);
+    if (isNaN(num)) return '0';
+    return num.toLocaleString('es-AR');
+};
+
 export const toTitle = s => {
     if (!s || typeof s !== 'string') return '---';
     return s.toLowerCase()
@@ -28,10 +38,10 @@ export function formatDate(isoStr) {
 
     const day = d.getDate().toString().padStart(2, '0');
     const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const year = d.getFullYear();
+    const year = d.getFullYear().toString().slice(-2);
     const hours = d.getHours().toString().padStart(2, '0');
     const mins = d.getMinutes().toString().padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${mins}`;
+    return `${day}-${month}-${year} ${hours}:${mins}`;
 }
 
 /**
@@ -74,7 +84,11 @@ export function showToast(msg, type = 'default') {
         }
     };
     
-    document.addEventListener('click', handleDocumentClick);
+    // REGISTRAR LISTENER EN EL PROXIMO TICK PARA EVITAR QUE EL CLICK
+    // QUE DISPARO EL TOAST LO CIERRE INMEDIATAMENTE
+    setTimeout(() => {
+        document.addEventListener('click', handleDocumentClick);
+    }, 0);
     
     // LIMPIAR LISTENER SI EL TOAST SE REMUEVE DE OTRA FORMA
     const observer = new MutationObserver(() => {
