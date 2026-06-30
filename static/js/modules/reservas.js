@@ -1,5 +1,5 @@
 import api from './api.js';
-import { toTitle, formatDate, formatPlate, showToast, showConfirm } from './utils.js';
+import { toTitle, formatDate, formatPlate, showToast, showConfirm, formatNum } from './utils.js';
 
 /**
  * RESERVAS MODULO
@@ -8,6 +8,8 @@ import { toTitle, formatDate, formatPlate, showToast, showConfirm } from './util
 
 let historialCurrentPage = 1;
 const HISTORIAL_PAGE_SIZE = 5;
+const RESERVA_MIN_MS = (window.RESERVA_HORA_MIN_SEGUNDOS || 1800) * 1000;
+const RESERVA_MIN_MIN = (window.RESERVA_HORA_MIN_SEGUNDOS || 1800) / 60;
 let currentRates = { hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
 let editingReservaId = null;
 let historyData = [];
@@ -20,12 +22,16 @@ export function initReservationForm() {
         window.flatpickr.localize(window.flatpickr.l10ns.es);
     }
 
+    const now = typeof window.getVirtualNow === 'function' ? window.getVirtualNow() : new Date();
+    const maxDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
     const commonConfig = {
         minDate: "today",
+        maxDate: maxDate,
         disableMobile: "true",
         altInput: true,
-        altFormat: "d-m-Y",
+        altFormat: "d-m-y",
         dateFormat: "Y-m-d",
+        defaultDate: now,
         onChange: () => updateReservationPrice()
     };
 
@@ -34,17 +40,22 @@ export function initReservationForm() {
     flatpickr(".res-time-only", { 
         enableTime: true, 
         noCalendar: true, 
-        dateFormat: "H:i", 
-        defaultHour: 12, 
-        defaultMinute: 0,
+        dateFormat: "H:i",
+        defaultDate: now,
         disableMobile: "true",
         onChange: () => updateReservationPrice()
     });
     flatpickr(".res-week-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 7, '.res-week-end') });
     flatpickr(".res-fortnight-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 15, '.res-fortnight-end') });
     flatpickr(".res-month-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 30, '.res-month-end') });
-    flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-Y H:i", dateFormat: "Y-m-d H:i" });
-    flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-Y H:i", dateFormat: "Y-m-d H:i" });
+    flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
+    flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
+
+    // CALCULAR FECHAS DE FIN PARA PERIODOS CON LA FECHA POR DEFECTO
+    const todayYmd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    updatePeriodEnd(todayYmd, 7, '.res-week-end');
+    updatePeriodEnd(todayYmd, 15, '.res-fortnight-end');
+    updatePeriodEnd(todayYmd, 30, '.res-month-end');
 
     const typeSelect = document.querySelector('.res-type');
     if (typeSelect) {
@@ -73,6 +84,23 @@ export function initReservationForm() {
     if (timeInput) {
         timeInput.addEventListener('change', () => updateReservationPrice());
     }
+
+    // FLECHAS CUSTOM PARA CANTIDAD DE HORAS
+    document.querySelectorAll('.num-input-wrapper').forEach(wrapper => {
+        const input = wrapper.querySelector('.res-hours-qty');
+        const up = wrapper.querySelector('.num-btn.up');
+        const down = wrapper.querySelector('.num-btn.down');
+        if (input && up) up.addEventListener('click', () => {
+            const max = parseInt(input.max) || 24;
+            const val = parseInt(input.value) || 0;
+            if (val < max) { input.value = val + 1; input.dispatchEvent(new Event('input', { bubbles: true })); }
+        });
+        if (input && down) down.addEventListener('click', () => {
+            const min = parseInt(input.min) || 1;
+            const val = parseInt(input.value) || 0;
+            if (val > min) { input.value = val - 1; input.dispatchEvent(new Event('input', { bubbles: true })); }
+        });
+    });
 }
 
 function updatePeriodEnd(startDateStr, days, targetSelector) {
@@ -84,8 +112,8 @@ function updatePeriodEnd(startDateStr, days, targetSelector) {
     const end = new Date(start.getTime() + (days - 1) * 24 * 60 * 60 * 1000);
     const day = end.getDate().toString().padStart(2, '0');
     const month = (end.getMonth() + 1).toString().padStart(2, '0');
-    const year = end.getFullYear();
-    endInput.value = `${day}/${month}/${year} 23:59`;
+    const year = end.getFullYear().toString().slice(-2);
+    endInput.value = `${day}-${month}-${year} 23:59`;
     updateReservationPrice();
 }
 
@@ -138,6 +166,7 @@ export async function toggleReservaForm() {
 }
 
 let userVehicles = [];
+let branchesData = [];
 
 export async function refreshReservationFormState() {
     const container = document.getElementById('reserva-form-container');
@@ -182,12 +211,12 @@ export async function refreshReservationFormState() {
     // 2. CARGAR SUCURSALES DINAMICAMENTE
     const resBranches = await api.get('/admin/branches');
     if (resBranches.ok) {
-        const branches = resBranches.data;
+        branchesData = resBranches.data;
         const sucursalSelects = document.querySelectorAll('.res-sucursal');
         sucursalSelects.forEach(select => {
             const currentVal = select.value;
             select.innerHTML = '<option value="" selected disabled hidden>Seleccioná sucursal...</option>' + 
-                branches.map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
+                branchesData.map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
     }
@@ -216,8 +245,8 @@ export async function prepareEditReservation(id) {
 
     const now = new Date();
     const start = new Date(r.fecha_inicio.replace(/-/g, "/"));
-    if (r.tipo_estadia === 'hora' && (start - now) < 3600000) {
-        return showToast('No se puede modificar con menos de 1 hora de antelación');
+    if (r.tipo_estadia === 'hora' && (start - now) < RESERVA_MIN_MS) {
+        return showToast(`No se puede modificar con menos de ${RESERVA_MIN_MIN} minutos de antelación`);
     }
 
     editingReservaId = id;
@@ -355,8 +384,18 @@ export function updateFormGroups(type) {
     Object.values(sections).forEach(s => { if(s) s.style.display = 'none'; });
     const activeSection = sections[type] || sections['standard'];
     if (activeSection) {
-        // USAR EL ATRIBUTO DATA-DISPLAY SI EXISTE, SINO GRID POR DEFECTO
         activeSection.style.display = activeSection.dataset.display || 'grid';
+    }
+    // RECALCULAR FECHA DE FIN AL CAMBIAR A UN PERIODO
+    if (type === 'semana') {
+        const v = document.querySelector('.res-week-start')?.value;
+        if (v) updatePeriodEnd(v, 7, '.res-week-end');
+    } else if (type === 'quincena') {
+        const v = document.querySelector('.res-fortnight-start')?.value;
+        if (v) updatePeriodEnd(v, 15, '.res-fortnight-end');
+    } else if (type === 'mes') {
+        const v = document.querySelector('.res-month-start')?.value;
+        if (v) updatePeriodEnd(v, 30, '.res-month-end');
     }
     updateReservationPrice();
 }
@@ -397,9 +436,35 @@ export async function createReservation(e) {
             inicio = `${fecha} ${hora}`;
             const now = new Date();
             const startDt = new Date(inicio.replace(/-/g, "/"));
-            if ((startDt - now) < 3600000) { console.groupEnd(); return showToast('Mínimo 1 hora de anticipación.'); }
+            if ((startDt - now) < RESERVA_MIN_MS) { console.groupEnd(); return showToast(`Mínimo ${RESERVA_MIN_MIN} minutos de anticipación.`); }
             const endDt = new Date(startDt.getTime() + hoursQty * 60 * 60 * 1000);
             fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} ${endDt.getHours().toString().padStart(2, '0')}:${endDt.getMinutes().toString().padStart(2, '0')}`;
+            // VALIDAR HORARIO DE SUCURSAL
+            const branch = branchesData.find(b => b.nombre === sucursal);
+            if (branch && !branch.is_24h && branch.horario) {
+                const hMatch = branch.horario.toUpperCase().trim().match(/^(\d{1,2}):(\d{2})\s+(?:A|UN)\s+(\d{1,2}):(\d{2})$/);
+                if (hMatch) {
+                    let open = parseInt(hMatch[1]) * 60 + parseInt(hMatch[2]);
+                    let close = parseInt(hMatch[3]) * 60 + parseInt(hMatch[4]);
+                    // SI CIERRE ES 00:00 SE TRATA COMO 24:00 (FINAL DEL DIA)
+                    if (close === 0) close = 1439;
+                    const startMin = startDt.getHours() * 60 + startDt.getMinutes();
+                    const endMin = endDt.getHours() * 60 + endDt.getMinutes();
+                    const endDateStr2 = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')}`;
+                    if (endDateStr2 !== fecha) {
+                        console.groupEnd();
+                        return showToast(`La sucursal cierra a las ${hMatch[3]}:${hMatch[4]}. La estadía no puede extenderse más allá del cierre.`);
+                    }
+                    if (startMin < open || startMin >= close) {
+                        console.groupEnd();
+                        return showToast(`La sucursal abre de ${branch.horario}. La hora de inicio debe estar dentro del horario de atención.`);
+                    }
+                    if (endMin > close) {
+                        console.groupEnd();
+                        return showToast(`La sucursal cierra a las ${hMatch[3]}:${hMatch[4]}. La hora de fin no puede exceder el horario de cierre.`);
+                    }
+                }
+            }
         } else if (tipo === 'dia') {
             const fecha = document.querySelector('.res-day-only').value;
             if (!fecha) { console.groupEnd(); return showToast('Seleccioná un día'); }
@@ -427,6 +492,25 @@ export async function createReservation(e) {
         console.error("[!] Error procesando fechas:", err);
         console.groupEnd();
         return showToast('Error en el formato de fecha');
+    }
+
+    // VERIFICAR DISPONIBILIDAD ANTES DE MOSTRAR EL CONFIRM
+    const av = await api.get('/user/reservations/check-availability', {
+        params: {
+            sucursal_nombre: sucursal,
+            fecha_inicio: inicio,
+            fecha_fin: fin,
+            exclude_id: editingReservaId || undefined
+        }
+    });
+    if (av.ok && av.data) {
+        if (!av.data.disponible) {
+            console.groupEnd();
+            return showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.');
+        }
+        if (av.data.restan !== undefined && av.data.restan <= 3) {
+            showToast(av.data.mensaje, 'warning');
+        }
     }
 
     const resumenHtml = `
@@ -520,13 +604,13 @@ export async function loadReservations() {
     const active = all.filter(r => r.estado_reserva === 'Pendiente' || r.estado_reserva === 'Activa');
     historyData = all.filter(r => r.estado_reserva !== 'Pendiente' && r.estado_reserva !== 'Activa');
     
-    const now = new Date();
+    const now = typeof window.getVirtualNow === 'function' ? window.getVirtualNow() : new Date();
     const inProgress = active.filter(r => now >= new Date(r.fecha_inicio.replace(/-/g, "/")) && now < new Date(r.fecha_fin.replace(/-/g, "/")));
     const upcoming = active.filter(r => now < new Date(r.fecha_inicio.replace(/-/g, "/")));
 
-    if (document.getElementById('stat-reservations')) document.getElementById('stat-reservations').innerText = active.length;
-    if (document.getElementById('stat-res-active')) document.getElementById('stat-res-active').innerText = inProgress.length;
-    if (document.getElementById('stat-res-upcoming')) document.getElementById('stat-res-upcoming').innerText = upcoming.length;
+    if (document.getElementById('stat-reservations')) document.getElementById('stat-reservations').innerText = formatNum(active.length);
+    if (document.getElementById('stat-res-active')) document.getElementById('stat-res-active').innerText = formatNum(inProgress.length);
+    if (document.getElementById('stat-res-upcoming')) document.getElementById('stat-res-upcoming').innerText = formatNum(upcoming.length);
 
     const featuredList = document.getElementById('reservation-featured-list');
     if (inProgress.length > 0) {
@@ -568,7 +652,7 @@ export function applyHistoryFilters() {
 }
 
 export function renderReservaCard(r, isFeatured) {
-    const now = new Date();
+    const now = typeof window.getVirtualNow === 'function' ? window.getVirtualNow() : new Date();
     const start = new Date(r.fecha_inicio.replace(/-/g, "/"));
     const end = new Date(r.fecha_fin.replace(/-/g, "/"));
     let progress = 0;
@@ -576,7 +660,7 @@ export function renderReservaCard(r, isFeatured) {
     if (isStarted) progress = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
 
     return `
-    <div class="reserva-card-ultra ${isFeatured ? 'featured' : ''}">
+    <div class="reserva-card-ultra ${isFeatured ? 'featured' : ''}" data-reserva-id="${r.id}">
         <div class="reserva-header-ultra">
             <div class="reserva-info-main">
                 <span class="reserva-tag-id">RESERVA #${r.id}</span>

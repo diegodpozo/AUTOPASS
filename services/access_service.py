@@ -10,6 +10,7 @@ import schemas
 from core.config import settings
 from models.enums import VehicleType, AccessEventType, ReservationStatus, PaymentStatus
 from services.notification_service import NotificationService
+from services.time_service import TimeService
 import unicodedata
 
 def normalize_name(text: str):
@@ -71,11 +72,11 @@ class AccessService:
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == p).first()
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
-        now = datetime.datetime.now()
+        now = TimeService.now()
         img_name = cls._save_image(p, data.image_base64)
                 
         # BUSCAMOS RESERVA PAGADA QUE ESTE EN EL RANGO DE TIEMPO ACTUAL
-        now_str = now.isoformat()
+        now_str = now.strftime("%Y-%m-%d %H:%M")
         reserva = db.query(models.Reservation).filter(
             func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
             models.Reservation.estado_pago == PaymentStatus.PAGADO,
@@ -92,14 +93,23 @@ class AccessService:
             db.add(aforo)
         
         # VALIDAR CAPACIDAD SEGUN TIPO
-        capacidad = aforo.capacidad_total if tipo_vehiculo == VehicleType.AUTO else aforo.capacidad_motos
-        ocupacion = aforo.ocupacion_actual if tipo_vehiculo == VehicleType.AUTO else aforo.ocupacion_motos
+        if tipo_vehiculo == VehicleType.AUTO:
+            capacidad = aforo.capacidad_total
+            ocupacion = aforo.ocupacion_actual
+        elif tipo_vehiculo == VehicleType.CAMIONETA:
+            capacidad = getattr(aforo, 'capacidad_camionetas', 5)
+            ocupacion = getattr(aforo, 'ocupacion_camionetas', 0)
+        else:
+            capacidad = aforo.capacidad_motos
+            ocupacion = aforo.ocupacion_motos
 
         if reserva:
             # RESERVA NO HORARIA: la plaza ya se reservó en el pago, no incrementar
             if reserva.tipo_estadia == "hora":
                 if tipo_vehiculo == VehicleType.AUTO:
                     aforo.ocupacion_actual += 1
+                elif tipo_vehiculo == VehicleType.CAMIONETA:
+                    aforo.ocupacion_camionetas += 1
                 else:
                     aforo.ocupacion_motos += 1
 
@@ -108,6 +118,8 @@ class AccessService:
         elif ocupacion < capacidad:
             if tipo_vehiculo == VehicleType.AUTO:
                 aforo.ocupacion_actual += 1
+            elif tipo_vehiculo == VehicleType.CAMIONETA:
+                aforo.ocupacion_camionetas += 1
             else:
                 aforo.ocupacion_motos += 1
         else:
@@ -175,10 +187,12 @@ class AccessService:
             if not reserva_no_horaria:
                 if ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
                     aforo.ocupacion_actual -= 1
+                elif ultimo.tipo_vehiculo == VehicleType.CAMIONETA and aforo.ocupacion_camionetas > 0:
+                    aforo.ocupacion_camionetas -= 1
                 elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
                     aforo.ocupacion_motos -= 1
             
-        now = datetime.datetime.now()
+            now = TimeService.now()
         db.add(models.AccessLog(
             patente_detectada=p, 
             normalized_patente=p,
@@ -243,7 +257,7 @@ class AccessService:
             vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == patente_qr).first()
             tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
-            now = datetime.datetime.now()
+            now = TimeService.now()
             gate_id = data.gate_id.upper() if data.gate_id else "ENTRADA"
             is_entry = "ENTRADA" in gate_id
             
@@ -259,7 +273,7 @@ class AccessService:
                 if reserva.estado_reserva == ReservationStatus.COMPLETADA:
                      return {"status": "denied", "message": "Esta reserva ya expiró"}
                 
-                now_str = now.isoformat()
+                now_str = now.strftime("%Y-%m-%d %H:%M")
                 if reserva.fecha_inicio > now_str or reserva.fecha_fin < now_str:
                     return {"status": "denied", "message": "La reserva no está vigente en este horario"}
 
@@ -268,8 +282,15 @@ class AccessService:
                     aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
                     db.add(aforo)
                 
-                capacidad = aforo.capacidad_total if tipo_vehiculo == VehicleType.AUTO else aforo.capacidad_motos
-                ocupacion = aforo.ocupacion_actual if tipo_vehiculo == VehicleType.AUTO else aforo.ocupacion_motos
+                if tipo_vehiculo == VehicleType.AUTO:
+                    capacidad = aforo.capacidad_total
+                    ocupacion = aforo.ocupacion_actual
+                elif tipo_vehiculo == VehicleType.CAMIONETA:
+                    capacidad = getattr(aforo, 'capacidad_camionetas', 5)
+                    ocupacion = getattr(aforo, 'ocupacion_camionetas', 0)
+                else:
+                    capacidad = aforo.capacidad_motos
+                    ocupacion = aforo.ocupacion_motos
                     
                 if not reserva and ocupacion >= capacidad:
                     return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
@@ -279,6 +300,8 @@ class AccessService:
                     if reserva.tipo_estadia == "hora":
                         if tipo_vehiculo == VehicleType.AUTO:
                             aforo.ocupacion_actual += 1
+                        elif tipo_vehiculo == VehicleType.CAMIONETA:
+                            aforo.ocupacion_camionetas += 1
                         else:
                             aforo.ocupacion_motos += 1
                     if reserva.estado_reserva == ReservationStatus.PENDIENTE:
@@ -286,6 +309,8 @@ class AccessService:
                 else:
                     if tipo_vehiculo == VehicleType.AUTO:
                         aforo.ocupacion_actual += 1
+                    elif tipo_vehiculo == VehicleType.CAMIONETA:
+                        aforo.ocupacion_camionetas += 1
                     else:
                         aforo.ocupacion_motos += 1
 
@@ -323,6 +348,8 @@ class AccessService:
                     if not reserva_no_horaria:
                         if ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
                             aforo.ocupacion_actual -= 1
+                        elif ultimo.tipo_vehiculo == VehicleType.CAMIONETA and aforo.ocupacion_camionetas > 0:
+                            aforo.ocupacion_camionetas -= 1
                         elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
                             aforo.ocupacion_motos -= 1
                 

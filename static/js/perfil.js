@@ -5,6 +5,7 @@ import * as ui from './modules/ui.js';
 import { initPasswordValidation } from './modules/auth.js';
 import { showToast } from './modules/utils.js';
 import { initMap } from './modules/landing.js';
+import { loadNotifications, updateNotifBadge, startNotifPolling } from './modules/notifications.js';
 
 /**
  * PUENTE: PERFIL.JS
@@ -67,6 +68,7 @@ window.showSection = function(sectionId, el) {
     }
     if (sectionId === 'perfil') prof.loadProfile();
     if (sectionId === 'vehiculos') v.loadVehicles();
+    if (sectionId === 'notificaciones') loadNotifications();
 };
 
 window.enterEditMode = function(field) {
@@ -184,7 +186,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             await res.refreshReservationFormState();
         }
 
-        // 3. VERIFICAR SI VENIMOS DEL MAPA CON UNA SUCURSAL PRE-SELECCIONADA
+        // 3. INICIAR POLLING DE NOTIFICACIONES
+        startNotifPolling();
+
+        // 4. VERIFICAR SI VENIMOS DEL MAPA CON UNA SUCURSAL PRE-SELECCIONADA
         const urlParams = new URLSearchParams(window.location.search);
         const preBranch = urlParams.get('reserva_sucursal');
         if (preBranch) {

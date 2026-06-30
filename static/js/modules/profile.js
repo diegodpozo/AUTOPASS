@@ -1,5 +1,5 @@
 import api from './api.js';
-import { toTitle, formatDate, showToast, showConfirm } from './utils.js';
+import { toTitle, formatDate, formatNum, showToast, showConfirm } from './utils.js';
 import { closeModal } from './ui.js';
 
 /**
@@ -19,9 +19,9 @@ export async function loadProfile() {
     const welcomeEl = document.getElementById('welcome-greeting');
     if (welcomeEl) welcomeEl.innerText = `¡HOLA, ${user.nombre.toUpperCase()}!`;
     
-    const pts = document.getElementById('points-val'); if (pts) pts.innerText = user.puntos_acumulados || 0;
-    const pagePts = document.getElementById('points-page-val'); if (pagePts) pagePts.innerText = user.puntos_acumulados || 0;
-    const balance = document.getElementById('balance-val'); if (balance) balance.innerText = `$${(user.saldo || 0).toFixed(2)}`;
+    const pts = document.getElementById('points-val'); if (pts) pts.innerText = formatNum(user.puntos_acumulados || 0);
+    const pagePts = document.getElementById('points-page-val'); if (pagePts) pagePts.innerText = formatNum(user.puntos_acumulados || 0);
+    const balance = document.getElementById('balance-val'); if (balance) balance.innerText = `$${formatNum(user.saldo || 0)}`;
     
     const initials = (user.nombre[0] || '') + (user.apellido[0] || '');
     const initialsEl = document.getElementById('user-initials'); if (initialsEl) initialsEl.innerText = initials.toUpperCase();
@@ -30,14 +30,17 @@ export async function loadProfile() {
     const memberSinceEl = document.getElementById('user-member-since');
     if (memberSinceEl) {
         const date = user.created_at ? new Date(user.created_at) : new Date();
-        memberSinceEl.innerText = `Miembro desde: ${date.toLocaleDateString()}`;
+        const d = date.getDate().toString().padStart(2,'0');
+        const m = (date.getMonth()+1).toString().padStart(2,'0');
+        const y = date.getFullYear().toString().slice(-2);
+        memberSinceEl.innerText = `Miembro desde: ${d}-${m}-${y}`;
     }
 
     updatePointsProgress(user.puntos_acumulados || 0);
 
     const resStays = await api.get('/user/payment-history');
     if (resStays.ok) {
-        const staysEl = document.getElementById('acc-stat-stays'); if (staysEl) staysEl.innerText = resStays.data.length;
+        const staysEl = document.getElementById('acc-stat-stays'); if (staysEl) staysEl.innerText = formatNum(resStays.data.length);
     }
 
     const fields = ['nombre', 'apellido', 'email', 'telefono', 'dni'];
@@ -81,11 +84,11 @@ export function updatePointsProgress(currentPts) {
     const progress = ((currentPts - prevTarget) / (nextTarget - prevTarget)) * 100;
     progressBar.style.width = `${Math.min(100, progress)}%`;
     
-    if (targetEl) targetEl.innerText = `Prox: ${nextTarget} pts`;
+    if (targetEl) targetEl.innerText = `Prox: ${formatNum(nextTarget)} pts`;
     if (footerText) {
         const remaining = nextTarget - currentPts;
         footerText.innerText = remaining > 0 ? 
-            `¡Te faltan solo ${remaining} puntos para tu próximo beneficio AutoPass!` : 
+            `¡Te faltan solo ${formatNum(remaining)} puntos para tu próximo beneficio AutoPass!` : 
             `¡Llegaste al nivel máximo! Canjeá tus puntos por estadías gratis.`;
     }
 }
@@ -126,7 +129,7 @@ export async function loadPromotions() {
             </div>
             <div class="promo-body">
                 <p class="promo-desc">${p.descripcion}</p>
-                <div class="promo-cost">${p.costo_puntos} <span>puntos</span></div>
+                <div class="promo-cost">${formatNum(p.costo_puntos)} <span>puntos</span></div>
             </div>
             <div class="promo-footer">
                 <button class="btn-redeem" onclick="redeemPoints(${p.id}, ${p.costo_puntos})" 
@@ -162,7 +165,7 @@ export async function loadPointsHistory(page = 1) {
                         <span class="pts-item-date">${formatDate(h.fecha)}</span>
                     </div>
                     <div class="pts-amount ${isPos ? 'pos' : 'neg'}">
-                        ${isPos ? '+' : ''}${h.cantidad}
+                        ${isPos ? '+' : ''}${formatNum(h.cantidad)}
                     </div>
                 </div>`;
         }).join('');
@@ -177,8 +180,8 @@ export async function loadPointsHistory(page = 1) {
         }
     }
     
-    const e = document.getElementById('total-earned-pts'); if (e) e.innerText = total_earned;
-    const r = document.getElementById('total-redeemed-pts'); if (r) r.innerText = total_redeemed;
+    const e = document.getElementById('total-earned-pts'); if (e) e.innerText = formatNum(total_earned);
+    const r = document.getElementById('total-redeemed-pts'); if (r) r.innerText = formatNum(total_redeemed);
 }
 
 export function changePtsPage(delta) {
@@ -206,6 +209,6 @@ export async function changePassword(current, newPass) {
 
 export async function processRecharge(amount) {
     const res = await api.post('/user/recharge-balance', { monto: amount });
-    if (res.ok) { showToast(`¡Carga de $${amount.toFixed(2)} exitosa!`); await loadProfile(); return true; }
+    if (res.ok) { showToast(`¡Carga de $${formatNum(amount)} exitosa!`); await loadProfile(); return true; }
     else { showToast(res.error, 'error'); return false; }
 }

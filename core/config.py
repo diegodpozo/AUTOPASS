@@ -49,7 +49,7 @@ class Settings:
     IMAGE_DIR: str = os.getenv("IMAGE_DIR", "captured_images")
 
     # RESERVAS
-    RESERVA_HORA_MIN_SEGUNDOS: int = int(os.getenv("RESERVA_HORA_MIN_SEGUNDOS", 3600))
+    RESERVA_HORA_MIN_SEGUNDOS: int = int(os.getenv("RESERVA_HORA_MIN_SEGUNDOS", 1800))
 
     # MANTENIMIENTO Y SALUD
     MAINTENANCE_INTERVAL_SECONDS: int = int(os.getenv("MAINTENANCE_INTERVAL_SECONDS", 300))

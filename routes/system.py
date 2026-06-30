@@ -13,6 +13,7 @@ from pydantic import BaseModel
 import models
 import unicodedata
 from core.database import get_db
+from services.time_service import TimeService
 from core.security import get_super_admin, get_operational_user, decode_access_token
 from core.config import settings
 
@@ -330,3 +331,7 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
             return {"status": "error", "message": str(e)}
             
     return {"status": "error", "message": "Acción no válida"}
+
+@router.get("/virtual-time")
+def get_virtual_time_public():
+    return TimeService.get_info()

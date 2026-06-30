@@ -6,7 +6,17 @@
 const API_BASE = '/v1';
 
 const api = {
-    get: (url) => api.request(url, 'GET'),
+    get: (url, opts = {}) => {
+        let finalUrl = url;
+        if (opts.params) {
+            const qs = Object.entries(opts.params)
+                .filter(([_, v]) => v !== undefined && v !== null)
+                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+                .join('&');
+            if (qs) finalUrl += `?${qs}`;
+        }
+        return api.request(finalUrl, 'GET');
+    },
     post: (url, body) => api.request(url, 'POST', body),
     put: (url, body) => api.request(url, 'PUT', body),
     patch: (url, body) => api.request(url, 'PATCH', body),
@@ -38,26 +48,25 @@ const api = {
                 return null;
             }
 
+            // 204 NO CONTENT - EXITO SIN CUERPO
+            if (response.status === 204) {
+                return { ok: true, data: {} };
+            }
+
+            if (!response.ok) {
+                let detail = '';
+                try { const d = await response.json(); detail = d.detail || ''; } catch(e) {}
+                return { 
+                    ok: false, 
+                    status: response.status, 
+                    error: detail || 'Error en la petición' 
+                };
+            }
+
             let data = {};
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.indexOf("application/json") !== -1) {
                 data = await response.json();
-            } else {
-                const text = await response.text();
-                console.error(`Respuesta no-JSON detectada (${response.status}):`, text);
-                return { 
-                    ok: false, 
-                    status: response.status, 
-                    error: `Error del servidor (${response.status})`
-                };
-            }
-            
-            if (!response.ok) {
-                return { 
-                    ok: false, 
-                    status: response.status, 
-                    error: data.detail || 'Error en la petición' 
-                };
             }
 
             return { ok: true, data };

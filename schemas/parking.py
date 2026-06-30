@@ -20,13 +20,17 @@ class ParkingStatus(BaseModel):
     ocupacion_actual: int
     capacidad_motos: int
     ocupacion_motos: int
+    capacidad_camionetas: int = 0
+    ocupacion_camionetas: int = 0
     disponibilidad: int
     disponibilidad_motos: int
+    disponibilidad_camionetas: int = 0
 
 class FloorBase(BaseModel):
     nombre: str
     capacidad_total: int = 20
     capacidad_motos: int = 10
+    capacidad_camionetas: int = 5
 
 class FloorCreate(FloorBase):
     pass
@@ -36,6 +40,8 @@ class FloorResponse(FloorBase):
     branch_id: int
     ocupacion_actual: int = 0
     ocupacion_motos: int = 0
+    capacidad_camionetas: int = 0
+    ocupacion_camionetas: int = 0
 
     class Config:
         from_attributes = True
@@ -61,8 +67,10 @@ class BranchResponse(BranchBase):
     # CAMPOS CALCULADOS PARA RESUMEN
     capacidad_autos_total: int = 0
     capacidad_motos_total: int = 0
+    capacidad_camionetas_total: int = 0
     ocupacion_autos_total: int = 0
     ocupacion_motos_total: int = 0
+    ocupacion_camionetas_total: int = 0
 
     class Config:
         from_attributes = True

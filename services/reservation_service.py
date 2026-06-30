@@ -5,6 +5,7 @@ import schemas
 from services.billing_service import BillingService
 from services.email_service import EmailService
 from services.notification_service import NotificationService
+from services.time_service import TimeService
 from repositories.reservation_repository import ReservationRepository
 from repositories.user_repository import UserRepository
 from fastapi import HTTPException
@@ -18,6 +19,46 @@ def _normalizar_sucursal(text: str) -> str:
     text = text.upper().replace("AUTOPASS ", "").strip()
     return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
 
+def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: str, fecha_fin: str, exclude_id: int = None):
+    """VERIFICA SI HAY LUGARES DISPONIBLES EN LA SUCURSAL PARA EL PERIODO SOLICITADO.
+    RETORNA {disponible, capacidad_total, ocupada, mensaje}."""
+    # 1. OBTENER CAPACIDAD TOTAL
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+    capacidad_total = 0
+    if branch and branch.floors:
+        capacidad_total = sum(f.capacidad_total for f in branch.floors)
+    else:
+        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
+        if aforo:
+            capacidad_total = aforo.capacidad_total
+
+    if capacidad_total == 0:
+        return {"disponible": True, "capacidad_total": 0, "ocupada": 0, "mensaje": "Sin datos de capacidad"}
+
+    # 2. CONTAR RESERVAS QUE SE SUPERPOSICIONAN EN EL RANGO (EXCLUYENDO CANCELADAS/COMPLETADAS)
+    #    SE CONSIDERAN ACTIVAS: Pendiente, Pagado, Activa, Confirmada
+    query = db.query(models.Reservation).filter(
+        models.Reservation.sucursal_nombre == sucursal_nombre,
+        models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+        models.Reservation.estado_pago.in_(["Pendiente", "Pagado"]),
+        models.Reservation.fecha_inicio < fecha_fin,
+        models.Reservation.fecha_fin > fecha_inicio
+    )
+    if exclude_id:
+        query = query.filter(models.Reservation.id != exclude_id)
+
+    ocupada = query.count()
+
+    disponible = ocupada < capacidad_total
+    restan = max(0, capacidad_total - ocupada)
+    return {
+        "disponible": disponible,
+        "capacidad_total": capacidad_total,
+        "ocupada": ocupada,
+        "restan": restan,
+        "mensaje": f"Quedan {restan} lugar{'es' if restan != 1 else ''} disponible{'s' if restan != 1 else ''}" if disponible else "No hay disponibilidad para el horario solicitado."
+    }
+
 def _reservar_plaza_en_aforo(db: Session, res: "models.Reservation"):
     """RESERVA UNA PLAZA EN EL AFORO DE LA SUCURSAL CUANDO SE PAGA UNA RESERVA NO HORARIA."""
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == res.sucursal_nombre).first()
@@ -26,7 +67,9 @@ def _reservar_plaza_en_aforo(db: Session, res: "models.Reservation"):
         db.add(aforo)
 
     vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
-    if vehiculo and vehiculo.tipo == VehicleType.MOTO:
+    if vehiculo and vehiculo.tipo == VehicleType.CAMIONETA:
+        aforo.ocupacion_camionetas += 1
+    elif vehiculo and vehiculo.tipo == VehicleType.MOTO:
         aforo.ocupacion_motos += 1
     else:
         aforo.ocupacion_actual += 1
@@ -40,7 +83,10 @@ def _liberar_plaza_en_aforo(db: Session, res: "models.Reservation"):
         return
 
     vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
-    if vehiculo and vehiculo.tipo == VehicleType.MOTO:
+    if vehiculo and vehiculo.tipo == VehicleType.CAMIONETA:
+        if aforo.ocupacion_camionetas > 0:
+            aforo.ocupacion_camionetas -= 1
+    elif vehiculo and vehiculo.tipo == VehicleType.MOTO:
         if aforo.ocupacion_motos > 0:
             aforo.ocupacion_motos -= 1
     else:
@@ -133,7 +179,7 @@ class ReservationService:
     @staticmethod
     def cleanup_overdue_reservations(db: Session):
         """CANCELA AUTOMATICAMENTE RESERVAS IMPAGAS CUYO TIEMPO DE INICIO YA PASO CON UN MARGEN DE GRACIA."""
-        now = datetime.datetime.now()
+        now = TimeService.now()
         grace_cutoff = now - datetime.timedelta(hours=2)
         cutoff_str = grace_cutoff.strftime("%Y-%m-%d %H:%M")
         
@@ -157,8 +203,12 @@ class ReservationService:
     @staticmethod
     def auto_finalize_reservations(db: Session, user_id: int):
         """MARCA COMO COMPLETADAS LAS RESERVAS DE UN USUARIO CUYO TIEMPO DE ESTADIA YA EXPIRO."""
-        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        now_str = TimeService.now_str()
+        print(f"[DEBUG auto_finalize_reservations] now_str={now_str} user_id={user_id}")
         past_reservations = ReservationRepository.get_past_reservations(db, user_id, now_str)
+        print(f"[DEBUG auto_finalize_reservations] encontradas {len(past_reservations)} reservas vencidas")
+        for r in past_reservations:
+            print(f"[DEBUG auto_finalize_reservations]   -> ID={r.id} fin={r.fecha_fin} ahora={now_str} fin<ahora? {r.fecha_fin < now_str}")
         
         if past_reservations:
             for r in past_reservations:
@@ -168,12 +218,17 @@ class ReservationService:
     @staticmethod
     def auto_finalize_all_reservations(db: Session):
         """MARCA COMO COMPLETADAS TODAS LAS RESERVAS VENCIDAS DEL SISTEMA."""
-        now_str = datetime.datetime.now().isoformat()
+        now_str = TimeService.now_str()
+        print(f"[DEBUG auto_finalize_ALL] now_str={now_str}")
         # BUSCAMOS RESERVAS QUE ESTEN PENDIENTES O ACTIVAS PERO CUYA FECHA_FIN YA PASO
         vencidas = db.query(models.Reservation).filter(
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_fin < now_str
         ).all()
+        
+        print(f"[DEBUG auto_finalize_ALL] encontradas {len(vencidas)} reservas vencidas")
+        for r in vencidas:
+            print(f"[DEBUG auto_finalize_ALL]   -> ID={r.id} fin={r.fecha_fin} ahora={now_str} fin<ahora? {r.fecha_fin < now_str}")
         
         if vencidas:
             print(f"[SYSTEM] Finalizando {len(vencidas)} reservas vencidas.")

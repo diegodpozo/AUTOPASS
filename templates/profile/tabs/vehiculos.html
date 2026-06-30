@@ -1,11 +1,15 @@
 <!-- SECCIÓN: MIS VEHÍCULOS -->
 <div id="section-vehiculos" class="profile-section">
-    <div class="flex-col items-center" style="margin-top: 20px;">
-        <!-- Trigger Button (Will hide when clicked) -->
-        <div class="register-trigger-card mb-30" onclick="toggleVehicleForm()" id="vehicle-form-trigger" style="background: var(--dorado); color: #000; border-radius: 15px; padding: 15px 40px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s; width: fit-content;">
-            <i class="fas fa-plus-circle" style="font-size: 1.2rem;"></i>
-            <span style="font-weight: 900; letter-spacing: 1px;">NUEVO VEHÍCULO</span>
+    <div class="card welcome-card" style="text-align: center; padding: 14px 20px;">
+        <div class="welcome-msg">
+            <h1 style="justify-content: center; margin-bottom: 0;"><i class="fas fa-car-side"></i> MIS VEHÍCULOS</h1>
         </div>
+        <div class="btn-group-header">
+            <button class="btn-new-reserva" id="vehicle-form-trigger" onclick="toggleVehicleForm()"><i class="fas fa-plus-circle"></i> NUEVO VEHÍCULO</button>
+            <button class="btn-new-reserva" onclick="showSection('inicio')"><i class="fas fa-plus-circle"></i> NUEVA RESERVA</button>
+        </div>
+    </div>
+    <div class="flex-col items-center" style="margin-top: 10px;">
 
         <!-- Form Container (Hidden by default, will swap with button) -->
         <div id="vehicle-form-container" style="width: 100%; max-width: 450px; display: none; margin-top: 15px; animation: fadeIn 0.4s ease;">
