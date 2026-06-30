@@ -1,4 +1,4 @@
-import * as res from './modules/reservas.js';
+import * as res from './modules/reservas.js?v=9.3.0';
 
 /**
  * PUENTE: RESERVAS.JS

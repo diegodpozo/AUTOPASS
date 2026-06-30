@@ -1,4 +1,4 @@
-import * as v from './modules/vehicles.js';
+import * as v from './modules/vehicles.js?v=9.3.0';
 
 /**
  * PUENTE: VEHICLES.JS
