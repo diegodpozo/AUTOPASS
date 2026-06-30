@@ -6,6 +6,7 @@ from sqlalchemy import func
 import models
 from core.database import get_db
 from core.security import get_operational_user
+from services.user_notification_service import UserNotificationService
 
 router = APIRouter()
 
@@ -211,4 +212,22 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
         msg = "Salida registrada con éxito."
 
     db.commit()
+
+    # NOTIFICAR AL PROPIETARIO DEL VEHICULO SI ES USUARIO REGISTRADO
+    try:
+        vehicle = db.query(models.Vehicle).filter(
+            func.replace(func.upper(models.Vehicle.patente), ' ', '') == p
+        ).first()
+        if vehicle and vehicle.user_id:
+            owner = db.query(models.User).filter(models.User.id == vehicle.user_id).first()
+            if owner and owner.rol == models.enums.UserRole.USER:
+                UserNotificationService.create_notification(
+                    db, user_id=owner.id,
+                    tipo="estadia_cancelada_admin",
+                    titulo="Estadía cancelada",
+                    mensaje=f"Un administrador canceló tu estadía en {sucursal} para la patente {plate}."
+                )
+    except Exception:
+        pass
+
     return {"status": "ok", "message": msg}

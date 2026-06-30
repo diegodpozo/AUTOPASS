@@ -6,6 +6,7 @@ import models, schemas
 from core.database import get_db
 from core.security import get_operational_user
 from services.reservation_service import ReservationService, verificar_disponibilidad
+from services.user_notification_service import UserNotificationService
 
 router = APIRouter()
 
@@ -65,6 +66,14 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
 
     try:
         new_res = ReservationService.create_reservation(db, data)
+        if new_res.user_id:
+            UserNotificationService.create_notification(
+                db, user_id=new_res.user_id,
+                tipo="reserva_creada_admin",
+                titulo="Reserva creada por administrador",
+                mensaje=f"Se creó una reserva para {new_res.patente} el {new_res.fecha_inicio} en {new_res.sucursal_nombre}.",
+                reserva_id=new_res.id
+            )
         return {"status": "ok", "id": new_res.id, "monto": new_res.monto_total}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -97,6 +106,16 @@ def confirm_reservation_payment(res_id: int, db: Session = Depends(get_db), staf
             ))
 
     db.commit()
+
+    if reserva.user:
+        UserNotificationService.create_notification(
+            db, user_id=reserva.user.id,
+            tipo="pago_confirmado_admin",
+            titulo="Pago confirmado",
+            mensaje=f"El pago de tu reserva #{res_id} ({reserva.patente}) fue confirmado por administrador.",
+            reserva_id=res_id
+        )
+
     return {"status": "ok"}
 
 @router.post("/reservations/{res_id}/cancel")
@@ -110,6 +129,15 @@ def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: 
         
     result = ReservationService.cancel_reservation(db, None, res_id)
     if result["status"] == "ok":
+        reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
+        if reserva and reserva.user:
+            UserNotificationService.create_notification(
+                db, user_id=reserva.user.id,
+                tipo="reserva_cancelada_admin",
+                titulo="Reserva cancelada por administrador",
+                mensaje=f"Tu reserva #{res_id} ({reserva.patente}) fue cancelada.",
+                reserva_id=res_id
+            )
         return result
     raise HTTPException(status_code=400, detail=result["message"])
 
@@ -133,5 +161,13 @@ def update_reservation_admin(res_id: int, data: schemas.ReservationUpdate, db: S
 
     updated = ReservationService.update_reservation(db, res_id, data)
     if updated:
+        if updated.user_id:
+            UserNotificationService.create_notification(
+                db, user_id=updated.user_id,
+                tipo="reserva_modificada_admin",
+                titulo="Reserva modificada por administrador",
+                mensaje=f"Tu reserva #{res_id} ({updated.patente}) fue modificada. Monto recalculado: ${updated.monto_total}.",
+                reserva_id=res_id
+            )
         return {"status": "ok", "monto_recalculado": updated.monto_total}
     raise HTTPException(status_code=400, detail="No se pudo actualizar la reserva")
