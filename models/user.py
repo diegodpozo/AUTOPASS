@@ -33,6 +33,7 @@ class Vehicle(Base):
     patente = Column(String, unique=True, index=True)
     marca_modelo = Column(String)
     tipo = Column(String, default="Auto") # 'AUTO' O 'MOTO'
+    is_favorite = Column(Boolean, default=False)
 
     owner = relationship("User", back_populates="vehicles")
 

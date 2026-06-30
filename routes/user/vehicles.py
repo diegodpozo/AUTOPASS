@@ -44,6 +44,33 @@ def add_user_vehicle(patente: str, marca_modelo: str, tipo: str = "Auto", db: Se
     db.commit()
     return {"status": "ok"}
 
+@router.post("/vehicles/{patente}/favorite")
+def set_favorite_vehicle(patente: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """MARCA UN VEHICULO COMO FAVORITO (SOLO UNO POR USUARIO). SI YA ESTA MARCADO, LO DESMARCA."""
+    from routes.parking import normalize_plate
+    p_clean = normalize_plate(patente)
+
+    vehicle = db.query(models.Vehicle).filter(
+        func.replace(models.Vehicle.patente, ' ', '') == p_clean,
+        models.Vehicle.user_id == current_user.id
+    ).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehículo no encontrado en su flota")
+
+    if vehicle.is_favorite:
+        # SI YA ERA FAVORITO, LO DESMARCA
+        vehicle.is_favorite = False
+    else:
+        # DESMARCAR CUALQUIER FAVORITO ANTERIOR Y MARCAR EL NUEVO
+        db.query(models.Vehicle).filter(
+            models.Vehicle.user_id == current_user.id,
+            models.Vehicle.is_favorite == True
+        ).update({"is_favorite": False})
+        vehicle.is_favorite = True
+
+    db.commit()
+    return {"status": "ok", "patente": vehicle.patente, "is_favorite": vehicle.is_favorite}
+
 @router.delete("/vehicles/{patente}")
 def delete_user_vehicle(patente: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """DESVINCULA UN VEHICULO DE LA CUENTA DEL USUARIO."""

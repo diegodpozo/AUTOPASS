@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOCUMENTACION DETALLADA DE FUNCIONALIDADES — AUTOPASS v9.2.0</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    color: #8b949e;
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #21262d;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #f0f6fc;
+    margin: 3rem 0 1.2rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  h2::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 1.5rem;
+    background: #C5A059;
+    border-radius: 2px;
+  }
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #d2a8ff;
+    margin: 2.5rem 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-bottom: 1px dashed #30363d;
+    padding-bottom: 0.3rem;
+  }
+  h3 .badge-flow {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f0f6fc;
+    margin: 1.5rem 0 0.5rem 0;
+  }
+  p { margin-bottom: 1rem; color: #c9d1d9; }
+
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    background: #1c2128;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: #a5d6ff;
+  }
+  pre {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+  pre code {
+    background: transparent;
+    padding: 0;
+    color: #e6edf3;
+    font-size: 0.85rem;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #21262d;
+    margin: 2.5rem 0;
+  }
+
+  .file-list {
+    list-style: none;
+    margin: 1.2rem 0 1.5rem 0;
+  }
+  .file-list li {
+    padding: 1.2rem 1.4rem;
+    position: relative;
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-size: 0.95rem;
+  }
+  .file-list li:hover { 
+    border-color: #30363d; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .file-list li strong { color: #f0f6fc; font-size: 1.05rem; }
+  .file-list li p { margin: 0.5rem 0 0.8rem 0; font-size: 0.92rem; color: #c9d1d9; }
+
+  .file-list li .layer-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .layer-front { background: #3a2d1b; color: #d29922; }
+  .layer-api   { background: #1f2a3f; color: #58a6ff; }
+  .layer-svc   { background: #2d1b42; color: #d2a8ff; }
+  .layer-core  { background: #1f3a2f; color: #3fb950; }
+  .layer-iot   { background: #3a1b1b; color: #f87171; }
+  .layer-data  { background: #1b2d3a; color: #79c0ff; }
+  .layer-tool  { background: #2d2d1b; color: #e3b341; }
+
+  .func-detail {
+    display: block;
+    color: #8b949e;
+    font-size: 0.88rem;
+    margin-top: 6px;
+    padding-left: 0.75rem;
+    border-left: 2px solid #30363d;
+  }
+  .func-detail strong { color: #c9d1d9; }
+
+  .note-box {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .note-box p { margin-bottom: 0.8rem; }
+  .note-box p:last-child { margin-bottom: 0; }
+
+  .dep-list {
+    list-style: none;
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+  }
+  .dep-list li {
+    padding: 0.3rem 0;
+    font-size: 0.9rem;
+    color: #c9d1d9;
+  }
+  .dep-list li::before {
+    content: '\25B8 ';
+    color: #C5A059;
+    margin-right: 0.5rem;
+  }
+
+  .gate-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    margin: 1.5rem 0;
+  }
+  .gate-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    padding: 1.4rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .gate-card:hover { 
+    border-color: rgba(197, 160, 89, 0.5); 
+    transform: translateY(-2px);
+  }
+  .gate-card h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f0f6fc;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+  }
+  .card-detail {
+    font-size: 0.92rem;
+    color: #8b949e;
+    line-height: 1.6;
+  }
+  .card-detail strong { color: #c9d1d9; }
+
+  .flow-box {
+    background: #1c2128;
+    border-left: 4px solid #C5A059;
+    padding: 1.2rem;
+    margin: 1.5rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .flow-box h4 {
+    margin-top: 0;
+    color: #C5A059;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.8rem;
+  }
+  .flow-step {
+    margin-bottom: 0.6rem;
+    padding-left: 1.5rem;
+    position: relative;
+    font-size: 0.95rem;
+  }
+  .flow-step::before {
+    content: attr(data-step);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 18px;
+    height: 18px;
+    background: #C5A059;
+    color: #0d1117;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (min-width: 640px) {
+    .gate-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (min-width: 1000px) {
+    .gate-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>DOCUMENTACIÓN DETALLADA DEL SISTEMA — AUTOPASS v9.2.0</h1>
+  <p class="subtitle">
+    Esta guía interactiva explica de manera minuciosa el rol, la lógica interna y las dependencias de cada archivo y componente del ecosistema AUTOPASS. Está diseñada para que cualquier persona, aun sin conocimiento previo del proyecto, comprenda cómo interactúan el software (FastAPI + Vanilla JS), la visión artificial (ALPR) y el hardware (ESP32).
+  </p>
+
+  <!-- SECCIÓN: ENTENDIENDO LA ARQUITECTURA -->
+  <h2>¿CÓMO FUNCIONA EL SISTEMA? (RESUMEN CONCEPTUAL)</h2>
+  <p>
+    AUTOPASS es un sistema de gestión de estacionamientos inteligentes que funciona bajo un modelo de <strong>control por flujo</strong>. Cuando un auto llega a la barrera, el sistema de visión artificial lee su patente y decide si dejarlo pasar o no basándose en las reservas vigentes o el espacio disponible. Todo esto ocurre en milisegundos y de manera automatizada.
+  </p>
+  
+  <div class="flow-box">
+    <h4>El Camino de un Vehículo (Flujo de Entrada Típico)</h4>
+    <div class="flow-step" data-step="1"><strong>Detección de Presencia:</strong> El sensor físico del microcontrolador en la barrera de entrada detecta un vehículo o el sistema de video recibe el feed continuo.</div>
+    <div class="flow-step" data-step="2"><strong>Procesamiento ALPR:</strong> El servicio de visión artificial (<a href="file:///C:/xampp/htdocs/AUTOPASS/alpr_service.py">alpr_service.py</a>) toma los fotogramas de la cámara, localiza la patente mediante OpenCV, extrae el texto mediante EasyOCR y envía la patente normalizada al backend mediante una petición HTTP POST.</div>
+    <div class="flow-step" data-step="3"><strong>Validación y Negocio:</strong> El backend recibe la patente en el controlador de accesos (<a href="file:///C:/xampp/htdocs/AUTOPASS/routes/parking/access.py">routes/parking/access.py</a>) y delega la decisión al servicio de acceso (<a href="file:///C:/xampp/htdocs/AUTOPASS/services/access_service.py">services/access_service.py</a>). Este servicio verifica si el auto ya está adentro, si posee una reserva abonada o si hay cupo libre "al paso".</div>
+    <div class="flow-step" data-step="4"><strong>Apertura Física:</strong> Si el acceso es autorizado, el backend envía un comando <code>"OPEN"</code> al broker de mensajería MQTT (<a href="file:///C:/xampp/htdocs/AUTOPASS/core/mqtt.py">core/mqtt.py</a>). El microcontrolador físico (ESP32) recibe este comando de forma instantánea y acciona el servomotor para levantar la barrera física.</div>
+    <div class="flow-step" data-step="5"><strong>Actualización en Tiempo Real:</strong> En paralelo, el backend calcula la nueva ocupación y la transmite mediante WebSockets (<a href="file:///C:/xampp/htdocs/AUTOPASS/services/notification_service.py">services/notification_service.py</a>) a todas las interfaces web conectadas, actualizando el tablero de control del operador sin recargar la página.</div>
+  </div>
+
+  <!-- LEYENDA DE CAPAS -->
+  <h2>ORGANIZACIÓN EN CAPAS (ARQUITECTURA LIMPIA)</h2>
+  <p>Para mantener el código ordenado, extensible y fácil de mantener, el sistema se divide en 6 capas lógicas:</p>
+  <div class="gate-grid">
+    <div class="gate-card">
+      <h4><span class="layer-tag layer-core">Core</span> Infraestructura</h4>
+      <div class="card-detail">Configuraciones base del sistema, comunicación con la base de datos física, cifrado de seguridad JWT y tokens, cliente para el broker MQTT de las barreras y llenado inicial de datos. Es la base sobre la que se apoya todo.</div>
+    </div>
+    <div class="gate-card">
+      <h4><span class="layer-tag layer-data">Data</span> Modelos y Validación</h4>
+      <div class="card-detail">Define la estructura de la base de datos relacional (tablas, columnas y relaciones mediante SQLAlchemy) y las reglas de validación para los datos de entrada y salida (esquemas de Pydantic). Evita datos corruptos.</div>
+    </div>
+    <div class="gate-card">
+      <h4><span class="layer-tag layer-api">API</span> Rutas (Controladores)</h4>
+      <div class="card-detail">Endpoints o URL expuestas del servidor FastAPI. Actúan como una capa de transporte muy delgada: solo reciben los datos, validan la identidad de quien llama (seguridad RBAC) y delegan la ejecución a la capa de servicios.</div>
+    </div>
+    <div class="gate-card">
+      <h4><span class="layer-tag layer-svc">Servicios</span> Lógica de Negocio</h4>
+      <div class="card-detail">Aquí reside la inteligencia del negocio. Son clases y funciones dedicadas exclusivamente a procesar las reglas complejas del sistema: calcular tarifas, validar aforos trimodales, gestionar el ciclo de vida de las reservas y notificar eventos.</div>
+    </div>
+    <div class="gate-card">
+      <h4><span class="layer-tag layer-front">Frontend</span> Interfaz de Usuario</h4>
+      <div class="card-detail">La cara visible de la aplicación. Utiliza plantillas HTML renderizadas en el servidor (Jinja2), estilos CSS premium con efectos de transparencia (glassmorphism) y JavaScript modular (ES6) para la interactividad en tiempo real.</div>
+    </div>
+    <div class="gate-card">
+      <h4><span class="layer-tag layer-tool">Tool</span> Herramientas y Pruebas</h4>
+      <div class="card-detail">Scripts auxiliares, repositorios de consultas específicas de base de datos, tareas de migración de datos y la suite de pruebas automáticas (tests unitarios con pytest) para garantizar que los cambios no rompan nada.</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ============================================================ -->
+  <!-- CAPA 1: CORE -->
+  <!-- ============================================================ -->
+  <h2>1. CORE — CAPA DE INFRAESTRUCTURA BASE</h2>
+  <p>Ubicada en el directorio <code>core/</code>. Contiene los cimientos tecnológicos del backend.</p>
+
+  <ul class="file-list">
+    <li>
+      <span class="layer-tag layer-core">Core</span>
+      <strong>core/config.py</strong> &mdash; Configuración Centralizada (Singleton <code>settings</code>)
+      <p>Este archivo se encarga de leer el archivo de configuración de entorno (<code>.env</code>) y cargar todas las credenciales, claves y constantes del sistema en un objeto único y seguro. Al actuar como un "Singleton", todo el sistema consulta esta misma instancia evitando lecturas repetidas del disco.</p>
+      <span class="func-detail"><strong>Componentes clave:</strong>
+        <br>• Clase <code>Settings</code>: Define las variables requeridas y sus tipos.
+        <br>• Variable <code>settings</code>: Instancia global exportada para consumo general.
+      </span>
+      <span class="func-detail"><strong>Variables críticas expuestas:</strong>
+        <br>• <code>DATABASE_URL</code>: Ruta del archivo de base de datos SQLite (ej. <code>sqlite:///./parking.db</code>).
+        <br>• <code>SECRET_KEY</code>: Llave criptográfica para firmar los tokens JWT de sesión.
+        <br>• <code>RESERVA_HORA_MIN_SEGUNDOS</code>: Tiempo de anticipación mínimo para reservas por hora (por defecto 3600 segundos = 1 hora).
+        <br>• Configuración del Broker MQTT (<code>MQTT_BROKER</code>, <code>MQTT_PORT</code>) para controlar las barreras.
+      </span>
+      <span class="func-detail"><strong>Relación con otros archivos:</strong> Es importado por casi cualquier archivo que necesite saber una dirección IP, puerto, clave secreta o valor de tarifa base.</span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-core">Core</span>
+      <strong>core/database.py</strong> &mdash; Motor y Conexión de Base de Datos (SQLAlchemy)
+      <p>Configura la comunicación con SQLite. Establece el "Engine" (puente de conexión), la clase base de la cual heredarán todos los modelos de tablas (<code>Base</code>) y el generador de sesiones de consulta (<code>SessionLocal</code>).</p>
+      <span class="func-detail"><strong>Componentes clave:</strong>
+        <br>• <code>SessionLocal</code>: Fábrica de conexiones de base de datos.
+        <br>• <code>Base</code>: Clase declarativa base para mapear objetos Python a tablas SQL.
+        <br>• <code>get_db()</code>: Función generadora (yield) usada como dependencia en las rutas de FastAPI. Abre una sesión de base de datos cuando llega una petición HTTP y la cierra automáticamente al terminar, evitando fugas de memoria.
+        <br>• <code>init_db()</code>: Inicializa físicamente el archivo SQLite creando todas las tablas que hereden de <code>Base</code> si no existen en el disco.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-core">Core</span>
+      <strong>core/security.py</strong> &mdash; Seguridad, Cifrado de Claves y Roles (RBAC)
+      <p>Es el guardián de la aplicación. Provee las herramientas para encriptar contraseñas antes de guardarlas, generar tokens JWT firmados cuando un usuario inicia sesión, y verificar si un token recibido es válido y qué permisos tiene el usuario.</p>
+      <span class="func-detail"><strong>Componentes clave:</strong>
+        <br>• <code>verify_password(plain, hashed)</code>: Compara una contraseña ingresada con su hash bcrypt guardado en base de datos.
+        <br>• <code>get_password_hash(password)</code>: Encripta una contraseña usando el algoritmo seguro <code>bcrypt</code>.
+        <br>• <code>create_access_token(data, expires_delta)</code>: Genera un token JWT de sesión con un tiempo de expiración determinado.
+        <br>• <strong>Filtros de Seguridad (Guards/Dependencies):</strong>
+        <br>&nbsp;&nbsp;- <code>get_current_user</code>: Valida que el llamador esté autenticado con un token válido.
+        <br>&nbsp;&nbsp;- <code>get_super_admin</code>: Exige que el usuario tenga rol de Administrador General (control de toda la red).
+        <br>&nbsp;&nbsp;- <code>get_local_manager</code>: Exige rol de Administrador Local o Administrador General.
+        <br>&nbsp;&nbsp;- <code>get_operational_user</code>: Exige rol de Operador (Staff), Administrador Local o Administrador General.
+      </span>
+      <span class="func-detail"><strong>Flujo de Aislamiento:</strong> Las funciones de verificación comprueban la columna <code>sucursal</code> del usuario para asegurar que un Administrador Local no pueda ver ni modificar datos de una sucursal ajena.</span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-core">Core</span>
+      <strong>core/mqtt.py</strong> &mdash; Cliente de Comunicación con Hardware (MQTT)
+      <p>Inicializa y configura el cliente de mensajería ligera <strong>MQTT</strong> (usando la librería <code>paho-mqtt</code>). El protocolo MQTT funciona bajo un modelo de publicación y suscripción muy rápido, ideal para enviar órdenes instantáneas de apertura a las barreras físicas.</p>
+      <span class="func-detail"><strong>Componentes clave:</strong>
+        <br>• <code>get_mqtt_client()</code>: Configura y devuelve el cliente conectado al servidor (broker) definido en los <code>settings</code>.
+        <br>• Variable <code>mqtt_client</code>: Instancia de conexión persistente compartida en el ciclo de vida del backend.
+      </span>
+      <span class="func-detail"><strong>Lógica física:</strong> Cuando un acceso es válido, el backend publica un mensaje JSON en el tópico <code>parking/barrera/+/control</code>. Las placas ESP32 de las barreras están suscritas a este tópico, reciben la orden y levantan el servomotor de inmediato.</span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-core">Core</span>
+      <strong>core/seed.py</strong> &mdash; Datos Iniciales de Puesta en Marcha (Seeding)
+      <p>Contiene la información inicial necesaria para que el sistema funcione la primera vez que se crea la base de datos. Registra los usuarios administradores por defecto, las sucursales iniciales con sus respectivas coordenadas, las tarifas base y las promociones disponibles.</p>
+      <span class="func-detail"><strong>Datos insertados:</strong>
+        <br>• Administrador Global: <code>admin@autopass.com</code> (Contraseña: <code>admin123</code>).
+        <br>• Administradores Locales para Morón, Ituzaingó y Castelar.
+        <br>• Sucursales activas con su información geográfica (latitud, longitud) y horarios de atención.
+        <br>• Tarifas configuradas por defecto en la tabla de configuraciones globales (<code>settings</code>).
+        <br>• Lista de promociones y beneficios canjeables por puntos de fidelidad.
+      </span>
+    </li>
+  </ul>
+
+  <hr>
+
+  <!-- ============================================================ -->
+  <!-- CAPA 2: MODELS & SCHEMAS -->
+  <!-- ============================================================ -->
+  <h2>2. MODELOS Y ESQUEMAS — CAPA DE DEFINICIÓN DE DATOS</h2>
+  <p>Ubicada en <code>models/</code> y <code>schemas/</code>. Define cómo se guardan los datos en la base de datos y cómo se validan al entrar o salir de la API.</p>
+
+  <ul class="file-list">
+    <li>
+      <span class="layer-tag layer-data">Data</span>
+      <strong>models/enums.py</strong> &mdash; Tipado Seguro de Estados y Roles
+      <p>Define las enumeraciones (<code>Enum</code>) oficiales del sistema. Esto evita el uso de palabras mágicas escritas a mano (como escribir "pagado" en un lugar y "PAGADO" en otro), garantizando coherencia absoluta en la base de datos.</p>
+      <span class="func-detail"><strong>Enumeraciones clave:</strong>
+        <br>• <code>UserRole</code>: Define los roles <code>"admin"</code>, <code>"local_admin"</code>, <code>"staff"</code> y <code>"user"</code>.
+        <br>• <code>VehicleType</code>: Define los tipos de vehículos soportados: <code>"Auto"</code>, <code>"Moto"</code> y <code>"Camioneta"</code>.
+        <br>• <code>AccessEventType</code>: Tipos de tránsitos en barrera: <code>"ENTRADA"</code> y <code>"SALIDA"</code>.
+        <br>• <code>ReservationStatus</code>: Estados de reserva: <code>"Pendiente"</code>, <code>"Activa"</code>, <code>"Completada"</code> y <code>"Cancelada"</code>.
+        <br>• <code>PaymentStatus</code>: Estados de pago: <code>"Pendiente"</code>, <code>"Pagado"</code>, <code>"Fallido"</code>, <code>"Reembolsado"</code> y <code>"Cancelado"</code>.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-data">Data</span>
+      <strong>models/user.py</strong> &mdash; Estructuras de Usuarios, Flotas y Puntos
+      <p>Contiene la definición de las tablas relacionadas con las personas y sus beneficios en el sistema.</p>
+      <span class="func-detail"><strong>Tablas definidas:</strong>
+        <br>• <code>User</code>: Almacena DNI, nombre, email, hash de contraseña, rol asignado, sucursal a la que pertenece (si es administrador local), saldo de dinero digital y puntos de fidelidad acumulados.
+        <br>• <code>Vehicle</code>: Registra las patentes asociadas a los usuarios. Tiene una relación de clave foránea (<code>user_id</code>) apuntando a la tabla de usuarios. Incluye el tipo de vehículo para aplicar tarifas diferenciadas y una bandera <code>is_favorite</code>.
+        <br>• <code>PointsLog</code>: Registro histórico de sumas y restas de puntos de fidelidad acumulados por reservas o canjes.
+        <br>• <code>Promotion</code>: Catálogo de beneficios disponibles en el sistema de fidelización (título, descripción, costo en puntos, estado activo).
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-data">Data</span>
+      <strong>models/parking.py</strong> &mdash; Estructuras del Estacionamiento y Ocupación
+      <p>Define cómo se modelan las sucursales, los pisos y los registros de ocupación física.</p>
+      <span class="func-detail"><strong>Tablas definidas:</strong>
+        <br>• <code>ParkingBranch</code>: Información de cada sede física (nombre, dirección, teléfono, coordenadas geográficas para el mapa interactivo y estado activo).
+        <br>• <code>ParkingFloor</code>: Soporte multi-nivel. Cada sucursal puede tener múltiples pisos, cada uno con capacidades de cupo independientes para autos, motos y camionetas.
+        <br>• <code>ParkingAforo</code>: Contador en tiempo real del aforo de cada sucursal. Registra la ocupación actual segregada por tipo de vehículo (autos, motos, camionetas) para no permitir ingresos si la capacidad máxima de ese tipo fue alcanzada.
+        <br>• <code>AccessLog</code>: Historial de todos los tránsitos por las barreras. Guarda la patente leída, tipo de evento (entrada o salida), tipo de vehículo, la sucursal, la hora exacta, el costo calculado de la estadía, si el pago fue confirmado, y la ruta de la fotografía del vehículo tomada por la cámara.
+        <br>• <code>Settings</code>: Tabla de configuración dinámica clave-valor para tarifas y parámetros del sistema específicos de cada sucursal.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-data">Data</span>
+      <strong>models/reservation.py</strong> &mdash; Estructuras de Reservas y Cupones
+      <p>Mapea las reservas realizadas por la aplicación móvil y los códigos de descuento.</p>
+      <span class="func-detail"><strong>Tablas definidas:</strong>
+        <br>• <code>Reservation</code>: Registra el usuario que reservó, la patente autorizada, fecha y hora de inicio y fin, tipo de estadía (por hora o estadías de período largo como día, semana, mes), monto total a pagar, identificador de pago de la pasarela y el estado actual de la reserva y del pago.
+        <br>• <code>Coupon</code>: Cupones de descuento que los usuarios pueden ingresar para reducir el monto total de su reserva (código único, porcentaje de descuento, fecha de vencimiento y estado activo).
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-data">Data</span>
+      <strong>schemas/ (Directorio)</strong> &mdash; Esquemas de Validación Pydantic
+      <p>Contiene las clases Pydantic encargadas de validar que los datos enviados por los clientes (JSON) cumplan con los formatos correctos antes de procesarlos en el servidor. Si un dato no es válido (por ejemplo, un email mal escrito o una patente con caracteres inválidos), la API lo rechaza inmediatamente con un error descriptivo.</p>
+      <span class="func-detail"><strong>Archivos internos y sus validaciones:</strong>
+        <br>• <code>schemas/auth.py</code>: Valida formatos de inicio de sesión y restablecimiento de claves.
+        <br>• <code>schemas/user.py</code>: Valida el registro de usuarios. Obliga a que el DNI y el teléfono contengan solo números, que el teléfono tenga al menos 10 dígitos, y que la contraseña contenga una combinación segura de letras, números y caracteres especiales.
+        <br>• <code>schemas/parking.py</code>: Valida las lecturas de patente del ALPR y la estructura de los códigos QR.
+        <br>• <code>schemas/reservation.py</code>: Controla la creación de reservas (valida que la fecha de fin sea posterior a la de inicio).
+      </span>
+    </li>
+  </ul>
+
+  <hr>
+
+  <!-- ============================================================ -->
+  <!-- CAPA 3: ROUTES -->
+  <!-- ============================================================ -->
+  <h2>3. ROUTES — CONTROLADORES Y ENTRADAS DE LA API</h2>
+  <p>Ubicada en <code>routes/</code>. Contiene los endpoints (URL) expuestos por el servidor. Estas rutas son delgadas: no calculan precios ni deciden accesos, solo reciben datos y llaman a la capa de servicios.</p>
+
+  <ul class="file-list">
+    <li>
+      <span class="layer-tag layer-api">API</span>
+      <strong>routes/auth.py</strong> &mdash; Endpoints de Autenticación Pública
+      <p>Gestiona el flujo de registro y acceso de los usuarios.</p>
+      <span class="func-detail"><strong>Endpoints principales:</strong>
+        <br>• <span class="endpoint-box"><span class="method method-post">POST</span> <code>/v1/auth/register</code></span>: Registra un nuevo cliente en el sistema y crea su vehículo favorito en un solo paso.
+        <br>• <span class="endpoint-box"><span class="method method-post">POST</span> <code>/v1/auth/login</code></span>: Valida las credenciales del usuario y le devuelve un token JWT para sus siguientes peticiones.
+        <br>• <span class="endpoint-box"><span class="method method-post">POST</span> <code>/v1/auth/forgot-password</code></span>: Genera un token temporal de recuperación y envía un correo electrónico al usuario mediante el servicio de email.
+        <br>• <span class="endpoint-box"><span class="method method-post">POST</span> <code>/v1/auth/reset-password</code></span>: Valida el token temporal y actualiza la contraseña en la base de datos.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-api">API</span>
+      <strong>routes/views.py</strong> &mdash; Renderizado de Páginas HTML (Jinja2)
+      <p>Es el encargado de servir la interfaz gráfica web de AUTOPASS. Lee las plantillas HTML del directorio <code>templates/</code>, procesa las variables dinámicas utilizando el motor Jinja2 y le devuelve el HTML completo al navegador del usuario.</p>
+      <span class="func-detail"><strong>Particularidad técnica:</strong> Inyecta la instancia de <code>settings</code> en todas las plantillas. Esto permite que el frontend conozca el nombre del proyecto, el logo o la URL base configurados en el servidor de manera dinámica.</span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-api">API</span>
+      <strong>routes/reports.py</strong> &mdash; Reportes Financieros y Auditoría
+      <p>Provee los datos necesarios para construir los gráficos de facturación e ingresos en el panel administrativo.</p>
+      <span class="func-detail"><strong>Filtros avanzados implementados:</strong> Permite filtrar el historial financiero por rango de fechas exactas (calendario), tipo de vehículo (autos, motos, camionetas) y método de pago (caja, saldo digital, Mercado Pago).</</span>
+      <span class="func-detail"><strong>Regla de seguridad (Aislamiento):</strong> Si el usuario que consulta es un <code>Local Admin</code>, las consultas SQL se filtran automáticamente para devolver únicamente los datos de su sucursal asignada. Los administradores globales tienen acceso a los datos de toda la red.</span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-api">API</span>
+      <strong>routes/system.py</strong> &mdash; Monitoreo de Cámaras y Diagnóstico del Servidor
+      <p>Controla el estado físico del servidor, el estado de los procesos de visión artificial y el streaming de video en vivo.</p>
+      <span class="func-detail"><strong>Endpoints y WebSockets clave:</strong>
+        <br>• <span class="endpoint-box"><span class="method method-get">GET</span> <code>/health</code></span>: Devuelve el estado de salud de la base de datos y el tiempo transcurrido desde el último latido (heartbeat) de las cámaras.
+        <br>• <span class="endpoint-box"><span class="method method-post">POST</span> <code>/camera-service/{gate_id}/{action}</code></span>: Permite al administrador iniciar (<code>"start"</code>) o detener (<code>"stop"</code>) el proceso independiente de lectura de patentes (<a href="file:///C:/xampp/htdocs/AUTOPASS/alpr_service.py">alpr_service.py</a>) desde la interfaz web, ejecutándolo como un subproceso del sistema operativo.
+        <br>• <span class="endpoint-box"><span class="method method-ws">WS</span> <code>/ws/video/{camera_id}</code></span>: Canal de comunicación WebSocket bidireccional de alta velocidad. El servicio ALPR envía los fotogramas en formato JPEG codificados en Base64, y esta ruta los retransmite a los operadores para que puedan ver el video de la cámara en vivo en sus navegadores sin retrasos.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-api">API</span>
+      <strong>routes/parking/ (Directorio)</strong> &mdash; Control de Accesos, Aforos y Notificaciones Push
+      <p>Contiene las rutas específicas para la operación del estacionamiento.</p>
+      <span class="func-detail"><strong>Archivos y funciones destacadas:</strong>
+        <br>• <code>parking/access.py</code>: Expone el endpoint crucial <span class="endpoint-box"><span class="method method-post">POST</span> <code>/v1/access/validate-plate</code></span> utilizado por las cámaras ALPR para validar ingresos de patentes, y <code>/pay-stay</code> para abonar la estadía antes de salir.
+        <br>• <code>parking/status.py</code>: Expone el WebSocket <span class="endpoint-box"><span class="method method-ws">WS</span> <code>/v1/parking/ws</code></span>. Utiliza la clase <code>OccupancyManager</code> para agrupar las conexiones de los navegadores web por sucursal. Cada vez que ingresa o sale un vehículo, se envía un mensaje WebSocket automático a los navegadores del personal de esa sede para actualizar los números de ocupación e ingresar el vehículo a la tabla de control al instante, eliminando el polling (consultas repetidas cada X segundos).
+        <br>• <code>parking/utils.py</code>: Contiene funciones de limpieza y formateo de texto, como normalizar patentes de entrada (ej: pasar "abc-123" a "ABC 123" o "ABC1234" a su formato Mercosur visual).
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-api">API</span>
+      <strong>routes/admin/ (Directorio)</strong> &mdash; Panel de Administración del Personal
+      <p>Agrupa las operaciones exclusivas del personal operativo y los administradores.</p>
+      <span class="func-detail"><strong>Módulos y lógica administrativa:</strong>
+        <br>• <code>admin/users.py</code>: CRUD de usuarios de la sucursal. Los administradores locales pueden crear operadores (Staff) pero tienen bloqueada en el backend la posibilidad de crear administradores generales o locales ajenos.
+        <br>• <code>admin/operations.py</code>: Contiene las acciones manuales del operador:
+        <br>&nbsp;&nbsp;- Apertura manual de barreras (publica el comando <code>"OPEN"</code> en MQTT).
+        <br>&nbsp;&nbsp;- Ingresos y salidas manuales (en caso de que falle la cámara). La salida manual implementa una política de cortesía de 10 minutos sin cargo.
+        <br>• <code>admin/branches.py</code>: Permite configurar las sedes y definir la cantidad de pisos (multi-piso) con sus respectivos cupos para autos, motos y camionetas.
+        <br>• <code>admin/settings.py</code>: Permite modificar las tarifas dinámicas de la sucursal (precio de la hora, día, semana, mes) para cada tipo de vehículo.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-api">API</span>
+      <strong>routes/user/ (Directorio)</strong> &mdash; Portal del Cliente (Reservas y Billetera)
+      <p>Endpoints consumidos por los clientes para gestionar sus cuentas y planificar sus accesos.</p>
+      <span class="func-detail"><strong>Módulos destacados:</strong>
+        <br>• <code>user/vehicles.py</code>: Permite al cliente registrar sus vehículos personales y elegir su favorito.
+        <br>• <code>user/reservations.py</code>: Flujo de creación de reservas. Valida que la sucursal esté abierta en el horario elegido, que posea cupo libre y que la reserva por hora se realice con al menos 1 hora de anticipación.
+        <br>• <code>user/balance.py</code>: Permite al usuario recargar dinero en su cuenta y consultar sus estadías activas y su deuda acumulada en tiempo real.
+        <br>• <code>user/fidelization.py</code>: Permite canjear puntos acumulados por promociones de estacionamiento gratuito.
+      </span>
+    </li>
+  </ul>
+
+  <hr>
+
+  <!-- ============================================================ -->
+  <!-- CAPA 4: SERVICES -->
+  <!-- ============================================================ -->
+  <h2>4. SERVICES — EL CORAZÓN DEL BACKEND (LÓGICA DE NEGOCIO)</h2>
+  <p>Ubicada en <code>services/</code>. Aquí se toman todas las decisiones lógicas del sistema. Si necesitas modificar una regla de negocio o comportamiento, este es el lugar correcto.</p>
+
+  <ul class="file-list">
+    <li>
+      <span class="layer-tag layer-svc">Servicios</span>
+      <strong>services/access_service.py</strong> &mdash; Orquestador de Tránsito Vehicular (Entrada/Salida/QR)
+      <p>Gestiona el flujo completo de validación física en los accesos. Contiene la lógica trimodal (autos, motos, camionetas) y la integración con las barreras y las notificaciones push.</p>
+      <span class="func-detail"><strong>Lógica detallada del método <code>validate_plate(db, plate, gate_id)</code> (Entrada):</strong>
+        <br><strong>1. Normalización:</strong> Limpia la patente recibida de la cámara para asegurar coherencia en las búsquedas SQL.
+        <br><strong>2. Control de duplicados:</strong> Verifica si el vehículo ya se encuentra dentro del estacionamiento para evitar lecturas dobles o ingresos erróneos.
+        <br><strong>3. Detección vehicular:</strong> Identifica el tipo de vehículo (ej: las patentes que inician con una letra y tres números seguido de tres letras se categorizan como motocicletas en Argentina) para descontar del aforo correspondiente.
+        <br><strong>4. Búsqueda de reserva:</strong> Busca en la base de datos una reserva pagada y vigente para esa patente en la sucursal actual.
+        <br><strong>5. Evaluación de aforo según tipo de reserva:</strong>
+        <br>&nbsp;&nbsp;- <i>Si tiene reserva de período largo (Día/Semana/Mes):</i> El usuario tiene "libre tránsito". Puede entrar y salir libremente. El ingreso se autoriza sin descontar del aforo de paso, ya que su plaza fue reservada y descontada al momento de pagar la reserva.
+        <br>&nbsp;&nbsp;- <i>Si tiene reserva por hora o entra "al paso" (sin reserva):</i> El sistema verifica si hay plazas disponibles para su tipo de vehículo en el aforo actual. Si hay lugar, autoriza el ingreso e incrementa el contador de ocupación en el aforo.
+        <br><strong>6. Registro y Apertura:</strong> Crea un registro en la tabla de accesos (<code>AccessLog</code>) con estado de pago pendiente (si entra al paso), publica la orden <code>"OPEN"</code> en MQTT para levantar la barrera física, y notifica a los dashboards vía WebSockets.
+      </span>
+      <span class="func-detail"><strong>Lógica detallada del método <code>exit_plate(db, plate, gate_id)</code> (Salida):</strong>
+        <br>Verifica que el vehículo tenga un ingreso activo registrado. Comprueba que la estadía esté paga (o que posea una reserva vigente). Si está todo en orden, registra la salida en el historial y resta una unidad de la ocupación del aforo de la sucursal (excepto si es un usuario con reserva de período largo, cuya plaza permanece ocupada hasta que finalice su período de reserva).
+      </span>
+      <span class="func-detail"><strong>Lógica del método <code>validate_qr(db, qr_code, gate_id)</code>:</strong>
+        <br>Desencripta y parsea el código QR presentado en el lector. Extrae el identificador de la reserva y la patente del vehículo, y ejecuta el mismo flujo de validación de entrada o salida según corresponda.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-svc">Servicios</span>
+      <strong>services/reservation_service.py</strong> &mdash; Gestor del Ciclo de Vida de las Reservas
+      <p>Controla la creación, el pago con saldo de billetera virtual, las cancelaciones automáticas y los reembolsos proporcionales de dinero al usuario.</p>
+      <span class="func-detail"><strong>Lógica del Aforo Diferenciado por Tipo de Reserva:</strong>
+        <br>• <strong>Reservas por hora:</strong> No ocupan lugar en el aforo físico de la sucursal hasta que el auto llega físicamente a la barrera de entrada.
+        <br>• <strong>Reservas de período largo (Día, Semana, Quincena, Mes):</strong> Al momento en que el usuario realiza el pago de la reserva, el sistema invoca al método interno <code>_reservar_plaza_en_aforo()</code>, descontando una plaza de la sucursal de manera fija. La plaza permanece ocupada las 24 horas del día durante todo el período de la reserva, permitiendo al cliente entrar y salir cuando quiera. La plaza física solo se libera cuando el período expira o si el usuario cancela la reserva de manera anticipada mediante el método <code>_liberar_plaza_en_aforo()</code>.
+      </span>
+      <span class="func-detail"><strong>Lógica de reembolsos proporcionales:</strong>
+        <br>Si un usuario cancela una reserva antes de su inicio, recibe el 100% del dinero de vuelta en su saldo digital. Si cancela una reserva que ya está en curso (por ejemplo, una reserva mensual que va por la mitad), el servicio calcula los días restantes y le devuelve un reembolso proporcional directo a su cuenta, liberando su plaza del aforo al instante.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-svc">Servicios</span>
+      <strong>services/billing_service.py</strong> &mdash; Motor de Tarifas y Fidelización
+      <p>Contiene los algoritmos para calcular los precios de las estadías y gestionar la acreditación de puntos de beneficio.</p>
+      <span class="func-detail"><strong>Cálculo de Deuda de Estadía (<code>calculate_debt</code>):</strong>
+        <br>Cuando un vehículo llega a la barrera de salida, el servicio calcula el tiempo transcurrido desde su entrada. Redondea el tiempo hacia arriba en fracciones de 1 hora (el mínimo a cobrar es 1 hora). Consulta las tarifas dinámicas vigentes de la sucursal y el tipo de vehículo (las motos tienen descuento, las camionetas un recargo) y devuelve el monto final a pagar.
+      </span>
+      <span class="func-detail"><strong>Programa de puntos (Fidelización):</strong>
+        <br>Al completarse un pago de estadía o reserva, el método <code>calculate_points()</code> acredita automáticamente 10 puntos de fidelidad en la cuenta del usuario por cada $1000 abonados (monto / 100).
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-svc">Servicios</span>
+      <strong>services/notification_service.py</strong> &mdash; Integración WebSocket con Hilos (v9.1.5)
+      <p>Es un servicio de infraestructura desacoplado. Permite que el servidor web principal envíe notificaciones en tiempo real a los dashboards de los operadores desde cualquier parte del código del backend, incluso desde hilos de ejecución secundarios o tareas de fondo.</p>
+      <span class="func-detail"><strong>Solución técnica implementada:</strong>
+        <br>Dado que FastAPI ejecuta el servidor web y los WebSockets de forma asíncrona (asyncio), y la base de datos o ciertos procesos de fondo corren de forma síncrona en otros hilos, el servicio almacena el bucle de eventos (event loop) de Uvicorn al arrancar en <code>main.py</code>. Cuando ocurre un cambio de aforo, el servicio utiliza la función <code>asyncio.run_coroutine_threadsafe()</code> para inyectar de forma segura la tarea de transmisión WebSocket en el hilo principal del servidor, evitando bloqueos y caídas.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-svc">Servicios</span>
+      <strong>services/email_service.py</strong> &mdash; Generación de Correos Electrónicos Transaccionales
+      <p>Construye y envía correos electrónicos en formato HTML con diseños responsivos y elegantes (confirmación de reserva, recordatorios y restablecimiento de contraseña).</p>
+      <span class="func-detail"><strong>Detalle técnico destacado:</strong>
+        <br>Cuando un usuario reserva, este servicio genera un código QR único en memoria (utilizando la librería <code>qrcode</code> de Python), lo codifica en formato Base64 y lo incrusta directamente en el cuerpo del correo electrónico HTML. El usuario puede mostrar este correo en la barrera para ingresar si la cámara no lee su patente, sin necesidad de descargar archivos adjuntos.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-svc">Servicios</span>
+      <strong>services/worker_service.py</strong> &mdash; Tareas en Segundo Plano (Daemon Thread)
+      <p>Al arrancar el servidor, este servicio inicia un hilo de ejecución secundario en segundo plano (Worker) que corre de forma infinita en ciclos de 5 minutos para mantener la base de datos limpia y actualizada.</p>
+      <span class="func-detail"><strong>Tareas recurrentes automáticas:</strong>
+        <br><strong>1. Cancelación de impagos:</strong> Llama a <code>cleanup_overdue_reservations()</code> para cancelar automáticamente reservas cuyo horario de inicio ya pasó hace más de 2 horas y no registran pago, liberando el cupo para otros clientes.
+        <br><strong>2. Vencimiento de vigencias:</strong> Llama a <code>auto_finalize_all_reservations()</code> para expirar las reservas que alcanzaron su horario de finalización. Si son reservas de período largo, se encarga de liberar la plaza del aforo de la sucursal de manera automática.
+        <br><strong>3. Envío de alertas:</strong> Envía correos de recordatorio a los usuarios que tengan reservas próximas a iniciar en los siguientes 30 minutos.
+      </span>
+    </li>
+  </ul>
+
+  <hr>
+
+  <!-- ============================================================ -->
+  <!-- CAPA 5: REPOSITORIES -->
+  <!-- ============================================================ -->
+  <h2>5. REPOSITORIES — CAPA DE ACCESO A DATOS (ABSTRACCIÓN SQL)</h2>
+  <p>Ubicada en <code>repositories/</code>. Contiene las consultas de base de datos personalizadas, aislando la lógica de negocio de la sintaxis de las consultas SQL de SQLAlchemy.</p>
+
+  <ul class="file-list">
+    <li>
+      <span class="layer-tag layer-tool">Repo</span>
+      <strong>repositories/reservation_repository.py</strong> &mdash; Consultas de Reservas
+      <p>Abstrae las consultas SQL relacionadas con el calendario de reservas.</p>
+      <span class="func-detail"><strong>Métodos destacados:</strong>
+        <br>• <code>get_past_reservations(db, user_id)</code>: Obtiene las reservas finalizadas o canceladas de un cliente específico.
+        <br>• <code>get_active_by_plate(db, plate, branch, time)</code>: Busca si hay una reserva autorizada y pagada para una patente en una fecha y hora específicas.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-tool">Repo</span>
+      <strong>repositories/user_repository.py</strong> &mdash; Consultas de Clientes
+      <p>Abstrae las consultas SQL para gestionar las cuentas de los usuarios.</p>
+      <span class="func-detail"><strong>Métodos destacados:</strong>
+        <br>• <code>update_balance(db, user_id, amount)</code>: Modifica de forma segura el saldo de dinero digital del usuario en la base de datos, evitando colisiones de transacciones concurrentes.
+        <br>• <code>add_points(db, user_id, points)</code>: Suma puntos al saldo de fidelidad y registra el movimiento en el historial.
+      </span>
+    </li>
+  </ul>
+
+  <hr>
+
+  <!-- ============================================================ -->
+  <!-- CAPA 6: FRONTEND -->
+  <!-- ============================================================ -->
+  <h2>6. FRONTEND — INTERFAZ WEB Y COMPONENTES EN TIEMPO REAL</h2>
+  <p>Archivos en <code>static/js/modules/</code> y <code>templates/</code>. Responsables de renderizar las vistas y mantener la comunicación en tiempo real con el servidor.</p>
+
+  <ul class="file-list">
+    <li>
+      <span class="layer-tag layer-front">Frontend</span>
+      <strong>static/js/modules/api.js</strong> &mdash; Cliente de Red Unificado (API Wrapper)
+      <p>Es el único archivo encargado de realizar peticiones HTTP (<code>fetch</code>) al backend. Intercepta de forma automática las cabeceras de red para adjuntar el token JWT de sesión guardado en el navegador (<code>localStorage</code>) en cada consulta. Si el servidor responde con un error de sesión expirada (código 401), redirige automáticamente al usuario a la pantalla de login.</p>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-front">Frontend</span>
+      <strong>static/js/modules/utils.js</strong> &mdash; Biblioteca de Utilidades Visuales y Validación
+      <p>Centraliza funciones de formato y validación en la interfaz gráfica.</p>
+      <span class="func-detail"><strong>Función crítica <code>validatePlate(plate)</code>:</strong>
+        <br>Contiene las expresiones regulares (Regex) para validar que el texto ingresado en cualquier formulario del sistema corresponda a un formato de patente válido de Argentina, Mercosur o motocicletas. Si la patente es inválida, bloquea el envío del formulario y muestra una alerta visual al usuario.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-front">Frontend</span>
+      <strong>static/js/modules/dashboard-stats.js</strong> &mdash; Sincronización de Ocupación por WebSockets
+      <p>Establece la conexión WebSocket permanente con la ruta <code>/v1/parking/ws</code> del servidor desde el panel de control del operador. Al recibir una actualización del aforo, refresca de manera dinámica la lista de vehículos estacionados y actualiza los indicadores visuales (KPIs) sin necesidad de recargar la página (F5).</p>
+      <span class="func-detail"><strong>Regla de negocio frontend:</strong> Oculta dinámicamente el botón "Cancelar Estadía" en la interfaz para aquellos vehículos que ingresaron al estacionamiento con una reserva de período largo pagada, evitando que el operador libere su plaza por error antes del vencimiento.</span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-front">Frontend</span>
+      <strong>static/js/modules/monitoring.js</strong> &mdash; Tablero de Control de Cámaras ALPR (v9.1.5)
+      <p>Controla el flujo de video en vivo en la pestaña de monitoreo. Se conecta a la ruta de WebSockets de video de cada cámara, recibe los fotogramas JPEG enviados por el servicio ALPR y los dibuja en la pantalla de forma fluida. También gestiona los botones de encendido y apagado de las cámaras, enviando las peticiones al backend para arrancar o detener los procesos correspondientes.</p>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-front">Frontend</span>
+      <strong>templates/dashboard.html</strong> &mdash; Panel de Control Operativo
+      <p>Es la interfaz principal que utiliza el personal de cabina y los administradores locales. Contiene el diseño en grilla de las cámaras en vivo, los botones de apertura remota de barreras de emergencia, el listado de vehículos ingresados con su deuda calculada al segundo y los gráficos de recaudación diaria.</p>
+    </li>
+  </ul>
+
+  <hr>
+
+  <!-- ============================================================ -->
+  <!-- CAPA 7: ARCHIVOS EN EL DIRECTORIO RAÍZ -->
+  <!-- ============================================================ -->
+  <h2>7. ARCHIVOS RAÍZ — ORQUESTADORES GENERALES</h2>
+  <p>Archivos ubicados en la raíz del proyecto. Son los puntos de entrada para iniciar los servicios y la base de datos.</p>
+
+  <ul class="file-list">
+    <li>
+      <span class="layer-tag layer-core">Core</span>
+      <strong>main.py</strong> &mdash; Punto de Entrada y Orquestador del Backend FastAPI
+      <p>Es el archivo principal que se ejecuta para iniciar el servidor web. Se encarga de instanciar la aplicación FastAPI, configurar las reglas de seguridad de intercambio de recursos (CORS) y montar todos los sub-routers de la API bajo sus respectivos prefijos (rutas de administración, usuarios, reportes, accesos, etc.).</p>
+      <span class="func-detail"><strong>Eventos de inicio (Startup Event):</strong>
+        <br><strong>1. Base de Datos:</strong> Llama a <code>init_db()</code> para verificar que la base de datos esté lista.
+        <br><strong>2. Hardware:</strong> Conecta el cliente MQTT global (<code>mqtt_client</code>) al broker para dejarlo listo para enviar órdenes.
+        <br><strong>3. WebSockets:</strong> Registra la instancia del gestor de ocupación (<code>OccupancyManager</code>) en el servicio de notificaciones.
+        <br><strong>4. Hilo de fondo:</strong> Inicia el hilo secundario (Worker) que limpia reservas vencidas de forma asíncrona.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-svc">Servicios</span>
+      <strong>alpr_service.py</strong> &mdash; Motor de Visión Artificial (Proceso Standalone)
+      <p>Es un proceso de software independiente que se ejecuta de forma paralela al servidor web. Captura los fotogramas del feed de video de una cámara de entrada o salida y aplica algoritmos de procesamiento de imágenes y redes neuronales para leer caracteres.</p>
+      <span class="func-detail"><strong>Flujo de procesamiento interno:</strong>
+        <br><strong>1. Captura y cola:</strong> Lee los frames del stream de video y los coloca en una cola interna limitada a 4 elementos (<code>maxsize=4</code>). Si la cola se llena porque la cámara procesa a altos FPS, se aplica la política "drop-oldest", descartando el frame más antiguo para evitar latencia y congelamiento del video.
+        <br><strong>2. Detección rápida de QR (Quick QR):</strong> Antes de procesar la imagen con el motor OCR (que es pesado para el procesador), realiza un escaneo rápido buscando patrones de códigos QR. Si detecta uno válido, envía el código al backend y salta el procesamiento de patente.
+        <br><strong>3. Reconocimiento óptico (OCR):</strong> Si no hay QR, recorta la zona de la patente, mejora su contraste usando la librería OpenCV y extrae los caracteres con la red neuronal de EasyOCR.
+        <br><strong>4. Consenso y Debounce:</strong> Para evitar falsas lecturas, requiere que el mismo texto de patente se lea de forma idéntica en varios frames seguidos. Una vez logrado el consenso, envía la patente al backend y activa un tiempo de espera (cooldown) de 10 segundos para esa patente, evitando registrar múltiples ingresos del mismo vehículo seguidos.
+      </span>
+    </li>
+
+    <li>
+      <span class="layer-tag layer-tool">Tool</span>
+      <strong>init_db.py</strong> &mdash; Script de Creación e Inicialización Física de Base de Datos
+      <p>Un script de consola sencillo que se ejecuta al instalar el sistema. Se encarga de importar la configuración del motor de base de datos, borrar cualquier base de datos de pruebas anterior si se requiere, crear la estructura de tablas limpia y llamar a la siembra de datos maestros de <a href="file:///C:/xampp/htdocs/AUTOPASS/core/seed.py">core/seed.py</a>.</p>
+    </li>
+  </ul>
+
+  <hr>
+
+  <div class="note-box">
+    <p><strong>ARQUITECTURA COMPACTA Y SIN ACENTOS EN CÓDIGO:</strong> De acuerdo con las pautas de desarrollo de AUTOPASS, todo el código generado que muestre mensajes por pantalla, logs del sistema o comentarios dentro del código fuente debe estar escrito estrictamente en <strong>MAYÚSCULAS Y SIN ACENTOS</strong> para garantizar máxima compatibilidad en terminales y consolas de diagnóstico de hardware.</p>
+    <p style="margin-top:0.8rem;"><strong>RESUMEN DE INTEGRACIÓN:</strong> El sistema logra un desacoplamiento completo. Si el microcontrolador de la barrera física se desconecta de la red, el servidor de la API sigue facturando y operando con normalidad, registrando las anomalías y reportando el estado "OFFLINE" en el panel de control del operador de forma automática.</p>
+  </div>
+
+</div>
+</body>
+</html>

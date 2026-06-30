@@ -101,3 +101,32 @@ class EmailService:
             qr_data_url=qr_data_url
         )
         EmailService.send_async_email(to_email, subject, html_content)
+
+    @staticmethod
+    def send_reservation_reminder(to_email: str, user_name: str, res_data: dict):
+        """ENVIA RECORDATORIO 30 MIN ANTES DE UNA RESERVA."""
+        pagada = res_data.get('pagada', False)
+        if pagada:
+            subject = f"Tu reserva #{
+                res_data['id']} comienza en 30 minutos - AUTOPASS"
+        else:
+            subject = f"Recordatorio de pago - Reserva #{
+                res_data['id']} - AUTOPASS"
+        html_content = EmailService._render_template(
+            "reservation_reminder.html",
+            user_name=user_name,
+            res_data=res_data,
+            pagada=pagada
+        )
+        EmailService.send_async_email(to_email, subject, html_content)
+
+    @staticmethod
+    def send_auto_cancelled_notification(to_email: str, user_name: str, res_data: dict):
+        """AVISA AL USUARIO QUE SU RESERVA FUE CANCELADA POR NO INGRESAR A TIEMPO."""
+        subject = f"Reserva #{res_data['id']} cancelada - AUTOPASS"
+        html_content = EmailService._render_template(
+            "reservation_auto_cancelled.html",
+            user_name=user_name,
+            res_data=res_data
+        )
+        EmailService.send_async_email(to_email, subject, html_content)

@@ -2,6 +2,7 @@
  * LANDING MODULO
  * LOGICA PARA EL CARRUSEL, MAPA Y NAVEGACION DE LA LANDING PAGE.
  */
+import { formatNum } from './utils.js';
 
 let mapInstance = null;
 let IndiceCarruselActual = 0;
@@ -75,6 +76,7 @@ export function initMap(containerId = 'map') {
                 
                 // DETERMINAR COLOR Y MENSAJE POR DISPONIBILIDAD
                 const pct = (p.ocupacion_actual / p.capacidad_total) * 100;
+                const disponibles = p.capacidad_total - p.ocupacion_actual;
                 let statusColor = '#C5A059'; // DISPONIBLE (DORADO)
                 let statusText = 'Alta disponibilidad';
                 let statusDesc = 'Hay lugares disponibles para vos.';
@@ -101,15 +103,19 @@ export function initMap(containerId = 'map') {
                 
                 const formattedAddr = formatAddress(p.direccion);
 
+                const horarioText = p.is_24h ? '24 HORAS' : (p.horario ? p.horario.replace(' UN ', ' a ') : 'Consultar');
+
                 const popupContent = `
                     <div style="text-align: center; min-width: 200px; padding: 10px; background: #0a0a0a; border-radius: 15px;">
                         <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 55px; height: 55px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #C5A059; padding: 3px; background: #000;">
                         <br><b style="font-size: 1.15rem; color: #fff; font-family: 'Montserrat'; letter-spacing: 0.5px;">${p.nombre}</b>
                         <br><span style="color: #888; font-size: 0.8rem; display: block; margin-top: 2px; text-transform: capitalize;">${formattedAddr}</span>
+                        <span style="color: var(--dorado); font-size: 0.75rem; display: block; margin-top: 6px;"><i class="fas fa-clock" style="margin-right: 5px;"></i>${horarioText}</span>
                         
-                        <div style="margin: 15px 0; padding: 12px; background: rgba(197, 160, 89, 0.03); border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.15);">
+                        <div style="margin: 12px 0; padding: 12px; background: rgba(197, 160, 89, 0.03); border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.15);">
                             <b style="color: ${statusColor}; font-size: 0.85rem; display: block; margin-bottom: 6px; letter-spacing: 1px;">${statusText.toUpperCase()}</b>
                             <span style="color: #ddd; font-size: 0.75rem; display: block; margin-bottom: 8px; line-height: 1.4;">${statusDesc}</span>
+                            ${disponibles > 0 ? `<span style="color: #fff; font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 4px;">${formatNum(disponibles)} lugar${disponibles !== 1 ? 'es' : ''} disponible${disponibles !== 1 ? 's' : ''}</span>` : ''}
                             
                             <div style="height: 5px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 10px 0;">
                                 <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, ${statusColor} 0%, #fff 200%);"></div>

@@ -1,0 +1,185 @@
+<div id="vt-fab" class="vt-fab" onclick="toggleVTModal()" title="Control de tiempo virtual">
+    <i class="fas fa-clock"></i>
+    <span class="vt-fab-badge" id="vt-fab-badge" style="display:none;">ON</span>
+</div>
+
+<div id="vt-modal" class="modal" style="display:none;">
+    <div class="modal-content glass-premium" style="max-width:420px;padding:24px;">
+        <div class="modal-header">
+            <div class="flex-row items-center gap-10">
+                <div class="header-icon-box sm">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 style="color: var(--dorado);">RELOJ VIRTUAL DEL SISTEMA</h3>
+            </div>
+            <span class="close-btn" onclick="toggleVTModal()"><i class="fas fa-xmark"></i></span>
+        </div>
+        <div class="modal-body">
+            <div class="vt-big-clock">
+                <div class="vt-big-time" id="vt-big-time">--:--:--</div>
+                <div class="vt-big-date" id="vt-big-date">---</div>
+            </div>
+
+            <div class="vt-info-grid">
+                <div class="vt-info-item">
+                    <span class="vt-info-label">Hora real del sistema</span>
+                    <span class="vt-info-value" id="vt-panel-real">---</span>
+                </div>
+                <div class="vt-info-item">
+                    <span class="vt-info-label">Offset activo</span>
+                    <span class="vt-info-value" id="vt-panel-offset">0h 0m</span>
+                </div>
+            </div>
+
+            <div class="vt-divider"></div>
+
+            <div class="vt-actions-label">ADELANTAR TIEMPO</div>
+            <div class="vt-actions" id="vt-panel-controls">
+                <button class="vt-btn" onclick="advanceVirtualTime(1)">+1 min</button>
+                <button class="vt-btn" onclick="advanceVirtualTime(5)">+5 min</button>
+                <button class="vt-btn" onclick="advanceVirtualTime(15)">+15 min</button>
+                <button class="vt-btn" onclick="advanceVirtualTime(30)">+30 min</button>
+                <button class="vt-btn" onclick="advanceVirtualTime(60)">+1 hora</button>
+                <button class="vt-btn" onclick="advanceVirtualTime(180)">+3 horas</button>
+                <button class="vt-btn" onclick="advanceVirtualTime(1440)">+1 día</button>
+                <button class="vt-btn" onclick="advanceVirtualTime(10080)">+1 semana</button>
+                <button class="vt-btn vt-btn-full vt-btn-danger" onclick="resetVirtualTime()"><i class="fas fa-undo"></i> RESTAURAR TIEMPO REAL</button>
+            </div>
+
+            <div id="vt-feedback" class="vt-feedback" style="display:none;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let vtToken = localStorage.getItem('token');
+let vtClockInterval = null;
+
+// GLOBAL VIRTUAL TIME HOOK FOR FRONTEND
+window.VIRTUAL_TIME_OFFSET = 0;
+window.getVirtualNow = function() {
+    return new Date(Date.now() + window.VIRTUAL_TIME_OFFSET * 1000);
+};
+
+(async function() {
+    const fab = document.getElementById('vt-fab');
+    if (fab) fab.style.display = vtToken ? 'flex' : 'none';
+    const controls = document.getElementById('vt-panel-controls');
+    if (controls) controls.style.display = vtToken ? '' : 'none';
+    await updateVT();
+    setInterval(updateVT, 30000);
+})();
+
+async function fetchVT() {
+    try {
+        const r = await fetch('/v1/system/virtual-time');
+        return await r.json();
+    } catch(e) { return null; }
+}
+
+async function updateVT() {
+    const info = await fetchVT();
+    if (!info) return;
+    window.VIRTUAL_TIME_OFFSET = info.offset_seconds || 0;
+    const realDate = new Date(info.real_now);
+    const virtDate = new Date(info.virtual_now);
+
+    const bigTime = document.getElementById('vt-big-time');
+    const bigDate = document.getElementById('vt-big-date');
+    if (bigTime) bigTime.textContent = virtDate.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if (bigDate) bigDate.textContent = virtDate.toLocaleDateString('es-AR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+    const panelReal = document.getElementById('vt-panel-real');
+    const panelOffset = document.getElementById('vt-panel-offset');
+    if (panelReal) panelReal.textContent = realDate.toLocaleString('es-AR');
+    if (panelOffset) {
+        const abs = Math.abs(info.offset_seconds);
+        const h = Math.floor(abs / 3600);
+        const m = Math.floor((abs % 3600) / 60);
+        const d = Math.floor(h / 24);
+        const rh = h % 24;
+        panelOffset.textContent = info.offset_seconds === 0 ? '0h 0m' : `${info.offset_seconds > 0 ? '+' : '-'}${d > 0 ? d + 'd ' : ''}${rh}h ${m}m`;
+    }
+
+    const badge = document.getElementById('vt-fab-badge');
+    const fab = document.getElementById('vt-fab');
+    if (badge && fab) {
+        if (info.active) {
+            badge.style.display = 'inline';
+            fab.classList.add('active');
+        } else {
+            badge.style.display = 'none';
+            fab.classList.remove('active');
+        }
+    }
+}
+
+function toggleVTModal() {
+    const modal = document.getElementById('vt-modal');
+    if (!modal) return;
+    const open = modal.style.display === 'block';
+    modal.style.display = open ? 'none' : 'block';
+    if (!open) {
+        updateVT();
+        if (vtClockInterval) clearInterval(vtClockInterval);
+        vtClockInterval = setInterval(updateVT, 2000);
+    } else {
+        if (vtClockInterval) clearInterval(vtClockInterval);
+        vtClockInterval = null;
+    }
+}
+
+function vtHeaders() {
+    const t = localStorage.getItem('token');
+    return t ? {'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+}
+
+function showVTFeedback(msg, ok) {
+    const fb = document.getElementById('vt-feedback');
+    if (!fb) return;
+    fb.textContent = msg;
+    fb.style.display = 'block';
+    fb.style.background = ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+    fb.style.color = ok ? '#10b981' : '#ef4444';
+    fb.style.border = '1px solid ' + (ok ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)');
+    setTimeout(() => { fb.style.display = 'none'; }, 3000);
+}
+
+async function advanceVirtualTime(minutes) {
+    const r = await fetch('/v1/admin/virtual-time/advance', {
+        method: 'POST', headers: vtHeaders(),
+        body: JSON.stringify({minutes})
+    });
+    if (r.ok) {
+        const label = minutes >= 1440 ? `${minutes/1440} día(s)` : minutes >= 60 ? `${minutes/60} hora(s)` : `${minutes} min`;
+        showVTFeedback(`⏱ Tiempo adelantado +${label}`, true);
+        await updateVT();
+        if (typeof updateNotifBadge === 'function') updateNotifBadge();
+        if (typeof window.loadReservations === 'function') window.loadReservations();
+        if (typeof window.loadTransactions === 'function') window.loadTransactions();
+    }
+}
+
+async function resetVirtualTime() {
+    const r = await fetch('/v1/admin/virtual-time/reset', {method: 'POST', headers: vtHeaders()});
+    if (r.ok) {
+        showVTFeedback('⏱ Tiempo real restaurado', true);
+        await updateVT();
+        if (typeof updateNotifBadge === 'function') updateNotifBadge();
+        if (typeof window.loadReservations === 'function') window.loadReservations();
+        if (typeof window.loadTransactions === 'function') window.loadTransactions();
+    }
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('vt-modal');
+    if (!modal || modal.style.display !== 'block') return;
+    const content = modal.querySelector('.modal-content');
+    if (content && !content.contains(e.target) && !e.target.closest('#vt-fab')) {
+        modal.style.display = 'none';
+        if (vtClockInterval) clearInterval(vtClockInterval);
+        vtClockInterval = null;
+    }
+});
+</script>

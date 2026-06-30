@@ -64,7 +64,7 @@ input::-webkit-calendar-picker-indicator:hover {
 
 .select-premium {
     width: 100%;
-    padding: 12px 15px 12px 42px;
+    padding: 12px 45px 12px 42px;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border-light);
     border-radius: 12px;
@@ -76,6 +76,10 @@ input::-webkit-calendar-picker-indicator:hover {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C5A059'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
 }
 
 .select-premium:focus {
@@ -119,4 +123,133 @@ select option {
 .search-box-premium input:focus {
     border-color: var(--dorado);
     width: 250px;
+}
+
+/* FLATPICKR - OVERRIDE DEL TEMA DARK */
+.flatpickr-calendar {
+    background: #0a0a0a !important;
+    border: 1px solid #333 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
+    font-family: 'Montserrat', 'Inter', sans-serif !important;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.flatpickr-time {
+    border: none !important;
+    background: transparent !important;
+    max-height: 60px;
+}
+
+.numInputWrapper {
+    background: transparent !important;
+}
+
+.numInputWrapper .numInput {
+    background: #111 !important;
+    border: 1px solid #333 !important;
+    border-radius: 8px !important;
+    color: #fff !important;
+    font-family: 'Montserrat', 'Inter', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    padding: 6px 2px !important;
+    text-align: center !important;
+    transition: border-color 0.3s;
+}
+
+.numInputWrapper .numInput:focus {
+    border-color: var(--dorado) !important;
+    outline: none;
+}
+
+.numInputWrapper span.arrowUp,
+.numInputWrapper span.arrowDown {
+    border: none !important;
+    background: transparent !important;
+    color: var(--dorado) !important;
+    font-size: 12px !important;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.numInputWrapper span.arrowUp:hover,
+.numInputWrapper span.arrowDown:hover {
+    opacity: 1;
+}
+
+.flatpickr-time-separator {
+    color: #666 !important;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* CUSTOM NUMBER INPUT CON FLECHAS DORADAS */
+.num-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.num-input-wrapper .input-premium {
+    padding-right: 35px !important;
+    text-align: center;
+}
+
+/* OCULTAR FLECHAS NATIVAS DEL NAVEGADOR */
+.num-input-wrapper input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.num-input-wrapper input[type="number"]::-webkit-outer-spin-button,
+.num-input-wrapper input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* FLECHAS CUSTOM */
+.num-btn {
+    position: absolute;
+    right: 3px;
+    width: 26px;
+    height: 18px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: background 0.2s;
+    border-radius: 4px;
+}
+
+.num-btn::after {
+    content: '';
+    display: block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+}
+
+.num-btn.up {
+    top: 2px;
+}
+
+.num-btn.up::after {
+    border-bottom: 5px solid var(--dorado);
+}
+
+.num-btn.down {
+    bottom: 2px;
+}
+
+.num-btn.down::after {
+    border-top: 5px solid var(--dorado);
+}
+
+.num-btn:hover {
+    background: rgba(197, 160, 89, 0.15);
 }

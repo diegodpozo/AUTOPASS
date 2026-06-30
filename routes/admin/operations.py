@@ -48,7 +48,7 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
         return {"status": "ok", "message": "El vehículo ya figura como ingresado en esta sede; se reutilizó el registro", "access_log_id": ultimo.id}
     
     # Buscar reserva activa y pagada para esta patente/sucursal
-    now_str = now.isoformat()
+    now_str = now.strftime("%Y-%m-%d %H:%M")
     reserva = db.query(models.Reservation).filter(
         func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
         models.Reservation.estado_pago == PaymentStatus.PAGADO,
@@ -65,6 +65,8 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
         
         if tipo_vehiculo == "Auto":
             floor.ocupacion_actual += 1
+        elif tipo_vehiculo == "Camioneta":
+            floor.ocupacion_camionetas += 1
         else:
             floor.ocupacion_motos += 1
     else:
@@ -76,6 +78,8 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
         
         if tipo_vehiculo == "Auto":
             aforo.ocupacion_actual += 1
+        elif tipo_vehiculo == "Camioneta":
+            aforo.ocupacion_camionetas += 1
         else:
             aforo.ocupacion_motos += 1
 
@@ -124,6 +128,8 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
     if aforo:
         if ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0:
             aforo.ocupacion_actual -= 1
+        elif ultimo.tipo_vehiculo == "Camioneta" and aforo.ocupacion_camionetas > 0:
+            aforo.ocupacion_camionetas -= 1
         elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
             aforo.ocupacion_motos -= 1
         

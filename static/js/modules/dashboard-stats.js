@@ -1,5 +1,5 @@
 import api from './api.js';
-import { formatDate, formatPlate } from './utils.js';
+import { formatDate, formatPlate, formatNum } from './utils.js';
 
 /**
  * PANEL ESTADISTICAS MODULO
@@ -38,30 +38,42 @@ export function initOccupancyWS() {
 export async function loadLiveStats() {
     const resStatus = await api.get('/parking/status');
     if (resStatus && resStatus.ok) {
-        const { disponibilidad: free, ocupacion_actual: occupied, capacidad_total: total, ocupacion_motos: occMotos, capacidad_motos: capMotos, disponibilidad_motos: freeMotos } = resStatus.data;
+        const { disponibilidad: free, ocupacion_actual: occupied, capacidad_total: total, ocupacion_motos: occMotos, capacidad_motos: capMotos, disponibilidad_motos: freeMotos, disponibilidad_camionetas: freeCamionetas, capacidad_camionetas: capCamionetas, ocupacion_camionetas: occCamionetas } = resStatus.data;
 
         // AUTOS
         const freeEl = document.getElementById('stat-free');
-        if (freeEl) freeEl.innerText = free;
+        if (freeEl) freeEl.innerText = formatNum(free);
+        const totalEl = document.getElementById('stat-free-total');
+        if (totalEl) totalEl.innerText = `Tot. Disp. ${formatNum(total)}`;
         const barFree = document.getElementById('bar-free');
         if (barFree) barFree.style.width = `${(free / total) * 100}%`;
 
         // MOTOS
         const freeMotosEl = document.getElementById('stat-free-motos');
-        if (freeMotosEl) freeMotosEl.innerText = freeMotos;
+        if (freeMotosEl) freeMotosEl.innerText = formatNum(freeMotos);
+        const totalMotosEl = document.getElementById('stat-free-motos-total');
+        if (totalMotosEl) totalMotosEl.innerText = `Tot. Disp. ${formatNum(capMotos)}`;
         const barFreeMotos = document.getElementById('bar-free-motos');
         if (barFreeMotos) barFreeMotos.style.width = `${(freeMotos / capMotos) * 100}%`;
 
+        // CAMIONETAS
+        const freeCamionetasEl = document.getElementById('stat-free-camionetas');
+        if (freeCamionetasEl) freeCamionetasEl.innerText = formatNum(freeCamionetas);
+        const totalCamionetasEl = document.getElementById('stat-free-camionetas-total');
+        if (totalCamionetasEl) totalCamionetasEl.innerText = `Tot. Disp. ${formatNum(capCamionetas)}`;
+        const barFreeCamionetas = document.getElementById('bar-free-camionetas');
+        if (barFreeCamionetas) barFreeCamionetas.style.width = `${(freeCamionetas / capCamionetas) * 100}%`;
+
         // OCUPACION TOTAL Y KPI MOTO
         const occMotosEl = document.getElementById('occ-stat-motos');
-        if (occMotosEl) occMotosEl.innerText = occMotos;
+        if (occMotosEl) occMotosEl.innerText = formatNum(occMotos);
     }
 
     const resFinance = await api.get('/reports/financial-summary?period=day');
     if (resFinance && resFinance.ok) {
         const entriesEl = document.getElementById('stat-entries');
         const moneyEl = document.getElementById('stat-money');
-        if (entriesEl) entriesEl.innerText = resFinance.data.cantidad_pagos;
+        if (entriesEl) entriesEl.innerText = formatNum(resFinance.data.cantidad_pagos);
         if (moneyEl) moneyEl.innerText = `$${resFinance.data.total_recaudado.toLocaleString('es-AR')}`;
     }
 }
@@ -240,8 +252,8 @@ export async function loadOccupancy() {
         
         let totalDebt = fullOccupancyData.reduce((acc, curr) => acc + (curr.deuda || 0), 0);
         
-        if (countEl) countEl.innerText = fullOccupancyData.filter(v => v.tipo_vehiculo !== 'Moto').length;
-        if (motosEl) motosEl.innerText = fullOccupancyData.filter(v => v.tipo_vehiculo === 'Moto').length;
+        if (countEl) countEl.innerText = formatNum(fullOccupancyData.filter(v => v.tipo_vehiculo !== 'Moto').length);
+        if (motosEl) motosEl.innerText = formatNum(fullOccupancyData.filter(v => v.tipo_vehiculo === 'Moto').length);
         if (debtEl) debtEl.innerText = `$${totalDebt.toLocaleString('es-AR')}`;
     }
 }
@@ -298,9 +310,9 @@ export function renderOccupancyTable() {
             <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">
                 <div class="flex-row gap-5 justify-center">
-                    ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
+                    ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${formatNum(occ.deuda)})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
                     <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-door-open"></i></button>
-                    ${(!(occ.reserva && occ.reserva.tipo_estadia && occ.reserva.estado_pago) || !(occ.reserva.tipo_estadia !== 'hora' && occ.reserva.estado_pago === 'Pagado')) ? `<button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${occ.deuda}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>` : ''}
+                    ${(!(occ.reserva && occ.reserva.tipo_estadia && occ.reserva.estado_pago) || !(occ.reserva.tipo_estadia !== 'hora' && occ.reserva.estado_pago === 'Pagado')) ? `<button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${formatNum(occ.deuda)}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>` : ''}
                 </div>
             </td>
         </tr>`;

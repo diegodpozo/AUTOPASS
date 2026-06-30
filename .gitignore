@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .env
 .gemini/
-parking.db
+
 Captura de pantalla*.jpg
 *.sqlite
 .venv/
@@ -11,3 +11,5 @@ Captura de pantalla*.jpg
 .idea/
 Thumbs.db
 .DS_Store
+data/
+*.db
