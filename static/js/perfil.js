@@ -56,7 +56,11 @@ window.showSection = function(sectionId, el) {
     document.querySelectorAll('.profile-section').forEach(s => s.classList.remove('active'));
     const sectionEl = document.getElementById(`section-${sectionId}`);
     if (sectionEl) sectionEl.classList.add('active');
-    
+
+    // MOSTRAR/OCULTAR BOTON FLOTANTE NUEVA RESERVA (SOLO FUERA DE INICIO)
+    const fab = document.querySelector('.fab-new-reserva');
+    if (fab) fab.style.display = sectionId === 'inicio' ? 'none' : 'flex';
+
     if (sectionId === 'reservas') res.loadReservations();
     if (sectionId === 'puntos') prof.loadPointsData();
     if (sectionId === 'inicio') {

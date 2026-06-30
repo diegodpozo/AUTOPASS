@@ -61,6 +61,7 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 1. **Dorado AutoPass**: `#C5A059`.
 2. **Glassmorphism**: Fondo con desenfoque y bordes semi-transparentes.
 3. **Voseo**: "Registrate", "Cargá saldo", "Tus puntos".
+4. **FAB (Floating Action Button)**: Botón dorado fijo en perfil de usuario. Usar `min-width` + `max-width` en label para animación sin pérdida del icono. Ocultar en "inicio" vía JS (`showSection`).
 4. **Modo Edición (UI Pattern)**:
    - Los campos de configuración (ej: tarifas) deben estar deshabilitados por defecto (`disabled`).
    - Usar un botón único "EDITAR" que habilita los campos y cambia la etiqueta a "APLICAR".

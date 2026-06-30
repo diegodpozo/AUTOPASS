@@ -9,7 +9,8 @@ SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # CREACION DEL MOTOR DE BASE DE DATOS
 engine_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=engine_args)
+pool_args = {"pool_size": 10, "max_overflow": 20, "pool_timeout": 60} if not SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=engine_args, **pool_args)
 
 # FABRICA DE SESIONES
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
