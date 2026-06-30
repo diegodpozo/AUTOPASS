@@ -11,3 +11,5 @@ Captura de pantalla*.jpg
 .idea/
 Thumbs.db
 .DS_Store
+data/
+*.db
