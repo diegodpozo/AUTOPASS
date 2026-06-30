@@ -797,7 +797,13 @@ export async function cancelReservation(id) {
 export async function payReservation(id) {
     if (!await showConfirm('PAGAR RESERVA', '¿Deseás pagar con tu saldo AutoPass?')) return;
     const res = await api.post(`/user/reservations/${id}/pay`);
-    if (res.ok) { showToast('¡Pago exitoso!'); loadReservations(); if (window.loadProfile) window.loadProfile(); }
+    if (res.ok) { 
+        showToast('¡Pago exitoso!'); 
+        loadReservations(); 
+        if (window.loadProfile) window.loadProfile(); 
+        // DISPARAR EVENTO PARA EL TOUR
+        try { document.dispatchEvent(new CustomEvent('reservation:paid', { detail: { id } })); } catch (e) {}
+    }
     else { showToast(res.error || 'Error en el pago'); }
 }
 
@@ -823,12 +829,20 @@ export async function showDigitalPass(id) {
         }
     }
     const modal = document.getElementById('modal-pase-digital');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        // DISPARAR EVENTO PARA EL TOUR
+        try { document.dispatchEvent(new CustomEvent('digitalpass:open', { detail: { id } })); } catch (e) {}
+    }
 }
 
 export function closeDigitalPass() {
     const modal = document.getElementById('modal-pase-digital');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        // DISPARAR EVENTO PARA EL TOUR
+        try { document.dispatchEvent(new CustomEvent('digitalpass:closed')); } catch (e) {}
+    }
 }
 
 export async function shareTicket() {

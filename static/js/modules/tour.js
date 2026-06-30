@@ -13,14 +13,89 @@ const mainTourSteps = [
 
 // Steps that run specifically inside 'Mis Reservas' after reservation is created
 const reservationsTourSteps = [
-    { selector: '#reservation-featured-list, #reservation-list-active, #reservation-list-history', title: 'Mis Reservas', text: 'Acá verás tus reservas recientes y activas. Podés ver el pase digital, editar o cancelar según corresponda.', align: 'top', interactive: true, center: true },
+    { 
+        selector: '#reservation-featured-list, #reservation-list-active, #reservation-list-history', 
+        title: 'Mis Reservas', 
+        text: 'Acá verás tus reservas recientes y activas. Podés ver el pase digital, editar o cancelar según corresponda.', 
+        align: 'top', 
+        interactive: true, 
+        center: true,
+        beforeShow: () => {
+            if (window.showSection) {
+                const navItem = document.querySelector('.nav-item[onclick*="reservas"]');
+                window.showSection('reservas', navItem);
+            }
+        }
+    },
     { selector: '.reserva-actions-ultra .btn-ultra.btn-ultra-primary, .reserva-card-ultra .btn-ultra.btn-ultra-primary', title: 'Acciones principales', text: 'Aquí podés ver el pase digital o pagar la reserva. Probá pulsar el botón principal para ver más opciones.', align: 'left', interactive: true, waitForEnabled: true },
     { selector: '.reserva-actions-ultra .btn-ultra.btn-ultra-secondary, .reserva-card-ultra .btn-ultra.btn-ultra-secondary', title: 'Editar reserva', text: 'Usá este botón para editar la reserva si necesitás cambiar fecha o sucursal.', align: 'left', interactive: true },
     { selector: '.reserva-actions-ultra .btn-ultra.btn-ultra-danger, .reserva-card-ultra .btn-ultra.btn-ultra-danger', title: 'Eliminar / Cancelar', text: 'Si querés cancelar la reserva, usá este botón. Te mostraremos la confirmación y posibles reembolsos.', align: 'left', interactive: true },
-    { selector: '.btn-add-balance, #balance-topup-button, .btn-topup, .wallet-topup', title: 'Agregar saldo', text: 'Si necesitás saldo para pagar, podés recargar tu saldo aquí.', align: 'right', interactive: true },
-    // points should only show after payment is completed; waitForPaid will poll the card status
-    { selector: '#user-points, .user-points, .points-badge', title: 'Puntos y beneficios', text: 'Acá podés ver tus puntos y canjear beneficios. Los puntos se procesarán una vez que la reserva esté pagada.', align: 'right', interactive: false, waitForPaid: true, center: true },
-    { selector: '#reservation-featured-list, #reservation-list-active, #reservation-list-history', title: 'Listo', text: 'Eso es todo sobre Mis Reservas. Volvé a empezar el tour cuando quieras desde el onboarding.', align: 'top', interactive: false, center: true }
+    { 
+        selector: '.nav-item[onclick*="puntos"]', 
+        title: 'Puntos AutoPass', 
+        text: 'Al realizar reservas y estacionar, sumás puntos. Hacé click en "Mis Puntos" en el menú para ver tus beneficios.', 
+        align: 'right', 
+        interactive: true,
+        beforeShow: () => {
+            if (window.showSection) {
+                const navItem = document.querySelector('.nav-item[onclick*="reservas"]');
+                window.showSection('reservas', navItem);
+            }
+        }
+    },
+    { 
+        selector: '#section-puntos .points-main-card', 
+        title: 'Tus Puntos', 
+        text: 'Acá podés ver tus puntos AutoPass disponibles. ¡Acumulás 10 puntos por cada $1000 abonados en estadías!', 
+        align: 'bottom', 
+        interactive: false,
+        beforeShow: () => {
+            if (window.showSection) {
+                const navItem = document.querySelector('.nav-item[onclick*="puntos"]');
+                window.showSection('puntos', navItem);
+            }
+        }
+    },
+    { 
+        selector: '#section-puntos #promotions-grid', 
+        title: 'Promociones y Canjes', 
+        text: 'En esta sección tenés el catálogo de beneficios. Podés canjear tus puntos por cupones de descuento o estadías gratuitas.', 
+        align: 'top', 
+        interactive: false,
+        beforeShow: () => {
+            if (window.showSection) {
+                const navItem = document.querySelector('.nav-item[onclick*="puntos"]');
+                window.showSection('puntos', navItem);
+            }
+        }
+    },
+    { 
+        selector: '#section-puntos #pts-history-container', 
+        title: 'Historial de Puntos', 
+        text: 'Revisá los detalles de tus puntos ganados y canjeados en esta lista.', 
+        align: 'top', 
+        interactive: false,
+        beforeShow: () => {
+            if (window.showSection) {
+                const navItem = document.querySelector('.nav-item[onclick*="puntos"]');
+                window.showSection('puntos', navItem);
+            }
+        }
+    },
+    { 
+        selector: '#section-puntos', 
+        title: '¡Felicitaciones!', 
+        text: 'Completaste el recorrido por tu portal de cliente de AutoPass. ¡Ya estás listo para empezar a reservar!', 
+        align: 'top', 
+        interactive: false, 
+        center: true,
+        beforeShow: () => {
+            if (window.showSection) {
+                const navItem = document.querySelector('.nav-item[onclick*="puntos"]');
+                window.showSection('puntos', navItem);
+            }
+        }
+    }
 ];
 
 // active tour steps (mutable)
@@ -34,8 +109,17 @@ let positioningToken = 0;
 let isPositioningActive = false;
 let _savedTourSteps = null;
 let _isQuickAddTour = false;
+let reservationsTourInitialized = false;
+let isTourActive = false;
+let onboardingSessionActive = false;
 
 function createTourElements() {
+    // EVITAR DUPLICADOS EN EL DOM ELIMINANDO EL OVERLAY EXISTENTE SI HAY UNO
+    const existingOverlay = document.getElementById('autopass-tour-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+
     // overlay container using class from profile.css
     tourOverlay = document.createElement('div');
     tourOverlay.id = 'autopass-tour-overlay';
@@ -99,7 +183,7 @@ function createTourElements() {
 
     document.getElementById('tour-prev').addEventListener('click', prevTourStep);
     document.getElementById('tour-next').addEventListener('click', nextTourStep);
-    document.getElementById('tour-end').addEventListener('click', endTour);
+    document.getElementById('tour-end').addEventListener('click', () => endTour(true));
 
     // Listen to resize and scroll to reposition tooltip
     window.addEventListener('resize', handleWindowReposition, { passive: true });
@@ -174,9 +258,10 @@ function repositionActiveStep() {
     if (!target) return;
 
     const rect = target.getBoundingClientRect();
-    updateSvgCutout(rect);
 
+    // SI EL PASO ES CENTRADO, LIMPIAMOS EL CUTOUT Y RETORNAMOS PREVENTIVAMENTE
     if (step.center) {
+        updateSvgCutout(null);
         tourTooltip.style.position = 'fixed';
         tourTooltip.style.left = '50%';
         tourTooltip.style.top = '50%';
@@ -187,6 +272,8 @@ function repositionActiveStep() {
         }
         return;
     }
+
+    updateSvgCutout(rect);
 
     tourTooltip.style.position = 'absolute';
     tourTooltip.style.transform = '';
@@ -278,6 +365,13 @@ function showTourStep(index) {
 
     const step = tourSteps[index];
     if (!step) return;
+
+    // EJECUTAR ACCIONES DE PREPARACION SI ESTAN DEFINIDAS PARA EL PASO
+    if (typeof step.beforeShow === 'function') {
+        try {
+            step.beforeShow();
+        } catch (e) { console.warn('[TOUR] Error en beforeShow del paso:', e); }
+    }
 
     // update tooltip content
     document.getElementById('tour-title').innerText = step.title || '';
@@ -422,10 +516,19 @@ function handleTypeChange() {
     }
 }
 
+// Auto-advance click handler para nav item de puntos
+function handlePuntosNavClick() {
+    const step = tourSteps[currentTourIndex];
+    if (step && step.selector.includes('puntos')) {
+        setTimeout(nextTourStep, 250);
+    }
+}
+
 function startTourAutoAdvance() {
     const vehicleSelect = document.querySelector('#reserva-form-content .res-vehicle');
     const sucursalSelect = document.querySelector('.res-sucursal');
     const typeSelect = document.querySelector('.res-type');
+    const puntosNavItem = document.querySelector('.nav-item[onclick*="puntos"]');
 
     if (vehicleSelect) {
         vehicleSelect.addEventListener('change', handleVehicleChange);
@@ -436,12 +539,16 @@ function startTourAutoAdvance() {
     if (typeSelect) {
         typeSelect.addEventListener('change', handleTypeChange);
     }
+    if (puntosNavItem) {
+        puntosNavItem.addEventListener('click', handlePuntosNavClick);
+    }
 }
 
 function stopTourAutoAdvance() {
     const vehicleSelect = document.querySelector('#reserva-form-content .res-vehicle');
     const sucursalSelect = document.querySelector('.res-sucursal');
     const typeSelect = document.querySelector('.res-type');
+    const puntosNavItem = document.querySelector('.nav-item[onclick*="puntos"]');
 
     if (vehicleSelect) {
         vehicleSelect.removeEventListener('change', handleVehicleChange);
@@ -452,9 +559,17 @@ function stopTourAutoAdvance() {
     if (typeSelect) {
         typeSelect.removeEventListener('change', handleTypeChange);
     }
+    if (puntosNavItem) {
+        puntosNavItem.removeEventListener('click', handlePuntosNavClick);
+    }
 }
 
 export function startReservationTour(startIndex = 0) {
+    // MARCAR QUE EL TOUR ESTA ACTIVO
+    isTourActive = true;
+    onboardingSessionActive = true;
+    console.log('[TOUR] startReservationTour: isTourActive and onboardingSessionActive set to true');
+
     if (!tourOverlay) createTourElements();
     tourOverlay.style.display = 'block';
     
@@ -468,6 +583,18 @@ export function startReservationTour(startIndex = 0) {
 
 export function startReservationTourAtReservations() {
     try {
+        // SI YA FUE INICIALIZADO POR EL EVENTO DIRECTO, EVITAMOS COLISION
+        if (reservationsTourInitialized) {
+            console.log('[TOUR] startReservationTourAtReservations: ya inicializado por evento, ignorando fallback');
+            reservationsTourInitialized = false;
+            return;
+        }
+
+        // SOLO MOSTRAR EL TOUR EN LAS RESERVAS SI EL ONBOARDING ESTA ACTIVO O SI ES LA PRIMERA VEZ (ONBOARDING INICIAL)
+        if (localStorage.getItem('seen_reservation_onboarding') === '1' && !onboardingSessionActive) {
+            return;
+        }
+
         if (!tourOverlay) createTourElements();
         if (_isQuickAddTour && _savedTourSteps) {
             tourSteps = _savedTourSteps;
@@ -499,7 +626,21 @@ function nextTourStep() {
 
 function prevTourStep() { if (currentTourIndex > 0) showTourStep(currentTourIndex - 1); }
 
-function _baseEndTour() {
+function _baseEndTour(isOmitted = false) {
+    // MARCAR QUE EL TOUR YA NO ESTA ACTIVO E IMPRIMIR TRAZA DE DEPURACION
+    isTourActive = false;
+    console.log('[TOUR] _baseEndTour: isTourActive set to false. Stack trace:', new Error().stack);
+
+    // SI EL USUARIO OMITIO EL TOUR O SI TERMINAMOS EL TOUR DE RESERVAS, SE CANCELA LA SESION DE ONBOARDING
+    // SI LLEGO AL FINAL DE MAIN TOUR STEPS O QUICK ADD STEPS, DEJAMOS onboardingSessionActive EN true A LA ESPERA DE LA RESERVA
+    const isAtReservations = tourSteps === reservationsTourSteps;
+    if (isOmitted || isAtReservations) {
+        onboardingSessionActive = false;
+        console.log('[TOUR] _baseEndTour: onboardingSessionActive set to false (omitted or completed reservations)');
+    } else {
+        console.log('[TOUR] _baseEndTour: keeping onboardingSessionActive as true (waiting for reservation created)');
+    }
+
     stopTourAutoAdvance();
     if (tourOverlay) {
         tourOverlay.classList.remove('active');
@@ -531,6 +672,12 @@ export async function startQuickAddTour() {
             console.warn('[TOUR] quick-add container no encontrado');
             return;
         }
+
+        // MARCAR QUE EL TOUR ESTA ACTIVO
+        isTourActive = true;
+        onboardingSessionActive = true;
+        console.log('[TOUR] startQuickAddTour: isTourActive and onboardingSessionActive set to true');
+
         _savedTourSteps = tourSteps;
         tourSteps = quickAddSteps;
         _isQuickAddTour = true;
@@ -550,10 +697,7 @@ export async function startQuickAddTour() {
                 _savedTourSteps = null;
 
                 tourSteps = reservationsTourSteps.slice();
-                console.log('[TOUR] quickAdd -> switching to reservationsTourSteps');
-                setTimeout(() => {
-                    showTourStep(0);
-                }, 600);
+                console.log('[TOUR] quickAdd -> switching to reservationsTourSteps (deferred to _handleReservationCreated)');
             } catch (e) { console.error('[TOUR] onReservationCreated error', e); }
             finally { document.removeEventListener('reservation:created', onReservationCreated); }
         };
@@ -561,9 +705,9 @@ export async function startQuickAddTour() {
     } catch (e) { console.error('[TOUR] startQuickAddTour error', e); }
 }
 
-export function endTour() {
+export function endTour(isOmitted = false) {
     try {
-        _baseEndTour();
+        _baseEndTour(isOmitted);
     } catch (e) { console.error('[TOUR] error in base endTour', e); }
     try {
         if (_isQuickAddTour && _savedTourSteps) {
@@ -578,17 +722,28 @@ window.endReservationTour = endTour;
 
 function _handleReservationCreated(ev) {
     try {
-        if (localStorage.getItem('seen_reservation_onboarding') === '1') return;
+        console.log('[TOUR] _handleReservationCreated: event recibido, onboardingSessionActive =', onboardingSessionActive);
+
+        // SI EL ONBOARDING NO ESTA ACTIVA EN ESTA SESION, NO CONTINUAMOS A MIS RESERVAS
+        if (!onboardingSessionActive) return;
+
         console.log('[TOUR] reservation created event recibido — detalle:', ev && ev.detail ? ev.detail : '(no detail)');
 
-        tourSteps = reservationsTourSteps.slice();
+        // MARCAR QUE EL TOUR DE RESERVAS SE VA A INICIALIZAR DIRECTAMENTE DESDE EL EVENTO
+        reservationsTourInitialized = true;
 
-        if (!tourOverlay) createTourElements();
-        tourOverlay.style.display = 'block';
-        setTimeout(() => {
-            tourOverlay.classList.add('active');
-            startTourAutoAdvance();
-        }, 15);
+        // DESTRUIR COMPLETAMENTE EL TOUR ANTERIOR PARA EVITAR ARTEFACTOS VISUALES
+        stopTourAutoAdvance();
+        positioningToken++;
+        if (tourOverlay) {
+            tourOverlay.remove();
+        }
+        tourOverlay = null;
+        tourTooltip = null;
+        tourArrow = null;
+        currentTourIndex = 0;
+
+        tourSteps = reservationsTourSteps.slice();
 
         const tryShow = (attempt = 0) => {
             try {
@@ -598,7 +753,13 @@ function _handleReservationCreated(ev) {
                 console.log(`[TOUR] intento ${attempt}: idx=${idx}, selector=${anySelector}, found=${!!found}`);
 
                 if (idx !== -1 && found) {
-                    showTourStep(idx);
+                    createTourElements();
+                    tourOverlay.style.display = 'block';
+                    setTimeout(() => {
+                        tourOverlay.classList.add('active');
+                        startTourAutoAdvance();
+                    }, 15);
+                    setTimeout(() => showTourStep(idx), 50);
                     return;
                 }
 
