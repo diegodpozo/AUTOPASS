@@ -193,6 +193,10 @@ export async function refreshReservationFormState() {
                 select.innerHTML = '<option value="" selected disabled hidden>Seleccioná vehículo...</option>' + 
                     userVehicles.map(v => `<option value="${v.patente}">${formatPlate(v.patente)} - ${v.marca_modelo}</option>`).join('');
                 if (currentVal) select.value = currentVal;
+                // Si solo hay un vehículo, auto-seleccionarlo para acelerar el flujo
+                if (userVehicles.length === 1) {
+                    select.value = userVehicles[0].patente;
+                }
             });
             // AUTO-SELECT SI TIENE UN SOLO VEHICULO O UNO MARCADO COMO FAVORITO
             if (userVehicles.length === 1) {
@@ -205,6 +209,21 @@ export async function refreshReservationFormState() {
                     updateReservationPrice();
                 }
             }
+
+            // SI SOLO HAY UN VEHICULO, AUTO-ABRIR FORMULARIO
+            try {
+                if (userVehicles.length === 1) {
+                    const container = document.getElementById('reserva-form-container');
+                    if (container && !container.classList.contains('open') && typeof toggleReservaForm === 'function') {
+                        toggleReservaForm();
+                        setTimeout(() => {
+                            const dateInput = document.querySelector('.res-date-only') || document.querySelector('.res-start');
+                            if (dateInput) dateInput.focus();
+                            if (typeof showToast === 'function') showToast('Seleccionamos tu vehículo para acelerar la reserva');
+                        }, 400);
+                    }
+                }
+            } catch (e) { console.error('[AUTOSELECT] ', e); }
         }
     }
 
@@ -416,6 +435,13 @@ export async function createReservation(e) {
         return showToast('Error interno: Formulario incompleto');
     }
 
+    // Si el usuario no tiene vehículos registrados, guiar al quick-add antes de continuar
+    if (!userVehicles || userVehicles.length === 0) {
+        if (typeof window.showQuickAddVehicle === 'function') window.showQuickAddVehicle();
+        console.groupEnd();
+        return showToast('Agregá tu primer vehículo para poder reservar');
+    }
+
     const patente = patenteEl.value;
     const sucursal = sucursalEl.value;
     const tipo = tipoEl.value;
@@ -578,18 +604,48 @@ export async function createReservation(e) {
     btn.disabled = true;
 
     const payload = { patente, fecha_inicio: inicio, fecha_fin: fin, sucursal_nombre: sucursal, tipo_estadia: tipo };
+    console.log('[RESERVAS] Enviando payload:', payload);
     const result = editingReservaId ? 
         await api.patch(`/user/reservations/${editingReservaId}`, payload) : 
         await api.post('/user/reservations', payload);
+
+    console.log('[RESERVAS] Resultado createReservation:', result);
 
     if (result.ok) {
         showToast(editingReservaId ? '¡Reserva actualizada!' : '¡Reserva creada con éxito!');
         resetReservaForm();
         toggleReservaForm();
-        if (window.showSection) window.showSection('reservas', document.querySelector('.nav-item[onclick*="reservas"]'));
-        else loadReservations();
+        try {
+            if (window.showSection) {
+                // navigate to reservas and wait for reservations to load before dispatch
+                window.showSection('reservas', document.querySelector('.nav-item[onclick*="reservas"]'));
+                try { await loadReservations(); } catch (e) { console.warn('[RESERVAS] loadReservations error after create:', e); }
+            } else {
+                try { await loadReservations(); } catch (e) { console.warn('[RESERVAS] loadReservations error after create (no showSection):', e); }
+            }
+        } catch (e) { console.warn('[RESERVAS] error esperando render de reservas:', e); }
         if (window.loadProfile) window.loadProfile();
-    } else { showToast(result.error || 'Error al procesar reserva'); }
+
+        // Disparar evento para notificar a listeners (p. ej. tour) que se creó una reserva
+        try {
+            console.log('[RESERVAS] Dispatching reservation:created with data:', result.data);
+            document.dispatchEvent(new CustomEvent('reservation:created', { detail: result.data || {} }));
+        } catch (e) { console.warn('[RESERVAS] no se pudo dispatch reservation:created', e); }
+
+        // Intento directo: si existe helper del tour, pedir que inicie el paso de 'Mis Reservas' (fallback)
+        try {
+            if (window.startReservationTourAtReservations && typeof window.startReservationTourAtReservations === 'function') {
+                console.log('[RESERVAS] Llamando startReservationTourAtReservations() como fallback');
+                setTimeout(() => { try { window.startReservationTourAtReservations(); } catch (e) { console.warn('[RESERVAS] startReservationTourAtReservations error', e); } }, 350);
+            }
+        } catch (e) { /* noop */ }
+    } else { 
+        console.log('[RESERVAS] createReservation failed:', result.error || result);
+        showToast(result.error || 'Error al procesar reserva'); 
+    }
+
+    // Always emit a debug event so listeners can inspect final state
+    try { document.dispatchEvent(new CustomEvent('reservation:created:debug', { detail: result || {} })); } catch (e) { /* noop */ }
     
     btn.innerHTML = originalContent;
     btn.disabled = false;

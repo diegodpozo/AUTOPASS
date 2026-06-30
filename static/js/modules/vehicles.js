@@ -11,7 +11,7 @@ export async function loadVehicles() {
     const list = document.getElementById('vehicle-list');
     const statVehicles = document.getElementById('stat-vehicles');
     
-    if (!list) return;
+    if (!list) return [];
 
     // INICIALIZAR AUTO-DETECCION SI NO SE HA HECHO
     initAutoDetection();
@@ -19,10 +19,10 @@ export async function loadVehicles() {
     const res = await api.get('/user/vehicles');
     if (!res.ok) {
         list.innerHTML = '<p style="color: var(--danger);">Error al cargar flota.</p>';
-        return;
+        return [];
     }
     
-    const vehicles = res.data;
+    const vehicles = res.data || [];
     if (statVehicles) statVehicles.innerText = formatNum(vehicles.length);
     
     if (vehicles.length === 0) {
@@ -36,7 +36,7 @@ export async function loadVehicles() {
                 <h4 style="color: #fff; font-family: 'Montserrat'; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px;">¡UPS! NO TENÉS VEHÍCULOS</h4>
                 <p style="color: #666; font-size: 0.95rem; max-width: 300px; line-height: 1.5;">Agregá tu primer vehículo para empezar a operar en la red AutoPass.</p>
             </div>`;
-        return;
+        return vehicles;
     }
 
     list.innerHTML = vehicles.map(v => `
@@ -78,6 +78,8 @@ export async function loadVehicles() {
             selects.forEach(select => select.value = fav.patente);
         }
     }
+
+    return vehicles;
 }
 
 export async function toggleVehicleForm() {
@@ -189,6 +191,20 @@ export async function addVehicle(e, isQuickAdd = false) {
             if (typeof window.refreshReservationFormState === 'function') {
                 await window.refreshReservationFormState();
             }
+            // Abrir y pre-seleccionar el vehículo en el formulario de reserva
+            try {
+                if (typeof window.toggleReservaForm === 'function') {
+                    // Asegurar que el form está abierto
+                    const container = document.getElementById('reserva-form-container');
+                    if (container && !container.classList.contains('open')) await window.toggleReservaForm();
+                }
+                setTimeout(() => {
+                    const sel = document.querySelector('.res-vehicle');
+                    if (sel) sel.value = patente;
+                    const dateInput = document.querySelector('.res-date-only') || document.querySelector('.res-start');
+                    if (dateInput) dateInput.focus();
+                }, 300);
+            } catch (e) { console.error('[QUICKADD FLOW]', e); }
         } else {
             // CERRAR EL FORMULARIO SI ESTABA ABIERTO (EN LA PESTANA DE MIS VEHICULOS)
             const container = document.getElementById('vehicle-form-container');
@@ -198,6 +214,11 @@ export async function addVehicle(e, isQuickAdd = false) {
         }
 
         await loadVehicles();
+
+        // Disparar evento global para listeners (por ejemplo: flujo de onboarding/tour)
+        try {
+            document.dispatchEvent(new CustomEvent('vehicle:added', { detail: { patente } }));
+        } catch (e) { console.warn('[VEHICLES] no se pudo dispatch vehicle:added', e); }
     }
  else {
         showToast(res.error || 'Error al registrar vehículo');

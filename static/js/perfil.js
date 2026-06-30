@@ -1,11 +1,13 @@
-import * as prof from './modules/profile.js';
-import * as res from './modules/reservas.js';
-import * as v from './modules/vehicles.js';
-import * as ui from './modules/ui.js';
-import { initPasswordValidation } from './modules/auth.js';
-import { showToast } from './modules/utils.js';
-import { initMap } from './modules/landing.js';
-import { loadNotifications, updateNotifBadge, startNotifPolling } from './modules/notifications.js';
+import * as prof from './modules/profile.js?v=9.3.0';
+import * as res from './modules/reservas.js?v=9.3.0';
+import * as v from './modules/vehicles.js?v=9.3.0';
+import * as ui from './modules/ui.js?v=9.3.0';
+import { initPasswordValidation } from './modules/auth.js?v=9.3.0';
+import { showToast } from './modules/utils.js?v=9.3.0';
+import { initMap } from './modules/landing.js?v=9.3.0';
+import { loadNotifications, updateNotifBadge, startNotifPolling } from './modules/notifications.js?v=9.3.0';
+import * as onboarding from './modules/onboarding_helpers.js?v=9.3.0';
+import { startReservationTour } from './modules/tour.js?v=9.3.0';
 
 /**
  * PUENTE: PERFIL.JS
@@ -163,7 +165,26 @@ window.hideQuickAddVehicle = () => {
     if (form) form.style.display = 'none';
 };
 
+// Exponer helpers del onboarding para que el HTML los invoque
+window.openReservationOnboarding = onboarding.openReservationOnboarding;
+window.closeReservationOnboarding = onboarding.closeReservationOnboarding;
+window.skipReservationOnboarding = onboarding.skipReservationOnboarding;
+window.startReservationOnboarding = onboarding.startReservationOnboarding;
+
+// Global error hooks para detectar problemas de runtime y mostrar alerta en UI
+window.addEventListener('error', (e) => {
+    try {
+        console.error('[GLOBAL ERROR]', e.message, e.error);
+        alert('Error en la página: ' + (e.message || 'Ver consola para detalles'));
+    } catch (_) {}
+});
+window.addEventListener('unhandledrejection', (e) => {
+    try { console.error('[UNHANDLED REJECTION]', e.reason); alert('Error no manejado: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); } catch(_) {}
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
+    try {
+
     if (document.getElementById('balance-val') && localStorage.getItem('token')) {
         
         // 1. INICIALIZAR MAPA (PRIMERO PARA ASEGURAR VISUALIZACION)
@@ -177,9 +198,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 2. CARGAR DATOS
         await prof.loadProfile();
-        await v.loadVehicles();
+        const vehicles = await v.loadVehicles();
         await res.loadReservations();
         res.initReservationForm();
+        
+        // evitar bloqueo por scripts terceros: pequeño log
+        console.log('[PROFILE] Datos cargados: vehicles=', (vehicles && vehicles.length) || 0);
+        
+        // Si el usuario no tiene vehículos y es la primera vez que entra, mostrar modal onboarding amigable
+        try {
+            if (vehicles && vehicles.length === 0) {
+                            // Mostrar modal siempre cuando el usuario no tenga vehículos (por petición)
+                            try {
+                                onboarding.openReservationOnboarding();
+                            }
+                            catch (e) { console.error('[ONBOARDING OPEN]', e); }
+
+                            // Dejar que el flujo de onboarding maneje cuándo iniciar el tour (post-add)
+                            console.log('[PROFILE] Tour start deferred to onboarding flow.');
+                        }
+        } catch (e) { console.error('[ONBOARDING] ', e); }
         
         // REFRESCAR ESTADO DE LOS FORMULARIOS DE RESERVA/VEHICULOS (AHORA SIEMPRE VISIBLES)
         if (typeof res.refreshReservationFormState === 'function') {
@@ -236,4 +274,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             'req-len', 'req-up', 'req-spec', 'req-match'
         );
     }
+    } catch (e) { console.error('[DOMREADY ERROR]', e); try { alert('Error al inicializar perfil: ' + (e && e.message ? e.message : e)); } catch(_){} }
 });

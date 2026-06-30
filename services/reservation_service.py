@@ -275,8 +275,11 @@ class ReservationService:
         db.commit()
 
         # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS (DIA/SEMANA/QUINCENA/MES)
+        # SOLO SI LA RESERVA YA COMENZO; SI ES FUTURA, LO HARA EL WORKER AL INICIAR
         if res.tipo_estadia != "hora" and res.sucursal_nombre:
-            _reservar_plaza_en_aforo(db, res)
+            now_str = TimeService.now_str()
+            if res.fecha_inicio <= now_str:
+                _reservar_plaza_en_aforo(db, res)
 
         # ENVIAR MAIL DE CONFIRMACION
         res_info = {
