@@ -1,7 +1,17 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **JUNIO 30, 2026 - UI/UX & FAB REFINEMENT (V9.3.0)**:
+    *   **FAB en Perfil**: Nueva tarjeta flotante "Nueva Reserva" (FAB) con animación expansiva al hover, reemplazando los botones redundantes en cada tab del perfil.
+    *   **FAB oculto en Inicio**: El FAB se oculta automáticamente en la tab "inicio" para no interferir con la vista principal del usuario.
+    *   **Fix Animación FAB**: Corregido bug donde el icono desaparecía al replegarse; se reemplazó `width` fija por `min-width` y el label usa `max-width` animado.
+    *   **Cards de Monitoreo Limpias**: Eliminado texto repetido "Tot. Disp." de las cards de aforo en `live.html` y `dashboard-stats.js`.
+    *   **Barras de Progreso Dinámicas**: Colores variables según ocupación: verde (>50%), amarillo (26-50%), naranja (11-25%), rojo (≤10%).
+    *   **Worker DB Robustez**: Wrapped DB sessions en `try/finally` para evitar agotamiento del pool de conexiones (`QueuePool limit`).
+    *   **Pool de Conexiones**: Aumentado pool size a 10 con overflow 20 y timeout 60s para motores no-SQLite.
+    *   **Títulos de Cards Actualizados**: "HACÉ TU RESERVA MANUAL" → "HACÉ TU RESERVA", "HACÉ TU RESERVA DESDE EL MAPA" → "SELECCIONÁ LA SUCURSAL DESDE EL MAPA".
+
 - **JUNIO 23, 2026 - RESERVAS & AFORO INTELIGENTE (V9.2.0)**:
-    *   **Aforo por Reserva No Horaria**: Las reservas de Día/Semana/Quincena/Mes descuentan la plaza del aforo al momento del pago. La plaza se libera solo al vencer el período o al cancelar, permitiendo al cliente entrar y salir libremente sin perder su lugar.
+    *   **Aforo por Reserva No Horaria**: Las reservas de Día/Semana/Quincena/Mes descuentan la plaza del aforo al iniciar el período (vía worker `_process_started_reservations`). La plaza se libera solo al vencer el período o al cancelar, permitiendo al cliente entrar y salir libremente sin perder su lugar.
     *   **Restricción de Anticipación Selectiva**: Solo las reservas por hora requieren anticipación mínima (1 hora configurable). Las de período largo no tienen restricción.
     *   **Liberación Automática al Vencer**: El WorkerService libera la plaza automáticamente cuando la reserva expira, incluso si el vehículo nunca ingresó.
     *   **Salida Física sin Liberación**: La salida por ALPR/QR ya no libera la plaza de reservas no horarias — la gestión de aforo queda a cargo del ciclo de vida de la reserva.

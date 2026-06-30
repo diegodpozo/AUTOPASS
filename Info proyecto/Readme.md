@@ -2,8 +2,11 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.2.0)
-- **Aforo Inteligente con Reservas**: Las reservas de Día/Semana/Quincena/Mes descuentan la plaza del aforo al iniciar el período, no al pagar. La plaza se libera solo al vencer o cancelar. El cliente puede entrar y salir libremente sin perder su lugar.
+## Últimas Actualizaciones (v9.3.0)
+- **FAB "Nueva Reserva" en Perfil**: Botón flotante con animación expansiva, oculto en la tab "inicio". Reemplaza botones redundantes en cada tab del perfil.
+- **Monitoreo Limpio**: Cards de aforo sin texto repetido ("Tot. Disp." eliminado). Barras de progreso con colores dinámicos (verde/amarillo/naranja/rojo).
+- **Worker Robusto**: DB sessions con `try/finally` para evitar `QueuePool limit` errors. Pool size aumentado a 10 con overflow 20.
+- **Aforo Inteligente con Reservas**: Las reservas de Día/Semana/Quincena/Mes descuentan la plaza del aforo al iniciar el período (vía worker), no al pagar. La plaza se libera solo al vencer o cancelar.
 - **Restricción de Anticipación Selectiva**: Solo las reservas por hora requieren anticipación (1 hora configurable vía `RESERVA_HORA_MIN_SEGUNDOS`). Las de período largo no tienen restricción.
 - **Gestión Vertical (Multi-Piso)**: Soporte para múltiples niveles por sucursal con control de aforo independiente.
 - **Soporte Trimodal (Autos/Motos/Camionetas)**: Identificación y facturación diferenciada para motocicletas y camionetas con tarifas reducidas.

@@ -32,13 +32,19 @@ class WorkerService:
         """HILO DE FONDO QUE LIMPIA Y FINALIZA RESERVAS PERIODICAMENTE."""
         print("[SYSTEM] Hilo de mantenimiento de reservas iniciado.")
         while True:
+            db = None
             try:
                 db = SessionLocal()
                 ReservationService.cleanup_overdue_reservations(db)
                 ReservationService.auto_finalize_all_reservations(db)
-                db.close()
             except Exception as e:
                 print(f"[ERROR] En el trabajador de reservas: {e}")
+            finally:
+                if db:
+                    try:
+                        db.close()
+                    except Exception:
+                        pass
             time.sleep(settings.MAINTENANCE_INTERVAL_SECONDS)
 
     @staticmethod
@@ -46,14 +52,20 @@ class WorkerService:
         """HILO DE FONDO QUE MANEJA RECORDATORIOS Y CANCELACION AUTOMATICA."""
         print("[SYSTEM] Hilo de notificaciones de reservas iniciado.")
         while True:
+            db = None
             try:
                 db = SessionLocal()
                 WorkerService._process_reminders(db)
                 WorkerService._process_started_reservations(db)
                 WorkerService._process_auto_cancellations(db)
-                db.close()
             except Exception as e:
                 print(f"[ERROR] En el trabajador de notificaciones: {e}")
+            finally:
+                if db:
+                    try:
+                        db.close()
+                    except Exception:
+                        pass
             time.sleep(NOTIFICATION_CHECK_INTERVAL)
 
     @staticmethod
