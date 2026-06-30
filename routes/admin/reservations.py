@@ -5,7 +5,7 @@ from typing import List, Optional
 import models, schemas
 from core.database import get_db
 from core.security import get_operational_user
-from services.reservation_service import ReservationService
+from services.reservation_service import ReservationService, verificar_disponibilidad
 
 router = APIRouter()
 
@@ -57,6 +57,11 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
         vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente, models.Vehicle.user_id == data.user_id).first()
         if not vehicle:
             raise HTTPException(status_code=400, detail="La patente no está vinculada a ese usuario")
+
+    # VERIFICAR DISPONIBILIDAD
+    disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
+    if not disp["disponible"]:
+        raise HTTPException(status_code=400, detail=disp["mensaje"])
 
     try:
         new_res = ReservationService.create_reservation(db, data)
@@ -117,6 +122,14 @@ def update_reservation_admin(res_id: int, data: schemas.ReservationUpdate, db: S
     
     if staff.rol != "admin" and reserva.sucursal_nombre != staff.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+
+    # VERIFICAR DISPONIBILIDAD (EXCLUYENDO LA RESERVA ACTUAL)
+    fec_ini = data.fecha_inicio if data.fecha_inicio else reserva.fecha_inicio
+    fec_fin = data.fecha_fin if data.fecha_fin else reserva.fecha_fin
+    suc_efect = data.sucursal_nombre if data.sucursal_nombre else reserva.sucursal_nombre
+    disp = verificar_disponibilidad(db, suc_efect, fec_ini, fec_fin, exclude_id=res_id)
+    if not disp["disponible"]:
+        raise HTTPException(status_code=400, detail=disp["mensaje"])
 
     updated = ReservationService.update_reservation(db, res_id, data)
     if updated:

@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm, formatDate, formatPlate } from './utils.js';
+import { showToast, showConfirm, formatDate, formatPlate, formatNum } from './utils.js';
 
 /**
  * PANEL ADMIN MODULO
@@ -131,10 +131,10 @@ function updateUserKPIs() {
         const elStaff = document.getElementById('stat-staff-users');
         const elCustomer = document.getElementById('stat-customer-users');
 
-        if (elTotal) elTotal.innerText = total;
-        if (elAdmin) elAdmin.innerText = admins;
-        if (elStaff) elStaff.innerText = staff;
-        if (elCustomer) elCustomer.innerText = customers;
+        if (elTotal) elTotal.innerText = formatNum(total);
+        if (elAdmin) elAdmin.innerText = formatNum(admins);
+        if (elStaff) elStaff.innerText = formatNum(staff);
+        if (elCustomer) elCustomer.innerText = formatNum(customers);
     } catch (err) {
         console.warn('Error actualizando KPIs de usuarios:', err);
     }
@@ -154,7 +154,7 @@ export function renderUserTable(filteredData = null) {
 
         tbody.innerHTML = paged.map(u => {
             const isStaffOrAdmin = u.rol === 'admin' || u.rol === 'local_admin' || u.rol === 'staff';
-            const puntosDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<div class="points-badge-sm mx-auto" style="display:inline-flex;"><i class="fas fa-star"></i> ${u.puntos_acumulados || 0}</div>`;
+            const puntosDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<div class="points-badge-sm mx-auto" style="display:inline-flex;"><i class="fas fa-star"></i> ${formatNum(u.puntos_acumulados || 0)}</div>`;
             const saldoDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<span class="text-success">$${(u.saldo || 0).toLocaleString()}</span>`;
 
             // PERSONALIZACION DE ETIQUETAS DE ROL
@@ -993,10 +993,10 @@ export async function loadBranches() {
                         <div class="flex-col items-center">
                             <div class="flex-row gap-5 items-center">
                                 <span class="text-xs ${b.ocupacion_autos_total >= b.capacidad_autos_total ? 'text-danger' : 'text-success'}">
-                                    <i class="fas fa-car"></i> ${b.ocupacion_autos_total}/${b.capacidad_autos_total}
+                                    <i class="fas fa-car"></i> ${formatNum(b.ocupacion_autos_total)}/${formatNum(b.capacidad_autos_total)}
                                 </span>
                                 <span class="text-xs ${b.ocupacion_motos_total >= b.capacidad_motos_total ? 'text-danger' : 'text-success'}">
-                                    <i class="fas fa-motorcycle"></i> ${b.ocupacion_motos_total}/${b.capacidad_motos_total}
+                                    <i class="fas fa-motorcycle"></i> ${formatNum(b.ocupacion_motos_total)}/${formatNum(b.capacidad_motos_total)}
                                 </span>
                             </div>
                             <div class="progress-bar-mini" style="width: 80px; height: 3px; background: rgba(255,255,255,0.05); margin-top: 5px; border-radius: 2px; overflow: hidden;">
@@ -1113,12 +1113,12 @@ export function showBranchFloors(id) {
                 <td><span class="text-white">${f.nombre}</span></td>
                 <td class="text-center">
                     <span class="text-xs ${f.ocupacion_actual >= f.capacidad_total ? 'text-danger' : ''}">
-                        ${f.ocupacion_actual} / ${f.capacidad_total}
+                        ${formatNum(f.ocupacion_actual)} / ${formatNum(f.capacidad_total)}
                     </span>
                 </td>
                 <td class="text-center">
                     <span class="text-xs ${f.ocupacion_motos >= f.capacidad_motos ? 'text-danger' : ''}">
-                        ${f.ocupacion_motos} / ${f.capacidad_motos}
+                        ${formatNum(f.ocupacion_motos)} / ${formatNum(f.capacidad_motos)}
                     </span>
                 </td>
             </tr>

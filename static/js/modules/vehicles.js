@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm, formatPlate, validatePlate, detectVehicleType } from './utils.js';
+import { showToast, showConfirm, formatPlate, validatePlate, detectVehicleType, formatNum } from './utils.js';
 import { toggleReservaForm } from './reservas.js'; 
 
 /**
@@ -23,7 +23,7 @@ export async function loadVehicles() {
     }
     
     const vehicles = res.data;
-    if (statVehicles) statVehicles.innerText = vehicles.length;
+    if (statVehicles) statVehicles.innerText = formatNum(vehicles.length);
     
     if (vehicles.length === 0) {
         list.innerHTML = `

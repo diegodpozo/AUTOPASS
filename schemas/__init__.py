@@ -11,3 +11,6 @@ from .reservation import (
     ReservationUpdate, UserReservationResponse
 )
 from .auth import Token
+from .notification import (
+    NotificationResponse, NotificationListResponse, UnreadCountResponse
+)

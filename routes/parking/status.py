@@ -80,12 +80,16 @@ class OccupancyManager:
                 occ_total = sum(f.ocupacion_actual for f in b.floors)
                 cap_motos = sum(f.capacidad_motos for f in b.floors)
                 occ_motos = sum(f.ocupacion_motos for f in b.floors)
+                cap_camionetas = sum(f.capacidad_camionetas for f in b.floors)
+                occ_camionetas = sum(f.ocupacion_camionetas for f in b.floors)
             else:
                 a = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == b.nombre).first()
                 cap_total = a.capacidad_total if a else 20
                 occ_total = a.ocupacion_actual if a else 0
                 cap_motos = a.capacidad_motos if a else 10
                 occ_motos = a.ocupacion_motos if a else 0
+                cap_camionetas = getattr(a, 'capacidad_camionetas', 5) if a else 5
+                occ_camionetas = getattr(a, 'ocupacion_camionetas', 0) if a else 0
             res.append({"id": b.id, "nombre": b.nombre, "ocupacion": occ_total, "capacidad": cap_total})
         return {"type": "GLOBAL_UPDATE", "branches": res}
 
@@ -104,6 +108,8 @@ class OccupancyManager:
             occ_total = sum(f.ocupacion_actual for f in branch.floors)
             cap_motos = sum(f.capacidad_motos for f in branch.floors)
             occ_motos = sum(f.ocupacion_motos for f in branch.floors)
+            cap_camionetas = sum(f.capacidad_camionetas for f in branch.floors)
+            occ_camionetas = sum(f.ocupacion_camionetas for f in branch.floors)
         else:
             #FALLBACK UN PARKINGAFORO SI NO HAY SUCURSAL O PISOS
             # PERO PARKINGAFORO.SUCURSAL NO ESTA NORMALIZADA, ASI QUE BUSCAMOS TODAS
@@ -115,12 +121,14 @@ class OccupancyManager:
                     break
             
             if not a:
-                return {"type": "BRANCH_UPDATE", "data": {"capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20}}
+                return {"type": "BRANCH_UPDATE", "data": {"capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20, "capacidad_motos": 10, "ocupacion_motos": 0, "disponibilidad_motos": 10, "capacidad_camionetas": 5, "ocupacion_camionetas": 0, "disponibilidad_camionetas": 5}}
             
             cap_total = a.capacidad_total
             occ_total = a.ocupacion_actual
             cap_motos = a.capacidad_motos
             occ_motos = a.ocupacion_motos
+            cap_camionetas = getattr(a, 'capacidad_camionetas', 5)
+            occ_camionetas = getattr(a, 'ocupacion_camionetas', 0)
 
         return {
             "type": "BRANCH_UPDATE",
@@ -129,8 +137,11 @@ class OccupancyManager:
                 "ocupacion_actual": occ_total, 
                 "capacidad_motos": cap_motos,
                 "ocupacion_motos": occ_motos,
+                "capacidad_camionetas": cap_camionetas,
+                "ocupacion_camionetas": occ_camionetas,
                 "disponibilidad": cap_total - occ_total,
-                "disponibilidad_motos": cap_motos - occ_motos
+                "disponibilidad_motos": cap_motos - occ_motos,
+                "disponibilidad_camionetas": cap_camionetas - occ_camionetas
             }
         }
 
@@ -184,6 +195,8 @@ def list_public_branches(db: Session = Depends(get_db)):
             occ_total = sum(f.ocupacion_actual for f in b.floors)
             cap_motos = sum(f.capacidad_motos for f in b.floors)
             occ_motos = sum(f.ocupacion_motos for f in b.floors)
+            cap_camionetas = sum(f.capacidad_camionetas for f in b.floors)
+            occ_camionetas = sum(f.ocupacion_camionetas for f in b.floors)
             floors_data = [schemas.FloorResponse.from_orm(f) for f in b.floors]
         else:
             aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == b.nombre).first()
@@ -191,6 +204,8 @@ def list_public_branches(db: Session = Depends(get_db)):
             occ_total = aforo.ocupacion_actual if aforo else 0
             cap_motos = aforo.capacidad_motos if aforo else 10
             occ_motos = aforo.ocupacion_motos if aforo else 0
+            cap_camionetas = getattr(aforo, 'capacidad_camionetas', 5) if aforo else 5
+            occ_camionetas = getattr(aforo, 'ocupacion_camionetas', 0) if aforo else 0
             floors_data = []
 
         res.append({
@@ -208,6 +223,8 @@ def list_public_branches(db: Session = Depends(get_db)):
             "capacidad_total": cap_total,
             "ocupacion_motos": occ_motos,
             "capacidad_motos": cap_motos,
+            "ocupacion_camionetas": occ_camionetas,
+            "capacidad_camionetas": cap_camionetas,
             "floors": floors_data
         })
     return res
@@ -225,25 +242,33 @@ def get_parking_status(db: Session = Depends(get_db), user: models.User = Depend
         occ_total = sum(f.ocupacion_actual for f in branch.floors)
         cap_motos = sum(f.capacidad_motos for f in branch.floors)
         occ_motos = sum(f.ocupacion_motos for f in branch.floors)
+        cap_camionetas = sum(f.capacidad_camionetas for f in branch.floors)
+        occ_camionetas = sum(f.ocupacion_camionetas for f in branch.floors)
     else:
         a = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
         if not a: 
             return {
                 "capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20,
-                "capacidad_motos": 10, "ocupacion_motos": 0, "disponibilidad_motos": 10
+                "capacidad_motos": 10, "ocupacion_motos": 0, "disponibilidad_motos": 10,
+                "capacidad_camionetas": 5, "ocupacion_camionetas": 0, "disponibilidad_camionetas": 5
             }
         cap_total = a.capacidad_total
         occ_total = a.ocupacion_actual
         cap_motos = a.capacidad_motos
         occ_motos = a.ocupacion_motos
+        cap_camionetas = getattr(a, 'capacidad_camionetas', 5)
+        occ_camionetas = getattr(a, 'ocupacion_camionetas', 0)
 
     return {
         "capacidad_total": cap_total, 
         "ocupacion_actual": occ_total, 
         "capacidad_motos": cap_motos,
         "ocupacion_motos": occ_motos,
+        "capacidad_camionetas": cap_camionetas,
+        "ocupacion_camionetas": occ_camionetas,
         "disponibilidad": cap_total - occ_total,
-        "disponibilidad_motos": cap_motos - occ_motos
+        "disponibilidad_motos": cap_motos - occ_motos,
+        "disponibilidad_camionetas": cap_camionetas - occ_camionetas
     }
 
 @router.get("/parking/current-occupancy")

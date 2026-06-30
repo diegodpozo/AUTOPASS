@@ -21,6 +21,7 @@ class Reservation(Base):
     sucursal_info = Column(String, nullable=True)
     tipo_estadia = Column(String, default="hora")
     cliente_nombre = Column(String, nullable=True)
+    recordatorio_confirmado = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="reservations")
     access_logs = relationship("AccessLog", back_populates="reservation")

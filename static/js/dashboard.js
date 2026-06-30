@@ -5,6 +5,7 @@ import * as promos from './modules/dashboard-promotions.js';
 import * as baseUi from './modules/ui.js';
 import api from './modules/api.js';
 import * as utils from './modules/utils.js';
+const { formatNum } = utils;
 
 /**
  * PUENTE: DASHBOARD.JS
@@ -196,8 +197,8 @@ window.loadAdminReservations = async () => {
         
         const statTotal = document.getElementById('admin-res-stat-total');
         const statPending = document.getElementById('admin-res-stat-pending');
-        if (statTotal) statTotal.innerText = res.data.length;
-        if (statPending) statPending.innerText = res.data.filter(r => r.estado_reserva === 'Pendiente').length;
+        if (statTotal) statTotal.innerText = formatNum(res.data.length);
+        if (statPending) statPending.innerText = formatNum(res.data.filter(r => r.estado_reserva === 'Pendiente').length);
     }
 };
 
@@ -326,8 +327,8 @@ const updateEditPeriodEnd = (startDateStr, days, targetSelector) => {
     const end = new Date(start.getTime() + (days - 1) * 24 * 60 * 60 * 1000);
     const day = end.getDate().toString().padStart(2, '0');
     const month = (end.getMonth() + 1).toString().padStart(2, '0');
-    const year = end.getFullYear();
-    endInput.value = `${day}/${month}/${year} 23:59`;
+    const year = end.getFullYear().toString().slice(-2);
+    endInput.value = `${day}-${month}-${year} 23:59`;
     window.updateEditReservationPrice();
 };
 
@@ -337,11 +338,16 @@ window.openEditReservationModal = (resId) => {
 
     // INICIALIZAR FLATPICKRS SI ES NECESARIO
     if (window.flatpickr && !window.editPickersInitialized) {
+        const now = new Date();
+        const maxDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
         const common = { 
             disableMobile: "true", 
             altInput: true,
-            altFormat: "d-m-Y",
-            dateFormat: "Y-m-d", 
+            altFormat: "d-m-y",
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            maxDate: maxDate,
+            defaultDate: now,
             onChange: () => window.updateEditReservationPrice() 
         };
         flatpickr("#edit-res-date-only", common);
@@ -349,9 +355,8 @@ window.openEditReservationModal = (resId) => {
         flatpickr("#edit-res-time-only", { 
             enableTime: true, 
             noCalendar: true, 
-            dateFormat: "H:i", 
-            defaultHour: 12, 
-            defaultMinute: 0,
+            dateFormat: "H:i",
+            defaultDate: now,
             disableMobile: "true",
             onChange: () => window.updateEditReservationPrice() 
         });
@@ -359,12 +364,37 @@ window.openEditReservationModal = (resId) => {
         flatpickr("#edit-res-fortnight-start", { ...common, onChange: (sd, ds) => updateEditPeriodEnd(ds, 15, '#edit-res-fortnight-end') });
         flatpickr("#edit-res-month-start", { ...common, onChange: (sd, ds) => updateEditPeriodEnd(ds, 30, '#edit-res-month-end') });
         
+        // CALCULAR FECHAS DE FIN PARA PERIODOS CON LA FECHA POR DEFECTO
+        const todayYmd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        updateEditPeriodEnd(todayYmd, 7, '#edit-res-week-end');
+        updateEditPeriodEnd(todayYmd, 15, '#edit-res-fortnight-end');
+        updateEditPeriodEnd(todayYmd, 30, '#edit-res-month-end');
+        
         document.getElementById('edit-res-hours-qty')?.addEventListener('input', () => window.updateEditReservationPrice());
+        
+        // FLECHAS CUSTOM PARA CANTIDAD DE HORAS (ADMIN)
+        const editQtyWrapper = document.querySelector('#edit-hourly-fields .num-input-wrapper');
+        if (editQtyWrapper) {
+            const inp = editQtyWrapper.querySelector('#edit-res-hours-qty');
+            const up = editQtyWrapper.querySelector('.num-btn.up');
+            const down = editQtyWrapper.querySelector('.num-btn.down');
+            if (inp && up) up.addEventListener('click', () => {
+                const max = parseInt(inp.max) || 24;
+                const val = parseInt(inp.value) || 0;
+                if (val < max) { inp.value = val + 1; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+            });
+            if (inp && down) down.addEventListener('click', () => {
+                const min = parseInt(inp.min) || 1;
+                const val = parseInt(inp.value) || 0;
+                if (val > min) { inp.value = val - 1; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+            });
+        }
         
         window.editPickersInitialized = true;
     }
 
     document.getElementById('edit-res-id').value = r.id;
+    document.getElementById('edit-res-sucursal').value = r.sucursal_nombre || '';
     document.getElementById('edit-res-title').innerText = `EDITAR RESERVA #${r.id}`;
     document.getElementById('edit-res-patente').value = r.patente;
     document.getElementById('edit-res-tipo').value = r.tipo_estadia;
@@ -461,6 +491,23 @@ window.handleAdminEditReservation = async (event) => {
         estado_reserva: document.getElementById('edit-res-reserva').value
     };
 
+    // VERIFICAR DISPONIBILIDAD
+    const sucursal = document.getElementById('edit-res-sucursal')?.value;
+    if (sucursal) {
+        const av = await api.get('/user/reservations/check-availability', {
+            params: {
+                sucursal_nombre: sucursal,
+                fecha_inicio: inicio,
+                fecha_fin: fin,
+                exclude_id: parseInt(resId) || undefined
+            }
+        });
+        if (av.ok && av.data && !av.data.disponible) {
+            btn.disabled = false;
+            return utils.showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.');
+        }
+    }
+
     btn.disabled = true;
     const res = await api.patch(`/admin/reservations/${resId}`, payload);
     if (res.ok) {
@@ -517,7 +564,8 @@ window.showLogDetail = async (logId) => {
 
     document.getElementById('audit-plate').innerText = log.patente_detectada;
     document.getElementById('audit-plate-overlay').innerText = log.patente_detectada;
-    document.getElementById('audit-time').innerText = new Date(log.fecha_hora).toLocaleString('es-AR');
+    const d = new Date(log.fecha_hora);
+    document.getElementById('audit-time').innerText = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     document.getElementById('audit-type').innerText = log.tipo_evento;
     document.getElementById('audit-payment').innerText = log.pago_confirmado ? 'PAGADO' : 'PENDIENTE';
     document.getElementById('audit-res-id').innerText = log.reserva_id ? `#${log.reserva_id}` : 'SIN RESERVA';
@@ -575,7 +623,7 @@ window.loadFinanceData = async (resetPage = true) => {
 
         if (elTotal) elTotal.innerText = `$${data.total_recaudado.toLocaleString()}`;
         if (elRefund) elRefund.innerText = `$${data.total_reembolsado.toLocaleString()}`;
-        if (elCount) elCount.innerText = data.cantidad_pagos;
+        if (elCount) elCount.innerText = formatNum(data.cantidad_pagos);
         if (elAvg) elAvg.innerText = `$${data.ticket_promedio.toLocaleString()}`;
 
         const elProy = document.getElementById('fin-proyectado');
@@ -591,11 +639,11 @@ window.loadFinanceData = async (resetPage = true) => {
         const d = data.desglose;
         if (d) {
             document.getElementById('fin-stay-monto').innerText = `$${(d.estadias?.monto || 0).toLocaleString()}`;
-            document.getElementById('fin-stay-count').innerText = d.estadias?.cantidad || 0;
+            document.getElementById('fin-stay-count').innerText = formatNum(d.estadias?.cantidad || 0);
             document.getElementById('fin-stay-avg').innerText = `$${(d.estadias?.promedio || 0).toLocaleString()}`;
 
             document.getElementById('fin-res-monto').innerText = `$${(d.reservas?.monto || 0).toLocaleString()}`;
-            document.getElementById('fin-res-count').innerText = d.reservas?.cantidad || 0;
+            document.getElementById('fin-res-count').innerText = formatNum(d.reservas?.cantidad || 0);
             document.getElementById('fin-res-avg').innerText = `$${(d.reservas?.promedio || 0).toLocaleString()}`;
         }
     }

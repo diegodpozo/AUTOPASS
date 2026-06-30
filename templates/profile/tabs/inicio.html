@@ -8,6 +8,10 @@
     <div class="portal-home-grid">
         <!-- LADO IZQUIERDO: ACCIONES RÁPIDAS Y RESERVA -->
         <div class="grid-col booking-side">
+            <div class="section-title-premium" style="text-align: center; margin-bottom: 25px; width: 100%;">
+                <h3 style="font-family: 'Montserrat'; font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; color: #fff; margin-bottom: 5px;"><i class="fas fa-pen" style="color: var(--dorado); margin-right: 10px;"></i>HACÉ TU RESERVA MANUAL</h3>
+                <div style="width: 60px; height: 2px; background: var(--dorado); margin: 0 auto; opacity: 0.5;"></div>
+            </div>
             <div id="reserva-form-container" class="open" style="display: block; opacity: 1; max-width: 675px; margin: 0 auto;">
                 <!-- (Contenido del formulario de reserva ...) -->
                 <div class="modern-reservation-card">
@@ -86,7 +90,7 @@
                                     <label style="text-align: center; width: 100%; display: block; font-size: 0.9rem;">Vehículo</label>
                                     <div class="select-wrapper-premium" style="width: 100%;">
                                         <i class="fas fa-car" style="left: 15px;"></i>
-                                        <select class="res-vehicle" required style="padding: 12px 15px 12px 42px !important; font-size: 0.9rem; text-align-last: center;">
+                                        <select class="res-vehicle" required style="font-size: 0.9rem; text-align-last: center;">
                                             <option value="">Cargando flota...</option>
                                         </select>
                                     </div>
@@ -98,7 +102,7 @@
                                         <label style="text-align: center; width: 100%; display: block;">Punto AutoPass</label>
                                         <div class="select-wrapper-premium" style="width: 100%;">
                                             <i class="fas fa-location-dot" style="left: 15px;"></i>
-                                            <select class="res-sucursal" required style="padding: 12px 15px 12px 42px !important; font-size: 0.9rem; text-align-last: center;">
+                                            <select class="res-sucursal" required style="font-size: 0.9rem; text-align-last: center;">
                                                 <option value="">Cargando sucursales...</option>
                                             </select>
                                         </div>
@@ -107,7 +111,7 @@
                                         <label style="text-align: center; width: 100%; display: block;">Tipo de Estadía</label>
                                         <div class="select-wrapper-premium" style="width: 100%;">
                                             <i class="fas fa-clock" style="left: 15px;"></i>
-                                            <select class="res-type" required style="padding: 12px 15px 12px 42px !important; font-size: 0.9rem; text-align-last: center;">
+                                            <select class="res-type" required style="font-size: 0.9rem; text-align-last: center;">
                                                 <option value="" selected disabled hidden>Seleccioná...</option>
                                                 <option value="hora">Hora</option>
                                                 <option value="dia">Día</option>
@@ -130,10 +134,14 @@
                                             <label style="text-align: center; width: 100%; display: block;">Hora Inicio</label>
                                             <input type="text" class="res-time-only input-premium" placeholder="12:00">
                                         </div>
-                                        <div class="form-group-premium" style="max-width: 60px; align-items: center;">
-                                            <label style="text-align: center; width: 100%; display: block;">Cantidad</label>
-                                            <input type="number" class="res-hours-qty input-premium" min="1" max="24" placeholder="2">
-                                        </div>
+<div class="form-group-premium" style="max-width: 120px; align-items: center;">
+    <label style="text-align: center; width: 100%; display: block;">Cantidad</label>
+    <div class="num-input-wrapper">
+        <input type="number" class="res-hours-qty input-premium" min="1" max="24" value="1">
+        <button type="button" class="num-btn up" tabindex="-1" aria-label="Incrementar"></button>
+        <button type="button" class="num-btn down" tabindex="-1" aria-label="Decrementar"></button>
+    </div>
+</div>
                                     </div>
                                     
                                     <div id="daily-fields" class="dynamic-row-premium" style="display:none; justify-content: center; width: 100%;">
@@ -216,6 +224,10 @@
         </div>
 
         <div class="grid-col map-and-stats-side">
+            <div class="section-title-premium" style="text-align: center; margin-bottom: 25px; width: 100%;">
+                <h3 style="font-family: 'Montserrat'; font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; color: #fff; margin-bottom: 5px;"><i class="fas fa-map-location-dot" style="color: var(--dorado); margin-right: 10px;"></i>HACÉ TU RESERVA DESDE EL MAPA</h3>
+                <div style="width: 60px; height: 2px; background: var(--dorado); margin: 0 auto; opacity: 0.5;"></div>
+            </div>
             <div class="card portal-map-card">
                 <div class="map-hint-floating">
                     <span class="hint-pulse"></span>

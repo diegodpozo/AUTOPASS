@@ -1,5 +1,6 @@
 import datetime
 import math
+import re
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -8,9 +9,65 @@ from core.config import settings
 from core.database import get_db
 from core.security import get_current_user
 from services.billing_service import BillingService
-from services.reservation_service import ReservationService
+from services.reservation_service import ReservationService, verificar_disponibilidad
+from services.user_notification_service import UserNotificationService
+
+
+def _validar_horario_sucursal(db: Session, sucursal_nombre: str, start: datetime.datetime, end: datetime.datetime):
+    """VALIDAR QUE LA RESERVA POR HORA ESTE DENTRO DEL HORARIO DE ATENCION DE LA SUCURSAL."""
+    if not sucursal_nombre:
+        return
+
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+    if not branch:
+        return
+    if branch.is_24h:
+        return
+    if not branch.horario:
+        return
+
+    # FORMATO ESPERADO: "07:00 a 23:00" O "07:00 UN 23:00"
+    match = re.match(r'^(\d{1,2}):(\d{2})\s+(?:A|UN)\s+(\d{1,2}):(\d{2})$', branch.horario.upper().strip())
+    if not match:
+        return
+
+    open_h, open_m = int(match.group(1)), int(match.group(2))
+    close_h, close_m = int(match.group(3)), int(match.group(4))
+
+    # SI CIERRE ES 00:00 SE TRATA COMO 24:00 (FINAL DEL DIA)
+    if close_h == 0 and close_m == 0:
+        close_h, close_m = 23, 59
+
+    apertura = datetime.time(open_h, open_m)
+    cierre = datetime.time(close_h, close_m)
+
+    start_time = start.time()
+    end_time = end.time()
+
+    # RECHAZAR SI LA ESTADIA CRUZA LA MEDIANOCHE (DIA DISTINTO)
+    if start.date() != end.date():
+        raise HTTPException(
+            status_code=400,
+            detail=f"La sucursal cierra a las {match.group(3)}:{match.group(4)}. La estadía no puede extenderse más allá del cierre."
+        )
+
+    if start_time < apertura or start_time >= cierre:
+        raise HTTPException(
+            status_code=400,
+            detail=f"La sucursal abre de {branch.horario}. La hora de inicio debe estar dentro del horario de atención."
+        )
+    if end_time > cierre:
+        raise HTTPException(
+            status_code=400,
+            detail=f"La sucursal cierra a las {match.group(3)}:{match.group(4)}. La hora de fin no puede exceder el horario de cierre."
+        )
 
 router = APIRouter()
+
+@router.get("/reservations/check-availability")
+def check_availability(sucursal_nombre: str, fecha_inicio: str, fecha_fin: str, exclude_id: int = None, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """VERIFICA SI HAY LUGARES DISPONIBLES EN LA SUCURSAL PARA EL RANGO SOLICITADO."""
+    return verificar_disponibilidad(db, sucursal_nombre, fecha_inicio, fecha_fin, exclude_id)
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
 def get_user_reservations(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -31,13 +88,26 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente, models.Vehicle.user_id == current_user.id).first()
     if not vehicle: raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
     
-    rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre)
+    rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
     start = datetime.datetime.fromisoformat(res.fecha_inicio)
-    
-    if res.tipo_estadia == "hora" and (start - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
-        raise HTTPException(status_code=400, detail="Las reservas por hora deben realizarse con al menos 1 hora de anticipación.")
-
     end = datetime.datetime.fromisoformat(res.fecha_fin)
+
+    # RECHAZAR RESERVAS CON MAS DE 3 MESES DE ANTICIPACION
+    max_future = datetime.datetime.now() + datetime.timedelta(days=90)
+    if start > max_future:
+        raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
+
+    if res.tipo_estadia == "hora":
+        min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
+        if (start - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+            raise HTTPException(status_code=400, detail=f"Las reservas por hora deben realizarse con al menos {min_antelacion_min} minutos de anticipación.")
+        _validar_horario_sucursal(db, res.sucursal_nombre, start, end)
+
+    # VERIFICAR DISPONIBILIDAD
+    disp = verificar_disponibilidad(db, res.sucursal_nombre, res.fecha_inicio, res.fecha_fin)
+    if not disp["disponible"]:
+        raise HTTPException(status_code=400, detail=disp["mensaje"])
+
     duration_hours = (end - start).total_seconds() / 3600
 
     if duration_hours <= 0:
@@ -81,6 +151,9 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     )
     db.add(new_res)
     db.commit()
+    print(f"[DEBUG POST RESERVE] ID={new_res.id} estado_reserva={new_res.estado_reserva}")
+    db.refresh(new_res)
+    print(f"[DEBUG POST RESERVE] ID={new_res.id} estado_reserva={new_res.estado_reserva}")
     return {"status": "ok", "monto": monto, "estado_pago": estado_pago}
 
 @router.patch("/reservations/{res_id}")
@@ -90,8 +163,27 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
     if not res: raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
     tipo_efectivo = data.tipo_estadia if data.tipo_estadia else res.tipo_estadia
-    if tipo_efectivo == "hora" and (datetime.datetime.fromisoformat(res.fecha_inicio) - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
-        raise HTTPException(status_code=400, detail="No se puede modificar una reserva por hora con menos de 1 hora de antelación")
+    suc_efectivo = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
+    start_efectivo = datetime.datetime.fromisoformat(data.fecha_inicio) if data.fecha_inicio else datetime.datetime.fromisoformat(res.fecha_inicio)
+    end_efectivo = datetime.datetime.fromisoformat(data.fecha_fin) if data.fecha_fin else datetime.datetime.fromisoformat(res.fecha_fin)
+
+    max_future = datetime.datetime.now() + datetime.timedelta(days=90)
+    if start_efectivo > max_future:
+        raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
+
+    if tipo_efectivo == "hora":
+        min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
+        if (start_efectivo - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+            raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva por hora con menos de {min_antelacion_min} minutos de antelación")
+        _validar_horario_sucursal(db, suc_efectivo, start_efectivo, end_efectivo)
+
+    # VERIFICAR DISPONIBILIDAD (EXCLUYENDO LA RESERVA ACTUAL)
+    fec_ini = data.fecha_inicio if data.fecha_inicio else res.fecha_inicio
+    fec_fin = data.fecha_fin if data.fecha_fin else res.fecha_fin
+    suc_efect = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
+    disp = verificar_disponibilidad(db, suc_efect, fec_ini, fec_fin, exclude_id=res.id)
+    if not disp["disponible"]:
+        raise HTTPException(status_code=400, detail=disp["mensaje"])
 
     monto_anterior, ya_pagado = res.monto_total, res.estado_pago == "Pagado"
 
@@ -104,7 +196,9 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
     if data.tipo_estadia: res.tipo_estadia = data.tipo_estadia
     if data.sucursal_nombre: res.sucursal_nombre = data.sucursal_nombre
 
-    rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre)
+    vehiculo_mod = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
+    tipo_vehiculo_mod = vehiculo_mod.tipo if vehiculo_mod else "Auto"
+    rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
     duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
     if duration_hours <= 0: raise HTTPException(status_code=400, detail="Fechas inválidas")
 
@@ -135,6 +229,17 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
 def pay_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """ABONA UNA RESERVA PENDIENTE CON EL SALDO DE LA CUENTA."""
     return ReservationService.pay_reservation(db, current_user, res_id)
+
+@router.post("/reservations/{res_id}/confirm-reminder")
+def confirm_reservation_reminder(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """CONFIRMA EL RECORDATORIO DE UNA RESERVA, DETIENE AVISOS Y PREPARA AUTO-CANCELACION."""
+    res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == current_user.id).first()
+    if not res:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    res.recordatorio_confirmado = True
+    UserNotificationService.mark_reservation_notifications_as_read(db, current_user.id, res_id, tipo="REMINDER_UNPAID")
+    db.commit()
+    return {"status": "ok", "message": "Recordatorio confirmado"}
 
 @router.get("/reservations/{res_id}/cancel-simulation")
 def simulate_reservation_cancel(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
