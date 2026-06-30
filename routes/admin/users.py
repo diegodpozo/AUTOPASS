@@ -6,6 +6,7 @@ from core.database import get_db
 from core.security import get_local_manager, get_super_admin, get_password_hash
 from models.enums import UserRole
 from services.user_service import UserService
+from services.user_notification_service import UserNotificationService
 
 router = APIRouter()
 
@@ -50,6 +51,13 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
 
     updated = UserService.update_user(db, user_id, user_data)
     if updated:
+        if user.rol == UserRole.USER:
+            UserNotificationService.create_notification(
+                db, user_id=user.id,
+                tipo="datos_actualizados_admin",
+                titulo="Tus datos fueron actualizados",
+                mensaje="Un administrador modificó tus datos de perfil."
+            )
         return {"status": "ok", "message": "Usuario actualizado correctamente"}
     raise HTTPException(status_code=400, detail="Error al actualizar el usuario")
 
@@ -60,6 +68,15 @@ def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(ge
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     user.rol = nuevo_rol
     db.commit()
+
+    if user.rol == UserRole.USER or nuevo_rol == UserRole.USER:
+        UserNotificationService.create_notification(
+            db, user_id=user.id,
+            tipo="rol_cambiado_admin",
+            titulo="Tu rol fue modificado",
+            mensaje=f"Un administrador cambió tu rol a {nuevo_rol.value}."
+        )
+
     return {"status": "ok"}
 
 @router.post("/users/{user_id}/toggle-block")
@@ -77,7 +94,16 @@ def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models
 
     user.is_blocked = not getattr(user, 'is_blocked', False)
     db.commit()
-    
+
+    if user.rol == UserRole.USER:
+        estado = "bloqueado" if user.is_blocked else "desbloqueado"
+        UserNotificationService.create_notification(
+            db, user_id=user.id,
+            tipo="bloqueo_cambiado_admin",
+            titulo="Estado de tu cuenta modificado",
+            mensaje=f"Un administrador {estado} tu cuenta."
+        )
+
     estado = "BLOQUEADO" if user.is_blocked else "ACTIVO"
     return {"status": "ok", "is_blocked": user.is_blocked, "message": f"Usuario {user.nombre} ahora está {estado}"}
 
@@ -92,6 +118,15 @@ def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db
         
     user.saldo = monto
     db.commit()
+
+    if user.rol == UserRole.USER:
+        UserNotificationService.create_notification(
+            db, user_id=user.id,
+            tipo="saldo_ajustado_admin",
+            titulo="Tu saldo fue ajustado",
+            mensaje=f"Un administrador ajustó tu saldo a ${monto}."
+        )
+
     return {"status": "ok"}
 
 @router.post("/users/{user_id}/password")
@@ -106,6 +141,15 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
 
     user.password_hash = get_password_hash(payload.new_password)
     db.commit()
+
+    if user.rol == UserRole.USER:
+        UserNotificationService.create_notification(
+            db, user_id=user.id,
+            tipo="password_cambiada_admin",
+            titulo="Tu contraseña fue cambiada",
+            mensaje="Un administrador cambió tu contraseña."
+        )
+
     return {"status": "ok", "message": f"Contraseña de {user.nombre} actualizada correctamente"}
 
 @router.delete("/users/{user_id}")
@@ -115,6 +159,19 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User 
     if user_id == admin.id: 
         raise HTTPException(status_code=400, detail="No podés eliminar tu propia cuenta")
     
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if user.rol == UserRole.USER:
+        UserNotificationService.create_notification(
+            db, user_id=user.id,
+            tipo="cuenta_eliminada_admin",
+            titulo="Tu cuenta fue eliminada",
+            mensaje="Un administrador eliminó tu cuenta del sistema."
+        )
+    db.flush()
+
     if UserService.delete_user(db, user_id):
         return {"status": "ok"}
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
