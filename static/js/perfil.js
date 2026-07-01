@@ -194,12 +194,19 @@ window.startReservationOnboarding = onboarding.startReservationOnboarding;
 // Global error hooks para detectar problemas de runtime y mostrar alerta en UI
 window.addEventListener('error', (e) => {
     try {
+        // IGNORAR ERRORES CROSS-ORIGEN (EJ: FLATPICKR CON CSS DE EXTENSIONES)
+        if (e.message === 'Script error.' || e.message?.includes('cssRules')) return;
         console.error('[GLOBAL ERROR]', e.message, e.error);
         alert('Error en la página: ' + (e.message || 'Ver consola para detalles'));
     } catch (_) {}
 });
 window.addEventListener('unhandledrejection', (e) => {
-    try { console.error('[UNHANDLED REJECTION]', e.reason); alert('Error no manejado: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); } catch(_) {}
+    try {
+        const msg = e.reason?.message || String(e.reason);
+        if (msg.includes('cssRules') || msg === 'Script error.') return;
+        console.error('[UNHANDLED REJECTION]', e.reason);
+        alert('Error no manejado: ' + msg);
+    } catch(_) {}
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
