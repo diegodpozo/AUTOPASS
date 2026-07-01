@@ -121,14 +121,14 @@
 
 /* GREETING & DASHBOARD HEADER */
 .greeting-premium {
-    margin-bottom: 30px;
+    margin-bottom: 19px;
     animation: fadeIn 0.8s ease;
 }
 
 .greeting-premium h2 {
     font-family: 'Montserrat';
     font-weight: 800;
-    font-size: 1.6rem;
+    font-size: 1.44rem;
     color: #fff;
     margin: 0;
     letter-spacing: 1px;
@@ -136,15 +136,15 @@
 
 .greeting-premium p {
     color: #888;
-    margin: 5px 0 0;
-    font-size: 0.9rem;
+    margin: 4px 0 0;
+    font-size: 0.81rem;
 }
 
 /* QUICK ACTIONS */
 .quick-actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
+    gap: 10px;
     margin-bottom: 35px;
 }
 
@@ -2432,10 +2432,14 @@
 /* --- PORTAL HOME: MAP INTEGRATION --- */
 .portal-home-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 50/50 para que el mapa tenga buen tamaño */
-    gap: 30px;
+    grid-template-columns: 0.9fr 1.3fr; /* COLUMNA IZQUIERDA MAS CHICA, MAPA 30% MAS GRANDE */
+    gap: 19px;
     align-items: start;
-    margin-top: 30px;
+    margin-top: 19px;
+}
+
+.portal-home-grid .mt-20 {
+    margin-top: 13px;
 }
 
 .portal-map-card {
@@ -2570,7 +2574,7 @@
 }
 
 .portal-map-container {
-    height: 400px;
+    height: 520px;
     width: 100%;
     position: relative;
     z-index: 10;
@@ -2611,7 +2615,7 @@
 .map-and-stats-side {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 15px;
 }
 
 /* ==========================================================================
@@ -3039,53 +3043,6 @@
     flex-wrap: wrap;
 }
 
-.fab-new-reserva {
-    position: fixed;
-    bottom: 100px;
-    right: 28px;
-    z-index: 999;
-    padding: 6px 14px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, var(--dorado), #c8a050);
-    color: #000;
-    border: none;
-    font-size: 0;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
-
-.fab-new-reserva .fab-label {
-    font-size: 0.6rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    white-space: nowrap;
-}
-
-.fab-new-reserva:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.5);
-}
-
-.fab-new-reserva:active {
-    transform: scale(0.95);
-}
-
-@media (max-width: 768px) {
-    .fab-new-reserva {
-        bottom: 20px;
-        right: 22px;
-        padding: 5px 10px;
-    }
-    .fab-new-reserva .fab-label {
-        font-size: 0.55rem;
-    }
-}
-
 .btn-new-reserva {
     background: linear-gradient(135deg, var(--dorado), #c8a050);
     color: #000;
@@ -3119,7 +3076,7 @@
 
 @media (max-width: 768px) {
     .portal-map-container {
-        height: 300px;
+        height: 390px;
     }
 }
 
@@ -3427,4 +3384,257 @@
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+}
+
+/* ESPACIO INFERIOR PARA QUE EL CONTENIDO NO QUEDE DETRAS DEL FOOTER FIJO */
+.content { padding-bottom: 80px; }
+@media (max-width: 768px) {
+    .content { padding-bottom: 70px; }
+}
+
+/* --- BARRA DE NAVEGACION INFERIOR (USER FOOTER) --- */
+.user-footer-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 998;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 6px 8px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+}
+
+.layout-with-sidebar .user-footer-nav {
+    left: 240px;
+}
+
+.layout-with-sidebar.collapsed .user-footer-nav {
+    left: 80px;
+}
+
+.uf-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    max-width: 140px;
+}
+
+.uf-btn i {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+.uf-btn span {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.uf-btn:hover {
+    color: var(--dorado);
+    background: rgba(197, 160, 89, 0.08);
+}
+
+.uf-btn:hover i {
+    transform: scale(1.15);
+}
+
+.uf-btn:active {
+    transform: scale(0.95);
+}
+
+.uf-btn-reserva i {
+    color: var(--dorado);
+}
+
+.uf-btn-reserva span {
+    color: var(--dorado);
+}
+
+@media (max-width: 768px) {
+    .layout-with-sidebar .user-footer-nav {
+        left: 0;
+    }
+    .uf-btn {
+        max-width: none;
+        padding: 6px 6px;
+    }
+    .uf-btn span {
+        font-size: 0.55rem;
+    }
+}
+
+/* --- OVERLAY MAPA EN PANTALLA COMPLETA --- */
+.map-fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+}
+
+.map-fullscreen-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(10, 10, 10, 0.98);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    gap: 10px;
+}
+
+.map-fs-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.map-fs-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: #ccc;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.map-fs-nav-btn i {
+    font-size: 0.9rem;
+    color: var(--dorado);
+}
+
+.map-fs-nav-btn:hover {
+    background: rgba(197, 160, 89, 0.15);
+    color: #fff;
+}
+
+.map-fs-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--dorado);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.map-fs-title i {
+    font-size: 1.1rem;
+}
+
+.map-fs-close {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.map-fs-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.portal-map-fullscreen {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+}
+
+.map-overlay-fullscreen {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 22px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.map-overlay-fullscreen.active {
+    opacity: 1;
+}
+
+.map-overlay-fullscreen h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    color: var(--dorado);
+    margin: 0 0 4px 0;
+    letter-spacing: 0.5px;
+}
+
+.map-overlay-fullscreen p {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .map-overlay-fullscreen {
+        bottom: 12px;
+        padding: 10px 16px;
+    }
+    .map-overlay-fullscreen h4 {
+        font-size: 0.8rem;
+    }
+    .map-overlay-fullscreen p {
+        font-size: 0.7rem;
+    }
+    .map-fs-title {
+        font-size: 0.7rem;
+    }
+    .map-fs-nav-btn span {
+        display: none;
+    }
+    .map-fs-nav-btn {
+        padding: 6px 8px;
+    }
+    .map-fs-nav-btn i {
+        font-size: 1rem;
+    }
+    .map-fullscreen-header {
+        padding: 8px 10px;
+    }
 }

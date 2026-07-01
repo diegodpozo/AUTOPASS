@@ -31,7 +31,12 @@ window.irAReserva = function(branchName = null) {
  */
 window.fillReservationForm = async function(branchName) {
     console.log(`[fillReservationForm] Intentando auto-llenado local para: ${branchName}`);
-    
+
+    // 0. CERRAR MAPA FULLSCREEN SI ESTA ABIERTO
+    if (window.closeFullMap) {
+        window.closeFullMap();
+    }
+
     // 1. ASEGURAR SECCION DE INICIO
     if (window.showSection) {
         window.showSection('inicio', document.querySelector('.nav-item[onclick*="inicio"]'));
@@ -101,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.addEventListener('scroll', land.handleHeaderScroll);
     
-    if (document.getElementById('map')) land.initMap();
+    if (document.getElementById('map')) land.initMap('map', null, true);
     if (document.getElementById('contenedorCarrusel')) land.InicializarCarrusel();
 
     // MENU MOVIL EVENTS

@@ -72,13 +72,45 @@
                 {% include "profile/tabs/notificaciones.html" %}
             </div>
         </div>
-        <!-- BOTON FLOTANTE NUEVA RESERVA -->
-        <button class="fab-new-reserva" onclick="showSection('inicio')" style="display:none;">
-            <span class="fab-label">NUEVA RESERVA</span>
-        </button>
-    </main>
+    <!-- OVERLAY MAPA EN PANTALLA COMPLETA -->
+    <div id="map-fullscreen-overlay" class="map-fullscreen-overlay" style="display:none;">
+        <div class="map-fullscreen-header">
+            <span class="map-fs-title"><i class="fas fa-map-marked-alt"></i> MAPA DE SUCURSALES</span>
+            <div class="map-fs-actions">
+                <button class="map-fs-nav-btn" onclick="closeFullMap(); showSection('inicio')" title="Nueva reserva">
+                    <i class="fas fa-plus-circle"></i><span>RESERVAR</span>
+                </button>
+                <button class="map-fs-nav-btn" onclick="closeFullMap(); showSection('reservas')" title="Mis reservas">
+                    <i class="fas fa-calendar-check"></i><span>MIS RESERVAS</span>
+                </button>
+                <button class="map-fs-close" onclick="closeFullMap()" title="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div id="portal-map-fullscreen" class="portal-map-fullscreen"></div>
+        <div class="map-overlay map-overlay-fullscreen">
+            <h4><i class="fas fa-building"></i> Playa</h4>
+            <p>Cargando dirección...</p>
+        </div>
+    </div>
 
-    {% include "profile/modals.html" %}
+    <!-- BARRA DE NAVEGACION INFERIOR -->
+    <nav class="user-footer-nav">
+        <button class="uf-btn uf-btn-reserva" onclick="showSection('inicio')">
+            <i class="fas fa-plus-circle"></i>
+            <span>NUEVA RESERVA</span>
+        </button>
+        <button class="uf-btn uf-btn-mapa" onclick="openFullMap()">
+            <i class="fas fa-map"></i>
+            <span>MOSTRAR MAPA</span>
+        </button>
+        <button class="uf-btn uf-btn-reservas" onclick="showSection('reservas')">
+            <i class="fas fa-calendar-check"></i>
+            <span>MIS RESERVAS</span>
+        </button>
+    </nav>
+</main>
+
+{% include "profile/modals.html" %}
 {% endblock %}
 
 {% block extra_scripts %}

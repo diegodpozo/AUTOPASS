@@ -57,10 +57,6 @@ window.showSection = function(sectionId, el) {
     const sectionEl = document.getElementById(`section-${sectionId}`);
     if (sectionEl) sectionEl.classList.add('active');
 
-    // MOSTRAR/OCULTAR BOTON FLOTANTE NUEVA RESERVA (SOLO FUERA DE INICIO)
-    const fab = document.querySelector('.fab-new-reserva');
-    if (fab) fab.style.display = sectionId === 'inicio' ? 'none' : 'flex';
-
     if (sectionId === 'reservas') res.loadReservations();
     if (sectionId === 'puntos') prof.loadPointsData();
     if (sectionId === 'inicio') {
@@ -75,6 +71,26 @@ window.showSection = function(sectionId, el) {
     if (sectionId === 'perfil') prof.loadProfile();
     if (sectionId === 'vehiculos') v.loadVehicles();
     if (sectionId === 'notificaciones') loadNotifications();
+};
+
+window.openFullMap = function() {
+    const overlay = document.getElementById('map-fullscreen-overlay');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+        const fsMap = document.getElementById('portal-map-fullscreen');
+        if (fsMap && !fsMap.classList.contains('map-initialized')) {
+            fsMap.classList.add('map-initialized');
+            initMap('portal-map-fullscreen', '#map-fullscreen-overlay .map-overlay', true);
+        }
+    }, 150);
+};
+
+window.closeFullMap = function() {
+    const overlay = document.getElementById('map-fullscreen-overlay');
+    if (overlay) overlay.style.display = 'none';
+    document.body.style.overflow = '';
 };
 
 window.enterEditMode = function(field) {
@@ -194,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 1. INICIALIZAR MAPA (PRIMERO PARA ASEGURAR VISUALIZACION)
         try {
             if (document.getElementById('portal-map')) {
-                initMap('portal-map');
+                initMap('portal-map', null, true);
             }
         } catch (e) {
             console.error("[MAP ERROR] No se pudo cargar el mapa:", e);
