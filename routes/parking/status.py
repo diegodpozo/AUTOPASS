@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import text
 from typing import List, Dict
 import models, schemas
@@ -185,7 +185,7 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
 @router.get("/parking/branches", response_model=List[schemas.BranchPublicResponse])
 def list_public_branches(db: Session = Depends(get_db)):
     """RETORNA LA LISTA DE SUCURSALES ACTIVAS CON SU OCUPACION REAL PARA EL MAPA PUBLICO."""
-    branches = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
+    branches = db.query(models.ParkingBranch).options(joinedload(models.ParkingBranch.floors)).filter(models.ParkingBranch.activa == True, models.ParkingBranch.latitude != None, models.ParkingBranch.longitude != None).all()
     
     res = []
     for b in branches:

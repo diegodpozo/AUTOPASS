@@ -19,18 +19,76 @@ function formatAddress(addr) {
     return addr;
 }
 
-export function initMap(containerId = 'map') {
+window.getDirectionsTo = function(branchLat, branchLng, mode) {
+    const googleUrl = (lat, lng) => `https://www.google.com/maps/dir/${lat},${lng}/${branchLat},${branchLng}`;
+    const wazeUrl = (lat, lng) => `https://www.waze.com/ul?ll=${branchLat},${branchLng}&navigate=yes&to=${branchLat},${branchLng}&from=${lat},${lng}`;
+    const openFallback = () => {
+        if (mode === 'waze') window.open(`https://www.waze.com/ul?ll=${branchLat},${branchLng}&navigate=yes`, '_blank');
+        else window.open(`https://www.google.com/maps/dir//${branchLat},${branchLng}`, '_blank');
+    };
+    if (!navigator.geolocation) return openFallback();
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const url = mode === 'waze'
+                ? wazeUrl(pos.coords.latitude, pos.coords.longitude)
+                : googleUrl(pos.coords.latitude, pos.coords.longitude);
+            window.open(url, '_blank');
+        },
+        openFallback,
+        { timeout: 5000, enableHighAccuracy: false }
+    );
+};
+
+const POI_CACHE_KEY = 'autopass_poi_cache';
+const POI_CACHE_TTL = 86400000; // 24 HS
+
+function getPoiCache() {
+    try {
+        const raw = localStorage.getItem(POI_CACHE_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (Date.now() - data.ts > POI_CACHE_TTL) {
+            localStorage.removeItem(POI_CACHE_KEY);
+            return null;
+        }
+        return data.items;
+    } catch (_) {
+        return null;
+    }
+}
+
+function setPoiCache(items) {
+    try {
+        localStorage.setItem(POI_CACHE_KEY, JSON.stringify({ ts: Date.now(), items }));
+    } catch (_) {}
+}
+
+export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = true) {
     const mapEl = document.getElementById(containerId);
     if (!mapEl || !window.L) return;
 
     const hqCoords = [-34.5888, -58.3900];
-    const newMapInstance = L.map(containerId).setView(hqCoords, 14);
+    const defaultZoom = (containerId === 'portal-map' || containerId === 'portal-map-fullscreen') ? 12 : 14;
+    const newMapInstance = L.map(containerId).setView(hqCoords, defaultZoom);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap',
+    // TILE STAMEN TONER (ALTO CONTRASTE, CALLES EN BLANCO)
+    const tileLayer = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
+        attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>',
         subdomains: 'abcd',
+        minZoom: 0,
         maxZoom: 20
     }).addTo(newMapInstance);
+
+    tileLayer.on('tileerror', function() {
+        if (this._fallbacked) return;
+        this._fallbacked = true;
+        console.warn('[MAP] Stamen Toner fallback a CartoDB');
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(newMapInstance);
+    });
 
     // SI ES EL MAPA PRINCIPAL DE LA LANDING, GUARDAMOS LA INSTANCIA GLOBAL PARA GEOLOCALIZACION
     if (containerId === 'map') mapInstance = newMapInstance;
@@ -65,6 +123,37 @@ export function initMap(containerId = 'map') {
         return div;
     };
     locationBtn.addTo(newMapInstance);
+
+    // BOTON DE PANTALLA COMPLETA (SOLO EN MAPA DE PERFIL)
+    if (containerId === 'portal-map') {
+        const fullscreenBtn = L.control({ position: 'topright' });
+        fullscreenBtn.onAdd = function() {
+            const div = L.DomUtil.create('div', 'leaflet-control-fullscreen');
+            div.innerHTML = `
+                <button title="Ver mapa completo" 
+                        style="background: #000; border: 1.5px solid #C5A059; color: #C5A059; 
+                               width: 34px; height: 34px; cursor: pointer; display: flex; 
+                               align-items: center; justify-content: center; 
+                               border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+                               transition: all 0.3s ease; outline: none; font-size: 0.9rem;">
+                    <i class="fas fa-expand"></i>
+                </button>`;
+            div.onmouseover = () => {
+                const btn = div.querySelector('button');
+                if (btn) { btn.style.background = '#C5A059'; btn.style.color = '#000'; }
+            };
+            div.onmouseout = () => {
+                const btn = div.querySelector('button');
+                if (btn) { btn.style.background = '#111'; btn.style.color = '#C5A059'; }
+            };
+            div.onclick = function(e) {
+                e.stopPropagation();
+                if (window.openFullMap) window.openFullMap();
+            };
+            return div;
+        };
+        fullscreenBtn.addTo(newMapInstance);
+    }
 
     //CARGAR SUCURSALES DESDE LA API
     fetch('/v1/parking/branches')
@@ -106,29 +195,41 @@ export function initMap(containerId = 'map') {
                 const horarioText = p.is_24h ? '24 HORAS' : (p.horario ? p.horario.replace(' UN ', ' a ') : 'Consultar');
 
                 const popupContent = `
-                    <div style="text-align: center; min-width: 200px; padding: 10px; background: #0a0a0a; border-radius: 15px;">
-                        <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 55px; height: 55px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #C5A059; padding: 3px; background: #000;">
-                        <br><b style="font-size: 1.15rem; color: #fff; font-family: 'Montserrat'; letter-spacing: 0.5px;">${p.nombre}</b>
+                    <div style="text-align: center; min-width: 200px; padding: 9px; background: #0a0a0a; border-radius: 15px;">
+                        <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 9px; border: 2px solid #C5A059; padding: 2px; background: #000; object-fit: cover;">
+                        <br><b style="font-size: 1.09rem; color: #fff; font-family: 'Montserrat'; letter-spacing: 0.5px;">${p.nombre}</b>
                         <br><span style="color: #888; font-size: 0.8rem; display: block; margin-top: 2px; text-transform: capitalize;">${formattedAddr}</span>
-                        <span style="color: var(--dorado); font-size: 0.75rem; display: block; margin-top: 6px;"><i class="fas fa-clock" style="margin-right: 5px;"></i>${horarioText}</span>
+                        <span style="color: var(--dorado); font-size: 0.75rem; display: block; margin-top: 5px;"><i class="fas fa-clock" style="margin-right: 5px;"></i>${horarioText}</span>
                         
-                        <div style="margin: 12px 0; padding: 12px; background: rgba(197, 160, 89, 0.03); border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.15);">
-                            <b style="color: ${statusColor}; font-size: 0.85rem; display: block; margin-bottom: 6px; letter-spacing: 1px;">${statusText.toUpperCase()}</b>
-                            <span style="color: #ddd; font-size: 0.75rem; display: block; margin-bottom: 8px; line-height: 1.4;">${statusDesc}</span>
-                            ${disponibles > 0 ? `<span style="color: #fff; font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 4px;">${formatNum(disponibles)} lugar${disponibles !== 1 ? 'es' : ''} disponible${disponibles !== 1 ? 's' : ''}</span>` : ''}
+                        <div style="margin: 11px 0; padding: 11px; background: rgba(197, 160, 89, 0.03); border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.15);">
+                            <b style="color: ${statusColor}; font-size: 0.85rem; display: block; margin-bottom: 5px; letter-spacing: 1px;">${statusText.toUpperCase()}</b>
+                            <span style="color: #ddd; font-size: 0.75rem; display: block; margin-bottom: 7px; line-height: 1.4;">${statusDesc}</span>
+                            ${disponibles > 0 ? `<span style="color: #fff; font-size: 1.04rem; font-weight: 700; display: block; margin-bottom: 3px;">${formatNum(disponibles)} lugar${disponibles !== 1 ? 'es' : ''} disponible${disponibles !== 1 ? 's' : ''}</span>` : ''}
                             
-                            <div style="height: 5px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 10px 0;">
+                            <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 9px 0;">
                                 <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, ${statusColor} 0%, #fff 200%);"></div>
                             </div>
                         </div>
-                        
+
                         <a href="javascript:void(0)" onclick="irAReserva('${p.nombre}')" 
-                           style="background: #C5A059; color: #000; padding: 10px 20px; font-size: 0.75rem; 
+                           style="background: #C5A059; color: #000; padding: 9px 18px; font-size: 0.7rem; 
                                   font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
-                                  width: 100%; display: block; margin-top: 5px; border-radius: 10px;
+                                  width: 100%; display: block; margin-top: 4px; border-radius: 10px;
                                   text-decoration: none; transition: 0.3s; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);">
                            RESERVÁ AQUÍ
                         </a>
+
+                        <div style="margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.08);">
+                            <div style="color:#888;font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;font-weight:600;">CÓMO LLEGAR</div>
+                            <div style="display:flex;gap:5px;justify-content:center;">
+                                <a href="javascript:void(0)" onclick="getDirectionsTo(${p.latitude}, ${p.longitude})" style="flex:1;background:#4285F4;color:#fff;padding:6px 5px;border-radius:8px;text-decoration:none;font-size:0.65rem;font-weight:700;text-align:center;letter-spacing:0.3px;display:flex;align-items:center;justify-content:center;gap:4px;transition:0.3s;">
+                                    <i class="fab fa-google" style="font-size:0.8rem;"></i> Google Maps
+                                </a>
+                                <a href="javascript:void(0)" onclick="getDirectionsTo(${p.latitude}, ${p.longitude}, 'waze')" style="flex:1;background:#33CCFF;color:#000;padding:6px 5px;border-radius:8px;text-decoration:none;font-size:0.65rem;font-weight:700;text-align:center;letter-spacing:0.3px;display:flex;align-items:center;justify-content:center;gap:4px;transition:0.3s;">
+                                    <i class="fab fa-waze" style="font-size:0.8rem;"></i> Waze
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 `;
                 
@@ -138,17 +239,21 @@ export function initMap(containerId = 'map') {
                 
                 // ACTUALIZAR OVERLAY DINAMICO AL ABRIR/CERRAR SUCURSAL
                 marker.on('popupopen', () => {
-                    const overlay = document.querySelector('.map-overlay');
-                    if (overlay) {
-                        overlay.querySelector('h4').innerHTML = `<i class="fas fa-building"></i> ${p.nombre}`;
-                        overlay.querySelector('p').innerText = formattedAddr;
-                        overlay.classList.add('active');
+                    if (overlaySelector) {
+                        const overlay = document.querySelector(overlaySelector);
+                        if (overlay) {
+                            overlay.querySelector('h4').innerHTML = `<i class="fas fa-building"></i> ${p.nombre}`;
+                            overlay.querySelector('p').innerText = formattedAddr;
+                            overlay.classList.add('active');
+                        }
                     }
                 });
 
                 marker.on('popupclose', () => {
-                    const overlay = document.querySelector('.map-overlay');
-                    if (overlay) overlay.classList.remove('active');
+                    if (overlaySelector) {
+                        const overlay = document.querySelector(overlaySelector);
+                        if (overlay) overlay.classList.remove('active');
+                    }
                 });
 
                 // GUARDAR REFERENCIA AL MARCADOR (ESPECIFICO POR CONTAINERID)
@@ -156,7 +261,7 @@ export function initMap(containerId = 'map') {
                 p.markers[containerId] = marker;
             });
 
-            // LOGICA PARA LOCALIZACION AUTOMATICA (VIA URL PARAM) - SOLO EN EL MAPA PRINCIPAL
+            // LOGICA PARA LOCALIZACION AUTOMATICA (VIA URL PARAM)
             if (containerId === 'map') {
                 const urlParams = new URLSearchParams(window.location.search);
                 const branchToFind = urlParams.get('branch');
@@ -170,8 +275,221 @@ export function initMap(containerId = 'map') {
                     }
                 }
             }
+
+            // CENTRAR MAPA EN SUCURSAL ITUZAINGO (PORTAL DE USUARIO)
+            if (containerId === 'portal-map' || containerId === 'portal-map-fullscreen') {
+                const ituzaingo = branches.find(b =>
+                    b.nombre && b.nombre.toLowerCase().includes('ituzaing')
+                );
+                if (ituzaingo && ituzaingo.latitude && ituzaingo.longitude) {
+                    newMapInstance.setView([ituzaingo.latitude, ituzaingo.longitude], 14);
+                }
+            }
         })
         .catch(err => console.error('Error al cargar sucursales para el mapa:', err));
+
+    // CARGAR PUNTOS DE INTERES (SOLO SI SE SOLICITA, EJ: MAPA DE LANDING)
+    if (loadPOIs) {
+        loadTheaters(newMapInstance, containerId);
+        loadStadiums(newMapInstance, containerId);
+    }
+}
+
+const _poiControllers = {};
+
+function loadTheaters(mapObj, containerId) {
+    const makeMarker = function(lat, lng, t, cfg) {
+        const name = t.name || t.operator || t['short_name'] || '(Sin nombre)';
+        return L.marker([lat, lng], { icon: cfg.icon })
+            .bindPopup(`<div style="text-align:center;min-width:150px;padding:8px;background:#0a0a0a;border-radius:12px;"><div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${cfg.label}</div><b style="font-size:0.9rem;color:#fff;font-family:'Montserrat',sans-serif;">${name}</b>${t['addr:street'] ? `<br><span style="color:#aaa;font-size:0.75rem;">${t['addr:street']} ${t['addr:housenumber'] || ''}</span>` : ''}</div>`);
+    };
+
+    const icons = {
+        theatre: L.divIcon({
+            className: 'poi-marker',
+            html: `<div style="width:28px;height:28px;background:#9B59B6;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(155,89,182,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-theater-masks"></i></div>`,
+            iconSize: [28, 28], iconAnchor: [14, 14]
+        }),
+        cinema: L.divIcon({
+            className: 'poi-marker',
+            html: `<div style="width:28px;height:28px;background:#E74C3C;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(231,76,60,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-film"></i></div>`,
+            iconSize: [28, 28], iconAnchor: [14, 14]
+        })
+    };
+
+    function createCfg(type) {
+        if (type === 'theatre' || type === 'museum') return { icon: icons.theatre, label: type === 'theatre' ? 'Teatro' : 'Museo', type: type };
+        if (type === 'cinema') return { icon: icons.cinema, label: 'Cine', type: type };
+        return null;
+    }
+
+    const poiTypes = { theatre: 'theatre', museum: 'museum', cinema: 'cinema' };
+
+    function loadCachedPoi(d) {
+        const cfg = createCfg(d.type);
+        if (cfg) makeMarker(d.lat, d.lng, d.tags, cfg).addTo(mapObj);
+    }
+
+    // CHECK CACHE LOCALSTORAGE
+    const cached = getPoiCache();
+    if (cached) {
+        cached.forEach(loadCachedPoi);
+        addPoiLegend(mapObj);
+        return;
+    }
+
+    // ABORT PREVIO SI EXISTE
+    if (_poiControllers[containerId]) {
+        _poiControllers[containerId].abort();
+    }
+    const controller = new AbortController();
+    _poiControllers[containerId] = controller;
+
+    // LOADING INDICATOR
+    const loadingEl = showPoiLoading(mapObj, containerId);
+
+    const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+    const bbox = '-34.80,-58.90,-34.50,-58.30';
+
+    const query = `[out:json][timeout:30];(node["amenity"="theatre"](${bbox});way["amenity"="theatre"](${bbox});node["tourism"="museum"](${bbox});node["amenity"="cinema"](${bbox});way["amenity"="cinema"](${bbox}););out center 100;`;
+
+    function doFetch(retries, delay) {
+        const d = delay || 1000;
+        return fetch(OVERPASS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'data=' + encodeURIComponent(query),
+            signal: controller.signal
+        })
+        .then(res => {
+            if (res.status === 429 && retries > 0) {
+                console.warn(`[OVERPASS] Rate limit, reintentando en ${d}ms... (${retries} restantes)`);
+                return new Promise(r => setTimeout(r, d)).then(() => doFetch(retries - 1, Math.min(d * 2, 30000)));
+            }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        });
+    }
+
+    doFetch(4, 2000).then(data => {
+        hidePoiLoading(loadingEl);
+        if (!data.elements || data.elements.length === 0) return;
+        const items = [];
+        let teatro = 0, cinema = 0;
+        data.elements.forEach(el => {
+            const lat = el.lat || (el.center && el.center.lat);
+            const lng = el.lon || (el.center && el.center.lon);
+            if (!lat || !lng) return;
+            const t = el.tags || {};
+            let poiType = null;
+            if (t.amenity === 'theatre' || t.tourism === 'museum') { poiType = t.amenity === 'theatre' ? 'theatre' : 'museum'; teatro++; }
+            else if (t.amenity === 'cinema') { poiType = 'cinema'; cinema++; }
+            if (!poiType) return;
+            const cfg = createCfg(poiType);
+            if (!cfg) return;
+            items.push({ lat, lng, tags: t, type: poiType });
+            makeMarker(lat, lng, t, cfg).addTo(mapObj);
+        });
+        console.log(`[OVERPASS] Total: ${teatro + cinema} POIs (${teatro} Teatro/Museo, ${cinema} Cine)`);
+        if (items.length === 0) return;
+        setPoiCache(items);
+        addPoiLegend(mapObj);
+    })
+    .catch(err => {
+        hidePoiLoading(loadingEl);
+        if (err.name === 'AbortError') return;
+        console.error('[OVERPASS] Error:', err);
+        // MOSTRAR TOAST DE ERROR SI EXISTE
+        const msg = 'No se pudieron cargar los puntos de interés.';
+        if (window.showToast) window.showToast(msg, 'error');
+    });
+}
+
+const ESTADIOS_FIJOS = [
+    { lat: -34.5453, lng: -58.4498, name: 'Estadio Monumental (River Plate)', sport: 'Fútbol' },
+    { lat: -34.6356, lng: -58.3642, name: 'La Bombonera (Boca Juniors)', sport: 'Fútbol' },
+    { lat: -34.6684, lng: -58.3706, name: 'Estadio Presidente Perón (Racing Club)', sport: 'Fútbol' },
+    { lat: -34.6526, lng: -58.4434, name: 'Estadio Pedro Bidegain (San Lorenzo)', sport: 'Fútbol' },
+    { lat: -34.6537, lng: -58.6689, name: 'Estadio Carlos Sacaan (Club Ituzaingó)', sport: 'Fútbol' },
+];
+
+function loadStadiums(mapObj, containerId) {
+    const stadiumIcon = L.divIcon({
+        className: 'poi-marker',
+        html: `<div style="width:28px;height:28px;background:#27AE60;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(39,174,96,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-futbol"></i></div>`,
+        iconSize: [28, 28], iconAnchor: [14, 14]
+    });
+
+    ESTADIOS_FIJOS.forEach(d => {
+        L.marker([d.lat, d.lng], { icon: stadiumIcon })
+            .bindPopup(`<div style="text-align:center;min-width:150px;padding:8px;background:#0a0a0a;border-radius:12px;"><div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Estadio</div><b style="font-size:0.9rem;color:#fff;font-family:'Montserrat',sans-serif;">${d.name}</b>${d.sport ? `<br><span style="color:#aaa;font-size:0.75rem;">${d.sport}</span>` : ''}</div>`)
+            .addTo(mapObj);
+    });
+
+    _stadiumsLoaded = true;
+    addPoiLegend(mapObj);
+    console.log(`[ESTADIOS] ${ESTADIOS_FIJOS.length} cargados`);
+}
+
+let _stadiumsLoaded = false;
+
+function showPoiLoading(mapObj, containerId) {
+    const id = `poi-loading-${containerId}`;
+    // EVITAR DUPLICADOS
+    if (document.getElementById(id)) return { el: document.getElementById(id), id };
+    const ctrl = L.control({ position: 'bottomleft' });
+    ctrl.onAdd = function() {
+        const div = L.DomUtil.create('div', 'poi-loading');
+        div.id = id;
+        div.innerHTML = `<div style="background:rgba(10,10,10,0.9);padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);font-size:0.65rem;color:var(--dorado);display:flex;align-items:center;gap:6px;"><i class="fas fa-spinner fa-pulse"></i> Cargando puntos de interés...</div>`;
+        return div;
+    };
+    ctrl.addTo(mapObj);
+    return { el: ctrl, id };
+}
+
+function hidePoiLoading(ctrl) {
+    if (!ctrl || !ctrl.el) return;
+    try {
+        const el = document.getElementById(ctrl.id);
+        if (el) el.remove();
+    } catch (_) {}
+    try {
+        if (typeof ctrl.el.remove === 'function') ctrl.el.remove();
+    } catch (_) {}
+}
+
+function addPoiLegend(mapObj) {
+    // REMOVER LEGEND ANTERIOR SI EXISTE
+    const oldLegend = document.querySelector('.map-poi-legend');
+    if (oldLegend) {
+        const parent = oldLegend.closest('.leaflet-control');
+        if (parent) parent.remove();
+        else oldLegend.remove();
+    }
+
+    const legend = L.control({ position: 'bottomleft' });
+    legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'map-poi-legend');
+        const stadiumHtml = _stadiumsLoaded ? `<span style="display:flex;align-items:center;gap:4px;color:#ccc;"><span style="width:18px;height:18px;background:#27AE60;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-futbol"></i></span> Estadio</span>` : '';
+        div.innerHTML = `
+            <div style="background:rgba(10,10,10,0.9);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);font-size:0.65rem;">
+                <div style="color:#fff;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:6px;letter-spacing:0.5px;">
+                    <i class="fas fa-map-pin" style="color:var(--dorado);"></i> PUNTOS DE INTERÉS
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <span style="display:flex;align-items:center;gap:4px;color:#ccc;">
+                        <span style="width:18px;height:18px;background:#9B59B6;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-theater-masks"></i></span> Teatro/Museo
+                    </span>
+                    <span style="display:flex;align-items:center;gap:4px;color:#ccc;">
+                        <span style="width:18px;height:18px;background:#E74C3C;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-film"></i></span> Cine
+                    </span>
+                    ${stadiumHtml}
+                </div>
+            </div>`;
+        return div;
+    };
+    legend.addTo(mapObj);
 }
 
 const DatosCarrusel = [
@@ -279,6 +597,31 @@ export function findNearestBranch(targetMap = null) {
 
         if (!window.allBranchesMap || window.allBranchesMap.length === 0) return;
 
+        // LIMPIAR MARCADOR Y CIRCULO ANTERIOR DEL USUARIO
+        if (window._userMarker && activeMap) activeMap.removeLayer(window._userMarker);
+        if (window._userCircle && activeMap) activeMap.removeLayer(window._userCircle);
+
+        // MARCADOR DE UBICACION REAL DEL USUARIO
+        const userIcon = L.divIcon({
+            className: 'user-location-marker',
+            html: `<div style="width:22px;height:22px;background:#4285F4;border:3px solid #fff;border-radius:50%;box-shadow:0 0 20px rgba(66,133,244,0.8);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;background:#fff;border-radius:50%;"></div></div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+        });
+        window._userMarker = L.marker([myLat, myLng], { icon: userIcon, zIndexOffset: 1000 })
+            .addTo(activeMap)
+            .bindPopup(`<div style="text-align:center;padding:5px;color:#fff;"><b>📍 Tu ubicación</b></div>`);
+
+        // CIRCULO DE PRECISION ALREDEDOR DEL USUARIO
+        window._userCircle = L.circle([myLat, myLng], {
+            radius: pos.coords.accuracy || 50,
+            color: '#4285F4',
+            fillColor: '#4285F4',
+            fillOpacity: 0.1,
+            weight: 2,
+            opacity: 0.4
+        }).addTo(activeMap);
+
         let nearest = null;
         let minDistance = Infinity;
 
@@ -292,15 +635,26 @@ export function findNearestBranch(targetMap = null) {
         });
 
         if (nearest && activeMap) {
-            activeMap.setView([nearest.latitude, nearest.longitude], 15);
-            
-            // EFECTO VISUAL: RESALTAR MARCADOR (INTENTAR ENCONTRAR EL DIV POR ID SI EXISTE)
-            // NOTA: EN MULTI-MAPA EL ID PODRIA REPETIRSE SI NO SE MANEJA BIEN, 
-            // PERO LEAFLET MANEJA SUS PROPIOS ESTADOS.
-            
+            // AJUSTAR VISTA PARA MOSTRAR AMBOS PUNTOS
+            const bounds = L.latLngBounds(L.latLng(myLat, myLng), L.latLng(nearest.latitude, nearest.longitude));
+            activeMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+
             nearest.markers && Object.values(nearest.markers).forEach(m => {
-                if (m._map === activeMap) m.openPopup();
+                if (m._map === activeMap) {
+                    m.openPopup();
+                    setTimeout(() => {
+                        if (activeMap) activeMap.invalidateSize();
+                    }, 200);
+                }
             });
+
+            // ACTUALIZAR OVERLAY CON DISTANCIA
+            const sel = document.querySelector('.map-overlay.active, .map-overlay-fullscreen.active');
+            if (sel) {
+                const distKm = minDistance < 1 ? `${(minDistance * 1000).toFixed(0)} m` : `${minDistance.toFixed(1)} km`;
+                const distP = sel.querySelector('p');
+                if (distP) distP.innerText = `${nearest.nombre} — ${distKm}`;
+            }
 
             toast(`Sucursal más cercana: ${nearest.nombre} (a ${(minDistance).toFixed(1)} km)`);
         }
@@ -309,3 +663,5 @@ export function findNearestBranch(targetMap = null) {
         toast('No se pudo obtener tu ubicación.');
     });
 }
+
+
