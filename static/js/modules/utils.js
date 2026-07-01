@@ -257,3 +257,6 @@ export function detectVehicleType(plate) {
     
     return null; // INDETERMINADO
 }
+
+// EXPONER GLOBALMENTE PARA SCRIPTS QUE NO SON MODULOS
+window.formatNum = formatNum;

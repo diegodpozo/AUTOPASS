@@ -3638,3 +3638,126 @@
         padding: 8px 10px;
     }
 }
+
+/* ==========================================================================
+   RESPONSIVE 480px: MAXIMIZAR ESPACIO EN PANTALLAS CHICAS
+   ========================================================================== */
+@media (max-width: 480px) {
+    .greeting-premium {
+        margin-bottom: 0.75rem;
+    }
+    .greeting-premium h2 {
+        font-size: 1.2rem;
+    }
+    .greeting-premium p {
+        font-size: 0.7rem;
+        margin-top: 0.125rem;
+    }
+    .portal-home-grid {
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+    .portal-home-grid .mt-20 {
+        margin-top: 0.625rem;
+    }
+    .portal-home-grid .grid-col {
+        gap: 0.875rem;
+    }
+    .section-title-premium {
+        margin-bottom: 0.625rem !important;
+    }
+    .section-title-premium h3 {
+        font-size: 0.85rem !important;
+    }
+    .map-and-stats-side {
+        gap: 0.625rem;
+    }
+    .portal-map-container {
+        height: 20rem;
+    }
+    #reserva-form-content {
+        padding: 0.75rem 0.5rem !important;
+    }
+    #reserva-no-vehicles {
+        padding: 1rem 0.625rem !important;
+    }
+    #reserva-form-content .reservation-form-modern .flex-col.gap-20 {
+        gap: 0.75rem;
+    }
+    #reserva-form-content .reservation-form-modern [style*="gap: 20px"] {
+        gap: 0.625rem !important;
+    }
+    #reserva-form-content .form-group-premium {
+        max-width: 100% !important;
+    }
+    #reserva-form-content .form-group-premium label {
+        font-size: 0.75rem !important;
+    }
+    #reserva-form-content .form-group-premium select,
+    #reserva-form-content .form-group-premium input {
+        font-size: 0.9rem !important;
+    }
+    .select-wrapper-premium select {
+        padding: 0.625rem 1.875rem 0.625rem 2.25rem !important;
+        font-size: 0.9rem !important;
+    }
+    .select-wrapper-premium i {
+        left: 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+    .select-wrapper-premium::after {
+        right: 0.625rem !important;
+        font-size: 0.65rem !important;
+    }
+    .input-premium {
+        padding: 0.625rem 0.75rem !important;
+        font-size: 0.9rem !important;
+        height: 2.625rem !important;
+    }
+    .input-premium-sm {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+    #reserva-total-est {
+        font-size: 1.5rem !important;
+    }
+    .btn-confirm-premium {
+        height: 2.875rem !important;
+        font-size: 0.9rem !important;
+        padding: 0.75rem 1.5rem !important;
+    }
+    .price-summary-premium .total-label {
+        font-size: 0.65rem;
+    }
+    #dynamic-fields-premium .dynamic-row-premium {
+        gap: 0.5rem !important;
+    }
+    #dynamic-fields-premium .dynamic-row-premium .form-group-premium {
+        max-width: 6.25rem !important;
+    }
+    #dynamic-fields-premium #hourly-fields {
+        gap: 0.5rem !important;
+    }
+    #dynamic-fields-premium #hourly-fields .form-group-premium:nth-child(1),
+    #dynamic-fields-premium #hourly-fields .form-group-premium:nth-child(2) {
+        max-width: 10.625rem !important;
+        flex: 1 !important;
+    }
+    #dynamic-fields-premium #hourly-fields .form-group-premium:nth-child(3) {
+        max-width: 5.625rem !important;
+    }
+    .quick-actions-grid {
+        gap: 0.5rem;
+    }
+    .quick-actions-grid .action-btn-premium {
+        padding: 0.625rem 0.5rem !important;
+    }
+    .quick-actions-grid .action-btn-premium span {
+        font-size: 0.7rem !important;
+    }
+    .reservation-footer-premium {
+        margin-top: 1.125rem !important;
+        padding-top: 0.875rem !important;
+        gap: 0.875rem !important;
+    }
+}
