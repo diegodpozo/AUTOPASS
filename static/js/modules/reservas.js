@@ -387,7 +387,7 @@ export function updateReservationPrice() {
         }
     } catch (e) { console.error("Error calculando precio:", e); }
 
-    if (totalEl) totalEl.innerText = total > 0 ? `$ ${total.toLocaleString()}` : '$ ---';
+    if (totalEl) totalEl.innerText = total > 0 ? `$ ${formatNum(total)}` : '$ ---';
 }
 
 export function updateFormGroups(type) {
