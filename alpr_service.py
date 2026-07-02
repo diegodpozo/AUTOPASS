@@ -65,17 +65,19 @@ PLATE_ALLOWLIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 # 4. ABC 1234 (URUGUAY MERCOSUR)
 # 5. ABCD 123 / 123 ABCD (PARAGUAY MERCOSUR)
 # Regex base para placas comunes + patrones mixtos (incluye variantes motos de 2 filas)
-LATAM_PLATE_PATTERN = r'\b(' + \
-    r'[A-Z]{3}\d{3}' + r'|' + \
-    r'[A-Z]{2}\d{3}[A-Z]{2}' + r'|' + \
-    r'[A-Z]{3}\d[A-Z]\d{2}' + r'|' + \
-    r'[A-Z]{3}\d{4}' + r'|' + \
-    r'[A-Z]{4}\d{3}' + r'|' + \
-    r'\d{3}[A-Z]{4}' + r'|' + \
+LATAM_PLATE_PATTERN = (
+    r'\b(' +
+    r'[A-Z]{3}\d{3}' + r'|' +
+    r'[A-Z]{2}\d{3}[A-Z]{2}' + r'|' +
+    r'[A-Z]{3}\d[A-Z]\d{2}' + r'|' +
+    r'[A-Z]{3}\d{4}' + r'|' +
+    r'[A-Z]{4}\d{3}' + r'|' +
+    r'\d{3}[A-Z]{4}' + r'|' +
     # Motos / patentes compactas (ej: fila superior 2 letras + digito; inferior digito + 3 letras -> formas combinadas)
-    r'[A-Z]{2}\d{1,3}[A-Z]{3}' + r'|' + \
-    r'[A-Z]{1,2}\d{1,4}[A-Z]{1,3}' + r'
-)\b'
+    r'[A-Z]{2}\d{1,3}[A-Z]{3}' + r'|' +
+    r'[A-Z]{1,2}\d{1,4}[A-Z]{1,3}' + r')\b'
+)
+
 
 class ALPREngine:
     def __init__(self):
@@ -465,7 +467,7 @@ class ALPREngine:
         try:
             _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             img_b64 = base64.b64encode(buffer).decode('utf-8')
-            endpoint = "/v1/access/validate-plate" if GATE_TYPE == "entrada" else "/v1/access/exit-plate"
+            endpoint = "/v1/access/validate-plate" if GATE_TYPE in ("entrada", "patente") else "/v1/access/exit-plate"
             if type == "qr": endpoint = "/v1/access/validate-qr"
             payload_key = "plate" if type != "qr" else "qr_data"
             payload = {"gate_id": GATE_ID, "image_base64": img_b64, payload_key: data}
@@ -554,10 +556,22 @@ def main():
         print(f"[!] ADVERTENCIA: No se recibe imagen de la fuente {VIDEO_SOURCE}. Verificá la URL o el dispositivo.")
 
     try:
+        # PREDIO: Solo streaming de video. No OCR, no QR.
+        if GATE_TYPE == "predio":
+            threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer),), daemon=True).start()
+            print(f"[*] Modo PREDIO: Streaming activo en {GATE_ID}. Escaneo desactivado.")
+            while True:
+                time.sleep(1)
+
         engine = ALPREngine()
-        threading.Thread(target=engine.ocr_worker, daemon=True).start()
+        
+        # Iniciar worker OCR solo si el modo requiere lectura de patente (patente, entrada, salida)
+        if GATE_TYPE in ("entrada", "salida", "patente"):
+            threading.Thread(target=engine.ocr_worker, daemon=True).start()
+            
         threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer),), daemon=True).start()
-        print(f"[*] Bucle de escaneo activo en {GATE_ID}. 'Ctrl+C' para salir.")
+        print(f"[*] Bucle de escaneo activo en {GATE_ID} (Modo: {GATE_TYPE.upper()}). 'Ctrl+C' para salir.")
+        
         last_ocr_time = 0
         while True:
             frame = streamer.get_frame()
@@ -565,38 +579,39 @@ def main():
                 time.sleep(0.1); continue
             now = time.time()
 
-            # QUICK QR CHECK: detect QR on a small fast-resized frame to react faster than OCR
-            try:
-                small = cv2.resize(frame, (320, 240))
-                qr_data, _, _ = engine.qr_detector.detectAndDecode(small)
-                if qr_data:
-                    print(f"[ALPR QUICK QR] QR detectado en main loop: len={len(qr_data)} preview={qr_data[:80]}")
-                    engine.send_event("qr", qr_data, frame)
-                    last_ocr_time = now
-                    time.sleep(0.05)
-                    continue
-            except Exception:
-                pass
+            # QUICK QR CHECK: Solo si el modo requiere lectura de QR (qr, entrada, salida)
+            if GATE_TYPE in ("entrada", "salida", "qr"):
+                try:
+                    small = cv2.resize(frame, (320, 240))
+                    qr_data, _, _ = engine.qr_detector.detectAndDecode(small)
+                    if qr_data:
+                        print(f"[ALPR QUICK QR] QR detectado en main loop: len={len(qr_data)} preview={qr_data[:80]}")
+                        engine.send_event("qr", qr_data, frame)
+                        last_ocr_time = now
+                        time.sleep(0.05)
+                        continue
+                except Exception:
+                    pass
 
-            if now - last_ocr_time > OCR_INTERVAL:
-                if engine.detect_motion(frame):
-                    # enqueue or drop-oldest policy when full (prefer recent frames)
-                    try:
-                        if not engine.frame_queue.full():
-                            engine.frame_queue.put(frame)
-                            print(f"[ALPR] Frame encolado. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
-                            last_ocr_time = now
-                        else:
-                            # drop the oldest frame to make room for newest
-                            try:
-                                engine.frame_queue.get_nowait()
+            # OCR CHECK: Solo si el modo requiere lectura de patente (patente, entrada, salida)
+            if GATE_TYPE in ("entrada", "salida", "patente"):
+                if now - last_ocr_time > OCR_INTERVAL:
+                    if engine.detect_motion(frame):
+                        try:
+                            if not engine.frame_queue.full():
                                 engine.frame_queue.put(frame)
-                                print(f"[ALPR] frame_queue lleno. descartado el más antiguo y encolado el nuevo. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
+                                print(f"[ALPR] Frame encolado. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
                                 last_ocr_time = now
-                            except Exception:
-                                print(f"[ALPR] frame_queue lleno. descartando frame. t={now:.3f}")
-                    except Exception:
-                        print(f"[ALPR] Error gestionando frame_queue. t={now:.3f}")
+                            else:
+                                try:
+                                    engine.frame_queue.get_nowait()
+                                    engine.frame_queue.put(frame)
+                                    print(f"[ALPR] frame_queue lleno. descartado el más antiguo y encolado el nuevo. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
+                                    last_ocr_time = now
+                                except Exception:
+                                    print(f"[ALPR] frame_queue lleno. descartando frame. t={now:.3f}")
+                        except Exception:
+                            print(f"[ALPR] Error gestionando frame_queue. t={now:.3f}")
             time.sleep(0.01)
     except Exception as e:
         print(f"[!] Error FATAL en el bucle principal: {e}")

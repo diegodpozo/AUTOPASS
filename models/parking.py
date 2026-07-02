@@ -24,6 +24,17 @@ class Settings(Base):
     valor_str = Column(String, nullable=True) # PARA CONFIGURACIONES DE TEXTO (IPS, ETC)
     sucursal = Column(String, nullable=True) #NONE = CONFIGURACION GLOBAL
 
+class ParkingCamera(Base):
+    """CONFIGURACION DE CAMARAS DE MONITOREO DEL ESTACIONAMIENTO."""
+    __tablename__ = "parking_cameras"
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, nullable=False)
+    tipo = Column(String, nullable=False) # 'ENTRADA', 'SALIDA', 'PREDIO', 'PATENTE', 'QR'
+    source = Column(String, nullable=False) # IP de camara, path de video o id de camara web (ej. "0")
+    sucursal = Column(String, nullable=True) # Aislamiento por sucursal
+    activa = Column(Boolean, default=True)
+
+
 class AccessLog(Base):
     """AUDITORIA VISUAL Y CRONOLOGICA DE ACCESOS (ALPR)."""
     __tablename__ = "access_logs"

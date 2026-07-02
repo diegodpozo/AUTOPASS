@@ -11,6 +11,7 @@ from sqlalchemy import text
 from typing import Dict, List
 from pydantic import BaseModel
 import models
+import schemas
 import unicodedata
 from core.database import get_db
 from services.time_service import TimeService
@@ -159,13 +160,23 @@ def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_o
             alpr_status[gate] = "ONLINE" if (now - ts).total_seconds() < 90 else "OFFLINE"
     else:
         # STAFF SOLO VE SUS CAMARAS
-        prefix = f"{staff.sucursal.upper()}_" if staff.sucursal else ""
-        gates_to_check = [f"{prefix}ENTRADA", f"{prefix}SALIDA"]
-        for gate in gates_to_check:
-            status = "OFFLINE"
-            if gate in ALPR_HEARTBEATS:
-                if (now - ALPR_HEARTBEATS[gate]).total_seconds() < 90: status = "ONLINE"
-            alpr_status[gate] = status
+        cameras = db.query(models.ParkingCamera).filter(models.ParkingCamera.sucursal == staff.sucursal).all()
+        if not cameras:
+            prefix = normalize_system_name(staff.sucursal)
+            gates_to_check = [f"{prefix}_ENTRADA", f"{prefix}_SALIDA"]
+            for gate in gates_to_check:
+                status = "OFFLINE"
+                if gate in ALPR_HEARTBEATS:
+                    if (now - ALPR_HEARTBEATS[gate]).total_seconds() < 90: status = "ONLINE"
+                alpr_status[gate] = status
+        else:
+            for c in cameras:
+                norm_suc = normalize_system_name(c.sucursal) if c.sucursal else "GLOBAL"
+                proc_id = f"{norm_suc}_{c.tipo}_{c.id}".upper()
+                status = "OFFLINE"
+                if proc_id in ALPR_HEARTBEATS:
+                    if (now - ALPR_HEARTBEATS[proc_id]).total_seconds() < 90: status = "ONLINE"
+                alpr_status[proc_id] = status
         
     return {"database": "ONLINE" if db_ok else "OFFLINE", "alpr": alpr_status, "api": "ONLINE"}
 
@@ -327,6 +338,159 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
             if gate_id in CAMERA_PROCESSES:
                 del CAMERA_PROCESSES[gate_id]
             return {"status": "ok", "message": "Servicio detenido"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+            
+    return {"status": "error", "message": "Acción no válida"}
+
+@router.get("/cameras", response_model=List[schemas.CameraResponse])
+def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    query = db.query(models.ParkingCamera)
+    if staff.rol != "admin" and staff.sucursal:
+        query = query.filter(models.ParkingCamera.sucursal == staff.sucursal)
+    cameras = query.all()
+    res = []
+    for c in cameras:
+        norm_suc = normalize_system_name(c.sucursal) if c.sucursal else "GLOBAL"
+        proc_id = f"{norm_suc}_{c.tipo}_{c.id}".upper()
+        is_running = proc_id in CAMERA_PROCESSES and CAMERA_PROCESSES[proc_id].poll() is None
+        res.append(schemas.CameraResponse(
+            id=c.id,
+            nombre=c.nombre,
+            tipo=c.tipo,
+            source=c.source,
+            activa=c.activa,
+            sucursal=c.sucursal,
+            is_running=is_running
+        ))
+    return res
+
+@router.post("/cameras", response_model=schemas.CameraResponse)
+def create_camera(data: schemas.CameraCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    sucursal = staff.sucursal if staff.rol != "admin" else data.sucursal
+    new_cam = models.ParkingCamera(
+        nombre=data.nombre,
+        tipo=data.tipo.upper(),
+        source=data.source,
+        sucursal=sucursal,
+        activa=data.activa
+    )
+    db.add(new_cam)
+    db.commit()
+    db.refresh(new_cam)
+    return schemas.CameraResponse(
+        id=new_cam.id,
+        nombre=new_cam.nombre,
+        tipo=new_cam.tipo,
+        source=new_cam.source,
+        activa=new_cam.activa,
+        sucursal=new_cam.sucursal,
+        is_running=False
+    )
+
+@router.put("/cameras/{camera_id}", response_model=schemas.CameraResponse)
+def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
+    if not camera:
+        raise HTTPException(status_code=404, detail="Cámara no encontrada")
+    if staff.rol != "admin" and camera.sucursal != staff.sucursal:
+        raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
+    camera.nombre = data.nombre
+    camera.tipo = data.tipo.upper()
+    camera.source = data.source
+    camera.activa = data.activa
+    if staff.rol == "admin":
+        camera.sucursal = data.sucursal
+    db.commit()
+    db.refresh(camera)
+    
+    norm_suc = normalize_system_name(camera.sucursal) if camera.sucursal else "GLOBAL"
+    proc_id = f"{norm_suc}_{camera.tipo}_{camera.id}".upper()
+    is_running = proc_id in CAMERA_PROCESSES and CAMERA_PROCESSES[proc_id].poll() is None
+    
+    return schemas.CameraResponse(
+        id=camera.id,
+        nombre=camera.nombre,
+        tipo=camera.tipo,
+        source=camera.source,
+        activa=camera.activa,
+        sucursal=camera.sucursal,
+        is_running=is_running
+    )
+
+@router.delete("/cameras/{camera_id}")
+def delete_camera(camera_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
+    if not camera:
+        raise HTTPException(status_code=404, detail="Cámara no encontrada")
+    if staff.rol != "admin" and camera.sucursal != staff.sucursal:
+        raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
+        
+    norm_suc = normalize_system_name(camera.sucursal) if camera.sucursal else "GLOBAL"
+    proc_id = f"{norm_suc}_{camera.tipo}_{camera.id}".upper()
+    if proc_id in CAMERA_PROCESSES:
+        proc = CAMERA_PROCESSES[proc_id]
+        try:
+            if proc.poll() is None:
+                if os.name == 'nt':
+                    subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    proc.terminate()
+        except: pass
+        del CAMERA_PROCESSES[proc_id]
+        
+    db.delete(camera)
+    db.commit()
+    return {"status": "ok", "message": "Cámara eliminada"}
+
+@router.post("/cameras/{camera_id}/control/{action}")
+def control_dynamic_camera_service(camera_id: int, action: str, request: Request, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
+    if not camera:
+        raise HTTPException(status_code=404, detail="Cámara no encontrada")
+    if staff.rol != "admin" and camera.sucursal != staff.sucursal:
+        raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
+        
+    norm_suc = normalize_system_name(camera.sucursal) if camera.sucursal else "GLOBAL"
+    proc_id = f"{norm_suc}_{camera.tipo}_{camera.id}".upper()
+    
+    if action == "start":
+        if proc_id in CAMERA_PROCESSES and CAMERA_PROCESSES[proc_id].poll() is None:
+            return {"status": "error", "message": "Ya está en ejecución"}
+            
+        base_url = str(request.base_url).rstrip("/")
+        env = os.environ.copy()
+        env["GATE_ID"] = proc_id
+        env["VIDEO_SOURCE"] = camera.source
+        env["GATE_TYPE"] = camera.tipo.lower()
+        env["BACKEND_URL"] = base_url
+        
+        try:
+            print(f"[*] Iniciando ALPR para {camera.nombre} ({proc_id}) con fuente: {camera.source}")
+            proc = subprocess.Popen(
+                [sys.executable, "alpr_service.py"],
+                env=env,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
+            )
+            CAMERA_PROCESSES[proc_id] = proc
+            return {"status": "ok", "message": f"Servicio para {camera.nombre} iniciado"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+            
+    elif action == "stop":
+        if proc_id not in CAMERA_PROCESSES:
+            return {"status": "error", "message": "No está en ejecución"}
+            
+        proc = CAMERA_PROCESSES[proc_id]
+        try:
+            if proc.poll() is None:
+                if os.name == 'nt':
+                    subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    proc.terminate()
+            if proc_id in CAMERA_PROCESSES:
+                del CAMERA_PROCESSES[proc_id]
+            return {"status": "ok", "message": f"Servicio para {camera.nombre} detenido"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
             

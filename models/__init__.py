@@ -1,7 +1,7 @@
 from core.database import Base
 from .user import User, Vehicle, PointsLog, Promotion
 from .reservation import Reservation, Coupon
-from .parking import ParkingAforo, Settings, AccessLog, ParkingBranch, ParkingFloor
+from .parking import ParkingAforo, Settings, AccessLog, ParkingBranch, ParkingFloor, ParkingCamera
 from .notification import UserNotification
 
 # --- RE-EXPORTACION PARA COMPATIBILIDAD ---

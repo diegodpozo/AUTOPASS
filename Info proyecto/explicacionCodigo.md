@@ -34,6 +34,15 @@ EL SISTEMA SE COMPONE DE CUATRO CAPAS PRINCIPALES:
   - AL VENCER (WORKER): LIBERA LA PLAZA AUTOMATICAMENTE.
 * **COMUNICACION CON HARDWARE:** SI EL ACCESO ES VALIDO, ENVIA UN MENSAJE POR **MQTT** PARA QUE LA BARRERA SE ABRA.
 
+### CENTRO DE MONITOREO DVR (TEMPLATES/MONITOREO_LIVE.HTML)
+* **TECNOLOGIA:** HTML5, CSS GRID, VANILLA JS Y WEBSOCKETS.
+* **FUNCIONAMIENTO:**
+  1. Consulta las cámaras configuradas en la sede actual.
+  2. Genera una grilla dinámica en la que todas las cámaras ocupan el mismo tamaño exacto y llenan la pantalla de forma uniforme.
+  3. Adapta las columnas y filas según la cantidad de cámaras configuradas, evitando mostrar slots desconectados o sin asignación.
+  4. Los controles de navegación, selección de sede y reloj del sistema flotan en un panel semi-transparente en la esquina superior derecha.
+  5. Cada cámara incluye un HUD overlay que muestra su tipo/función (Lectura Patente, Lectura QR o Vigilancia) y un cronómetro con prefijo de grabación `■`.
+
 ### SERVICIO DE RECONOCIMIENTO (ALPR_SERVICE.PY)
 * **TECNOLOGIA:** OPENCV (PARA PROCESAMIENTO DE IMAGENES) Y EASYOCR (PARA LECTURA DE TEXTO).
 * **MODOS DE OPERACION:**

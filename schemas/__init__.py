@@ -4,7 +4,8 @@ from .user import (
 )
 from .parking import (
     PlateValidation, QRValidation, AccessResponse, ParkingStatus, 
-    BranchCreate, BranchResponse, BranchPublicResponse, FloorCreate, FloorResponse
+    BranchCreate, BranchResponse, BranchPublicResponse, FloorCreate, FloorResponse,
+    CameraCreate, CameraResponse
 )
 from .reservation import (
     ReservationCreate, UserReservationCreate, AdminReservationCreate, 
