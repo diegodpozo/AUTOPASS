@@ -948,11 +948,11 @@ window.savePBCapacity = admin.savePBCapacity;
 window.toggleLevelEdit = admin.toggleLevelEdit;
 
 // CAMERAS
-window.openCameraConfig = ui.openCameraConfig;
-window.toggleCameraService = ui.toggleCameraService;
-window.handleSaveCamConfig = ui.handleSaveCamConfig;
 window.loadCameraSettings = ui.loadCameraSettings;
-window.saveCameraSettings = ui.saveCameraSettings;
-window.toggleCameraServiceSettings = ui.toggleCameraServiceSettings;
-window.toggleCameraLink = ui.toggleCameraLink;
+window.showCreateCameraModal = ui.showCreateCameraModal;
+window.showEditCameraModal = ui.showEditCameraModal;
+window.handleSaveCameraConfig = ui.handleSaveCameraConfig;
+window.deleteCamera = ui.deleteCamera;
+window.toggleDynamicCameraService = ui.toggleDynamicCameraService;
+
 

@@ -85,3 +85,21 @@ class BranchPublicResponse(BranchBase):
 
     class Config:
         from_attributes = True
+
+class CameraBase(BaseModel):
+    nombre: str
+    tipo: str # 'ENTRADA', 'SALIDA', 'PREDIO', 'PATENTE', 'QR'
+    source: str
+    activa: bool = True
+    sucursal: Optional[str] = None
+
+class CameraCreate(CameraBase):
+    pass
+
+class CameraResponse(CameraBase):
+    id: int
+    is_running: bool = False
+
+    class Config:
+        from_attributes = True
+

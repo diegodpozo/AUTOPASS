@@ -2,7 +2,13 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.3.0)
+## Últimas Actualizaciones (v9.4.0 - Julio 2026)
+- **Monitoreo DVR CCTV Dinámico**: Nuevo visor de cámaras en grilla auto-ajustable de tamaño uniforme. Elimina los slots fijos de "NO SIGNAL" para cámaras no configuradas y adapta el diseño (1x1, 2x1, 2x2, 3x2, 3x3) según la cantidad de cámaras configuradas.
+- **Identificadores HUD**: Indicador técnico explícito de la función de cada cámara en el visor (ej. LECTURA PATENTE ENTRADA/SALIDA, LECTURA QR, VIGILANCIA).
+- **Panel Flotante de DVR**: Reemplazo de la botonera superior por un panel flotante semi-transparente en la esquina superior derecha que integra controles de navegación, reloj y selector de sucursal.
+- **Detalles DVR CCTV Estilo Industrial**: Agregado el indicador de grabación cuadrado relleno `■` en la duración (`DUR : HH:MM:SS:FF`) y ajuste de espaciado digital.
+
+## Últimas Actualizaciones Previas (v9.3.0)
 - **FAB "Nueva Reserva" en Perfil**: Botón flotante con animación expansiva, oculto en la tab "inicio". Reemplaza botones redundantes en cada tab del perfil.
 - **Monitoreo Limpio**: Cards de aforo sin texto repetido ("Tot. Disp." eliminado). Barras de progreso con colores dinámicos (verde/amarillo/naranja/rojo).
 - **Worker Robusto**: DB sessions con `try/finally` para evitar `QueuePool limit` errors. Pool size aumentado a 10 con overflow 20.

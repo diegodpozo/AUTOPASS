@@ -68,6 +68,11 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
    - Al aplicar, disparar `showConfirm` con resumen. El sistema guarda y vuelve a bloquear los campos automáticamente.
 5. **Reportes Financieros**: Al agregar nuevos reportes o filtros, asegurar la integración de `vehicle_type` y `payment_method` ('all', 'DIGITAL', 'CAJA').
 6. **Gestión de Cámaras**: UI con botones Play/Stop por cámara, input de IP, indicador de estado (conectado/desconectado).
+7. **Centro de Monitoreo Dinámico**:
+   - Fondo `#000000` y bordes finos `#ffffff` (cambian a `#00bcd4` al hacer hover).
+   - Sin cabecera superior: barra de mandos flotante a la derecha con posición fija (`.cctv-floating-controls`).
+   - Rejilla adaptativa: las cámaras ocupan el mismo tamaño y la grilla se ajusta según la cantidad (1x1, 2x1, 2x2, 3x2, 3x3).
+   - Identificadores de función visibles en la cabecera de cada slot (ej: `[LECTURA PATENTE (ENTRADA)]`).
 7. **Monitoreo de Salud**: Puntos de indicador (verde/rojo) para servicios del sistema en dashboard.
 
 ---

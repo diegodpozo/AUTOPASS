@@ -1,6 +1,12 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-06-23)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-07-02)
 
-### 🚀 Hitos Recientes (Junio 2026) - Versión 9.2.0 (Reservas & Aforo Inteligente)
+### 🚀 Hitos Recientes (Julio 2026) - Versión 9.4.0 (DVR CCTV Overhaul & Dynamic Layout)
+- [x] **Grilla CCTV Dinámica**: Rediseño total de la grilla de monitoreo multi-cámara. Se adaptan los visores para que tengan exactamente el mismo tamaño, suprimiendo las cards de "NO SIGNAL" para puertos vacíos.
+- [x] **Panel Flotante de Mandos**: Reemplazo de la cabecera completa por un control flotante semi-transparente que contiene reloj, botón de volver y selector de sede.
+- [x] **Identificadores Explícitos**: Incorporación de tags y descripciones de función en cada cámara para saber si realizan LECTURA PATENTE (ENTRADA/SALIDA), LECTURA QR, o VIGILANCIA.
+- [x] **Detalles Estéticos DVR**: Incorporación de indicadores reales de CCTV, incluyendo el símbolo `■` de almacenamiento/duración y la hora digital espaciada.
+
+### 🚀 Hitos Previos (Junio 2026) - Versión 9.2.0 (Reservas & Aforo Inteligente)
 - [x] **Reserva de Aforo en Pago**: Las reservas de tipo Día, Semana, Quincena y Mes descuentan la plaza del aforo al momento del pago, liberándola solo al vencimiento o cancelación.
 - [x] **Tránsito Libre con Reserva**: Los clientes con reserva no horaria pueden entrar y salir libremente durante el período sin perder la plaza reservada.
 - [x] **Liberación Automática al Vencer**: El sistema libera la plaza automáticamente cuando la reserva expira, incluso si el vehículo nunca ingresó.
@@ -44,6 +50,11 @@
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.
 - **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago.
 - **Monitoreo**: ALPR en vivo con gestión centralizada y aforo real-time.
+
+### Cambios técnicos recientes (2026-07-02)
+- Monitoreo: Refactorizado `monitoreo_live.html` utilizando CSS Grid dinámico autogestionado por JavaScript (N cámaras adaptadas en columnas/filas variables).
+- HUD: Modificados los metadatos de superposición visual para incluir prefijo de grabación `■` en duraciones y concatenar la función de la cámara (`cam.tipo`) al nombre del dispositivo.
+- Controles: Movidos los controles de backend de la vista de video a un div con `position: fixed` en la esquina superior derecha del viewport.
 
 ### Cambios técnicos recientes (2026-06-23)
 - ALPR: Quick QR detection añadido para captura rápida de códigos QR; cooldown/debounce de **10s** para suprimir eventos duplicados.
