@@ -1,5 +1,10 @@
 import api from './api.js';
+<<<<<<< HEAD
 import { normalizeSystemName, showToast, showConfirm } from './utils.js';
+=======
+import { normalizeSystemName, showToast } from './utils.js';
+import { getVirtualNow } from './virtual-time.js';
+>>>>>>> 189c3ba (VISUALIZACION PLAZAS + ARREGLOS DE TIEMPOS)
 
 /**
  * PANEL UI MODULO
@@ -11,8 +16,7 @@ export function initClock() {
     if (!clockEl) return;
     
     const update = () => {
-        const now = new Date();
-        clockEl.innerText = now.toLocaleTimeString('es-AR', { hour12: false });
+        clockEl.innerText = getVirtualNow().toLocaleTimeString('es-AR', { hour12: false });
     };
     
     update();

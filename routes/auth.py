@@ -26,7 +26,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @router.post("/forgot-password")
 def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = Depends(get_db)):
     """GENERA UN TOKEN DE RECUPERACION Y ENVIA UN CORREO AL USUARIO."""
-    user = db.query(models.User).filter(models.User.email == request.email.lower().strip()).first()
+    user = db.query(models.User).filter(models.User.email == request.email.lower().strip(), models.User.is_deleted == False).first()
     if not user:
         #POR SEGURIDAD, NO REVELAMOS SI EL CORREO EXISTE O NO
         return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
@@ -59,7 +59,7 @@ def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Dep
     except JWTError:
         raise HTTPException(status_code=400, detail="El enlace de recuperación ha expirado o es inválido.")
     
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(models.User).filter(models.User.email == email, models.User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
     

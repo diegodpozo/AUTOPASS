@@ -1,5 +1,6 @@
 import api from './api.js';
 import { toTitle, formatDate, formatPlate, showToast, showConfirm, formatNum } from './utils.js';
+import { getVirtualNow } from './virtual-time.js';
 
 /**
  * RESERVAS MODULO
@@ -22,7 +23,7 @@ export function initReservationForm() {
         window.flatpickr.localize(window.flatpickr.l10ns.es);
     }
 
-    const now = typeof window.getVirtualNow === 'function' ? window.getVirtualNow() : new Date();
+    const now = getVirtualNow();
     const maxDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
     const commonConfig = {
         minDate: "today",
@@ -262,7 +263,7 @@ export async function prepareEditReservation(id) {
     const r = all.find(item => item.id === id);
     if (!r) return;
 
-    const now = new Date();
+    const now = getVirtualNow();
     const start = new Date(r.fecha_inicio.replace(/-/g, "/"));
     if (r.tipo_estadia === 'hora' && (start - now) < RESERVA_MIN_MS) {
         return showToast(`No se puede modificar con menos de ${RESERVA_MIN_MIN} minutos de antelación`);
@@ -460,7 +461,7 @@ export async function createReservation(e) {
             const hoursQty = parseInt(document.querySelector('.res-hours-qty').value) || 1;
             if (!fecha || !hora) { console.groupEnd(); return showToast('Seleccioná fecha y hora'); }
             inicio = `${fecha} ${hora}`;
-            const now = new Date();
+            const now = getVirtualNow();
             const startDt = new Date(inicio.replace(/-/g, "/"));
             if ((startDt - now) < RESERVA_MIN_MS) { console.groupEnd(); return showToast(`Mínimo ${RESERVA_MIN_MIN} minutos de anticipación.`); }
             const endDt = new Date(startDt.getTime() + hoursQty * 60 * 60 * 1000);
@@ -660,7 +661,7 @@ export async function loadReservations() {
     const active = all.filter(r => r.estado_reserva === 'Pendiente' || r.estado_reserva === 'Activa');
     historyData = all.filter(r => r.estado_reserva !== 'Pendiente' && r.estado_reserva !== 'Activa');
     
-    const now = typeof window.getVirtualNow === 'function' ? window.getVirtualNow() : new Date();
+    const now = getVirtualNow();
     const inProgress = active.filter(r => now >= new Date(r.fecha_inicio.replace(/-/g, "/")) && now < new Date(r.fecha_fin.replace(/-/g, "/")));
     const upcoming = active.filter(r => now < new Date(r.fecha_inicio.replace(/-/g, "/")));
 
@@ -708,7 +709,7 @@ export function applyHistoryFilters() {
 }
 
 export function renderReservaCard(r, isFeatured) {
-    const now = typeof window.getVirtualNow === 'function' ? window.getVirtualNow() : new Date();
+    const now = getVirtualNow();
     const start = new Date(r.fecha_inicio.replace(/-/g, "/"));
     const end = new Date(r.fecha_fin.replace(/-/g, "/"));
     let progress = 0;
@@ -727,7 +728,7 @@ export function renderReservaCard(r, isFeatured) {
             </div>
             <div class="reserva-status-ultra">
                 <div class="status-badge-ultra ${r.estado_pago.toLowerCase()}">${r.estado_pago}</div>
-                <div class="price-container-ultra"><span class="price-value-ultra">$${r.monto_total.toLocaleString()}</span></div>
+                <div class="price-container-ultra"><span class="price-value-ultra">$${formatNum(r.monto_total)}</span></div>
             </div>
         </div>
         <div class="reserva-timeline-container">
@@ -759,7 +760,7 @@ export function renderHistory(history) {
         <div class="historial-item">
             <div class="hist-icon"><i class="fas ${r.estado_reserva === 'Completada' ? 'fa-car-circle-check' : 'fa-ban'}"></i></div>
             <div class="hist-main-info"><span class="hist-title">${r.sucursal_nombre}</span><div class="hist-subtitle-group"><span class="hist-plate-badge">${formatPlate(r.patente)}</span><span class="hist-date-info">${formatDate(r.fecha_inicio).split(',')[0]}</span></div></div>
-            <div class="hist-amount-info"><span class="hist-value">$${r.monto_total.toLocaleString()}</span><div class="status-pill ${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</div></div>
+            <div class="hist-amount-info"><span class="hist-value">$${formatNum(r.monto_total)}</span><div class="status-pill ${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</div></div>
             <div class="hist-actions-group"><button class="btn-repeat-express" onclick="repeatReservation('${r.patente}','${r.sucursal_nombre}','${r.tipo_estadia}')"><i class="fas fa-rotate-right"></i></button></div>
         </div>`).join('');
 
@@ -779,7 +780,7 @@ export async function cancelReservation(id) {
             return showToast(`No se puede cancelar: ${error}`);
         }
         if (reembolso > 0) {
-            confirmMsg = `Al cancelar ahora, se te reembolsarán <b style="color:var(--dorado);">$${reembolso.toLocaleString()}</b> en tu saldo AutoPass.<br><br>¿Deseás continuar?`;
+            confirmMsg = `Al cancelar ahora, se te reembolsarán <b style="color:var(--dorado);">$${formatNum(reembolso)}</b> en tu saldo AutoPass.<br><br>¿Deseás continuar?`;
         }
     }
 

@@ -1,5 +1,6 @@
 import api from './api.js';
 import { showToast, showConfirm, formatDate, formatPlate, formatNum } from './utils.js';
+import { getVirtualNow } from './virtual-time.js';
 
 /**
  * PANEL ADMIN MODULO
@@ -155,7 +156,7 @@ export function renderUserTable(filteredData = null) {
         tbody.innerHTML = paged.map(u => {
             const isStaffOrAdmin = u.rol === 'admin' || u.rol === 'local_admin' || u.rol === 'staff';
             const puntosDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<div class="points-badge-sm mx-auto" style="display:inline-flex;"><i class="fas fa-star"></i> ${formatNum(u.puntos_acumulados || 0)}</div>`;
-            const saldoDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<span class="text-success">$${(u.saldo || 0).toLocaleString()}</span>`;
+            const saldoDisplay = isStaffOrAdmin ? '<span class="text-muted">---</span>' : `<span class="text-success">$${formatNum(u.saldo || 0)}</span>`;
 
             // PERSONALIZACION DE ETIQUETAS DE ROL
             let roleLabel = (u.rol || 'user').toUpperCase();
@@ -741,7 +742,7 @@ export async function saveAllRates() {
         const val = document.getElementById(`cfg-${key}`)?.value || 0;
         summary += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span style="color: #fff; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">${labels[key]}:</span>
-                        <b style="color: var(--dorado); font-size: 0.75rem;">$${parseFloat(val).toLocaleString()}</b>
+                        <b style="color: var(--dorado); font-size: 0.75rem;">$${formatNum(parseFloat(val))}</b>
                     </div>`;
     });
     summary += '</div>';
@@ -815,7 +816,7 @@ export async function saveRateGroup(type) {
         const val = document.getElementById(`cfg-${key}`)?.value || 0;
         summary += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span style="color: #fff; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">${labels[key]}:</span>
-                        <b style="color: var(--dorado); font-size: 0.75rem;">$${parseFloat(val).toLocaleString()}</b>
+                        <b style="color: var(--dorado); font-size: 0.75rem;">$${formatNum(parseFloat(val))}</b>
                     </div>`;
     });
     summary += '</div>';
@@ -930,7 +931,7 @@ export async function exportFinanceData() {
     
     const branchName = localStorage.getItem('sucursal') || 'global';
     const cleanBranch = branchName.replace('AUTOPASS ', '').toLowerCase().replace(/\s+/g, '_');
-    link.setAttribute("download", `reporte_financiero_${cleanBranch}_${period}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `reporte_financiero_${cleanBranch}_${period}_${getVirtualNow().toISOString().split('T')[0]}.csv`);
     
     link.style.visibility = 'hidden';
     document.body.appendChild(link);

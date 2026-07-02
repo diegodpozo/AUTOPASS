@@ -159,6 +159,7 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
 def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """CANCELA UNA ESTADIA ACTUAL. SI ESTA DENTRO DE LOS 10 MIN DE CORTESIA, NO COBRA."""
     from routes.parking import normalize_plate
+    from services.time_service import TimeService
     p = normalize_plate(plate)
     sucursal = staff.sucursal
     
@@ -172,7 +173,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
     
     # VERIFICAR CORTESIA (10 MINUTOS)
     entrada_dt = datetime.datetime.fromisoformat(ultimo.fecha_hora)
-    minutos_transcurridos = (datetime.datetime.now() - entrada_dt).total_seconds() / 60
+    minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
     
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
     if (aforo):
@@ -187,7 +188,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
             patente_detectada=p, 
             tipo_evento="SALIDA", 
             tipo_vehiculo=ultimo.tipo_vehiculo,
-            fecha_hora=datetime.datetime.now().isoformat(), 
+            fecha_hora=TimeService.now().isoformat(), 
             pago_confirmado=True, 
             costo_estadia=0.0,
             sucursal=sucursal
@@ -205,7 +206,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
             patente_detectada=p, 
             tipo_evento="SALIDA", 
             tipo_vehiculo=ultimo.tipo_vehiculo,
-            fecha_hora=datetime.datetime.now().isoformat(), 
+            fecha_hora=TimeService.now().isoformat(), 
             pago_confirmado=True, 
             sucursal=sucursal
         ))

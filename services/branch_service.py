@@ -38,7 +38,8 @@ class BranchService:
             # ADMINISTRADOR
             admin_sede = db.query(models.User).filter(
                 models.User.sucursal == b.nombre,
-                models.User.rol == "local_admin"
+                models.User.rol == "local_admin",
+                models.User.is_deleted == False
             ).first()
             b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"
 

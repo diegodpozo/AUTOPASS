@@ -1,5 +1,6 @@
 import api from './api.js';
 import { formatDate, formatPlate, formatNum } from './utils.js';
+import { getVirtualNow } from './virtual-time.js';
 
 /**
  * PANEL ESTADISTICAS MODULO
@@ -51,19 +52,31 @@ export async function loadLiveStats() {
 
         // AUTOS
         const freeEl = document.getElementById('stat-free');
+        const totalEl = document.getElementById('stat-total');
         if (freeEl) freeEl.innerText = formatNum(free);
+        if (totalEl) totalEl.innerText = formatNum(total);
+        const freeTotalEl = document.getElementById('stat-free-total');
+        if (freeTotalEl) freeTotalEl.innerText = `${formatNum(free)} / ${formatNum(total)}`;
         const barFree = document.getElementById('bar-free');
         if (barFree) setBarFill(barFree, (free / total) * 100);
 
         // MOTOS
         const freeMotosEl = document.getElementById('stat-free-motos');
+        const totalMotosEl = document.getElementById('stat-total-motos');
         if (freeMotosEl) freeMotosEl.innerText = formatNum(freeMotos);
+        if (totalMotosEl) totalMotosEl.innerText = formatNum(capMotos);
+        const freeTotalMotosEl = document.getElementById('stat-free-total-motos');
+        if (freeTotalMotosEl) freeTotalMotosEl.innerText = `${formatNum(freeMotos)} / ${formatNum(capMotos)}`;
         const barFreeMotos = document.getElementById('bar-free-motos');
         if (barFreeMotos) setBarFill(barFreeMotos, (freeMotos / capMotos) * 100);
 
         // CAMIONETAS
         const freeCamionetasEl = document.getElementById('stat-free-camionetas');
+        const totalCamionetasEl = document.getElementById('stat-total-camionetas');
         if (freeCamionetasEl) freeCamionetasEl.innerText = formatNum(freeCamionetas);
+        if (totalCamionetasEl) totalCamionetasEl.innerText = formatNum(capCamionetas);
+        const freeTotalCamionetasEl = document.getElementById('stat-free-total-camionetas');
+        if (freeTotalCamionetasEl) freeTotalCamionetasEl.innerText = `${formatNum(freeCamionetas)} / ${formatNum(capCamionetas)}`;
         const barFreeCamionetas = document.getElementById('bar-free-camionetas');
         if (barFreeCamionetas) setBarFill(barFreeCamionetas, (freeCamionetas / capCamionetas) * 100);
 
@@ -77,7 +90,7 @@ export async function loadLiveStats() {
         const entriesEl = document.getElementById('stat-entries');
         const moneyEl = document.getElementById('stat-money');
         if (entriesEl) entriesEl.innerText = formatNum(resFinance.data.cantidad_pagos);
-        if (moneyEl) moneyEl.innerText = `$${resFinance.data.total_recaudado.toLocaleString('es-AR')}`;
+        if (moneyEl) moneyEl.innerText = `$${formatNum(resFinance.data.total_recaudado)}`;
     }
 }
 
@@ -257,7 +270,7 @@ export async function loadOccupancy() {
         
         if (countEl) countEl.innerText = formatNum(fullOccupancyData.filter(v => v.tipo_vehiculo !== 'Moto').length);
         if (motosEl) motosEl.innerText = formatNum(fullOccupancyData.filter(v => v.tipo_vehiculo === 'Moto').length);
-        if (debtEl) debtEl.innerText = `$${totalDebt.toLocaleString('es-AR')}`;
+        if (debtEl) debtEl.innerText = `$${formatNum(totalDebt)}`;
     }
 }
 
@@ -287,7 +300,7 @@ export function renderOccupancyTable() {
     const start = (currentPageOcc - 1) * itemsPerPageOcc;
     const end = start + itemsPerPageOcc;
     const paginatedData = filteredOccupancyData.slice(start, end);
-    const now = new Date();
+    const now = getVirtualNow();
 
     tbody.innerHTML = paginatedData.map(occ => {
         const date = new Date(occ.ingreso);
@@ -296,7 +309,7 @@ export function renderOccupancyTable() {
 
         const statusBadge = occ.ya_pago ? 
             `<span class="text-secondary text-bold">PAGADO</span>` :
-            `<span class="text-danger text-bold">$${occ.deuda.toLocaleString('es-AR')}</span>`;
+            `<span class="text-danger text-bold">$${formatNum(occ.deuda)}</span>`;
 
         const floorInfo = occ.floor_nombre ? `<div class="text-xs text-muted mt-2">${occ.floor_nombre}</div>` : '';
 
@@ -366,7 +379,7 @@ export async function cancelStay(plate, type, debt, ingreso) {
     
     // CALCULAR SI ESTA EN CORTESIA (10 MIN) PARA MOSTRAR DEUDA 0 EN EL MENSAJE
     const entryDate = new Date(ingreso);
-    const minutesElapsed = (new Date() - entryDate) / 60000;
+    const minutesElapsed = (getVirtualNow() - entryDate) / 60000;
     const displayDebt = minutesElapsed <= 10 ? 0 : debt;
 
     // CONFIRMACION MEDIANTE ALERTA PREMIUM (ESTILO UNIFICADO)
@@ -380,7 +393,7 @@ export async function cancelStay(plate, type, debt, ingreso) {
                 TIPO: ${type || 'AUTO'}
             </div>
             <div class="${displayDebt === 0 ? 'text-secondary' : 'text-danger'}" style="font-size: 1.1rem;">
-                DEUDA: $${(displayDebt || 0).toLocaleString('es-AR')}
+                DEUDA: $${formatNum(displayDebt || 0)}
             </div>
             <div style="opacity: 0.9; margin-top: 5px; font-size: 1.1rem;">
                 ¿Confirmar la cancelación?

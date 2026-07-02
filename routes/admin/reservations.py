@@ -52,7 +52,7 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
         data.sucursal_nombre = staff.sucursal
 
     if data.user_id:
-        user = db.query(models.User).filter(models.User.id == data.user_id).first()
+        user = db.query(models.User).filter(models.User.id == data.user_id, models.User.is_deleted == False).first()
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente, models.Vehicle.user_id == data.user_id).first()
