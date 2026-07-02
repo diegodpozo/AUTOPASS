@@ -393,6 +393,53 @@ nav#nav-menu {
     border-bottom: 2px solid var(--border);
 }
 
+/* FLECHAS DE NAVEGACION DEL CARRUSEL */
+.carrusel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.carrusel-arrow:hover {
+    background: var(--dorado);
+    color: #000;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 25px rgba(197, 160, 89, 0.4);
+}
+
+.carrusel-arrow-prev {
+    left: 20px;
+}
+
+.carrusel-arrow-next {
+    right: 20px;
+}
+
+@media (max-width: 768px) {
+    .carrusel-arrow {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    .carrusel-arrow-prev { left: 10px; }
+    .carrusel-arrow-next { right: 10px; }
+}
+
 .contenedor-carrusel {
     width: 100%;
     height: 100%;
