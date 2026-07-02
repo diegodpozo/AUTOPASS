@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTOPASS — Estacionamiento Inteligente | MVP 2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --dorado: #C5A059;
+    --negro: #0a0a0a;
+    --gris-card: #161b22;
+    --border: #21262d;
+    --blanco: #e6edf3;
+    --texto: #c9d1d9;
+    --texto-sec: #8b949e;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--negro);
+    color: var(--blanco);
+    line-height: 1.7;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* HEADER */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 1.2rem 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+    transition: 0.3s;
+  }
+  header.scrolled {
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(197,160,89,0.1);
+    padding: 0.8rem 0;
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-logo {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--dorado);
+    letter-spacing: 4px;
+    text-decoration: none;
+  }
+  .header-logo span { color: var(--blanco); }
+  nav a {
+    color: var(--texto-sec);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-left: 2rem;
+    transition: 0.3s;
+  }
+  nav a:hover { color: var(--dorado); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 8rem 1.5rem 4rem;
+    background: radial-gradient(ellipse at center, rgba(197,160,89,0.08) 0%, transparent 60%);
+  }
+  .hero h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    letter-spacing: 12px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--blanco) 30%, var(--dorado) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  .hero .subtitle {
+    color: var(--dorado);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero p {
+    max-width: 650px;
+    color: var(--texto);
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+  }
+  .hero-badges {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hero-badge {
+    background: rgba(197,160,89,0.1);
+    border: 1px solid rgba(197,160,89,0.2);
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dorado);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* SECTIONS */
+  section { padding: 5rem 0; }
+  section:nth-child(even) { background: rgba(22,27,34,0.3); }
+  .section-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--blanco);
+    margin-bottom: 3rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+  }
+  .section-title span { color: var(--dorado); }
+
+  /* PROBLEM / SOLUTION */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 2rem;
+  }
+  .two-col .card {
+    background: var(--gris-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: 0.3s;
+  }
+  .two-col .card:hover { border-color: rgba(197,160,89,0.3); transform: translateY(-3px); }
+  .card h3 {
+    font-size: 1.2rem;
+    color: var(--dorado);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .card p, .card li { color: var(--texto); font-size: 0.95rem; }
+  .card ul { list-style: none; padding: 0; }
+  .card ul li { padding: 0.4rem 0; padding-left: 1.5rem; position: relative; }
+  .card ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.85rem;
+    width: 8px;
+    height: 8px;
+    background: var(--dorado);
+    border-radius: 50%;
+  }
+
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* FEATURES GRID */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .feature-card {
+    background: var(--gris-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.8rem;
+    transition: 0.3s;
+    text-align: center;
+  }
+  .feature-card:hover { border-color: var(--dorado); transform: translateY(-5px); }
+  .feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+    color: var(--dorado);
+  }
+  .feature-card h4 { color: var(--blanco); margin-bottom: 0.8rem; font-size: 1.1rem; }
+  .feature-card p { color: var(--texto); font-size: 0.9rem; }
+
+  /* STATUS BADGES */
+  .status-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 0.5rem;
+  }
+  .status-done { background: rgba(59,185,80,0.2); color: #3fb950; }
+  .status-partial { background: rgba(210,153,34,0.2); color: #d29922; }
+  .status-pending { background: rgba(139,148,158,0.2); color: #8b949e; }
+
+  /* ARCHITECTURE */
+  .arch-list { list-style: none; display: grid; gap: 1rem; }
+  .arch-item {
+    background: var(--gris-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .arch-tag {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.15rem;
+  }
+  .tag-backend { background: #1f2a3f; color: #58a6ff; }
+  .tag-frontend { background: #3a2d1b; color: #d29922; }
+  .tag-hardware { background: #3a1b1b; color: #f87171; }
+  .tag-infra { background: #1f3a2f; color: #3fb950; }
+  .tag-data { background: #1b2d3a; color: #79c0ff; }
+  .arch-item h4 { color: var(--blanco); font-size: 1rem; margin-bottom: 0.3rem; }
+  .arch-item p { color: var(--texto-sec); font-size: 0.85rem; margin: 0; }
+
+  /* MVP ROADMAP */
+  .mvp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .mvp-card {
+    background: var(--gris-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.8rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .mvp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+  }
+  .mvp-card.mvp1::before { background: #3fb950; }
+  .mvp-card.mvp2::before { background: var(--dorado); }
+  .mvp-card.mvp3::before { background: #58a6ff; }
+  .mvp-card h3 {
+    font-size: 1.1rem;
+    color: var(--blanco);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .mvp-card h3 .mvp-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+  .mvp1 .mvp-tag { background: rgba(59,185,80,0.2); color: #3fb950; }
+  .mvp2 .mvp-tag { background: rgba(197,160,89,0.2); color: var(--dorado); }
+  .mvp3 .mvp-tag { background: rgba(88,166,255,0.2); color: #58a6ff; }
+  .mvp-card ul { list-style: none; }
+  .mvp-card ul li {
+    color: var(--texto);
+    font-size: 0.9rem;
+    padding: 0.35rem 0;
+    padding-left: 1.3rem;
+    position: relative;
+  }
+  .mvp-card ul li::before { content: '>'; position: absolute; left: 0; color: var(--dorado); font-weight: 700; }
+  .mvp-card ul li.done { color: #3fb950; }
+  .mvp-card ul li.done::before { content: '\2713'; color: #3fb950; }
+  .mvp-card ul li.wip { color: var(--dorado); }
+  .mvp-card ul li.wip::before { content: '\25D4'; color: var(--dorado); }
+
+  /* TEAM */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    text-align: center;
+  }
+  .team-card {
+    background: var(--gris-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem 1.5rem;
+    transition: 0.3s;
+  }
+  .team-card:hover { border-color: rgba(197,160,89,0.3); }
+  .team-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(197,160,89,0.15);
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--dorado);
+    border: 2px solid rgba(197,160,89,0.2);
+  }
+  .team-card h4 { color: var(--blanco); margin-bottom: 0.3rem; }
+  .team-card p { color: var(--texto-sec); font-size: 0.85rem; margin: 0; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 0;
+    text-align: center;
+    color: var(--texto-sec);
+    font-size: 0.85rem;
+  }
+  footer strong { color: var(--dorado); }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 2.5rem; letter-spacing: 6px; }
+    .hero .subtitle { font-size: 0.9rem; }
+    .section-title { font-size: 1.5rem; }
+    .header-inner { flex-direction: column; gap: 0.8rem; }
+    nav a { margin: 0 0.7rem; font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="header-inner">
+    <a href="#" class="header-logo">AUTO<span>PASS</span></a>
+    <nav>
+      <a href="#problematica">Problematica</a>
+      <a href="#solucion">Solucion</a>
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#arquitectura">Arquitectura</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#equipo">Equipo</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="subtitle">Tecnicatura en Desarrollo de Software — PP3</div>
+  <h1>AUTOPASS</h1>
+  <p>
+    Sistema inteligente de gestion de estacionamientos que integra reconocimiento automatico de patentes
+    por IA, reservas anticipadas, control de barreras via IoT y panel de administracion en tiempo real.
+  </p>
+  <div class="hero-badges">
+    <span class="hero-badge">ALPR + EasyOCR</span>
+    <span class="hero-badge">FastAPI</span>
+    <span class="hero-badge">ESP32 + MQTT</span>
+    <span class="hero-badge">MVP 2</span>
+    <span class="hero-badge">Grupo 404</span>
+  </div>
+</section>
+
+<!-- PROBLEMATICA -->
+<section id="problematica">
+  <div class="container">
+    <h2 class="section-title">La <span>Problematica</span></h2>
+    <div class="two-col">
+      <div class="card">
+        <h3>Problema</h3>
+        <p>Ineficiencia y estres al buscar estacionamiento en zonas urbanas. Los conductores llegan sin certeza de encontrar un lugar disponible, lo que genera demoras, congestion y frustracion. Los procesos actuales son manuales, con pagos limitados y sin herramientas que optimicen la ocupacion en tiempo real.</p>
+      </div>
+      <div class="card">
+        <h3>Impacto</h3>
+        <ul>
+          <li>Perdida de tiempo y combustible dando vueltas</li>
+          <li>Congestion vehicular en zonas comerciales</li>
+          <li>Experiencia frustrante para el conductor</li>
+          <li>Gestion ineficiente para los operadores</li>
+          <li>Perdida de oportunidades de ingreso</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUCION -->
+<section id="solucion">
+  <div class="container">
+    <h2 class="section-title">Nuestra <span>Solucion</span></h2>
+    <div class="two-col">
+      <div class="card">
+        <h3>Autopass</h3>
+        <p>Plataforma integral de gestion de estacionamientos que automatiza el control de acceso mediante reconocimiento de patentes por inteligencia artificial. Transforma un proceso tradicionalmente lento y manual en una experiencia digital fluida, segura y sin fricciones, conectando el software de vision artificial directamente con el hardware de las barreras.</p>
+      </div>
+      <div class="card">
+        <h3>Valor Diferencial</h3>
+        <ul>
+          <li><strong>Tu auto es tu identidad:</strong> No necesitas llevar nada mas que tu vehiculo</li>
+          <li><strong>Gestion en tiempo real:</strong> Visualiza disponibilidad antes de salir de tu casa</li>
+          <li><strong>Reservas anticipadas:</strong> Asegura tu lugar con semanas de anticipacion</li>
+          <li><strong>Pagos digitales:</strong> Sin efectivo ni tarjeta fisica</li>
+          <li><strong>Autogestion total:</strong> Controlas tus datos, vehiculos y reservas</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCIONALIDADES MVP2 -->
+<section id="funcionalidades">
+  <div class="container">
+    <h2 class="section-title">Funcionalidades <span>MVP 2</span></h2>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F4F7;</span>
+        <h4>ALPR con IA  <span class="status-badge status-done">Completado</span></h4>
+        <p>Reconocimiento automatico de patentes con EasyOCR + OpenCV. Soporta formatos Mercosur, patentes viejas, motos y deteccion QR. Consenso 2X para evitar lecturas erroneas.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F6E1;&#xFE0F;</span>
+        <h4>Control de Barreras  <span class="status-badge status-done">Completado</span></h4>
+        <p>Integracion con ESP32 via MQTT. Apertura automatica de barrera al detectar una patente valida. Servomotor + sensor ultrasonico HC-SR04.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F4C5;</span>
+        <h4>Reservas Anticipadas  <span class="status-badge status-done">Completado</span></h4>
+        <p>Sistema de reservas por hora, dia, semana, quincena y mes. Aforo diferenciado: reservas de periodo largo reservan plaza fija; reservas por hora usan aforo de paso.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F4BA;</span>
+        <h4>Dashboard Operador  <span class="status-badge status-done">Completado</span></h4>
+        <p>Panel de control en tiempo real con ocupacion, camaras en vivo, apertura manual de barreras y listado de vehiculos ingresados con deuda calculada al instante.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F4B0;</span>
+        <h4>Facturacion Automatica  <span class="status-badge status-done">Completado</span></h4>
+        <p>Calculo de tarifas por bloques de hora con redondeo hacia arriba. Tarifas diferenciadas por tipo de vehiculo (auto, moto, camioneta). Exportacion a CSV.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F514;</span>
+        <h4>Notificaciones In-App  <span class="status-badge status-done">Completado</span></h4>
+        <p>Sistema de notificaciones con polling. Alertas de cambios de ocupacion, eventos de acceso y recordatorios de reserva. WebSockets para actualizacion en tiempo real.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x2B50;</span>
+        <h4>Fidelizacion y Puntos  <span class="status-badge status-done">Completado</span></h4>
+        <p>Programa de puntos: 10 pts por cada $1000 abonados. Canje de puntos por promociones. Catalogo de beneficios administrable desde el panel.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F4CA;</span>
+        <h4>Reportes Financieros  <span class="status-badge status-done">Completado</span></h4>
+        <p>Reportes de facturacion con filtros por fecha, tipo de vehiculo y metodo de pago. Exportacion a CSV con BOM para Excel. Graficos de recaudacion diaria.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F916;</span>
+        <h4>Lista Negra de Patentes  <span class="status-badge status-pending">Pendiente</span></h4>
+        <p>Bloqueo de patentes no deseadas desde el panel administrativo, independiente del estado de la cuenta del usuario.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F3F7;&#xFE0F;</span>
+        <h4>Monitoreo de Salud  <span class="status-badge status-partial">Parcial</span></h4>
+        <p>Heartbeat de camaras ALPR y endpoint /health. Pendiente: monitoreo de barreras fisicas (ESP32), broker MQTT y alertas proactivas.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARQUITECTURA -->
+<section id="arquitectura">
+  <div class="container">
+    <h2 class="section-title">Arquitectura <span>Tecnologica</span></h2>
+    <ul class="arch-list">
+
+      <li class="arch-item">
+        <span class="arch-tag tag-backend">Backend</span>
+        <div>
+          <h4>FastAPI + Python</h4>
+          <p>API REST con rutas organizadas por dominio (auth, parking, admin, user, reports). Autenticacion JWT con roles RBAC, base de datos SQLite/SQLAlchemy y tareas en background (Worker) para limpieza automatica de reservas vencidas.</p>
+        </div>
+      </li>
+
+      <li class="arch-item">
+        <span class="arch-tag tag-frontend">Frontend</span>
+        <div>
+          <h4>HTML + CSS + JavaScript (ES6 Modules)</h4>
+          <p>Interfaz web responsive con diseno oscuro premium (glassmorphism). JavaScript modular con imports ES6. Comunicacion en tiempo real via WebSockets para ocupacion y camaras en vivo.</p>
+        </div>
+      </li>
+
+      <li class="arch-item">
+        <span class="arch-tag tag-hardware">Hardware</span>
+        <div>
+          <h4>ESP32 + MQTT</h4>
+          <p>Microcontrolador ESP32 con sensor ultrasonico HC-SR04, servomotor y display LCD. Comunicacion con el backend mediante protocolo MQTT (broker HiveMQ). Recepcion de comandos OPEN/CLOSE para control de barreras.</p>
+        </div>
+      </li>
+
+      <li class="arch-item">
+        <span class="arch-tag tag-hardware">Vision</span>
+        <div>
+          <h4>EasyOCR + OpenCV</h4>
+          <p>Motor de reconocimiento optico de caracteres basado en redes neuronales. Preprocesamiento de imagen con OpenCV (CLAHE, deteccion de bordes, inversion). Correccion heuristica de caracteres y consenso 2X sobre ventana de 4 segundos.</p>
+        </div>
+      </li>
+
+      <li class="arch-item">
+        <span class="arch-tag tag-data">Datos</span>
+        <div>
+          <h4>SQLite + SQLAlchemy</h4>
+          <p>Base de datos relacional con modelo declarativo. Tablas de usuarios, vehiculos, reservas, accesos, aforo, promociones y configuracion. Migraciones aditivas via init_db(). Preparada para migrar a PostgreSQL en produccion.</p>
+        </div>
+      </li>
+
+      <li class="arch-item">
+        <span class="arch-tag tag-infra">Infra</span>
+        <div>
+          <h4>MQTT + WebSockets</h4>
+          <p>Dos canales de comunicacion en tiempo real: MQTT para comandos de hardware (barreras) y WebSockets para actualizacion de dashboards web. Arquitectura hibrida Edge + Cloud.</p>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container">
+    <h2 class="section-title">Roadmap <span>MVP</span></h2>
+    <div class="mvp-grid">
+
+      <div class="mvp-card mvp1">
+        <h3><span class="mvp-tag">MVP 1</span> Nucleo</h3>
+        <ul>
+          <li class="done">Servicio ALPR con consenso 2X y deteccion QR</li>
+          <li class="done">Registro de ingresos y egresos (AccessLog)</li>
+          <li class="done">Sistema de reservas anticipadas</li>
+          <li class="done">Portal web de registro y autogestion</li>
+          <li class="done">Integracion con ESP32 + MQTT (barrera de entrada)</li>
+          <li class="done">Notificaciones in-app para conductores</li>
+        </ul>
+      </div>
+
+      <div class="mvp-card mvp2">
+        <h3><span class="mvp-tag">MVP 2</span> Gestion</h3>
+        <ul>
+          <li class="done">Gestion de usuarios con permisos y roles RBAC</li>
+          <li class="done">Reportes financieros exportables a CSV</li>
+          <li class="done">Sistema de promociones y puntos de fidelizacion</li>
+          <li class="done">Alertas de sistema: conectividad, estado de componentes, aforo</li>
+          <li class="wip">Lista negra de patentes</li>
+          <li class="wip">Monitoreo de salud de componentes fisicos (ESP32 + MQTT)</li>
+          <li class="wip">Cupones de descuento integrados al flujo de pago</li>
+        </ul>
+      </div>
+
+      <div class="mvp-card mvp3">
+        <h3><span class="mvp-tag">MVP 3</span> Expansion</h3>
+        <ul>
+          <li>Integracion con pasarelas de pago reales (Mercado Pago)</li>
+          <li>Aplicacion movil nativa para conductores</li>
+          <li>Analitica avanzada con prediccion de demanda</li>
+          <li>Aplicacion Web Progresiva (PWA) con service worker</li>
+          <li>Modo de operacion local ante falla de conectividad</li>
+          <li>Sensores infrarrojos de seguridad en barreras</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- EQUIPO -->
+<section id="equipo">
+  <div class="container">
+    <h2 class="section-title">Grupo <span>404</span></h2>
+    <p style="text-align:center;color:var(--texto-sec);margin-bottom:3rem;">
+      Instituto Tecnico de Formacion Superior Leopoldo Marechal — Tecnicatura en Desarrollo de Software<br>
+      Practicas Profesionalizantes 3 — Ciclo lectivo 2026<br>
+      Docente: Mauro Julian Ayala
+    </p>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">VB</div>
+        <h4>Veronica Bonsembiante</h4>
+        <p>Integrante</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">TA</div>
+        <h4>Teresa Aguayo</h4>
+        <p>Integrante</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">MC</div>
+        <h4>Mariano Cirillo</h4>
+        <p>Integrante</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">DP</div>
+        <h4>Diego Pozo</h4>
+        <p>Integrante</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <strong>AUTOPASS</strong> &mdash; Estacionamiento Inteligente &mdash; Grupo 404 &mdash; PP3 2026
+  </div>
+</footer>
+
+<script>
+// HEADER SCROLL EFFECT
+const header = document.getElementById('header');
+window.addEventListener('scroll', () => {
+  header.classList.toggle('scrolled', window.scrollY > 50);
+});
+</script>
+
+</body>
+</html>
