@@ -67,3 +67,24 @@ def init_db():
                 conn.commit()
     except Exception as e:
         print(f"[MIGRACION WARN] No se pudieron agregar columnas de camionetas: {e}")
+
+    # MIGRACION: AGREGAR COLUMNA IS_DELETED A USERS
+    try:
+        with engine.connect() as conn:
+            if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+                from sqlalchemy import text
+                result = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+                cols = [r[1] for r in result]
+                if 'is_deleted' not in cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_deleted BOOLEAN DEFAULT 0"))
+                    print("[MIGRACION] Columna is_deleted agregada a users")
+                    conn.commit()
+            else:
+                from sqlalchemy import text
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE"))
+                    conn.commit()
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"[MIGRACION WARN] No se pudo agregar is_deleted a users: {e}")

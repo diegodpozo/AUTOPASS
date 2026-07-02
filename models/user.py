@@ -19,6 +19,7 @@ class User(Base):
     puntos_acumulados = Column(Integer, default=0)
     saldo = Column(Float, default=0.0)
     is_blocked = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False)
 
     # RELACIONES
     vehicles = relationship("Vehicle", back_populates="owner")

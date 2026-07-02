@@ -36,7 +36,7 @@ class UserService:
         """ACTUALIZA LOS DATOS DE UN USUARIO."""
         from routes.parking.utils import normalize_name, normalize_dni
         
-        user = db.query(models.User).filter(models.User.id == user_id).first()
+        user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
         if not user:
             return None
 
@@ -54,12 +54,19 @@ class UserService:
 
     @staticmethod
     def delete_user(db: Session, user_id: int):
-        """ELIMINA UN USUARIO Y SUS VEHICULOS ASOCIADOS."""
+        """MARCA UN USUARIO COMO ELIMINADO Y ANONIMIZA SUS DATOS PERSONALES."""
         user = db.query(models.User).filter(models.User.id == user_id).first()
         if not user:
             return False
-            
-        db.query(models.Vehicle).filter(models.Vehicle.user_id == user_id).delete()
-        db.delete(user)
+
+        anon_suffix = str(user_id)
+        user.nombre = "Usuario"
+        user.apellido = "Eliminado"
+        user.dni = f"eliminado-{anon_suffix}"
+        user.email = f"eliminado-{anon_suffix}@autopass.com"
+        user.telefono = ""
+        user.patente = None
+        user.direccion = None
+        user.is_deleted = True
         db.commit()
         return True

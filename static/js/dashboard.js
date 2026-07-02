@@ -5,6 +5,7 @@ import * as promos from './modules/dashboard-promotions.js';
 import * as baseUi from './modules/ui.js';
 import api from './modules/api.js';
 import * as utils from './modules/utils.js';
+import { initVirtualTime, getVirtualNow } from './modules/virtual-time.js';
 const { formatNum } = utils;
 
 /**
@@ -180,7 +181,7 @@ window.loadAdminReservations = async () => {
                         <div class="text-small text-dorado font-bold uppercase" style="letter-spacing: 1px;">${utils.toTitle(r.tipo_estadia)}</div>
                     </div>
                 </td>
-                <td data-label="Monto" class="text-bold text-white">$${r.monto_total.toLocaleString()}</td>
+                <td data-label="Monto" class="text-bold text-white">$${formatNum(r.monto_total)}</td>
                 <td data-label="Estado Pago"><span class="badge-status badge-${r.estado_pago.toLowerCase()}">${r.estado_pago}</span></td>
                 <td data-label="Estado Reserva"><span class="badge-status badge-${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</span></td>
                 <td data-label="Acciones">
@@ -287,7 +288,7 @@ window.updateEditReservationPrice = async () => {
             else total = Math.ceil(durationHours) * rates.hora;
 
             const elMonto = document.getElementById('edit-res-monto-total');
-            if (elMonto) elMonto.innerText = `$ ${total.toLocaleString()}`;
+            if (elMonto) elMonto.innerText = `$ ${formatNum(total)}`;
         } else {
             const elMonto = document.getElementById('edit-res-monto-total');
             if (elMonto) elMonto.innerText = `$ ---`;
@@ -338,7 +339,7 @@ window.openEditReservationModal = (resId) => {
 
     // INICIALIZAR FLATPICKRS SI ES NECESARIO
     if (window.flatpickr && !window.editPickersInitialized) {
-        const now = new Date();
+        const now = getVirtualNow();
         const maxDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
         const common = { 
             disableMobile: "true", 
@@ -438,7 +439,7 @@ window.openEditReservationModal = (resId) => {
     }
 
     const elMonto = document.getElementById('edit-res-monto-total');
-    if (elMonto) elMonto.innerText = `$ ${r.monto_total.toLocaleString()}`;
+    if (elMonto) elMonto.innerText = `$ ${formatNum(r.monto_total)}`;
 
     if (window.openModal) window.openModal('modal-edit-reservation');
 };
@@ -543,7 +544,7 @@ window.showReservationDetail = (resId) => {
     document.getElementById('res-detail-end').innerText = utils.formatDate(r.fecha_fin);
     document.getElementById('res-detail-sucursal').innerText = r.sucursal_nombre;
     document.getElementById('res-detail-type').innerText = utils.toTitle(r.tipo_estadia);
-    document.getElementById('res-detail-amount').innerText = `$${r.monto_total.toLocaleString()}`;
+    document.getElementById('res-detail-amount').innerText = `$${formatNum(r.monto_total)}`;
 
     const badgeContainer = document.getElementById('res-detail-status-badges');
     badgeContainer.innerHTML = `
@@ -592,7 +593,7 @@ window.toggleFinanceDateFilter = () => {
     if (period === 'specific') {
         dateGroup.style.display = 'flex';
         if (!dateInput.value) {
-            dateInput.value = new Date().toISOString().split('T')[0];
+            dateInput.value = getVirtualNow().toISOString().split('T')[0];
         }
     } else {
         dateGroup.style.display = 'none';
@@ -621,30 +622,30 @@ window.loadFinanceData = async (resetPage = true) => {
         const elCount = document.getElementById('fin-count');
         const elAvg = document.getElementById('fin-avg');
 
-        if (elTotal) elTotal.innerText = `$${data.total_recaudado.toLocaleString()}`;
-        if (elRefund) elRefund.innerText = `$${data.total_reembolsado.toLocaleString()}`;
+        if (elTotal) elTotal.innerText = `$${formatNum(data.total_recaudado)}`;
+        if (elRefund) elRefund.innerText = `$${formatNum(data.total_reembolsado)}`;
         if (elCount) elCount.innerText = formatNum(data.cantidad_pagos);
-        if (elAvg) elAvg.innerText = `$${data.ticket_promedio.toLocaleString()}`;
+        if (elAvg) elAvg.innerText = `$${formatNum(data.ticket_promedio)}`;
 
         const elProy = document.getElementById('fin-proyectado');
-        if (elProy) elProy.innerText = `$${data.ingresos_proyectados.toLocaleString()}`;
+        if (elProy) elProy.innerText = `$${formatNum(data.ingresos_proyectados)}`;
 
         const elCancel = document.getElementById('fin-cancel-rate');
         if (elCancel) elCancel.innerText = `${data.tasa_cancelacion || 0}%`;
 
         const elNoShow = document.getElementById('fin-noshow');
-        if (elNoShow) elNoShow.innerText = `$${(data.ingresos_incumplimiento || 0).toLocaleString()}`;
+        if (elNoShow) elNoShow.innerText = `$${formatNum(data.ingresos_incumplimiento || 0)}`;
 
         // DESGLOSE POR CANAL
         const d = data.desglose;
         if (d) {
-            document.getElementById('fin-stay-monto').innerText = `$${(d.estadias?.monto || 0).toLocaleString()}`;
+            document.getElementById('fin-stay-monto').innerText = `$${formatNum(d.estadias?.monto || 0)}`;
             document.getElementById('fin-stay-count').innerText = formatNum(d.estadias?.cantidad || 0);
-            document.getElementById('fin-stay-avg').innerText = `$${(d.estadias?.promedio || 0).toLocaleString()}`;
+            document.getElementById('fin-stay-avg').innerText = `$${formatNum(d.estadias?.promedio || 0)}`;
 
-            document.getElementById('fin-res-monto').innerText = `$${(d.reservas?.monto || 0).toLocaleString()}`;
+            document.getElementById('fin-res-monto').innerText = `$${formatNum(d.reservas?.monto || 0)}`;
             document.getElementById('fin-res-count').innerText = formatNum(d.reservas?.cantidad || 0);
-            document.getElementById('fin-res-avg').innerText = `$${(d.reservas?.promedio || 0).toLocaleString()}`;
+            document.getElementById('fin-res-avg').innerText = `$${formatNum(d.reservas?.promedio || 0)}`;
         }
     }
 
@@ -668,7 +669,7 @@ window.loadFinanceData = async (resetPage = true) => {
                 <tr class="${rowClass}">
                     <td><span class="text-light">${utils.formatDate(p.fecha_pago)}</span></td>
                     <td><span class="plate-style">${p.patente_detectada}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
-                    <td class="text-bold ${amountClass}">$${p.costo_estadia.toLocaleString()}</td>
+                    <td class="text-bold ${amountClass}">$${formatNum(p.costo_estadia)}</td>
                     <td><span class="text-small">${metodoPago}</span></td>
                     <td><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
                 </tr>
@@ -786,7 +787,7 @@ function renderRevenueChart(data, period) {
                     callbacks: {
                         label: (context) => {
                             const val = context.parsed.y || 0;
-                            return ` Recaudado: $${val.toLocaleString()}`;
+                            return ` Recaudado: $${formatNum(val)}`;
                         }
                     }
                 }
@@ -798,7 +799,7 @@ function renderRevenueChart(data, period) {
                     ticks: { 
                         color: '#666',
                         font: { size: 10 },
-                        callback: (value) => '$' + value.toLocaleString()
+                        callback: (value) => '$' + formatNum(value)
                     }
                 },
                 x: {
@@ -811,7 +812,7 @@ function renderRevenueChart(data, period) {
 }
 
 // --- INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // 1. ACTUALIZAR INMEDIATAMENTE LA UI CON LO QUE TENGAMOS EN LOCALSTORAGE
     const rol = localStorage.getItem('rol');
     const sucursalRaw = localStorage.getItem('sucursal');
@@ -841,6 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. INICIAR SERVICIOS SECUNDARIOS
     try {
+        await initVirtualTime();
         ui.initClock();
         ui.checkSystemHealth();
         // INICIAR WEBSOCKET DE AFORO
@@ -875,7 +877,7 @@ window.payOccupancy = async (plate, amount) => {
                 ${utils.formatPlate(plate)}
             </div>
             <div>
-                MONTO: $${(amount || 0).toLocaleString('es-AR')}
+                MONTO: $${formatNum(amount || 0)}
             </div>
             <div style="opacity: 0.9; margin-top: 5px;">
                 ¿Confirmar el pago?

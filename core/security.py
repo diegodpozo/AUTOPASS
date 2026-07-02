@@ -64,7 +64,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise credentials_exception
     
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(models.User).filter(models.User.email == email, models.User.is_deleted == False).first()
     if user is None:
         raise credentials_exception
     return user
@@ -91,7 +91,7 @@ def get_operational_user(current_user: models.User = Depends(get_current_user)):
 
 def authenticate_user(db: Session, email: str, password: str):
     """VERIFICA LAS CREDENCIALES DE UN USUARIO CONTRA LA BASE DE DATOS."""
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(models.User).filter(models.User.email == email, models.User.is_deleted == False).first()
     if not user:
         return None
     if not verify_password(password, user.password_hash):

@@ -351,10 +351,10 @@ function loadTheaters(mapObj, containerId) {
     const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
     const bbox = '-34.80,-58.90,-34.50,-58.30';
 
-    const query = `[out:json][timeout:30];(node["amenity"="theatre"](${bbox});way["amenity"="theatre"](${bbox});node["tourism"="museum"](${bbox});node["amenity"="cinema"](${bbox});way["amenity"="cinema"](${bbox}););out center 100;`;
+    const query = `[out:json][timeout:60];(node["amenity"="theatre"](${bbox});way["amenity"="theatre"](${bbox});node["tourism"="museum"](${bbox});node["amenity"="cinema"](${bbox});way["amenity"="cinema"](${bbox}););out center 100;`;
 
     function doFetch(retries, delay) {
-        const d = delay || 1000;
+        const d = delay || 2000;
         return fetch(OVERPASS_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -362,16 +362,16 @@ function loadTheaters(mapObj, containerId) {
             signal: controller.signal
         })
         .then(res => {
-            if (res.status === 429 && retries > 0) {
-                console.warn(`[OVERPASS] Rate limit, reintentando en ${d}ms... (${retries} restantes)`);
-                return new Promise(r => setTimeout(r, d)).then(() => doFetch(retries - 1, Math.min(d * 2, 30000)));
+            if ((res.status === 429 || res.status === 504) && retries > 0) {
+                console.warn(`[OVERPASS] HTTP ${res.status}, reintentando en ${d}ms... (${retries} restantes)`);
+                return new Promise(r => setTimeout(r, d)).then(() => doFetch(retries - 1, Math.min(d * 2, 60000)));
             }
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.json();
         });
     }
 
-    doFetch(4, 2000).then(data => {
+    doFetch(6, 3000).then(data => {
         hidePoiLoading(loadingEl);
         if (!data.elements || data.elements.length === 0) return;
         const items = [];

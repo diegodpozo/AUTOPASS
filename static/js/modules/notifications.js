@@ -1,5 +1,6 @@
 import api from './api.js';
 import { showToast } from './utils.js';
+import { getVirtualNow } from './virtual-time.js';
 
 let pollInterval = null;
 let lastNotifCount = 0;
@@ -86,7 +87,7 @@ function getNotifActions(n) {
 
 function getTimeAgo(dateStr) {
     if (!dateStr) return '';
-    const now = new Date();
+    const now = getVirtualNow();
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return '';
     const diffMs = now - d;

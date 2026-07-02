@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("/users")
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """RETORNA LA LISTA DE USUARIOS. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES REGISTRADOS."""
-    q = db.query(models.User)
+    q = db.query(models.User).filter(models.User.is_deleted == False)
     if str(admin.rol) != UserRole.ADMIN.value:
         from sqlalchemy import or_
         q = q.filter(
@@ -37,7 +37,7 @@ def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.US
 @router.patch("/users/{user_id}")
 def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA LA INFORMACION DE UN USUARIO DESDE EL PANEL ADMINISTRATIVO."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
@@ -64,7 +64,7 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
 @router.post("/users/{user_id}/role")
 def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """SOLO EL ADMIN GLOBAL PUEDE CAMBIAR ROLES DE NIVEL JERARQUICO."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     user.rol = nuevo_rol
     db.commit()
@@ -82,7 +82,7 @@ def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(ge
 @router.post("/users/{user_id}/toggle-block")
 def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ALTERNA EL ESTADO DE BLOQUEO. LOS LOCALES SOLO BLOQUEAN A SU GENTE."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
@@ -110,7 +110,7 @@ def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models
 @router.post("/users/{user_id}/balance")
 def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """AJUSTA EL SALDO DE UN USUARIO."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     if str(admin.rol) != UserRole.ADMIN.value and user.sucursal != admin.sucursal and user.rol != UserRole.USER:
@@ -132,7 +132,7 @@ def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db
 @router.post("/users/{user_id}/password")
 def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE AL ADMINISTRADOR CAMBIAR LA CONTRASENA DE UN USUARIO."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
@@ -159,7 +159,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User 
     if user_id == admin.id: 
         raise HTTPException(status_code=400, detail="No podés eliminar tu propia cuenta")
     
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 

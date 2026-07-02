@@ -7,13 +7,14 @@
  * CONVIERTE UN STRING A FORMATO DE TITULO (CAPITALIZACION DE CADA PALABRA).
  */
 /**
- * FORMATEA UN NUMERO CON SEPARADORES DE MILES (LOCALE ES-AR).
+ * FORMATEA UN NUMERO CON SEPARADORES DE MILES (USA PUNTO, EJ: 1.500).
  */
 export const formatNum = (n) => {
     if (n === undefined || n === null) return '0';
     const num = typeof n === 'number' ? n : parseFloat(n);
     if (isNaN(num)) return '0';
-    return num.toLocaleString('es-AR');
+    const [entera, decimal] = Math.round(num).toString().split('.');
+    return entera.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (decimal ? ',' + decimal : '');
 };
 
 export const toTitle = s => {
