@@ -493,9 +493,9 @@ function addPoiLegend(mapObj) {
 }
 
 const DatosCarrusel = [
-    { imagen: '/static/images/inicio/trafico1.webp', leyenda: '¿Te agota tanto embotellamiento en Buenos Aires?' },
-    { imagen: '/static/images/inicio/trafico2.webp', leyenda: '¿Sentís que el tráfico continuo te consume la energía?' },
-    { imagen: '/static/images/inicio/trafico3.webp', leyenda: '¿Es frustrante perder horas en la autopista?' },
+    { imagen: '/static/images/inicio/trafico1.webp', leyenda: '¿TE PASA QUE SALIS SIN SABER DONDE VAS A ESTACIONAR?' },
+    { imagen: '/static/images/inicio/trafico2.webp', leyenda: '¿CANSADO DE DAR VUELTAS MANZANA TRAS MANZANA BUSCANDO LUGAR?' },
+    { imagen: '/static/images/inicio/trafico3.webp', leyenda: '¿PERDISTE EVENTOS IMPORTANTES POR NO ENCONTRAR ESTACIONAMIENTO?' },
     { imagen: '/static/images/inicio/estacionamiento1.webp', leyenda: '¿Te fastidia buscar lugar en la calle siempre?' },
     { imagen: '/static/images/inicio/estacionamiento2.webp', leyenda: '¿Te molesta llegar y que no haya lugar?' },
     { imagen: '/static/images/inicio/estacionamiento3.webp', leyenda: 'AUTOPASS elimina el estrés del estacionamiento en la ciudad.' },
@@ -514,10 +514,16 @@ export function InicializarCarrusel() {
         Contenedor.appendChild(Item);
     });
 
+    // FLECHAS DE NAVEGACION
+    const flechaIzq = document.getElementById('carrusel-prev');
+    const flechaDer = document.getElementById('carrusel-next');
+    if (flechaIzq) flechaIzq.addEventListener('click', () => RotarCarrusel(-1, true));
+    if (flechaDer) flechaDer.addEventListener('click', () => RotarCarrusel(1, true));
+
     IniciarTemporizadores();
 }
 
-function RotarCarrusel(Direccion) {
+function RotarCarrusel(Direccion, reiniciarTimer) {
     const Items = document.querySelectorAll('.item-carrusel');
     if (Items.length === 0) return;
 
@@ -530,6 +536,12 @@ function RotarCarrusel(Direccion) {
     const contenedor = document.getElementById('frase-animada');
     if (contenedor) {
         contenedor.innerText = DatosCarrusel[IndiceFraseActual].leyenda;
+    }
+
+    // REINICIAR TIMER SI SE NAVEGO MANUALMENTE
+    if (reiniciarTimer) {
+        if (IntervaloCarrusel) clearInterval(IntervaloCarrusel);
+        IntervaloCarrusel = setInterval(() => RotarCarrusel(1), 5000);
     }
 }
 
