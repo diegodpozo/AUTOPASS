@@ -24,7 +24,6 @@
   }
   .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
 
-  /* HEADER */
   header {
     position: fixed;
     top: 0;
@@ -69,7 +68,6 @@
   }
   nav a:hover { color: var(--dorado); }
 
-  /* HERO */
   .hero {
     min-height: 100vh;
     display: flex;
@@ -122,84 +120,91 @@
     letter-spacing: 1px;
   }
 
-  /* SECTIONS */
   section { padding: 5rem 0; }
   section:nth-child(even) { background: rgba(22,27,34,0.3); }
   .section-title {
     font-size: 2rem;
     font-weight: 800;
     color: var(--blanco);
-    margin-bottom: 3rem;
+    margin-bottom: 1rem;
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 3px;
   }
   .section-title span { color: var(--dorado); }
-
-  /* PROBLEM / SOLUTION */
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    margin-top: 2rem;
+  .section-desc {
+    text-align: center;
+    color: var(--texto-sec);
+    margin-bottom: 3rem;
+    font-size: 0.95rem;
   }
-  .two-col .card {
+
+  /* TABS */
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .tab-btn {
     background: var(--gris-card);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    transition: 0.3s;
-  }
-  .two-col .card:hover { border-color: rgba(197,160,89,0.3); transform: translateY(-3px); }
-  .card h3 {
-    font-size: 1.2rem;
-    color: var(--dorado);
-    margin-bottom: 1rem;
+    color: var(--texto-sec);
+    padding: 0.7rem 2rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-  }
-  .card p, .card li { color: var(--texto); font-size: 0.95rem; }
-  .card ul { list-style: none; padding: 0; }
-  .card ul li { padding: 0.4rem 0; padding-left: 1.5rem; position: relative; }
-  .card ul li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.85rem;
-    width: 8px;
-    height: 8px;
-    background: var(--dorado);
-    border-radius: 50%;
-  }
-
-  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
-
-  /* FEATURES GRID */
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-  }
-  .feature-card {
-    background: var(--gris-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.8rem;
+    cursor: pointer;
     transition: 0.3s;
-    text-align: center;
   }
-  .feature-card:hover { border-color: var(--dorado); transform: translateY(-5px); }
-  .feature-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    display: block;
+  .tab-btn:hover { border-color: rgba(197,160,89,0.3); color: var(--blanco); }
+  .tab-btn.active {
+    background: rgba(197,160,89,0.15);
+    border-color: var(--dorado);
     color: var(--dorado);
   }
-  .feature-card h4 { color: var(--blanco); margin-bottom: 0.8rem; font-size: 1.1rem; }
-  .feature-card p { color: var(--texto); font-size: 0.9rem; }
 
-  /* STATUS BADGES */
-  .status-badge {
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--gris-card);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  thead {
+    background: rgba(197,160,89,0.08);
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--dorado);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid rgba(33,38,45,0.5);
+    color: var(--texto);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(197,160,89,0.03); }
+
+  .badge {
     display: inline-block;
     font-size: 0.65rem;
     font-weight: 700;
@@ -207,137 +212,51 @@
     border-radius: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-left: 0.5rem;
   }
-  .status-done { background: rgba(59,185,80,0.2); color: #3fb950; }
-  .status-partial { background: rgba(210,153,34,0.2); color: #d29922; }
-  .status-pending { background: rgba(139,148,158,0.2); color: #8b949e; }
+  .badge-done { background: rgba(59,185,80,0.2); color: #3fb950; }
+  .badge-wip { background: rgba(210,153,34,0.2); color: #d29922; }
+  .badge-future { background: rgba(88,166,255,0.2); color: #58a6ff; }
+  .badge-new { background: rgba(197,160,89,0.2); color: var(--dorado); }
 
-  /* ARCHITECTURE */
-  .arch-list { list-style: none; display: grid; gap: 1rem; }
-  .arch-item {
-    background: var(--gris-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.2rem 1.5rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  .arch-tag {
-    flex-shrink: 0;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 0.3rem 0.6rem;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 0.15rem;
-  }
-  .tag-backend { background: #1f2a3f; color: #58a6ff; }
-  .tag-frontend { background: #3a2d1b; color: #d29922; }
-  .tag-hardware { background: #3a1b1b; color: #f87171; }
-  .tag-infra { background: #1f3a2f; color: #3fb950; }
-  .tag-data { background: #1b2d3a; color: #79c0ff; }
-  .arch-item h4 { color: var(--blanco); font-size: 1rem; margin-bottom: 0.3rem; }
-  .arch-item p { color: var(--texto-sec); font-size: 0.85rem; margin: 0; }
+  .date-col { white-space: nowrap; color: var(--texto-sec); font-size: 0.8rem; }
 
-  /* MVP ROADMAP */
-  .mvp-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-  }
-  .mvp-card {
-    background: var(--gris-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.8rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .mvp-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-  }
-  .mvp-card.mvp1::before { background: #3fb950; }
-  .mvp-card.mvp2::before { background: var(--dorado); }
-  .mvp-card.mvp3::before { background: #58a6ff; }
-  .mvp-card h3 {
-    font-size: 1.1rem;
-    color: var(--blanco);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-  .mvp-card h3 .mvp-tag {
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-  }
-  .mvp1 .mvp-tag { background: rgba(59,185,80,0.2); color: #3fb950; }
-  .mvp2 .mvp-tag { background: rgba(197,160,89,0.2); color: var(--dorado); }
-  .mvp3 .mvp-tag { background: rgba(88,166,255,0.2); color: #58a6ff; }
-  .mvp-card ul { list-style: none; }
-  .mvp-card ul li {
-    color: var(--texto);
-    font-size: 0.9rem;
-    padding: 0.35rem 0;
-    padding-left: 1.3rem;
-    position: relative;
-  }
-  .mvp-card ul li::before { content: '>'; position: absolute; left: 0; color: var(--dorado); font-weight: 700; }
-  .mvp-card ul li.done { color: #3fb950; }
-  .mvp-card ul li.done::before { content: '\2713'; color: #3fb950; }
-  .mvp-card ul li.wip { color: var(--dorado); }
-  .mvp-card ul li.wip::before { content: '\25D4'; color: var(--dorado); }
-
-  /* TEAM */
-  .team-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    text-align: center;
-  }
-  .team-card {
-    background: var(--gris-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 2rem 1.5rem;
-    transition: 0.3s;
-  }
-  .team-card:hover { border-color: rgba(197,160,89,0.3); }
-  .team-avatar {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: rgba(197,160,89,0.15);
-    margin: 0 auto 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    color: var(--dorado);
-    border: 2px solid rgba(197,160,89,0.2);
-  }
-  .team-card h4 { color: var(--blanco); margin-bottom: 0.3rem; }
-  .team-card p { color: var(--texto-sec); font-size: 0.85rem; margin: 0; }
-
-  /* FOOTER */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 2rem 0;
-    text-align: center;
+  .commit-ref {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
     color: var(--texto-sec);
-    font-size: 0.85rem;
+    background: rgba(0,0,0,0.3);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
   }
-  footer strong { color: var(--dorado); }
+
+  .summary-box {
+    background: var(--gris-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    border-left: 4px solid var(--dorado);
+  }
+  .summary-box h3 { color: var(--blanco); margin-bottom: 0.8rem; font-size: 1.1rem; }
+  .summary-box p { color: var(--texto); font-size: 0.95rem; }
+  .summary-box .count {
+    display: inline-block;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--dorado);
+    margin-right: 0.5rem;
+  }
+
+  .legend-row {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    font-size: 0.8rem;
+    color: var(--texto-sec);
+  }
+  .legend-row span { display: flex; align-items: center; gap: 0.4rem; }
 
   @media (max-width: 600px) {
     .hero h1 { font-size: 2.5rem; letter-spacing: 6px; }
@@ -345,307 +264,249 @@
     .section-title { font-size: 1.5rem; }
     .header-inner { flex-direction: column; gap: 0.8rem; }
     nav a { margin: 0 0.7rem; font-size: 0.75rem; }
+    .tab-bar { flex-direction: column; align-items: stretch; }
+    th, td { padding: 0.6rem; font-size: 0.8rem; }
   }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header id="header">
   <div class="header-inner">
     <a href="#" class="header-logo">AUTO<span>PASS</span></a>
     <nav>
-      <a href="#problematica">Problematica</a>
-      <a href="#solucion">Solucion</a>
-      <a href="#funcionalidades">Funcionalidades</a>
-      <a href="#arquitectura">Arquitectura</a>
-      <a href="#roadmap">Roadmap</a>
-      <a href="#equipo">Equipo</a>
+      <a href="#mvp1">MVP 1</a>
+      <a href="#mvp2">MVP 2</a>
+      <a href="#comparativa">Comparativa</a>
     </nav>
   </div>
 </header>
 
-<!-- HERO -->
 <section class="hero">
   <div class="subtitle">Tecnicatura en Desarrollo de Software — PP3</div>
   <h1>AUTOPASS</h1>
   <p>
-    Sistema inteligente de gestion de estacionamientos que integra reconocimiento automatico de patentes
-    por IA, reservas anticipadas, control de barreras via IoT y panel de administracion en tiempo real.
+    Evolucion del sistema de estacionamiento inteligente desde el MVP 1 (11/05/2026)
+    hasta el estado actual del MVP 2, con todas las funcionalidades implementadas en cada etapa.
   </p>
   <div class="hero-badges">
     <span class="hero-badge">ALPR + EasyOCR</span>
     <span class="hero-badge">FastAPI</span>
     <span class="hero-badge">ESP32 + MQTT</span>
-    <span class="hero-badge">MVP 2</span>
     <span class="hero-badge">Grupo 404</span>
   </div>
 </section>
 
-<!-- PROBLEMATICA -->
-<section id="problematica">
+<!-- RESUMEN -->
+<section>
   <div class="container">
-    <h2 class="section-title">La <span>Problematica</span></h2>
-    <div class="two-col">
-      <div class="card">
-        <h3>Problema</h3>
-        <p>Ineficiencia y estres al buscar estacionamiento en zonas urbanas. Los conductores llegan sin certeza de encontrar un lugar disponible, lo que genera demoras, congestion y frustracion. Los procesos actuales son manuales, con pagos limitados y sin herramientas que optimicen la ocupacion en tiempo real.</p>
+    <h2 class="section-title">Resumen <span>General</span></h2>
+    <div class="legend-row">
+      <span><span class="badge badge-done">&nbsp;</span> MVP 1 (11/05/2026)</span>
+      <span><span class="badge badge-new">&nbsp;</span> MVP 2 (nuevo)</span>
+      <span><span class="badge badge-wip">&nbsp;</span> En progreso</span>
+      <span><span class="badge badge-future">&nbsp;</span> Futuro</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+      <div class="summary-box" style="border-left-color:#3fb950;">
+        <h3>MVP 1 <span style="color:#3fb950;font-size:0.8rem;">11/05/2026</span></h3>
+        <p><span class="count">12</span> funcionalidades base</p>
+        <p style="margin-top:0.5rem;color:var(--texto-sec);">ALPR, login, reservas basicas, dashboard inicial, MQTT, ESP32, perfiles de usuario.</p>
       </div>
-      <div class="card">
-        <h3>Impacto</h3>
-        <ul>
-          <li>Perdida de tiempo y combustible dando vueltas</li>
-          <li>Congestion vehicular en zonas comerciales</li>
-          <li>Experiencia frustrante para el conductor</li>
-          <li>Gestion ineficiente para los operadores</li>
-          <li>Perdida de oportunidades de ingreso</li>
-        </ul>
+      <div class="summary-box" style="border-left-color:var(--dorado);">
+        <h3>MVP 2 <span style="color:var(--dorado);font-size:0.8rem;">02/07/2026</span></h3>
+        <p><span class="count">15</span> funcionalidades agregadas</p>
+        <p style="margin-top:0.5rem;color:var(--texto-sec);">Multi-sede, RBAC, WebSockets, aforo inteligente, finanzas, promociones, virtual-time, notificaciones admin, soft-delete.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SOLUCION -->
-<section id="solucion">
+<!-- MVP 1 -->
+<section id="mvp1">
   <div class="container">
-    <h2 class="section-title">Nuestra <span>Solucion</span></h2>
-    <div class="two-col">
-      <div class="card">
-        <h3>Autopass</h3>
-        <p>Plataforma integral de gestion de estacionamientos que automatiza el control de acceso mediante reconocimiento de patentes por inteligencia artificial. Transforma un proceso tradicionalmente lento y manual en una experiencia digital fluida, segura y sin fricciones, conectando el software de vision artificial directamente con el hardware de las barreras.</p>
-      </div>
-      <div class="card">
-        <h3>Valor Diferencial</h3>
-        <ul>
-          <li><strong>Tu auto es tu identidad:</strong> No necesitas llevar nada mas que tu vehiculo</li>
-          <li><strong>Gestion en tiempo real:</strong> Visualiza disponibilidad antes de salir de tu casa</li>
-          <li><strong>Reservas anticipadas:</strong> Asegura tu lugar con semanas de anticipacion</li>
-          <li><strong>Pagos digitales:</strong> Sin efectivo ni tarjeta fisica</li>
-          <li><strong>Autogestion total:</strong> Controlas tus datos, vehiculos y reservas</li>
-        </ul>
-      </div>
+    <h2 class="section-title">MVP 1 <span>11/05/2026</span></h2>
+    <p class="section-desc">Funcionalidades implementadas hasta la presentacion del primer hito.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Funcionalidad</th>
+            <th>Componente</th>
+            <th>Commit ref</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Reconocimiento de patentes ALPR</td><td>EasyOCR + OpenCV con consenso 2X</td><td class="date-col"><span class="commit-ref">f2f2579</span> (22/04)</td></tr>
+          <tr><td>Deteccion de QR en camaras</td><td>cv2.QRCodeDetector + Quick QR</td><td class="date-col"><span class="commit-ref">f2f2579</span> (22/04)</td></tr>
+          <tr><td>Login y registro de usuarios</td><td>JWT + bcrypt + formularios web</td><td class="date-col"><span class="commit-ref">a86bb55</span> (27/04)</td></tr>
+          <tr><td>Reservas por hora</td><td>Creacion, confirmacion y cancelacion de reservas</td><td class="date-col"><span class="commit-ref">a86bb55</span> (27/04)</td></tr>
+          <tr><td>Mapa interactivo con sucursales</td><td>Leaflet con marcadores de estacionamientos</td><td class="date-col"><span class="commit-ref">a86bb55</span> (27/04)</td></tr>
+          <tr><td>Perfil de usuario</td><td>Vehiculos, historial, puntos de fidelizacion</td><td class="date-col"><span class="commit-ref">cd09bee</span> (02/05)</td></tr>
+          <tr><td>Integracion MQTT con ESP32</td><td>Cliente paho-mqtt, publicacion de comandos OPEN</td><td class="date-col"><span class="commit-ref">f2f2579</span> (22/04)</td></tr>
+          <tr><td>Firmware ESP32 (barrera entrada)</td><td>Servomotor + ultrasonido HC-SR04 + LCD</td><td class="date-col"><span class="commit-ref">f2f2579</span> (22/04)</td></tr>
+          <tr><td>Dashboard administrativo basico</td><td>Listado de vehiculos ocupados, apertura manual</td><td class="date-col"><span class="commit-ref">88a9431</span> (10/05)</td></tr>
+          <tr><td>Landing page premium</td><td>Carrusel con imagenes, frases, hero section</td><td class="date-col"><span class="commit-ref">80651f1</span> (09/05)</td></tr>
+          <tr><td>Servicio de email transaccional</td><td>QR en confirmacion de reserva, reset password</td><td class="date-col"><span class="commit-ref">88a9431</span> (10/05)</td></tr>
+          <tr><td>Generacion de QR en reservas</td><td>qrcode lib + QRCode.js en frontend</td><td class="date-col"><span class="commit-ref">88a9431</span> (10/05)</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
-<!-- FUNCIONALIDADES MVP2 -->
-<section id="funcionalidades">
+<!-- MVP 2 -->
+<section id="mvp2">
   <div class="container">
-    <h2 class="section-title">Funcionalidades <span>MVP 2</span></h2>
-    <div class="features-grid">
+    <h2 class="section-title">MVP 2 <span>02/07/2026</span></h2>
+    <p class="section-desc">Funcionalidades agregadas despues del MVP 1 hasta la fecha actual.</p>
 
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F4F7;</span>
-        <h4>ALPR con IA  <span class="status-badge status-done">Completado</span></h4>
-        <p>Reconocimiento automatico de patentes con EasyOCR + OpenCV. Soporta formatos Mercosur, patentes viejas, motos y deteccion QR. Consenso 2X para evitar lecturas erroneas.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F6E1;&#xFE0F;</span>
-        <h4>Control de Barreras  <span class="status-badge status-done">Completado</span></h4>
-        <p>Integracion con ESP32 via MQTT. Apertura automatica de barrera al detectar una patente valida. Servomotor + sensor ultrasonico HC-SR04.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F4C5;</span>
-        <h4>Reservas Anticipadas  <span class="status-badge status-done">Completado</span></h4>
-        <p>Sistema de reservas por hora, dia, semana, quincena y mes. Aforo diferenciado: reservas de periodo largo reservan plaza fija; reservas por hora usan aforo de paso.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F4BA;</span>
-        <h4>Dashboard Operador  <span class="status-badge status-done">Completado</span></h4>
-        <p>Panel de control en tiempo real con ocupacion, camaras en vivo, apertura manual de barreras y listado de vehiculos ingresados con deuda calculada al instante.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F4B0;</span>
-        <h4>Facturacion Automatica  <span class="status-badge status-done">Completado</span></h4>
-        <p>Calculo de tarifas por bloques de hora con redondeo hacia arriba. Tarifas diferenciadas por tipo de vehiculo (auto, moto, camioneta). Exportacion a CSV.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F514;</span>
-        <h4>Notificaciones In-App  <span class="status-badge status-done">Completado</span></h4>
-        <p>Sistema de notificaciones con polling. Alertas de cambios de ocupacion, eventos de acceso y recordatorios de reserva. WebSockets para actualizacion en tiempo real.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x2B50;</span>
-        <h4>Fidelizacion y Puntos  <span class="status-badge status-done">Completado</span></h4>
-        <p>Programa de puntos: 10 pts por cada $1000 abonados. Canje de puntos por promociones. Catalogo de beneficios administrable desde el panel.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F4CA;</span>
-        <h4>Reportes Financieros  <span class="status-badge status-done">Completado</span></h4>
-        <p>Reportes de facturacion con filtros por fecha, tipo de vehiculo y metodo de pago. Exportacion a CSV con BOM para Excel. Graficos de recaudacion diaria.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F916;</span>
-        <h4>Lista Negra de Patentes  <span class="status-badge status-pending">Pendiente</span></h4>
-        <p>Bloqueo de patentes no deseadas desde el panel administrativo, independiente del estado de la cuenta del usuario.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon">&#x1F3F7;&#xFE0F;</span>
-        <h4>Monitoreo de Salud  <span class="status-badge status-partial">Parcial</span></h4>
-        <p>Heartbeat de camaras ALPR y endpoint /health. Pendiente: monitoreo de barreras fisicas (ESP32), broker MQTT y alertas proactivas.</p>
-      </div>
-
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Funcionalidad</th>
+            <th>Componente</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Soporte multi-sede</td><td>Branch isolation, multi-piso, aforo independiente por sucursal</td><td class="date-col">18/05 <span class="commit-ref">72dc116</span></td></tr>
+          <tr><td>RBAC descentralizado</td><td>Roles admin/local_admin/staff/user con aislamiento de datos por sucursal</td><td class="date-col">18/05 <span class="commit-ref">72dc116</span></td></tr>
+          <tr><td>Validacion de acceso por QR</td><td>validate_qr(), endpoint /v1/access/validate-qr</td><td class="date-col">16/05 <span class="commit-ref">b904108</span></td></tr>
+          <tr><td>Cancelacion automatica de reservas impagas</td><td>Worker en background cada 5 minutos</td><td class="date-col">16/05 <span class="commit-ref">b904108</span></td></tr>
+          <tr><td>Reservas multi-tipo (dia/semana/mes)</td><td>Tarifas diferenciadas, aforo dedicado para periodo largo</td><td class="date-col">11/05 <span class="commit-ref">e89ffeb</span></td></tr>
+          <tr><td>Modularizacion del frontend</td><td>ES6 modules, refactor de dashboard en modulos separados</td><td class="date-col">04/06 <span class="commit-ref">d5e02bb</span></td></tr>
+          <tr><td>Finanzas inteligentes</td><td>Reportes financieros con filtros, exportacion CSV, graficos</td><td class="date-col">05/06 <span class="commit-ref">098a1fa</span></td></tr>
+          <tr><td>Precios trimodales</td><td>Tarifas diferenciadas para Auto, Moto y Camioneta</td><td class="date-col">17/06 <span class="commit-ref">dbb0c50</span></td></tr>
+          <tr><td>WebSockets en tiempo real</td><td>Ocupacion actualizada al instante, notificaciones de cambio de aforo</td><td class="date-col">17/06 <span class="commit-ref">dbb0c50</span></td></tr>
+          <tr><td>Aforo inteligente con reservas</td><td>Plazas fijas para periodo largo, aforo de paso para hora/sin reserva</td><td class="date-col">23/06 <span class="commit-ref">35e6c22</span></td></tr>
+          <tr><td>Notificaciones in-app admin</td><td>UserNotificationService, polling, badge de no leidas</td><td class="date-col">30/06 <span class="commit-ref">3ac2fea</span></td></tr>
+          <tr><td>Tour interactivo de onboarding</td><td>Recorrido guiado con pasos, eventos reservation:paid</td><td class="date-col">30/06 <span class="commit-ref">c689371</span></td></tr>
+          <tr><td>Sistema de reloj virtual</td><td>getVirtualNow(), initVirtualTime(), TimeService.now()</td><td class="date-col">02/07 <span class="commit-ref">c296f52</span></td></tr>
+          <tr><td>Soft-delete de usuarios</td><td>Columna is_deleted + anonimizacion en lugar de borrado fisico</td><td class="date-col">02/07 <span class="commit-ref">c296f52</span></td></tr>
+          <tr><td>Separador de miles universal</td><td>formatNum() con regex, aplicado en dashboard, reservas, stats</td><td class="date-col">02/07 <span class="commit-ref">c296f52</span></td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
-<!-- ARQUITECTURA -->
-<section id="arquitectura">
+<!-- COMPARATIVA -->
+<section id="comparativa">
   <div class="container">
-    <h2 class="section-title">Arquitectura <span>Tecnologica</span></h2>
-    <ul class="arch-list">
+    <h2 class="section-title">Tabla <span>Comparativa</span></h2>
+    <p class="section-desc">Evolucion de las funcionalidades mas importantes entre ambas etapas.</p>
 
-      <li class="arch-item">
-        <span class="arch-tag tag-backend">Backend</span>
-        <div>
-          <h4>FastAPI + Python</h4>
-          <p>API REST con rutas organizadas por dominio (auth, parking, admin, user, reports). Autenticacion JWT con roles RBAC, base de datos SQLite/SQLAlchemy y tareas en background (Worker) para limpieza automatica de reservas vencidas.</p>
-        </div>
-      </li>
-
-      <li class="arch-item">
-        <span class="arch-tag tag-frontend">Frontend</span>
-        <div>
-          <h4>HTML + CSS + JavaScript (ES6 Modules)</h4>
-          <p>Interfaz web responsive con diseno oscuro premium (glassmorphism). JavaScript modular con imports ES6. Comunicacion en tiempo real via WebSockets para ocupacion y camaras en vivo.</p>
-        </div>
-      </li>
-
-      <li class="arch-item">
-        <span class="arch-tag tag-hardware">Hardware</span>
-        <div>
-          <h4>ESP32 + MQTT</h4>
-          <p>Microcontrolador ESP32 con sensor ultrasonico HC-SR04, servomotor y display LCD. Comunicacion con el backend mediante protocolo MQTT (broker HiveMQ). Recepcion de comandos OPEN/CLOSE para control de barreras.</p>
-        </div>
-      </li>
-
-      <li class="arch-item">
-        <span class="arch-tag tag-hardware">Vision</span>
-        <div>
-          <h4>EasyOCR + OpenCV</h4>
-          <p>Motor de reconocimiento optico de caracteres basado en redes neuronales. Preprocesamiento de imagen con OpenCV (CLAHE, deteccion de bordes, inversion). Correccion heuristica de caracteres y consenso 2X sobre ventana de 4 segundos.</p>
-        </div>
-      </li>
-
-      <li class="arch-item">
-        <span class="arch-tag tag-data">Datos</span>
-        <div>
-          <h4>SQLite + SQLAlchemy</h4>
-          <p>Base de datos relacional con modelo declarativo. Tablas de usuarios, vehiculos, reservas, accesos, aforo, promociones y configuracion. Migraciones aditivas via init_db(). Preparada para migrar a PostgreSQL en produccion.</p>
-        </div>
-      </li>
-
-      <li class="arch-item">
-        <span class="arch-tag tag-infra">Infra</span>
-        <div>
-          <h4>MQTT + WebSockets</h4>
-          <p>Dos canales de comunicacion en tiempo real: MQTT para comandos de hardware (barreras) y WebSockets para actualizacion de dashboards web. Arquitectura hibrida Edge + Cloud.</p>
-        </div>
-      </li>
-
-    </ul>
-  </div>
-</section>
-
-<!-- ROADMAP -->
-<section id="roadmap">
-  <div class="container">
-    <h2 class="section-title">Roadmap <span>MVP</span></h2>
-    <div class="mvp-grid">
-
-      <div class="mvp-card mvp1">
-        <h3><span class="mvp-tag">MVP 1</span> Nucleo</h3>
-        <ul>
-          <li class="done">Servicio ALPR con consenso 2X y deteccion QR</li>
-          <li class="done">Registro de ingresos y egresos (AccessLog)</li>
-          <li class="done">Sistema de reservas anticipadas</li>
-          <li class="done">Portal web de registro y autogestion</li>
-          <li class="done">Integracion con ESP32 + MQTT (barrera de entrada)</li>
-          <li class="done">Notificaciones in-app para conductores</li>
-        </ul>
-      </div>
-
-      <div class="mvp-card mvp2">
-        <h3><span class="mvp-tag">MVP 2</span> Gestion</h3>
-        <ul>
-          <li class="done">Gestion de usuarios con permisos y roles RBAC</li>
-          <li class="done">Reportes financieros exportables a CSV</li>
-          <li class="done">Sistema de promociones y puntos de fidelizacion</li>
-          <li class="done">Alertas de sistema: conectividad, estado de componentes, aforo</li>
-          <li class="wip">Lista negra de patentes</li>
-          <li class="wip">Monitoreo de salud de componentes fisicos (ESP32 + MQTT)</li>
-          <li class="wip">Cupones de descuento integrados al flujo de pago</li>
-        </ul>
-      </div>
-
-      <div class="mvp-card mvp3">
-        <h3><span class="mvp-tag">MVP 3</span> Expansion</h3>
-        <ul>
-          <li>Integracion con pasarelas de pago reales (Mercado Pago)</li>
-          <li>Aplicacion movil nativa para conductores</li>
-          <li>Analitica avanzada con prediccion de demanda</li>
-          <li>Aplicacion Web Progresiva (PWA) con service worker</li>
-          <li>Modo de operacion local ante falla de conectividad</li>
-          <li>Sensores infrarrojos de seguridad en barreras</li>
-        </ul>
-      </div>
-
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Funcionalidad</th>
+            <th>MVP 1</th>
+            <th>MVP 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vision artificial</td>
+            <td>ALPR</td>
+            <td><span class="badge badge-done">Basico</span></td>
+            <td><span class="badge badge-done">Estabilizado</span></td>
+          </tr>
+          <tr>
+            <td>Hardware</td>
+            <td>ESP32 + MQTT</td>
+            <td><span class="badge badge-done">Barrera entrada</span></td>
+            <td><span class="badge badge-wip">Falta salida</span></td>
+          </tr>
+          <tr>
+            <td>Reservas</td>
+            <td>Sistema de reservas</td>
+            <td><span class="badge badge-done">Solo por hora</span></td>
+            <td><span class="badge badge-done">Hora/dia/semana/mes</span></td>
+          </tr>
+          <tr>
+            <td>Seguridad</td>
+            <td>Roles y permisos</td>
+            <td><span class="badge badge-done">Admin/usuario</span></td>
+            <td><span class="badge badge-done">RBAC completo</span></td>
+          </tr>
+          <tr>
+            <td>Dashboard</td>
+            <td>Panel de control</td>
+            <td><span class="badge badge-done">Basico</span></td>
+            <td><span class="badge badge-done">Tiempo real + WebSockets</span></td>
+          </tr>
+          <tr>
+            <td>Autogestion</td>
+            <td>Perfil de usuario</td>
+            <td><span class="badge badge-done">Basico</span></td>
+            <td><span class="badge badge-done">Multi-vehiculo + favorito</span></td>
+          </tr>
+          <tr>
+            <td>Facturacion</td>
+            <td>Calculo de tarifas</td>
+            <td><span class="badge badge-done">Precio fijo</span></td>
+            <td><span class="badge badge-done">Trimodal + dinamico</span></td>
+          </tr>
+          <tr>
+            <td>Notificaciones</td>
+            <td>Sistema de alerts</td>
+            <td><span class="badge badge-done">Email</span></td>
+            <td><span class="badge badge-done">In-app + WebSocket</span></td>
+          </tr>
+          <tr>
+            <td>Fidelizacion</td>
+            <td>Puntos y promociones</td>
+            <td><span class="badge badge-done">Puntos basicos</span></td>
+            <td><span class="badge badge-done">Canje + catalogo</span></td>
+          </tr>
+          <tr>
+            <td>Reportes</td>
+            <td>Exportacion de datos</td>
+            <td><span class="badge badge-future">No disponible</span></td>
+            <td><span class="badge badge-done">CSV con filtros</span></td>
+          </tr>
+          <tr>
+            <td>Tiempo</td>
+            <td>Reloj virtual</td>
+            <td><span class="badge badge-future">No disponible</span></td>
+            <td><span class="badge badge-done">getVirtualNow()</span></td>
+          </tr>
+          <tr>
+            <td>Usuarios</td>
+            <td>Gestion de cuentas</td>
+            <td><span class="badge badge-done">CRUD basico</span></td>
+            <td><span class="badge badge-done">Soft-delete + bloqueo</span></td>
+          </tr>
+          <tr>
+            <td>Landing</td>
+            <td>Pagina de inicio</td>
+            <td><span class="badge badge-done">Carrusel + hero</span></td>
+            <td><span class="badge badge-done">Flechas navegacion</span></td>
+          </tr>
+          <tr>
+            <td>PWA</td>
+            <td>Progressive Web App</td>
+            <td><span class="badge badge-future">No disponible</span></td>
+            <td><span class="badge badge-future">Pendiente</span></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
-<!-- EQUIPO -->
-<section id="equipo">
-  <div class="container">
-    <h2 class="section-title">Grupo <span>404</span></h2>
-    <p style="text-align:center;color:var(--texto-sec);margin-bottom:3rem;">
-      Instituto Tecnico de Formacion Superior Leopoldo Marechal — Tecnicatura en Desarrollo de Software<br>
-      Practicas Profesionalizantes 3 — Ciclo lectivo 2026<br>
-      Docente: Mauro Julian Ayala
-    </p>
-    <div class="team-grid">
-      <div class="team-card">
-        <div class="team-avatar">VB</div>
-        <h4>Veronica Bonsembiante</h4>
-        <p>Integrante</p>
-      </div>
-      <div class="team-card">
-        <div class="team-avatar">TA</div>
-        <h4>Teresa Aguayo</h4>
-        <p>Integrante</p>
-      </div>
-      <div class="team-card">
-        <div class="team-avatar">MC</div>
-        <h4>Mariano Cirillo</h4>
-        <p>Integrante</p>
-      </div>
-      <div class="team-card">
-        <div class="team-avatar">DP</div>
-        <h4>Diego Pozo</h4>
-        <p>Integrante</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
 <footer>
-  <div class="container">
-    <strong>AUTOPASS</strong> &mdash; Estacionamiento Inteligente &mdash; Grupo 404 &mdash; PP3 2026
+  <div class="container" style="border-top:1px solid var(--border);padding:2rem 0;text-align:center;color:var(--texto-sec);font-size:0.85rem;">
+    <strong style="color:var(--dorado);">AUTOPASS</strong> &mdash; Estacionamiento Inteligente &mdash; Grupo 404 &mdash; PP3 2026
   </div>
 </footer>
 
 <script>
-// HEADER SCROLL EFFECT
 const header = document.getElementById('header');
 window.addEventListener('scroll', () => {
   header.classList.toggle('scrolled', window.scrollY > 50);
