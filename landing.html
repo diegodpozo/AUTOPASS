@@ -49,13 +49,11 @@
     align-items: center;
   }
   .header-logo {
-    font-weight: 800;
-    font-size: 1.4rem;
-    color: var(--dorado);
-    letter-spacing: 4px;
     text-decoration: none;
+    display: flex;
+    align-items: center;
   }
-  .header-logo span { color: var(--blanco); }
+  .header-logo img { height: 38px; }
   nav a {
     color: var(--texto-sec);
     text-decoration: none;
@@ -273,7 +271,7 @@
 
 <header id="header">
   <div class="header-inner">
-    <a href="#" class="header-logo">AUTO<span>PASS</span></a>
+    <a href="#" class="header-logo"><img src="static/images/logo.png" alt="AUTOPASS"></a>
     <nav>
       <a href="#mvp1">MVP 1</a>
       <a href="#mvp2">MVP 2</a>
