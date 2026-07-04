@@ -277,7 +277,49 @@ export async function openBarrier(gateId) {
     }
 }
 
-export function showCreateUserModal() {
+export async function populateBranchSelect(selectEl) {
+    if (!selectEl) { console.warn('[populateBranchSelect] selectEl is null'); return; }
+    console.log('[populateBranchSelect] Cargando sucursales...');
+
+    // FALLBACK DESDE CACHE LOCAL SI YA SE CARGARON
+    if (allBranchesData.length > 0) {
+        console.log('[populateBranchSelect] Usando cache local:', allBranchesData.length);
+        _renderBranchOptions(selectEl, allBranchesData);
+        return;
+    }
+
+    try {
+        const res = await api.get('/admin/branches');
+        console.log('[populateBranchSelect] Respuesta:', res);
+        if (res && res.ok) {
+            const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            console.log('[populateBranchSelect] Datos:', data);
+            if (data.length > 0) {
+                allBranchesData = data; // CACHEAR
+                _renderBranchOptions(selectEl, data);
+            } else {
+                selectEl.innerHTML = '<option value="" style="background: #111;">-- Sin sucursales --</option>';
+            }
+        } else {
+            console.warn('[populateBranchSelect] Error en respuesta:', res?.error);
+        }
+    } catch (e) {
+        console.error('[populateBranchSelect] Error:', e);
+    }
+}
+
+function _renderBranchOptions(selectEl, data) {
+    selectEl.innerHTML = '';
+    data.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.nombre;
+        opt.textContent = b.nombre;
+        selectEl.appendChild(opt);
+    });
+    console.log('[populateBranchSelect] Options renderizadas:', data.length);
+}
+
+export async function showCreateUserModal() {
     const rol = localStorage.getItem('rol');
     const sucursal = localStorage.getItem('sucursal') || '';
     
@@ -311,23 +353,31 @@ export function showCreateUserModal() {
     } else {
         //ADMIN GLOBAL VE TODO
         if (branchRow) branchRow.style.display = 'none';
-        if (branchSelect) branchSelect.disabled = false;
+        if (branchSelect) {
+            branchSelect.innerHTML = ''; // VACIO HASTA QUE SE SELECCIONE ROL
+            branchSelect.disabled = false;
+        }
         roleSelect.value = 'user';
     }
 
     if (window.openModal) window.openModal('modal-create-user');
 }
 
-export function toggleBranchSelection() {
+export async function toggleBranchSelection() {
     const rol = document.getElementById('admin-user-rol').value;
     const branchRow = document.getElementById('branch-selection-row');
+    const branchSelect = document.getElementById('admin-user-sucursal');
     const userRol = localStorage.getItem('rol');
 
     // SI EL QUE ESTA CREANDO ES UN ADMIN LOCAL, LA FILA DE SEDE YA ESTA VISIBLE Y BLOQUEADA
     if (userRol === 'local_admin') return;
 
     if (branchRow) {
-        branchRow.style.display = (rol === 'staff' || rol === 'local_admin') ? 'block' : 'none';
+        const show = (rol === 'staff' || rol === 'local_admin');
+        branchRow.style.display = show ? 'block' : 'none';
+        if (show && branchSelect) {
+            await populateBranchSelect(branchSelect);
+        }
     }
 }
 
@@ -348,14 +398,20 @@ export async function handleAdminCreateUser(event) {
     };
 
     btn.disabled = true;
+    console.log('[handleAdminCreateUser] Payload:', payload);
     const res = await api.post(`/admin/users?rol=${rol}`, payload);
+    console.log('[handleAdminCreateUser] Respuesta:', res);
     if (res && res.ok) {
         showToast('Usuario creado.');
         if (window.closeModal) window.closeModal('modal-create-user');
         event.target.reset();
         if (window.loadUsers) window.loadUsers(); 
     } else {
-        showToast(`Error: ${res?.error || 'Desconocido'}`);
+        const errMsg = Array.isArray(res?.error) 
+            ? res.error.map(e => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join(' | ')
+            : (res?.error || 'Desconocido');
+        console.error('[handleAdminCreateUser] Error:', errMsg);
+        showToast(`Error: ${errMsg}`);
     }
     btn.disabled = false;
 }
@@ -1304,7 +1360,7 @@ export async function handleAdminChangePassword(event) {
     btn.disabled = false;
 }
 
-export function openEditUserModal(userId) {
+export async function openEditUserModal(userId) {
     const u = allUsersData.find(x => x.id === userId);
     if (!u) return;
 
@@ -1348,10 +1404,14 @@ export function openEditUserModal(userId) {
             <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
             <option value="admin" style="background: #111;">Administrador General</option>
         `;
+        const branchSelect = document.getElementById('edit-user-sucursal');
+        if (branchSelect) {
+            await populateBranchSelect(branchSelect);
+        }
     }
 
     roleSelect.value = u.rol;
-    toggleEditBranchSelection();
+    await toggleEditBranchSelection();
     
     if (u.sucursal) {
         const branchSelect = document.getElementById('edit-user-sucursal');
@@ -1361,13 +1421,18 @@ export function openEditUserModal(userId) {
     if (window.openModal) window.openModal('modal-edit-user');
 }
 
-export function toggleEditBranchSelection() {
+export async function toggleEditBranchSelection() {
     const rol = document.getElementById('edit-user-rol').value;
     const branchRow = document.getElementById('edit-branch-selection-row');
+    const branchSelect = document.getElementById('edit-user-sucursal');
     const userRol = localStorage.getItem('rol');
 
     if (branchRow) {
-        branchRow.style.display = (rol === 'staff' || rol === 'local_admin') ? 'block' : 'none';
+        const show = (rol === 'staff' || rol === 'local_admin');
+        branchRow.style.display = show ? 'block' : 'none';
+        if (show && userRol !== 'local_admin' && branchSelect) {
+            await populateBranchSelect(branchSelect);
+        }
     }
 }
 

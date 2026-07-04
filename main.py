@@ -34,6 +34,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def no_cache_js(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static/js/"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
 @app.on_event("startup")
 def startup_event():
     """INICIALIZACION DE SERVICIOS AL ARRANCAR EL SERVIDOR."""

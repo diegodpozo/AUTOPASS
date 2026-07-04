@@ -1,3 +1,4 @@
+import time
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -11,6 +12,7 @@ templates = Jinja2Templates(directory="templates")
 
 # INYECTAR CONFIGURACIONES GLOBALES A TODOS LOS TEMPLATES
 templates.env.globals["settings"] = settings
+templates.env.globals["cache_buster"] = int(time.time())
 
 @router.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):

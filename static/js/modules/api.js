@@ -55,7 +55,13 @@ const api = {
 
             if (!response.ok) {
                 let detail = '';
-                try { const d = await response.json(); detail = d.detail || ''; } catch(e) {}
+                try {
+                    const d = await response.json();
+                    detail = d.detail || '';
+                    if (Array.isArray(detail)) {
+                        detail = detail.map(e => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join('; ');
+                    }
+                } catch(e) {}
                 return { 
                     ok: false, 
                     status: response.status, 
