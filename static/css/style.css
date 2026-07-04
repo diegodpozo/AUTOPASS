@@ -80,9 +80,13 @@ nav a {
 }
 
 .toast.success .toast-icon { color: var(--secondary); }
+.toast.success { border-color: var(--secondary); }
 .toast.error .toast-icon { color: var(--danger); }
+.toast.error { border-color: var(--danger); }
 .toast.info .toast-icon { color: var(--info); }
+.toast.info { border-color: var(--info); }
 .toast.default .toast-icon { color: var(--dorado); }
+.toast.default { border-color: var(--dorado); }
 
 @keyframes toast-entrance {
     0% { transform: translateX(120%) scale(0.8); opacity: 0; }
