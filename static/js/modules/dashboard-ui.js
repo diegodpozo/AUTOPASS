@@ -1,10 +1,6 @@
 import api from './api.js';
-<<<<<<< HEAD
 import { normalizeSystemName, showToast, showConfirm } from './utils.js';
-=======
-import { normalizeSystemName, showToast } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
->>>>>>> 189c3ba (VISUALIZACION PLAZAS + ARREGLOS DE TIEMPOS)
 
 /**
  * PANEL UI MODULO
