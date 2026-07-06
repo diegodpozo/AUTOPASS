@@ -294,15 +294,19 @@ function applyOccupancyFilter() {
 }
 
 export function renderOccupancyTable() {
-    const tbody = document.getElementById('occ-list');
-    if (!tbody) return;
+    const html = buildOccupancyRows();
+    const tbodies = [document.getElementById('occ-list'), document.getElementById('occ-list-tab')];
+    tbodies.forEach(el => { if (el) el.innerHTML = html; });
+    renderOccupancyPagination();
+}
 
+function buildOccupancyRows() {
     const start = (currentPageOcc - 1) * itemsPerPageOcc;
     const end = start + itemsPerPageOcc;
     const paginatedData = filteredOccupancyData.slice(start, end);
     const now = getVirtualNow();
 
-    tbody.innerHTML = paginatedData.map(occ => {
+    return paginatedData.map(occ => {
         const date = new Date(occ.ingreso);
         const diffMs = now - date;
         const duration = `${Math.floor(diffMs / 3600000)}h ${Math.floor((diffMs % 3600000) / 60000)}m`;
@@ -326,15 +330,13 @@ export function renderOccupancyTable() {
             <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">
                 <div class="flex-row gap-5 justify-center">
-                    ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${formatNum(occ.deuda)})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
+                    ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
                     <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-door-open"></i></button>
                     ${(!(occ.reserva && occ.reserva.tipo_estadia && occ.reserva.estado_pago) || !(occ.reserva.tipo_estadia !== 'hora' && occ.reserva.estado_pago === 'Pagado')) ? `<button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${formatNum(occ.deuda)}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>` : ''}
                 </div>
             </td>
         </tr>`;
     }).join('') || '<tr><td colspan="5" class="text-center py-20">Sin vehículos.</td></tr>';
-
-    renderOccupancyPagination();
 }
 
 function renderOccupancyPagination() {

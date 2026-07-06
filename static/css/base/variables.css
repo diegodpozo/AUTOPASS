@@ -1,28 +1,61 @@
 :root {
-    /* Paleta Obsidian & Champagne Gold (Overhaul v9.2.0) */
-    --dorado: #dfba6b;
-    --dorado-dark: #b89047;
-    --blanco: #FFFFFF;
-    --negro: #000000;
-    --gris: #1a1e26;
-    --gris-fondo: #08090c;
-    --gris-card: #11141b;
-    --gris-sidebar: #0b0d10;
-    --border: rgba(223, 186, 107, 0.25);
-    --border-light: rgba(223, 186, 107, 0.12);
+    /* --- PALETA CHAMPAGNE GOLD & ROYAL VELVET (V9.4.0) --- */
     
-    /* Colores Semánticos Premium (No genéricos) */
-    --danger: #f43f5e;
-    --secondary: #05c46b;
-    --warning: #fbbf24;
-    --info: #6366f1;
+    /* DORADOS DE MARCA (CHAMPAGNE ACCENT) */
+    --dorado: #dfba6b;          /* DORADO PRINCIPAL */
+    --dorado-hover: #edd193;    /* DORADO ILUMINADO PARA HOVERS */
+    --dorado-dark: #b89047;     /* DORADO OSCURO PARA BORDES Y TITULOS */
+    --dorado-glow: rgba(223, 186, 107, 0.15); /* GLOW DE FONDO */
     
+    /* VIOLETA DE ACENTO PREMIUM (ROYAL VELVET PARA REMARCAR COSAS IMPORTANTES) */
+    --violet-brand: #8b5cf6;    /* VIOLETA REAL PARA FIDELIZACION, PUNTOS Y PASES VIP */
+    --violet-dark: #4c1d95;     /* VIOLETA OSCURO PARA ESTADOS ACTIVOS O DETALLES DE INTERES */
+    --violet-glow: rgba(139, 92, 246, 0.15); /* GLOW VIOLETA PARA DESTACAR ELEMENTOS */
+    
+    /* FONDOS OBSIDIAN ORIGINALES (NEGROS Y GRISES OSCUROS SOBRIOS) */
+    --bg-main: #08090c;         /* FONDO DE LA APP (OBSIDIAN ORIGINAL) */
+    --bg-sidebar: #0b0d10;      /* SIDEBAR COLAPSABLE */
+    --bg-card: #11141b;         /* TARJETAS PRINCIPALES */
+    --bg-input: #1a1e26;        /* INPUTS, BOTONES SECUNDARIOS E INTERNOS */
+    
+    /* JERARQUIA DE TEXTOS NEUTRALES */
+    --text-primary: #f5f6f8;    /* BLANCO SATINADO */
+    --text-secondary: #9ca3af;  /* GRIS CLARO NEUTRAL */
+    --text-muted: #6b7280;      /* GRIS APAGADO */
+    
+    /* BORDES METALICOS Y DE VIDRIO */
+    --border: rgba(223, 186, 107, 0.22);       /* BORDE DORADO */
+    --border-light: rgba(223, 186, 107, 0.10); /* BORDE DORADO TENUE */
+    --border-card: rgba(255, 255, 255, 0.05);   /* BORDE DE TARJETA NEUTRAL */
+
+    /* COLORES SEMANTICOS PREMIUM */
+    --success: #10b981;         /* VERDE ESMERALDA (AFORO/LIBRE) */
+    --danger: #f43f5e;          /* ROSA-ROJO (ERROR/OCUPADO) */
+    --warning: #f59e0b;         /* AMBAR (ADVERTENCIA) */
+    --info: #3b82f6;            /* AZUL COBALTO PARA INFORMACION GENERAL */
+    
+    /* GRADIENTES DE ALTA GAMA */
+    --gradient-gold: linear-gradient(135deg, var(--dorado) 0%, var(--dorado-dark) 100%);
+    --gradient-violet: linear-gradient(135deg, var(--violet-brand) 0%, var(--violet-dark) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(17, 20, 27, 0.85) 0%, rgba(8, 9, 12, 0.95) 100%);
+    --gradient-vip: linear-gradient(135deg, #120e24 0%, #07060b 100%); /* FONDO DE TARJETA VIP */
+    
+    /* TIPOGRAFIA */
     --font-mono: 'JetBrains Mono', monospace;
     
-    /* Escala Tipográfica */
+    /* ESCALA TIPOGRAFICA */
     --text-xs: 0.7rem;
     --text-sm: 0.85rem;
     --text-md: 1.1rem;
     --text-lg: 1.4rem;
     --text-xl: 2.5rem;
+
+    /* COMPATIBILIDAD CON CODIGO ANTERIOR - MAPEO DE VARIABLES ANTIGUAS */
+    --blanco: #FFFFFF;
+    --negro: #000000;
+    --gris: var(--bg-input);
+    --gris-fondo: var(--bg-main);
+    --gris-card: var(--bg-card);
+    --gris-sidebar: var(--bg-sidebar);
+    --secondary: var(--success);
 }

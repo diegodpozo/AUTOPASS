@@ -113,13 +113,44 @@ class BillingService:
     @staticmethod
     def process_payment(db: Session, plate: str) -> dict:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
+        from services.time_service import TimeService
+        from models.enums import ReservationStatus
+
         log = db.query(models.AccessLog).filter(
             models.AccessLog.patente_detectada == plate,
-            models.AccessLog.tipo_evento == "ENTRADA",
-            models.AccessLog.pago_confirmado == False
+            models.AccessLog.tipo_evento == "ENTRADA"
         ).order_by(models.AccessLog.id.desc()).first()
 
         if not log:
+            return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}
+
+        # SI YA ESTA PAGADO, VERIFICAR SI TIENE RESERVA VENCIDA (EXTRA TIME)
+        if log.pago_confirmado:
+            if log.reserva_id:
+                r = db.query(models.Reservation).filter(models.Reservation.id == log.reserva_id).first()
+                if r:
+                    now_str = TimeService.now_str()
+                    if not (r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str):
+                        return {"status": "error", "message": "La reserva sigue vigente"}
+                    # RESERVA VENCIDA: cobrar desde fecha_fin
+                    monto_real = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+                    log.costo_estadia = (log.costo_estadia or 0) + monto_real
+                    log.fecha_pago = datetime.datetime.now().isoformat()
+                    log.pago_confirmado = True
+                    
+                    puntos_ganados = 0
+                    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == plate).first()
+                    if vehiculo and vehiculo.owner:
+                        puntos_ganados = BillingService.calculate_points(monto_real)
+                        vehiculo.owner.puntos_acumulados += puntos_ganados
+                        db.add(models.PointsLog(
+                            user_id=vehiculo.owner.id,
+                            cantidad=puntos_ganados,
+                            motivo=f"Extra por reserva vencida: {plate}",
+                            fecha=datetime.datetime.now().isoformat()
+                        ))
+                    db.commit()
+                    return {"status": "ok", "monto_cobrado": monto_real, "puntos_ganados": puntos_ganados}
             return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}
 
         monto_real = BillingService.calculate_debt(log.fecha_hora, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)

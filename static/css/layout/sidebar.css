@@ -1,6 +1,6 @@
 /* --- SIDEBAR LAYOUT --- */
 .sidebar { 
-    background: linear-gradient(180deg, var(--gris-sidebar) 0%, #0d0d0d 100%);
+    background: linear-gradient(180deg, var(--bg-sidebar) 0%, #0d0d0d 100%);
     border-right: 1px solid var(--border-light); 
     display: flex; 
     flex-direction: column; 
@@ -27,7 +27,7 @@
 /* --- SIDEBAR TOGGLE --- */
 .sidebar-toggle {
     position: absolute; right: -15px; top: 50%; transform: translateY(-50%);
-    width: 30px; height: 30px; background: var(--gris-sidebar); border: 1px solid var(--border);
+    width: 30px; height: 30px; background: var(--bg-sidebar); border: 1px solid var(--border);
     border-radius: 50%; display: flex; justify-content: center; align-items: center; color: var(--dorado);
     cursor: pointer; z-index: 1000; box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }

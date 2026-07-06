@@ -16,7 +16,7 @@ class NotificationService:
         cls._loop = loop
 
     @classmethod
-    def notify_occupancy_change(cls, db: Session, sucursal_norm: Optional[str] = None):
+    def notify_occupancy_change(cls, db: Session = None, sucursal_norm: Optional[str] = None):
         """DISPARA LA NOTIFICACION DE AFORO DE FORMA ASINCRONA.
         Si la llamada ocurre desde un hilo sincronico (FastAPI sync handler), se usa
         asyncio.run_coroutine_threadsafe para programar la tarea en el loop principal.
@@ -27,7 +27,7 @@ class NotificationService:
             # Si hay un loop registrado (p.ej. el loop de Uvicorn), usalo con run_coroutine_threadsafe
             if cls._loop and cls._loop.is_running():
                 try:
-                    asyncio.run_coroutine_threadsafe(cls._occupancy_manager.broadcast_update(db, sucursal_norm), cls._loop)
+                    asyncio.run_coroutine_threadsafe(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm), cls._loop)
                     print(f"[NotificationService] Scheduled broadcast_update for sucursal={sucursal_norm}")
                 except Exception as e:
                     print(f"[NotificationService] Error scheduling broadcast: {e}")
@@ -42,7 +42,7 @@ class NotificationService:
 
             if loop and loop.is_running():
                 try:
-                    loop.create_task(cls._occupancy_manager.broadcast_update(db, sucursal_norm))
+                    loop.create_task(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm))
                     print(f"[NotificationService] Created task broadcast_update for sucursal={sucursal_norm} in current loop")
                 except Exception as e:
                     print(f"[NotificationService] Error creating task in current loop: {e}")

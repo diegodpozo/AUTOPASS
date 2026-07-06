@@ -278,7 +278,6 @@ class ALPREngine:
         while self.is_running:
             try:
                 frame = self.frame_queue.get(timeout=1)
-                print(f"[ALPR OCR] Procesando frame desde queue. queue_size={self.frame_queue.qsize()}")
                 found_plate = False
                 
                 # QR DETECTION
@@ -305,39 +304,7 @@ class ALPREngine:
                             print(f"[ALPR OCR] Error reader.readtext: {type(e).__name__} - {e}")
                             results = []
 
-                        # Loguear resultados crudos para depuración
-                        if results:
-                            print(f"[ALPR OCR] EasyOCR raw results (roi={roi_idx} var={var_idx}):")
-                            for r in results:
-                                # Defensive unpack + type coercion
-                                try:
-                                    bbox = r[0] if len(r) > 0 else None
-                                    text = str(r[1]) if len(r) > 1 else ""
-                                    conf = float(r[2]) if len(r) > 2 else 0.0
-                                except Exception as e:
-                                    print(f"    - unexpected result format: {r} ({type(e).__name__}: {e})")
-                                    continue
-
-                                # Extract a safe leftmost x coordinate for bbox if possible
-                                bx = 0.0
-                                try:
-                                    # bbox might be nested lists/tuples or numpy arrays
-                                    pt0 = bbox[0]
-                                    if hasattr(pt0, '__len__'):
-                                        bx = float(pt0[0])
-                                    else:
-                                        bx = float(pt0)
-                                except Exception:
-                                    try:
-                                        import numpy as _np
-                                        arr = _np.array(bbox)
-                                        bx = float(_np.min(arr[:,0]))
-                                    except Exception:
-                                        bx = 0.0
-
-                                print(f"    - text='{text}' conf={conf:.3f} bbox0x={bx:.1f}")
-                        else:
-                            print(f"[ALPR OCR] No se obtuvieron resultados OCR (roi={roi_idx} var={var_idx})")
+                        # NO LOGGEAR RESULTADOS CRUDOS PARA EVITAR RUIDO EN CONSOLA
 
                         if not results:
                             # No OCR results -> continuar sin guardar para evitar ruido
@@ -364,8 +331,8 @@ class ALPREngine:
 
                         try:
                             results.sort(key=_leftmost_x)
-                        except Exception as e:
-                            print(f"[ALPR OCR] Warning sorting results: {e}")
+                        except Exception:
+                            pass
 
                         # Construir texto combinado de forma segura (left->right)
                         combined_lr = "".join([str(r[1]) if len(r) > 1 else '' for r in results])
@@ -411,7 +378,7 @@ class ALPREngine:
                                 self.vote_buffer = [(p,c,t) for (p,c,t) in self.vote_buffer if now - t <= CONSENSUS_WINDOW]
                                 continue
 
-                            print(f"🚗 [{country} MATCH (candidate)] >>> {plate} (Conf: {avg_conf:.2f})")
+                            print(f"🚗 Patente detectada: {plate} (Conf: {avg_conf:.2f})")
 
                             # CONSENSUS: aceptar si avg_conf >= threshold o si aparece CONSENSUS_REQUIRED veces en ventana
                             now = time.time()
@@ -427,7 +394,6 @@ class ALPREngine:
                                         os.makedirs('alpr_debug', exist_ok=True)
                                         debug_path = os.path.join('alpr_debug', f'accepted_plate_{GATE_ID}_{plate}_{int(time.time()*1000)}.jpg')
                                         cv2.imwrite(debug_path, roi)
-                                        print(f"[ALPR DEBUG] Plate aceptado guardado: {debug_path} avg_conf={avg_conf:.3f} votes={len(same_votes)}")
                                 except Exception:
                                     pass
 
@@ -437,7 +403,7 @@ class ALPREngine:
                                 found_plate = True
                                 break
                             else:
-                                print(f"[ALPR] Plate buffered for consensus: {plate} avg_conf={avg_conf:.3f} votes={len(same_votes)} (need {CONSENSUS_REQUIRED})")
+                                # Buffered for consensus, no log
                                 # buffered for consensus; no debug image saved to avoid noise
                                 continue
                         else:
@@ -454,7 +420,7 @@ class ALPREngine:
             key = f"{type}:" + re.sub(r'\s+', '', str(data)).upper()
             now = time.time()
             if self.last_validated_plate == key and (now - getattr(self, 'last_validation_time', 0)) < COOLDOWN_SECONDS:
-                print(f"[ALPR] Ignorando evento duplicado {key} dentro de cooldown")
+                # Ignorando evento duplicado dentro de cooldown
                 return
             self.last_validated_plate = key
             self.last_validation_time = now
@@ -471,10 +437,18 @@ class ALPREngine:
             if type == "qr": endpoint = "/v1/access/validate-qr"
             payload_key = "plate" if type != "qr" else "qr_data"
             payload = {"gate_id": GATE_ID, "image_base64": img_b64, payload_key: data}
-            print(f"[ALPR -> BACKEND] POST {BACKEND_URL}{endpoint} payload_keys={list(payload.keys())}")
             try:
                 resp = requests.post(f"{BACKEND_URL}{endpoint}", json=payload, timeout=5)
-                print(f"[ALPR -> BACKEND] Response {resp.status_code}: {resp.text[:200]}")
+                if resp.ok:
+                    msg = resp.json().get("message", "")
+                    if "bienvenido" in msg.lower():
+                        print(f"✅ Ingreso: ¡Bienvenido {data}!")
+                    elif "hasta luego" in msg.lower() or "salida" in msg.lower():
+                        print(f"✅ Salida: ¡Hasta luego {data}!")
+                    else:
+                        print(f"✅ {msg}")
+                else:
+                    print(f"❌ Error {resp.status_code}: {resp.text[:200]}")
             except Exception as re:
                 print(f"[ALPR ERROR] Error enviando petición al backend: {type(re).__name__} - {re}")
         except Exception as e:
@@ -532,8 +506,6 @@ async def ws_monitoring_worker(streamer):
                             _, buffer = cv2.imencode('.jpg', view_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                             await websocket.send(base64.b64encode(buffer).decode('utf-8'))
                             frame_count += 1
-                            if frame_count % 100 == 0:
-                                print(f"[*] Streaming {GATE_ID}: {frame_count} frames enviados.")
                         except Exception as fe:
                             print(f"[!] Error al procesar/enviar frame ({GATE_ID}): {fe}")
                             break # ROMPER BUCLE INTERNO PARA RECONECTAR
@@ -600,18 +572,16 @@ def main():
                         try:
                             if not engine.frame_queue.full():
                                 engine.frame_queue.put(frame)
-                                print(f"[ALPR] Frame encolado. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
                                 last_ocr_time = now
                             else:
                                 try:
                                     engine.frame_queue.get_nowait()
                                     engine.frame_queue.put(frame)
-                                    print(f"[ALPR] frame_queue lleno. descartado el más antiguo y encolado el nuevo. t={now:.3f} queue_size={engine.frame_queue.qsize()}")
                                     last_ocr_time = now
                                 except Exception:
-                                    print(f"[ALPR] frame_queue lleno. descartando frame. t={now:.3f}")
+                                    pass
                         except Exception:
-                            print(f"[ALPR] Error gestionando frame_queue. t={now:.3f}")
+                            pass
             time.sleep(0.01)
     except Exception as e:
         print(f"[!] Error FATAL en el bucle principal: {e}")

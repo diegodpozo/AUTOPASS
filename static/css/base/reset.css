@@ -3,8 +3,8 @@
 body {
     margin: 0; 
     font-family: 'Montserrat', 'Inter', sans-serif;
-    background-color: var(--negro); 
-    color: var(--blanco);
+    background-color: var(--bg-main); 
+    color: var(--text-primary);
     overflow-x: hidden;
     font-size: var(--text-sm);
 }
