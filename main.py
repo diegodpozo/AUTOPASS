@@ -42,9 +42,13 @@ async def no_cache_js(request, call_next):
     return response
 
 @app.on_event("startup")
-def startup_event():
+async def startup_event():
     """INICIALIZACION DE SERVICIOS AL ARRANCAR EL SERVIDOR."""
     try:
+        import asyncio
+        from services.notification_service import NotificationService
+        NotificationService.set_event_loop(asyncio.get_running_loop())
+
         # MQTT
         mqtt_client.connect_async(settings.MQTT_BROKER, settings.MQTT_PORT, 60)
         mqtt_client.loop_start()

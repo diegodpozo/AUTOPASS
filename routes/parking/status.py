@@ -7,6 +7,8 @@ from core.database import get_db
 from core.security import get_operational_user, decode_access_token
 from services.billing_service import BillingService
 from services.notification_service import NotificationService
+from services.time_service import TimeService
+from models.enums import ReservationStatus
 import unicodedata
 
 router = APIRouter()
@@ -41,24 +43,29 @@ class OccupancyManager:
                 self.active_connections[sucursal].remove(websocket)
             except ValueError: pass
 
-    async def broadcast_update(self, db: Session, sucursal_norm: str = None):
-        """ENVIA EL ESTADO ACTUAL DE AFORO UN TODOS LOS INTERESADOS."""
-        #SI SE PASA SUCURSAL_NORM, NOTIFICAMOS UN ESA SEDE Y UN GLOBAL
-        targets = ["GLOBAL"]
-        if sucursal_norm and sucursal_norm != "GLOBAL":
-            targets.append(sucursal_norm)
-            
-        for target in targets:
-            if target not in self.active_connections or not self.active_connections[target]:
-                continue
+    async def broadcast_update(self, db: Session = None, sucursal_norm: str = None):
+        """ENVIA EL ESTADO ACTUAL DE AFORO UN TODOS LOS INTERESADOS.
+        Crea su propia sesión de DB si no se provee una, para evitar
+        usar una sesión cerrada cuando se llama asincrónicamente."""
+        from core.database import SessionLocal
+        close_session = False
+        if db is None:
+            db = SessionLocal()
+            close_session = True
+        try:
+            targets = ["GLOBAL"]
+            if sucursal_norm and sucursal_norm != "GLOBAL":
+                targets.append(sucursal_norm)
                 
-            # OBTENER DATOS DE AFORO PARA EL TARGET
-            if target == "GLOBAL":
-                #RESUMEN PARA ADMIN GLOBAL
-                data = self._get_global_status(db)
-            else:
-                # DATOS ESPECIFICOS DE LA SEDE
-                data = self._get_branch_status(db, target)
+            for target in targets:
+                if target not in self.active_connections or not self.active_connections[target]:
+                    continue
+                    
+                # OBTENER DATOS DE AFORO PARA EL TARGET
+                if target == "GLOBAL":
+                    data = self._get_global_status(db)
+                else:
+                    data = self._get_branch_status(db, target)
                 
             # ENVIAR A TODOS LOS SOCKETS DE ESTE TARGET
             disconnected = []
@@ -70,6 +77,9 @@ class OccupancyManager:
             
             for conn in disconnected:
                 self.disconnect(conn, target)
+        finally:
+            if close_session:
+                db.close()
 
     def _get_global_status(self, db: Session):
         branches = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
@@ -300,31 +310,41 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
         tiene_salida = db.query(models.AccessLog.id).filter(
             models.AccessLog.patente_detectada == e.patente_detectada, 
             models.AccessLog.tipo_evento == "SALIDA", 
-            models.AccessLog.fecha_hora > e.fecha_hora,
+            models.AccessLog.id > e.id,
             models.AccessLog.sucursal == e.sucursal
         ).first()
         
         if not tiene_salida:
-            # AHORA PASAMOS LA SUCURSAL PARA QUE EL CALCULO DE DEUDA SEA EXACTO POR SEDE
-            deuda = 0.0 if e.pago_confirmado else BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
-            
             floor_name = None
             if e.floor:
                 floor_name = e.floor.nombre
 
-            # incluir info de reserva (si existe) para el frontend
+            deuda = 0.0
+            ya_pago = e.pago_confirmado
             reserva_info = None
+
             if e.reserva_id:
                 r = db.query(models.Reservation).filter(models.Reservation.id == e.reserva_id).first()
                 if r:
                     reserva_info = {"id": r.id, "tipo_estadia": r.tipo_estadia, "estado_pago": r.estado_pago}
+                    now_str = TimeService.now_str()
+                    # SI LA RESERVA EXPIRÓ (COMPLETADA/CANCELADA O FECHA_FIN YA PASÓ), CALCULAR DEUDA DESDE ESE MOMENTO
+                    if r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str:
+                        deuda = BillingService.calculate_debt(r.fecha_fin, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
+                        deuda = max(0, deuda - (e.costo_estadia or 0))
+                        ya_pago = deuda == 0
+                    else:
+                        deuda = 0.0
+                        ya_pago = True
+            elif not e.pago_confirmado:
+                deuda = BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
 
             res.append({
                 "patente": e.patente_detectada, 
                 "tipo_vehiculo": e.tipo_vehiculo,
                 "ingreso": e.fecha_hora, 
                 "deuda": deuda, 
-                "ya_pago": e.pago_confirmado, 
+                "ya_pago": ya_pago, 
                 "es_reserva": e.reserva_id is not None,
                 "reserva": reserva_info,
                 "sucursal": e.sucursal,

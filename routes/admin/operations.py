@@ -35,18 +35,27 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
     """REGISTRA UN INGRESO FORZADO AL PREDIO DE LA SEDE."""
     from routes.parking import normalize_plate
     from models.enums import PaymentStatus, ReservationStatus
+    from services.time_service import TimeService
     p = normalize_plate(plate)
-    now = datetime.datetime.now()
+    now = TimeService.now()
     sucursal = staff.sucursal
     
-    ultimo = db.query(models.AccessLog).filter(
+    # Buscar la última ENTRADA y verificar si el vehículo sigue adentro
+    ultima_entrada = db.query(models.AccessLog).filter(
         func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == p,
+        models.AccessLog.tipo_evento == "ENTRADA",
         models.AccessLog.sucursal == sucursal
     ).order_by(models.AccessLog.id.desc()).first()
     
-    if ultimo and ultimo.tipo_evento == "ENTRADA":
-        # Reusar registro existente para evitar duplicados cuando hay reserva activa o entrada previa
-        return {"status": "ok", "message": "El vehículo ya figura como ingresado en esta sede; se reutilizó el registro", "access_log_id": ultimo.id}
+    if ultima_entrada:
+        tiene_salida = db.query(models.AccessLog.id).filter(
+            models.AccessLog.patente_detectada == ultima_entrada.patente_detectada,
+            models.AccessLog.tipo_evento == "SALIDA",
+            models.AccessLog.id > ultima_entrada.id,
+            models.AccessLog.sucursal == sucursal
+        ).first()
+        if not tiene_salida:
+            return {"status": "ok", "message": "El vehículo ya figura como ingresado en esta sede; se reutilizó el registro", "access_log_id": ultima_entrada.id}
     
     # Buscar reserva activa y pagada para esta patente/sucursal
     now_str = now.strftime("%Y-%m-%d %H:%M")
@@ -111,6 +120,7 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
 def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """REGISTRA UNA SALIDA MANUAL DE LA SEDE."""
     from routes.parking import normalize_plate
+    from services.time_service import TimeService
     p = normalize_plate(plate)
     sucursal = staff.sucursal
     
@@ -122,8 +132,13 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
     if not ultimo or ultimo.tipo_evento != "ENTRADA":
         raise HTTPException(status_code=400, detail="El vehículo no figura en esta sede")
     
-    if not ultimo.pago_confirmado:
-        raise HTTPException(status_code=403, detail="DEUDA PENDIENTE en esta sede.")
+    fecha_str = ultimo.fecha_hora.replace(' ', 'T')
+    entrada_dt = datetime.datetime.fromisoformat(fecha_str)
+    minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
+    dentro_cortesia = minutos_transcurridos <= 10
+    
+    if not ultimo.pago_confirmado and not dentro_cortesia:
+        raise HTTPException(status_code=403, detail=f"DEUDA PENDIENTE en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min")
     
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
     if aforo:
@@ -139,9 +154,10 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         normalized_patente=p,
         tipo_evento="SALIDA", 
         tipo_vehiculo=ultimo.tipo_vehiculo, 
-        fecha_hora=datetime.datetime.now().isoformat(), 
+        fecha_hora=TimeService.now().isoformat(), 
         pago_confirmado=True, 
-        metodo_pago="CAJA",
+        costo_estadia=0.0 if dentro_cortesia else None,
+        metodo_pago="CAJA" if not dentro_cortesia else None,
         sucursal=sucursal
     ))
     db.commit()
@@ -153,7 +169,8 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         NotificationService.notify_occupancy_change(db, norm)
     except Exception as e:
         print(f"[ADMIN OPS] Error notifying occupancy: {e}")
-    return {"status": "ok", "message": f"Salida manual registrada en {sucursal or 'Global'}: {p}"}
+    msg = f"Salida manual registrada en {sucursal or 'Global'}: {p}" + (" (Cortesía)" if dentro_cortesia else "")
+    return {"status": "ok", "message": msg}
 
 @router.post("/cancel-stay")
 def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
@@ -172,7 +189,8 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
         raise HTTPException(status_code=400, detail="El vehículo no figura como ingresado")
     
     # VERIFICAR CORTESIA (10 MINUTOS)
-    entrada_dt = datetime.datetime.fromisoformat(ultimo.fecha_hora)
+    fecha_str = ultimo.fecha_hora.replace(' ', 'T')
+    entrada_dt = datetime.datetime.fromisoformat(fecha_str)
     minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
     
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()

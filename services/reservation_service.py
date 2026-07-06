@@ -60,40 +60,12 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
     }
 
 def _reservar_plaza_en_aforo(db: Session, res: "models.Reservation"):
-    """RESERVA UNA PLAZA EN EL AFORO DE LA SUCURSAL CUANDO SE PAGA UNA RESERVA NO HORARIA."""
-    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == res.sucursal_nombre).first()
-    if not aforo:
-        aforo = models.ParkingAforo(sucursal=res.sucursal_nombre, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
-        db.add(aforo)
-
-    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
-    if vehiculo and vehiculo.tipo == VehicleType.CAMIONETA:
-        aforo.ocupacion_camionetas += 1
-    elif vehiculo and vehiculo.tipo == VehicleType.MOTO:
-        aforo.ocupacion_motos += 1
-    else:
-        aforo.ocupacion_actual += 1
-    db.commit()
-    NotificationService.notify_occupancy_change(db, _normalizar_sucursal(res.sucursal_nombre))
+    """YA NO PRE-OCUPA PLAZA FISICA. La ocupación la maneja exclusivamente el ALPR (entrada/salida física)."""
+    pass
 
 def _liberar_plaza_en_aforo(db: Session, res: "models.Reservation"):
-    """LIBERA UNA PLAZA EN EL AFORO CUANDO SE CANCELA UNA RESERVA NO HORARIA."""
-    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == res.sucursal_nombre).first()
-    if not aforo:
-        return
-
-    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
-    if vehiculo and vehiculo.tipo == VehicleType.CAMIONETA:
-        if aforo.ocupacion_camionetas > 0:
-            aforo.ocupacion_camionetas -= 1
-    elif vehiculo and vehiculo.tipo == VehicleType.MOTO:
-        if aforo.ocupacion_motos > 0:
-            aforo.ocupacion_motos -= 1
-    else:
-        if aforo.ocupacion_actual > 0:
-            aforo.ocupacion_actual -= 1
-    db.commit()
-    NotificationService.notify_occupancy_change(db, _normalizar_sucursal(res.sucursal_nombre))
+    """YA NO LIBERA PLAZA FISICA. La ocupación la maneja exclusivamente el ALPR (entrada/salida física)."""
+    pass
 
 # --- SERVICIO DE GESTION DE RESERVAS ---
 
