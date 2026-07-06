@@ -1,5 +1,10 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **JULIO 6, 2026 - CORTESÍA & OCUPACIÓN REFACTOR (V9.5.0)**:
+    *   **Fix "ya está en la sede" en ALPR**: Se aplicó el mismo fix de `manual_entry` en `validate_plate` — ahora verifica si existe una SALIDA posterior a la última ENTRADA en lugar de solo mirar el último registro.
+    *   **Cortesía 10 min en ALPR y manual**: Tanto `exit_plate` (cámara) como `manual_exit` ahora cheqiean el tiempo de cortesía (≤10 min desde la entrada) antes de denegar por deuda. Si está dentro del margen, la salida se registra sin cargo.
+    *   **Ocupación solo física**: Se eliminó la pre-ocupación de plazas por reservas no horarias. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` ya no tocan `ocupacion_actual`. El ALPR (entrada/salida) maneja el conteo para todos los vehículos por igual, reflejando solo autos físicamente presentes.
+
 - **JUNIO 30, 2026 - UI/UX & FAB REFINEMENT (V9.3.0)**:
     *   **FAB en Perfil**: Nueva tarjeta flotante "Nueva Reserva" (FAB) con animación expansiva al hover, reemplazando los botones redundantes en cada tab del perfil.
     *   **FAB oculto en Inicio**: El FAB se oculta automáticamente en la tab "inicio" para no interferir con la vista principal del usuario.

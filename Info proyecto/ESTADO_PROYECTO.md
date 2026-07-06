@@ -1,10 +1,11 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-07-02)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-07-06)
 
-### 🚀 Hitos Recientes (Julio 2026) - Versión 9.4.0 (DVR CCTV Overhaul & Dynamic Layout)
-- [x] **Grilla CCTV Dinámica**: Rediseño total de la grilla de monitoreo multi-cámara. Se adaptan los visores para que tengan exactamente el mismo tamaño, suprimiendo las cards de "NO SIGNAL" para puertos vacíos.
-- [x] **Panel Flotante de Mandos**: Reemplazo de la cabecera completa por un control flotante semi-transparente que contiene reloj, botón de volver y selector de sede.
-- [x] **Identificadores Explícitos**: Incorporación de tags y descripciones de función en cada cámara para saber si realizan LECTURA PATENTE (ENTRADA/SALIDA), LECTURA QR, o VIGILANCIA.
-- [x] **Detalles Estéticos DVR**: Incorporación de indicadores reales de CCTV, incluyendo el símbolo `■` de almacenamiento/duración y la hora digital espaciada.
+### 🚀 Hitos Recientes (Julio 2026) - Versión 9.5.0 (Cortesía & Ocupación Refactor)
+- [x] **Fix ALPR "ya está en la sede"**: Misma corrección que en `manual_entry` — ahora verifica si hay SALIDA posterior a la última ENTRADA en lugar de solo el último registro.
+- [x] **Cortesía 10 min en ALPR y manual**: `exit_plate` y `manual_exit` chequean el tiempo de cortesía antes de denegar por deuda. Dentro de los 10 min la salida es sin cargo.
+- [x] **Ocupación solo física**: Las reservas no horarias ya no pre-ocupan plaza. El ALPR de entrada/salida maneja el conteo para todos los vehículos, reflejando solo autos físicamente presentes.
+
+### 🚀 Hitos Previos (Julio 2026) - Versión 9.4.0 (DVR CCTV Overhaul & Dynamic Layout)
 
 ### 🚀 Hitos Previos (Junio 2026) - Versión 9.2.0 (Reservas & Aforo Inteligente)
 - [x] **Reserva de Aforo en Pago**: Las reservas de tipo Día, Semana, Quincena y Mes descuentan la plaza del aforo al momento del pago, liberándola solo al vencimiento o cancelación.
@@ -50,6 +51,11 @@
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.
 - **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago.
 - **Monitoreo**: ALPR en vivo con gestión centralizada y aforo real-time.
+
+### Cambios técnicos recientes (2026-07-06)
+- ALPR: Fix en `validate_plate` y `validate_qr` — ahora buscan la última ENTRADA y verifican SALIDA posterior (mismo patrón que `manual_entry`), en lugar de solo mirar el último registro de cualquier tipo.
+- ALPR/Manual exit: Se agregó chequeo de cortesía de 10 minutos tanto en `exit_plate` como en `manual_exit`. Si el tiempo desde la entrada es ≤10 min, se permite la salida sin exigir pago (`costo_estadia=0.0`).
+- Ocupación: Se eliminó la pre-ocupación de plazas por reservas no horarias. Las funciones `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como no-ops. El ALPR de entrada incrementa `ocupacion_actual` para todos los vehículos (con o sin reserva); el ALPR de salida la decrementa igualmente. Así el aforo refleja solo autos físicamente presentes.
 
 ### Cambios técnicos recientes (2026-07-02)
 - Monitoreo: Refactorizado `monitoreo_live.html` utilizando CSS Grid dinámico autogestionado por JavaScript (N cámaras adaptadas en columnas/filas variables).
