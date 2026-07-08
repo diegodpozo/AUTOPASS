@@ -171,6 +171,14 @@
     gap: 15px;
 }
 
+/* FILA DE STATS HORIZONTALES */
+.stats-row .stat-card-premium {
+    justify-content: center;
+}
+.stats-row .stat-card-premium:hover {
+    transform: translateY(-5px);
+}
+
 /* BARRAS DE PROGRESO EN STATS */
 .stat-progress {
     position: absolute;
@@ -455,6 +463,10 @@
 @media (max-width: 768px) {
     .camera-grid {
         grid-template-columns: 1fr;
+    }
+
+    .stats-row {
+        flex-direction: column !important;
     }
 
     .kpi-grid {

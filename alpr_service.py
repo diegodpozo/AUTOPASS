@@ -557,7 +557,6 @@ def main():
                     small = cv2.resize(frame, (320, 240))
                     qr_data, _, _ = engine.qr_detector.detectAndDecode(small)
                     if qr_data:
-                        print(f"[ALPR QUICK QR] QR detectado en main loop: len={len(qr_data)} preview={qr_data[:80]}")
                         engine.send_event("qr", qr_data, frame)
                         last_ocr_time = now
                         time.sleep(0.05)

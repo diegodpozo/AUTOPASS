@@ -282,9 +282,10 @@ class ReservationService:
         es_presencial = False
         if vinc_log:
             salida = db.query(models.AccessLog).filter(
-                models.AccessLog.normalized_patente == norm_pat,
+                models.AccessLog.patente_detectada == vinc_log.patente_detectada,
                 models.AccessLog.tipo_evento == AccessEventType.SALIDA,
-                models.AccessLog.fecha_hora > vinc_log.fecha_hora
+                models.AccessLog.id > vinc_log.id,
+                models.AccessLog.sucursal == vinc_log.sucursal
             ).first()
             if not salida:
                 es_presencial = True

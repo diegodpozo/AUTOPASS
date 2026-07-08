@@ -76,8 +76,10 @@ class AccessService:
             if not tiene_salida:
                 return {"status": "denied", "message": "El vehículo ya figura dentro de esta sede"}
         
-        # DETERMINAR TIPO DE VEHICULO
-        vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == p).first()
+        # DETERMINAR TIPO DE VEHICULO (normalizando espacios en ambos lados)
+        vehiculo = db.query(models.Vehicle).filter(
+            func.replace(func.upper(models.Vehicle.patente), ' ', '') == p
+        ).first()
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
         now = TimeService.now()
@@ -256,7 +258,9 @@ class AccessService:
             if reserva.estado_pago != PaymentStatus.PAGADO:
                 return {"status": "denied", "message": "La reserva no ha sido abonada"}
 
-            vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == patente_qr).first()
+            vehiculo = db.query(models.Vehicle).filter(
+                func.replace(func.upper(models.Vehicle.patente), ' ', '') == patente_qr
+            ).first()
             tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
             now = TimeService.now()
