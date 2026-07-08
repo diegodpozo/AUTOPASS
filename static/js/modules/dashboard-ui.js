@@ -46,12 +46,6 @@ export async function checkSystemHealth() {
 
         updateHealthNode('node-ocr-entry', entryOnline);
         updateHealthNode('node-ocr-exit', exitOnline);
-
-        // ACTUALIZAR INDICADORES "LIVE" SOBRE LOS CUADROS DE VIDEO
-        const indEntry = document.getElementById('indicator-entry');
-        const indExit = document.getElementById('indicator-exit');
-        if (indEntry) indEntry.className = entryOnline ? 'live-indicator online' : 'live-indicator';
-        if (indExit) indExit.className = exitOnline ? 'live-indicator online' : 'live-indicator';
     }
 }
 
@@ -77,91 +71,9 @@ function updateHealthNode(id, isOnline) {
     }
 }
 
-let videoSockets = { entry: null, exit: null };
-
 export async function initVideoStreams() {
-    const sucursalRaw = localStorage.getItem('sucursal') || '';
-    const token = localStorage.getItem('token');
-    const rol = localStorage.getItem('rol');
-    
-    // Normalizar la sucursal
-    const sucursal = normalizeSystemName(sucursalRaw);
-    
-    const res = await api.get('/system/cameras');
-    if (res.ok) {
-        let cameras = res.data;
-        if (rol !== 'admin' && sucursal) {
-            cameras = cameras.filter(c => normalizeSystemName(c.sucursal) === sucursal);
-        }
-        
-        const firstEntry = cameras.find(c => c.tipo === 'ENTRADA' && c.is_running);
-        const firstExit = cameras.find(c => c.tipo === 'SALIDA' && c.is_running);
-        
-        if (firstEntry) {
-            const normSuc = normalizeSystemName(firstEntry.sucursal || '');
-            const procId = `${normSuc}_ENTRADA_${firstEntry.id}`.toUpperCase();
-            setupSocket('entry', procId, token);
-        } else {
-            const entryId = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA_PRINCIPAL';
-            setupSocket('entry', entryId, token);
-        }
-        
-        if (firstExit) {
-            const normSuc = normalizeSystemName(firstExit.sucursal || '');
-            const procId = `${normSuc}_SALIDA_${firstExit.id}`.toUpperCase();
-            setupSocket('exit', procId, token);
-        } else {
-            const exitId = sucursal ? `${sucursal}_SALIDA` : 'SALIDA_PRINCIPAL';
-            setupSocket('exit', exitId, token);
-        }
-    } else {
-        const entryId = sucursal ? `${sucursal}_ENTRADA` : 'ENTRADA_PRINCIPAL';
-        const exitId = sucursal ? `${sucursal}_SALIDA` : 'SALIDA_PRINCIPAL';
-        setupSocket('entry', entryId, token);
-        setupSocket('exit', exitId, token);
-    }
-}
-
-function setupSocket(type, cameraId, token) {
-    if (videoSockets[type]) {
-        videoSockets[type].close();
-    }
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/v1/system/ws/video/${cameraId}?token=${token}`;
-    
-    if (!token) {
-        console.warn(`[WS] Abortando conexión para ${cameraId}: Token no encontrado.`);
-        return;
-    }
-
-    const socket = new WebSocket(wsUrl);
-    videoSockets[type] = socket;
-
-    socket.onmessage = (event) => {
-        const img = document.getElementById(`cam-${type}`);
-        if (img) {
-            img.src = `data:image/jpeg;base64,${event.data}`;
-            if (img.style.opacity === '0') {
-                img.style.opacity = '1';
-            }
-        }
-    };
-
-    socket.onclose = () => {
-        const tab = document.getElementById('tab-live');
-        if (tab && tab.classList.contains('active')) {
-            setTimeout(() => {
-                 if (videoSockets[type] === socket) {
-                     setupSocket(type, cameraId, token);
-                 }
-            }, 5000);
-        }
-    };
-
-    socket.onerror = (err) => {
-        console.error(`WS Error [${cameraId}]:`, err);
-    };
+    // Las vistas de cámara individuales (ENTRADA/SALIDA) se han eliminado.
+    // Usar el Monitor Multi-Cámara (/monitoreo) para ver los feeds de video.
 }
 
 export function switchTab(tabId, element) {
@@ -201,13 +113,6 @@ export function switchTab(tabId, element) {
 
     if (tabId === 'live') {
         initVideoStreams();
-    } else {
-        Object.keys(videoSockets).forEach(k => {
-            if (videoSockets[k]) {
-                videoSockets[k].close();
-                videoSockets[k] = null;
-            }
-        });
     }
 
     if (window.innerWidth <= 768) {

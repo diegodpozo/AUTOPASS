@@ -204,6 +204,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
         # CORTESIA: SALIDA SIN CARGO
         db.add(models.AccessLog(
             patente_detectada=p, 
+            normalized_patente=p,
             tipo_evento="SALIDA", 
             tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=TimeService.now().isoformat(), 
@@ -222,6 +223,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
         # SI YA PAGO, REGISTRAMOS SALIDA NORMAL
         db.add(models.AccessLog(
             patente_detectada=p, 
+            normalized_patente=p,
             tipo_evento="SALIDA", 
             tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=TimeService.now().isoformat(), 

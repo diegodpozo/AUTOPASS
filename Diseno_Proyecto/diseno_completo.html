@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTOPASS — Diseño del Proyecto (Proceso Unificado)</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:15px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#e0e0e0;line-height:1.7;display:flex;min-height:100vh}
+a{color:#C5A059;text-decoration:none}a:hover{color:#d4b06a}
+::selection{background:#C5A05933;color:#fff}
+.sidebar{position:fixed;top:0;left:0;width:280px;height:100vh;background:#111;border-right:1px solid #222;z-index:100;overflow-y:auto;padding-bottom:40px}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid #222}
+.sidebar-header h1{font-size:1.1rem;color:#C5A059;font-weight:700;letter-spacing:1px}
+.sidebar-header .version{font-size:.7rem;color:#666;margin-top:2px}
+.sidebar-nav{padding:0 0 20px}
+.sidebar-nav .phase-label{padding:12px 20px 4px;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:#555;font-weight:600}
+.sidebar-nav a{display:block;padding:6px 20px 6px 24px;color:#aaa;font-size:.82rem;border-left:2px solid transparent;transition:all .2s}
+.sidebar-nav a:hover,.sidebar-nav a.active{color:#C5A059;background:#C5A0590a;border-left-color:#C5A059;text-decoration:none}
+.main{margin-left:280px;flex:1;max-width:1200px;padding:40px 50px 100px}
+.section{display:none}.section.active{display:block}
+.section h2{font-size:1.6rem;color:#C5A059;margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid #222;font-weight:700}
+.section h3{font-size:1.15rem;color:#ddd;margin:32px 0 16px;font-weight:600}
+.section h4{font-size:.95rem;color:#ccc;margin:20px 0 10px;font-weight:600}
+.section p{margin-bottom:12px;color:#bbb}
+.section ul,.section ol{margin:8px 0 16px 24px;color:#bbb}
+.section li{margin-bottom:4px}
+.card{background:rgba(26,26,26,.85);backdrop-filter:blur(10px);border:1px solid #222;border-radius:12px;padding:20px 24px;margin-bottom:20px}
+.card.gold-border{border-left:3px solid #C5A059}
+.card h4{margin:0 0 8px;color:#C5A059}
+.table-wrap{overflow-x:auto;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:rgba(26,26,26,.5);border-radius:8px;overflow:hidden}
+th{background:#1a1a1a;color:#C5A059;font-weight:600;padding:10px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid #333;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px}
+td{padding:8px 12px;border-bottom:1px solid #222;color:#bbb}
+tr:hover td{background:#ffffff08}
+td:first-child{font-weight:500;color:#ddd}
+code{font-family:'Cascadia Code','Fira Code',Consolas,monospace;background:#1a1a1a;color:#C5A059;padding:2px 6px;border-radius:4px;font-size:.85rem;border:1px solid #222}
+pre{background:#111;border:1px solid #222;border-radius:8px;padding:16px 20px;overflow-x:auto;margin:12px 0;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:.78rem;line-height:1.5;color:#ccc}
+pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit}
+.diagram{background:#111;border:1px solid #222;border-radius:10px;padding:20px;margin:16px 0;font-family:'Cascadia Code','Fira Code',monospace;font-size:.75rem;line-height:1.6;overflow-x:auto;color:#aaa}
+.arch-layers{display:flex;flex-direction:column;gap:4px;margin:16px 0}
+.arch-layer{padding:12px 16px;border-radius:6px;text-align:center;font-size:.78rem;font-weight:600;letter-spacing:.5px;border:1px solid;position:relative}
+.arch-layer .sub{display:block;font-weight:400;font-size:.7rem;margin-top:2px;opacity:.7}
+.arch-layer.presentation{background:#1a237e22;border-color:#5c6bc0;color:#9fa8da}
+.arch-layer.transport{background:#004d4022;border-color:#26a69a;color:#80cbc4}
+.arch-layer.business{background:#e6510022;border-color:#ff7043;color:#ffab91}
+.arch-layer.data{background:#4a148c22;border-color:#ab47bc;color:#ce93d8}
+.arch-layer.infrastructure{background:#1b5e2022;border-color:#66bb6a;color:#a5d6a7}
+.arch-layer.client{background:#C5A05911;border-color:#C5A05944;color:#C5A059}
+.flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:20px 0}
+.flow-node{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px 20px;font-size:.8rem;color:#ccc;text-align:center;min-width:160px;position:relative}
+.tag{display:inline-block;font-size:.6rem;padding:1px 8px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.flow-arrow{color:#444;font-size:.7rem;padding:2px 0}
+.entity-grid{display:grid;gap:12px;margin:16px 0}
+.entity-grid.cols-2{grid-template-columns:1fr 1fr}
+.entity-box{background:#111;border:1px solid #222;border-radius:8px;overflow:hidden}
+.entity-box .entity-name{background:#C5A05911;color:#C5A059;padding:6px 12px;font-size:.78rem;font-weight:600;border-bottom:1px solid #C5A05922}
+.entity-box .entity-fields{padding:6px 12px}
+.entity-box .entity-fields div{font-size:.7rem;color:#999;padding:2px 0;font-family:'Cascadia Code','Fira Code',monospace}
+.entity-box .entity-fields .pk{color:#C5A059}.entity-box .entity-fields .fk{color:#64B5F6}
+.seq-diagram{background:#111;border:1px solid #222;border-radius:10px;padding:20px 16px;margin:16px 0;overflow-x:auto}
+.seq-participants{display:flex;justify-content:space-around;margin-bottom:0;position:sticky;top:0;z-index:2}
+.seq-participant{text-align:center;font-size:.65rem;color:#C5A059;font-weight:600;padding:6px 10px;background:#111;border:1px solid #222;border-radius:4px;min-width:80px}
+.seq-row{display:flex;align-items:center;min-height:28px;position:relative;padding:2px 0}
+.seq-row .msg{font-size:.68rem;color:#ccc;padding:0 8px}
+.badge{display:inline-block;padding:1px 8px;border-radius:3px;font-size:.65rem;font-weight:600;letter-spacing:.3px}
+.badge.alta{background:#f4433622;color:#ef9a9a;border:1px solid #f4433633}
+.badge.media{background:#ff980022;color:#ffcc80;border:1px solid #ff980033}
+.badge.baja{background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.kpi-card{background:#111;border:1px solid #222;border-radius:8px;padding:14px;text-align:center}
+.kpi-card .kpi-value{font-size:1.3rem;font-weight:700;color:#C5A059}
+.kpi-card .kpi-label{font-size:.7rem;color:#777;margin-top:2px}
+.glossary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.glossary-item{background:#111;border:1px solid #222;border-radius:6px;padding:10px 14px}
+.glossary-item .term{color:#C5A059;font-weight:600;font-size:.82rem}
+.glossary-item .def{font-size:.75rem;color:#999;margin-top:2px}
+.api-row{display:flex;align-items:flex-start;gap:12px;padding:8px 12px;border-bottom:1px solid #222;font-size:.78rem}
+.api-row:last-child{border-bottom:none}
+.api-row .http-method{font-weight:700;font-size:.7rem;min-width:50px;text-align:center;padding:2px 8px;border-radius:3px;text-transform:uppercase}
+.api-row .http-method.get{background:#2196f322;color:#64B5F6}
+.api-row .http-method.post{background:#4caf5022;color:#81C784}
+.api-row .http-method.patch{background:#ff980022;color:#ffcc80}
+.api-row .http-method.delete{background:#f4433622;color:#ef9a9a}
+.api-row .http-method.ws{background:#ab47bc22;color:#CE93D8}
+.api-row .api-path{flex:1;font-family:'Cascadia Code','Fira Code',monospace;color:#ccc}
+.api-row .api-desc{color:#888;font-size:.72rem;min-width:120px;text-align:right}
+.api-row .api-role{font-size:.6rem;padding:1px 6px;border-radius:3px;white-space:nowrap;background:#333;color:#aaa;min-width:80px;text-align:center}
+.progress-wrap{margin:8px 0}
+.progress-bar{height:6px;background:#222;border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:3px;transition:width .6s}
+.checklist{list-style:none;margin-left:0!important}
+.checklist li::before{content:'✅ ';color:#4CAF50}
+.checklist li{margin-bottom:4px}
+@media(max-width:900px){.sidebar{width:220px}.main{margin-left:220px;padding:24px}.entity-grid.cols-2{grid-template-columns:1fr}.glossary-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.sidebar{width:100%;height:auto;position:relative}.main{margin-left:0;padding:16px}body{flex-direction:column}.seq-participants{flex-wrap:wrap;gap:4px}.seq-participant{font-size:.55rem;min-width:60px}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.section.active{animation:fadeIn .3s ease}
+@media print{.sidebar{display:none}.main{margin-left:0;max-width:100%;padding:20px}.section{display:block!important}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-header"><h1>AUTOPASS</h1><div class="version">Diseño del Proyecto — v9.5.0</div><div class="version" style="color:#444;font-size:.6rem;margin-top:4px;">Proceso Unificado de Desarrollo</div></div>
+<div class="sidebar-nav" id="sidebar-nav">
+<div class="phase-label">Inicio</div>
+<a href="#" data-section="resumen" class="active">📋 Resumen General</a>
+<div class="phase-label">Fase 1 — Inception</div>
+<a href="#" data-section="vision">🎯 Visión del Sistema</a>
+<a href="#" data-section="stakeholders">👥 Stakeholders &amp; Equipo</a>
+<a href="#" data-section="alcance">📌 Alcance &amp; Glosario</a>
+<a href="#" data-section="negocio">💼 Modelo de Negocio</a>
+<div class="phase-label">Fase 2 — Elaboración</div>
+<a href="#" data-section="rf">📋 Requisitos Funcionales</a>
+<a href="#" data-section="rnf">🔒 Requisitos No Funcionales</a>
+<a href="#" data-section="casos-uso">🔄 Casos de Uso</a>
+<a href="#" data-section="arquitectura">🏗️ Arquitectura General</a>
+<div class="phase-label">Fase 3 — Construcción</div>
+<a href="#" data-section="datos">🗄️ Modelo de Datos</a>
+<a href="#" data-section="secuencia">⏱️ Diagramas de Secuencia</a>
+<a href="#" data-section="clases">📊 Diagrama de Clases</a>
+<a href="#" data-section="frontend">🎨 Diseño Frontend</a>
+<div class="phase-label">Fase 4 — Transición</div>
+<a href="#" data-section="despliegue">🚀 Plan de Despliegue</a>
+<a href="#" data-section="pruebas">🧪 Estrategia de Pruebas</a>
+<a href="#" data-section="ops">🔧 Operaciones y Mantenimiento</a>
+<div class="phase-label">Apéndices</div>
+<a href="#" data-section="api">🗺️ Mapa de Rutas API</a>
+<a href="#" data-section="alpr">📷 Arquitectura ALPR</a>
+<a href="#" data-section="hardware">🔌 Integración Hardware</a>
+</div>
+</nav>
+<div class="main" id="main-content">
+<div class="section active" id="resumen">
+<h2>📋 Resumen General del Diseño</h2>
+<div class="card gold-border"><p><strong>AUTOPASS</strong> es una solución empresarial integral para la gestión inteligente de estacionamientos que combina <strong>visión artificial (ALPR)</strong>, <strong>Arquitectura Limpia (Clean Architecture)</strong> y un <strong>frontend premium</strong> para automatizar el control de acceso, facturación y monitoreo en tiempo real de estacionamientos multi-sucursal y multi-piso.</p></div>
+<div class="arch-layers" style="margin-bottom:24px;">
+<div class="arch-layer client" style="border-style:dashed;">🌐 Cliente Web + ALPR + ESP32 <span class="sub">Browser / Cámaras / Hardware IoT</span></div>
+<div class="arch-layer presentation">🎨 CAPA DE PRESENTACIÓN <span class="sub">Jinja2 Templates · Vanilla JS · CSS Glassmorphism</span></div>
+<div class="arch-layer transport">📡 CAPA DE TRANSPORTE <span class="sub">FastAPI Routes · REST API · WebSockets</span></div>
+<div class="arch-layer business">⚙️ CAPA DE NEGOCIO <span class="sub">Services · Workers · Lógica de Acceso, Reservas, Facturación</span></div>
+<div class="arch-layer data">🗄️ CAPA DE DATOS <span class="sub">SQLAlchemy Models · Pydantic Schemas · Repositories</span></div>
+<div class="arch-layer infrastructure">🔧 CAPA DE INFRAESTRUCTURA <span class="sub">Config · Security (JWT/RBAC) · Database · MQTT · Seed</span></div>
+</div>
+<div class="kpi-grid">
+<div class="kpi-card"><div class="kpi-value">44</div><div class="kpi-label">Requisitos Funcionales</div></div>
+<div class="kpi-card"><div class="kpi-value">29</div><div class="kpi-label">Requisitos No Funcionales</div></div>
+<div class="kpi-card"><div class="kpi-value">20</div><div class="kpi-label">Casos de Uso</div></div>
+<div class="kpi-card"><div class="kpi-value">11</div><div class="kpi-label">Entidades de Datos</div></div>
+<div class="kpi-card"><div class="kpi-value">4</div><div class="kpi-label">Roles RBAC</div></div>
+<div class="kpi-card"><div class="kpi-value">3</div><div class="kpi-label">Tipos Vehiculares</div></div>
+<div class="kpi-card"><div class="kpi-value">9</div><div class="kpi-label">Servicios de Negocio</div></div>
+<div class="kpi-card"><div class="kpi-value">5</div><div class="kpi-label">Diagramas de Secuencia</div></div>
+</div>
+<h3>Estructura de la Documentación</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">📌 Fase 1 — Inception</div><div class="entity-fields"><div>Visión del Sistema</div><div>Stakeholders y Equipo</div><div>Alcance y Glosario</div><div>Modelo de Negocio</div></div></div>
+<div class="entity-box"><div class="entity-name">📐 Fase 2 — Elaboración</div><div class="entity-fields"><div>44 Requisitos Funcionales</div><div>29 Requisitos No Funcionales</div><div>20 Casos de Uso</div><div>Arquitectura General</div></div></div>
+<div class="entity-box"><div class="entity-name">🔧 Fase 3 — Construcción</div><div class="entity-fields"><div>Modelo de Datos (11 entidades)</div><div>5 Diagramas de Secuencia</div><div>Diagrama de Clases</div><div>Diseño Frontend</div></div></div>
+<div class="entity-box"><div class="entity-name">🚀 Fase 4 — Transición</div><div class="entity-fields"><div>Plan de Despliegue</div><div>Estrategia de Pruebas</div><div>Operaciones y Mantenimiento</div></div></div>
+</div>
+</div>
+<div class="section" id="vision">
+<h2>Visión del Sistema</h2>
+<div class="card gold-border"><h4>🎯 Propósito</h4><p>AUTOPASS es una solución empresarial integral para la gestión inteligente de estacionamientos. Combina visión artificial (ALPR), arquitectura limpia (Clean Architecture) y un frontend premium para automatizar el control de acceso, facturación y monitoreo en tiempo real de estacionamientos multi-sucursal y multi-piso.</p></div>
+<h3>Problema que Resuelve</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">❌ Control manual ineficiente</div><div class="entity-fields"><div>Entrada/salida de vehículos lenta y propensa a errores</div></div></div>
+<div class="entity-box"><div class="entity-name">❌ Gestión multi-sucursal compleja</div><div class="entity-fields"><div>Dificultad para gestionar múltiples sucursales y pisos con aforos independientes</div></div></div>
+<div class="entity-box"><div class="entity-name">❌ Sin visibilidad en tiempo real</div><div class="entity-fields"><div>No hay forma de conocer la ocupación actual sin recorrer físicamente</div></div></div>
+<div class="entity-box"><div class="entity-name">❌ Facturación lenta</div><div class="entity-fields"><div>Procesos manuales propensos a errores de cálculo</div></div></div>
+<div class="entity-box"><div class="entity-name">❌ Sin reservas anticipadas</div><div class="entity-fields"><div>Imposibilidad de garantizar plaza sin llegar físicamente</div></div></div>
+<div class="entity-box"><div class="entity-name">❌ Hardware desintegrado</div><div class="entity-fields"><div>Barreras, sensores y software funcionando por separado</div></div></div>
+</div>
+<h3>Usuarios Objetivo</h3>
+<div class="table-wrap"><table><tr><th>Perfil</th><th>Rol</th><th>Descripción</th></tr>
+<tr><td><span style="background:#f4433622;color:#ef9a9a;padding:1px 8px;border-radius:3px;font-size:.6rem;font-weight:600;">ADMIN</span></td><td>Administrador Global</td><td>Dueño del sistema, gestiona toda la red de sucursales</td></tr>
+<tr><td><span style="background:#ff980022;color:#ffcc80;padding:1px 8px;border-radius:3px;font-size:.6rem;font-weight:600;">LOCAL_ADMIN</span></td><td>Administrador Local</td><td>Encargado de una sucursal, gestiona tarifas, pisos y personal</td></tr>
+<tr><td><span style="background:#2196f322;color:#64B5F6;padding:1px 8px;border-radius:3px;font-size:.6rem;font-weight:600;">STAFF</span></td><td>Personal Operativo</td><td>Operadores de turno, ingresos/egresos manuales</td></tr>
+<tr><td><span style="background:#4caf5022;color:#a5d6a7;padding:1px 8px;border-radius:3px;font-size:.6rem;font-weight:600;">USER</span></td><td>Cliente</td><td>Usuario final que estaciona, reserva, paga y acumula puntos</td></tr>
+</table></div>
+<h3>Propuesta de Valor</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">🤖 Automatización total</div><div class="entity-fields"><div>ALPR + QR para entrada/salida sin intervención humana</div></div></div>
+<div class="entity-box"><div class="entity-name">🏢 Multi-sucursal nativo</div><div class="entity-fields"><div>Control unificado de N sucursales con tarifas independientes</div></div></div>
+<div class="entity-box"><div class="entity-name">🏗️ Multi-piso</div><div class="entity-fields"><div>N niveles por sucursal con cupos por tipo de vehículo</div></div></div>
+<div class="entity-box"><div class="entity-name">🚗🚲🚚 Facturación trimodal</div><div class="entity-fields"><div>Precios diferenciados para Autos, Motos y Camionetas</div></div></div>
+<div class="entity-box"><div class="entity-name">📅 Reservas inteligentes</div><div class="entity-fields"><div>Hora, día, semana, quincena o mes con garantía de plaza</div></div></div>
+<div class="entity-box"><div class="entity-name">⭐ Fidelización</div><div class="entity-fields"><div>Puntos canjeables por promociones y beneficios</div></div></div>
+<div class="entity-box"><div class="entity-name">📊 Monitoreo en vivo</div><div class="entity-fields"><div>WebSockets + video streaming DVR en tiempo real</div></div></div>
+<div class="entity-box"><div class="entity-name">🔒 RBAC</div><div class="entity-fields"><div>Jerarquía de permisos con aislamiento por sucursal</div></div></div>
+</div>
+<h3>Métricas de Éxito</h3>
+<div class="kpi-grid">
+<div class="kpi-card"><div class="kpi-value">&lt; 5s</div><div class="kpi-label">Tiempo entrada/salida</div></div>
+<div class="kpi-card"><div class="kpi-value">100%</div><div class="kpi-label">Dashboard en tiempo real</div></div>
+<div class="kpi-card"><div class="kpi-value">&gt; 95%</div><div class="kpi-label">Tasa reconocimiento ALPR</div></div>
+<div class="kpi-card"><div class="kpi-value">∞</div><div class="kpi-label">Sucursales escalables</div></div>
+</div>
+</div>
+<div class="section" id="stakeholders">
+<h2>Stakeholders y Equipo de Desarrollo</h2>
+<h3>Stakeholders Identificados</h3>
+<div class="table-wrap"><table><tr><th>Stakeholder</th><th>Rol</th><th>Intereses</th><th>Expectativas</th></tr>
+<tr><td>Dirección / Dueño</td><td>Sponsor</td><td>ROI, expansión, imagen</td><td>Sistema robusto y escalable</td></tr>
+<tr><td>Gerente de Operaciones</td><td>ADMIN</td><td>Control sucursales, reportes</td><td>Dashboard ejecutivo en tiempo real</td></tr>
+<tr><td>Encargados de Sucursal</td><td>LOCAL_ADMIN</td><td>Tarifas, personal, aforo</td><td>Panel intuitivo para operación local</td></tr>
+<tr><td>Personal de Turno</td><td>STAFF</td><td>Operaciones manuales</td><td>Interfaz rápida y sin complicaciones</td></tr>
+<tr><td>Clientes</td><td>USER</td><td>Reservar, pagar, entrar/salir</td><td>Respuesta inmediata, UX fluida</td></tr>
+<tr><td>Soporte Técnico</td><td>Mantenimiento</td><td>Monitoreo, debugging</td><td>Logs claros, heartbeats</td></tr>
+</table></div>
+<h3>Equipo de Desarrollo</h3>
+<div class="table-wrap"><table><tr><th>Rol</th><th>Responsabilidades</th></tr>
+<tr><td>Arquitecto de Software</td><td>Clean Architecture, capas, patrones y estándares</td></tr>
+<tr><td>Backend Developer</td><td>FastAPI, servicios, ORM, MQTT</td></tr>
+<tr><td>Frontend Developer</td><td>Jinja2, CSS Glassmorphism, JS modular, WebSockets</td></tr>
+<tr><td>DevOps</td><td>Entorno producción, despliegue, scripts</td></tr>
+<tr><td>QA / Tester</td><td>pytest, integración, flujos críticos</td></tr>
+<tr><td>Especialista Visión Artificial</td><td>EasyOCR + OpenCV, tuning ALPR</td></tr>
+</table></div>
+<h3>Cronograma de Alto Nivel</h3>
+<div class="table-wrap"><table><tr><th>Hito</th><th>Versión</th><th>Fecha</th><th>Entregable Principal</th></tr>
+<tr><td>Base operativa</td><td>v8.0.0</td><td>Jun 2026</td><td>ALPR funcional, acceso, facturación básica</td></tr>
+<tr><td>Multi-sucursal + Pisos</td><td>v8.2.0</td><td>Jun 2026</td><td>Gestión vertical y bimodal (Auto/Moto)</td></tr>
+<tr><td>Reportes financieros</td><td>v8.5.5</td><td>Jun 2026</td><td>Analytics con filtros, RBAC empoderado</td></tr>
+<tr><td>Monitoreo premium</td><td>v8.6.0</td><td>Jun 2026</td><td>Dashboard en tiempo real, paginación</td></tr>
+<tr><td>UX/UI avanzado</td><td>v8.8.5</td><td>Jun 2026</td><td>Formularios normalizados, FAB, animaciones</td></tr>
+<tr><td>Video streaming</td><td>v8.9.5</td><td>Jun 2026</td><td>Cámaras en vivo, WebSockets de video</td></tr>
+<tr><td>Tiempo real + Settings</td><td>v9.0.0</td><td>Jun 2026</td><td>WebSockets de aforo, configuración dinámica</td></tr>
+<tr><td>Camionetas (trimodal)</td><td>v9.1.0</td><td>Jun 2026</td><td>Tercer tipo vehicular con tarifas propias</td></tr>
+<tr><td>Refinamiento UX/RBAC</td><td>v9.1.5</td><td>Jun 2026</td><td>UI hardening, filtros financieros expandidos</td></tr>
+<tr><td>Reservas + Aforo Inteligente</td><td>v9.2.0</td><td>Jun 2026</td><td>Reservas no horarias, liberación automática</td></tr>
+<tr><td>FAB + Monitoreo limpio</td><td>v9.3.0</td><td>Jun 2026</td><td>Worker robusto, barras de progreso dinámicas</td></tr>
+<tr><td>DVR CCTV Dinámico</td><td>v9.4.0</td><td>Jul 2026</td><td>Grilla auto-ajustable, HUD, panel flotante</td></tr>
+<tr><td style="color:#C5A059;font-weight:600;">Cortesía + Ocupación física</td><td style="color:#C5A059;">v9.5.0</td><td style="color:#C5A059;">Jul 2026</td><td style="color:#C5A059;">Fix ALPR, cortesía 10 min, ocupación solo física</td></tr>
+</table></div>
+</div>
+
+<div class="section" id="alcance">
+<h2>📌 Alcance y Glosario del Sistema</h2>
+<div class="card gold-border"><p>Esta sección define el alcance funcional del sistema AUTOPASS v9.5.0 junto con un glosario de términos técnicos utilizados a lo largo del proyecto.</p></div>
+<h3>Alcance Funcional (v9.5.0)</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">🔐 Autenticación y Seguridad</div><div class="entity-fields"><div>✅ Registro de usuario con hash bcrypt</div><div>✅ Inicio de sesión con emisión de JWT</div><div>✅ Recuperación de contraseña por email</div><div>✅ RBAC con 4 roles</div><div>✅ Bloqueo/desbloqueo de cuentas</div><div>✅ Refresh de token</div></div></div>
+<div class="entity-box"><div class="entity-name">📷 Acceso ALPR + QR</div><div class="entity-fields"><div>✅ Validación de patente por ALPR en entrada</div><div>✅ Validación de QR en entrada</div><div>✅ Pago en salida con cálculo automático</div><div>✅ Validación de salida con verificación de pago</div><div>✅ Cortesía 10 minutos sin cargo</div><div>✅ Cancelación de estadía sin costo</div><div>✅ Ingreso/egreso manual por STAFF</div><div>✅ Apertura remota de barrera</div></div></div>
+<div class="entity-box"><div class="entity-name">📅 Reservas</div><div class="entity-fields"><div>✅ Creación de reservas por hora/día/semana/quincena/mes</div><div>✅ Verificación de disponibilidad antes de confirmar</div><div>✅ Pago de reserva desde saldo del usuario</div><div>✅ Cancelación con reembolso proporcional</div><div>✅ Simulación de cancelación con monto estimado</div><div>✅ Modificación de fechas/patente en reservas pendientes</div></div></div>
+<div class="entity-box"><div class="entity-name">📊 Aforo</div><div class="entity-fields"><div>✅ Control de capacidad por piso y tipo de vehículo</div><div>✅ Ocupación en tiempo real con WebSocket</div><div>✅ Aforo multi-piso con capacidad independiente</div><div>✅ Colores dinámicos en barras de progreso</div><div>✅ Liberación automática de plazas vencidas</div></div></div>
+<div class="entity-box"><div class="entity-name">💰 Facturación</div><div class="entity-fields"><div>✅ Tarifas configurables por hora/día/semana/mes</div><div>✅ Cálculo de estadía basado en tiempo real</div><div>✅ Reportes financieros con filtros múltiples</div><div>✅ Exportación de reportes en CSV</div><div>✅ Recarga de saldo del usuario</div></div></div>
+<div class="entity-box"><div class="entity-name">👤 Perfil de Usuario</div><div class="entity-fields"><div>✅ Gestión de vehículos (registro/edición/eliminación)</div><div>✅ Historial de pagos y estadías activas</div><div>✅ Recarga de saldo simulada</div><div>✅ Puntos de fidelización y progreso</div><div>✅ Notificaciones in-app</div></div></div>
+<div class="entity-box"><div class="entity-name">⚙️ Administración</div><div class="entity-fields"><div>✅ CRUD de usuarios (crear, editar, cambiar rol)</div><div>✅ CRUD de sucursales con logo y coordenadas</div><div>✅ Gestión de pisos con capacidad independiente</div><div>✅ Configuración de cámaras ALPR</div><div>✅ Gestión de promociones de fidelización</div></div></div>
+<div class="entity-box"><div class="entity-name">📺 Monitoreo</div><div class="entity-fields"><div>✅ Dashboard de ocupación con barras de progreso</div><div>✅ Video en vivo de cámaras por WebSocket</div><div>✅ Grilla DVR dinámica auto-ajustable</div><div>✅ HUD de cámara con identificación de función</div><div>✅ Heartbeat del sistema para monitoreo de salud</div></div></div>
+</div>
+<h3>Glosario de Términos</h3>
+<div class="glossary-grid">
+<div class="glossary-item"><div class="term">ALPR</div><div class="def">Automatic License Plate Recognition — Reconocimiento automático de patentes mediante visión artificial.</div></div>
+<div class="glossary-item"><div class="term">OCR</div><div class="def">Optical Character Recognition — Tecnología para extraer texto de imágenes, aplicada a patentes.</div></div>
+<div class="glossary-item"><div class="term">ROI</div><div class="def">Region of Interest — Región de interés en el frame donde se busca la patente.</div></div>
+<div class="glossary-item"><div class="term">MQTT</div><div class="def">Message Queuing Telemetry Transport — Protocolo ligero para comunicación IoT con barreras y sensores.</div></div>
+<div class="glossary-item"><div class="term">RBAC</div><div class="def">Role-Based Access Control — Control de acceso basado en roles (ADMIN, LOCAL_ADMIN, STAFF, USER).</div></div>
+<div class="glossary-item"><div class="term">JWT</div><div class="def">JSON Web Token — Token de autenticación stateless firmado con HS256.</div></div>
+<div class="glossary-item"><div class="term">Aforo</div><div class="def">Capacidad máxima de vehículos permitida por piso y tipo vehicular.</div></div>
+<div class="glossary-item"><div class="term">MERCOSUR</div><div class="def">Formato de patente del bloque suramericano (ABC·1234 o AB·123·CD).</div></div>
+<div class="glossary-item"><div class="term">FAB</div><div class="def">Floating Action Button — Botón de acción flotante para acceso rápido a funciones principales.</div></div>
+<div class="glossary-item"><div class="term">HUD</div><div class="def">Heads-Up Display — Superposición de información en feeds de video en vivo.</div></div>
+<div class="glossary-item"><div class="term">Glassmorphism</div><div class="def">Estilo de diseño UI con efecto de vidrio esmerilado, blur y transparencia.</div></div>
+<div class="glossary-item"><div class="term">Clean Architecture</div><div class="def">Arquitectura en capas con separación de responsabilidades (Routes/Services/Models/Schemas).</div></div>
+<div class="glossary-item"><div class="term">Trimodal</div><div class="def">Soporte para tres tipos vehiculares: Auto, Moto y Camioneta con tarifas independientes.</div></div>
+<div class="glossary-item"><div class="term">Virtual Time</div><div class="def">Sistema de tiempo virtual para cálculos de estadía, configurable en settings.</div></div>
+<div class="glossary-item"><div class="term">Heartbeat</div><div class="def">Señal periódica de salud enviada por cámaras ALPR para monitoreo de conectividad.</div></div>
+</div>
+<h3>Excluido del Alcance v9.5.0</h3>
+<div class="card" style="border:1px solid #f4433633;border-left:3px solid #f44336;"><p style="color:#ef9a9a;">Los siguientes ítems quedan fuera del alcance de la versión 9.5.0 y serán considerados para versiones futuras:</p><ul><li>Pagos con tarjeta/token real (solo saldo simulado)</li><li>Integración con sistemas contables externos</li><li>App móvil nativa (iOS/Android)</li><li>Reconocimiento facial de conductores</li><li>Sensores IoT de ocupación por plaza</li><li>Backup automático a la nube</li></ul></div>
+</div>
+
+
+<div class="section" id="negocio">
+<h2>💼 Modelo de Negocio</h2>
+<div class="card gold-border"><h4>✨ Propuesta de Valor</h4><p>AUTOPASS ofrece una plataforma integral de gestión de estacionamientos que automatiza el 100% del flujo operativo: desde la entrada del vehículo por ALPR hasta el cobro y la salida, pasando por reservas anticipadas, facturación trimodal, fidelización y monitoreo en tiempo real, todo desde un dashboard unificado multi-sucursal.</p></div>
+<h3>Flujo de Ingresos</h3>
+<div class="table-wrap"><table><tr><th>Fuente de Ingreso</th><th>Descripción</th><th>Modelo</th></tr>
+<tr><td>Estacionamiento por hora</td><td>Cobro por tiempo de uso en minutos/horas</td><td>Pago por uso</td></tr>
+<tr><td>Reservas anticipadas</td><td>Reserva de plaza por hora/día/semana/quincena/mes</td><td>Prepago / Suscripción</td></tr>
+<tr><td>Planes mensuales</td><td>Abono mensual para clientes frecuentes</td><td>Suscripción recurrente</td></tr>
+<tr><td>Publicidad y promociones</td><td>Espacios publicitarios en dashboard y pantallas</td><td>Comisión / Fee</td></tr>
+</table></div>
+<h3>Segmentos de Cliente</h3>
+<div class="table-wrap"><table><tr><th>Segmento</th><th>Perfil</th><th>Necesidad Principal</th></tr>
+<tr><td>Conductores particulares</td><td>Auto/Moto/Camioneta</td><td>Estacionamiento rápido, seguro y sin fricción</td></tr>
+<tr><td>Empresas/flotas</td><td>Vehículos corporativos</td><td>Gestión unificada de múltiples vehículos</td></tr>
+<tr><td>Propietarios de estacionamientos</td><td>ADMIN / LOCAL_ADMIN</td><td>Maximizar ocupación y rentabilidad</td></tr>
+<tr><td>Personal operativo</td><td>STAFF</td><td>Herramientas simples para operación diaria</td></tr>
+</table></div>
+<h3>KPIs Clave del Negocio</h3>
+<div class="kpi-grid">
+<div class="kpi-card"><div class="kpi-value">&gt; 75%</div><div class="kpi-label">Ocupación promedio</div></div>
+<div class="kpi-card"><div class="kpi-value">&gt; 30%</div><div class="kpi-label">Margen operativo</div></div>
+<div class="kpi-card"><div class="kpi-value">&gt; 40%</div><div class="kpi-label">Tasa de recompra mensual</div></div>
+<div class="kpi-card"><div class="kpi-value">&lt; 15%</div><div class="kpi-label">Tasa de abandono</div></div>
+<div class="kpi-card"><div class="kpi-value">&lt; 30s</div><div class="kpi-label">Tiempo promedio de salida</div></div>
+</div>
+<h3>Ventajas Competitivas</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">🤖 Automatización ALPR total</div><div class="entity-fields"><div>Sin intervención humana en entrada/salida, reduciendo costos operativos</div></div></div>
+<div class="entity-box"><div class="entity-name">🏢 Multi-sucursal nativo</div><div class="entity-fields"><div>Arquitectura diseñada para escalar a N sucursales desde el día 1</div></div></div>
+<div class="entity-box"><div class="entity-name">📊 Tiempo real</div><div class="entity-fields"><div>WebSockets y dashboards en vivo para toma de decisiones inmediata</div></div></div>
+<div class="entity-box"><div class="entity-name">🎨 UX Premium</div><div class="entity-fields"><div>Glassmorphism, animaciones, FAB y diseño responsive mobile-first</div></div></div>
+<div class="entity-box"><div class="entity-name">🔌 IoT Integrado</div><div class="entity-fields"><div>MQTT + ESP32 para control de barreras, sensores y pantallas LCD</div></div></div>
+</div>
+</div>
+
+
+<div class="section" id="rf">
+<h2>📋 Requisitos Funcionales</h2>
+<div class="card gold-border"><p>Total: <strong>44 requisitos funcionales</strong> organizados por módulo. Cada requisito incluye ID, nombre, descripción y prioridad.</p></div>
+<h3>🔐 Autenticación y Seguridad</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-01</td><td>Registro de usuario</td><td>Auto-registro con nombre, apellido, DNI, email, teléfono y contraseña</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-02</td><td>Inicio de sesión</td><td>Autenticar por email/contraseña y emitir JWT</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-03</td><td>Recuperación de contraseña</td><td>Email con token de recuperación válido por 30 min</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-04</td><td>Cierre de sesión</td><td>Invalidar token JWT del lado del cliente</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-05</td><td>Refresh de token</td><td>Renovar token JWT antes de que expire</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-06</td><td>Bloqueo de usuario</td><td>ADMIN puede bloquear/desbloquear; bloqueo impide login</td><td><span class="badge alta">ALTA</span></td></tr>
+</table></div>
+<h3>📷 Acceso ALPR + QR</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-07</td><td>Validación de patente (entrada)</td><td>Recibir patente del ALPR, verificar si ya está dentro, buscar reserva, registrar entrada</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-08</td><td>Validación de QR (entrada)</td><td>Decodificar QR y verificar reserva o pase digital</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-09</td><td>Pago en salida</td><td>Calcular costo de estadía y permitir pago desde saldo o caja</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-10</td><td>Validación de salida</td><td>Verificar pago o reserva vigente antes de abrir barrera</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-11</td><td>Cortesía 10 min</td><td>Salida sin cargo si la estadía ≤ 10 minutos</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-12</td><td>Cancelación de estadía</td><td>Cancelar estadía activa sin costo (cortesía)</td><td><span class="badge media">MEDIA</span></td></tr>
+</table></div>
+<h3>📅 Reservas</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-13</td><td>Crear reserva</td><td>Reservar por hora, día, semana, quincena o mes</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-14</td><td>Verificar disponibilidad</td><td>Chequear capacidad antes de confirmar</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-15</td><td>Pagar reserva</td><td>Pagar desde el saldo del usuario</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-16</td><td>Cancelar reserva</td><td>Cancelar con reembolso proporcional</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-17</td><td>Simular cancelación</td><td>Mostrar monto de reembolso estimado</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-18</td><td>Modificar reserva</td><td>Modificar fechas/patente de reserva pendiente</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-19</td><td>Restricción de anticipación</td><td>Reservas por hora requieren mínimo 1 hora de anticipación</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-20</td><td>Liberación automática</td><td>Worker libera plazas de reservas vencidas cada 5 min</td><td><span class="badge alta">ALTA</span></td></tr>
+</table></div>
+<h3>📊 Aforo</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-21</td><td>Control de capacidad</td><td>No exceder capacidad por piso y tipo de vehículo</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-22</td><td>Ocupación en tiempo real</td><td>Dashboard con WebSocket en tiempo real</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-23</td><td>Aforo multi-piso</td><td>Capacidad independiente por piso para Auto/Moto/Camioneta</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-24</td><td>Colores dinámicos</td><td>Barras de progreso cambian según nivel de ocupación</td><td><span class="badge media">MEDIA</span></td></tr>
+</table></div>
+<h3>💰 Facturación</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-25</td><td>Tarifas configurables</td><td>Configurar tarifas por hora/día/semana/mes por tipo vehículo</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-26</td><td>Cálculo de estadía</td><td>Calcular costo basado en tiempo real estacionado</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-27</td><td>Reportes financieros</td><td>Ingresos filtrados por sucursal, fecha, tipo, método de pago</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-28</td><td>Exportación CSV</td><td>Descargar reportes en CSV</td><td><span class="badge media">MEDIA</span></td></tr>
+</table></div>
+<h3>👤 Perfil de Usuario</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-29</td><td>Gestión de vehículos</td><td>Registrar/editar/eliminar vehículos con patente y tipo</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-30</td><td>Historial de pagos</td><td>Ver historial de pagos y estadías activas</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-31</td><td>Recarga de saldo</td><td>Recargar saldo (simulación)</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-32</td><td>Puntos de fidelización</td><td>Ver saldo de puntos y progreso hacia metas</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-33</td><td>Notificaciones in-app</td><td>Recibir notificaciones sobre reservas y promociones</td><td><span class="badge baja">BAJA</span></td></tr>
+</table></div>
+<h3>⚙️ Administración</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-34</td><td>CRUD de usuarios</td><td>Gestionar usuarios (crear, editar, cambiar rol, eliminar)</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-35</td><td>CRUD de sucursales</td><td>Gestionar sucursales con logo, coordenadas y toggle</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-36</td><td>Gestión de pisos</td><td>Agregar/editar/eliminar pisos con capacidad independiente</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-37</td><td>Configuración de cámaras</td><td>Configurar IPs y start/stop servicios ALPR</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-38</td><td>Operaciones manuales</td><td>Registrar entrada/salida manual, abrir barrera, cancelar</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-39</td><td>Gestión de promociones</td><td>Crear/editar/activar promociones de fidelización</td><td><span class="badge media">MEDIA</span></td></tr>
+</table></div>
+<h3>📺 Monitoreo</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
+<tr><td>RF-40</td><td>Dashboard de ocupación</td><td>Ocupación actual con barras de progreso</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-41</td><td>Video en vivo</td><td>Transmitir video de cámaras por WebSocket</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-42</td><td>Grilla DVR dinámica</td><td>Ajustar grilla según cantidad de cámaras</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-43</td><td>HUD de cámara</td><td>Identificador de función y duración en cada feed</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-44</td><td>Heartbeat del sistema</td><td>Monitorear salud de cámaras vía heartbeats</td><td><span class="badge alta">ALTA</span></td></tr>
+</table></div>
+</div>
+
+
+<div class="section" id="rnf">
+<h2>🔒 Requisitos No Funcionales</h2>
+<div class="card gold-border"><p>Total: <strong>29 requisitos no funcionales</strong> organizados por categoría. Cada requisito incluye ID, nombre, descripción y especificación técnica.</p></div>
+<h3>⚡ Rendimiento</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Especificación</th></tr>
+<tr><td>RNF-01</td><td>Tiempo de respuesta API</td><td>Respuestas rápidas para mantener UX fluida</td><td>&lt; 500ms (95% solicitudes)</td></tr>
+<tr><td>RNF-02</td><td>Throughput ALPR</td><td>Sin acumulación de frames</td><td>Mínimo 2 frames/segundo por cámara</td></tr>
+<tr><td>RNF-03</td><td>Latencia WebSocket</td><td>Actualizaciones en tiempo real</td><td>&lt; 1 segundo desde el evento</td></tr>
+<tr><td>RNF-04</td><td>Concurrencia</td><td>Múltiples usuarios y cámaras simultáneas</td><td>50 usuarios, 8 cámaras</td></tr>
+<tr><td>RNF-05</td><td>Pool DB</td><td>Evitar cuellos de botella</td><td>pool_size=10, overflow=20, timeout=60s</td></tr>
+</table></div>
+<h3>🔐 Seguridad</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Especificación</th></tr>
+<tr><td>RNF-06</td><td>Hashing de contraseñas</td><td>bcrypt con salt</td><td>passlib[bcrypt]</td></tr>
+<tr><td>RNF-07</td><td>Autenticación JWT</td><td>Validar token en rutas protegidas</td><td>HS256, expiración configurable</td></tr>
+<tr><td>RNF-08</td><td>RBAC</td><td>Acceso restringido por rol</td><td>4 roles: ADMIN, LOCAL_ADMIN, STAFF, USER</td></tr>
+<tr><td>RNF-09</td><td>Bloqueo de cuenta</td><td>Usuarios bloqueados no se autentican</td><td>Verificación en authenticate_user</td></tr>
+<tr><td>RNF-10</td><td>Protección de secrets</td><td>Claves desde .env</td><td>SECRET_KEY, SMTP_* en entorno</td></tr>
+</table></div>
+<h3>⏱️ Disponibilidad</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Especificación</th></tr>
+<tr><td>RNF-11</td><td>Disponibilidad</td><td>Sin interrupciones planificadas</td><td>99.9% uptime</td></tr>
+<tr><td>RNF-12</td><td>Worker de limpieza</td><td>Ejecución periódica</td><td>Cada 300s (configurable)</td></tr>
+<tr><td>RNF-13</td><td>Heartbeat ALPR</td><td>Cámaras reportan salud</td><td>Timeout 90s</td></tr>
+<tr><td>RNF-14</td><td>Graceful shutdown</td><td>Limpiar recursos al apagar</td><td>Detener cámaras, cerrar MQTT</td></tr>
+<tr><td>RNF-15</td><td>Persistencia DB</td><td>Sin pérdida de datos</td><td>SQLite/PostgreSQL</td></tr>
+</table></div>
+<h3>🔧 Mantenibilidad</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Especificación</th></tr>
+<tr><td>RNF-16</td><td>Arquitectura limpia</td><td>Separación en capas</td><td>Routes/Services/Models/Schemas</td></tr>
+<tr><td>RNF-17</td><td>Enums tipados</td><td>Sin strings mágicos</td><td>models/enums.py</td></tr>
+<tr><td>RNF-18</td><td>Config centralizada</td><td>core/config.py desde .env</td><td>Sin hardcoding</td></tr>
+<tr><td>RNF-19</td><td>Modularidad</td><td>Cada módulo con responsabilidad única</td><td>Archivo/paquete por módulo</td></tr>
+<tr><td>RNF-20</td><td>Pruebas unitarias</td><td>Services con tests</td><td>pytest</td></tr>
+</table></div>
+<h3>🎨 Usabilidad</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Especificación</th></tr>
+<tr><td>RNF-21</td><td>Diseño responsive</td><td>Desktop y mobile</td><td>CSS Grid, Flexbox, media queries</td></tr>
+<tr><td>RNF-22</td><td>Estilo consistente</td><td>Paleta unificada</td><td>Dorado #C5A059, Glassmorphism</td></tr>
+<tr><td>RNF-23</td><td>Voseo argentino</td><td>Registrate, cargá, etc.</td><td>Consistente en toda la UI</td></tr>
+<tr><td>RNF-24</td><td>Feedback visual</td><td>Spinners, toasts, animaciones</td><td>Respuesta inmediata</td></tr>
+<tr><td>RNF-25</td><td>Tour de usuario</td><td>Guía interactiva</td><td>tour.js + onboarding_helpers.js</td></tr>
+</table></div>
+<h3>🖥️ Compatibilidad</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Especificación</th></tr>
+<tr><td>RNF-26</td><td>Navegadores</td><td>Chrome, Firefox, Edge, Safari</td><td>Últimas 2 versiones</td></tr>
+<tr><td>RNF-27</td><td>Python</td><td>Backend</td><td>Python 3.9+</td></tr>
+<tr><td>RNF-28</td><td>Base de datos</td><td>SQLAlchemy abstrae</td><td>SQLite / PostgreSQL</td></tr>
+<tr><td>RNF-29</td><td>Cámaras IP</td><td>ALPR funciona con estándar</td><td>RTSP, HTTP, MJPEG</td></tr>
+</table></div>
+</div>
+
+
+<div class="section" id="casos-uso">
+<h2>🔄 Casos de Uso</h2>
+<div class="card gold-border"><p>Total: <strong>20 casos de uso</strong> que cubren los flujos principales del sistema. A continuación se listan todos los casos de uso con sus actores asociados, seguidos de diagramas detallados de los flujos críticos.</p></div>
+<h3>Lista Completa de Casos de Uso</h3>
+<div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Actores</th></tr>
+<tr><td>CU-01</td><td>Registrarse en el sistema</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-02</td><td>Iniciar sesión</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-03</td><td>Recuperar contraseña</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-04</td><td>Gestionar vehículos</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-05</td><td>Recargar saldo</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-06</td><td>Reservar plaza</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-07</td><td>Cancelar reserva</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-08</td><td>Consultar historial</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-09</td><td>Ver puntos fidelización</td><td><span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-10</td><td>Ingreso por ALPR</td><td><span class="badge" style="background:#f4433622;color:#ef9a9a;border:1px solid #f4433633;">CÁMARA</span></td></tr>
+<tr><td>CU-11</td><td>Egreso por ALPR</td><td><span class="badge" style="background:#f4433622;color:#ef9a9a;border:1px solid #f4433633;">CÁMARA</span></td></tr>
+<tr><td>CU-12</td><td>Ingreso manual</td><td><span class="badge" style="background:#2196f322;color:#64B5F6;border:1px solid #2196f333;">STAFF</span></td></tr>
+<tr><td>CU-13</td><td>Egreso manual</td><td><span class="badge" style="background:#2196f322;color:#64B5F6;border:1px solid #2196f333;">STAFF</span></td></tr>
+<tr><td>CU-14</td><td>Pago en caja</td><td><span class="badge" style="background:#2196f322;color:#64B5F6;border:1px solid #2196f333;">STAFF</span> · <span class="badge" style="background:#4caf5022;color:#a5d6a7;border:1px solid #4caf5033;">USER</span></td></tr>
+<tr><td>CU-15</td><td>Configurar sucursal</td><td><span class="badge" style="background:#ff980022;color:#ffcc80;border:1px solid #ff980033;">LOCAL_ADMIN</span></td></tr>
+<tr><td>CU-16</td><td>Gestionar tarifas</td><td><span class="badge" style="background:#ff980022;color:#ffcc80;border:1px solid #ff980033;">LOCAL_ADMIN</span></td></tr>
+<tr><td>CU-17</td><td>Ver dashboard ocupación</td><td><span class="badge" style="background:#2196f322;color:#64B5F6;border:1px solid #2196f333;">STAFF</span> · <span class="badge" style="background:#ff980022;color:#ffcc80;border:1px solid #ff980033;">LOCAL_ADMIN</span> · <span class="badge" style="background:#f4433622;color:#ef9a9a;border:1px solid #f4433633;">ADMIN</span></td></tr>
+<tr><td>CU-18</td><td>Ver reportes financieros</td><td><span class="badge" style="background:#ff980022;color:#ffcc80;border:1px solid #ff980033;">LOCAL_ADMIN</span> · <span class="badge" style="background:#f4433622;color:#ef9a9a;border:1px solid #f4433633;">ADMIN</span></td></tr>
+<tr><td>CU-19</td><td>Gestionar usuarios</td><td><span class="badge" style="background:#f4433622;color:#ef9a9a;border:1px solid #f4433633;">ADMIN</span> · <span class="badge" style="background:#ff980022;color:#ffcc80;border:1px solid #ff980033;">LOCAL_ADMIN</span></td></tr>
+<tr><td>CU-20</td><td>Monitorear cámaras</td><td><span class="badge" style="background:#2196f322;color:#64B5F6;border:1px solid #2196f333;">STAFF</span> · <span class="badge" style="background:#ff980022;color:#ffcc80;border:1px solid #ff980033;">LOCAL_ADMIN</span></td></tr>
+</table></div>
+<h3>Diagramas Detallados</h3>
+<div class="card gold-border"><h4>CU-10: Ingreso por ALPR</h4><p><strong>Actores:</strong> <span class="badge alta">CÁMARA</span> <span class="badge" style="background:#2196f322;color:#64B5F6;">SISTEMA</span></p><p><strong>Descripción:</strong> Una cámara ALPR detecta una patente en la entrada. El sistema valida la patente, verifica si ya está dentro, busca una reserva activa y registra la entrada.</p>
+<div class="flow">
+<div class="flow-node">📷 Cámara ALPR capta patente</div>
+<div class="flow-arrow">▼ frame</div>
+<div class="flow-node">🖥️ Procesador ALPR (EasyOCR) reconoce texto</div>
+<div class="flow-arrow">▼ patente string</div>
+<div class="flow-node">📡 AccessService.validate_entry()</div>
+<div class="flow-arrow">▼ verificación</div>
+<div class="flow-node" style="border-color:#C5A05933;">✅ ¿Patente ya dentro?</div>
+<div class="flow-arrow">▼ No</div>
+<div class="flow-node" style="border-color:#C5A05933;">🔍 ¿Reserva activa?</div>
+<div class="flow-arrow">▼ Sí/No</div>
+<div class="flow-node">📝 Registra entrada + mensaje MQTT</div>
+<div class="flow-arrow">▼ open</div>
+<div class="flow-node">🛞 ESP32 abre barrera</div>
+</div>
+</div>
+<div class="card gold-border"><h4>CU-11: Egreso por ALPR</h4><p><strong>Actores:</strong> <span class="badge alta">CÁMARA</span> <span class="badge" style="background:#2196f322;color:#64B5F6;">SISTEMA</span></p><p><strong>Descripción:</strong> Una cámara ALPR detecta una patente en la salida. El sistema calcula el tiempo de estadía, verifica el pago o aplica cortesía, y registra la salida.</p>
+<div class="flow">
+<div class="flow-node">📷 Cámara ALPR capta patente en salida</div>
+<div class="flow-arrow">▼ frame</div>
+<div class="flow-node">🖥️ ALPR reconoce patente</div>
+<div class="flow-arrow">▼ patente string</div>
+<div class="flow-node">📡 AccessService.validate_exit()</div>
+<div class="flow-arrow">▼ cálculo</div>
+<div class="flow-node" style="border-color:#C5A05933;">⏱️ ¿Estadía ≤ 10 min?</div>
+<div class="flow-arrow">▼ Sí → Cortesía</div>
+<div class="flow-node" style="border-color:#C5A05933;">💰 No → ¿Saldo suficiente?</div>
+<div class="flow-arrow">▼ Sí</div>
+<div class="flow-node">📝 Registra salida + libera plaza</div>
+<div class="flow-arrow">▼ open</div>
+<div class="flow-node">🛞 ESP32 abre barrera</div>
+</div>
+</div>
+<div class="card gold-border"><h4>CU-06: Reservar Plaza</h4><p><strong>Actores:</strong> <span class="badge" style="background:#4caf5022;color:#a5d6a7;">USER</span></p><p><strong>Descripción:</strong> El usuario selecciona sucursal, piso, tipo de vehículo, período y método de pago. El sistema verifica disponibilidad, descuenta el saldo y confirma la reserva.</p>
+<div class="flow">
+<div class="flow-node">👤 Usuario selecciona sucursal y piso</div>
+<div class="flow-arrow">▼ formulario</div>
+<div class="flow-node">📡 ReservationService.check_availability()</div>
+<div class="flow-arrow">▼ ¿Hay cupo?</div>
+<div class="flow-node" style="border-color:#C5A05933;">✅ Disponible</div>
+<div class="flow-arrow">▼ confirmar</div>
+<div class="flow-node">📡 PaymentService.charge() desde saldo</div>
+<div class="flow-arrow">▼ éxito</div>
+<div class="flow-node">📝 Crea reserva + descuenta saldo</div>
+<div class="flow-arrow">▼ notificación</div>
+<div class="flow-node">📧 Usuario recibe confirmación</div>
+</div>
+</div>
+</div>
+
+
+<div class="section" id="arquitectura">
+<h2>🏗️ Arquitectura General</h2>
+<div class="card gold-border"><p>AUTOPASS sigue una <strong>Arquitectura Limpia (Clean Architecture)</strong> con 6 capas bien definidas que separan responsabilidades y permiten escalabilidad, testabilidad y mantenibilidad.</p></div>
+<h3>Arquitectura en Capas</h3>
+<div class="arch-layers">
+<div class="arch-layer client">🌐 Cliente Web + ALPR + ESP32 <span class="sub">Browser / Cámaras / Hardware IoT</span></div>
+<div class="arch-layer presentation">🎨 CAPA DE PRESENTACIÓN <span class="sub">Jinja2 Templates · Vanilla JS · CSS Glassmorphism</span></div>
+<div class="arch-layer transport">📡 CAPA DE TRANSPORTE <span class="sub">FastAPI Routes · REST API · WebSockets</span></div>
+<div class="arch-layer business">⚙️ CAPA DE NEGOCIO <span class="sub">Services · Workers · Lógica de Acceso, Reservas, Facturación</span></div>
+<div class="arch-layer data">🗄️ CAPA DE DATOS <span class="sub">SQLAlchemy Models · Pydantic Schemas · Repositories</span></div>
+<div class="arch-layer infrastructure">🔧 CAPA DE INFRAESTRUCTURA <span class="sub">Config · Security (JWT/RBAC) · Database · MQTT · Seed</span></div>
+</div>
+<h3>Tecnologías Utilizadas</h3>
+<div class="table-wrap"><table><tr><th>Capa</th><th>Tecnología</th><th>Propósito</th></tr>
+<tr><td>Presentación</td><td>Jinja2 + HTML5 + CSS3</td><td>Templating y renderizado de vistas</td></tr>
+<tr><td>Presentación</td><td>Vanilla JavaScript (ES6+)</td><td>Interactividad del lado del cliente</td></tr>
+<tr><td>Presentación</td><td>CSS Glassmorphism</td><td>Estilo visual premium con efecto de vidrio</td></tr>
+<tr><td>Transporte</td><td>FastAPI (Python)</td><td>Framework REST + WebSockets asíncrono</td></tr>
+<tr><td>Transporte</td><td>WebSockets</td><td>Tiempo real para aforo y video</td></tr>
+<tr><td>Negocio</td><td>Python 3.9+</td><td>Lógica de servicios y workers</td></tr>
+<tr><td>Negocio</td><td>MQTT (paho-mqtt)</td><td>Comunicación con hardware IoT</td></tr>
+<tr><td>Datos</td><td>SQLAlchemy 2.0</td><td>ORM para acceso a base de datos</td></tr>
+<tr><td>Datos</td><td>Pydantic</td><td>Schemas de validación y serialización</td></tr>
+<tr><td>Infraestructura</td><td>SQLite / PostgreSQL</td><td>Base de datos relacional</td></tr>
+<tr><td>Infraestructura</td><td>OpenCV + EasyOCR</td><td>Visión artificial para ALPR</td></tr>
+</table></div>
+<h3>Patrones de Diseño</h3>
+<div class="table-wrap"><table><tr><th>Patrón</th><th>Uso</th><th>Ubicación</th></tr>
+<tr><td>Clean Architecture</td><td>Separación en capas con dependencias hacia adentro</td><td>Toda la aplicación</td></tr>
+<tr><td>Repository Pattern</td><td>Abstracción de acceso a datos</td><td>Repositories por entidad</td></tr>
+<tr><td>Service Layer</td><td>Lógica de negocio encapsulada</td><td>services/*.py</td></tr>
+<tr><td>Dependency Injection</td><td>Inversión de dependencias vía parámetros</td><td>Servicios reciben repositorios</td></tr>
+<tr><td>Observer (WebSocket)</td><td>Notificación en tiempo real a clientes</td><td>WebSocket managers</td></tr>
+<tr><td>Strategy (Tarifas)</td><td>Cálculo de costos según tipo vehículo y período</td><td>BillingService</td></tr>
+<tr><td>Factory (ALPR)</td><td>Creación de detectores según formato de patente</td><td>ALPR processor</td></tr>
+<tr><td>Singleton (Config)</td><td>Configuración centralizada global</td><td>core/config.py</td></tr>
+</table></div>
+<h3>Flujo de Datos: Cámara → Barrera</h3>
+<div class="flow">
+<div class="flow-node">📷 Cámara IP<span class="tag" style="background:#f4433622;color:#ef9a9a;">RTSP</span></div>
+<div class="flow-arrow">▼ frame</div>
+<div class="flow-node">🖥️ ALPR Processor<span class="tag" style="background:#4caf5022;color:#a5d6a7;">EasyOCR</span></div>
+<div class="flow-arrow">▼ patente</div>
+<div class="flow-node">📡 AccessService<span class="tag" style="background:#2196f322;color:#64B5F6;">FastAPI</span></div>
+<div class="flow-arrow">▼ acción (open/close)</div>
+<div class="flow-node">📨 MQTT Broker<span class="tag" style="background:#ab47bc22;color:#CE93D8;">mosquitto</span></div>
+<div class="flow-arrow">▼ topic</div>
+<div class="flow-node">🔌 ESP32<span class="tag" style="background:#ff980022;color:#ffcc80;">IoT</span></div>
+<div class="flow-arrow">▼ señal</div>
+<div class="flow-node">🛞 Barrera / Servo<span class="tag" style="background:#ff980022;color:#ffcc80;">actuador</span></div>
+</div>
+</div>
+
+
+<div class="section" id="datos">
+<h2>🗄️ Modelo de Datos</h2>
+<div class="card gold-border"><p>El modelo de datos de AUTOPASS consta de <strong>11 entidades principales</strong> que cubren usuarios, vehículos, accesos, reservas, sucursales, facturación y configuración. Se utiliza SQLAlchemy 2.0 con herencia declarativa.</p></div>
+<h3>Entidades del Sistema</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">👤 User</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>username: String(50)</div><div>email: String(100) UNIQUE</div><div>hashed_password: String</div><div>nombre: String(100)</div><div>apellido: String(100)</div><div>dni: String(20)</div><div>telefono: String(20)</div><div>role: RoleEnum</div><div>saldo: Float</div><div>puntos_fidelizacion: Integer</div><div>bloqueado: Boolean</div><div class="fk">FK sucursal_id → ParkingBranch</div></div></div>
+<div class="entity-box"><div class="entity-name">🚗 Vehicle</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>patente: String(20)</div><div>tipo: VehicleTypeEnum</div><div class="fk">FK user_id → User</div></div></div>
+<div class="entity-box"><div class="entity-name">📋 AccessLog</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>patente: String(20)</div><div>tipo: VehicleTypeEnum</div><div>fecha_ingreso: DateTime</div><div>fecha_egreso: DateTime (nullable)</div><div>costo: Float (nullable)</div><div>metodo_pago: PaymentMethodEnum (nullable)</div><div>estado: AccessStatusEnum</div><div class="fk">FK user_id → User (nullable)</div><div class="fk">FK sucursal_id → ParkingBranch</div></div></div>
+<div class="entity-box"><div class="entity-name">📅 Reservation</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>patente: String(20)</div><div>tipo_vehiculo: VehicleTypeEnum</div><div>fecha_inicio: DateTime</div><div>fecha_fin: DateTime</div><div>tipo_periodo: ReservationPeriodEnum</div><div>monto_pagado: Float</div><div>estado: ReservationStatusEnum</div><div class="fk">FK user_id → User</div><div class="fk">FK sucursal_id → ParkingBranch</div><div class="fk">FK piso_id → ParkingFloor</div></div></div>
+<div class="entity-box"><div class="entity-name">🏢 ParkingBranch</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>nombre: String(100)</div><div>direccion: String(200)</div><div>logo_url: String(200)</div><div>latitud: Float</div><div>longitud: Float</div><div>activa: Boolean</div></div></div>
+<div class="entity-box"><div class="entity-name">🏗️ ParkingFloor</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>nombre: String(50)</div><div>capacidad_auto: Integer</div><div>capacidad_moto: Integer</div><div>capacidad_camioneta: Integer</div><div class="fk">FK sucursal_id → ParkingBranch</div></div></div>
+<div class="entity-box"><div class="entity-name">⭐ PointsLog</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>puntos: Integer</div><div>concepto: String(100)</div><div>fecha: DateTime</div><div class="fk">FK user_id → User</div></div></div>
+<div class="entity-box"><div class="entity-name">🎁 Promotion</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>nombre: String(100)</div><div>puntos_requeridos: Integer</div><div>descuento: Float</div><div>descripcion: Text</div><div>activa: Boolean</div></div></div>
+<div class="entity-box"><div class="entity-name">📊 ParkingAforo</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>tipo_vehiculo: VehicleTypeEnum</div><div>ocupacion_actual: Integer</div><div class="fk">FK piso_id → ParkingFloor</div></div></div>
+<div class="entity-box"><div class="entity-name">⚙️ Settings</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>clave: String(100) UNIQUE</div><div>valor: String(200)</div><div>tipo: String(50)</div></div></div>
+<div class="entity-box"><div class="entity-name">📷 ParkingCamera</div><div class="entity-fields"><div class="pk">PK id: Integer</div><div>nombre: String(50)</div><div>ip: String(45)</div><div>funcion: CameraFunctionEnum</div><div>activa: Boolean</div><div>ultimo_heartbeat: DateTime (nullable)</div><div class="fk">FK sucursal_id → ParkingBranch</div></div></div>
+</div>
+<h3>Enumeradores (Enums)</h3>
+<div class="table-wrap"><table><tr><th>Enum</th><th>Valores</th><th>Uso</th></tr>
+<tr><td>RoleEnum</td><td>ADMIN, LOCAL_ADMIN, STAFF, USER</td><td>Control de acceso RBAC</td></tr>
+<tr><td>VehicleTypeEnum</td><td>AUTO, MOTO, CAMIONETA</td><td>Tipos vehiculares trimodal</td></tr>
+<tr><td>AccessStatusEnum</td><td>ACTIVE, COMPLETED, CANCELLED, COURTESY</td><td>Estado de estadías</td></tr>
+<tr><td>ReservationStatusEnum</td><td>PENDING, PAID, ACTIVE, CANCELLED, EXPIRED</td><td>Estado de reservas</td></tr>
+<tr><td>ReservationPeriodEnum</td><td>HOUR, DAY, WEEK, FORTNIGHT, MONTH</td><td>Períodos de reserva</td></tr>
+<tr><td>PaymentMethodEnum</td><td>BALANCE, CASH, COURTESY</td><td>Métodos de pago</td></tr>
+<tr><td>CameraFunctionEnum</td><td>ENTRY, EXIT, DVR, GENERAL</td><td>Función de cámara</td></tr>
+</table></div>
+<h3>Relaciones entre Entidades</h3>
+<div class="diagram">
+User ──1:N──→ Vehicle<br>
+User ──1:N──→ AccessLog<br>
+User ──1:N──→ Reservation<br>
+User ──1:N──→ PointsLog<br>
+ParkingBranch ──1:N──→ ParkingFloor<br>
+ParkingBranch ──1:N──→ ParkingCamera<br>
+ParkingBranch ──1:N──→ AccessLog<br>
+ParkingBranch ──1:N──→ Reservation<br>
+ParkingFloor ──1:N──→ ParkingAforo<br>
+ParkingFloor ──1:N──→ Reservation<br>
+User ──N:1──→ ParkingBranch (sucursal asignada)
+</div>
+</div>
+
+
+<div class="section" id="secuencia">
+<h2>⏱️ Diagramas de Secuencia</h2>
+<div class="card gold-border"><p>Los diagramas de secuencia muestran la interacción entre los componentes del sistema para los flujos más críticos: ingreso ALPR, egreso con pago y reserva de plaza.</p></div>
+<h3>1. Flujo de Ingreso ALPR</h3>
+<div class="seq-diagram">
+<div class="seq-participants">
+<div class="seq-participant">Cámara</div>
+<div class="seq-participant">ALPR</div>
+<div class="seq-participant">AccessService</div>
+<div class="seq-participant">DB</div>
+<div class="seq-participant">MQTT</div>
+<div class="seq-participant">ESP32</div>
+<div class="seq-participant">WebSocket</div>
+</div>
+<div class="seq-row"><span style="visibility:hidden;">──</span><span class="msg">Cámara envía frame</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────</span><span class="msg">ALPR reconoce patente</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────</span><span class="msg">validate_entry(patente, sucursal)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────</span><span class="msg">buscar patente en AccessLog activo</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────────</span><span class="msg">buscar reserva activa</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────</span><span class="msg">crear AccessLog (ACTIVE)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────</span><span class="msg">actualizar ParkingAforo (+1)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────</span><span class="msg">publish MQTT: autopass/entrada/open</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────</span><span class="msg">recibe comando → abre barrera</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────</span><span class="msg">broadcast ocupación actualizada</span></div>
+</div>
+<h3>2. Flujo de Egreso con Pago</h3>
+<div class="seq-diagram">
+<div class="seq-participants">
+<div class="seq-participant">Cámara</div>
+<div class="seq-participant">ALPR</div>
+<div class="seq-participant">AccessService</div>
+<div class="seq-participant">BillingService</div>
+<div class="seq-participant">DB</div>
+<div class="seq-participant">MQTT</div>
+</div>
+<div class="seq-row"><span style="visibility:hidden;">──</span><span class="msg">Cámara envía frame</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────</span><span class="msg">ALPR reconoce patente</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────</span><span class="msg">validate_exit(patente, sucursal)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────</span><span class="msg">buscar AccessLog activo</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────</span><span class="msg">calcular duración</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────────</span><span class="msg">calcular_costo(duracion, tipo)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────────────</span><span class="msg">¿≤10 min? → cortesía</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────────</span><span class="msg">descontar saldo o marcar pagado</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────</span><span class="msg">cerrar AccessLog (COMPLETED)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────────</span><span class="msg">actualizar ParkingAforo (-1)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────</span><span class="msg">publish MQTT: autopass/salida/open</span></div>
+</div>
+<h3>3. Flujo de Reserva y Pago</h3>
+<div class="seq-diagram">
+<div class="seq-participants">
+<div class="seq-participant">Usuario</div>
+<div class="seq-participant">Frontend</div>
+<div class="seq-participant">ReservationService</div>
+<div class="seq-participant">BillingService</div>
+<div class="seq-participant">DB</div>
+</div>
+<div class="seq-row"><span style="visibility:hidden;">──</span><span class="msg">selecciona sucursal, piso, tipo, período</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────</span><span class="msg">check_availability(sucursal, piso, tipo)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────</span><span class="msg">consultar ParkingAforo + Reservations</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────</span><span class="msg">devolver disponibilidad</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────</span><span class="msg">mostrar disponibilidad</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──</span><span class="msg">confirma reserva</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────</span><span class="msg">create_reservation(datos)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────</span><span class="msg">calcular monto según período y tipo</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────────</span><span class="msg">charge(user_id, monto)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">──────────────────────</span><span class="msg">descontar saldo</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────────────</span><span class="msg">crear Reservation (PAID)</span></div>
+<div class="seq-row"><span style="visibility:hidden;">────────</span><span class="msg">mostrar confirmación</span></div>
+</div>
+</div>
+
+
+<div class="section" id="clases">
+<h2>📊 Diagrama de Clases</h2>
+<div class="card gold-border"><p>AUTOPASS sigue el patrón de <strong>Arquitectura Limpia</strong> con una separación clara en capas. A continuación se muestran los paquetes principales y las clases más importantes del sistema.</p></div>
+<h3>Diagrama de Paquetes</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">📁 core/</div><div class="entity-fields"><div>config.py — Configuración centralizada</div><div>security.py — JWT + RBAC + hashing</div><div>database.py — Engine + SessionLocal</div><div>dependencies.py — Inyección de dependencias</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 models/</div><div class="entity-fields"><div>user.py — User</div><div>vehicle.py — Vehicle</div><div>access_log.py — AccessLog</div><div>reservation.py — Reservation</div><div>parking_branch.py — ParkingBranch</div><div>parking_floor.py — ParkingFloor</div><div>points_log.py — PointsLog</div><div>promotion.py — Promotion</div><div>parking_aforo.py — ParkingAforo</div><div>settings.py — Settings</div><div>parking_camera.py — ParkingCamera</div><div>enums.py — Todos los enumeradores</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 schemas/</div><div class="entity-fields"><div>user_schema.py — UserCreate, UserResponse</div><div>vehicle_schema.py — VehicleCreate, VehicleResponse</div><div>access_schema.py — AccessCreate, AccessResponse</div><div>reservation_schema.py — ReservationCreate, etc.</div><div>parking_schema.py — BranchCreate, FloorCreate</div><div>report_schema.py — ReportFilters, ReportResponse</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 services/</div><div class="entity-fields"><div>auth_service.py — AuthService</div><div>user_service.py — UserService</div><div>access_service.py — AccessService</div><div>reservation_service.py — ReservationService</div><div>billing_service.py — BillingService</div><div>parking_service.py — ParkingService</div><div>report_service.py — ReportService</div><div>alpr_service.py — ALPRService</div><div>camera_service.py — CameraService</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 routes/</div><div class="entity-fields"><div>auth_routes.py — /v1/auth/*</div><div>user_routes.py — /v1/user/*</div><div>admin_routes.py — /v1/admin/*</div><div>parking_routes.py — /v1/parking/*</div><div>report_routes.py — /v1/reports/*</div><div>system_routes.py — /v1/system/*</div><div>ws_routes.py — WebSocket endpoints</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 workers/</div><div class="entity-fields"><div>cleanup_worker.py — Liberación de reservas</div><div>heartbeat_worker.py — Monitoreo de cámaras</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 templates/</div><div class="entity-fields"><div>auth/, dashboard/, admin/, etc.</div><div>Componentes Jinja2 reutilizables</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 static/</div><div class="entity-fields"><div>css/style.css — Estilos globales</div><div>js/*.js — Módulos JS</div><div>img/ — Recursos gráficos</div></div></div>
+</div>
+<h3>Servicios Clave</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box" style="border-color:#C5A05933;"><div class="entity-name">🔐 AuthService</div><div class="entity-fields"><div>+ register_user(data) → User</div><div>+ authenticate_user(email, pass) → User</div><div>+ create_token(user) → str</div><div>+ refresh_token(token) → str</div><div>+ recover_password(email) → bool</div><div>+ reset_password(token, pass) → bool</div></div></div>
+<div class="entity-box" style="border-color:#C5A05933;"><div class="entity-name">📡 AccessService</div><div class="entity-fields"><div>+ validate_entry(patente, sucursal_id) → AccessLog</div><div>+ validate_exit(patente, sucursal_id) → AccessLog</div><div>+ register_manual_entry(data) → AccessLog</div><div>+ register_manual_exit(data) → AccessLog</div><div>+ cancel_access(access_id) → bool</div></div></div>
+<div class="entity-box" style="border-color:#C5A05933;"><div class="entity-name">📅 ReservationService</div><div class="entity-fields"><div>+ check_availability(sucursal, piso, tipo) → bool</div><div>+ create_reservation(data) → Reservation</div><div>+ cancel_reservation(id) → dict</div><div>+ simulate_cancellation(id) → float</div><div>+ modify_reservation(id, data) → Reservation</div></div></div>
+<div class="entity-box" style="border-color:#C5A05933;"><div class="entity-name">💰 BillingService</div><div class="entity-fields"><div>+ calculate_cost(duracion, tipo_vehiculo) → float</div><div>+ charge(user_id, monto) → bool</div><div>+ get_report(filters) → ReportResponse</div><div>+ export_csv(filters) → str</div></div></div>
+</div>
+<h3>Rutas (Endpoints)</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box"><div class="entity-name">📁 routes/auth_routes.py</div><div class="entity-fields"><div>POST /register, POST /login</div><div>POST /refresh, POST /recover</div><div>POST /reset-password</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 routes/admin_routes.py</div><div class="entity-fields"><div>CRUD /users, CRUD /branches</div><div>CRUD /floors, CRUD /cameras</div><div>POST /manual-entry, POST /manual-exit</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 routes/user_routes.py</div><div class="entity-fields"><div>CRUD /vehicles, GET /history</div><div>POST /balance, GET /points</div></div></div>
+<div class="entity-box"><div class="entity-name">📁 routes/parking_routes.py</div><div class="entity-fields"><div>POST /reservations, GET /aforo</div><div>GET /availability, WebSocket /ws/aforo</div></div></div>
+</div>
+</div>
+
+
+<div class="section" id="frontend">
+<h2>🎨 Diseño Frontend</h2>
+<div class="card gold-border"><p>El frontend de AUTOPASS utiliza <strong>Jinja2</strong> para el renderizado del lado del servidor, <strong>CSS Glassmorphism</strong> para el estilo visual y <strong>Vanilla JS (ES6+)</strong> para la interactividad, con soporte WebSocket para tiempo real.</p></div>
+<h3>Estructura de Archivos</h3>
+<div class="card"><pre><code>templates/
+├── auth/
+│   ├── login.html
+│   ├── register.html
+│   └── recover.html
+├── dashboard/
+│   ├── index.html
+│   ├── aforo.html
+│   └── monitoreo.html
+├── admin/
+│   ├── users.html
+│   ├── branches.html
+│   ├── floors.html
+│   ├── cameras.html
+│   └── promotions.html
+├── user/
+│   ├── profile.html
+│   ├── vehicles.html
+│   ├── reservations.html
+│   └── history.html
+├── components/
+│   ├── sidebar.html
+│   ├── navbar.html
+│   ├── footer.html
+│   └── fab.html
+└── base.html
+
+static/
+├── css/
+│   └── style.css
+├── js/
+│   ├── app.js
+│   ├── auth.js
+│   ├── dashboard.js
+│   ├── admin.js
+│   ├── websocket.js
+│   ├── tour.js
+│   └── onboarding_helpers.js
+└── img/</code></pre></div>
+<h3>Sistema de Diseño (Paleta de Colores)</h3>
+<div class="table-wrap"><table><tr><th>Variable</th><th>Color</th><th>Uso</th></tr>
+<tr><td>--gold</td><td><span style="display:inline-block;width:16px;height:16px;background:#C5A059;vertical-align:middle;border-radius:2px;"></span> #C5A059</td><td>Color principal, acentos, bordes</td></tr>
+<tr><td>--gold-light</td><td><span style="display:inline-block;width:16px;height:16px;background:#d4b06a;vertical-align:middle;border-radius:2px;"></span> #d4b06a</td><td>Hover y variantes claras</td></tr>
+<tr><td>--bg-dark</td><td><span style="display:inline-block;width:16px;height:16px;background:#0a0a0a;vertical-align:middle;border-radius:2px;"></span> #0a0a0a</td><td>Fondo principal</td></tr>
+<tr><td>--bg-card</td><td><span style="display:inline-block;width:16px;height:16px;background:#1a1a1a;vertical-align:middle;border-radius:2px;"></span> #1a1a1a</td><td>Fondo de tarjetas y tablas</td></tr>
+<tr><td>--border</td><td><span style="display:inline-block;width:16px;height:16px;background:#222;vertical-align:middle;border-radius:2px;"></span> #222</td><td>Bordes</td></tr>
+<tr><td>--text</td><td><span style="display:inline-block;width:16px;height:16px;background:#e0e0e0;vertical-align:middle;border-radius:2px;"></span> #e0e0e0</td><td>Texto principal</td></tr>
+<tr><td>--text-muted</td><td><span style="display:inline-block;width:16px;height:16px;background:#999;vertical-align:middle;border-radius:2px;"></span> #999</td><td>Texto secundario</td></tr>
+</table></div>
+<h3>Estilo Glassmorphism</h3>
+<div class="card"><pre><code>/* Efecto de vidrio esmerilado */
+.glass-card {
+  background: rgba(26, 26, 26, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* FAB — Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #C5A059;
+  color: #0a0a0a;
+  border: none;
+  box-shadow: 0 4px 16px rgba(197, 160, 89, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 1000;
+}
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(197, 160, 89, 0.5);
+}</code></pre></div>
+<h3>Flujo de Navegación</h3>
+<div class="flow">
+<div class="flow-node">🔓 Login/Register</div>
+<div class="flow-arrow">▼ autenticación</div>
+<div class="flow-node" style="border-color:#C5A05933;">🧭 Dashboard Principal</div>
+<div class="flow-arrow" style="padding:6px 0;">┌──────┬──────┬──────┬──────┬──────┐</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:4px 0;">
+<div class="flow-node" style="min-width:100px;font-size:.7rem;padding:6px 10px;">📊 Aforo</div>
+<div class="flow-node" style="min-width:100px;font-size:.7rem;padding:6px 10px;">📷 Monitoreo</div>
+<div class="flow-node" style="min-width:100px;font-size:.7rem;padding:6px 10px;">📅 Reservas</div>
+<div class="flow-node" style="min-width:100px;font-size:.7rem;padding:6px 10px;">👤 Perfil</div>
+<div class="flow-node" style="min-width:100px;font-size:.7rem;padding:6px 10px;">⚙️ Admin</div>
+</div>
+<div class="flow-arrow">▼ cada sección con FAB contextual</div>
+<div class="flow-node">➕ Acción rápida (nueva reserva, ingreso manual, etc.)</div>
+</div>
+</div>
+
+
+<div class="section" id="despliegue">
+<h2>🚀 Plan de Despliegue</h2>
+<div class="card gold-border"><p>El despliegue de AUTOPASS se realiza mediante scripts automatizados que configuran el entorno, instalan dependencias, inicializan la base de datos y ponen en marcha todos los servicios.</p></div>
+<h3>Pasos de Instalación</h3>
+<div class="card"><ol>
+<li><strong>Clonar repositorio:</strong> <code>git clone &lt;repo&gt; &amp;&amp; cd autopass</code></li>
+<li><strong>Crear entorno virtual:</strong> <code>python -m venv venv &amp;&amp; source venv/bin/activate</code></li>
+<li><strong>Instalar dependencias:</strong> <code>pip install -r requirements.txt</code></li>
+<li><strong>Configurar variables de entorno:</strong> Copiar <code>.env.example</code> a <code>.env</code> y completar SECRET_KEY, SMTP_*, etc.</li>
+<li><strong>Inicializar base de datos:</strong> <code>python -c "from app import init_db; init_db()"</code></li>
+<li><strong>Ejecutar seed:</strong> <code>python seed.py</code> (datos demo)</li>
+<li><strong>Iniciar servidor:</strong> <code>uvicorn app.main:app --host 0.0.0.0 --port 8000</code></li>
+<li><strong>Iniciar workers:</strong> <code>python workers/cleanup_worker.py &amp; python workers/heartbeat_worker.py &amp;</code></li>
+</ol></div>
+<h3>Scripts de Automatización</h3>
+<div class="table-wrap"><table><tr><th>Script</th><th>Función</th></tr>
+<tr><td>seed.py</td><td>Poblar DB con datos demo (usuarios, sucursales, pisos, tarifas)</td></tr>
+<tr><td>reset_db.py</td><td>Eliminar y recrear todas las tablas</td></tr>
+<tr><td>export_schema.py</td><td>Exportar esquema de base de datos a SQL</td></tr>
+<tr><td>run_workers.ps1</td><td>Iniciar workers de limpieza y heartbeat (Windows)</td></tr>
+<tr><td>run_workers.sh</td><td>Iniciar workers de limpieza y heartbeat (Linux/Mac)</td></tr>
+</table></div>
+<h3>Arquitectura de Producción</h3>
+<div class="flow">
+<div class="flow-node">🌐 Nginx (Reverse Proxy)<span class="tag" style="background:#2196f322;color:#64B5F6;">SSL</span></div>
+<div class="flow-arrow">▼ proxy_pass</div>
+<div class="flow-node">⚡ Uvicorn (FastAPI)<span class="tag" style="background:#4caf5022;color:#81C784;">:8000</span></div>
+<div class="flow-arrow">▼</div>
+<div class="flow-node" style="display:flex;gap:16px;border-style:dashed;background:transparent;">
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">📁 Static Files</span>
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">📡 WebSockets</span>
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">🔄 REST API</span>
+</div>
+<div class="flow-arrow">▼</div>
+<div class="flow-node">🗄️ SQLite / PostgreSQL</div>
+<div class="flow-arrow">▼</div>
+<div class="flow-node" style="display:flex;gap:8px;border-style:dashed;background:transparent;">
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">🔄 Cleanup Worker</span>
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">❤️ Heartbeat Worker</span>
+</div>
+<div class="flow-arrow">▼ MQTT</div>
+<div class="flow-node">📨 Mosquitto Broker → ESP32</div>
+</div>
+<h3>Recomendaciones de Despliegue</h3>
+<div class="card"><ul class="checklist">
+<li>Usar <strong>PostgreSQL</strong> en producción (SQLite solo para desarrollo)</li>
+<li>Configurar <strong>Nginx</strong> como reverse proxy con SSL (Let's Encrypt)</li>
+<li>Ejecutar workers como <strong>systemd services</strong> (Linux) o tareas programadas (Windows)</li>
+<li>Monitorear logs en <strong>app.log</strong> y rotarlos semanalmente</li>
+<li>Configurar <strong>SECRET_KEY</strong> robusto y rotarlo periódicamente</li>
+<li>Asegurar que el puerto MQTT (1883) esté firewalled</li>
+<li>Usar <strong>supervisord</strong> o <strong>pm2</strong> para mantener procesos activos</li>
+</ul></div>
+</div>
+
+
+<div class="section" id="pruebas">
+<h2>🧪 Estrategia de Pruebas</h2>
+<div class="card gold-border"><p>La estrategia de pruebas de AUTOPASS cubre múltiples niveles: unitarias, integración, sistema y aceptación. Se priorizan los flujos críticos de acceso ALPR, reservas y facturación.</p></div>
+<h3>Niveles de Prueba</h3>
+<div class="table-wrap"><table><tr><th>Nivel</th><th>Responsable</th><th>Herramienta</th><th>Cobertura</th></tr>
+<tr><td>Unitarias</td><td>Backend Developer</td><td>pytest</td><td>Services, Schemas, Helpers</td></tr>
+<tr><td>Integración</td><td>Backend Developer</td><td>pytest + SQLite in-memory</td><td>API endpoints, DB operations</td></tr>
+<tr><td>Sistema</td><td>QA / Tester</td><td>pytest + Playwright</td><td>Flujos completos UI + API</td></tr>
+<tr><td>Aceptación</td><td>Stakeholders</td><td>Manual + Demo</td><td>Casos de uso críticos</td></tr>
+</table></div>
+<h3>Casos de Prueba Críticos</h3>
+<div class="card gold-border"><h4>TC-01: Registro de usuario exitoso</h4><p><strong>Pasos:</strong> Completar formulario con datos válidos → Enviar → Verificar usuario creado en DB</p><p><strong>Verificación:</strong> HTTP 201, usuario persistido, contraseña hasheada con bcrypt</p></div>
+<div class="card gold-border"><h4>TC-02: Inicio de sesión con credenciales válidas</h4><p><strong>Pasos:</strong> POST /v1/auth/login con email y contraseña correctos</p><p><strong>Verificación:</strong> HTTP 200, token JWT en respuesta, token decodificable</p></div>
+<div class="card gold-border"><h4>TC-03: Ingreso ALPR con patente válida</h4><p><strong>Pasos:</strong> Cámara envía patente → AccessService.validate_entry() → Verificar AccessLog creado</p><p><strong>Verificación:</strong> AccessLog ACTIVO, ParkingAforo incrementado, mensaje MQTT enviado</p></div>
+<div class="card gold-border"><h4>TC-04: Salida con pago desde saldo</h4><p><strong>Pasos:</strong> Cámara capta patente en salida → Calcular costo → Descontar saldo → Registrar salida</p><p><strong>Verificación:</strong> Saldo descontado correctamente, AccessLog COMPLETED, aforo decrementado</p></div>
+<div class="card gold-border"><h4>TC-05: Cortesía 10 minutos</h4><p><strong>Pasos:</strong> Ingreso ALPR → Salida antes de 10 min → Sin cargo</p><p><strong>Verificación:</strong> AccessLog con estado COURTESY, costo = 0, saldo sin cambios</p></div>
+<div class="card gold-border"><h4>TC-06: Reserva exitosa con pago</h4><p><strong>Pasos:</strong> Seleccionar sucursal/piso → Verificar disponibilidad → Pagar desde saldo → Confirmar</p><p><strong>Verificación:</strong> Reservation PAID, saldo descontado, aforo reservado bloqueado</p></div>
+<div class="card gold-border"><h4>TC-07: Bloqueo de usuario impide login</h4><p><strong>Pasos:</strong> ADMIN bloquea usuario → Usuario intenta login</p><p><strong>Verificación:</strong> HTTP 403, mensaje "Cuenta bloqueada"</p></div>
+<div class="card gold-border"><h4>TC-08: Dashboard en tiempo real</h4><p><strong>Pasos:</strong> Conectar WebSocket /ws/aforo → Verificar mensajes de ocupación</p><p><strong>Verificación:</strong> Mensajes JSON con datos actualizados cada vez que cambia aforo</p></div>
+</div>
+
+
+<div class="section" id="ops">
+<h2>🔧 Operaciones y Mantenimiento</h2>
+<div class="card gold-border"><p>Esta sección detalla las operaciones diarias de mantenimiento, monitoreo de salud del sistema y los workers que ejecutan tareas periódicas.</p></div>
+<h3>Health Check (Monitoreo de Salud)</h3>
+<div class="table-wrap"><table><tr><th>Endpoint</th><th>Método</th><th>Propósito</th></tr>
+<tr><td>/v1/system/health</td><td><span class="badge" style="background:#4caf5022;color:#81C784;">GET</span></td><td>Estado general del sistema (DB, workers, MQTT)</td></tr>
+<tr><td>/v1/system/health/db</td><td><span class="badge" style="background:#4caf5022;color:#81C784;">GET</span></td><td>Verificar conexión a base de datos</td></tr>
+<tr><td>/v1/system/health/cameras</td><td><span class="badge" style="background:#4caf5022;color:#81C784;">GET</span></td><td>Estado de heartbeats de todas las cámaras</td></tr>
+<tr><td>/v1/system/health/workers</td><td><span class="badge" style="background:#4caf5022;color:#81C784;">GET</span></td><td>Última ejecución de workers</td></tr>
+</table></div>
+<h3>Workers del Sistema</h3>
+<div class="table-wrap"><table><tr><th>Worker</th><th>Intervalo</th><th>Función</th></tr>
+<tr><td>Cleanup Worker</td><td>Cada 300s (5 min)</td><td>Libera reservas EXPIRED y actualiza aforo</td></tr>
+<tr><td>Heartbeat Worker</td><td>Cada 60s</td><td>Verifica heartbeats de cámaras, marca como inactivas si timeout &gt; 90s</td></tr>
+</table></div>
+<h3>Registro de Logs</h3>
+<div class="card"><p>Los logs se escriben en <code>app.log</code> con rotación semanal. Formato:</p>
+<pre><code>[2026-07-07 10:30:15] INFO     AccessService.validate_entry: Patente ABC123 ingresó en sucursal 1
+[2026-07-07 10:30:16] INFO     MQTT.publish: autopass/entrada/open → Barrera abierta
+[2026-07-07 10:30:17] DEBUG    WebSocket.broadcast: Ocupación actualizada para piso 1
+[2026-07-07 10:35:00] INFO     CleanupWorker: Liberadas 3 reservas vencidas
+[2026-07-07 10:36:00] WARNING  HeartbeatWorker: Cámara "Entrada Principal" sin heartbeat (timeout 92s)</code></pre></div>
+<h3>Mantenimiento Preventivo</h3>
+<div class="entity-grid cols-2">
+<div class="entity-box" style="border-color:#4caf5033;"><div class="entity-name">📅 Diario</div><div class="entity-fields"><div>✅ Verificar health en /v1/system/health</div><div>✅ Revisar logs de errores</div><div>✅ Confirmar workers ejecutándose</div><div>✅ Monitorear ocupación promedio</div></div></div>
+<div class="entity-box" style="border-color:#ff980033;"><div class="entity-name">📅 Semanal</div><div class="entity-fields"><div>✅ Rotar logs</div><div>✅ Revisar heartbeats de cámaras</div><div>✅ Verificar integridad de DB</div><div>✅ Analizar reportes financieros</div></div></div>
+<div class="entity-box" style="border-color:#f4433633;"><div class="entity-name">📅 Mensual</div><div class="entity-fields"><div>✅ Backup de base de datos</div><div>✅ Actualizar dependencias (pip)</div><div>✅ Revisar rendimiento (respuestas API)</div><div>✅ Auditoría de usuarios y roles</div></div></div>
+</div>
+</div>
+
+
+<div class="section" id="api">
+<h2>🗺️ Mapa de Rutas API</h2>
+<div class="card gold-border"><p>Todas las rutas del sistema AUTOPASS, organizadas por prefijo. Los endpoints REST utilizan FastAPI y los WebSocket permiten comunicación bidireccional en tiempo real.</p></div>
+<h3>/v1/auth — Autenticación</h3>
+<div class="card">
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/auth/register</span><span class="api-desc">Registrar usuario</span><span class="api-role">Público</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/auth/login</span><span class="api-desc">Iniciar sesión</span><span class="api-role">Público</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/auth/refresh</span><span class="api-desc">Renovar JWT</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/auth/recover</span><span class="api-desc">Solicitar recuperación</span><span class="api-role">Público</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/auth/reset-password</span><span class="api-desc">Resetear contraseña</span><span class="api-role">Público</span></div>
+</div>
+<h3>/v1/admin — Administración</h3>
+<div class="card">
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/admin/users</span><span class="api-desc">Listar usuarios</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/users</span><span class="api-desc">Crear usuario</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method patch">PATCH</span><span class="api-path">/v1/admin/users/{id}</span><span class="api-desc">Editar usuario</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method delete">DELETE</span><span class="api-path">/v1/admin/users/{id}</span><span class="api-desc">Eliminar usuario</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method patch">PATCH</span><span class="api-path">/v1/admin/users/{id}/block</span><span class="api-desc">Bloquear/desbloquear</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/admin/branches</span><span class="api-desc">Listar sucursales</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/branches</span><span class="api-desc">Crear sucursal</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method patch">PATCH</span><span class="api-path">/v1/admin/branches/{id}</span><span class="api-desc">Editar sucursal</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method delete">DELETE</span><span class="api-path">/v1/admin/branches/{id}</span><span class="api-desc">Eliminar sucursal</span><span class="api-role">ADMIN</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/floors</span><span class="api-desc">Crear piso</span><span class="api-role">LOCAL_ADMIN+</span></div>
+<div class="api-row"><span class="http-method patch">PATCH</span><span class="api-path">/v1/admin/floors/{id}</span><span class="api-desc">Editar piso</span><span class="api-role">LOCAL_ADMIN+</span></div>
+<div class="api-row"><span class="http-method delete">DELETE</span><span class="api-path">/v1/admin/floors/{id}</span><span class="api-desc">Eliminar piso</span><span class="api-role">LOCAL_ADMIN+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/cameras</span><span class="api-desc">Configurar cámara</span><span class="api-role">LOCAL_ADMIN+</span></div>
+<div class="api-row"><span class="http-method patch">PATCH</span><span class="api-path">/v1/admin/cameras/{id}/toggle</span><span class="api-desc">Iniciar/detener ALPR</span><span class="api-role">LOCAL_ADMIN+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/manual-entry</span><span class="api-desc">Ingreso manual</span><span class="api-role">STAFF+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/manual-exit</span><span class="api-desc">Egreso manual</span><span class="api-role">STAFF+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/open-barrier</span><span class="api-desc">Abrir barrera remoto</span><span class="api-role">STAFF+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/admin/promotions</span><span class="api-desc">Listar promociones</span><span class="api-role">LOCAL_ADMIN+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/admin/promotions</span><span class="api-desc">Crear promoción</span><span class="api-role">LOCAL_ADMIN+</span></div>
+</div>
+<h3>/v1/user — Perfil de Usuario</h3>
+<div class="card">
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/user/profile</span><span class="api-desc">Ver perfil</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/user/vehicles</span><span class="api-desc">Listar vehículos</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/user/vehicles</span><span class="api-desc">Registrar vehículo</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method delete">DELETE</span><span class="api-path">/v1/user/vehicles/{id}</span><span class="api-desc">Eliminar vehículo</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/user/history</span><span class="api-desc">Historial de pagos</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/user/balance</span><span class="api-desc">Recargar saldo</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/user/points</span><span class="api-desc">Ver puntos fidelización</span><span class="api-role">USER+</span></div>
+</div>
+<h3>/v1/parking — Estacionamiento</h3>
+<div class="card">
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/parking/branches</span><span class="api-desc">Listar sucursales activas</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/parking/branches/{id}/floors</span><span class="api-desc">Pisos de sucursal</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/parking/aforo/{sucursal_id}</span><span class="api-desc">Ocupación en tiempo real</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/parking/availability</span><span class="api-desc">Verificar disponibilidad</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/parking/reservations</span><span class="api-desc">Crear reserva</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/parking/reservations</span><span class="api-desc">Mis reservas</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method patch">PATCH</span><span class="api-path">/v1/parking/reservations/{id}</span><span class="api-desc">Modificar reserva</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method post">POST</span><span class="api-path">/v1/parking/reservations/{id}/cancel</span><span class="api-desc">Cancelar reserva</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/parking/reservations/{id}/simulate-cancel</span><span class="api-desc">Simular cancelación</span><span class="api-role">USER+</span></div>
+</div>
+<h3>/v1/reports — Reportes</h3>
+<div class="card">
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/reports/financial</span><span class="api-desc">Reporte financiero</span><span class="api-role">LOCAL_ADMIN+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/reports/financial/csv</span><span class="api-desc">Exportar CSV</span><span class="api-role">LOCAL_ADMIN+</span></div>
+</div>
+<h3>/v1/system — Sistema</h3>
+<div class="card">
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/system/health</span><span class="api-desc">Health check general</span><span class="api-role">Público</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/system/health/db</span><span class="api-desc">Health check DB</span><span class="api-role">Público</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/system/health/cameras</span><span class="api-desc">Estado de cámaras</span><span class="api-role">STAFF+</span></div>
+<div class="api-row"><span class="http-method get">GET</span><span class="api-path">/v1/system/health/workers</span><span class="api-desc">Estado de workers</span><span class="api-role">STAFF+</span></div>
+</div>
+<h3>WebSockets</h3>
+<div class="card">
+<div class="api-row"><span class="http-method ws">WS</span><span class="api-path">/ws/aforo/{sucursal_id}</span><span class="api-desc">Ocupación en tiempo real</span><span class="api-role">USER+</span></div>
+<div class="api-row"><span class="http-method ws">WS</span><span class="api-path">/ws/video/{camera_id}</span><span class="api-desc">Video en vivo de cámara</span><span class="api-role">STAFF+</span></div>
+</div>
+</div>
+
+
+<div class="section" id="alpr">
+<h2>📷 Arquitectura ALPR</h2>
+<div class="card gold-border"><p>El módulo ALPR (Automatic License Plate Recognition) es el corazón del sistema de acceso automatizado. Utiliza <strong>OpenCV</strong> para preprocesamiento de imágenes y <strong>EasyOCR</strong> para el reconocimiento óptico de caracteres.</p></div>
+<h3>Arquitectura Interna de ALPR</h3>
+<div class="flow">
+<div class="flow-node">📷 Frame de cámara IP<span class="tag" style="background:#f4433622;color:#ef9a9a;">RTSP</span></div>
+<div class="flow-arrow">▼ captura</div>
+<div class="flow-node">🔧 Preprocesador OpenCV<span class="tag" style="background:#2196f322;color:#64B5F6;">Grayscale</span></div>
+<div class="flow-arrow">▼ frame procesado</div>
+<div class="flow-node">📐 Detector de ROI<span class="tag" style="background:#2196f322;color:#64B5F6;">Contornos</span></div>
+<div class="flow-arrow">▼ región candidata</div>
+<div class="flow-node">👁️ EasyOCR<span class="tag" style="background:#4caf5022;color:#81C784;">Reconocimiento</span></div>
+<div class="flow-arrow">▼ texto extraído</div>
+<div class="flow-node">🧹 Post-procesador<span class="tag" style="background:#ff980022;color:#ffcc80;">Regex</span></div>
+<div class="flow-arrow">▼ patente normalizada</div>
+<div class="flow-node">📡 AccessService.validate_entry/exit()</div>
+</div>
+<h3>Formatos de Patente Soportados</h3>
+<div class="table-wrap"><table><tr><th>Formato</th><th>Ejemplo</th><th>Regex</th></tr>
+<tr><td>MERCOSUR (formato nuevo)</td><td>ABC·1234</td><td>^[A-Z]{3}\d{3}[A-Z0-9]$</td></tr>
+<tr><td>MERCOSUR (formato anterior)</td><td>AB·123·CD</td><td>^[A-Z]{2}\d{3}[A-Z]{2}$</td></tr>
+<tr><td>Patente genérica</td><td>ABC·123</td><td>^[A-Z]{3}\d{3}$</td></tr>
+</table></div>
+<h3>Variables de Entorno</h3>
+<div class="table-wrap"><table><tr><th>Variable</th><th>Descripción</th><th>Default</th></tr>
+<tr><td>ALPR_CAMERA_FPS</td><td>Frames por segundo por cámara</td><td>2</td></tr>
+<tr><td>ALPR_ROI_MARGIN</td><td>Margen de recorte de ROI (píxeles)</td><td>20</td></tr>
+<tr><td>ALPR_MIN_CONFIDENCE</td><td>Confianza mínima de OCR</td><td>0.5</td></tr>
+<tr><td>ALPR_HEARTBEAT_INTERVAL</td><td>Intervalo de heartbeat (segundos)</td><td>30</td></tr>
+<tr><td>ALPR_HEARTBEAT_TIMEOUT</td><td>Timeout para considerar cámara caída</td><td>90</td></tr>
+</table></div>
+<h3>Recomendaciones</h3>
+<div class="card"><ul class="checklist">
+<li>Utilizar cámaras con resolución mínima de <strong>720p</strong> (1080p recomendado)</li>
+<li>Asegurar <strong>iluminación uniforme</strong> sobre la zona de lectura de patentes</li>
+<li>Ángulo de cámara: <strong>30°-45°</strong> respecto al vehículo para mejor captura</li>
+<li>Evitar contraluz directa; usar <strong>filtro IR</strong> si es necesario</li>
+<li>Configurar ROI para excluir áreas sin vehículos y mejorar rendimiento</li>
+<li>Mantener la lente limpia y calibrar periódicamente</li>
+</ul></div>
+</div>
+
+
+<div class="section" id="hardware">
+<h2>🔌 Integración Hardware</h2>
+<div class="card gold-border"><p>AUTOPASS se integra con hardware IoT a través del protocolo <strong>MQTT</strong>. Los <strong>ESP32</strong> actúan como actuadores que controlan barreras (servos), sensores de ocupación y pantallas LCD informativas.</p></div>
+<h3>Arquitectura de Integración</h3>
+<div class="flow">
+<div class="flow-node">⚡ Backend (FastAPI)<span class="tag" style="background:#2196f322;color:#64B5F6;">Publisher</span></div>
+<div class="flow-arrow">▼ publish MQTT</div>
+<div class="flow-node">📨 MQTT Broker<span class="tag" style="background:#ab47bc22;color:#CE93D8;">mosquitto</span></div>
+<div class="flow-arrow">▼ subscribe</div>
+<div class="flow-node">🔌 ESP32<span class="tag" style="background:#ff980022;color:#ffcc80;">WiFi</span></div>
+<div class="flow-arrow">▼ GPIO</div>
+<div class="flow-node" style="display:flex;gap:8px;border-style:dashed;background:transparent;">
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">🛞 Servo (barrera)</span>
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">📡 Sensor (ocupación)</span>
+<span style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 12px;">🖥️ LCD (mensajes)</span>
+</div>
+</div>
+<h3>Componentes de Hardware</h3>
+<div class="table-wrap"><table><tr><th>Componente</th><th>Función</th><th>Protocolo</th></tr>
+<tr><td>ESP32 (o ESP8266)</td><td>Microcontrolador WiFi para IoT</td><td>WiFi + MQTT</td></tr>
+<tr><td>Servomotor SG90 / MG996R</td><td>Apertura/cierre de barrera</td><td>PWM (GPIO)</td></tr>
+<tr><td>Sensor infrarrojo / ultrasónico</td><td>Detección de ocupación de plaza</td><td>GPIO digital</td></tr>
+<tr><td>Pantalla LCD 16x2 / OLED</td><td>Mostrar mensajes y patentes</td><td>I2C / SPI</td></tr>
+<tr><td>Barrera física (brazo)</td><td>Mecanismo de entrada/salida</td><td>Acoplado a servo</td></tr>
+<tr><td>Fuente de alimentación</td><td>5V / 3.3V para ESP32 y periféricos</td><td>DC</td></tr>
+</table></div>
+<h3>Topicos MQTT</h3>
+<div class="table-wrap"><table><tr><th>Topic</th><th>Dirección</th><th>Payload</th></tr>
+<tr><td>autopass/{sucursal}/entrada/open</td><td>Backend → ESP32</td><td>{"patente": "ABC123", "timestamp": "..."}</td></tr>
+<tr><td>autopass/{sucursal}/salida/open</td><td>Backend → ESP32</td><td>{"patente": "ABC123", "timestamp": "..."}</td></tr>
+<tr><td>autopass/{sucursal}/lcd/message</td><td>Backend → ESP32</td><td>{"line1": "...", "line2": "..."}</td></tr>
+<tr><td>autopass/{sucursal}/sensor/status</td><td>ESP32 → Backend</td><td>{"plaza": 1, "ocupado": true}</td></tr>
+<tr><td>autopass/{sucursal}/heartbeat</td><td>ESP32 → Backend</td><td>{"device": "esp32_01", "uptime": 3600}</td></tr>
+</table></div>
+<h3>Flujo de Apertura de Barrera</h3>
+<div class="flow">
+<div class="flow-node">📡 Backend publica en topic <code>autopass/entrada/open</code></div>
+<div class="flow-arrow">▼ MQTT</div>
+<div class="flow-node">🔌 ESP32 recibe mensaje</div>
+<div class="flow-arrow">▼ decodifica JSON</div>
+<div class="flow-node" style="border-color:#C5A05933;">🧠 ¿Patente válida?</div>
+<div class="flow-arrow">▼ Sí</div>
+<div class="flow-node">🛞 Activa servo a 90° (abrir)</div>
+<div class="flow-arrow">▼ espera 3s</div>
+<div class="flow-node">🖥️ Muestra patente en LCD</div>
+<div class="flow-arrow">▼ espera 5s</div>
+<div class="flow-node">🛞 Activa servo a 0° (cerrar)</div>
+<div class="flow-arrow">▼</div>
+<div class="flow-node">📡 Publica heartbeat de confirmación</div>
+</div>
+</div>
+
+
+</div><!-- close main -->
+
+<script>
+document.querySelectorAll('.sidebar-nav a').forEach(function(link) {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('.sidebar-nav a').forEach(function(a) { a.classList.remove('active'); });
+    this.classList.add('active');
+    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+    var target = document.getElementById(this.getAttribute('data-section'));
+    if (target) { target.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  });
+});
+</script>
+
+</body>
+</html>
+

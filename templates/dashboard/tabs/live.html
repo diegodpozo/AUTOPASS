@@ -1,53 +1,65 @@
 <!-- PESTAÑA: MONITOREO -->
 <div id="tab-live" class="tab-view">
-    <div class="flex-row justify-between items-center p-15" style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.15); margin-bottom: 20px;">
-        <span style="font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 500;">
-            <i class="fas fa-circle-info mr-5 text-dorado"></i> Monitoreo básico local (Entrada y Salida).
-        </span>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
         <a href="/monitoreo" target="_blank" class="btn btn-premium sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; padding: 8px 16px;">
             <i class="fas fa-tower-observation" style="color: var(--dorado);"></i> ABRIR MONITOR MULTI-CÁMARA
         </a>
     </div>
-    <div class="monitoring-grid">
-        <!-- SECCIÓN IZQUIERDA: CÁMARAS Y CONTROL -->
-        <div class="monitoring-main">
-            <div class="camera-grid">
-                <div class="cam-box" id="cam-box-entry">
-                    <div class="cam-overlay">
-                        <div class="cam-status">
-                            <span class="live-indicator" id="indicator-entry"></span>
-                            <span class="cam-label">ENTRADA</span>
-                        </div>
-                    </div>
-                    <div class="cam-feed-container">
-                        <img id="cam-entry" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="opacity: 1;">
-                        <div class="scan-line"></div>
-                        <!-- Overlay de patente dentro del video -->
-                        <div class="cam-plate-overlay" id="overlay-plate-entry">
-                            <span class="overlay-label">DETECTADA</span>
-                            <span class="overlay-value">---</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="cam-box" id="cam-box-exit">
-                    <div class="cam-overlay">
-                        <div class="cam-status">
-                            <span class="live-indicator" id="indicator-exit"></span>
-                            <span class="cam-label">SALIDA</span>
-                        </div>
-                    </div>
-                    <div class="cam-feed-container">
-                        <img id="cam-exit" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="opacity: 1;">
-                        <div class="scan-line"></div>
-                        <!-- Overlay de patente dentro del video -->
-                        <div class="cam-plate-overlay" id="overlay-plate-exit">
-                            <span class="overlay-label">DETECTADA</span>
-                            <span class="overlay-value">---</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- ESTADÍSTICAS DE CAPACIDAD EN FILA -->
+    <div class="stats-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div class="stat-card-premium" style="flex: 1;" title="Disponibilidad de cocheras para autos">
+            <div class="stat-icon"><i class="fas fa-car"></i></div>
+            <div class="stat-info">
+                <span class="label">Autos</span>
+                <span class="value" id="stat-free-total">-- / --</span>
             </div>
+            <div class="stat-progress">
+                <div class="progress-bar"><div id="bar-free" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-sub-labels">
+                <span class="text-xs text-muted">Libres</span>
+                <span id="stat-free" class="text-xs" style="display:none"></span>
+                <span id="stat-total" class="text-xs" style="display:none"></span>
+            </div>
+        </div>
+
+        <div class="stat-card-premium" style="flex: 1;" title="Disponibilidad de lugares para motos">
+            <div class="stat-icon"><i class="fas fa-motorcycle"></i></div>
+            <div class="stat-info">
+                <span class="label">Motos</span>
+                <span class="value" id="stat-free-total-motos">-- / --</span>
+            </div>
+            <div class="stat-progress">
+                <div class="progress-bar"><div id="bar-free-motos" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-sub-labels">
+                <span class="text-xs text-muted">Libres</span>
+                <span id="stat-free-motos" class="text-xs" style="display:none"></span>
+                <span id="stat-total-motos" class="text-xs" style="display:none"></span>
+            </div>
+        </div>
+
+        <div class="stat-card-premium" style="flex: 1;" title="Disponibilidad de lugares para camionetas">
+            <div class="stat-icon"><i class="fas fa-truck-pickup"></i></div>
+            <div class="stat-info">
+                <span class="label">Camionetas</span>
+                <span class="value" id="stat-free-total-camionetas">-- / --</span>
+            </div>
+            <div class="stat-progress">
+                <div class="progress-bar"><div id="bar-free-camionetas" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-sub-labels">
+                <span class="text-xs text-muted">Libres</span>
+                <span id="stat-free-camionetas" class="text-xs" style="display:none"></span>
+                <span id="stat-total-camionetas" class="text-xs" style="display:none"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="monitoring-grid">
+        <!-- SECCIÓN IZQUIERDA: CONTROL -->
+        <div class="monitoring-main">
 
             <!-- CONTENEDOR DE PESTAÑAS PARA LISTADOS -->
             <div class="card mt-10">
@@ -120,59 +132,8 @@
             </div>
         </div>
 
-        <!-- SECCIÓN DERECHA: CONTROL Y ESTADÍSTICAS -->
+        <!-- SECCIÓN DERECHA: CONTROL -->
         <div class="monitoring-side">
-            <!-- ESTADÍSTICAS DE CAPACIDAD -->
-            <div class="stats-vertical">
-                <div class="stat-card-premium" title="Disponibilidad de cocheras para autos">
-                    <div class="stat-icon"><i class="fas fa-car"></i></div>
-                    <div class="stat-info">
-                        <span class="label">Autos</span>
-                        <span class="value" id="stat-free-total">-- / --</span>
-                    </div>
-                    <div class="stat-progress">
-                        <div class="progress-bar"><div id="bar-free" class="progress-fill" style="width: 0%"></div></div>
-                    </div>
-                    <div class="stat-sub-labels">
-                        <span class="text-xs text-muted">Libres</span>
-                        <span id="stat-free" class="text-xs" style="display:none"></span>
-                        <span id="stat-total" class="text-xs" style="display:none"></span>
-                    </div>
-                </div>
-
-                <div class="stat-card-premium" title="Disponibilidad de lugares para motos">
-                    <div class="stat-icon"><i class="fas fa-motorcycle"></i></div>
-                    <div class="stat-info">
-                        <span class="label">Motos</span>
-                        <span class="value" id="stat-free-total-motos">-- / --</span>
-                    </div>
-                    <div class="stat-progress">
-                        <div class="progress-bar"><div id="bar-free-motos" class="progress-fill" style="width: 0%"></div></div>
-                    </div>
-                    <div class="stat-sub-labels">
-                        <span class="text-xs text-muted">Libres</span>
-                        <span id="stat-free-motos" class="text-xs" style="display:none"></span>
-                        <span id="stat-total-motos" class="text-xs" style="display:none"></span>
-                    </div>
-                </div>
-
-                <div class="stat-card-premium" title="Disponibilidad de lugares para camionetas">
-                    <div class="stat-icon"><i class="fas fa-truck-pickup"></i></div>
-                    <div class="stat-info">
-                        <span class="label">Camionetas</span>
-                        <span class="value" id="stat-free-total-camionetas">-- / --</span>
-                    </div>
-                    <div class="stat-progress">
-                        <div class="progress-bar"><div id="bar-free-camionetas" class="progress-fill" style="width: 0%"></div></div>
-                    </div>
-                    <div class="stat-sub-labels">
-                        <span class="text-xs text-muted">Libres</span>
-                        <span id="stat-free-camionetas" class="text-xs" style="display:none"></span>
-                        <span id="stat-total-camionetas" class="text-xs" style="display:none"></span>
-                    </div>
-                </div>
-            </div>
-
             <!-- PANEL DE CONTROL MANUAL -->
             <div class="card mt-0">
                 <div class="card-header-premium" style="padding: 15px 20px;">
@@ -189,7 +150,7 @@
                         <!-- Ingreso -->
                         <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
                             <div class="form-group-premium" style="max-width: none; width: 50%;">
-                                <label style="font-size: 0.6rem;">PATENTE</label>
+                                <label style="font-size: 0.6rem; display: block; text-align: center; width: 100%;">PATENTE</label>
                                 <div title="Ingresar patente manualmente">
                                     <input type="text" id="manual-plate" placeholder="ABC-123" class="input-premium uppercase" style="height: 40px; font-size: 0.9rem; text-align: center;">
                                 </div>
