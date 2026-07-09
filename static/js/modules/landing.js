@@ -596,12 +596,12 @@ export function findNearestBranch(targetMap = null) {
     }
 
     // USAR SHOWTOAST SI ESTA DISPONIBLE
-    const toast = (msg) => {
-        if (window.showToast) window.showToast(msg);
+    const toast = (msg, type) => {
+        if (window.showToast) window.showToast(msg, type);
         else console.log(msg);
     };
 
-    toast('Buscando tu ubicación...');
+    toast('Buscando tu ubicación...', 'info');
 
     navigator.geolocation.getCurrentPosition((pos) => {
         const myLat = pos.coords.latitude;

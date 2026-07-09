@@ -152,7 +152,7 @@ window.setRechargeAmount = (a) => {
 window.processRecharge = async function(e) {
     e.preventDefault();
     const a = parseFloat(document.getElementById('recharge-amount').value);
-    if (isNaN(a) || a <= 0) return showToast('Monto inválido');
+    if (isNaN(a) || a <= 0) return showToast('Monto inválido', 'error');
 
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         if (vehicleSelect && vehicleSelect.options.length === 2) vehicleSelect.selectedIndex = 1;
                         if (container) container.scrollIntoView({ behavior: 'smooth' });
-                        showToast(`Preparado para reservar en ${preBranch}`);
+                        showToast(`Preparado para reservar en ${preBranch}`, 'info');
                         return true;
                     }
                     attempts++;

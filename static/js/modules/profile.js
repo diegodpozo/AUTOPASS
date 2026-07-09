@@ -191,24 +191,24 @@ export function changePtsPage(delta) {
 export async function redeemPoints(promoId, cost) {
     if (!await showConfirm('Confirmar Canje', `¿Canjear ${cost} puntos?`)) return;
     const res = await api.post(`/user/redeem/${promoId}`);
-    if (res.ok) { showToast(res.data.message); await loadPointsData(); }
+    if (res.ok) { showToast(res.data.message, 'success'); await loadPointsData(); }
     else showToast(res.error, 'error');
 }
 
 export async function saveField(field, newValue) {
     const res = await api.put('/user/me', { [field]: newValue });
-    if (res.ok) { showToast(`${toTitle(field)} actualizado`); await loadProfile(); return true; }
+    if (res.ok) { showToast(`${toTitle(field)} actualizado`, 'success'); await loadProfile(); return true; }
     else { showToast(res.error, 'error'); return false; }
 }
 
 export async function changePassword(current, newPass) {
     const res = await api.post('/user/change-password', { current_password: current, new_password: newPass });
-    if (res.ok) { showToast('Contraseña actualizada'); return true; }
+    if (res.ok) { showToast('Contraseña actualizada', 'success'); return true; }
     else { showToast(res.error, 'error'); return false; }
 }
 
 export async function processRecharge(amount) {
     const res = await api.post('/user/recharge-balance', { monto: amount });
-    if (res.ok) { showToast(`¡Carga de $${formatNum(amount)} exitosa!`); await loadProfile(); return true; }
+    if (res.ok) { showToast(`¡Carga de $${formatNum(amount)} exitosa!`, 'success'); await loadProfile(); return true; }
     else { showToast(res.error, 'error'); return false; }
 }

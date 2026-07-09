@@ -70,13 +70,13 @@ export async function searchAddress() {
             initBranchMap(); // ASEGURAR QUE EL MAPA EXISTE
             updateBranchMarker(lat, lng);
             branchMap.setView([lat, lng], 16);
-            showToast('Ubicación encontrada');
+            showToast('Ubicación encontrada', 'success');
         } else {
-            showToast('No se encontró la dirección. Intentá ser más específico.');
+            showToast('No se encontró la dirección. Intentá ser más específico.', 'error');
         }
     } catch (err) {
         console.error('Error en geocoding:', err);
-        showToast('Error al buscar la dirección');
+        showToast('Error al buscar la dirección', 'error');
     }
 }
 
@@ -269,10 +269,10 @@ export async function openBarrier(gateId) {
 
     const res = await api.post(`/admin/open-barrier?gate_id=${gateId}`);
     if (res && res.ok) {
-        showToast(`Barrera ${gateId} abierta.`);
+        showToast(`Barrera ${gateId} abierta.`, 'success');
         setTimeout(() => { if (iconEl) iconEl.src = '/static/images/barrera baja.png'; }, 3000);
     } else {
-        showToast(`Error: ${res?.error || 'Desconocido'}`);
+        showToast(`Error: ${res?.error || 'Desconocido'}`, 'error');
         if (iconEl) iconEl.src = '/static/images/barrera baja.png';
     }
 }
@@ -402,7 +402,7 @@ export async function handleAdminCreateUser(event) {
     const res = await api.post(`/admin/users?rol=${rol}`, payload);
     console.log('[handleAdminCreateUser] Respuesta:', res);
     if (res && res.ok) {
-        showToast('Usuario creado.');
+        showToast('Usuario creado.', 'success');
         if (window.closeModal) window.closeModal('modal-create-user');
         event.target.reset();
         if (window.loadUsers) window.loadUsers(); 
@@ -411,7 +411,7 @@ export async function handleAdminCreateUser(event) {
             ? res.error.map(e => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join(' | ')
             : (res?.error || 'Desconocido');
         console.error('[handleAdminCreateUser] Error:', errMsg);
-        showToast(`Error: ${errMsg}`);
+        showToast(`Error: ${errMsg}`, 'error');
     }
     btn.disabled = false;
 }
@@ -421,8 +421,9 @@ export async function toggleUserBlock(id, nombre, currentlyBlocked) {
     if (!await showConfirm(`${action} USUARIO`, `¿Estás seguro?`)) return;
 
     const res = await api.post(`/admin/users/${id}/toggle-block`);
-    if (res && res.ok) { showToast(res.data.message); if (window.loadUsers) window.loadUsers(); }
-    else showToast(res?.error || 'Error');
+    const type = currentlyBlocked ? 'success' : 'error';
+    if (res && res.ok) { showToast(res.data.message, type); if (window.loadUsers) window.loadUsers(); }
+    else showToast(res?.error || 'Error', 'error');
 }
 
 export async function refreshSystemDiagnostics() {
@@ -672,10 +673,10 @@ export async function savePBCapacity() {
     const resMotos = await api.post(`/admin/settings/prices?clave=capacidad_motos&valor=${capMotos}`);
 
     if (resAutos.ok && resMotos.ok) {
-        showToast('Capacidad de Planta Baja actualizada');
+        showToast('Capacidad de Planta Baja actualizada', 'success');
         loadFloors();
     } else {
-        showToast('Error al actualizar Planta Baja');
+        showToast('Error al actualizar Planta Baja', 'error');
     }
 }
 
@@ -685,10 +686,10 @@ export async function updateFloorCapacity(id) {
 
     const res = await api.patch(`/admin/floors/${id}?cap_autos=${capAutos}&cap_motos=${capMotos}`);
     if (res.ok) {
-        showToast('Capacidad de nivel actualizada');
+        showToast('Capacidad de nivel actualizada', 'success');
         loadFloors();
     } else {
-        showToast(res.error || 'Error al actualizar nivel');
+        showToast(res.error || 'Error al actualizar nivel', 'error');
     }
 }
 
@@ -742,7 +743,7 @@ export async function handleCreateFloor(event) {
         b.nombre.trim().toLowerCase().includes(mySucursal.trim().toLowerCase())
     );
 
-    if (!branch) return showToast('Error: No se pudo identificar la sucursal activa');
+    if (!branch) return showToast('Error: No se pudo identificar la sucursal activa', 'error');
 
     const payload = {
         nombre: document.getElementById('floor-nombre').value,
@@ -759,11 +760,11 @@ export async function handleCreateFloor(event) {
     }
 
     if (res.ok) {
-        showToast(editId ? 'Nivel actualizado' : 'Piso agregado correctamente');
+        showToast(editId ? 'Nivel actualizado' : 'Piso agregado correctamente', 'success');
         if (window.closeModal) window.closeModal('modal-add-floor');
         loadFloors();
     } else {
-        showToast(res.error || 'Error al procesar');
+        showToast(res.error || 'Error al procesar', 'error');
     }
     btn.disabled = false;
 }
@@ -773,10 +774,10 @@ export async function deleteFloor(id) {
     
     const res = await api.delete(`/admin/floors/${id}`);
     if (res.ok) {
-        showToast('Piso eliminado');
+        showToast('Piso eliminado', 'success');
         loadFloors();
     } else {
-        showToast(res.error || 'Error al eliminar');
+        showToast(res.error || 'Error al eliminar', 'error');
     }
 }
 
@@ -815,7 +816,7 @@ export async function saveAllRates() {
     }
 
     if (success) {
-        showToast('Tarifas actualizadas correctamente.');
+        showToast('Tarifas actualizadas correctamente.', 'success');
         // SI HAY GRUPOS EN EDICION, CERRARLOS
         document.querySelectorAll('.rate-group').forEach(g => {
             g.classList.remove('editing');
@@ -824,7 +825,7 @@ export async function saveAllRates() {
         document.querySelectorAll('[id^="btn-save-rates-"]').forEach(b => b.style.display = 'none');
         document.querySelectorAll('[id^="btn-edit-rates-"]').forEach(b => b.style.display = 'inline-flex');
     }
-    else showToast('Error al actualizar algunas tarifas.');
+    else showToast('Error al actualizar algunas tarifas.', 'error');
 }
 
 export function toggleRateEdit(type) {
@@ -901,9 +902,9 @@ export async function saveRateGroup(type) {
     }
 
     if (success) {
-        showToast(`Tarifas de ${type} actualizadas correctamente.`);
+        showToast(`Tarifas de ${type} actualizadas correctamente.`, 'success');
     } else {
-        showToast('Error al actualizar algunas tarifas.');
+        showToast('Error al actualizar algunas tarifas.', 'error');
     }
     
     resetUI();
@@ -912,15 +913,15 @@ export async function saveRateGroup(type) {
 export async function saveSystemParam(param) {
     const val = document.getElementById(`cfg-${param}`).value;
     const res = await api.post(`/admin/settings/prices?clave=${param}&valor=${val}`);
-    if (res.ok) showToast('Configuración guardada.');
-    else showToast(res.error);
+    if (res.ok) showToast('Configuración guardada.', 'success');
+    else showToast(res.error, 'error');
 }
 
 export async function saveCapacities() {
     const capAutos = document.getElementById('cfg-capacidad_total').value;
     const capMotos = document.getElementById('cfg-capacidad_motos').value;
 
-    if (!capAutos || !capMotos) return showToast('Completá ambos valores de plazas');
+    if (!capAutos || !capMotos) return showToast('Completá ambos valores de plazas', 'error');
 
     let success = true;
     
@@ -932,32 +933,32 @@ export async function saveCapacities() {
     const resMotos = await api.post(`/admin/settings/prices?clave=capacidad_motos&valor=${capMotos}`);
     if (!resMotos.ok) success = false;
 
-    if (success) showToast('Plazas actualizadas correctamente.');
-    else showToast('Error al actualizar plazas.');
+    if (success) showToast('Plazas actualizadas correctamente.', 'success');
+    else showToast('Error al actualizar plazas.', 'error');
 }
 
 export async function resetSys() {
     if (!await showConfirm('REINICIAR SISTEMA', 'Esto eliminará logs de acceso y ocupación actual. ¿Continuar?')) return;
     const res = await api.post('/system/reset');
     if (res && res.ok) {
-        showToast('Sistema reiniciado.');
+        showToast('Sistema reiniciado.', 'success');
         window.location.reload();
-    } else showToast(res?.error || 'Error');
+    } else showToast(res?.error || 'Error', 'error');
 }
 
 export async function exportFinanceData() {
     const period = document.getElementById('fin-period')?.value || 'month';
-    showToast('Generando reporte...');
+    showToast('Generando reporte...', 'info');
     
     const res = await api.get(`/reports/payment-history?period=${period}&limit=0`);
     if (!res || !res.ok) {
-        showToast('Error al obtener datos para exportar');
+        showToast('Error al obtener datos para exportar', 'error');
         return;
     }
     
     const data = res.data;
     if (data.length === 0) {
-        showToast('No hay transacciones para exportar en este período');
+        showToast('No hay transacciones para exportar en este período', 'info');
         return;
     }
     
@@ -994,14 +995,14 @@ export async function exportFinanceData() {
     link.click();
     document.body.removeChild(link);
     
-    showToast('Reporte descargado correctamente.');
+    showToast('Reporte descargado correctamente.', 'success');
 }
 
 export async function deleteUserAdmin(id) {
     if (!await showConfirm('Eliminar Usuario', `¿Estás seguro?`)) return;
     const res = await api.post(`/admin/users/${id}/delete`);
-    if (res && res.ok) { showToast('Eliminado.'); if (window.loadUsers) window.loadUsers(); }
-    else showToast(res?.error || 'Error');
+    if (res && res.ok) { showToast('Eliminado.', 'success'); if (window.loadUsers) window.loadUsers(); }
+    else showToast(res?.error || 'Error', 'error');
 }
 
 // --- GESTION DE SUCURSALES ---
@@ -1231,9 +1232,9 @@ export function editBranch(id) {
 export async function toggleBranch(id) {
     const res = await api.post(`/admin/branches/${id}/toggle`);
     if (res && res.ok) {
-        showToast(`Sucursal ${res.data.activa ? 'Activada' : 'Suspendida'}`);
+        showToast(`Sucursal ${res.data.activa ? 'Activada' : 'Suspendida'}`, 'success');
     } else {
-        showToast(res?.error || 'Error al cambiar estado');
+        showToast(res?.error || 'Error al cambiar estado', 'error');
         loadBranches();
     }
 }
@@ -1308,7 +1309,7 @@ export async function handleCreateBranch(event) {
     const res = await api[method](url, formData);
     
     if (res && res.ok) {
-        showToast(editId ? 'Sucursal actualizada.' : 'Sucursal creada exitosamente.');
+        showToast(editId ? 'Sucursal actualizada.' : 'Sucursal creada exitosamente.', 'success');
         if (window.closeModal) window.closeModal('modal-add-branch');
         event.target.reset();
         document.getElementById('branch-logo-preview').querySelector('img').src = '/static/images/logo.png';
@@ -1317,9 +1318,10 @@ export async function handleCreateBranch(event) {
         document.getElementById('btn-clear-logo').style.display = 'none';
         loadBranches();
     } else {
-        showToast(`Error: ${res?.error || 'Desconocido'}`);
+        showToast(`Error: ${res?.error || 'Desconocido'}`, 'error');
     }
     btn.disabled = false;
+}
 }
 
 export async function deleteBranch(id) {
@@ -1327,10 +1329,10 @@ export async function deleteBranch(id) {
     
     const res = await api.delete(`/admin/branches/${id}`);
     if (res && res.ok) {
-        showToast('Sucursal eliminada.');
+        showToast('Sucursal eliminada.', 'success');
         loadBranches();
     } else {
-        showToast(res?.error || 'Error al eliminar sucursal');
+        showToast(res?.error || 'Error al eliminar sucursal', 'error');
     }
 }
 
@@ -1351,11 +1353,11 @@ export async function handleAdminChangePassword(event) {
     btn.disabled = true;
     const res = await api.post(`/admin/users/${userId}/password`, { new_password: newPassword });
     if (res && res.ok) {
-        showToast('Contraseña actualizada.');
+        showToast('Contraseña actualizada.', 'success');
         if (window.closeModal) window.closeModal('modal-change-password-admin');
         event.target.reset();
     } else {
-        showToast(res?.error || 'Error al cambiar contraseña');
+        showToast(res?.error || 'Error al cambiar contraseña', 'error');
     }
     btn.disabled = false;
 }
@@ -1456,11 +1458,11 @@ export async function handleAdminEditUser(event) {
     btn.disabled = true;
     const res = await api.patch(`/admin/users/${userId}`, payload);
     if (res && res.ok) {
-        showToast('Información de usuario actualizada.');
+        showToast('Información de usuario actualizada.', 'success');
         if (window.closeModal) window.closeModal('modal-edit-user');
         if (window.loadUsers) window.loadUsers(); 
     } else {
-        showToast(`Error: ${res?.error || 'Desconocido'}`);
+        showToast(`Error: ${res?.error || 'Desconocido'}`, 'error');
     }
     btn.disabled = false;
 }

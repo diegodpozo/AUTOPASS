@@ -145,13 +145,13 @@ export async function addVehicle(e, isQuickAdd = false) {
     const tipo = form.querySelector('[name="tipo"]')?.value || "Auto";
 
     if (!patente || !marca_modelo || !tipo) {
-        showToast('Completá todos los campos');
+        showToast('Completá todos los campos', 'info');
         return;
     }
 
     // VALIDAR FORMATO DE PATENTE
     if (!validatePlate(patente, tipo)) {
-        showToast('Formato de patente no válido.');
+        showToast('Formato de patente no válido.', 'error');
         return;
     }
 
@@ -180,7 +180,7 @@ export async function addVehicle(e, isQuickAdd = false) {
 
     const res = await api.post(`/user/vehicles?patente=${encodeURIComponent(patente)}&marca_modelo=${encodeURIComponent(marca_modelo)}&tipo=${encodeURIComponent(tipo)}`);
     if (res.ok) {
-        showToast('Vehículo registrado con éxito');
+        showToast('Vehículo registrado con éxito', 'success');
         form.reset();
 
         // RESETEAR ICONO Y PADDING (TIPO AHORA ES HIDDEN)
@@ -221,7 +221,7 @@ export async function addVehicle(e, isQuickAdd = false) {
         } catch (e) { console.warn('[VEHICLES] no se pudo dispatch vehicle:added', e); }
     }
  else {
-        showToast(res.error || 'Error al registrar vehículo');
+        showToast(res.error || 'Error al registrar vehículo', 'error');
     }
 
     btn.innerHTML = originalContent;
@@ -233,9 +233,9 @@ export async function setFavoriteVehicle(patente) {
     if (res.ok) {
         await loadVehicles();
         if (window.refreshReservationFormState) window.refreshReservationFormState();
-        showToast(res.data.is_favorite ? 'Vehículo marcado como favorito' : 'Favorito removido');
+        showToast(res.data.is_favorite ? 'Vehículo marcado como favorito' : 'Favorito removido', 'success');
     } else {
-        showToast(res.error || 'Error al actualizar favorito');
+        showToast(res.error || 'Error al actualizar favorito', 'error');
     }
 }
 
@@ -248,11 +248,11 @@ export async function deleteVehicle(patente) {
 
     const res = await api.delete(`/user/vehicles/${encodeURIComponent(patente)}`);
     if (res.ok) {
-        showToast('Vehículo eliminado');
+        showToast('Vehículo eliminado', 'success');
         await loadVehicles();
         if (window.refreshReservationFormState) window.refreshReservationFormState();
     } else {
-        showToast(res.error || 'Error al eliminar');
+        showToast(res.error || 'Error al eliminar', 'error');
     }
 }
 
