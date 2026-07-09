@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contactForm) {
         contactForm.onsubmit = (e) => {
             e.preventDefault();
-            showToast('¡Mensaje enviado con éxito! Un asesor te contactará a la brevedad.');
+            showToast('¡Mensaje enviado con éxito! Un asesor te contactará a la brevedad.', 'success');
             e.target.reset();
         };
     }

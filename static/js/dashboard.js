@@ -115,7 +115,7 @@ window.manualEntry = async () => {
     let type = document.getElementById('manual-type')?.value || 'Auto';
     const floorId = document.getElementById('manual-floor')?.value;
     
-    if (!plate) return utils.showToast('Ingresá una patente');
+    if (!plate) return utils.showToast('Ingresá una patente', 'error');
 
     // DETECCION AUTOMATICA DE MOTO (FORMATO: 1 LETRA, 3 NUMEROS, 3 LETRAS)
     const isMoto = /^[A-Z]{1}[0-9]{3}[A-Z]{3}$/.test(plate);
@@ -480,7 +480,7 @@ window.handleAdminEditReservation = async (event) => {
             fin = document.getElementById('edit-res-fin').value.replace('T', ' ');
         }
     } catch (e) {
-        return utils.showToast(e.message);
+        return utils.showToast(e.message, 'error');
     }
 
     const payload = {
@@ -505,18 +505,18 @@ window.handleAdminEditReservation = async (event) => {
         });
         if (av.ok && av.data && !av.data.disponible) {
             btn.disabled = false;
-            return utils.showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.');
+            return utils.showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.', 'info');
         }
     }
 
     btn.disabled = true;
     const res = await api.patch(`/admin/reservations/${resId}`, payload);
     if (res.ok) {
-        utils.showToast('Reserva actualizada correctamente');
+        utils.showToast('Reserva actualizada correctamente', 'success');
         if (window.closeModal) window.closeModal('modal-edit-reservation');
         window.loadAdminReservations();
     } else {
-        utils.showToast(res.error || 'Error al actualizar reserva');
+        utils.showToast(res.error || 'Error al actualizar reserva', 'error');
     }
     btn.disabled = false;
 };
@@ -526,10 +526,10 @@ window.cancelReservationAdmin = async (resId) => {
     
     const res = await api.post(`/admin/reservations/${resId}/cancel`);
     if (res.ok) {
-        utils.showToast(res.data.message || 'Reserva cancelada');
+        utils.showToast(res.data.message || 'Reserva cancelada', 'success');
         window.loadAdminReservations();
     } else {
-        utils.showToast(res.error || 'Error al cancelar reserva');
+        utils.showToast(res.error || 'Error al cancelar reserva', 'error');
     }
 };
 
@@ -889,14 +889,14 @@ window.payOccupancy = async (plate, amount) => {
 
     const res = await api.post(`/access/pay-stay?plate=${plate}`);
     if (res.ok) { 
-        utils.showToast('Pago procesado'); 
+        utils.showToast('Pago procesado', 'success'); 
         stats.loadOccupancy(); 
         stats.loadLiveStats();
         if (document.getElementById('tab-finance').style.display !== 'none') {
             window.loadFinanceData();
         }
     }
-    else utils.showToast(res.error);
+    else utils.showToast(res.error, 'error');
 };
 
 window.cancelStay = stats.cancelStay;
@@ -922,11 +922,11 @@ window.manualExit = async (plate, type) => {
     
     const res = await api.post(`/admin/manual-exit?plate=${plate}`);
     if (res.ok) { 
-        utils.showToast('Salida registrada'); 
+        utils.showToast('Salida registrada', 'success'); 
         stats.loadOccupancy(); 
         stats.loadLiveStats();
     }
-    else utils.showToast(res.error);
+    else utils.showToast(res.error, 'error');
 };
 
 window.createBranch = admin.handleCreateBranch;

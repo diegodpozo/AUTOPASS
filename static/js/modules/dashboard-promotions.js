@@ -115,22 +115,22 @@ export async function handleCreatePromotion() {
 
     const res = await api.post('/admin/promotions', payload);
     if (res.ok) {
-        showToast('Promoción creada');
+        showToast('Promoción creada', 'success');
         if (window.closeModal) window.closeModal('modal-create-promotion');
         document.getElementById('form-create-promotion').reset();
         loadPromotionsAdmin();
     } else {
-        showToast(res.error);
+        showToast(res.error, 'error');
     }
 }
 
 export async function togglePromotion(id) {
     const res = await api.post(`/admin/promotions/${id}/toggle`);
     if (res.ok) {
-        showToast(res.data.activa ? 'Promoción activada' : 'Promoción desactivada');
+        showToast(res.data.activa ? 'Promoción activada' : 'Promoción desactivada', 'success');
         loadPromotionsAdmin();
     } else {
-        showToast(res.error);
+        showToast(res.error, 'error');
     }
 }
 
@@ -138,9 +138,9 @@ export async function deletePromotion(id) {
     if (!await showConfirm('Eliminar Promoción', '¿Estás seguro de eliminar este beneficio permanentemente?')) return;
     const res = await api.delete(`/admin/promotions/${id}`);
     if (res.ok) {
-        showToast('Promoción eliminada');
+        showToast('Promoción eliminada', 'success');
         loadPromotionsAdmin();
     } else {
-        showToast(res.error);
+        showToast(res.error, 'error');
     }
 }

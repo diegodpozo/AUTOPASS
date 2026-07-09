@@ -220,7 +220,7 @@ export async function refreshReservationFormState() {
                         setTimeout(() => {
                             const dateInput = document.querySelector('.res-date-only') || document.querySelector('.res-start');
                             if (dateInput) dateInput.focus();
-                            if (typeof showToast === 'function') showToast('Seleccionamos tu vehículo para acelerar la reserva');
+                            if (typeof showToast === 'function') showToast('Seleccionamos tu vehículo para acelerar la reserva', 'info');
                         }, 400);
                     }
                 }
@@ -266,7 +266,7 @@ export async function prepareEditReservation(id) {
     const now = getVirtualNow();
     const start = new Date(r.fecha_inicio.replace(/-/g, "/"));
     if (r.tipo_estadia === 'hora' && (start - now) < RESERVA_MIN_MS) {
-        return showToast(`No se puede modificar con menos de ${RESERVA_MIN_MIN} minutos de antelación`);
+        return showToast(`No se puede modificar con menos de ${RESERVA_MIN_MIN} minutos de antelación`, 'info');
     }
 
     editingReservaId = id;
@@ -433,14 +433,14 @@ export async function createReservation(e) {
     if (!patenteEl || !sucursalEl || !tipoEl || !btn) {
         console.error("[!] Error: No se encontraron los campos del formulario.");
         console.groupEnd();
-        return showToast('Error interno: Formulario incompleto');
+        return showToast('Error interno: Formulario incompleto', 'error');
     }
 
     // Si el usuario no tiene vehículos registrados, guiar al quick-add antes de continuar
     if (!userVehicles || userVehicles.length === 0) {
         if (typeof window.showQuickAddVehicle === 'function') window.showQuickAddVehicle();
         console.groupEnd();
-        return showToast('Agregá tu primer vehículo para poder reservar');
+        return showToast('Agregá tu primer vehículo para poder reservar', 'info');
     }
 
     const patente = patenteEl.value;
@@ -448,9 +448,9 @@ export async function createReservation(e) {
     const tipo = tipoEl.value;
     const originalContent = btn.innerHTML;
     
-    if (!patente) { console.groupEnd(); return showToast('Seleccioná un vehículo'); }
-    if (!sucursal) { console.groupEnd(); return showToast('Seleccioná una sucursal'); }
-    if (!tipo) { console.groupEnd(); return showToast('Seleccioná tipo de estadía'); }
+    if (!patente) { console.groupEnd(); return showToast('Seleccioná un vehículo', 'info'); }
+    if (!sucursal) { console.groupEnd(); return showToast('Seleccioná una sucursal', 'info'); }
+    if (!tipo) { console.groupEnd(); return showToast('Seleccioná tipo de estadía', 'info'); }
 
     let inicio, fin;
 
@@ -459,11 +459,11 @@ export async function createReservation(e) {
             const fecha = document.querySelector('.res-date-only').value;
             const hora = document.querySelector('.res-time-only').value;
             const hoursQty = parseInt(document.querySelector('.res-hours-qty').value) || 1;
-            if (!fecha || !hora) { console.groupEnd(); return showToast('Seleccioná fecha y hora'); }
+            if (!fecha || !hora) { console.groupEnd(); return showToast('Seleccioná fecha y hora', 'info'); }
             inicio = `${fecha} ${hora}`;
             const now = getVirtualNow();
             const startDt = new Date(inicio.replace(/-/g, "/"));
-            if ((startDt - now) < RESERVA_MIN_MS) { console.groupEnd(); return showToast(`Mínimo ${RESERVA_MIN_MIN} minutos de anticipación.`); }
+            if ((startDt - now) < RESERVA_MIN_MS) { console.groupEnd(); return showToast(`Mínimo ${RESERVA_MIN_MIN} minutos de anticipación.`, 'info'); }
             const endDt = new Date(startDt.getTime() + hoursQty * 60 * 60 * 1000);
             fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} ${endDt.getHours().toString().padStart(2, '0')}:${endDt.getMinutes().toString().padStart(2, '0')}`;
             // VALIDAR HORARIO DE SUCURSAL
@@ -480,21 +480,21 @@ export async function createReservation(e) {
                     const endDateStr2 = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')}`;
                     if (endDateStr2 !== fecha) {
                         console.groupEnd();
-                        return showToast(`La sucursal cierra a las ${hMatch[3]}:${hMatch[4]}. La estadía no puede extenderse más allá del cierre.`);
+                        return showToast(`La sucursal cierra a las ${hMatch[3]}:${hMatch[4]}. La estadía no puede extenderse más allá del cierre.`, 'info');
                     }
                     if (startMin < open || startMin >= close) {
                         console.groupEnd();
-                        return showToast(`La sucursal abre de ${branch.horario}. La hora de inicio debe estar dentro del horario de atención.`);
+                        return showToast(`La sucursal abre de ${branch.horario}. La hora de inicio debe estar dentro del horario de atención.`, 'info');
                     }
                     if (endMin > close) {
                         console.groupEnd();
-                        return showToast(`La sucursal cierra a las ${hMatch[3]}:${hMatch[4]}. La hora de fin no puede exceder el horario de cierre.`);
+                        return showToast(`La sucursal cierra a las ${hMatch[3]}:${hMatch[4]}. La hora de fin no puede exceder el horario de cierre.`, 'info');
                     }
                 }
             }
         } else if (tipo === 'dia') {
             const fecha = document.querySelector('.res-day-only').value;
-            if (!fecha) { console.groupEnd(); return showToast('Seleccioná un día'); }
+            if (!fecha) { console.groupEnd(); return showToast('Seleccioná un día', 'info'); }
             inicio = `${fecha} 00:00`;
             fin = `${fecha} 23:59`;
         } else {
@@ -503,7 +503,7 @@ export async function createReservation(e) {
             if (periods[tipo]) {
                 const selector = periodClasses[tipo];
                 const fecha = document.querySelector(selector).value;
-                if (!fecha) { console.groupEnd(); return showToast('Seleccioná día de inicio'); }
+                if (!fecha) { console.groupEnd(); return showToast('Seleccioná día de inicio', 'info'); }
                 inicio = `${fecha} 00:00`;
                 const now = new Date();
                 const startDt = new Date(fecha.replace(/-/g, "/"));
@@ -518,7 +518,7 @@ export async function createReservation(e) {
     } catch (err) {
         console.error("[!] Error procesando fechas:", err);
         console.groupEnd();
-        return showToast('Error en el formato de fecha');
+        return showToast('Error en el formato de fecha', 'error');
     }
 
     // VERIFICAR DISPONIBILIDAD ANTES DE MOSTRAR EL CONFIRM
@@ -533,10 +533,10 @@ export async function createReservation(e) {
     if (av.ok && av.data) {
         if (!av.data.disponible) {
             console.groupEnd();
-            return showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.');
+            return showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.', 'info');
         }
         if (av.data.restan !== undefined && av.data.restan <= 3) {
-            showToast(av.data.mensaje, 'warning');
+            showToast(av.data.mensaje, 'info');
         }
     }
 
@@ -613,7 +613,7 @@ export async function createReservation(e) {
     console.log('[RESERVAS] Resultado createReservation:', result);
 
     if (result.ok) {
-        showToast(editingReservaId ? '¡Reserva actualizada!' : '¡Reserva creada con éxito!');
+        showToast(editingReservaId ? '¡Reserva actualizada!' : '¡Reserva creada con éxito!', 'success');
         resetReservaForm();
         toggleReservaForm();
         try {
@@ -642,7 +642,7 @@ export async function createReservation(e) {
         } catch (e) { /* noop */ }
     } else { 
         console.log('[RESERVAS] createReservation failed:', result.error || result);
-        showToast(result.error || 'Error al procesar reserva'); 
+        showToast(result.error || 'Error al procesar reserva', 'error'); 
     }
 
     // Always emit a debug event so listeners can inspect final state
@@ -777,7 +777,7 @@ export async function cancelReservation(id) {
     if (resSim.ok) {
         const { reembolso, error } = resSim.data;
         if (error) {
-            return showToast(`No se puede cancelar: ${error}`);
+            return showToast(`No se puede cancelar: ${error}`, 'error');
         }
         if (reembolso > 0) {
             confirmMsg = `Al cancelar ahora, se te reembolsarán <b style="color:var(--dorado);">$${formatNum(reembolso)}</b> en tu saldo AutoPass.<br><br>¿Deseás continuar?`;
@@ -788,24 +788,24 @@ export async function cancelReservation(id) {
 
     const res = await api.post(`/user/reservations/${id}/cancel`);
     if (res.ok) { 
-        showToast('Reserva cancelada con éxito'); 
+        showToast('Reserva cancelada con éxito', 'success'); 
         loadReservations(); 
         if (window.loadProfile) window.loadProfile(); 
     }
-    else { showToast(res.error || 'Error al cancelar'); }
+    else { showToast(res.error || 'Error al cancelar', 'error'); }
 }
 
 export async function payReservation(id) {
     if (!await showConfirm('PAGAR RESERVA', '¿Deseás pagar con tu saldo AutoPass?')) return;
     const res = await api.post(`/user/reservations/${id}/pay`);
     if (res.ok) { 
-        showToast('¡Pago exitoso!'); 
+        showToast('¡Pago exitoso!', 'success'); 
         loadReservations(); 
         if (window.loadProfile) window.loadProfile(); 
         // DISPARAR EVENTO PARA EL TOUR
         try { document.dispatchEvent(new CustomEvent('reservation:paid', { detail: { id } })); } catch (e) {}
     }
-    else { showToast(res.error || 'Error en el pago'); }
+    else { showToast(res.error || 'Error en el pago', 'error'); }
 }
 
 export function historialPage(dir) { historialCurrentPage += dir; applyHistoryFilters(); }
@@ -864,7 +864,7 @@ export async function shareTicket() {
             }
         });
     } catch (err) { 
-        showToast('Error al generar imagen'); 
+        showToast('Error al generar imagen', 'error'); 
         console.error(err);
     } finally { 
         ticket.querySelectorAll('.no-print').forEach(el => el.style.opacity = '1'); 
@@ -891,7 +891,7 @@ export async function repeatReservation(patente, sucursal, tipo) {
             tSelect.value = tipo;
             updateFormGroups(tipo);
         }
-        showToast('¡Datos cargados! Seleccioná la nueva fecha.');
+        showToast('¡Datos cargados! Seleccioná la nueva fecha.', 'info');
     }, 500);
 }
 

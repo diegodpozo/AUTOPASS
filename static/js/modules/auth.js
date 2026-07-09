@@ -150,7 +150,7 @@ export async function handleRegister(e) {
     const res = await api.post('/auth/register', payload);
 
     if (res && res.ok) {
-        showToast('¡Registro exitoso! Bienvenido a AUTOPASS');
+        showToast('¡Registro exitoso! Bienvenido a AUTOPASS', 'success');
         setTimeout(() => switchModal('registerModal', 'loginModal'), 1500);
     } else {
         errorMsg.innerText = res ? (res.error || 'Error en el registro') : 'Error de conexión';

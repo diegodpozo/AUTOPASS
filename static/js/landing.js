@@ -76,7 +76,7 @@ window.fillReservationForm = async function(branchName) {
             }
 
             container.scrollIntoView({ behavior: 'smooth' });
-            if (window.showToast) window.showToast(`Preparado para reservar en ${branchName}`);
+            if (window.showToast) window.showToast(`Preparado para reservar en ${branchName}`, 'info');
             return true;
         }
         
