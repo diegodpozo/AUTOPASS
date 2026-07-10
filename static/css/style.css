@@ -116,6 +116,22 @@ nav a {
     }
 }
 
+/* MARCADOR DE SUCURSAL EN MAPA */
+.branch-marker-logo {
+    background: none !important;
+    border: none !important;
+    filter: drop-shadow(0 0 6px rgba(197, 160, 89, 0.7));
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.branch-marker-logo > div {
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    border: 2px solid rgba(197, 160, 89, 0.6);
+}
+
 /* DISEÑO RESPONSIVO */
 @media (max-width: 480px) {
     .form-row { grid-template-columns: 1fr; gap: 0; }
