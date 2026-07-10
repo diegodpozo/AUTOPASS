@@ -160,22 +160,41 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
         .then(res => res.json())
         .then(branches => {
             window.allBranchesMap = branches; // GUARDAR PARA GEOLOCALIZACION
+            const branchMarkers = [];
+
+            const zoomSizer = (zoom) => Math.round((12 + zoom * 0.6) * 3);
+
+            const makeBranchIcon = (zoom, color) => L.divIcon({
+                className: 'branch-marker-logo',
+                html: `<div style="width:100%;height:100%;background:url('/static/images/logo.png') center/contain no-repeat;border-color:${color};"></div>`,
+                iconSize: [zoomSizer(zoom), zoomSizer(zoom)],
+                iconAnchor: [zoomSizer(zoom) / 2, zoomSizer(zoom) / 2]
+            });
+
+            newMapInstance.on('zoomend', () => {
+                const z = newMapInstance.getZoom();
+                branchMarkers.forEach(m => {
+                    const col = m.options.color || '#C5A059';
+                    m.setIcon(makeBranchIcon(z, col));
+                });
+            });
+
             branches.forEach(p => {
                 if (!p.latitude || !p.longitude) return;
                 
                 // DETERMINAR COLOR Y MENSAJE POR DISPONIBILIDAD
                 const pct = (p.ocupacion_actual / p.capacidad_total) * 100;
                 const disponibles = p.capacidad_total - p.ocupacion_actual;
-                let statusColor = '#C5A059'; // DISPONIBLE (DORADO)
+                let statusColor = '#C5A059'; // DORADO = ALTA DISPONIBILIDAD
                 let statusText = 'Alta disponibilidad';
                 let statusDesc = 'Hay lugares disponibles para vos.';
                 
                 if (pct >= 100) {
-                    statusColor = '#ff4444'; // LLENO (ROJO)
+                    statusColor = '#ff4444'; // ROJO = COMPLETO
                     statusText = 'Sucursal Completa';
                     statusDesc = 'No hay disponibilidad en este momento.';
                 } else if (pct >= 85) {
-                    statusColor = '#ffbb33'; // CASI LLENO (NARANJA)
+                    statusColor = '#8b5cf6'; // VIOLETA = LUGARES LIMITADOS
                     statusText = 'Lugares limitados';
                     statusDesc = 'Quedan pocas plazas. ¡Reservá ahora!';
                 } else if (pct > 50) {
@@ -183,13 +202,6 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                     statusDesc = 'Disponibilidad moderada.';
                 }
 
-                const branchIcon = L.divIcon({
-                    className: 'branch-icon',
-                    html: `<div id="marker-${containerId}-${p.id}" style="background-color: ${statusColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${statusColor}; transition: all 0.3s ease;"></div>`,
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7]
-                });
-                
                 const formattedAddr = formatAddress(p.direccion);
 
                 const horarioText = p.is_24h ? '24 HORAS' : (p.horario ? p.horario.replace(' UN ', ' a ') : 'Consultar');
@@ -233,9 +245,13 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                     </div>
                 `;
                 
-                const marker = L.marker([p.latitude, p.longitude], { icon: branchIcon })
+                const marker = L.marker([p.latitude, p.longitude], {
+                    icon: makeBranchIcon(newMapInstance.getZoom(), statusColor),
+                    color: statusColor
+                })
                     .addTo(newMapInstance)
                     .bindPopup(popupContent);
+                branchMarkers.push(marker);
                 
                 // ACTUALIZAR OVERLAY DINAMICO AL ABRIR/CERRAR SUCURSAL
                 marker.on('popupopen', () => {
