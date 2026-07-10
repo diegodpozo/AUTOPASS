@@ -312,12 +312,19 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
 }
 
 const _poiControllers = {};
+const _poiLayers = {};
 
 function loadTheaters(mapObj, containerId) {
-    const makeMarker = function(lat, lng, t, cfg) {
+    if (!_poiLayers[containerId]) _poiLayers[containerId] = {};
+    const layers = _poiLayers[containerId];
+    layers.theatre = L.layerGroup().addTo(mapObj);
+    layers.cinema = L.layerGroup().addTo(mapObj);
+
+    const makeMarker = function(lat, lng, t, cfg, group) {
         const name = t.name || t.operator || t['short_name'] || '(Sin nombre)';
         return L.marker([lat, lng], { icon: cfg.icon })
-            .bindPopup(`<div style="text-align:center;min-width:150px;padding:8px;background:#0a0a0a;border-radius:12px;"><div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${cfg.label}</div><b style="font-size:0.9rem;color:#fff;font-family:'Montserrat',sans-serif;">${name}</b>${t['addr:street'] ? `<br><span style="color:#aaa;font-size:0.75rem;">${t['addr:street']} ${t['addr:housenumber'] || ''}</span>` : ''}</div>`);
+            .bindPopup(`<div style="text-align:center;min-width:150px;padding:8px;background:#0a0a0a;border-radius:12px;"><div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${cfg.label}</div><b style="font-size:0.9rem;color:#fff;font-family:'Montserrat',sans-serif;">${name}</b>${t['addr:street'] ? `<br><span style="color:#aaa;font-size:0.75rem;">${t['addr:street']} ${t['addr:housenumber'] || ''}</span>` : ''}</div>`)
+            .addTo(group);
     };
 
     const icons = {
@@ -343,14 +350,15 @@ function loadTheaters(mapObj, containerId) {
 
     function loadCachedPoi(d) {
         const cfg = createCfg(d.type);
-        if (cfg) makeMarker(d.lat, d.lng, d.tags, cfg).addTo(mapObj);
+        const group = d.type === 'cinema' ? layers.cinema : layers.theatre;
+        if (cfg) makeMarker(d.lat, d.lng, d.tags, cfg, group);
     }
 
     // CHECK CACHE LOCALSTORAGE
     const cached = getPoiCache();
     if (cached) {
         cached.forEach(loadCachedPoi);
-        addPoiLegend(mapObj);
+        addPoiLegend(mapObj, containerId);
         return;
     }
 
@@ -403,13 +411,14 @@ function loadTheaters(mapObj, containerId) {
             if (!poiType) return;
             const cfg = createCfg(poiType);
             if (!cfg) return;
+            const group = poiType === 'cinema' ? layers.cinema : layers.theatre;
             items.push({ lat, lng, tags: t, type: poiType });
-            makeMarker(lat, lng, t, cfg).addTo(mapObj);
+            makeMarker(lat, lng, t, cfg, group);
         });
         console.log(`[OVERPASS] Total: ${teatro + cinema} POIs (${teatro} Teatro/Museo, ${cinema} Cine)`);
         if (items.length === 0) return;
         setPoiCache(items);
-        addPoiLegend(mapObj);
+        addPoiLegend(mapObj, containerId);
     })
     .catch(err => {
         hidePoiLoading(loadingEl);
@@ -430,6 +439,10 @@ const ESTADIOS_FIJOS = [
 ];
 
 function loadStadiums(mapObj, containerId) {
+    if (!_poiLayers[containerId]) _poiLayers[containerId] = {};
+    const layers = _poiLayers[containerId];
+    layers.stadium = L.layerGroup().addTo(mapObj);
+
     const stadiumIcon = L.divIcon({
         className: 'poi-marker',
         html: `<div style="width:28px;height:28px;background:#27AE60;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(39,174,96,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-futbol"></i></div>`,
@@ -439,11 +452,11 @@ function loadStadiums(mapObj, containerId) {
     ESTADIOS_FIJOS.forEach(d => {
         L.marker([d.lat, d.lng], { icon: stadiumIcon })
             .bindPopup(`<div style="text-align:center;min-width:150px;padding:8px;background:#0a0a0a;border-radius:12px;"><div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Estadio</div><b style="font-size:0.9rem;color:#fff;font-family:'Montserrat',sans-serif;">${d.name}</b>${d.sport ? `<br><span style="color:#aaa;font-size:0.75rem;">${d.sport}</span>` : ''}</div>`)
-            .addTo(mapObj);
+            .addTo(layers.stadium);
     });
 
     _stadiumsLoaded = true;
-    addPoiLegend(mapObj);
+    addPoiLegend(mapObj, containerId);
     console.log(`[ESTADIOS] ${ESTADIOS_FIJOS.length} cargados`);
 }
 
@@ -475,7 +488,7 @@ function hidePoiLoading(ctrl) {
     } catch (_) {}
 }
 
-function addPoiLegend(mapObj) {
+function addPoiLegend(mapObj, containerId) {
     // REMOVER LEGEND ANTERIOR SI EXISTE
     const oldLegend = document.querySelector('.map-poi-legend');
     if (oldLegend) {
@@ -484,20 +497,36 @@ function addPoiLegend(mapObj) {
         else oldLegend.remove();
     }
 
+    const layers = _poiLayers[containerId] || {};
+
+    const toggleLayer = (name, btnEl) => {
+        const g = layers[name];
+        if (!g) return;
+        if (mapObj.hasLayer(g)) {
+            mapObj.removeLayer(g);
+            btnEl.style.opacity = '0.4';
+            btnEl.style.textDecoration = 'line-through';
+        } else {
+            g.addTo(mapObj);
+            btnEl.style.opacity = '1';
+            btnEl.style.textDecoration = 'none';
+        }
+    };
+
     const legend = L.control({ position: 'bottomleft' });
     legend.onAdd = function() {
         const div = L.DomUtil.create('div', 'map-poi-legend');
-        const stadiumHtml = _stadiumsLoaded ? `<span style="display:flex;align-items:center;gap:4px;color:#ccc;"><span style="width:18px;height:18px;background:#27AE60;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-futbol"></i></span> Estadio</span>` : '';
+        const stadiumHtml = _stadiumsLoaded ? `<span id="legend-stadium" style="display:flex;align-items:center;gap:4px;color:#ccc;cursor:pointer;"><span style="width:18px;height:18px;background:#27AE60;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-futbol"></i></span> Estadio</span>` : '';
         div.innerHTML = `
             <div style="background:rgba(10,10,10,0.9);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);font-size:0.65rem;">
                 <div style="color:#fff;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:6px;letter-spacing:0.5px;">
                     <i class="fas fa-map-pin" style="color:var(--dorado);"></i> PUNTOS DE INTERÉS
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <span style="display:flex;align-items:center;gap:4px;color:#ccc;">
+                    <span id="legend-theatre" style="display:flex;align-items:center;gap:4px;color:#ccc;cursor:pointer;">
                         <span style="width:18px;height:18px;background:#9B59B6;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-theater-masks"></i></span> Teatro/Museo
                     </span>
-                    <span style="display:flex;align-items:center;gap:4px;color:#ccc;">
+                    <span id="legend-cinema" style="display:flex;align-items:center;gap:4px;color:#ccc;cursor:pointer;">
                         <span style="width:18px;height:18px;background:#E74C3C;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-film"></i></span> Cine
                     </span>
                     ${stadiumHtml}
@@ -506,6 +535,18 @@ function addPoiLegend(mapObj) {
         return div;
     };
     legend.addTo(mapObj);
+
+    // ASIGNAR EVENTOS POST-AGREGADO
+    setTimeout(() => {
+        const el = document.querySelector('.map-poi-legend');
+        if (!el) return;
+        const th = el.querySelector('#legend-theatre');
+        const ci = el.querySelector('#legend-cinema');
+        const st = el.querySelector('#legend-stadium');
+        if (th) th.onclick = () => toggleLayer('theatre', th);
+        if (ci) ci.onclick = () => toggleLayer('cinema', ci);
+        if (st) st.onclick = () => toggleLayer('stadium', st);
+    }, 50);
 }
 
 const DatosCarrusel = [
