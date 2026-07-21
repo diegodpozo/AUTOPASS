@@ -40,6 +40,7 @@
 │  │  │           SERVICES LAYER                    │   │       │
 │  │  │  Access  Billing  Reservation  Branch      │   │       │
 │  │  │  User    Email   Notification  Worker      │   │       │
+│  │  │  UserNotification  Time                   │   │       │
 │  │  └────┬───────────────────────────────────────┘   │       │
 │  │       │                                            │       │
 │  │  ┌────▼───────────────────────────────────────┐   │       │
@@ -84,11 +85,12 @@
 | **Repository** | Abstracción de acceso a datos | repositories/ |
 | **Service Layer** | Lógica de negocio centralizada | services/ |
 | **Dependency Injection** | Inyección de dependencias vía FastAPI Depends | routes/, core/security.py |
-| **Observer (via WS)** | Notificaciones en tiempo real | services/notification_service.py |
+| **Observer (via WS)** | Notificaciones en tiempo real (OccupancyManager) | services/notification_service.py |
 | **Singleton** | Configuración global, MQTT client | core/config.py, core/mqtt.py |
 | **Strategy** | Cálculo de tarifas por tipo de vehículo/reserva | services/billing_service.py |
-| **Worker Thread** | Procesos de fondo periódicos | services/worker_service.py |
+| **Worker Thread** | Procesos de fondo periódicos (3 hilos: limpieza, recordatorios, auto-cancelación) | services/worker_service.py |
 | **Vote Buffer (Consensus)** | Sistema de consenso para ALPR | alpr_service.py |
+| **Virtual Time** | Sistema de tiempo offset para testing sin alterar reloj real | services/time_service.py |
 
 ## Flujo de Datos Transversal
 

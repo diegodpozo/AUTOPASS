@@ -27,12 +27,12 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 
 | Prefijo | Paquete/Archivo | Responsabilidad |
 | :--- | :--- | :--- |
-| `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password, Refresh Token. |
+| `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password. |
 | `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay, manual-entry), Settings (prices, capacity). |
 | `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel), Fidelization (promotions, redeem, points-history). |
 | `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay, exit-plate, validate-qr), Status (current-occupancy, branches, ws), Utils (normalize_plate, format_plate). |
 | `/v1/reports`| `routes/reports.py` | Resúmenes financieros y logs de acceso. Filtros: `vehicle_type`, `payment_method`, `date_range`. |
-| `/v1/system` | `routes/system.py` | Health, Heartbeat ALPR, Camera config/service/start/stop, Video feeds, WebSocket video, Capture, System Reset. |
+| `/v1/system` | `routes/system.py` | Health, Camera config/service/start/stop, Video feeds, WebSocket video, Capture, System Reset. |
 | `/` (Vistas) | `routes/views.py` | Renderizado Jinja2 con **Inyección Global de Settings**. |
 
 ---
@@ -91,10 +91,10 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 
 ## Convenciones ALPR
 1. **No ejecutar `alpr_service.py` directamente en producción**: El backend lo inicia como proceso hijo al presionar Play en el dashboard.
-2. **Heartbeat**: Toda instancia ALPR debe enviar heartbeat a `/v1/system/heartbeat` cada N segundos. El backend monitorea en `/v1/system/health`.
-3. **Modo Simulación**: Usar `SCREEN_TO_SCREEN` para desarrollo (reproduce un video de archivo).
-4. **Configuración de Cámara**: La IP se guarda en `Settings` con clave `camara_ip_<entrada|salida>`.
-5. **Video WebSocket**: Los frames se envían a `/v1/system/ws/video/{gate_id}` con token JWT como query param.
+2. **Modo Simulación**: Configurar `VIDEO_SOURCE` con la ruta de un archivo de video para desarrollo.
+3. **Configuración de Cámara**: La IP se guarda en `Settings` con clave `camara_ip_<entrada|salida>`.
+4. **Video WebSocket**: Los frames se envían a `/v1/system/ws/video/{gate_id}` con token JWT como query param.
+5. **Virtual Time**: Para testing, usar los endpoints de virtual time (`/v1/admin/virtual-time/*`) en lugar de alterar el reloj del sistema.
 
 ---
 
@@ -107,7 +107,7 @@ Para correr las pruebas tras un cambio:
 
 ---
 
-## ⚠️ MANDATOS ARQUITECTÓNICOS (V9.2.0+)
+## ⚠️ MANDATOS ARQUITECTÓNICOS (V9.5.0+)
 Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cumplir estrictamente con lo siguiente:
 
 1. **Arquitectura Limpia (Clean Architecture):**

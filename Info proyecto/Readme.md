@@ -2,11 +2,16 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.4.0 - Julio 2026)
-- **Monitoreo DVR CCTV Dinámico**: Nuevo visor de cámaras en grilla auto-ajustable de tamaño uniforme. Elimina los slots fijos de "NO SIGNAL" para cámaras no configuradas y adapta el diseño (1x1, 2x1, 2x2, 3x2, 3x3) según la cantidad de cámaras configuradas.
-- **Identificadores HUD**: Indicador técnico explícito de la función de cada cámara en el visor (ej. LECTURA PATENTE ENTRADA/SALIDA, LECTURA QR, VIGILANCIA).
-- **Panel Flotante de DVR**: Reemplazo de la botonera superior por un panel flotante semi-transparente en la esquina superior derecha que integra controles de navegación, reloj y selector de sucursal.
-- **Detalles DVR CCTV Estilo Industrial**: Agregado el indicador de grabación cuadrado relleno `■` en la duración (`DUR : HH:MM:SS:FF`) y ajuste de espaciado digital.
+## Últimas Actualizaciones (v9.5.0 - Julio 2026)
+- **Fix ALPR "ya está en la sede"**: Verificación corregida de duplicados de entrada.
+- **Cortesía 10 min en ALPR y manual**: Salida sin costo dentro de los primeros 10 minutos.
+- **Ocupación solo física**: Las reservas no horarias ya no pre-ocupan plaza. El aforo refleja solo autos físicamente presentes.
+- **Virtual Time Service**: Sistema de tiempo offset para testing sin alterar el reloj real.
+
+## Últimas Actualizaciones Previas (v9.4.0 - Julio 2026)
+- **Monitoreo DVR CCTV Dinámico**: Nuevo visor de cámaras en grilla auto-ajustable de tamaño uniforme.
+- **Identificadores HUD**: Indicador técnico explícito de la función de cada cámara en el visor.
+- **Panel Flotante de DVR**: Reemplazo de la botonera superior por un panel flotante semi-transparente.
 
 ## Últimas Actualizaciones Previas (v9.3.0)
 - **FAB "Nueva Reserva" en Perfil**: Botón flotante con animación expansiva, oculto en la tab "inicio". Reemplaza botones redundantes en cada tab del perfil.
