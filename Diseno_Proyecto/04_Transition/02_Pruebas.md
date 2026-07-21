@@ -114,18 +114,30 @@ Ubicación: `tests/`
 
 ## Pruebas de Virtual Time
 
-El sistema incluye un **Virtual Time Service** (`services/time_service.py`) que permite adelantar el reloj del sistema para pruebas sin alterar el reloj real.
+El sistema incluye un **Virtual Time Service** (`services/time_service.py`) que permite adelantar el reloj del sistema para pruebas sin alterar el reloj real. Se persiste en `data/virtual_time_offset.json`.
+
+### Endpoints de Virtual Time
+
+| Método | Ruta | Función | Rol Requerido |
+|--------|------|---------|---------------|
+| GET | `/v1/admin/virtual-time` | Ver estado del tiempo virtual | USER+ |
+| GET | `/v1/admin/virtual-time/status` | Estado detallado del tiempo virtual | USER+ |
+| POST | `/v1/admin/virtual-time/advance` | Adelantar tiempo X segundos | USER+ |
+| POST | `/v1/admin/virtual-time/set` | Establecer offset exacto | USER+ |
+| POST | `/v1/admin/virtual-time/reset` | Resetear a tiempo real | USER+ |
+
+### Ejemplos de uso
 
 ```powershell
 # Consultar estado
-GET /v1/virtual-time/status
+GET /v1/admin/virtual-time/status
 
 # Avanzar tiempo (ej: 2 horas)
-POST /v1/virtual-time/advance
+POST /v1/admin/virtual-time/advance
 Body: { "seconds": 7200 }
 
 # Resetear
-POST /v1/virtual-time/reset
+POST /v1/admin/virtual-time/reset
 ```
 
 ## Estrategia de Datos de Prueba

@@ -160,46 +160,69 @@ Usuario (Browser)     User Routes         ReservationService    BillingService  
 
 ## 4. Flujo de Worker de Mantenimiento
 
+WorkerService ejecuta **3 hilos** en background:
+
+### 4a. Limpieza de Reservas (cada 300 segundos)
+
 ```
 WorkerService (Thread)     ReservationService        ParkingAforo          DB          NotificationService
     │                            │                       │                  │                 │
     │ 1. Cada 300 segundos      │                       │                  │                 │
     │───────────────────────────►│                       │                  │                 │
     │                            │                       │                  │                 │
-    │                            │ 2. Buscar reservas    │                  │                 │
-    │                            │    vencidas (ACTIVAS  │                  │                 │
-    │                            │    con fecha_fin <    │                  │                 │
-    │                            │    ahora)             │                  │                 │
+    │                            │ 2. auto_finalize_     │                  │                 │
+    │                            │    all_reservations() │                  │                 │
+    │                            │                       │                  │                 │
+    │                            │ 2a. Marcar COMPLETADA │                  │                 │
+    │                            │     reservas vencidas │                  │                 │
+    │                            │     (fecha_fin < ahora│                  │                 │
+    │                            │     y estado=Activa)  │                  │                 │
     │                            │─────────────────────────────────────────►                 │
     │                            │◄─────────────────────────────────────────                 │
     │                            │                       │                  │                 │
-    │                            │ 3. Para cada reserva  │                  │                 │
-    │                            │    vencida:           │                  │                 │
-    │                            │    - Marcar COMPLETADA│                  │                 │
-    │                            │─────────────────────────────────────────►                 │
-    │                            │                       │                  │                 │
-    │                            │    - Liberar plaza    │                  │                 │
-    │                            │      (si aplica)     │                  │                 │
-    │                            │────────────────────────────────────►                      │
-    │                            │                       │                  │                 │
-    │                            │ 4. Buscar reservas    │                  │                 │
-    │                            │    PENDIENTES con     │                  │                 │
-    │                            │    fecha_inicio >     │                  │                 │
-    │                            │    hora_actual + X    │                  │                 │
-    │                            │─────────────────────────────────────────►                 │
-    │                            │◄─────────────────────────────────────────                 │
-    │                            │                       │                  │                 │
-    │                            │ 5. Auto-cancelar      │                  │                 │
-    │                            │    reservas expiradas │                  │                 │
-    │                            │    no pagadas         │                  │                 │
-    │                            │─────────────────────────────────────────►                 │
-    │                            │                       │                  │                 │
-    │                            │ 6. Notificar cambios  │                  │                 │
-    │                            │    de aforo          │                  │                 │
-    │                            │─────────────────────────────────────────────────────────►│
-    │                            │                       │                  │                 │
-    │  7. OK                   │                       │                  │                 │
+    │  3. OK                   │                       │                  │                 │
     │◄───────────────────────────│                       │                  │                 │
+```
+
+### 4b. Worker de Notificaciones (continuo)
+
+```
+WorkerService (Thread)     UserNotificationService       EmailService         DB
+    │                            │                          │                  │
+    │ 1. Loop continuo          │                          │                  │
+    │    _notification_worker() │                          │                  │
+    │                           │                          │                  │
+    │ 2. _process_reminders()   │                          │                  │
+    │    Buscar reservas con    │                          │                  │
+    │    inicio en 31 min       │                          │                  │
+    │──────────────────────────────────────────────────────────────────────►   │
+    │◄──────────────────────────────────────────────────────────────────────   │
+    │                           │                          │                  │
+    │    Enviar email recordatorio y                      │                  │
+    │    crear notificacion in-app│                         │                  │
+    │                           │─────────────────────────►│                  │
+    │                           │◄─────────────────────────│                  │
+    │                           │                          │                  │
+    │ 3. _process_started_      │                          │                  │
+    │    reservations()         │                          │                  │
+    │    Auto-activar reservas  │                          │                  │
+    │    cuando fecha_inicio    │                          │                  │
+    │    <= ahora               │                          │                  │
+    │──────────────────────────────────────────────────────────────────────►   │
+    │◄──────────────────────────────────────────────────────────────────────   │
+    │                           │                          │                  │
+    │ 4. _process_auto_         │                          │                  │
+    │    cancellations()        │                          │                  │
+    │    Auto-cancelar reservas │                          │                  │
+    │    PENDIENTES no pagadas  │                          │                  │
+    │    30 min despues de      │                          │                  │
+    │    fecha_inicio           │                          │                  │
+    │──────────────────────────────────────────────────────────────────────►   │
+    │                           │                          │                  │
+    │    Enviar email de        │                          │                  │
+    │    auto-cancelacion       │                          │                  │
+    │                           │─────────────────────────►│                  │
+    │                           │◄─────────────────────────│                  │
 ```
 
 ## 5. Flujo de Operación Manual (STAFF)

@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.2.0).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.5.0).
 
 ---
 
@@ -25,14 +25,16 @@ AUTOPASS/
 
 ### 1. Capa de Servicios (Service Layer)
 Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
-- **`AccessService`**: Gestiona toda la lógica de validación de patentes, salidas y QR. Integra con el aforo: no incrementa ocupación si el vehículo tiene reserva no horaria pagada (ya se reservó en el pago); no libera en salida si la reserva sigue vigente.
-- **`ReservationService`**: Gestiona el ciclo de vida de las reservas (creación, edición, cancelación con reembolsos proporcionales). Al pagar una reserva no horaria, reserva la plaza en el aforo. Al cancelar o vencer, la libera.
+- **`AccessService`**: Gestiona toda la lógica de validación de patentes, salidas y QR. Integra con el aforo: no incrementa ocupación si el vehículo tiene reserva no horaria pagada (ya se reservó en el pago); no libera en salida si la reserva sigue vigente. Incluye verificación de duplicados (evita registrar dos entradas seguidas) y cortesía de 10 minutos en salida.
+- **`ReservationService`**: Gestiona el ciclo de vida de las reservas (creación, edición, cancelación con reembolsos proporcionales, simulación de refund). Al pagar una reserva no horaria, reserva la plaza en el aforo. Al cancelar o vencer, la libera. Incluye auto-activación y auto-cancelación.
 - **`BillingService`**: Motor de tarifas y cálculo de puntos por fidelización.
 - **`UserService`**: Gestión administrativa de usuarios y validaciones de seguridad.
 - **`BranchService`**: Lógica de gestión de sucursales y aforos.
 - **`EmailService`**: Envío de emails transaccionales con templates Jinja2 (confirmación de reserva con QR embebido, recuperación de contraseña, logo en base64).
-- **`NotificationService`**: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal para actualización en tiempo real del aforo. Usa un `asyncio.Queue` por sala.
-- **`WorkerService`**: Hilo de fondo que ejecuta `auto_finalize_all_reservations` cada `MAINTENANCE_INTERVAL_SECONDS` (default 300s). Libera plazas de aforo de reservas vencidas y limpia reservas expiradas no pagadas.
+- **`NotificationService`**: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal para actualización en tiempo real del aforo. Usa un `OccupancyManager` con `broadcast_update` para distribuir cambios.
+- **`UserNotificationService`**: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
+- **`WorkerService`**: 3 hilos de fondo: (1) limpieza de reservas cada 300s (`auto_finalize_all_reservations`), (2) recordatorios 31 min antes del inicio, (3) auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio.
+- **`TimeService`**: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
 
 ### 2. Capa de Datos (Modelos y Enums)
 - **Seguridad de Tipos:** Se han implementado Enums en `models/enums.py` para eliminar "strings mágicos" (ej: `UserRole`, `VehicleType`, `ReservationStatus`).
@@ -41,7 +43,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **Configuración Dinámica:** Modelo `Settings` (key-value store con `valor_str` para configuraciones de texto como IPs de cámaras, y aislamiento por sucursal).
 - **Normalización de Patentes:** Campo `normalized_patente` en `AccessLog` para búsquedas eficientes, con funciones `normalize_plate`/`format_plate` en `routes/parking/utils.py` que soportan formatos MERCOSUR (Argentina, Brasil, Uruguay, Paraguay).
 - **Soporte Trimodal:** `VehicleType` incluye `CAMIONETA` además de `AUTO` y `MOTO`. `ParkingAforo` y `ParkingFloor` tienen `capacidad_motos` y `ocupacion_motos`.
-- **Pago y Liquidación:** `AccessLog` incluye `costo_estadia`, `metodo_pago` ('DIGITAL'/'CAJA'), `fecha_pago`, `pago_confirmado`, `status`, `floor_id`.
+- **Pago y Liquidación:** `AccessLog` incluye `costo_estadia`, `metodo_pago` ('DIGITAL'/'CAJA'), `fecha_pago`, `pago_confirmado`, `floor_id`.
 - **Sucursales Geo-localizadas:** `ParkingBranch` incluye `logo_url`, `activa`, `latitude`, `longitude` para mapa interactivo y toggle de activación.
 - **Reservas:** `Reservation` incluye `monto_reembolsado`, `sucursal_info` (JSON), `cliente_nombre`, `tipo_estadia`.
 - **Usuarios:** `User` incluye `apellido`, `dni`, `telefono`, `direccion`, `saldo`, `is_blocked` para bloqueo administrativo.
@@ -52,7 +54,6 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 Servicio independiente de visión artificial que corre como proceso hijo:
 - **Sistema de Consenso:** Buffer de votos (múltiples lecturas de la misma patente) antes de enviar al backend para evitar falsos positivos.
 - **Detección de QR:** Escaneo directo de QR en cada frame (Quick QR), alternativa a patente.
-- **Heartbeat:** Envía pulsos periódicos (`/v1/system/heartbeat`) para monitoreo de salud de cámaras.
 - **Video WebSocket:** Envía frames en tiempo real al backend (`/v1/system/ws/video/{gate_id}`) para visualización en dashboard.
 - **Cola de Frames:** Política drop-oldest para no acumular frames sin procesar.
 - **Detección de Movimiento:** Ignora frames estáticos para optimizar procesamiento.
@@ -60,7 +61,7 @@ Servicio independiente de visión artificial que corre como proceso hijo:
 - **ROI (Region of Interest):** Múltiples estrategias de detección de región de placa.
 - **Imágenes de Debug:** Guarda imágenes de patentes aceptadas (solo Argentina).
 - **Des-duplicación:** Cooldown por patente para no re-enviar la misma.
-- **Modos de Operación:** `SCREEN_TO_SCREEN` (simulación con video de archivo) y `SCREEN_TO_CAMERA` (cámaras IP reales).
+- **Modos de Operación:** Configurado via `GATE_TYPE`: `entrada`, `salida`, `patente`, `qr`, `predio`. Fuente de video via `VIDEO_SOURCE` (webcam, RTSP, HTTP MJPEG).
 
 ### 4. Capa de Hardware (ESP32)
 - **Firmware:** `firmware_esp32/firmware_esp32.ino`

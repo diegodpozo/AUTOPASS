@@ -5,10 +5,17 @@ El servicio ALPR (`alpr_service.py`) es un proceso independiente que corre como 
 
 ## Modos de Operación
 
-| Modo | Descripción | Uso |
+El ALPR se configura mediante la variable de entorno `GATE_TYPE`:
+
+| Valor de `GATE_TYPE` | Descripción | Uso |
 |------|-------------|-----|
-| `SCREEN_TO_SCREEN` | Reproduce un video de archivo y simula detección | Desarrollo / Pruebas |
-| `SCREEN_TO_CAMERA` | Se conecta a cámaras IP reales vía RTSP/HTTP | Producción |
+| `entrada` | Procesa patentes de entrada | Cámara de entrada al estacionamiento |
+| `salida` | Procesa patentes de salida | Cámara de salida del estacionamiento |
+| `patente` | Procesa patentes genérico | Modo dual (entrada+salida) |
+| `qr` | Procesa códigos QR | Escáner QR |
+| `predio` | Vigilancia general | Cámara de seguridad del predio |
+
+La fuente de video se configura con `VIDEO_SOURCE` (puede ser `0` para webcam local, una URL RTSP, o una URL HTTP MJPEG).
 
 ## Arquitectura Interna
 
@@ -43,11 +50,6 @@ El servicio ALPR (`alpr_service.py`) es un proceso independiente que corre como 
 │  ┌───────────────────────────────────────────────────────┐           │
 │  │              Video WebSocket Thread                    │           │
 │  │  Envía frames en tiempo real a /v1/system/ws/video/  │           │
-│  └───────────────────────────────────────────────────────┘           │
-│                                                                      │
-│  ┌───────────────────────────────────────────────────────┐           │
-│  │              Heartbeat Thread                           │           │
-│  │  Envía POST /v1/system/heartbeat cada N segundos       │           │
 │  └───────────────────────────────────────────────────────┘           │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -98,17 +100,17 @@ Estrategias múltiples (en orden):
 ### 8. Quick QR Detection
 - Escaneo de QR en cada frame (previo al OCR)
 - Usa pyzbar para decodificación rápida
-- Cooldown/Debounce de 10s para evitar eventos duplicados
+- Cooldown/Debounce configurable (`ALPR_COOLDOWN`, default 10s) para evitar eventos duplicados
 
-### 9. Video WebSocket
+### 9. Cooldown entre validaciones
+- `COOLDOWN_SECONDS` (default 6s): Evita procesar la misma patente en ventana corta
+- `last_validated_plate`: Almacena última patente validada con timestamp
+- Si la misma patente se detecta dentro del cooldown, se descarta
+
+### 10. Video WebSocket
 - Envía frames JPEG comprimidos en tiempo real
 - Endpoint: `/v1/system/ws/video/{gate_id}`
 - Token JWT como query param para autenticación
-
-### 10. Heartbeat
-- Envía pulso cada N segundos a `POST /v1/system/heartbeat`
-- El backend monitorea tiempo desde último heartbeat
-- Si timeout > `HEARTBEAT_TIMEOUT_SECONDS` → cámara marcada como TIMEOUT
 
 ## Formato de Patentes Soportado
 
@@ -124,11 +126,14 @@ Estrategias múltiples (en orden):
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
+| `GATE_TYPE` | `entrada` | Tipo de cámara: entrada, salida, patente, qr, predio |
+| `VIDEO_SOURCE` | `0` | Fuente de video (0=webcam, URL RTSP, URL HTTP) |
 | `ALPR_OCR_INTERVAL` | 0.35 | Intervalo entre procesamientos OCR (segundos) |
 | `ALPR_FRAMEQ_MAXSIZE` | 12 | Tamaño máximo de la cola de frames |
-| `ALPR_CONFIDENCE_THRESHOLD` | 0.45 | Umbral de confianza para aceptar lectura directa |
+| `ALPR_CONFIDENCE_THRESHOLD` | 0.20 | Umbral de confianza para aceptar lectura directa |
 | `ALPR_CONSENSUS_REQUIRED` | 2 | Votos requeridos para consenso con baja confianza |
 | `ALPR_FORCE_OCR` | false | Forzar OCR incluso sin detección de movimiento |
+| `ALPR_COOLDOWN` | 6 | Segundos de cooldown entre validaciones de la misma patente |
 
 ## Recomendaciones Operativas ALPR
 

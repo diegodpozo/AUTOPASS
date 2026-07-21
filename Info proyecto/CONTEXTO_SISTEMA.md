@@ -1,6 +1,6 @@
 #  Contexto del Sistema: AUTOPASS
 
-Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.2.0).
+Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.5.0).
 
 ## 📐 Arquitectura del Ecosistema
 
@@ -23,11 +23,13 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `routes/views.py`: Router dedicado exclusivamente para el frontend Jinja2.
 
 3.  **Lógica de Negocio (`services/`)**:
-    *   `services/access_service.py`: Validación de patentes, gestión de entrada/salida e integración con aforo. Soporta entrada con QR, pago de estadía en salida (`pay_stay`), verificación de deuda antes de salir (`exit_plate`), cancelación de estadía con cortesía de 10 min (`cancel_stay`).
+    *   `services/access_service.py`: Validación de patentes, gestión de entrada/salida e integración con aforo. Soporta entrada con QR, verificación de deuda antes de salir (`exit_plate`), y validación de duplicados (evita registrar dos entradas seguidas).
     *   `services/reservation_service.py`: Ciclo de vida de reservas (creación, edición, pago, cancelación con reembolsos proporcionales, simulación de cancelación, cleanup). Gestiona la reserva de plazas en el aforo para reservas no horarias.
     *   `services/billing_service.py`: Motor de tarifas y cálculo de puntos por fidelización. Tarifas por sucursal, tipo de vehículo (Auto/Moto/Camioneta) y tipo de reserva (Hora/Día/Semana/Quincena/Mes).
-    *   `services/notification_service.py`: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal. Usa `asyncio.Queue` para broadcast eficiente del estado de ocupación.
-    *   `services/worker_service.py`: Hilo de fondo que ejecuta `auto_finalize_all_reservations` cada `MAINTENANCE_INTERVAL_SECONDS` (300s). Libera plazas de aforo de reservas vencidas, limpia reservas expiradas no pagadas.
+    *   `services/notification_service.py`: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal. Usa `OccupancyManager` con `broadcast_update` para distribuir cambios de ocupación.
+    *   `services/user_notification_service.py`: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
+    *   `services/worker_service.py`: 3 hilos de fondo: (1) limpieza de reservas cada 300s (`auto_finalize_all_reservations`), (2) recordatorios 31 min antes del inicio, (3) auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio.
+    *   `services/time_service.py`: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
     *   `services/branch_service.py`: Lógica de gestión de sucursales (CRUD, toggle activo), aforo multi-piso (add/delete floors, update capacity) y branch isolation.
     *   `services/user_service.py`: Gestión de usuarios (CRUD, toggle-block, balance adjust, password change by admin, role change, delete), validaciones de seguridad.
     *   `services/email_service.py`: Envío de emails transaccionales con templates HTML Jinja2 (confirmación de reserva con QR embebido en base64, recuperación de contraseña con token).
@@ -37,9 +39,8 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `repositories/reservation_repository.py`: Acceso a datos de reservas.
 
 5.  **Gestión de Accesos ALPR**:
-    *   `alpr_service.py`: Servicio independiente de visión artificial (OpenCV + EasyOCR) que consume la API modular. Modos `SCREEN_TO_SCREEN` (simulación con video) y `SCREEN_TO_CAMERA` (cámaras IP reales).
-    *   **Arquitectura Interna**: Sistema de consenso con buffer de votos, cola de frames con política drop-oldest, detección de movimiento, recorte de banda azul MERCOSUR, detección de QR rápido, heartbeat periódico, envío de frames por WebSocket, persistencia de última patente aceptada con cooldown.
-    *   **Heartbeat**: Las cámaras activas envían pulsos a `/v1/system/heartbeat` cada N segundos. El backend monitorea salud vía `ALPR_HEARTBEATS` (dict con timestamps) y expone en `/v1/system/health`.
+    *   `alpr_service.py`: Servicio independiente de visión artificial (OpenCV + EasyOCR) que consume la API modular. Configurado via `GATE_TYPE` (`entrada`, `salida`, `patente`, `qr`, `predio`) y `VIDEO_SOURCE` (webcam, RTSP, HTTP MJPEG).
+    *   **Arquitectura Interna**: Sistema de consenso con buffer de votos, cola de frames con política drop-oldest, detección de movimiento, recorte de banda azul MERCOSUR, detección de QR rápido, envío de frames por WebSocket, persistencia de última patente aceptada con cooldown.
     *   **Gestión de Cámaras**: Configuración de IP por puerta (entrada/salida) en DB vía `Settings`, start/stop de procesos ALPR desde dashboard, service restart.
 
 ##  Configuración y Seguridad
@@ -52,7 +53,6 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
   - `POST /v1/auth/register`: Auto-registro de clientes.
   - `POST /v1/auth/forgot-password`: Envía email con token de recuperación.
   - `POST /v1/auth/reset-password`: Cambia contraseña con token válido.
-  - `POST /v1/auth/refresh`: Renueva token JWT.
 
 ## 🛠️ Comandos de Inicio Rápido
 

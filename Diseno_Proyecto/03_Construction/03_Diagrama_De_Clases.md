@@ -22,6 +22,7 @@
 │  │  AccessService  BillingService  ReservationService                │
 │  │  UserService    BranchService   EmailService                      │
 │  │  NotificationService  WorkerService  UserNotificationService      │
+│  │  TimeService                                                       │
 │  └──────────────────────────────────────────────────────────────────┘
 │                                                                      │
 │  ┌─────────────┐  ┌─────────────────┐  ┌──────────────────────────┐ │
@@ -53,10 +54,15 @@
 │ - MQTT_PORT: int                                               │
 │ - MQTT_TOPIC_ENTRADA: str                                      │
 │ - MQTT_TOPIC_SALIDA: str                                       │
-│ - RESERVA_HORA_MIN_SEGUNDOS: int                               │
+│ - RESERVA_HORA_MIN_SEGUNDOS: int (default 1800)                │
 │ - MAINTENANCE_INTERVAL_SECONDS: int                            │
 │ - HEARTBEAT_TIMEOUT_SECONDS: int                               │
 │ - IMAGE_DIR: str                                               │
+│ - ALLOWED_ORIGINS: list[str]                                   │
+│ - CONTACT_SUPPORT: str                                         │
+│ - DEFAULT_HOURLY_RATE: float                                   │
+│ - DEFAULT_BASE_RATE: float                                     │
+│ - RECOVERY_TOKEN_EXPIRE_MINUTES: int                           │
 ├───────────────────────────────────────────────────────────────┤
 │ (carga desde .env)                                             │
 └───────────────────────────────────────────────────────────────┘
@@ -82,54 +88,49 @@
 ┌───────────────────────────────────────────────────────────────┐
 │                  services.access_service.AccessService         │
 ├───────────────────────────────────────────────────────────────┤
-│ + validate_plate(db, data, settings) -> dict                  │
-│ + validate_qr(db, data) -> dict                               │
-│ + pay_stay(db, patente, metodo_pago, user_id) -> dict         │
-│ + exit_plate(db, data, settings) -> dict                      │
-│ + manual_entry(db, patente, tipo, user_id, ...) -> dict       │
-│ + manual_exit(db, patente, settings) -> dict                  │
-│ + cancel_stay(db, access_log_id) -> dict                      │
-│ # _publish_mqtt(topic, payload)                               │
-│ # _notify_occupancy(db, sucursal, event_type, ...)            │
-│ # _check_courtesy_time(access_log) -> bool                    │
+│ + validate_plate(db, data, request) -> dict                   │
+│ + exit_plate(db, data, request) -> dict                       │
+│ + validate_qr(db, data, request) -> dict                      │
+│ # _save_image(plate, image_base64) -> str                     │
+│ # _publish_mqtt(request, topic, payload)                      │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
 │              services.reservation_service.ReservationService   │
 ├───────────────────────────────────────────────────────────────┤
-│ + create_reservation(db, user, data) -> Reservation           │
-│ + get_availability(db, sucursal, fecha_inicio, ...) -> dict   │
-│ + pay_reservation(db, user_id, res_id) -> dict                │
-│ + cancel_reservation(db, user_id, res_id) -> dict             │
-│ + simulate_cancel(db, user_id, res_id) -> dict                │
-│ + update_reservation(db, user_id, res_id, data) -> dict      │
-│ + auto_finalize_all_reservations(db) -> int                   │
-│ - _calculate_refund(reservation, cancel_time) -> float        │
-│ - _reservar_plaza_en_aforo(db, ...)  [NO-OP v9.5]             │
-│ - _liberar_plaza_en_aforo(db, ...)   [NO-OP v9.5]             │
+│ + create_reservation(db, data) -> Reservation                 │
+│ + update_reservation(db, res_id, data) -> Reservation         │
+│ + cleanup_overdue_reservations(db)                            │
+│ + auto_finalize_reservations(db, user_id)                     │
+│ + auto_finalize_all_reservations(db)                          │
+│ + pay_reservation(db, user, res_id)                           │
+│ + simulate_refund(db, res) -> dict                            │
+│ + cancel_reservation(db, user, res_id)                        │
+│ # normalize_name(name) -> str                                 │
+│ # verificar_disponibilidad(db, ...) -> bool                   │
+│ # _reservar_plaza_en_aforo(db, ...)  [NO-OP v9.5]             │
+│ # _liberar_plaza_en_aforo(db, ...)   [NO-OP v9.5]             │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
 │               services.billing_service.BillingService          │
 ├───────────────────────────────────────────────────────────────┤
-│ + calculate_stay_cost(db, patente, sucursal, ...) -> dict     │
-│ + calculate_reservation_cost(db, sucursal, tipo, ...) -> float│
+│ + get_rate(db, tipo, sucursal, tipo_vehiculo) -> float        │
+│ + get_hourly_rate(db, sucursal, tipo_vehiculo) -> float       │
+│ + calculate_debt(entry_time_str, db, sucursal, tipo_vehiculo) │
+│ + calculate_total_amount(db, tipo_estadia, fecha_inicio, ...) │
 │ + calculate_points(amount) -> int                             │
-│ + get_hourly_rate(db, sucursal, vehicle_type) -> float        │
-│ + get_daily_rate(db, sucursal, vehicle_type) -> float         │
-│ + get_weekly_rate(db, sucursal, vehicle_type) -> float        │
-│ + get_monthly_rate(db, sucursal, vehicle_type) -> float       │
-│ # _get_rates_dict(db, sucursal) -> dict                       │
+│ + process_payment(db, plate) -> dict                          │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
 │            services.notification_service.NotificationService   │
 ├───────────────────────────────────────────────────────────────┤
+│ - _occupancy_manager: OccupancyManager                        │
 │ - _event_loop: asyncio.AbstractEventLoop                       │
-│ - _queues: dict[str, asyncio.Queue]                           │
+│ + set_occupancy_manager(manager)                              │
 │ + set_event_loop(loop)                                        │
-│ + broadcast(sucursal, message)                                │
-│ + get_queue(sucursal) -> asyncio.Queue                        │
+│ + notify_occupancy_change(db, sucursal_norm)                  │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
@@ -139,15 +140,70 @@
 │ - _notification_thread: threading.Thread                       │
 │ + start_reservation_cleanup()                                 │
 │ + start_notification_worker()                                 │
+│ # _reservation_cleanup_worker()                               │
+│ # _notification_worker()                                      │
+│ # _process_reminders(db)                                      │
+│ # _process_started_reservations(db)                           │
+│ # _process_auto_cancellations(db)                             │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
 │                 services.email_service.EmailService            │
 ├───────────────────────────────────────────────────────────────┤
-│ + send_reservation_confirmation(db, reservation) -> bool      │
-│ + send_password_reset(db, email, token) -> bool               │
-│ - _send_email(to_email, subject, html_content)                │
-│ - _render_template(template_name, context) -> str             │
+│ + send_async_email(to_email, subject, html_content)           │
+│ + send_recovery_email(to_email, user_name, recovery_url)      │
+│ + send_reservation_confirmation(to_email, user_name, res_data)│
+│ + send_reservation_reminder(to_email, user_name, res_data)    │
+│ + send_auto_cancelled_notification(to_email, user_name, res)  │
+│ # _render_template(template_name, **context) -> str            │
+│ # _get_logo_base64() -> str                                   │
+│ # _send_email(to_email, subject, html_content)                │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│           services.user_notification_service                   │
+│                  .UserNotificationService                      │
+├───────────────────────────────────────────────────────────────┤
+│ + create_notification(db, user_id, tipo, titulo, mensaje,     │
+│                       reserva_id) -> UserNotification          │
+│ + get_user_notifications(db, user_id, limit, offset) -> list  │
+│ + get_unread_count(db, user_id) -> int                        │
+│ + mark_as_read(db, notif_id, user_id) -> bool                 │
+│ + mark_all_as_read(db, user_id) -> int                        │
+│ + mark_reservation_notifications_as_read(db, user_id,         │
+│                                          reserva_id, tipo)    │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│                 services.time_service.TimeService              │
+├───────────────────────────────────────────────────────────────┤
+│ (clase estatica/classmethod)                                   │
+│ + now() -> datetime                                           │
+│ + now_str() -> str                                            │
+│ + set_offset(seconds: int)                                    │
+│ + advance(**kwargs)                                           │
+│ + reset()                                                     │
+│ + get_offset() -> int                                         │
+│ + get_virtual_now() -> str                                    │
+│ + is_active() -> bool                                         │
+│ + get_info() -> dict                                          │
+│ # _load_offset()                                              │
+│ # _save_offset()                                              │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│              services.branch_service.BranchService             │
+├───────────────────────────────────────────────────────────────┤
+│ + get_branch_capacity_summary(db, branch) -> dict             │
+│ + list_branches_with_summary(db) -> list                      │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│               services.user_service.UserService                │
+├───────────────────────────────────────────────────────────────┤
+│ + create_user(db, user_data, rol, sucursal) -> User           │
+│ + update_user(db, user_id, user_data) -> User                 │
+│ + delete_user(db, user_id)                                    │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -161,7 +217,6 @@
 │ POST /login          -> login()                               │
 │ POST /forgot-password -> forgot_password()                     │
 │ POST /reset-password  -> reset_password()                      │
-│ POST /refresh         -> refresh_token()                       │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
@@ -200,7 +255,7 @@
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐
 │   Routes/    │────►│    Services/     │────►│    Models/       │
-│  (Delgadas)  │     │  (Lógica Negocio)│     │  (ORM Entities)  │
+│  (Delgadas)  │     │  (Logica Negocio)│     │  (ORM Entities)  │
 │              │     │                  │     │                  │
 │  - Valida    │     │  - Orquesta      │     │  - Define tablas │
 │  - Llama     │     │  - Calcula       │     │  - Enums         │
@@ -220,7 +275,7 @@
 │              │     │                  │     │                  │
 │  - Request   │     │  - Config        │     │  - Persistencia  │
 │  - Response  │     │  - Security      │     │  - Consultas     │
-│  - Validation│     │  - DB Sessions   │     │  - Índices       │
+│  - Validation│     │  - DB Sessions   │     │  - Indices       │
 └──────────────┘     │  - MQTT Client   │     └──────────────────┘
                      └──────────────────┘
 ```

@@ -7,7 +7,7 @@ Sigue estos pasos para poner en marcha el sistema bajo la nueva arquitectura mod
 ```bash
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 # O el comando rápido:
-.\venv\Scripts\python.exe -m pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt requests opencv-python easyocr httpx pytest
+.\venv\Scripts\python.exe -m pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt opencv-python easyocr httpx pytest
 ```
 
 > **⚠️ POST-INSTALACIÓN:** Después de instalar dependencias, ejecutá el siguiente parche para evitar un error de importación de EasyOCR:
@@ -24,7 +24,7 @@ MQTT_BROKER=broker.hivemq.com
 MQTT_TOPIC_ENTRADA=autopass/entrada
 MQTT_TOPIC_SALIDA=autopass/salida
 IMAGE_DIR=captured_images
-RESERVA_HORA_MIN_SEGUNDOS=3600  # Tiempo mínimo de anticipación para reservas por hora (en segundos)
+RESERVA_HORA_MIN_SEGUNDOS=1800  # Tiempo mínimo de anticipación para reservas por hora (en segundos, default 30 min)
 MAINTENANCE_INTERVAL_SECONDS=300  # Intervalo de limpieza de reservas vencidas
 
 # Email (para recuperación de contraseña y confirmaciones)
@@ -91,18 +91,17 @@ Ejecuta los tests automáticos para asegurar que la modularización está operat
 ---
 ### 🚦 Flujo de Prueba Rápido (ALPR)
 1. Inicia el servidor.
-2. Abre una terminal nueva y corre `python alpr_service.py` (modo `SCREEN_TO_SCREEN`, simulará una cámara con video de archivo).
+2. Abre una terminal nueva y corre `python alpr_service.py` (configurá `GATE_TYPE` y `VIDEO_SOURCE` en `.env` para simular con video de archivo).
 3. Entra a `http://localhost:8000/dashboard` como admin (admin@autopass.com / admin123).
-4. En la pestaña **Live**, deberías ver el stream simulado y las detecciones ingresando a la base de datos modular.
+4. En la pestaña **Live**, deberías ver el stream y las detecciones ingresando a la base de datos.
 
-### 🎬 Modo Simulación (Sin Cámaras)
-Si no tenés cámaras IP, ejecutá `alpr_service.py` directamente:
-```bash
-python alpr_service.py
+### Modo Simulación (Sin Cámaras)
+Si no tenés cámaras IP, configurá en `.env`:
 ```
-Esto usa `SCREEN_TO_SCREEN` mode: reproduce un video desde `videos/` y simula detecciones. Las patentes se enviarán al backend como si fueran de una cámara real.
-
-Para cambiar el video simulado, editá `alpr_service.py` y modificá la ruta del archivo de video.
+GATE_TYPE=entrada
+VIDEO_SOURCE=path/to/video.mp4
+```
+Y ejecutá `python alpr_service.py`. Esto reproduce un video y simula detecciones. Las patentes se enviarán al backend como si fueran de una cámara real.
 
 ### 🔄 Scripts de Migración y Utilidad
 ```bash
