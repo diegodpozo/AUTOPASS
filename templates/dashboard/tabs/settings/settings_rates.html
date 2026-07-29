@@ -1,0 +1,133 @@
+                <div id="set-section-rates" class="settings-section">
+                    
+                    <!-- SUB-TABS AUTOS/MOTOS/CAMIONETAS -->
+                    <div class="flex-row justify-center gap-20 mb-30" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <button class="btn-tab-sub active" onclick="switchRatesTab('autos', this)">
+                            <i class="fas fa-car mr-8"></i> AUTOS
+                        </button>
+                        <button class="btn-tab-sub" onclick="switchRatesTab('motos', this)">
+                            <i class="fas fa-motorcycle mr-8"></i> MOTOS
+                        </button>
+                        <button class="btn-tab-sub" onclick="switchRatesTab('camionetas', this)">
+                            <i class="fas fa-truck-pickup mr-8"></i> CAMIONETAS
+                        </button>
+                    </div>
+
+                    <!-- GRUPO AUTOS -->
+                    <div id="rate-group-autos" class="rate-group">
+                        <div class="flex-row justify-end mb-15">
+                            <button id="btn-edit-rates-autos" class="btn-tab-sub" onclick="toggleRateEdit('autos')" style="border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem;">
+                                <i class="fas fa-edit mr-8"></i> EDITAR
+                            </button>
+                        </div>
+                        <div class="rates-form-grid">
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">FRACCIÓN HORA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-clock"></i>
+                                    <input type="number" id="cfg-precio_hora" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ESTADÍA DIARIA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <input type="number" id="cfg-precio_dia" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO SEMANAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-week"></i>
+                                    <input type="number" id="cfg-precio_semana" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO MENSUAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <input type="number" id="cfg-precio_mes" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GRUPO MOTOS -->
+                    <div id="rate-group-motos" class="rate-group" style="display: none;">
+                        <div class="flex-row justify-end mb-15">
+                            <button id="btn-edit-rates-motos" class="btn-tab-sub" onclick="toggleRateEdit('motos')" style="border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem;">
+                                <i class="fas fa-edit mr-8"></i> EDITAR
+                            </button>
+                        </div>
+                        <div class="rates-form-grid">
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">FRACCIÓN HORA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-clock"></i>
+                                    <input type="number" id="cfg-precio_hora_moto" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ESTADÍA DIARIA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <input type="number" id="cfg-precio_dia_moto" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO SEMANAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-week"></i>
+                                    <input type="number" id="cfg-precio_semana_moto" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO MENSUAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <input type="number" id="cfg-precio_mes_moto" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GRUPO CAMIONETAS -->
+                    <div id="rate-group-camionetas" class="rate-group" style="display: none;">
+                        <div class="flex-row justify-end mb-15">
+                            <button id="btn-edit-rates-camionetas" class="btn-tab-sub" onclick="toggleRateEdit('camionetas')" style="border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem;">
+                                <i class="fas fa-edit mr-8"></i> EDITAR
+                            </button>
+                        </div>
+                        <div class="rates-form-grid">
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">FRACCIÓN HORA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-clock"></i>
+                                    <input type="number" id="cfg-precio_hora_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ESTADÍA DIARIA</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <input type="number" id="cfg-precio_dia_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO SEMANAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-week"></i>
+                                    <input type="number" id="cfg-precio_semana_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group-premium">
+                                <label class="text-xs mb-8 block text-muted">ABONO MENSUAL</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <input type="number" id="cfg-precio_mes_camioneta" class="input-premium" placeholder="0" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+

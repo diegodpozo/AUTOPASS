@@ -1,6 +1,6 @@
 # Alcance y Glosario del Sistema
 
-## Alcance Funcional (Incluido en v9.5.0)
+## Alcance Funcional (Incluido en v9.6.0)
 
 ### Módulo de Autenticación y Seguridad
 - [x] Registro de usuarios con validación de email
@@ -97,7 +97,7 @@
 | **Virtual Time** | Sistema que permite adelantar el reloj del servidor para pruebas |
 | **Heartbeat** | Pulso periódico que indica que un servicio/cámara está activo |
 
-## Exclusiones (Fuera de Alcance v9.5.0)
+## Exclusiones (Fuera de Alcance v9.6.0)
 - Aplicación móvil nativa (iOS/Android) — solo web responsive
 - Integración con sistemas de pago externos reales (Mercado Pago, etc.) — simulación
 - Reconocimiento facial de conductores

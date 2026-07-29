@@ -140,39 +140,40 @@
                     <div class="header-info-group">
                         <div class="header-icon" style="font-size: 0.9rem;"><i class="fas fa-keyboard"></i></div>
                         <div class="header-text">
-                            <h3 style="font-size: 0.85rem;">OPERACIÓN MANUAL</h3>
+                            <h3 style="font-size: 0.85rem;">INGRESO MANUAL</h3>
                         </div>
                     </div>
                 </div>
                 
                 <div id="manual-ops-content" style="background: rgba(0,0,0,0.1);">
-                    <div style="padding: 20px 20px 30px; display: flex; flex-direction: column; gap: 20px;">
-                        <!-- Ingreso -->
-                        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
-                            <div class="form-group-premium" style="max-width: none; width: 50%;">
-                                <label style="font-size: 0.6rem; display: block; text-align: center; width: 100%;">PATENTE</label>
-                                <div title="Ingresar patente manualmente">
-                                    <input type="text" id="manual-plate" placeholder="ABC-123" class="input-premium uppercase" style="height: 40px; font-size: 0.9rem; text-align: center;">
-                                </div>
+                    <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                        <!-- Ingreso Manual -->
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="manual-plate" placeholder="ABC-123" class="input-premium uppercase" style="height: 42px; font-size: 0.9rem; text-align: center; flex: 1;">
+                                <button class="btn btn-premium sm" onclick="manualEntry()" style="height: 42px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;" title="Registrar ingreso de vehículo sin ALPR">
+                                    <i class="fas fa-sign-in-alt"></i> ENTRAR
+                                </button>
                             </div>
-                            <button class="btn btn-premium sm" onclick="manualEntry()" style="width: 50px; height: 40px; justify-content: center;" title="Registrar ingreso de vehículo sin ALPR">
-                                <i class="fas fa-sign-in-alt"></i>
-                            </button>
+                            <div id="manual-floor-group" style="display: none; margin-top: 5px;">
+                                <label style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 700;">PISO / SECTOR</label>
+                                <select id="manual-floor" class="select-premium-sm" style="width: 100%; height: 36px; margin-top: 4px;"></select>
+                            </div>
                         </div>
 
                         <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.05);"></div>
 
                         <!-- Barreras -->
                         <div style="display: flex; justify-content: space-around; align-items: center; padding-top: 5px;">
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.6rem; color: var(--secondary); font-weight: 800; letter-spacing: 0.5px;">ENTRADA</span>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.65rem; color: var(--secondary); font-weight: 800; letter-spacing: 0.5px;">ENTRADA</span>
                                 <button class="btn-barrier-control" onclick="openBarrier('ENTRADA')" title="Abrir Barrera de Entrada" 
                                     style="height: 56px; width: 56px; border-radius: 50%; padding: 0; background: rgba(16, 185, 129, 0.2); border: 2px solid var(--secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);">
                                     <img id="icon-barrier-entry" src="/static/images/barrera baja.png" style="width: 32px; filter: brightness(0) invert(1);">
                                 </button>
                             </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.6rem; color: var(--secondary); font-weight: 800; letter-spacing: 0.5px;">SALIDA</span>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.65rem; color: var(--secondary); font-weight: 800; letter-spacing: 0.5px;">SALIDA</span>
                                 <button class="btn-barrier-control" onclick="openBarrier('SALIDA')" title="Abrir Barrera de Salida" 
                                     style="height: 56px; width: 56px; border-radius: 50%; padding: 0; background: rgba(16, 185, 129, 0.2); border: 2px solid var(--secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);">
                                     <img id="icon-barrier-exit" src="/static/images/barrera baja.png" style="width: 32px; filter: brightness(0) invert(1);">

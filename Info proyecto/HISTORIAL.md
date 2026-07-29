@@ -1,5 +1,10 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **JULIO 27, 2026 - GRANULAR MODULARIZATION OVERHAUL (V9.7.0)**:
+    *   **Modularización Granular de Reservas JS**: Descomposición de `reservas.js` (903 líneas / 45 KB) en 4 submódulos ES6 especializados: `reservas-form.js` (formularios, validación, tarifas), `reservas-list.js` (tarjetas, timeline, historial y paginación), `reservas-actions.js` (pago con saldo y cancelación con reembolso) y `reservas-pass.js` (Pase Digital, QR `QRCode.js` y compartir ticket). `reservas.js` re-exporta todo el API usando el patrón Fachada.
+    *   **Modularización Granular de Sucursales JS**: Separación de `dashboard-admin-branches.js` (705 líneas / 30 KB) en dos submódulos: `dashboard-admin-branches-crud.js` (CRUD sucursales, mapa Leaflet, geocoding, logo upload) y `dashboard-admin-branches-floors.js` (gestión de pisos `ParkingFloor`, aforos por piso y Planta Baja). `dashboard-admin-branches.js` re-exporta el API completo.
+    *   **Componentes Partials de Modales HTML**: Extracción de modales HTML embebidos hacia componentes partials reutilizables: `profile/modals/onboarding_modal.html`, `dashboard/modals/user_modals.html`, `dashboard/modals/branch_modals.html` y `dashboard/modals/promotion_modal.html`, incluidos mediante `{% include %}` en las vistas principales.
+
 - **JULIO 6, 2026 - CORTESÍA & OCUPACIÓN REFACTOR (V9.5.0)**:
     *   **Fix "ya está en la sede" en ALPR**: Se aplicó el mismo fix de `manual_entry` en `validate_plate` — ahora verifica si existe una SALIDA posterior a la última ENTRADA en lugar de solo mirar el último registro.
     *   **Cortesía 10 min en ALPR y manual**: Tanto `exit_plate` (cámara) como `manual_exit` ahora cheqiean el tiempo de cortesía (≤10 min desde la entrada) antes de denegar por deuda. Si está dentro del margen, la salida se registra sin cargo.

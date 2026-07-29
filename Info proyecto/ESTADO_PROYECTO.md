@@ -1,6 +1,19 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-07-06)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-07-27)
 
-### 🚀 Hitos Recientes (Julio 2026) - Versión 9.5.0 (Cortesía & Ocupación Refactor)
+### 🚀 Hitos Recientes (Julio 2026) - Versión 9.7.0 (Granular Modularization Overhaul)
+- [x] **Modularización Granular de Reservas JS (`static/js/modules/reservas-*.js`)**: Descomposición del monolito `reservas.js` (903 líneas / 45 KB) en 4 submódulos ES6 especializados: `reservas-form.js` (formularios, validación, tarifas), `reservas-list.js` (renderizado de tarjetas, timeline, historial y paginación), `reservas-actions.js` (pago con saldo y simulación de reembolso) y `reservas-pass.js` (Pase Digital, QR `QRCode.js` y compartir ticket). `reservas.js` actúa como fachada re-exportando todo el API.
+- [x] **Modularización Granular de Sucursales JS (`static/js/modules/dashboard-admin-branches-*.js`)**: Separación de `dashboard-admin-branches.js` (705 líneas / 30 KB) en dos submódulos: `dashboard-admin-branches-crud.js` (CRUD sucursales, mapa Leaflet, geocoding, logo upload) y `dashboard-admin-branches-floors.js` (gestión de pisos `ParkingFloor`, aforos por piso y Planta Baja). `dashboard-admin-branches.js` actúa como fachada.
+- [x] **Partials de Modales HTML (`templates/dashboard/modals/` y `templates/profile/modals/`)**: Extracción de modales HTML embebidos hacia componentes partials reutilizables: `profile/modals/onboarding_modal.html`, `dashboard/modals/user_modals.html`, `dashboard/modals/branch_modals.html` y `dashboard/modals/promotion_modal.html`, incluidos mediante `{% include %}` en las vistas principales.
+
+### 🚀 Hitos Previos (Julio 2026) - Versión 9.6.0 (Modularización & Code Quality Overhaul)
+- [x] **Paquete ALPR (`alpr/`)**: Refactorización del script monolítico `alpr_service.py` (29 KB) en el paquete `alpr/` (`config`, `preprocessor`, `video_streamer`, `ws_client`, `ocr_engine`, `runner`). Se preserva `alpr_service.py` como wrapper ejecutable.
+- [x] **Servicio de Analítica (`ReportService`)**: Creación de `services/report_service.py` para abstraer agregación financiera y transacciones, convirtiendo `routes/reports.py` en un controlador delgado (Clean Architecture).
+- [x] **Paquete de Sistema (`routes/system/`)**: Modularización de `routes/system.py` (22 KB) en submódulos especializados (`common.py`, `health.py`, `cameras.py`, `video.py`).
+- [x] **Modularización Frontend Dashboard**: Separación del monolito `dashboard.js` en módulos ES6: `dashboard-ui.js` (UI/navegación/cámaras), `dashboard-stats.js` (estadísticas/aforo/WebSocket), `dashboard-admin.js` (CRUD usuarios/sucursales/config), `dashboard-promotions.js` (CRUD promociones). `dashboard.js` actúa como puente/orquestador exponiendo funciones al scope global.
+- [x] **Fix Navegación de Pestañas**: Corrección de error de sintaxis (`}` sobrante en `dashboard-admin.js:1325`) que impedía la carga del módulo y rompía `window.switchTab`. Mejora en `switchTab` para gestionar explícitamente `style.display` en lugar de depender solo de CSS `!important`.
+- [x] **Revisión y Actualización Documentación**: Sincronización de `ESTADO_PROYECTO.md`, `ARQUITECTURA_DETALLADA.md`, `GUIA_DESARROLLO.md` y `DEPENDENCIAS.md` con el estado real del código (v9.6.0).
+
+### 🚀 Hitos Previos (Julio 2026) - Versión 9.5.0 (Cortesía & Ocupación Refactor)
 - [x] **Fix ALPR "ya está en la sede"**: Misma corrección que en `manual_entry` — ahora verifica si hay SALIDA posterior a la última ENTRADA en lugar de solo el último registro.
 - [x] **Cortesía 10 min en ALPR y manual**: `exit_plate` y `manual_exit` chequean el tiempo de cortesía antes de denegar por deuda. Dentro de los 10 min la salida es sin cargo.
 - [x] **Ocupación solo física**: Las reservas no horarias ya no pre-ocupan plaza. El ALPR de entrada/salida maneja el conteo para todos los vehículos, reflejando solo autos físicamente presentes.
@@ -41,16 +54,22 @@
 - [x] **Unified Visual Style**: Sincronización estética total entre el formulario de inicio ("Quick Add") y la gestión de flota.
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
-### 🛠️ Arquitectura Actual (v9.1.5)
-- **Capas**: Clean Architecture con Servicios de Notificación Asíncronos.
-- **Seguridad**: JWT + RBAC (Endurecido en UI).
-- **Frontend**: Dashboard Premium, Vanilla JS, CSS Glassmorphism, WebSockets (Video/Aforo).
+### 🛠️ Arquitectura Actual (v9.6.0)
+- **Backend**: Clean Architecture con Servicios y Repositories. ~48 archivos Python en 6 paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`).
+- **Frontend**: Dashboard Premium modularizado. 29 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 40 templates HTML, 36 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+- **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
+- **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
+- **Multi-sucursal**: Full isolation por sucursal con gestión de pisos, aforos y configuración independiente.
+- **ALPR**: Pipeline completo de visión artificial (EasyOCR + OpenCV + PyTorch) con consenso de votos y streaming de video.
+- **Base de Datos**: SQLite (`parking.db`) con 13 tablas, migraciones inline sin framework externo.
 
 ### 📊 Cobertura de Funcionalidades
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.
 - **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago.
-- **Monitoreo**: ALPR en vivo con gestión centralizada y aforo real-time.
+- **Monitoreo**: ALPR en vivo con gestión centralizada, aforo real-time vía WebSocket y streaming de video multi-cámara.
+- **Fidelización**: Sistema de puntos (10 pts/$1000), promociones canjeables y cupones.
+- **Frontend**: Dashboard modular con 7 pestañas (Monitoreo, Reservas, Usuarios, Finanzas, Promociones, Sucursales, Configuración).
 
 ### Cambios técnicos recientes (2026-07-06)
 - ALPR: Fix en `validate_plate` y `validate_qr` — ahora buscan la última ENTRADA y verifican SALIDA posterior (mismo patrón que `manual_entry`), en lugar de solo mirar el último registro de cualquier tipo.

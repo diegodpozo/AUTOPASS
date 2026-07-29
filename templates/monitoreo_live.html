@@ -99,8 +99,8 @@
         padding: 4px 10px;
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.75rem;
-        cursor: pointer;
         border-radius: 2px;
+        cursor: pointer;
         transition: all 0.2s;
         display: flex;
         align-items: center;
@@ -108,106 +108,104 @@
     }
 
     .cctv-floating-btn:hover {
-        border-color: #ef4444;
-        color: #ef4444;
-        background: rgba(239, 68, 68, 0.1);
+        background: #222222;
+        border-color: #00bcd4;
+        color: #00bcd4;
     }
 
     .cctv-floating-clock {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.75rem;
-        color: #888888;
-        padding-left: 5px;
+        font-size: 0.8rem;
+        color: #00bcd4;
+        font-weight: bold;
+        letter-spacing: 1px;
+        padding-left: 8px;
         border-left: 1px solid #333333;
     }
 
-    /* --- HUD OVERLAYS --- */
+    /* --- CCTV OVERLAYS (HUD) --- */
     .cctv-hud-header {
         position: absolute;
-        top: 6px;
-        left: 8px;
-        right: 8px;
+        top: 8px;
+        left: 12px;
+        right: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.7rem;
-        color: #ffffff;
         z-index: 10;
-        text-shadow: 1px 1px 2px #000;
         pointer-events: none;
+        font-size: 0.75rem;
+        color: #ffffff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        letter-spacing: 0.5px;
+    }
+
+    .cctv-hud-footer {
+        position: absolute;
+        bottom: 8px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+        pointer-events: none;
+        font-size: 0.75rem;
+        color: #ffffff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
     }
 
     .cctv-rec-indicator {
         display: flex;
         align-items: center;
-        gap: 5px;
-        color: #ef4444;
+        gap: 6px;
+        color: #ffffff;
         font-weight: bold;
     }
 
     .cctv-rec-dot {
-        width: 6px;
-        height: 6px;
-        background: #ef4444;
+        width: 8px;
+        height: 8px;
+        background-color: #ef4444;
         border-radius: 50%;
-        animation: recBlink 1s infinite ease-in-out;
+        animation: blink 1s infinite;
     }
 
-    @keyframes recBlink {
-        0%, 100% { opacity: 0; }
-        50% { opacity: 1; }
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.2; }
     }
 
-    .cctv-hud-footer {
-        position: absolute;
-        bottom: 6px;
-        left: 8px;
-        right: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.7rem;
-        color: #ffffff;
-        z-index: 10;
-        text-shadow: 1px 1px 2px #000;
-        pointer-events: none;
-    }
-
-    /* CRT Scanlines and visual textures */
+    /* --- SCANLINES & TEST PATTERN --- */
     .cctv-scanlines {
         position: absolute;
-        inset: 0;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background: linear-gradient(
             rgba(18, 16, 16, 0) 50%, 
-            rgba(0, 0, 0, 0.2) 50%
+            rgba(0, 0, 0, 0.25) 50%
         );
         background-size: 100% 4px;
         z-index: 5;
         pointer-events: none;
-        opacity: 0.2;
+        opacity: 0.6;
     }
 
-    /* --- NO SIGNAL COLOR BARS --- */
     .test-pattern {
-        position: absolute;
-        inset: 0;
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        z-index: 1;
-        pointer-events: none;
+        background: #111111;
     }
 
     .test-pattern-bars {
-        display: flex;
-        flex: 7;
-        width: 100%;
-    }
-
-    .test-pattern-bar {
         flex: 1;
-        height: 100%;
+        display: flex;
     }
 
+    .test-pattern-bar { flex: 1; height: 100%; }
     .bar-white { background: #c0c0c0; }
     .bar-yellow { background: #c0c000; }
     .bar-cyan { background: #00c0c0; }
@@ -217,62 +215,53 @@
     .bar-blue { background: #0000c0; }
 
     .test-pattern-bottom {
+        height: 25%;
+        background: #080808;
         display: flex;
-        flex: 3;
-        width: 100%;
-        background: #101010;
         align-items: center;
         justify-content: center;
-        border-top: 2px solid #000;
+        border-top: 2px solid #222222;
     }
 
     .test-pattern-text {
-        color: #fff;
         font-family: 'Share Tech Mono', monospace;
-        font-weight: 800;
-        font-size: 0.95rem;
+        color: #ffffff;
+        font-size: 0.9rem;
         letter-spacing: 2px;
-        text-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
     }
 
-    /* --- NO CAMERAS SCREEN --- */
     .no-cameras-screen {
-        grid-column: 1 / -1;
-        grid-row: 1 / -1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 15px;
-        background: #050505;
-        border: 1px solid #222;
-        color: #fff;
-        font-family: 'Share Tech Mono', monospace;
         height: 100%;
+        background: #050505;
+        border: 1px solid #222222;
+        gap: 15px;
     }
 
     .no-cameras-title {
-        font-size: 1.5rem;
-        color: #ef4444;
-        letter-spacing: 2px;
-        font-weight: bold;
+        font-size: 1.2rem;
+        color: #ffffff;
+        letter-spacing: 1px;
     }
 
-    /* --- HOVER CONTROL ACTIONS --- */
+    /* --- HOVER ACTIONS FOR CAMERAS --- */
     .cctv-hover-actions {
         position: absolute;
         top: 0;
-        bottom: 0;
         left: 0;
-        right: 0;
-        background: rgba(0, 0, 0, 0.65);
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
         opacity: 0;
+        transition: opacity 0.2s ease;
         z-index: 20;
-        transition: opacity 0.25s ease-in-out;
     }
 
     .cctv-box:hover .cctv-hover-actions {
@@ -280,18 +269,18 @@
     }
 
     .cctv-btn {
-        background: rgba(15, 15, 15, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #fff;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
+        background: #000000;
+        border: 1px solid #ffffff;
+        color: #ffffff;
+        width: 38px;
+        height: 38px;
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        font-size: 0.9rem;
         transition: all 0.2s;
-        font-size: 0.85rem;
     }
 
     .cctv-btn:hover {
@@ -308,413 +297,19 @@
 {% endblock %}
 
 {% block content %}
-<!-- FLOATING CONTROLS -->
-<div class="cctv-floating-controls">
-    <div class="branch-selector-container" id="branch-selector-wrapper" style="display: none; align-items: center;">
-        <select id="monitoring-branch-select" onchange="changeBranch(this.value)">
-            <option value="">Cargando sedes...</option>
-        </select>
-    </div>
-    <div id="sucursal-label-wrapper" style="display: none; background: #111; border: 1px solid #333; padding: 4px 10px; border-radius: 2px;">
-        <span id="sucursal-display-name" style="font-size: 0.75rem; color: #00bcd4; font-weight: bold; letter-spacing: 0.5px;"></span>
-    </div>
-    <button class="cctv-floating-btn" onclick="window.location.href='/dashboard'" title="Volver al Panel">
-        <i class="fas fa-sign-out-alt"></i> VOLVER
-    </button>
-    <div class="cctv-floating-clock" id="monitoreo-clock">00:00:00</div>
-</div>
-
-<!-- DYNAMIC CCTV GRID -->
-<div class="cctv-grid-container" id="cctv-grid">
-    <!-- Rendered dynamically -->
-</div>
+{% include "components/monitoreo_controls.html" %}
 {% endblock %}
 
 {% block extra_scripts %}
 <script type="module">
-    import api from '/static/js/modules/api.js';
-    import { formatPlate, normalizeSystemName } from '/static/js/modules/utils.js';
+    import { initMonitoreoLive, changeBranch, toggleCamera, openGate } from '/static/js/modules/monitoreo-live.js';
 
-    let camerasList = [];
-    let activeWebSockets = {};
-    let wsGeneral = null;
-    let clockInterval = null;
-    let durationInterval = null;
+    window.changeBranch = changeBranch;
+    window.toggleCamera = toggleCamera;
+    window.openGate = openGate;
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        const token = localStorage.getItem('token');
-        const rol = localStorage.getItem('rol');
-        if (!token || !['admin', 'local_admin', 'staff'].includes(rol)) {
-            window.location.href = '/';
-            return;
-        }
-
-        initClock();
-        startDurationTicker();
-
-        const userSucursal = localStorage.getItem('sucursal') || '';
-        if (rol === 'admin') {
-            document.getElementById('branch-selector-wrapper').style.display = 'flex';
-            await loadBranchesSelect();
-        } else {
-            const wrapperLabel = document.getElementById('sucursal-label-wrapper');
-            const displayLabel = document.getElementById('sucursal-display-name');
-            if (wrapperLabel && displayLabel) {
-                wrapperLabel.style.display = 'block';
-                displayLabel.innerText = userSucursal.toUpperCase();
-            }
-            await loadCameras();
-        }
-
-        connectGeneralWS();
+    document.addEventListener('DOMContentLoaded', () => {
+        initMonitoreoLive();
     });
-
-    function initClock() {
-        const clockEl = document.getElementById('monitoreo-clock');
-        const update = () => {
-            const now = new Date();
-            const dateStr = now.getFullYear() + '/' + 
-                String(now.getMonth() + 1).padStart(2, '0') + '/' + 
-                String(now.getDate()).padStart(2, '0');
-            const timeStr = now.toTimeString().split(' ')[0];
-            clockEl.innerText = `${dateStr}   ${timeStr}`;
-        };
-        update();
-        clockInterval = setInterval(update, 1000);
-    }
-
-    function startDurationTicker() {
-        durationInterval = setInterval(() => {
-            // Actualizar la fecha y hora de los overlays de CCTV
-            const now = new Date();
-            const dateStr = now.getFullYear() + '/' + 
-                String(now.getMonth() + 1).padStart(2, '0') + '/' + 
-                String(now.getDate()).padStart(2, '0');
-            const timeStr = now.toTimeString().split(' ')[0];
-            
-            document.querySelectorAll('.cctv-hud-time').forEach(el => {
-                el.innerText = `${dateStr}   ${timeStr}`;
-            });
-
-            // Actualizar los cronómetros de duración
-            document.querySelectorAll('.cctv-hud-duration').forEach(el => {
-                let ticks = parseInt(el.dataset.ticks || '0') + 1;
-                el.dataset.ticks = ticks;
-                
-                const hrs = Math.floor(ticks / 3600);
-                const mins = Math.floor((ticks % 3600) / 60);
-                const secs = ticks % 60;
-                const frames = Math.floor(Math.random() * 30);
-                
-                el.innerHTML = `<span style="color: #ffffff; margin-right: 6px; font-size: 0.65rem;">■</span>DUR : ${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
-            });
-        }, 1000);
-    }
-
-    async function loadBranchesSelect() {
-        const res = await api.get('/admin/branches');
-        if (res.ok) {
-            const select = document.getElementById('monitoring-branch-select');
-            select.innerHTML = res.data.map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
-            
-            const activeBranch = localStorage.getItem('activeMonitoringBranch') || res.data[0]?.nombre || '';
-            if (activeBranch) {
-                select.value = activeBranch;
-            }
-            await loadCameras();
-        }
-    }
-
-    window.changeBranch = async (branchName) => {
-        localStorage.setItem('activeMonitoringBranch', branchName);
-        await loadCameras();
-    };
-
-    function clearVideoWebSockets() {
-        Object.keys(activeWebSockets).forEach(id => {
-            if (activeWebSockets[id]) {
-                activeWebSockets[id].close();
-                delete activeWebSockets[id];
-            }
-        });
-    }
-
-    async function loadCameras() {
-        clearVideoWebSockets();
-        
-        const token = localStorage.getItem('token');
-        const rol = localStorage.getItem('rol');
-        let selectedBranch = '';
-        
-        if (rol === 'admin') {
-            selectedBranch = document.getElementById('monitoring-branch-select').value;
-        } else {
-            selectedBranch = localStorage.getItem('sucursal') || '';
-        }
-
-        const res = await api.get('/system/cameras');
-        if (res.ok) {
-            camerasList = res.data;
-            if (selectedBranch) {
-                camerasList = camerasList.filter(c => c.sucursal === selectedBranch);
-            }
-            arrangeCctvGrid();
-        }
-    }
-
-    function arrangeCctvGrid() {
-        const grid = document.getElementById('cctv-grid');
-        grid.innerHTML = '';
-
-        if (camerasList.length === 0) {
-            grid.style.gridTemplateColumns = '1fr';
-            grid.style.gridTemplateRows = '1fr';
-            grid.innerHTML = `
-                <div class="no-cameras-screen">
-                    <i class="fas fa-video-slash" style="font-size: 3rem; color: #ef4444;"></i>
-                    <div class="no-cameras-title">NO SE ENCONTRARON CÁMARAS CONFIGURADAS</div>
-                    <div style="font-size: 0.8rem; color: #888;">Configura tus cámaras IP desde Ajustes > Monitoreo</div>
-                </div>
-            `;
-            return;
-        }
-
-        // Determine dynamic grid columns and rows based on camera count
-        const N = camerasList.length;
-        let cols = 1;
-        let rows = 1;
-
-        if (N === 2) {
-            cols = 2;
-            rows = 1;
-        } else if (N > 2 && N <= 4) {
-            cols = 2;
-            rows = 2;
-        } else if (N > 4 && N <= 6) {
-            cols = 3;
-            rows = 2;
-        } else if (N > 6) {
-            cols = 3;
-            rows = 3;
-        }
-
-        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-        grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-
-        // Append active slots for each camera
-        camerasList.forEach((cam, idx) => {
-            const slotId = idx + 1;
-            const box = document.createElement('div');
-            box.className = 'cctv-box';
-            box.id = `cctv-slot-${slotId}`;
-            renderActiveSlot(box, slotId, cam);
-            grid.appendChild(box);
-        });
-
-        loadLatestDetections();
-    }
-
-    function renderActiveSlot(box, slotId, cam) {
-        const cctvCode = `CCTV ${String(slotId).padStart(3, '0')}`;
-        
-        // Define functional label based on type
-        let functionLabel = 'VIGILANCIA';
-        if (cam.tipo === 'ENTRADA') functionLabel = 'LECTURA PATENTE (ENTRADA)';
-        else if (cam.tipo === 'SALIDA') functionLabel = 'LECTURA PATENTE (SALIDA)';
-        else if (cam.tipo === 'PATENTE') functionLabel = 'LECTURA PATENTE';
-        else if (cam.tipo === 'QR') functionLabel = 'LECTURA QR';
-        else if (cam.tipo === 'PREDIO') functionLabel = 'VIGILANCIA';
-
-        const cameraLabel = `${cctvCode} - ${cam.nombre.toUpperCase()} [${functionLabel}]`;
-        const ticksOffset = Math.floor(Math.random() * 3600);
-
-        if (cam.is_running) {
-            box.innerHTML = `
-                <div class="cctv-hud-header">
-                    <span>${cameraLabel}</span>
-                    <div class="cctv-rec-indicator">
-                        <span class="cctv-rec-dot"></span>
-                        <span>REC</span>
-                        <i class="fas fa-wifi" style="margin-left: 5px; font-size: 0.7rem; color: #ffffff;"></i>
-                    </div>
-                </div>
-                <img id="img-${cam.id}" class="cctv-video-feed" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
-                <div class="cctv-scanlines"></div>
-                <div class="cctv-hud-footer">
-                    <span class="cctv-hud-duration" data-ticks="${ticksOffset}"><span style="color: #ffffff; margin-right: 6px; font-size: 0.65rem;">■</span>DUR: 00:00:00:00</span>
-                    <span class="cctv-hud-time">---/--/-- --:--:--</span>
-                </div>
-                <div class="cctv-hover-actions">
-                    <button class="cctv-btn danger" onclick="toggleCamera(${cam.id}, 'stop')" title="Detener Cámara">
-                        <i class="fas fa-stop"></i>
-                    </button>
-                    <button class="cctv-btn" onclick="openGate(${slotId})" title="Abrir Barrera">
-                        <i class="fas fa-door-open"></i>
-                    </button>
-                </div>
-            `;
-            connectCameraWebSocket(cam);
-        } else {
-            box.innerHTML = `
-                <div class="cctv-hud-header">
-                    <span>${cameraLabel}</span>
-                    <span style="color: #ecc94b; font-weight: bold;">[STANDBY]</span>
-                </div>
-                <div class="test-pattern">
-                    <div class="test-pattern-bars">
-                        <div class="test-pattern-bar bar-white"></div>
-                        <div class="test-pattern-bar bar-yellow"></div>
-                        <div class="test-pattern-bar bar-cyan"></div>
-                        <div class="test-pattern-bar bar-green"></div>
-                        <div class="test-pattern-bar bar-magenta"></div>
-                        <div class="test-pattern-bar bar-red"></div>
-                        <div class="test-pattern-bar bar-blue"></div>
-                    </div>
-                    <div class="test-pattern-bottom">
-                        <div class="test-pattern-text">STANDBY DEVICE</div>
-                    </div>
-                </div>
-                <div class="cctv-scanlines"></div>
-                <div class="cctv-hud-footer">
-                    <span><span style="color: #ffffff; margin-right: 6px; font-size: 0.65rem;">■</span>DUR: 00:00:00:00</span>
-                    <span class="cctv-hud-time">---/--/-- --:--:--</span>
-                </div>
-                <div class="cctv-hover-actions">
-                    <button class="cctv-btn" onclick="toggleCamera(${cam.id}, 'start')" title="Iniciar Cámara">
-                        <i class="fas fa-play" style="color: #10b981;"></i>
-                    </button>
-                </div>
-            `;
-        }
-    }
-
-    function connectCameraWebSocket(cam) {
-        const token = localStorage.getItem('token');
-        const normSuc = normalizeSystemName(cam.sucursal || localStorage.getItem('sucursal') || '');
-        const procId = `${normSuc}_${cam.tipo}_${cam.id}`.toUpperCase();
-        
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/v1/system/ws/video/${procId}?token=${token}`;
-        
-        if (activeWebSockets[cam.id]) {
-            activeWebSockets[cam.id].close();
-        }
-        
-        const socket = new WebSocket(wsUrl);
-        activeWebSockets[cam.id] = socket;
-        
-        socket.onmessage = (event) => {
-            const img = document.getElementById(`img-${cam.id}`);
-            if (img) {
-                img.src = `data:image/jpeg;base64,${event.data}`;
-                if (!img.classList.contains('loaded')) {
-                    img.classList.add('loaded');
-                }
-            }
-        };
-        
-        socket.onclose = () => {
-            const currentCam = camerasList.find(c => c.id === cam.id);
-            if (currentCam && currentCam.is_running && activeWebSockets[cam.id] === socket) {
-                setTimeout(() => connectCameraWebSocket(cam), 5000);
-            }
-        };
-        
-        socket.onerror = (err) => {
-            console.error(`Error WS Cámara ${cam.nombre}:`, err);
-        };
-    }
-
-    window.toggleCamera = async (camId, action) => {
-        const res = await api.post(`/system/cameras/${camId}/control/${action}`);
-        if (res.ok) {
-            const camIdx = camerasList.findIndex(c => c.id === camId);
-            if (camIdx !== -1) {
-                camerasList[camIdx].is_running = (action === 'start');
-            }
-            arrangeCctvGrid();
-        } else {
-            alert(res.error || 'Error al cambiar estado de la cámara');
-        }
-    };
-
-    window.openGate = async (slotId) => {
-        const camera = camerasList[slotId - 1];
-        if (!camera) return;
-
-        const gateType = camera.tipo.toUpperCase() === 'ENTRADA' ? 'ENTRADA' : 'SALIDA';
-        const res = await api.post(`/admin/open-barrier?gate=${gateType}`);
-        if (res.ok) {
-            alert(`Acción remota: Apertura de barrera ${gateType} enviada correctamente.`);
-        } else {
-            alert(`Error al abrir barrera: ${res.error}`);
-        }
-    };
-
-    async function loadLatestDetections() {
-        const res = await api.get('/reports/access');
-        if (!res || !res.ok) return;
-
-        const logs = res.data;
-        const lastEntry = logs.find(l => l.tipo_evento === 'ENTRADA');
-        const lastExit = logs.find(l => l.tipo_evento === 'SALIDA');
-        const lastQR = logs.find(l => l.reserva_id !== null);
-
-        camerasList.forEach((cam, idx) => {
-            const slotId = idx + 1;
-            const box = document.getElementById(`cctv-slot-${slotId}`);
-            if (!box) return;
-
-            const footer = box.querySelector('.cctv-hud-footer');
-            if (!footer) return;
-
-            // Limpiar overlays anteriores si existen
-            let plateOverlay = box.querySelector('.cctv-plate-hud');
-            if (plateOverlay) plateOverlay.remove();
-
-            let text = '';
-            if (cam.tipo === 'ENTRADA' || cam.tipo === 'PATENTE') {
-                if (lastEntry) text = formatPlate(lastEntry.patente_detectada);
-            } else if (cam.tipo === 'SALIDA') {
-                if (lastExit) text = formatPlate(lastExit.patente_detectada);
-            } else if (cam.tipo === 'QR') {
-                if (lastQR) text = `QR: ${formatPlate(lastQR.patente_detectada)}`;
-            }
-
-            if (text) {
-                // Agregar un HUD overlay arriba del footer
-                const plateDiv = document.createElement('div');
-                plateDiv.className = 'cctv-plate-hud';
-                plateDiv.style.position = 'absolute';
-                plateDiv.style.bottom = '30px';
-                plateDiv.style.left = '10px';
-                plateDiv.style.background = 'rgba(0, 0, 0, 0.8)';
-                plateDiv.style.border = '1px solid #C5A059';
-                plateDiv.style.padding = '2px 8px';
-                plateDiv.style.fontSize = '0.75rem';
-                plateDiv.style.color = '#C5A059';
-                plateDiv.style.zIndex = '15';
-                plateDiv.style.pointerEvents = 'none';
-                plateDiv.innerText = `LAST DETECT: ${text}`;
-                
-                box.appendChild(plateDiv);
-            }
-        });
-    }
-
-    function connectGeneralWS() {
-        const token = localStorage.getItem('token');
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/v1/parking/ws?token=${token}`;
-        
-        wsGeneral = new WebSocket(wsUrl);
-        wsGeneral.onmessage = (event) => {
-            loadLatestDetections();
-        };
-
-        wsGeneral.onclose = () => {
-            setTimeout(connectGeneralWS, 5000);
-        };
-    }
 </script>
 {% endblock %}

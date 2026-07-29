@@ -8,7 +8,7 @@ Este documento sirve como mapa técnico tras la gran refactorización. Explica l
 
 ### 1. `core/` (Infraestructura)
 Cualquier configuración que afecte a todo el sistema debe ir aquí.
-- **Seguridad**: Si añadís un nuevo rol, registralo en `core/security.py`. Las dependencias disponibles son: `get_current_user` (todos autenticados), `get_local_manager` (ADMIN/LOCAL_ADMIN), `get_operational_user` (ADMIN/LOCAL_ADMIN/STAFF).
+- **Seguridad**: Si añadís un nuevo rol, registralo en `core/security.py`. Las dependencias disponibles son: `get_current_user` (todos autenticados), `get_super_admin` (solo ADMIN), `get_local_manager` (ADMIN/LOCAL_ADMIN), `get_operational_user` (ADMIN/LOCAL_ADMIN/STAFF).
 - **Config**: Si añadís una API Key o variable al `.env`, definila en `core/config.py`. Variables existentes: `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*` (server, port, user, password), `MQTT_*` (broker, topics), `DATABASE_URL`.
 - **MQTT**: Usa `CallbackAPIVersion.VERSION2` de Paho. El cliente se crea sin callbacks globales en `core/mqtt.py`.
 - **Seed**: `core/seed.py` incluye `INITIAL_USERS` (admin con DNI, admins de sucursal), `DEFAULT_PRICES` (tarifas trimodales incluyendo `camioneta`), `INITIAL_PROMOS` (3 promos iniciales con icono y categoría). La función `seed()` parchea datos existentes sin duplicar.
@@ -28,11 +28,11 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 | Prefijo | Paquete/Archivo | Responsabilidad |
 | :--- | :--- | :--- |
 | `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password. |
-| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay, manual-entry), Settings (prices, capacity). |
-| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel), Fidelization (promotions, redeem, points-history). |
+| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay, manual-entry), Settings (prices, capacity), Virtual Time (status, advance, set, reset). |
+| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel), Fidelization (promotions, redeem, points-history), Notifications (CRUD in-app, unread count, mark read). |
 | `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay, exit-plate, validate-qr), Status (current-occupancy, branches, ws), Utils (normalize_plate, format_plate). |
-| `/v1/reports`| `routes/reports.py` | Resúmenes financieros y logs de acceso. Filtros: `vehicle_type`, `payment_method`, `date_range`. |
-| `/v1/system` | `routes/system.py` | Health, Camera config/service/start/stop, Video feeds, WebSocket video, Capture, System Reset. |
+| `/v1/reports`| `routes/reports.py` | Resúmenes financieros y logs de acceso. Controlador delgado delegando a `ReportService`. Filtros: `vehicle_type`, `payment_method`, `date_range`. |
+| `/v1/system` | `routes/system/` | **Modular:** `common.py` (ConnectionManager, stop_all_cameras), `health.py` (/health, /heartbeat, /reset, /virtual-time), `cameras.py` (CRUD y control dinámico), `video.py` (WebSockets, streaming, capturas). |
 | `/` (Vistas) | `routes/views.py` | Renderizado Jinja2 con **Inyección Global de Settings**. |
 
 ---
@@ -42,8 +42,8 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 - **Plantillas Email**: `templates/emails/`. Usar Jinja2 para variables dinámicas con QR embebido en base64.
 - **Componentes HTML**: `templates/components/` (Navbar, Footers, Modales base).
-- **Lógica JS (Módulos)**: `static/js/modules/`. Toda nueva función lógica debe ir aquí y exportarse.
-- **Scripts de Página**: `static/js/*.js`. Actúan como puentes, importando módulos y exponiendo funciones al ámbito global si es necesario.
+- **Módulos ES6**: `static/js/modules/`. Toda nueva función lógica debe ir aquí y exportarse como ES6 module.
+- **Scripts Puente**: `static/js/*.js`. Actúan como puentes entre módulos y handlers inline, importando módulos y exponiendo funciones al ámbito global (`window.*`) si es necesario.
 - **Mapa Interactivo**: Usa Leaflet.js (CDN) para selector de coordenadas en creación de sucursales.
 - **Tour de Usuario**: Archivos `tour.js` y `onboarding_helpers.js` para guía interactiva.
 - **Sidebar**: Colapsable con persistencia en localStorage (`sidebar-collapsed`).
@@ -52,10 +52,21 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 
 ### Reglas de JS:
 1. **Usar ES6 Modules**: Usá `import` / `export`. No crees funciones globales directamente en los módulos.
-2. **Validación de Datos**: Usá la función `validatePlate` de `static/js/modules/utils.js` para cualquier registro de patentes nuevo. Usá `detectVehicleType` para auto-detectar Moto/Auto/Camioneta desde el formato de patente.
-3. **Modularización de API**: Toda petición a la red debe usar el módulo `api.js`.
-4. **Type Module**: Siempre que añadas un script a un template, usá `<script type="module" src="...">`.
-5. **Confirmaciones**: Usá `showConfirm` de `utils.js` para acciones destructivas.
+2. **Separación Módulo/Puente**: La lógica de negocio va en `modules/`. El script puente solo expone `window.*` y conecta event handlers. Ejemplo:
+   ```js
+   // modules/dashboard-admin.js (lógica)
+   export async function loadUsers() { ... }
+   
+   // dashboard.js (puente)
+   import * as admin from './modules/dashboard-admin.js';
+   window.loadUsers = admin.loadUsers;
+   ```
+3. **Nomenclatura de Módulos**: Usar prefijo `dashboard-` para módulos exclusivos del dashboard admin. Para módulos compartidos (api, utils, ui) no usar prefijo.
+4. **Validación de Datos**: Usá la función `validatePlate` de `static/js/modules/utils.js` para cualquier registro de patentes nuevo. Usá `detectVehicleType` para auto-detectar Moto/Auto/Camioneta desde el formato de patente.
+5. **Modularización de API**: Toda petición a la red debe usar el módulo `api.js`.
+6. **Type Module**: Siempre que añadas un script a un template, usá `<script type="module" src="...">`.
+7. **Confirmaciones**: Usá `showConfirm` de `utils.js` para acciones destructivas.
+8. **Carga de Pestañas**: Usá `switchTab(tabId, element)` para navegar entre pestañas del dashboard. La función gestiona explícitamente `style.display` y clases CSS para evitar problemas de rendering.
 
 ### Reglas de Estilo:
 1. **Dorado AutoPass**: `#C5A059`.
@@ -101,13 +112,18 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 ## Pruebas (Tests)
 Para correr las pruebas tras un cambio:
 ```bash
-.\venv\Scripts\python.exe test_user_flow.py
-.\venv\Scripts\python.exe test_multi_branch_rbac.py
+.\venv\Scripts\python.exe -m pytest tests/ -v
 ```
+Tests disponibles en `tests/`:
+- `test_access_service.py`: Validación de placas, entrada/salida
+- `test_billing_service.py`: Cálculo de tarifas/estadías
+- `test_branch_service.py`: CRUD de sucursales, aforo, pisos
+- `test_reservation_service.py`: Creación, estados de reservas
+- `test_user_service.py`: CRUD de usuarios, roles
 
 ---
 
-## ⚠️ MANDATOS ARQUITECTÓNICOS (V9.5.0+)
+## ⚠️ MANDATOS ARQUITECTÓNICOS (V9.6.0+)
 Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cumplir estrictamente con lo siguiente:
 
 1. **Arquitectura Limpia (Clean Architecture):**
@@ -118,8 +134,9 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
 2. **Cero Hardcoding:**
    - Valores configurables deben ir en `core/config.py` cargados desde `.env`.
 
-3. **Modularización:**
-   - Evitá el acoplamiento circular.
+3. **Modularización Backend y Frontend:**
+   - Backend: Evitá acoplamiento circular. Cada servicio es independiente.
+   - Frontend: Lógica de negocio en `modules/`, puente delgado en scripts raíz. No duplicar lógica entre módulos.
 
 4. **Tipado Seguro:**
    - Usar SIEMPRE Enums (`models/enums.py`). Prohibido usar strings literales para estados o tipos.
@@ -131,3 +148,7 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
    - **Reservas por hora**: La plaza se descuenta al entrar (en `AccessService`) y se libera al salir.
    - **Reservas no horarias (Día/Semana/Quincena/Mes)**: La plaza se descuenta al pagar (en `pay_reservation`) y se libera solo al vencer (`auto_finalize_all_reservations`) o cancelar. La salida física nunca debe modificar el aforo para estas reservas.
    - Usar siempre los helpers `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` en `reservation_service.py` para gestionar estas operaciones.
+
+7. **Consistencia JS:**
+   - No modificar `window.*` desde módulos ES6. Solo los scripts puente asignan al scope global.
+   - Validar que los módulos pasen `node --check` antes de commitear.

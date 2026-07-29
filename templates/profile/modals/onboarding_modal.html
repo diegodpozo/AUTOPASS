@@ -1,0 +1,56 @@
+<!-- ONBOARDING MODAL: GUÍA RÁPIDA PARA USUARIOS SIN VEHÍCULOS -->
+<div id="reservation-onboarding-modal" class="onboarding-overlay-premium" style="display:none;">
+    <div class="onboarding-card-premium">
+        <div class="onboarding-header-premium">
+            <span class="onboarding-badge-premium">Guía de Inicio</span>
+            <h3>BIENVENIDO A AUTOPASS</h3>
+            <p class="subtitle">Seguí estos simples pasos para registrar tu vehículo y realizar tu primera reserva.</p>
+        </div>
+        
+        <div class="onboarding-checklist-premium">
+            <div class="onboarding-checkitem-premium">
+                <div class="icon-circle-premium">
+                    <i class="fas fa-car"></i>
+                </div>
+                <div class="checkitem-content">
+                    <span class="checkitem-title">1. Vinculá tu Patente</span>
+                    <span class="checkitem-desc">Registrá la patente y marca de tu Auto, Moto o Camioneta por única vez.</span>
+                </div>
+            </div>
+            
+            <div class="onboarding-checkitem-premium">
+                <div class="icon-circle-premium">
+                    <i class="fas fa-map-location-dot"></i>
+                </div>
+                <div class="checkitem-content">
+                    <span class="checkitem-title">2. Elegí Punto & Estadía</span>
+                    <span class="checkitem-desc">Seleccioná la sucursal AutoPass más cercana y el tipo de estadía que necesites.</span>
+                </div>
+            </div>
+            
+            <div class="onboarding-checkitem-premium">
+                <div class="icon-circle-premium">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="checkitem-content">
+                    <span class="checkitem-title">3. Obtené tu Pase Digital</span>
+                    <span class="checkitem-desc">Confirmá la reserva, realizá el pago y recibí tu QR único de acceso.</span>
+                </div>
+            </div>
+        </div>
+        
+        <p class="onboarding-skip-link">¿Ya conocés la plataforma? Podés <a href="#" onclick="skipReservationOnboarding(); return false;">omitir la guía</a>.</p>
+        
+        <p class="onboarding-skip-link" style="font-size: 0.72rem; color: #666; text-align: center; margin-top: 8px; line-height: 1.35; max-width: 90%; margin-left: auto; margin-right: auto;">
+            Al utilizar la plataforma, aceptás nuestras 
+            <a href="#" onclick="openLegalModal('privacidad'); return false;" style="color: var(--dorado); text-decoration: underline;">Políticas de Privacidad</a> 
+            y los 
+            <a href="#" onclick="openLegalModal('terminos'); return false;" style="color: var(--dorado); text-decoration: underline;">Términos y Condiciones</a>.
+        </p>
+        
+        <div class="onboarding-footer-premium">
+            <button class="btn btn-outline" onclick="skipReservationOnboarding()">Omitir</button>
+            <button class="btn btn-primary" onclick="startReservationOnboarding()"><i class="fas fa-plus"></i> Registrar Vehículo</button>
+        </div>
+    </div>
+</div>

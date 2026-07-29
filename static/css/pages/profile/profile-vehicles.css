@@ -1,0 +1,144 @@
+/* --- PROFILE VEHICLES --- */
+/* --- ESTADO SIN VEHÍCULOS (EMPTY STATE) --- */
+.empty-state-premium {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+}
+
+.empty-icon-box {
+    width: 80px;
+    height: 80px;
+    background: rgba(197, 160, 89, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.empty-icon-box .main-icon {
+    font-size: 2rem;
+    color: var(--dorado);
+    z-index: 2;
+}
+
+.icon-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--dorado);
+    border-radius: 50%;
+    opacity: 0.15;
+    animation: iconPulse 2s infinite;
+}
+
+@keyframes iconPulse {
+    0% { transform: scale(1); opacity: 0.2; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+.empty-state-premium h4 {
+    color: #fff;
+    font-family: 'Montserrat';
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.empty-state-premium p {
+    color: #888;
+    font-size: 0.9rem;
+    max-width: 250px;
+}
+
+/* ==========================================================================
+   3. VEHICLES SECTION
+   ========================================================================== */
+.register-row-modern {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 35px;
+    animation: slideUp 0.5s ease;
+}
+
+.register-trigger-card {
+    background: var(--dorado);
+    color: var(--negro);
+    border: none;
+    border-radius: 12px;
+    padding: 0 35px;
+    height: 95px; /* Altura aumentada significativamente */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.register-trigger-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(197, 160, 89, 0.4);
+}
+
+.register-trigger-card i {
+    font-size: 1rem;
+    transition: 0.4s;
+}
+
+.register-trigger-card.open i {
+    transform: rotate(180deg);
+}
+
+.form-container-collapsible.open {
+    max-height: 800px !important;
+    opacity: 1 !important;
+    margin-bottom: 30px !important;
+}
+
+/* Selector de Vehículo con Iconos FontAwesome */
+.select-vehicle-type {
+    font-family: 'Font Awesome 6 Free', 'Montserrat', sans-serif !important;
+    font-weight: 900 !important;
+    color: #fff !important;
+}
+
+.select-vehicle-type option {
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 700 !important;
+    background-color: #0a0a0a !important;
+    color: #fff !important;
+}
+
+.select-vehicle-type option:disabled {
+    color: #666 !important;
+}
+
+.register-trigger-card.active {
+    background: var(--dorado) !important;
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+}
+
+@media (max-width: 500px) {
+    .flex-wrap-mobile {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    .flex-wrap-mobile .form-group-premium {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+    .register-trigger-card {
+        padding: 0 20px;
+        height: 70px;
+        font-size: 0.85rem;
+    }
+}
+
