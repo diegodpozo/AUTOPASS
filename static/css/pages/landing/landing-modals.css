@@ -1,0 +1,178 @@
+/* ==========================================================================
+   AUTOPASS - LANDING CONTACT FORMS, RESERVA ANIMATION & RESPONSIVE MODALS
+   ========================================================================== */
+
+/* ESTILOS DE PÁGINA DE CONTACTO Y FORMULARIOS */
+.contact-layout {
+    max-width: 1200px; 
+    margin: 0 auto;
+    padding: 160px 20px 80px;
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 60px;
+}
+
+.contact-info-section h1 {
+    font-family: 'Montserrat'; 
+    font-size: 3rem; 
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, var(--blanco) 30%, var(--dorado) 100%);
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+}
+
+.contact-info-section > p {
+    color: #888; 
+    font-size: 1.1rem; 
+    line-height: 1.8; 
+    margin-bottom: 40px;
+}
+
+.contact-item {
+    display: flex; 
+    align-items: center; 
+    gap: 20px; 
+    margin-bottom: 25px;
+}
+
+.contact-icon-box {
+    width: 50px; 
+    height: 50px;
+    background: var(--gris-card); 
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    color: var(--dorado); 
+    font-size: 1.2rem; 
+    flex-shrink: 0;
+}
+
+.contact-label {
+    margin: 0; 
+    font-family: 'Montserrat'; 
+    font-size: 0.9rem;
+    color: var(--dorado); 
+    text-transform: uppercase;
+}
+
+.contact-value {
+    margin: 5px 0 0; 
+    color: #eee; 
+    font-size: 1rem;
+}
+
+/* ANIMACIÓN PARA EL FORMULARIO DE RESERVA (Versión Landing) */
+#reserva-form-container {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.4s ease, margin 0.3s ease;
+    margin: 0 auto;
+    background: var(--gris-card);
+    border-radius: 15px;
+    border: 1px solid var(--border-light);
+    border-top: 2px solid var(--dorado);
+    padding: 25px;
+}
+
+#reserva-form-container.open {
+    max-height: 800px;
+    opacity: 1;
+    margin: 0 auto 40px;
+}
+
+/* DISEÑO RESPONSIVO Y ADAPTACIONES GLOBAL DE LANDING */
+@media (max-width: 768px) {
+    .hero h1, .hero p, .leyenda-carrusel {
+        display: none !important;
+    }
+
+    .page-hero h1 { font-size: 2.2rem; }
+    .page-hero { min-height: 35vh; padding: 120px 20px 40px; }
+    
+    .feature-grid { grid-template-columns: 1fr; gap: 30px; }
+    
+    header { 
+        padding: 15px 5%; 
+        justify-content: flex-start;
+        gap: 20px;
+    }
+    
+    .header-logo-img { height: 45px; }
+    .logo-text { font-size: 1.2rem; }
+
+    .seccion-carrusel { height: 500px; }
+    .hero { height: 500px; }
+    
+    .footer-grid { grid-template-columns: 1fr; gap: 30px; text-align: center; }
+    .footer-col { display: flex; flex-direction: column; align-items: center; }
+    .footer-social { justify-content: center; }
+    .footer-logo { justify-content: center; }
+    .footer-contact-item { justify-content: center; display: flex; align-items: center; gap: 10px; }
+
+    .cta-group {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+        max-width: 300px;
+    }
+    .cta-group .btn { width: 100%; }
+
+    .feature-single-column {
+        padding: 30px 20px;
+        margin-bottom: 40px;
+    }
+
+    .feature-single-column h2 {
+        font-size: 1.8rem;
+    }
+
+    .feature-list-horizontal {
+        gap: 15px;
+    }
+
+    .feature-list-horizontal li {
+        font-size: 0.85rem;
+        padding: 8px 15px;
+    }
+
+    .section-title-center {
+        font-size: 1.8rem;
+        margin: 60px 0 40px;
+        letter-spacing: 2px;
+    }
+
+    .grid-adheridos {
+        gap: 20px;
+        margin-bottom: 50px;
+    }
+
+    .public-content-section {
+        padding: 40px 5%;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-hero h1 { font-size: 1.8rem; letter-spacing: 2px; }
+    .page-hero p { font-size: 0.95rem; }
+
+    .feature-single-column h2 { font-size: 1.5rem; }
+    .feature-single-column p { font-size: 0.95rem; }
+
+    .feature-list-horizontal {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .feature-list-horizontal li {
+        justify-content: center;
+    }
+
+    .section-title-center { font-size: 1.5rem; }
+    
+    .card-center { padding: 35px 20px; }
+    .icon-large { font-size: 2.8rem; }
+}

@@ -79,8 +79,8 @@ tr:hover .user-actions {
         background: rgba(255, 255, 255, 0.02);
         border: 1px solid var(--border-light);
         border-radius: 20px;
-        margin-bottom: 30px;
-        padding: 15px;
+        margin-bottom: 20px;
+        padding: 12px 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
@@ -89,13 +89,15 @@ tr:hover .user-actions {
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         position: relative;
         padding-left: 45% !important;
-        padding-top: 15px !important;
-        padding-bottom: 15px !important;
-        text-align: left; /* Alineado a la izquierda para mejor lectura del valor */
-        min-height: 50px;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
+        padding-right: 12px !important;
+        text-align: left;
+        min-height: 46px;
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        box-sizing: border-box;
     }
 
     td:last-child {
@@ -106,7 +108,9 @@ tr:hover .user-actions {
     td::before {
         position: absolute;
         left: 15px;
-        width: 40%;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 38%;
         white-space: nowrap;
         text-align: left;
         font-weight: 800;
@@ -114,7 +118,41 @@ tr:hover .user-actions {
         color: var(--dorado);
         text-transform: uppercase;
         content: attr(data-label);
-        opacity: 0.8;
+        opacity: 0.85;
+        letter-spacing: 1px;
+    }
+
+    /* En la card móvil, alineación de columnas internas */
+    td .flex-col {
+        align-items: flex-start !important;
+        text-align: left !important;
+    }
+
+    td[data-label="Contacto"] .user-contact {
+        word-break: break-all;
+        overflow-wrap: anywhere;
+        font-size: 0.8rem;
+        text-align: left !important;
+        max-width: 100%;
+    }
+
+    td[data-label="Acciones"] {
+        min-height: 55px;
+    }
+
+    td[data-label="Acciones"] .user-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+        max-width: 100%;
+    }
+
+    td[data-label="Acciones"] .btn-icon-premium.sm {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 0.85rem !important;
+        flex-shrink: 0;
     }
 
     /* Solo centramos el botón de Info al final, pero mantenemos su etiqueta para que se sepa qué es */
@@ -122,11 +160,12 @@ tr:hover .user-actions {
         justify-content: flex-end;
     }
 
-    .user-actions, .flex-row {
-        justify-content: center !important;
-        width: 100%;
+    .user-actions, .actions-reveal {
+        opacity: 1 !important;
+        transform: none !important;
+        pointer-events: all !important;
     }
-    
+
     .btn-delete-promo {
         opacity: 1 !important;
     }

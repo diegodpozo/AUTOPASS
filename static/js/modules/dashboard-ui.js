@@ -78,11 +78,22 @@ export async function initVideoStreams() {
 
 export function switchTab(tabId, element) {
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    element.classList.add('active');
+    if (element) {
+        element.classList.add('active');
+    } else {
+        const item = document.querySelector(`.nav-item[onclick*="'${tabId}'"]`);
+        if (item) item.classList.add('active');
+    }
     
-    document.querySelectorAll('.tab-view').forEach(view => view.classList.remove('active'));
+    document.querySelectorAll('.tab-view').forEach(view => {
+        view.classList.remove('active');
+        view.style.display = 'none';
+    });
     const activeTab = document.getElementById(`tab-${tabId}`);
-    if (activeTab) activeTab.classList.add('active');
+    if (activeTab) {
+        activeTab.classList.add('active');
+        activeTab.style.display = '';
+    }
     
     const titleEl = document.getElementById('view-title');
     if (titleEl) {

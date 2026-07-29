@@ -2,13 +2,12 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.5.0 - Julio 2026)
-- **Fix ALPR "ya está en la sede"**: Verificación corregida de duplicados de entrada.
-- **Cortesía 10 min en ALPR y manual**: Salida sin costo dentro de los primeros 10 minutos.
-- **Ocupación solo física**: Las reservas no horarias ya no pre-ocupan plaza. El aforo refleja solo autos físicamente presentes.
-- **Virtual Time Service**: Sistema de tiempo offset para testing sin alterar el reloj real.
+## Últimas Actualizaciones (v9.6.0 - Julio 2026)
+- **Modularización ALPR (`alpr/`)**: Refactorización del servicio de visión artificial monolítico en el paquete `alpr/` (`config`, `preprocessor`, `video_streamer`, `ws_client`, `ocr_engine`, `runner`) manteniendo compatibilidad total.
+- **Servicio de Reportes (`ReportService`)**: Abstracción de analítica financiera y transacciones en `services/report_service.py`, aligerando `routes/reports.py` (Clean Architecture).
+- **Rutas de Sistema (`routes/system/`)**: División del módulo `system.py` en submódulos especializados (`common.py`, `health.py`, `cameras.py`, `video.py`).
 
-## Últimas Actualizaciones Previas (v9.4.0 - Julio 2026)
+## Últimas Actualizaciones Previas (v9.5.0 - Julio 2026)
 - **Monitoreo DVR CCTV Dinámico**: Nuevo visor de cámaras en grilla auto-ajustable de tamaño uniforme.
 - **Identificadores HUD**: Indicador técnico explícito de la función de cada cámara en el visor.
 - **Panel Flotante de DVR**: Reemplazo de la botonera superior por un panel flotante semi-transparente.
@@ -49,8 +48,8 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 
 ## Tecnologías
 
-- **Backend:** FastAPI (Python 3.9+)
-- **Base de Datos:** SQLAlchemy (SQLite/PostgreSQL)
-- **Frontend:** Vanilla JS, CSS Moderno, Jinja2, Chart.js.
+- **Backend:** FastAPI (Python 3.14)
+- **Base de Datos:** SQLAlchemy (SQLite)
+- **Frontend:** Vanilla JS (ES6 Modules), CSS Moderno, Jinja2, Chart.js.
 - **IoT:** Paho-MQTT.
-- **IA:** OpenCV + EasyOCR (Deep Learning).
+- **IA:** OpenCV + EasyOCR + PyTorch (Deep Learning).

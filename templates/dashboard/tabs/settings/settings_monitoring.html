@@ -1,0 +1,27 @@
+                <!-- SECCIÓN 3: CONFIGURACIÓN DE CÁMARAS (v9.1.0) -->
+                <div id="set-section-monitoring" class="settings-section" style="display: none;">
+                    <div class="flex-row justify-between items-center mb-20" style="padding-top: 10px;">
+                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">Administración de dispositivos y canales</span>
+                        <button class="btn btn-premium sm" onclick="showCreateCameraModal()" title="Agregar nueva cámara">
+                            <i class="fas fa-plus"></i> AGREGAR CÁMARA
+                        </button>
+                    </div>
+
+                    <div class="table-container mt-10">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cámara</th>
+                                    <th>Tipo / Categoría</th>
+                                    <th>Dirección IP / Origen</th>
+                                    <th>Estado Proceso</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="camera-settings-list">
+                                <tr><td colspan="5" class="text-center py-20">Cargando dispositivos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+

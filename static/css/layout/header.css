@@ -203,9 +203,15 @@
     .header-right {
         display: flex;
         justify-content: center;
-        gap: 15px;
+        align-items: center;
+        gap: 10px;
         width: 100%;
         margin-top: 5px;
+        flex-wrap: wrap;
+    }
+
+    .notif-header-bell {
+        order: 3;
     }
 
     .header-icon-box {

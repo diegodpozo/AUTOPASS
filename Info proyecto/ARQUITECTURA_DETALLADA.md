@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.5.0).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.6.0).
 
 ---
 
@@ -10,21 +10,45 @@ El proyecto sigue una organización basada en la separación de responsabilidade
 
 ```text
 AUTOPASS/
-├── core/ # Infraestructura (Configuración, Seguridad, DB, MQTT)
-├── models/ # Entidades SQLAlchemy + Enums (Domain Layer)
-├── schemas/ # Validación Pydantic
-├── routes/ # Endpoints (Transport Layer - Delgados)
-├── services/ # Inteligencia de Negocio (Service Layer - Gruesos)
-├── tests/ # Pruebas unitarias (pytest)
-└── main.py # Orquestador
+├── alpr/               # Paquete modular ALPR (Vision, Preprocessing, Consensus, WS Streamer)
+├── core/               # Infraestructura (Configuración, Seguridad, DB, MQTT, Seed)
+├── models/             # Entidades SQLAlchemy + Enums (Domain Layer)
+├── schemas/            # Validación Pydantic
+├── routes/             # Endpoints (Transport Layer - Delgados, organizados por submódulos)
+│   ├── admin/          # Admin CRUD (users, branches, reservations, promotions, operations, settings, virtual_time)
+│   ├── user/           # User portal (profile, vehicles, reservations, balance, fidelization, notifications)
+│   ├── parking/        # Access control (access, status, utils)
+│   └── system/         # System management (health, cameras, video, common)
+├── services/           # Inteligencia de Negocio (11 servicios)
+├── repositories/       # Data Access (user, reservation)
+├── scripts/            # Utilidades (migraciones, backfill, test, patch)
+├── tests/              # Pruebas unitarias (pytest)
+├── static/
+│   ├── js/
+│   │   ├── modules/    # 29 módulos ES6 (lógica de negocio frontend)
+│   │   └── *.js        # 9 scripts puente (bridge: módulos → window.*)
+│   ├── css/            # 36 archivos CSS organizados en base/layout/components/pages
+│   └── images/
+├── templates/
+│   ├── dashboard/
+│   │   ├── tabs/       # 8 pestañas del dashboard admin + settings/ (4 sub-archivos)
+│   │   └── modals/     # Modales reutilizables (user_modals, branch_modals, promotion_modal)
+│   ├── profile/
+│   │   ├── tabs/       # 6 pestañas del portal de usuario
+│   │   └── modals/     # Modales reutilizables (onboarding_modal, modals.html)
+│   ├── components/     # 7 componentes reutilizables (navbar, footer, modales globales, etc.)
+│   └── emails/         # 4 templates de email transaccional
+├── firmware_esp32/     # Firmware ESP32 (MQTT + barrera + LCD)
+└── main.py             # Orquestador FastAPI
 ```
 
 ---
 
-## Capas y Responsabilidades (v9.2.0)
+## Capas y Responsabilidades (v9.6.0)
 
 ### 1. Capa de Servicios (Service Layer)
 Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
+- **`ReportService`**: **Nuevo** — Encapsula toda la analítica financiera por sucursal/medio de pago/tipo de vehículo, agregaciones de ingresos proyectados, historial unificado de transacciones (UNION ALL) y auditoría de accesos.
 - **`AccessService`**: Gestiona toda la lógica de validación de patentes, salidas y QR. Integra con el aforo: no incrementa ocupación si el vehículo tiene reserva no horaria pagada (ya se reservó en el pago); no libera en salida si la reserva sigue vigente. Incluye verificación de duplicados (evita registrar dos entradas seguidas) y cortesía de 10 minutos en salida.
 - **`ReservationService`**: Gestiona el ciclo de vida de las reservas (creación, edición, cancelación con reembolsos proporcionales, simulación de refund). Al pagar una reserva no horaria, reserva la plaza en el aforo. Al cancelar o vencer, la libera. Incluye auto-activación y auto-cancelación.
 - **`BillingService`**: Motor de tarifas y cálculo de puntos por fidelización.
@@ -41,6 +65,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **Gestión Vertical:** Soporte para sucursales con múltiples pisos (`ParkingFloor`), cada uno con capacidad independiente para autos y motos (`capacidad`, `capacidad_motos`, `ocupacion`, `ocupacion_motos`).
 - **Fidelización:** Modelos `Promotion` (catálogo de beneficios con icono, categoría, sucursal, activa) y `Coupon` (cupones generados por canje de puntos).
 - **Configuración Dinámica:** Modelo `Settings` (key-value store con `valor_str` para configuraciones de texto como IPs de cámaras, y aislamiento por sucursal).
+- **Cámaras:** Modelo `ParkingCamera` (nombre, tipo, source/URL, sucursal, activa) para gestión dinámica de cámaras de seguridad.
 - **Normalización de Patentes:** Campo `normalized_patente` en `AccessLog` para búsquedas eficientes, con funciones `normalize_plate`/`format_plate` en `routes/parking/utils.py` que soportan formatos MERCOSUR (Argentina, Brasil, Uruguay, Paraguay).
 - **Soporte Trimodal:** `VehicleType` incluye `CAMIONETA` además de `AUTO` y `MOTO`. `ParkingAforo` y `ParkingFloor` tienen `capacidad_motos` y `ocupacion_motos`.
 - **Pago y Liquidación:** `AccessLog` incluye `costo_estadia`, `metodo_pago` ('DIGITAL'/'CAJA'), `fecha_pago`, `pago_confirmado`, `floor_id`.
@@ -50,7 +75,75 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 
 ---
 
-### 3. Capa de Servicio ALPR (`alpr_service.py`)
+### 3. Capa Frontend (Dashboard y Portal Modular - v9.6.0)
+
+#### Patrón de Arquitectura: Bridge Pattern
+El frontend utiliza un patrón de **dos capas** para compatibilizar módulos ES6 modernos con handlers `onclick` inline en HTML:
+
+```
+modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →  HTML onclick
+```
+
+- **Módulos ES6** (`static/js/modules/`): Contienen la lógica real. Exportan funciones puras.
+- **Scripts Puente** (`static/js/*.js`): Importan módulos y exponen funciones al scope global (`window.*`) para compatibilidad con handlers inline en templates Jinja2.
+- **Carga**: Los scripts puente se cargan como `<script type="module">`. Los módulos se cargan en paralelo y se resuelven automáticamente.
+
+#### Módulos Frontend (`static/js/modules/` - 29 módulos ES6)
+
+| Módulo | Responsabilidad |
+|---|---|
+| `dashboard-ui.js` | Navegación de pestañas (`switchTab`), reloj, salud del sistema, streaming de video, gestión de cámaras |
+| `dashboard-stats.js` | Estadísticas en vivo, logs recientes, tabla de ocupación, WebSocket de aforo, cancelar estadía |
+| `dashboard-admin.js` | Orquestador del admin (importa sub-módulos y expone funciones globales) |
+| `dashboard-admin-users.js` | CRUD usuarios (crear, editar, toggle-block, balance, password, rol, eliminar) |
+| `dashboard-admin-branches.js` | Fachada de sucursales (re-exporta `crud` y `floors`) |
+| `dashboard-admin-branches-crud.js` | CRUD sucursales, mapa Leaflet, geocoding, logo upload |
+| `dashboard-admin-branches-floors.js` | Gestión de pisos (`ParkingFloor`), aforos por piso y Planta Baja |
+| `dashboard-admin-settings.js` | Configuración del sistema, monitoreo de cámaras, control de barreras |
+| `dashboard-finance.js` | Reportes financieros, filtros por fecha/tipo/método de pago, exportación CSV |
+| `dashboard-operations.js` | Operaciones manuales (ingreso/egreso manual, abrir barrera, cancelar estadía) |
+| `dashboard-reservations.js` | CRUD reservas admin, confirmar pago, cancelar, actualizar |
+| `dashboard-promotions.js` | CRUD promociones, selección de iconos |
+| `monitoreo-live.js` | Monitoreo CCTV en vivo, grilla dinámica de cámaras, controles DVR |
+| `api.js` | Cliente HTTP centralizado (GET/POST/PUT/PATCH/DELETE) con manejo de tokens y errores |
+| `utils.js` | Utilidades: `formatNum`, `toTitle`, `formatDate`, `showToast`, `showConfirm`, `validatePlate`, `detectVehicleType` |
+| `ui.js` | UI base: modales, sidebar, toggle password, logout |
+| `virtual-time.js` | Tiempo virtual del servidor (sync periódica cada 60s) |
+| `notifications.js` | Polling de notificaciones (30s), badge de unread |
+| `auth.js` | Validación de forms, login, registro, recuperación |
+| `profile.js` | Portal de usuario: perfil, puntos, promociones, historial |
+| `reservas.js` | Fachada de reservas (re-exporta `form`, `list`, `actions`, `pass`) |
+| `reservas-form.js` | Formulario de reserva, datepickers, estimador dinámico de tarifas, validaciones |
+| `reservas-list.js` | Renderizado de tarjetas de reservas activas, timeline, historial y paginación |
+| `reservas-actions.js` | Pago de reservas con saldo y cancelación con simulación de reembolso |
+| `reservas-pass.js` | Renderizado de Pase Digital, QR `QRCode.js` y compartir ticket |
+| `vehicles.js` | CRUD vehículos de usuario, auto-detección de tipo |
+| `landing.js` | Landing page: mapa Leaflet, carrusel, header scroll |
+| `tour.js` | Tour guiado interactivo |
+| `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
+
+#### Scripts Puente del Dashboard (`static/js/dashboard.js`)
+El orquestador centraliza todas las asignaciones `window.*`:
+- Navegación: `window.switchTab`, `window.switchMonitorTab`, `window.toggleMobileNav`
+- Datos: `window.loadTabData` (dispatcher por pestaña), `window.loadAdminReservations`, `window.loadFinanceData`
+- CRUD: `window.handleAdminCreateUser`, `window.handleCreateBranch`, `window.handleCreatePromotion`
+- Configuración: `window.switchSettingsTab`, `window.switchRatesTab`, `window.refreshSystemDiagnostics`
+- Reservas: `window.openEditReservationModal`, `window.cancelReservationAdmin`
+
+#### Estilo CSS
+Organización en 4 capas bajo `static/css/` (36 archivos totales):
+- `base/`: Variables CSS, reset, tipografía, utilidades (4 archivos)
+- `layout/`: Sidebar, header, grid (3 archivos)
+- `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
+- `pages/`: landing, profile, dashboard, contacto, legal (5 archivos + 15 sub-archivos)
+  - `pages/dashboard/`: `dashboard-base.css`, `dashboard-cards.css`, `dashboard-live.css`, `dashboard-settings.css`, `dashboard-tables.css`
+  - `pages/landing/`: `landing-features.css`, `landing-hero.css`, `landing-map.css`, `landing-modals.css`, `landing-nav.css`
+  - `pages/profile/`: `profile-base.css`, `profile-points.css`, `profile-reservations.css`, `profile-tour.css`, `profile-vehicles.css`
+- `style.css` (raíz): Estilos globales adicionales
+
+---
+
+### 4. Capa de Servicio ALPR (`alpr_service.py`)
 Servicio independiente de visión artificial que corre como proceso hijo:
 - **Sistema de Consenso:** Buffer de votos (múltiples lecturas de la misma patente) antes de enviar al backend para evitar falsos positivos.
 - **Detección de QR:** Escaneo directo de QR en cada frame (Quick QR), alternativa a patente.
@@ -63,7 +156,7 @@ Servicio independiente de visión artificial que corre como proceso hijo:
 - **Des-duplicación:** Cooldown por patente para no re-enviar la misma.
 - **Modos de Operación:** Configurado via `GATE_TYPE`: `entrada`, `salida`, `patente`, `qr`, `predio`. Fuente de video via `VIDEO_SOURCE` (webcam, RTSP, HTTP MJPEG).
 
-### 4. Capa de Hardware (ESP32)
+### 5. Capa de Hardware (ESP32)
 - **Firmware:** `firmware_esp32/firmware_esp32.ino`
 - **Comunicación:** MQTT con CallbackAPIVersion.VERSION2.
 - **Tópicos configurables vía .env:** `MQTT_TOPIC_ENTRADA`, `MQTT_TOPIC_SALIDA`.
@@ -76,3 +169,4 @@ Servicio independiente de visión artificial que corre como proceso hijo:
 4. **Configuración Centralizada:** Cualquier parámetro, constante o URL externa debe ser configurada en `core/config.py` y, si es necesario, provista vía `.env`.
 5. **Aforo por Reserva:** Las reservas no horarias (Día/Semana/Quincena/Mes) descuentan la plaza al iniciar el período (fecha_inicio) y la liberan solo al vencer o cancelar. Las reservas por hora descuentan al entrar físicamente.
 6. **Liberación Diferida:** La salida física nunca libera plazas de reservas no horarias — la liberación la gestiona exclusivamente `auto_finalize_all_reservations` al vencer el período.
+7. **Modularización Frontend:** Toda lógica de negocio JS debe ir en `static/js/modules/` como módulo ES6 exportado. Los scripts puente en `static/js/` solo deben contener asignaciones `window.*` y event wiring. Nunca poner lógica de negocio en scripts puente.

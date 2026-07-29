@@ -1,0 +1,20 @@
+<!-- FLOATING CONTROLS (MONITOREO CCTV) -->
+<div class="cctv-floating-controls">
+    <div class="branch-selector-container" id="branch-selector-wrapper" style="display: none; align-items: center;">
+        <select id="monitoring-branch-select" onchange="changeBranch(this.value)">
+            <option value="">Cargando sedes...</option>
+        </select>
+    </div>
+    <div id="sucursal-label-wrapper" style="display: none; background: #111; border: 1px solid #333; padding: 4px 10px; border-radius: 2px;">
+        <span id="sucursal-display-name" style="font-size: 0.75rem; color: #00bcd4; font-weight: bold; letter-spacing: 0.5px;"></span>
+    </div>
+    <button class="cctv-floating-btn" onclick="window.location.href='/dashboard'" title="Volver al Panel">
+        <i class="fas fa-sign-out-alt"></i> VOLVER
+    </button>
+    <div class="cctv-floating-clock" id="monitoreo-clock">00:00:00</div>
+</div>
+
+<!-- DYNAMIC CCTV GRID -->
+<div class="cctv-grid-container" id="cctv-grid">
+    <!-- Rendered dynamically -->
+</div>

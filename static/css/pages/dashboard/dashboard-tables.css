@@ -1,0 +1,332 @@
+/* ==========================================================================
+   AUTOPASS - DASHBOARD TABLES, MODALS & CONTROLS STYLING
+   ========================================================================== */
+
+/* REEMBOLSOS & FILAS ESPECIALES */
+.row-refund {
+    background: rgba(239, 68, 68, 0.03) !important;
+}
+
+.row-refund:hover {
+    background: rgba(239, 68, 68, 0.06) !important;
+}
+
+.text-danger { color: #ef4444 !important; }
+
+.badge-danger-light {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    display: inline-block;
+}
+
+.badge-success-light {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    display: inline-block;
+}
+
+.badge-warning-light {
+    background: rgba(197, 160, 89, 0.1);
+    color: var(--dorado);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    border: 1px solid rgba(197, 160, 89, 0.2);
+    display: inline-block;
+}
+
+/* MIN ANCHOS DE COLUMNAS DE TABLA */
+#tab-admin-reservations table th:nth-child(2),
+#tab-admin-reservations table td:nth-child(2),
+#tab-live table th:nth-child(2),
+#tab-live table td:nth-child(2),
+#tab-finance table th:nth-child(2),
+#tab-finance table td:nth-child(2) {
+    min-width: 110px;
+}
+
+#tab-branches table th:nth-child(2),
+#tab-branches table td:nth-child(2) {
+    min-width: 200px;
+}
+
+#tab-branches table th:nth-child(4),
+#tab-branches table td:nth-child(4) {
+    min-width: 130px;
+}
+
+#tab-branches .row-premium td {
+    padding: 15px 10px;
+}
+
+/* Columna de Vehículo en Ocupación */
+#occupancy-content table th:nth-child(1),
+#occupancy-content table td:nth-child(1) {
+    min-width: 110px;
+}
+
+#tab-admin-reservations table th:nth-child(3),
+#tab-admin-reservations table td:nth-child(3) {
+    min-width: 160px;
+}
+
+.chart-wrapper { padding: 25px; height: 350px; }
+
+/* CONTROLES Y FILTROS */
+.select-premium-sm {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border-light);
+    color: var(--dorado);
+    padding: 6px 35px 6px 30px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C5A059'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px;
+}
+
+.filter-group-premium {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-group-premium i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--dorado);
+    font-size: 0.8rem;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+/* AUDIT MODAL LAYOUT */
+.capture-audit-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+    padding: 10px;
+}
+
+.capture-image-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #000;
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.audit-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.image-placeholder-premium {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    color: #444;
+    border: 2px dashed #222;
+    border-radius: 12px;
+}
+
+.image-placeholder-premium i {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.image-placeholder-premium span {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    opacity: 0.5;
+}
+
+.capture-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+}
+
+.info-grid-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+}
+
+.info-item i {
+    color: var(--dorado);
+    font-size: 1.1rem;
+    margin-top: 3px;
+}
+
+.info-item label {
+    font-size: 0.6rem;
+    color: #666;
+    display: block;
+    text-transform: uppercase;
+}
+
+.info-item span {
+    font-size: 0.85rem;
+    color: #eee;
+    font-weight: 600;
+}
+
+@media (max-width: 800px) {
+    .capture-audit-grid { grid-template-columns: 1fr; }
+}
+
+/* ICON PICKER */
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    background: rgba(0,0,0,0.3);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.icon-option {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #666;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.icon-option:hover {
+    background: rgba(197, 160, 89, 0.1);
+    color: var(--dorado);
+    border-color: rgba(197, 160, 89, 0.3);
+}
+
+.icon-option.active {
+    background: var(--dorado);
+    color: #000;
+    box-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+}
+
+@media (max-width: 400px) {
+    .icon-picker-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* PROMOTIONS UI ENHANCEMENTS */
+.btn-delete-promo {
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+tr:hover .btn-delete-promo {
+    opacity: 1;
+}
+
+.btn-icon-premium.sm.danger {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-icon-premium.sm.danger:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+/* LOGOS DE SUCURSAL EN TABLA */
+.branch-logo-sm { 
+    width: 35px; 
+    height: 35px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    overflow: hidden; 
+    background: transparent;
+    border: none;
+}
+
+.branch-logo-sm img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+
+/* SWITCH PREMIUM */
+.switch-premium { position: relative; display: inline-block; width: 44px; height: 20px; }
+.switch-premium input { opacity: 0; width: 0; height: 0; }
+.slider-premium { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+.slider-premium:before { position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 2px; background-color: #888; transition: .4s; border-radius: 50%; }
+.switch-premium input:checked + .slider-premium { background-color: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.3); }
+.switch-premium input:checked + .slider-premium:before { transform: translateX(24px); background-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+.switch-premium input:focus + .slider-premium { box-shadow: 0 0 1px #10b981; }
+
+/* RESPONSIVE TABLES & FILTERS */
+@media (max-width: 768px) {
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .select-premium-sm {
+        padding: 6px 28px 6px 24px;
+        font-size: 0.7rem;
+    }
+
+    .filter-group-premium i {
+        font-size: 0.7rem;
+        left: 8px;
+    }
+
+    .search-box-premium.sm input {
+        font-size: 0.75rem;
+    }
+}
