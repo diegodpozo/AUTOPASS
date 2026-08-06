@@ -4,15 +4,17 @@
 
 ### Desarrollo
 - **SO**: Windows 10/11
-- **Python**: 3.9+
+- **Python**: 3.14 (probado en Windows)
 - **Base de datos**: SQLite (archivo local)
+- **Migraciones**: Alembic (`alembic/`, migración inicial `c833a3129266_initial_schema`)
 - **RAM**: 4 GB mínimo (8 GB recomendado para ALPR con EasyOCR)
 - **Cámara**: Webcam o archivo de video para simulación
 
 ### Producción
 - **SO**: Windows Server 2019+ / Ubuntu 20.04+
-- **Python**: 3.9+
+- **Python**: 3.14 (probado en Windows)
 - **Base de datos**: PostgreSQL 13+
+- **Migraciones**: Alembic
 - **RAM**: 8 GB mínimo (16 GB recomendado para múltiples cámaras ALPR)
 - **GPU**: Opcional (PyTorch puede usar CUDA para acelerar EasyOCR)
 - **Disco**: 50 GB SSD mínimo

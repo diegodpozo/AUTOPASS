@@ -5,7 +5,7 @@ load_dotenv()
 
 class Settings:
     PROJECT_NAME: str = "AUTOPASS Professional"
-    VERSION: str = "9.6.0"
+    VERSION: str = "9.9.0"
     
     # CONTACTO
     CONTACT_SUPPORT: str = "soporte@autopass.com.ar"

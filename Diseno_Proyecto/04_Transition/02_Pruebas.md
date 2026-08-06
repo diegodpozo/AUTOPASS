@@ -13,30 +13,30 @@ Ubicación: `tests/`
 | `test_reservation_service.py` | ReservationService | Creación, pago, cancelación, reembolso, simulación |
 | `test_user_service.py` | UserService | Creación con normalización de DNI y patente |
 | `test_branch_service.py` | BranchService | CRUD sucursales, pisos, capacity summary |
+| `test_routes_auth.py` | Rutas de autenticación | TestClient sobre login/registro/recuperación |
+| `test_alpr_utils.py` | Utilidades ALPR | Normalización de patentes, preprocesado |
+| `test_notifications.py` | UserNotificationService | Creación, marcado leído, conteo no leídas |
+| `test_support_service.py` | SupportService | Creación de tickets, consulta, respuesta admin |
 
 **Ejecución:**
 ```powershell
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-### 2. Pruebas de Integración (Flujo Completo)
+### 2. Pruebas de Integración (API + Base de Datos)
 
-| Script | Propósito |
-|--------|-----------|
-| `test_user_flow.py` | Flujo completo de usuario: registro → login → crear reserva → pagar → cancelar |
-| `test_multi_branch_rbac.py` | Verificación de aislamiento por sucursal y permisos RBAC |
+Los flujos de extremo a extremo (registro → login → reserva → pago → cancelación) y el aislamiento RBAC por sucursal están cubiertos por la suite con **TestClient de FastAPI** sobre una base SQLite en memoria, principalmente en `test_routes_auth.py` y los tests de servicios que ejercitan la pila completa.
 
-**Ejecución:**
+**Ejecución de toda la suite:**
 ```powershell
-.\venv\Scripts\python.exe test_user_flow.py
-.\venv\Scripts\python.exe test_multi_branch_rbac.py
+.\venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
 ### 3. Pruebas de ALPR (Visión Artificial)
 
 | Script | Propósito |
 |--------|-----------|
-| `test_video.py` | Prueba de fuente de video (cámara o archivo) |
+| `scripts/test_video.py` | Prueba de fuente de video (cámara o archivo) |
 | `alpr_service.py` (modo SCREEN_TO_SCREEN) | Simulación con video de archivo para validar detección |
 
 **Ejecución:**
@@ -79,17 +79,17 @@ Ubicación: `tests/`
 ### TC-05: Cancelación de reserva con reembolso
 1. Crear y pagar reserva de SEMANA
 2. Cancelar a los 2 días
-3. Verificar: reembolso proporcional, liberación de aforo
+3. Verificar: reembolso proporcional (sin modificación de aforo, ocupación solo física)
 
 ### TC-06: RBAC - Admin Local no puede crear Admin Global
 1. Autenticar como LOCAL_ADMIN
 2. Intentar cambiar rol de usuario a ADMIN
 3. Verificar: 403 Forbidden
 
-### TC-07: Worker - Liberación automática al vencer
+### TC-07: Worker - Finalización automática al vencer
 1. Crear reserva que vence en 1 minuto (usar virtual time)
 2. Avanzar tiempo + ejecutar worker manualmente
-3. Verificar: reserva COMPLETADA, aforo liberado
+3. Verificar: reserva COMPLETADA (sin liberación de aforo, ocupación solo física)
 
 ### TC-08: Monitoreo - Grilla dinámica
 1. Configurar 1 cámara → verificar grilla 1x1
@@ -132,9 +132,17 @@ El sistema incluye un **Virtual Time Service** (`services/time_service.py`) que 
 # Consultar estado
 GET /v1/admin/virtual-time/status
 
-# Avanzar tiempo (ej: 2 horas)
+# Avanzar tiempo (ej: 2 horas) — campos minutos/horas/días
 POST /v1/admin/virtual-time/advance
-Body: { "seconds": 7200 }
+Body: { "hours": 2 }
+
+# Avanzar 30 minutos
+POST /v1/admin/virtual-time/advance
+Body: { "minutes": 30 }
+
+# Establecer offset exacto (segundos desde tiempo real)
+POST /v1/admin/virtual-time/set
+Body: { "offset_seconds": 7200 }
 
 # Resetear
 POST /v1/admin/virtual-time/reset

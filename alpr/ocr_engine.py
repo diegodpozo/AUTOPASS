@@ -159,7 +159,8 @@ class ALPREngine:
         try:
             _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             img_b64 = base64.b64encode(buffer).decode('utf-8')
-            endpoint = "/v1/access/validate-plate" if GATE_TYPE in ("entrada", "patente") else "/v1/access/exit-plate"
+            is_entry_gate = "salida" not in GATE_TYPE and "egreso" not in GATE_TYPE
+            endpoint = "/v1/access/validate-plate" if is_entry_gate else "/v1/access/exit-plate"
             if type == "qr":
                 endpoint = "/v1/access/validate-qr"
             payload_key = "plate" if type != "qr" else "qr_data"

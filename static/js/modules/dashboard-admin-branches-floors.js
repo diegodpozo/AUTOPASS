@@ -18,14 +18,18 @@ export function showBranchFloors(id) {
 
     const floorsSumAutos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_actual, 0);
     const floorsSumMotos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_motos, 0);
+    const floorsSumCamionetas = (b.floors || []).reduce((acc, f) => acc + (f.ocupacion_camionetas || 0), 0);
     
     const pbOccAutos = Math.max(0, b.ocupacion_autos_total - floorsSumAutos);
     const pbOccMotos = Math.max(0, b.ocupacion_motos_total - floorsSumMotos);
+    const pbOccCamionetas = Math.max(0, (b.ocupacion_camionetas_total || 0) - floorsSumCamionetas);
     
     const floorsCapAutos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_total, 0);
     const floorsCapMotos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_motos, 0);
+    const floorsCapCamionetas = (b.floors || []).reduce((acc, f) => acc + (f.capacidad_camionetas || 0), 0);
     const pbCapAutos = b.capacidad_autos_total - floorsCapAutos;
     const pbCapMotos = b.capacidad_motos_total - floorsCapMotos;
+    const pbCapCamionetas = (b.capacidad_camionetas_total || 0) - floorsCapCamionetas;
 
     let rows = `
         <tr class="row-premium" style="background: rgba(197,160,89,0.05);">
@@ -45,6 +49,11 @@ export function showBranchFloors(id) {
                     ${pbOccMotos} / ${pbCapMotos}
                 </span>
             </td>
+            <td class="text-center">
+                <span class="text-xs ${pbOccCamionetas >= pbCapCamionetas ? 'text-danger' : 'text-success'} font-bold">
+                    ${pbOccCamionetas} / ${pbCapCamionetas}
+                </span>
+            </td>
         </tr>
     `;
 
@@ -60,6 +69,11 @@ export function showBranchFloors(id) {
                 <td class="text-center">
                     <span class="text-xs ${f.ocupacion_motos >= f.capacidad_motos ? 'text-danger' : ''}">
                         ${formatNum(f.ocupacion_motos)} / ${formatNum(f.capacidad_motos)}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <span class="text-xs ${(f.ocupacion_camionetas || 0) >= (f.capacidad_camionetas || 5) ? 'text-danger' : ''}">
+                        ${formatNum(f.ocupacion_camionetas || 0)} / ${formatNum(f.capacidad_camionetas || 5)}
                     </span>
                 </td>
             </tr>
@@ -103,24 +117,28 @@ export async function loadFloors() {
 
     const pbCapAutos = resSettings.ok ? (resSettings.data.capacidad_total || 20) : 20;
     const pbCapMotos = resSettings.ok ? (resSettings.data.capacidad_motos || 10) : 10;
+    const pbCapCamionetas = resSettings.ok ? (resSettings.data.capacidad_camionetas ?? 5) : 5;
     
     let cardsHtml = `
-        <div class="level-block pb" id="level-block-pb">
-            <div class="level-indicator">
-                <span class="level-code">PB</span>
-            </div>
-            <div class="level-main-content" style="justify-content: center;">
-                <div class="level-stats-grid" style="gap: 50px;">
-                    <div class="stat-item">
-                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-car mr-10 text-dorado" style="font-size: 1.2rem;"></i> Autos</span>
-                        <div class="stat-val-box">
-                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled style="width: 100px; font-size: 1.6rem;">
+        <div class="level-block pb" id="level-block-pb" style="grid-template-columns: 1fr auto;">
+            <div class="level-main-content" style="justify-content: space-around; width: 100%;">
+                <div class="level-stats-grid" style="gap: 40px; width: 100%; justify-content: space-around;">
+                    <div class="stat-item items-center text-center">
+                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-car mr-8 text-dorado" style="font-size: 1.2rem;"></i> Autos</span>
+                        <div class="stat-val-box justify-center">
+                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled style="width: 100px; font-size: 1.6rem; text-align: center;">
                         </div>
                     </div>
-                    <div class="stat-item">
-                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-motorcycle mr-10 text-dorado" style="font-size: 1.2rem;"></i> Motos</span>
-                        <div class="stat-val-box">
-                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled style="width: 100px; font-size: 1.6rem;">
+                    <div class="stat-item items-center text-center">
+                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-motorcycle mr-8 text-dorado" style="font-size: 1.2rem;"></i> Motos</span>
+                        <div class="stat-val-box justify-center">
+                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled style="width: 100px; font-size: 1.6rem; text-align: center;">
+                        </div>
+                    </div>
+                    <div class="stat-item items-center text-center">
+                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-truck-pickup mr-8 text-dorado" style="font-size: 1.2rem;"></i> Camionetas</span>
+                        <div class="stat-val-box justify-center">
+                            <input type="number" id="pb-cap-camionetas" class="stat-val-input" value="${pbCapCamionetas}" min="0" disabled style="width: 100px; font-size: 1.6rem; text-align: center;">
                         </div>
                     </div>
                 </div>
@@ -163,6 +181,13 @@ export async function loadFloors() {
                             <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-motorcycle mr-5"></i> Motos</span>
                             <div class="stat-val-box">
                                 <input type="number" id="cap-motos-${f.id}" class="stat-val-input" value="${f.capacidad_motos}" min="0" disabled>
+                                <span class="stat-unit">u.</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-truck-pickup mr-5"></i> Camionetas</span>
+                            <div class="stat-val-box">
+                                <input type="number" id="cap-camionetas-${f.id}" class="stat-val-input" value="${f.capacidad_camionetas ?? 5}" min="0" disabled>
                                 <span class="stat-unit">u.</span>
                             </div>
                         </div>
@@ -216,13 +241,15 @@ export function toggleLevelEdit(id) {
 export async function savePBCapacity() {
     const capAutos = document.getElementById('pb-cap-autos').value;
     const capMotos = document.getElementById('pb-cap-motos').value;
+    const capCamionetas = document.getElementById('pb-cap-camionetas').value;
 
-    if (!capAutos || !capMotos) return showToast('Completá las plazas de PB');
+    if (!capAutos || !capMotos || !capCamionetas) return showToast('Completá las plazas de PB');
 
     const resAutos = await api.post(`/admin/settings/prices?clave=capacidad_total&valor=${capAutos}`);
     const resMotos = await api.post(`/admin/settings/prices?clave=capacidad_motos&valor=${capMotos}`);
+    const resCamionetas = await api.post(`/admin/settings/prices?clave=capacidad_camionetas&valor=${capCamionetas}`);
 
-    if (resAutos.ok && resMotos.ok) {
+    if (resAutos.ok && resMotos.ok && resCamionetas.ok) {
         showToast('Capacidad de Planta Baja actualizada', 'success');
         loadFloors();
     } else {
@@ -233,8 +260,9 @@ export async function savePBCapacity() {
 export async function updateFloorCapacity(id) {
     const capAutos = document.getElementById(`cap-autos-${id}`).value;
     const capMotos = document.getElementById(`cap-motos-${id}`).value;
+    const capCamionetas = document.getElementById(`cap-camionetas-${id}`).value;
 
-    const res = await api.patch(`/admin/floors/${id}?cap_autos=${capAutos}&cap_motos=${capMotos}`);
+    const res = await api.patch(`/admin/floors/${id}?cap_autos=${capAutos}&cap_motos=${capMotos}&cap_camionetas=${capCamionetas}`);
     if (res.ok) {
         showToast('Capacidad de nivel actualizada', 'success');
         loadFloors();
@@ -248,6 +276,7 @@ export function openAddFloorModal() {
     document.getElementById('floor-nombre').value = '';
     document.getElementById('floor-cap-autos').value = '20';
     document.getElementById('floor-cap-motos').value = '10';
+    if (document.getElementById('floor-cap-camionetas')) document.getElementById('floor-cap-camionetas').value = '5';
     document.getElementById('floor-modal-title').innerText = 'NUEVO NIVEL';
     document.getElementById('btn-floor-submit').innerText = 'CREAR NIVEL';
     if (window.openModal) window.openModal('modal-add-floor');
@@ -270,6 +299,7 @@ export async function openEditFloorModal(id) {
     document.getElementById('floor-nombre').value = floor.nombre;
     document.getElementById('floor-cap-autos').value = floor.capacidad_total;
     document.getElementById('floor-cap-motos').value = floor.capacidad_motos;
+    if (document.getElementById('floor-cap-camionetas')) document.getElementById('floor-cap-camionetas').value = floor.capacidad_camionetas ?? 5;
     
     document.getElementById('floor-modal-title').innerText = 'EDITAR NIVEL';
     document.getElementById('btn-floor-submit').innerText = 'GUARDAR CAMBIOS';
@@ -295,13 +325,14 @@ export async function handleCreateFloor(event) {
     const payload = {
         nombre: document.getElementById('floor-nombre').value,
         capacidad_total: parseInt(document.getElementById('floor-cap-autos').value),
-        capacidad_motos: parseInt(document.getElementById('floor-cap-motos').value)
+        capacidad_motos: parseInt(document.getElementById('floor-cap-motos').value),
+        capacidad_camionetas: parseInt(document.getElementById('floor-cap-camionetas')?.value || '5')
     };
 
     btn.disabled = true;
     let res;
     if (editId) {
-        res = await api.patch(`/admin/floors/${editId}?cap_autos=${payload.capacidad_total}&cap_motos=${payload.capacidad_motos}`);
+        res = await api.patch(`/admin/floors/${editId}?cap_autos=${payload.capacidad_total}&cap_motos=${payload.capacidad_motos}&cap_camionetas=${payload.capacidad_camionetas}`);
     } else {
         res = await api.post(`/admin/${branch.id}/floors`, payload);
     }

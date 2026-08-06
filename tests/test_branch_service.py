@@ -35,3 +35,5 @@ def test_get_branch_capacity_summary(db):
     assert summary["capacidad_autos_total"] == 30
     # 10 (PB) + 5 (PISO) = 15
     assert summary["capacidad_motos_total"] == 15
+    # 5 (PB) + 5 (PISO) = 10
+    assert summary["capacidad_camionetas_total"] == 10

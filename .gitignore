@@ -13,3 +13,5 @@ Thumbs.db
 .DS_Store
 data/
 *.db
+alpr_debug/
+captured_images/

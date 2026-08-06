@@ -19,7 +19,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 
 ### 3. `services/` (Cerebro)
 - **IMPORTANTE**: No pongas lógica de cálculo de precios o validación de stock en los routers. Creá un método estático en un servicio dentro de `services/`.
-- **Aforo por Reserva**: Las reservas no horarias (Día/Semana/Quincena/Mes) descuentan la plaza del aforo al iniciar el período (`fecha_inicio`), no al pagar. Si la reserva es futura, el worker (`_process_started_reservations`) descuenta la plaza cuando arranca. La salida física NO libera la plaza — la liberación ocurre al vencer (`auto_finalize_all_reservations`) o al cancelar. Para reservas por hora, la plaza se descuenta al entrar y se libera al salir.
+- **Aforo Solo Físico (v9.5+)**: Las reservas no horarias (Día/Semana/Quincena/Mes) **no** descuentan plaza del aforo ni al pagar ni al iniciar el período. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como **no-ops**. El conteo de ocupación lo maneja exclusivamente el ALPR/ingreso manual (incrementa en ENTRADA, decrementa en SALIDA) reflejando solo vehículos físicamente presentes. No modificar este comportamiento sin revisar el refactor v9.5.0.
 
 ---
 
@@ -28,8 +28,8 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 | Prefijo | Paquete/Archivo | Responsabilidad |
 | :--- | :--- | :--- |
 | `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password. |
-| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay, manual-entry), Settings (prices, capacity), Virtual Time (status, advance, set, reset). |
-| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel), Fidelization (promotions, redeem, points-history), Notifications (CRUD in-app, unread count, mark read). |
+| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay, manual-entry), Settings (prices, capacity), Virtual Time (status, advance, set, reset), Support (listar/responder tickets de soporte). |
+| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel), Fidelization (promotions, redeem, points-history), Notifications (CRUD in-app, unread count, mark read), Support (crear/consultar tickets). |
 | `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay, exit-plate, validate-qr), Status (current-occupancy, branches, ws), Utils (normalize_plate, format_plate). |
 | `/v1/reports`| `routes/reports.py` | Resúmenes financieros y logs de acceso. Controlador delgado delegando a `ReportService`. Filtros: `vehicle_type`, `payment_method`, `date_range`. |
 | `/v1/system` | `routes/system/` | **Modular:** `common.py` (ConnectionManager, stop_all_cameras), `health.py` (/health, /heartbeat, /reset, /virtual-time), `cameras.py` (CRUD y control dinámico), `video.py` (WebSockets, streaming, capturas). |
@@ -47,7 +47,7 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 - **Mapa Interactivo**: Usa Leaflet.js (CDN) para selector de coordenadas en creación de sucursales.
 - **Tour de Usuario**: Archivos `tour.js` y `onboarding_helpers.js` para guía interactiva.
 - **Sidebar**: Colapsable con persistencia en localStorage (`sidebar-collapsed`).
-- **Pase Digital**: Vista de pase con QR en `digital_pass.html`.
+- **Pase Digital**: Vista de pase con QR renderizada como sección/modal dentro de `perfil.html` (módulo `reservas-pass.js`), no como template separado.
 - **Puntos**: Barra de progreso con metas escalonadas (500/1000/2500/5000/10000).
 
 ### Reglas de JS:
@@ -95,7 +95,7 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 4. **Aforo por Sucursal**: `ParkingAforo` y `ParkingFloor` tienen campo `sucursal` para aislamiento de capacidad.
 
 ## Convenciones de Email
-1. **Templates**: Ubicados en `templates/emails/`, usar Jinja2 con herencia de `templates/emails/base_email.html`.
+1. **Templates**: Ubicados en `templates/emails/`, templates Jinja2 autocontenidos (no existe `base_email.html`): `reservation_confirmation.html`, `reservation_reminder.html`, `reservation_auto_cancelled.html` y `recovery.html`.
 2. **QR en Base64**: Para emails de confirmación, generar QR como imagen base64 embebida.
 3. **Logo**: El logo de la sucursal se incluye como `cid:logo` en el email.
 4. **Servicio**: Usar `services/email_service.py` con `send_email` que soporta HTML y attachments.
@@ -120,6 +120,8 @@ Tests disponibles en `tests/`:
 - `test_branch_service.py`: CRUD de sucursales, aforo, pisos
 - `test_reservation_service.py`: Creación, estados de reservas
 - `test_user_service.py`: CRUD de usuarios, roles
+- `test_support_service.py`: CRUD de tickets de soporte, permisos por rol
+- `test_notifications.py`: CRUD de notificaciones, respuestas de soporte, borrado y filtros
 
 ---
 
@@ -144,10 +146,10 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
 5. **Testing Obligatorio:**
    - Todo nuevo servicio debe incluir pruebas en `tests/`.
 
-6. **Aforo Diferenciado por Tipo de Reserva:**
-   - **Reservas por hora**: La plaza se descuenta al entrar (en `AccessService`) y se libera al salir.
-   - **Reservas no horarias (Día/Semana/Quincena/Mes)**: La plaza se descuenta al pagar (en `pay_reservation`) y se libera solo al vencer (`auto_finalize_all_reservations`) o cancelar. La salida física nunca debe modificar el aforo para estas reservas.
-   - Usar siempre los helpers `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` en `reservation_service.py` para gestionar estas operaciones.
+6. **Aforo Solo Físico (v9.5+):**
+   - La ocupación se gestiona **exclusivamente** con los eventos de acceso (ALPR/ingreso manual): ENTRADA incrementa `ocupacion_actual`, SALIDA la decrementa. Refleja solo vehículos físicamente presentes.
+   - Las reservas no horarias (Día/Semana/Quincena/Mes) **no** pre-ocupan plaza. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` en `reservation_service.py` son **no-ops** conservados por compatibilidad; no reintroducir la pre-ocupación sin autorización.
+   - Usar los helpers solo si se revierte el comportamiento v9.5.0.
 
 7. **Consistencia JS:**
    - No modificar `window.*` desde módulos ES6. Solo los scripts puente asignan al scope global.

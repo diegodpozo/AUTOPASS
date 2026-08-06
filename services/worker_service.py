@@ -89,6 +89,14 @@ class WorkerService:
                 if not user or not user.email:
                     continue
 
+                # Evitar notificaciones duplicadas si ya fue notificado previamente
+                notif_existente = db.query(models.UserNotification).filter(
+                    models.UserNotification.reserva_id == res.id,
+                    models.UserNotification.tipo.in_(["REMINDER_PAID", "REMINDER_UNPAID"])
+                ).first()
+                if notif_existente:
+                    continue
+
                 pagada = res.estado_pago == PaymentStatus.PAGADO
 
                 # CREAR NOTIFICACION IN-APP

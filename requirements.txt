@@ -84,3 +84,5 @@ uvicorn==0.42.0
 watchfiles==1.1.1
 websockets==16.0
 Werkzeug==3.1.8
+alembic==1.19.0
+httpx==0.28.1

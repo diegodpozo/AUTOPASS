@@ -1,7 +1,7 @@
 # Arquitectura del Sistema ALPR — AUTOPASS
 
 ## Visión General
-El servicio ALPR (`alpr_service.py`) es un proceso independiente que corre como hijo del backend FastAPI. Se encarga de capturar video, procesar frames, detectar patentes y códigos QR, y comunicar los eventos al backend.
+El servicio ALPR está modularizado en el **paquete `alpr/`** (`config.py`, `preprocessor.py`, `video_streamer.py`, `ws_client.py`, `ocr_engine.py`, `runner.py`). `alpr_service.py` actúa como wrapper/entrypoint que lanza el `runner` y se ejecuta como proceso hijo del backend FastAPI. Se encarga de capturar video, procesar frames, detectar patentes y códigos QR, y comunicar los eventos al backend.
 
 ## Modos de Operación
 
@@ -21,13 +21,14 @@ La fuente de video se configura con `VIDEO_SOURCE` (puede ser `0` para webcam lo
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        alpr_service.py                               │
+│                       paquete alpr/ (módulos)                         │
+│  alpr_service.py (wrapper) + runner.py (orquestador)                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌──────────────────┐    ┌──────────────────┐    ┌────────────────┐ │
-│  │  Frame Capture    │───►│  Motion Detection│───►│  Queue         │ │
-│  │  (OpenCV)         │    │  (Skip static)   │    │  maxsize=12    │ │
-│  │                   │    │                  │    │  drop-oldest   │ │
+│  │ video_streamer   │───►│  preprocessor    │───►│  Queue         │ │
+│  │ (Frame Capture)  │    │ Motion Detection │    │  maxsize=12    │ │
+│  │  (OpenCV)        │    │  (Skip static)   │    │  drop-oldest   │ │
 │  └──────────────────┘    └──────────────────┘    └───────┬────────┘ │
 │                                                           │          │
 │                              ┌────────────────────────────┘          │
@@ -37,19 +38,21 @@ La fuente de video se configura con `VIDEO_SOURCE` (puede ser `0` para webcam lo
 │  │                                                         │           │
 │  │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐ │           │
 │  │  │ ROI         │─►│ EasyOCR      │─►│ Consensus    │ │           │
-│  │  │ Detection   │  │ (OCR)        │  │ Vote Buffer  │ │           │
-│  │  │             │  │              │  │ min_votes=2  │ │           │
+│  │  │ Detection   │  │ (OCR ['en']) │  │ Vote Buffer  │ │           │
+│  │  │ (preproc.)  │  │              │  │ min_votes=2  │ │           │
 │  │  └─────────────┘  └──────────────┘  └──────┬───────┘ │           │
 │  │                                             │          │           │
 │  │  ┌─────────────┐  ┌──────────────┐  ┌──────▼───────┐ │           │
 │  │  │ Quick QR    │  │ QR Decode    │  │ Event Send   │ │           │
-│  │  │ Detection   │─►│ (pyzbar)     │─►│ (HTTP POST)  │ │           │
-│  │  └─────────────┘  └──────────────┘  └──────────────┘ │           │
+│  │  │ Detection   │─►│ cv2.QRCode   │─►│ (HTTP POST)  │ │           │
+│  │  │             │  │ Detector     │  └──────────────┘ │           │
+│  │  └─────────────┘  └──────────────┘                    │           │
 │  └───────────────────────────────────────────────────────┘           │
 │                                                                      │
 │  ┌───────────────────────────────────────────────────────┐           │
 │  │              Video WebSocket Thread                    │           │
-│  │  Envía frames en tiempo real a /v1/system/ws/video/  │           │
+│  │  ws_client: envía frames en tiempo real a             │           │
+│  │  /v1/system/ws/video/{camera_id}                      │           │
 │  └───────────────────────────────────────────────────────┘           │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -57,13 +60,13 @@ La fuente de video se configura con `VIDEO_SOURCE` (puede ser `0` para webcam lo
 ## Componentes Clave
 
 ### 1. Captura de Frames (Frame Capture)
-- Fuente: Cámara IP (RTSP/HTTP) o archivo de video
+- Módulo `video_streamer.py`: Fuente Cámara IP (RTSP/HTTP) o archivo de video
 - Resolución configurable
 - FPS limitado para no saturar el procesamiento
 - Soporta múltiples fuentes simultáneas
 
 ### 2. Detección de Movimiento (Motion Detection)
-- Compara frames consecutivos
+- Módulo `preprocessor.py`; compara frames consecutivos (`ALPR_MOTION_THRESHOLD`, default 3000)
 - Si no hay cambios significativos, salta el frame
 - Reduce drásticamente la carga de procesamiento OCR
 - Configurable: `ALPR_FORCE_OCR` para forzar OCR incluso sin movimiento
@@ -86,31 +89,30 @@ Estrategias múltiples (en orden):
 - Elimina texto "REPUBLICA ARGENTINA" que confunde al OCR
 
 ### 6. OCR (EasyOCR)
-- Motor de Deep Learning
-- Idiomas: español, inglés (soporta caracteres latinos)
+- Módulo `ocr_engine.py`; motor de Deep Learning `easyocr.Reader(['en'])` (alfanumérico de patentes)
 - Umbral de confianza configurable: `ALPR_CONFIDENCE_THRESHOLD=0.45`
 - Intervalo entre OCRs: `ALPR_OCR_INTERVAL=0.35s`
 
 ### 7. Sistema de Consenso (Vote Buffer)
 - Buffer temporal de lecturas de la misma patente
-- Ventana de consenso: N lecturas iguales en período de tiempo
+- Ventana de consenso: `ALPR_CONSENSUS_WINDOW` (default 4.0s) para N lecturas iguales
 - Si confianza > threshold: acepta directo
-- Si confianza baja: requiere `ALPR_CONSENSUS_REQUIRED=2` votos iguales
+- Si confianza baja: requiere `ALPR_CONSENSUS_REQUIRED=2` votos iguales en la ventana
 
 ### 8. Quick QR Detection
 - Escaneo de QR en cada frame (previo al OCR)
-- Usa pyzbar para decodificación rápida
+- Usa `cv2.QRCodeDetector()` de OpenCV para decodificación rápida
 - Cooldown/Debounce configurable (`ALPR_COOLDOWN`, default 10s) para evitar eventos duplicados
 
 ### 9. Cooldown entre validaciones
-- `COOLDOWN_SECONDS` (default 6s): Evita procesar la misma patente en ventana corta
+- `COOLDOWN_SECONDS` (default 10s): Evita procesar la misma patente en ventana corta
 - `last_validated_plate`: Almacena última patente validada con timestamp
 - Si la misma patente se detecta dentro del cooldown, se descarta
 
 ### 10. Video WebSocket
-- Envía frames JPEG comprimidos en tiempo real
-- Endpoint: `/v1/system/ws/video/{gate_id}`
-- Token JWT como query param para autenticación
+- Módulo `ws_client.py`; envía frames JPEG comprimidos en tiempo real
+- Endpoint: `/v1/system/ws/video/{camera_id}`
+- Token JWT como query param (`?token=...`) para autenticación
 
 ## Formato de Patentes Soportado
 
@@ -130,10 +132,12 @@ Estrategias múltiples (en orden):
 | `VIDEO_SOURCE` | `0` | Fuente de video (0=webcam, URL RTSP, URL HTTP) |
 | `ALPR_OCR_INTERVAL` | 0.35 | Intervalo entre procesamientos OCR (segundos) |
 | `ALPR_FRAMEQ_MAXSIZE` | 12 | Tamaño máximo de la cola de frames |
-| `ALPR_CONFIDENCE_THRESHOLD` | 0.20 | Umbral de confianza para aceptar lectura directa |
+| `ALPR_CONFIDENCE_THRESHOLD` | 0.45 | Umbral de confianza para aceptar lectura directa |
 | `ALPR_CONSENSUS_REQUIRED` | 2 | Votos requeridos para consenso con baja confianza |
+| `ALPR_CONSENSUS_WINDOW` | 4.0 | Ventana de tiempo (s) para acumular votos de consenso |
+| `ALPR_MOTION_THRESHOLD` | 3000 | Umbral de diferencia de píxeles para detectar movimiento |
 | `ALPR_FORCE_OCR` | false | Forzar OCR incluso sin detección de movimiento |
-| `ALPR_COOLDOWN` | 6 | Segundos de cooldown entre validaciones de la misma patente |
+| `ALPR_COOLDOWN` | 10 | Segundos de cooldown entre validaciones de la misma patente |
 
 ## Recomendaciones Operativas ALPR
 

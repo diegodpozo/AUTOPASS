@@ -25,8 +25,10 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
     if aforo:
         config_dict["capacidad_total"] = aforo.capacidad_total
         config_dict["capacidad_motos"] = aforo.capacidad_motos
+        config_dict["capacidad_camionetas"] = getattr(aforo, "capacidad_camionetas", 5)
         config_dict["ocupacion_actual"] = aforo.ocupacion_actual
         config_dict["ocupacion_motos"] = aforo.ocupacion_motos
+        config_dict["ocupacion_camionetas"] = getattr(aforo, "ocupacion_camionetas", 0)
     
     return config_dict
 
@@ -35,19 +37,22 @@ def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin:
     """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR."""
     sucursal = admin.sucursal if admin.rol != "admin" else None
 
-    if clave in ["capacidad_total", "capacidad_motos"]:
+    if clave in ["capacidad_total", "capacidad_motos", "capacidad_camionetas"]:
         aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
         if aforo:
             if clave == "capacidad_total": aforo.capacidad_total = int(valor)
-            else: aforo.capacidad_motos = int(valor)
+            elif clave == "capacidad_motos": aforo.capacidad_motos = int(valor)
+            elif clave == "capacidad_camionetas": aforo.capacidad_camionetas = int(valor)
             db.commit()
             return {"status": "ok"}
         else:
             db.add(models.ParkingAforo(
                 capacidad_total=int(valor) if clave == "capacidad_total" else 20,
                 capacidad_motos=int(valor) if clave == "capacidad_motos" else 10,
+                capacidad_camionetas=int(valor) if clave == "capacidad_camionetas" else 5,
                 ocupacion_actual=0,
                 ocupacion_motos=0,
+                ocupacion_camionetas=0,
                 ultima_actualizacion=datetime.datetime.now().isoformat(),
                 sucursal=sucursal
             ))

@@ -25,11 +25,32 @@ export function initBranchMap() {
     const initialCoords = [-34.5888, -58.3900];
     branchMap = window.L.map('branch-map-picker').setView(initialCoords, 13);
 
-    window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap',
+    const googleStreets = window.L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; <a href="https://www.google.com/maps" target="_blank">Google Maps</a>'
+    });
+
+    const googleHybrid = window.L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; <a href="https://www.google.com/maps" target="_blank">Google Maps</a>'
+    });
+
+    const cartoDark = window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20,
         subdomains: 'abcd',
-        maxZoom: 20
-    }).addTo(branchMap);
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+    });
+
+    googleStreets.addTo(branchMap);
+
+    const baseMaps = {
+        "🗺️ Google Calles": googleStreets,
+        "🌍 Google Híbrido": googleHybrid,
+        "🌙 CartoDB Oscuro": cartoDark
+    };
+    window.L.control.layers(baseMaps, null, { position: 'topleft' }).addTo(branchMap);
 
     branchMap.on('click', function(e) {
         updateBranchMarker(e.latlng.lat, e.latlng.lng);

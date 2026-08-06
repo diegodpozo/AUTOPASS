@@ -1,0 +1,94 @@
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from core.database import Base
+from services.user_notification_service import UserNotificationService
+from services.worker_service import WorkerService
+from services.reservation_service import ReservationService
+from services.support_service import SupportService
+import models
+
+@pytest.fixture
+def db_session():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    yield session
+    session.close()
+
+def test_user_notification_crud(db_session: Session):
+    # 1. Crear usuario de prueba
+    user = models.User(
+        email="notif_test@example.com",
+        password_hash="hash",
+        nombre="Test",
+        apellido="Notif",
+        dni="11223344",
+        rol="user"
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    # 2. Crear notificacion
+    notif = UserNotificationService.create_notification(
+        db_session, user.id, "BALANCE_RECHARGED", "Carga OK", "Se cargaron $1000"
+    )
+    assert notif.id is not None
+    assert notif.leido is False
+
+    # 3. Contar unread
+    unread = UserNotificationService.get_unread_count(db_session, user.id)
+    assert unread == 1
+
+    # 4. Marcar leida
+    res_read = UserNotificationService.mark_as_read(db_session, notif.id, user.id)
+    assert res_read is True
+
+    unread_after = UserNotificationService.get_unread_count(db_session, user.id)
+    assert unread_after == 0
+
+    # 5. Borrar leidas
+    deleted_count = UserNotificationService.clear_read_notifications(db_session, user.id)
+    assert deleted_count == 1
+
+    total = UserNotificationService.get_total_count(db_session, user.id)
+    assert total == 0
+
+def test_support_ticket_response_notification(db_session: Session):
+    user = models.User(
+        email="support_notif@example.com",
+        password_hash="hash",
+        nombre="Ana",
+        apellido="Gomez",
+        dni="55667788",
+        rol="user"
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    # Crear ticket de soporte
+    ticket = models.SupportTicket(
+        user_id=user.id,
+        categoria="Pagos",
+        asunto="Problema con mi saldo",
+        mensaje="No se acredito",
+        estado="Pendiente"
+    )
+    db_session.add(ticket)
+    db_session.commit()
+
+    # Responder ticket
+    admin_user = models.User(email="admin_test@autopass.com", rol="admin")
+    db_session.add(admin_user)
+    db_session.commit()
+
+    SupportService.update_ticket_status(
+        db_session, admin_user, ticket.id, "Resuelto", "Se ha acreditado tu saldo correctamente."
+    )
+
+    # Verificar que el usuario recibio la notificacion
+    notifs = UserNotificationService.get_user_notifications(db_session, user.id)
+    assert len(notifs) == 1
+    assert notifs[0].tipo == "SUPPORT_RESPONSE"
+    assert "Resuelto" in notifs[0].mensaje or "acreditado" in notifs[0].mensaje

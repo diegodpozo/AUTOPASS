@@ -45,9 +45,11 @@
 | POST | `/settings/prices` | Actualizar tarifas | LOCAL_ADMIN+ |
 | GET | `/virtual-time` | Ver tiempo virtual | USER+ |
 | GET | `/virtual-time/status` | Estado del tiempo virtual | USER+ |
-| POST | `/virtual-time/advance` | Adelantar tiempo (testing) | USER+ |
-| POST | `/virtual-time/set` | Establecer offset de tiempo | USER+ |
+| POST | `/virtual-time/advance` | Adelantar tiempo (testing, minutos/horas/días) | USER+ |
+| POST | `/virtual-time/set` | Establecer offset de tiempo (offset_seconds) | USER+ |
 | POST | `/virtual-time/reset` | Resetear tiempo virtual | USER+ |
+| GET | `/support-tickets` | Listar tickets de soporte (filtro sucursal/estado) | STAFF+ |
+| PATCH | `/support-tickets/{ticket_id}` | Actualizar estado/responder ticket | STAFF+ |
 
 ## Prefijo: `/v1/user`
 | Método | Ruta | Función | Rol Requerido |
@@ -78,6 +80,10 @@
 | GET | `/profile/notifications/unread` | No leídas | USER+ |
 | PATCH | `/profile/notifications/{id}/read` | Marcar leída | USER+ |
 | POST | `/profile/notifications/read-all` | Leer todas | USER+ |
+| DELETE | `/profile/notifications/{id}` | Eliminar notificación | USER+ |
+| DELETE | `/profile/notifications/clear-read` | Eliminar notificaciones leídas | USER+ |
+| POST | `/support-tickets` | Crear ticket de soporte | USER+ |
+| GET | `/support-tickets` | Ver mis tickets de soporte | USER+ |
 
 ## Prefijo: `/v1/parking`
 | Método | Ruta | Función | Rol Requerido |

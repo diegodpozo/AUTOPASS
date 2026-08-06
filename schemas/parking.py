@@ -40,7 +40,7 @@ class FloorResponse(FloorBase):
     branch_id: int
     ocupacion_actual: int = 0
     ocupacion_motos: int = 0
-    capacidad_camionetas: int = 0
+    capacidad_camionetas: int = 5
     ocupacion_camionetas: int = 0
 
     class Config:
@@ -81,6 +81,8 @@ class BranchPublicResponse(BranchBase):
     capacidad_total: int = 20
     ocupacion_motos: int = 0
     capacidad_motos: int = 10
+    ocupacion_camionetas: int = 0
+    capacidad_camionetas: int = 5
     floors: List[FloorResponse] = []
 
     class Config:

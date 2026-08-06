@@ -8,7 +8,7 @@
 |----------|-----------|-----------|
 | `GET /v1/system/health` | Estado general del sistema | JSON con DB, MQTT, ALPR heartbeat status |
 | `GET /v1/system/heartbeat` | Heartbeat de nodos ALPR | Timestamp actualizado |
-| `GET /v1/virtual-time/status` | Estado del tiempo virtual | Offset aplicado, tiempo real vs virtual |
+| `GET /v1/admin/virtual-time/status` | Estado del tiempo virtual | Offset aplicado, tiempo real vs virtual |
 
 ### Sistema de Heartbeat
 - Cada cámara/nodo ALPR envía heartbeat a `POST /v1/system/heartbeat` cada N segundos

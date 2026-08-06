@@ -18,7 +18,7 @@ def get_notifications(
     """LISTA LAS NOTIFICACIONES DEL USUARIO LOGUEADO."""
     notifications = UserNotificationService.get_user_notifications(db, current_user.id, limit, offset)
     unread = UserNotificationService.get_unread_count(db, current_user.id)
-    total = len(notifications) + offset  # APROXIMADO
+    total = UserNotificationService.get_total_count(db, current_user.id)
     return schemas.NotificationListResponse(
         notifications=[
             schemas.NotificationResponse.model_validate(n) for n in notifications
@@ -52,3 +52,20 @@ def mark_all_as_read(
 ):
     """MARCA TODAS LAS NOTIFICACIONES COMO LEIDAS."""
     UserNotificationService.mark_all_as_read(db, current_user.id)
+
+@router.delete("/profile/notifications/{notif_id}", status_code=204)
+def delete_notification(
+    notif_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """ELIMINA UNA NOTIFICACION ESPECIFICA."""
+    UserNotificationService.delete_notification(db, notif_id, current_user.id)
+
+@router.delete("/profile/notifications/clear-read", status_code=204)
+def clear_read_notifications(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """ELIMINA TODAS LAS NOTIFICACIONES MARCADAS COMO LEIDAS."""
+    UserNotificationService.clear_read_notifications(db, current_user.id)

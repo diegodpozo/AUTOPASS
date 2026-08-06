@@ -265,6 +265,17 @@ class ReservationService:
         }
         EmailService.send_reservation_confirmation(user.email, user.nombre, res_info)
 
+        try:
+            from services.user_notification_service import UserNotificationService
+            UserNotificationService.create_notification(
+                db, user.id, "RESERVATION_CONFIRMED",
+                f"Reserva #{res.id} confirmada",
+                f"Se abonó con éxito tu reserva en {res.sucursal_nombre} por ${res.monto_total:,.2f}.",
+                res.id
+            )
+        except Exception as e:
+            print(f"[ERROR NOTIF] No se pudo notificar pago de reserva: {e}")
+
         return {"status": "ok", "message": "Reserva abonada con éxito", "puntos_ganados": puntos_ganados}
 
     @staticmethod
@@ -363,4 +374,20 @@ class ReservationService:
             _liberar_plaza_en_aforo(db, res)
         
         msg = f"Reserva cancelada. Reembolso: ${monto_a_reembolsar}" if monto_a_reembolsar > 0 else "Reserva cancelada sin reembolso."
+        
+        try:
+            from services.user_notification_service import UserNotificationService
+            if target_user:
+                notif_msg = f"Tu reserva #{res.id} en {res.sucursal_nombre} fue cancelada."
+                if monto_a_reembolsar > 0:
+                    notif_msg += f" Se reembolsaron ${monto_a_reembolsar:,.2f} a tu saldo."
+                UserNotificationService.create_notification(
+                    db, target_user.id, "RESERVATION_CANCELLED",
+                    f"Reserva #{res.id} cancelada",
+                    notif_msg,
+                    res.id
+                )
+        except Exception as e:
+            print(f"[ERROR NOTIF] No se pudo notificar cancelacion de reserva: {e}")
+
         return {"status": "ok", "message": msg, "reembolso": monto_a_reembolsar}

@@ -1,13 +1,11 @@
-#  Guía de Inicialización: AUTOPASS
+# 🚀 Guía de Inicialización: AUTOPASS
 
 Sigue estos pasos para poner en marcha el sistema bajo la nueva arquitectura modular.
 
 ## 1. Requisitos Previos
-- Python 3.9+ e instalar dependencias:
+- Python 3.14 (probado en Windows) e instalar dependencias:
 ```bash
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
-# O el comando rápido:
-.\venv\Scripts\python.exe -m pip install fastapi uvicorn sqlalchemy python-dotenv jinja2 passlib[bcrypt] python-jose[cryptography] paho-mqtt opencv-python easyocr httpx pytest
 ```
 
 > **⚠️ POST-INSTALACIÓN:** Después de instalar dependencias, ejecutá el siguiente parche para evitar un error de importación de EasyOCR:
@@ -30,15 +28,20 @@ MAINTENANCE_INTERVAL_SECONDS=300  # Intervalo de limpieza de reservas vencidas
 # Email (para recuperación de contraseña y confirmaciones)
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USERNAME=tu_email@gmail.com
+SMTP_USER=tu_email@gmail.com
 SMTP_PASSWORD=tu_password
-EMAIL_FROM=noreply@autopass.com
+SMTP_FROM=noreply@autopass.com.ar
 ```
 
-## 3. Preparación de Base de Datos
-Este paso crea las tablas y los roles iniciales (Admin Global).
+## 3. Preparación y Migración de Base de Datos
+Este paso crea las tablas, los roles iniciales (Admin Global) y sincroniza las migraciones con Alembic:
 ```bash
-python init_db.py
+# 1. Crear tablas y seed inicial
+venv\Scripts\python.exe init_db.py
+
+# 2. Sellar e inspeccionar migraciones de Alembic
+venv\Scripts\alembic.exe stamp head
+venv\Scripts\alembic.exe upgrade head
 ```
 
 ## 4. Credenciales por Defecto
@@ -82,10 +85,10 @@ Las cámaras se configuran y controlan directamente desde el Dashboard en **Ajus
 
 No es necesario ejecutar nada en terminal.
 
-## 5. Verificación de Integridad
-Ejecuta los tests automáticos para asegurar que la modularización está operativa:
+## 6. Verificación de Integridad
+Ejecutá los tests automáticos para asegurar que todos los módulos e integraciones están operativos:
 ```bash
-.\venv\Scripts\python.exe test_user_flow.py
+.\venv\Scripts\python.exe -m pytest tests/ --verbose
 ```
 
 ---

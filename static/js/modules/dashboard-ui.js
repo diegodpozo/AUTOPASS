@@ -1,5 +1,5 @@
 import api from './api.js';
-import { normalizeSystemName, showToast, showConfirm } from './utils.js';
+import { normalizeSystemName, showToast, showConfirm, toTitle } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**
@@ -104,7 +104,8 @@ export function switchTab(tabId, element) {
             'finance': 'Reporte Financiero',
             'promotions': 'Promociones',
             'branches': 'Gestión de Sucursales',
-            'settings': 'Configuración'
+            'settings': 'Configuración',
+            'tickets': 'Soporte & Tickets'
         };
         titleEl.innerText = titles[tabId] || 'Dashboard';
     }
@@ -207,15 +208,28 @@ export function renderCameraSettingsTable(cameras) {
         return;
     }
     
+    const typeLabels = {
+        'PATENTE_INGRESO': 'LECTURA DE PATENTE - ENTRADA',
+        'PATENTE_EGRESO': 'LECTURA DE PATENTE - SALIDA',
+        'QR_INGRESO': 'LECTOR DE QR - ENTRADA',
+        'QR_EGRESO': 'LECTOR DE QR - SALIDA',
+        'PREDIO': 'VIGILANCIA',
+        'ENTRADA': 'LECTURA DE PATENTE - ENTRADA',
+        'SALIDA': 'LECTURA DE PATENTE - SALIDA',
+        'PATENTE': 'LECTURA DE PATENTE - ENTRADA',
+        'QR': 'LECTOR DE QR - ENTRADA'
+    };
+
     listEl.innerHTML = cameras.map(cam => {
         const badgeClass = cam.is_running ? 'badge-success-light' : 'badge-danger-light';
         const badgeText = cam.is_running ? 'ONLINE' : 'OFFLINE';
+        const tipoLabel = typeLabels[(cam.tipo || '').toUpperCase()] || cam.tipo;
         
         return `
             <tr>
-                <td class="text-bold">${cam.nombre}</td>
+                <td class="text-bold">${toTitle(cam.nombre)}</td>
                 <td>
-                    <span class="badge-status badge-info-light">${cam.tipo}</span>
+                    <span class="badge-status badge-info-light">${tipoLabel}</span>
                 </td>
                 <td style="font-family: var(--font-mono); font-size: 0.8rem;">${cam.source}</td>
                 <td>
@@ -225,12 +239,6 @@ export function renderCameraSettingsTable(cameras) {
                 </td>
                 <td>
                     <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                        <button class="btn-action-mini ${cam.is_running ? 'danger' : 'success'}" 
-                                id="settings-cam-btn-control-${cam.id}"
-                                onclick="toggleDynamicCameraService(${cam.id}, '${cam.is_running ? 'stop' : 'start'}')"
-                                title="${cam.is_running ? 'Detener Servicio' : 'Iniciar Servicio'}">
-                            <i class="fas ${cam.is_running ? 'fa-stop' : 'fa-play'}"></i>
-                        </button>
                         <button class="btn-action-mini" 
                                 id="settings-cam-btn-edit-${cam.id}"
                                 title="Editar Cámara">
@@ -302,7 +310,7 @@ export async function showEditCameraModal(cam) {
     if (editIdInput) editIdInput.value = cam.id;
 
     const nombreInput = document.getElementById('camera-nombre');
-    if (nombreInput) nombreInput.value = cam.nombre;
+    if (nombreInput) nombreInput.value = toTitle(cam.nombre);
 
     const tipoSelect = document.getElementById('camera-tipo');
     if (tipoSelect) tipoSelect.value = cam.tipo;
@@ -345,7 +353,7 @@ export async function handleSaveCameraConfig(event) {
     if (btnSubmit) btnSubmit.disabled = true;
 
     const editId = document.getElementById('edit-camera-id').value;
-    const nombre = document.getElementById('camera-nombre').value;
+    const nombre = toTitle(document.getElementById('camera-nombre').value);
     const tipo = document.getElementById('camera-tipo').value;
     const source = document.getElementById('camera-source').value;
     const sucursal = document.getElementById('camera-sucursal').value || null;

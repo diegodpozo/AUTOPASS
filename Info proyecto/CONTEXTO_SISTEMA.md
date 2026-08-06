@@ -1,6 +1,6 @@
 #  Contexto del Sistema: AUTOPASS
 
-Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.6.0).
+Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.9.0).
 
 ## 📐 Arquitectura del Ecosistema
 
@@ -15,8 +15,8 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
 
 2. **Backend Multi-Sucursal (FastAPI - `routes/`)**: 
     *   `routes/auth.py`: Autenticación, registro de usuarios, gestión de tokens JWT, recuperación de contraseña (`/forgot-password`, `/reset-password`).
-    *   `routes/admin/`: **Modular** — `users.py` (CRUD, toggle-block, balance, password, delete, role), `branches.py` (CRUD con logo upload, toggle activo, floors), `reservations.py` (CRUD, confirm-payment, cancel, update), `promotions.py` (CRUD, toggle activo), `operations.py` (manual entry/exit, open-barrier, cancel-stay, manual-entry), `settings.py` (prices, capacity), `virtual_time.py` (status, advance, set, reset).
-    *   `routes/user/`: **Modular** — `profile.py` (get/update profile, change-password), `reservations.py` (CRUD, modify, pay, cancel-simulation, cancel), `vehicles.py` (CRUD), `balance.py` (recharge, payment-history, active-stays, rates), `fidelization.py` (promotions, redeem, points-history), `notifications.py` (CRUD notificaciones in-app, unread count, mark read).
+    *   `routes/admin/`: **Modular** — `users.py` (CRUD, toggle-block, balance, password, delete, role), `branches.py` (CRUD con logo upload, toggle activo, floors), `reservations.py` (CRUD, confirm-payment, cancel, update), `promotions.py` (CRUD, toggle activo), `operations.py` (manual entry/exit, open-barrier, cancel-stay, manual-entry), `settings.py` (prices, capacity), `virtual_time.py` (status, advance, set, reset), `support.py` (listar y responder tickets de soporte).
+    *   `routes/user/`: **Modular** — `profile.py` (get/update profile, change-password), `reservations.py` (CRUD, modify, pay, cancel-simulation, cancel), `vehicles.py` (CRUD), `balance.py` (recharge, payment-history, active-stays, rates), `fidelization.py` (promotions, redeem, points-history), `notifications.py` (CRUD notificaciones in-app, unread count, mark read, delete single, clear read), `support.py` (crear y consultar tickets de soporte).
     *   `routes/parking/`: **Modular** — `access.py` (ALPR/QR, validate-plate, pay-stay, exit-plate, validate-qr), `status.py` (aforo + WebSockets, current-occupancy, branches, ws), `utils.py` (normalize_plate, format_plate, normalize_dni).
     *   `routes/reports.py`: Controlador delgado delegando a `ReportService` para analítica financiera segmentada por sucursal, canal de pago y tipo de vehículo.
     *   `routes/system/`: **Modular** — `common.py` (ConnectionManager, stop_all_cameras), `health.py` (`/health`, `/heartbeat`, `/reset`, `/virtual-time`), `cameras.py` (CRUD y control dinámico de cámaras), `video.py` (WebSockets de video, streaming MJPEG, capturas).
@@ -25,10 +25,11 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
 3.  **Lógica de Negocio (`services/`)**:
     *   `services/access_service.py`: Validación de patentes, gestión de entrada/salida e integración con aforo. Soporta entrada con QR, verificación de deuda antes de salir (`exit_plate`), y validación de duplicados (evita registrar dos entradas seguidas).
     *   `services/report_service.py`: **Nuevo** — Inteligencia de negocio para analítica financiera, historial unificado de transacciones (UNION ALL) y auditoría de accesos.
-    *   `services/reservation_service.py`: Ciclo de vida de reservas (creación, edición, pago, cancelación con reembolsos proporcionales, simulación de cancelación, cleanup). Gestiona la reserva de plazas en el aforo para reservas no horarias.
+    *   `services/reservation_service.py`: Ciclo de vida de reservas (creación, edición, pago, cancelación con reembolsos proporcionales, simulación de cancelación, cleanup). Desde v9.5 las reservas no horarias ya no pre-ocupan plaza: `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como no-ops y el aforo refleja solo vehículos físicamente presentes.
     *   `services/billing_service.py`: Motor de tarifas y cálculo de puntos por fidelización. Tarifas por sucursal, tipo de vehículo (Auto/Moto/Camioneta) y tipo de reserva (Hora/Día/Semana/Quincena/Mes).
     *   `services/notification_service.py`: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal. Usa `OccupancyManager` con `broadcast_update` para distribuir cambios de ocupación.
     *   `services/user_notification_service.py`: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
+    *   `services/support_service.py`: CRUD de tickets de soporte (`SupportTicket`) con aislamiento por sucursal según rol del usuario.
     *   `services/worker_service.py`: 3 hilos de fondo: (1) limpieza de reservas cada 300s (`auto_finalize_all_reservations`), (2) recordatorios 31 min antes del inicio, (3) auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio.
     *   `services/time_service.py`: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
     *   `services/branch_service.py`: Lógica de gestión de sucursales (CRUD, toggle activo), aforo multi-piso (add/delete floors, update capacity) y branch isolation.
@@ -106,7 +107,7 @@ uvicorn main:app --reload
 - **Logo de Sucursal**: Upload de logo personalizado por sucursal.
 - **Exportación CSV**: Exportar datos financieros a CSV.
 - **Flujo de Registro Rápido de Vehículo**: Integración directa con flujo de reserva.
-- **Dashboard Modular (v9.6.0)**: Lógica JS del dashboard dividida en 10 módulos ES6 (`dashboard-ui.js`, `dashboard-stats.js`, `dashboard-admin.js`, `dashboard-admin-users.js`, `dashboard-admin-branches.js`, `dashboard-admin-settings.js`, `dashboard-finance.js`, `dashboard-operations.js`, `dashboard-reservations.js`, `dashboard-promotions.js`) con un script puente `dashboard.js` que orquesta la exposición global. Módulo adicional `monitoreo-live.js` para monitoreo CCTV en vivo. Esto mejora mantenibilidad, permite tree-shaking futuro y separa responsabilidades claramente.
+- **Dashboard Modular (v9.6.0+)**: Lógica JS del dashboard dividida en 14 módulos ES6 (`dashboard-ui.js`, `dashboard-stats.js`, `dashboard-admin.js`, `dashboard-admin-users.js`, `dashboard-admin-branches.js`, `dashboard-admin-branches-crud.js`, `dashboard-admin-branches-floors.js`, `dashboard-admin-settings.js`, `dashboard-finance.js`, `dashboard-operations.js`, `dashboard-reservations.js`, `dashboard-promotions.js`, `dashboard-tickets.js`, `monitoreo-live.js`) con un script puente `dashboard.js` que orquesta la exposición global. Esto mejora mantenibilidad, permite tree-shaking futuro y separa responsabilidades claramente.
 
 ---
 
@@ -119,7 +120,7 @@ El frontend usa un patrón de **dos capas** para compatibilizar módulos ES6 con
 modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclick handlers
 ```
 
-### Módulos Frontend (29 módulos ES6)
+### Módulos Frontend (31 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -135,6 +136,8 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `dashboard-operations.js` | Operaciones manuales (ingreso/egreso manual, abrir barrera, cancelar estadía) |
 | `dashboard-reservations.js` | CRUD reservas admin, confirmar pago, cancelar, actualizar |
 | `dashboard-promotions.js` | CRUD promociones, iconos |
+| `dashboard-tickets.js` | Gestión de tickets de soporte admin, auto-actualización real-time y búsqueda en vivo |
+| `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
 | `monitoreo-live.js` | Monitoreo CCTV en vivo, grilla dinámica de cámaras, controles DVR |
 | `api.js` | Cliente HTTP centralizado con manejo de tokens y errores |
 | `utils.js` | Utilidades: formatNum, formatDate, showToast, showConfirm, validatePlate, detectVehicleType |
@@ -161,15 +164,15 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `perfil.js` | Portal de Usuario | Importa `profile`, `vehicles`, `reservas`, `notifications` |
 | `main.js` | Todas las páginas | Utilidades globales (modal, sidebar, auth) |
 
-### CSS (36 archivos)
+### CSS (38 archivos)
 Organizado en `static/css/`:
 - `base/`: Variables, reset, tipografía, utilidades (4 archivos)
 - `layout/`: Sidebar, header, grid (3 archivos)
 - `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
-- `pages/`: landing, profile, dashboard, contacto, legal (5 + 15 sub-archivos)
+- `pages/`: landing, profile, dashboard, contacto, legal (5 + 17 sub-archivos)
   - `pages/dashboard/`: dashboard-base, dashboard-cards, dashboard-live, dashboard-settings, dashboard-tables
   - `pages/landing/`: landing-features, landing-hero, landing-map, landing-modals, landing-nav
-  - `pages/profile/`: profile-base, profile-points, profile-reservations, profile-tour, profile-vehicles
+  - `pages/profile/`: profile-base, profile-help, profile-notifications, profile-points, profile-reservations, profile-tour, profile-vehicles
 
 ---
 

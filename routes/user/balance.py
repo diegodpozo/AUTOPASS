@@ -68,4 +68,15 @@ def recharge_balance(data: schemas.RechargeBalance, db: Session = Depends(get_db
     if data.monto <= 0: raise HTTPException(status_code=400, detail="Monto inválido")
     current_user.saldo += data.monto
     db.commit()
+
+    try:
+        from services.user_notification_service import UserNotificationService
+        UserNotificationService.create_notification(
+            db, current_user.id, "BALANCE_RECHARGED",
+            "Carga de saldo exitosa",
+            f"Se acreditó con éxito ${data.monto:,.2f} en tu cuenta. Saldo actual: ${current_user.saldo:,.2f}."
+        )
+    except Exception as e:
+        print(f"[ERROR NOTIF] No se pudo notificar carga de saldo: {e}")
+
     return {"status": "ok", "message": f"Carga de ${data.monto:.2f} exitosa"}

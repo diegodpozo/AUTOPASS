@@ -5,6 +5,7 @@ import * as promos from './modules/dashboard-promotions.js';
 import * as ops from './modules/dashboard-operations.js';
 import * as reservations from './modules/dashboard-reservations.js';
 import * as finance from './modules/dashboard-finance.js';
+import * as tickets from './modules/dashboard-tickets.js';
 import * as baseUi from './modules/ui.js';
 import * as utils from './modules/utils.js';
 import { initVirtualTime } from './modules/virtual-time.js';
@@ -138,7 +139,13 @@ window.handleSaveCameraConfig = ui.handleSaveCameraConfig;
 window.deleteCamera = ui.deleteCamera;
 window.toggleDynamicCameraService = ui.toggleDynamicCameraService;
 
-// 12. DISPATCHER DE CARGA POR PESTAÑA
+// 12. TICKETS DE SOPORTE
+window.loadAdminTickets = tickets.loadAdminTickets;
+window.openTicketAnswerModal = tickets.openTicketAnswerModal;
+window.submitTicketAnswer = tickets.submitTicketAnswer;
+window.filterTicketList = tickets.filterTicketList;
+
+// 13. DISPATCHER DE CARGA POR PESTAÑA
 window.loadTabData = async (tabId) => {
     switch (tabId) {
         case 'live':
@@ -163,6 +170,9 @@ window.loadTabData = async (tabId) => {
             break;
         case 'settings':
             admin.loadSettings();
+            break;
+        case 'tickets':
+            tickets.loadAdminTickets();
             break;
     }
 };
@@ -201,11 +211,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn("Error en servicios UI:", e); 
     }
 
-    let lastTab = localStorage.getItem('activeAdminTab') || 'live';
-    const restrictedStaff = ['users', 'finance', 'promotions', 'settings', 'branches'];
+    let lastTab = localStorage.getItem('activeAdminTab');
 
-    if (rol === 'staff' && restrictedStaff.includes(lastTab)) {
-        lastTab = 'live';
+    if (rol === 'admin') {
+        const allowedSuperAdmin = ['users', 'promotions', 'tickets', 'branches'];
+        if (!lastTab || !allowedSuperAdmin.includes(lastTab)) {
+            lastTab = 'users';
+        }
+    } else if (rol === 'staff') {
+        const restrictedStaff = ['users', 'finance', 'promotions', 'settings', 'branches'];
+        if (!lastTab || restrictedStaff.includes(lastTab)) {
+            lastTab = 'live';
+        }
+    } else if (rol === 'local_admin') {
+        if (!lastTab || lastTab === 'branches') {
+            lastTab = 'live';
+        }
+    } else {
+        if (!lastTab) lastTab = 'live';
     }
 
     const activeItem = document.querySelector(`.nav-item[onclick*="'${lastTab}'"]`);

@@ -88,9 +88,24 @@
                               │ titulo                         │
                               │ mensaje                        │
                               │ leido                          │
-                              │ FK reserva_id (nullable)       │
-                              │ created_at (DateTime)          │
-                              └────────────────────────────────┘
+│ FK reserva_id (nullable)       │
+│ created_at (DateTime)          │
+└────────────────────────────────┘
+
+┌────────────────────────────────┐
+│       SupportTicket            │
+├────────────────────────────────┤
+│ PK id                          │
+│ FK user_id (not null)          │
+│ categoria                      │
+│ sucursal (default "General")   │
+│ asunto                         │
+│ mensaje (Text)                 │
+│ estado (default "Pendiente")   │
+│ respuesta (nullable)           │
+│ created_at (DateTime)          │
+│ updated_at (DateTime)          │
+└────────────────────────────────┘
 ```
 
 ## Descripción de Entidades
@@ -249,6 +264,20 @@
 | leido | Boolean (default False) | Si fue leída |
 | reserva_id | Integer FK→reservations.id (nullable) | Reserva asociada (si aplica) |
 | created_at | DateTime (default utcnow) | Fecha de creación |
+
+### SupportTicket (models/support.py)
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| id | Integer PK | Identificador único |
+| user_id | Integer FK→users.id (not null, indexed) | Usuario que crea el ticket |
+| categoria | String (not null) | Categoría de la consulta |
+| sucursal | String (default "General", indexed) | Sucursal del ticket |
+| asunto | String (not null) | Asunto de la consulta |
+| mensaje | Text (not null) | Cuerpo del mensaje |
+| estado | String (default "Pendiente", indexed) | Pendiente, Respondido, etc. |
+| respuesta | Text (nullable) | Respuesta del administrador |
+| created_at | DateTime (default utcnow) | Fecha de creación |
+| updated_at | DateTime (default utcnow, onupdate) | Fecha de última actualización |
 
 ## Enumeraciones (models/enums.py)
 
