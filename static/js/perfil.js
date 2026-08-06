@@ -8,11 +8,21 @@ import { initMap } from './modules/landing.js?v=9.3.0';
 import { loadNotifications, updateNotifBadge, startNotifPolling } from './modules/notifications.js?v=9.3.0';
 import * as onboarding from './modules/onboarding_helpers.js?v=9.3.0';
 import { startReservationTour } from './modules/tour.js?v=9.3.0';
+import * as help from './modules/profile-help.js?v=9.8.5';
 
 /**
  * PUENTE: PERFIL.JS
  * ORQUESTADOR PRINCIPAL DEL PORTAL DE USUARIO.
  */
+
+// TOUR & AYUDA
+window.startReservationTour = startReservationTour;
+window.toggleFaq = help.toggleFaq;
+window.filterHelpCategory = help.filterHelpCategory;
+window.filterHelpContent = help.filterHelpContent;
+window.clearHelpSearch = help.clearHelpSearch;
+window.submitSupportTicket = help.submitSupportTicket;
+window.loadHelpBranches = help.loadHelpBranches;
 
 // PERFIL
 window.loadProfile = prof.loadProfile;
@@ -71,6 +81,7 @@ window.showSection = function(sectionId, el) {
     if (sectionId === 'perfil') prof.loadProfile();
     if (sectionId === 'vehiculos') v.loadVehicles();
     if (sectionId === 'notificaciones') loadNotifications();
+    if (sectionId === 'ayuda') help.loadHelpBranches();
 };
 
 window.openFullMap = function() {

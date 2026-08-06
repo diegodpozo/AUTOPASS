@@ -39,7 +39,7 @@
 
 ## Firmware ESP32
 
-**Archivo:** `firmware_esp32/firmware_esp32.ino`
+**Archivo:** `Info proyecto/Hardware/firmware_esp32.ino`
 
 ### Funcionamiento
 

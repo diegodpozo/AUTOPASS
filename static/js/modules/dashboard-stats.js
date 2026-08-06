@@ -24,6 +24,9 @@ export function initOccupancyWS() {
         loadLiveStats();
         loadRecentLogs();
         loadOccupancy();
+        if (typeof window.loadAdminTickets === 'function') {
+            window.loadAdminTickets();
+        }
     };
 
     socket.onclose = () => {

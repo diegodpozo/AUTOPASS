@@ -1,6 +1,35 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-07-27)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-06)
 
-### 🚀 Hitos Recientes (Julio 2026) - Versión 9.7.0 (Granular Modularization Overhaul)
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.0 (Interactive Map Overhaul, Google Maps Integration & Trimodal Status Dots UI)
+- [x] **Mosaicos de Google Maps 100% Gratuitos sin API Key**: Integración de capas de mapas base de Google Maps (`Google Calles`, `Google Satélite`, `Google Híbrido`) y `CartoDB Oscuro` con un selector multicapa interactivo en `landing.js` y `dashboard-admin-branches-crud.js`.
+- [x] **Indicadores Circulares de Disponibilidad por Vehículo**: Remoción de textos genéricos (`"ALTA DISPONIBILIDAD"`, `"Hay lugares disponibles para vos."`) y sustitución de la cantidad numérica de plazas por círculos de estado luminosos (`status dots`) discriminados para **Auto**, **Moto** y **Camioneta** (Verde: Alta, Amarillo: Media, Naranja: Baja, Rojo: Agotado).
+- [x] **Rediseño Proporcional & Botón de Cierre Glassmorphic**: Optimización de las dimensiones de la tarjeta emergente a `250px` con padding interior equilibrado y reubicación del botón de cierre (`top: 10px`, `right: 12px`) con estilo circular translúcido.
+- [x] **Formateador de Direcciones en Puntos de Interés**: Implementación de la función `formatPoiAddress` para extracción en cascada de direcciones en OpenStreetMap y asignación de direcciones reales exactas para los estadios deportivos fijados.
+
+### 🚀 Hitos Previos (Agosto 2026) - Versión 9.8.6 (Notification Engine Overhaul & User Notification Center Redesign)
+- [x] **Solución de Duplicidad en Recordatorios (`WorkerService`)**: Incorporación de verificación previa de notificaciones existentes en `WorkerService._process_reminders`. Se eliminó la generación de notificaciones in-app y correos electrónicos duplicados cada 30 segundos previa al inicio de reservas.
+- [x] **Notificaciones In-App Automáticas por Evento**: Disparo automático de notificaciones in-app ante respuesta de soporte (`SUPPORT_RESPONSE`), recarga de saldo (`BALANCE_RECHARGED`), confirmación de pago de reserva (`RESERVATION_CONFIRMED`) y cancelación de reserva (`RESERVATION_CANCELLED`).
+- [x] **Nuevos Endpoints de Borrado & Conteo Preciso**: Adición de endpoints `DELETE /v1/user/profile/notifications/{notif_id}` (borrado individual) y `DELETE /v1/user/profile/notifications/clear-read` (borrado masivo de leídas) en `routes/user/notifications.py`, junto con cálculo exacto `get_total_count`.
+- [x] **Rediseño UI del Centro de Notificaciones (`notificaciones.html` & `profile-notifications.css`)**: Integración con la estructura de tarjeta premium del portal (`welcome-card`), icono de campanita dorada alineada con el título, botón estilizad `Borrar leídas` en el extremo derecho de la barra de filtros y eliminación de bordes de colores por categoría en las tarjetas a favor de bordes limpios de cristal.
+- [x] **Centrado de Estados Vacíos & Pestañas de Filtro (`notifications.js`)**: Sistema de chips de filtrado en el cliente (*Todas*, *No leídas*, *Reservas*, *Pagos & Saldo*, *Soporte*), y ajuste CSS Flexbox para centrar perfectamente icono y mensaje de estado vacío al navegar entre filtros.
+- [x] **Expansión de Suite de Tests (`test_notifications.py`)**: Incorporación de pruebas unitarias para el ciclo de vida completo de notificaciones y respuestas de soporte (subiendo a 19 pruebas de integración ejecutadas exitosamente).
+
+### 🚀 Hitos Previos (Agosto 2026) - Versión 9.8.5 (Trimodal Capacity Management & Customer Support Ticket System)
+- [x] **Sistema Integral de Tickets de Soporte (`SupportTicket`)**: Creación del modelo `SupportTicket` en DB, servicio `SupportService`, esquemas Pydantic y endpoints FastAPI (`/v1/user/support-tickets` y `/v1/admin/support-tickets`). Permite a los usuarios enviar consultas filtradas por sucursal y categoría desde su portal, y a los Administradores gestionar y responder tickets.
+- [x] **Aislamiento por Rol & Actualización en Tiempo Real de Tickets**: Filtrado automático estricto por sucursal para Administradores Locales y vista por defecto de Consultas Generales para Administradores Globales. Actualización automática de la tabla en tiempo real mediante notificaciones push WebSockets y polling en segundo plano cada 10s.
+- [x] **Solución de Pestaña Inicial para Admin Principal (`dashboard.js`)**: Corrección de la inicialización de pestaña al iniciar sesión como Administrador Global (`admin`). Ahora redirige automáticamente a la pestaña de **Gestión de Usuarios** (`users`) en lugar de enviar a Monitoreo (`live`), manteniendo coherencia estricta con los permisos del Administrador Principal (acceso únicamente a Gestión de Usuarios, Promociones, Soporte & Tickets y Sucursales).
+- [x] **Rediseño UI Premium de Soporte & Búsqueda en Vivo (`tickets.html` & `dashboard-tickets.js`)**: Adaptación estética 100% fiel al sistema de diseño AUTOPASS (`tab-view`, `kpi-grid`, `card-header-premium`, `table-centered`). Incorporación de buscador en tiempo real por asunto, cliente, email o categoría, remoción de botones redundantes y simplificación del filtro de estados a `"Todos"`.
+- [x] **Gestión de Plazas de Camionetas (`capacidad_camionetas`)**: Integración completa de edición y almacenamiento de plazas para Camionetas en endpoints `/v1/admin/settings/prices`, `POST /v1/admin/{branch_id}/floors` y `PATCH /v1/admin/floors/{floor_id}`.
+- [x] **Rediseño UI de la Pestaña Plazas (`settings_floors.html`)**: Ampliación del ancho del contenedor del tarifario/plazas a `820px` y eliminación del recuadro PB redundante en el bloque de Planta Baja para maximizar el espacio horizontal de los campos de Autos, Motos y Camionetas.
+- [x] **Estilización de Botones y Normalización de Cámaras (`buttons.css` & `dashboard-ui.js`)**: Creación de estilos CSS `.btn-action-mini` (`.success`, `.danger`), normalización de nombres de dispositivos con `toTitle` y remoción del botón redundante Play/Stop de la tabla de configuración.
+- [x] **Rediseño Monitoreo Multi-Cámara & Categorías de Cámara**: Posicionamiento flotante del nombre de cámara arriba a la izquierda (`.cctv-hud-header`) sin franjas negras laterales y con texto de alto contraste. Reestructuración de categorías de cámaras: `PATENTE_INGRESO` (Lectura de Patente - Entrada), `PATENTE_EGRESO` (Lectura de Patente - Salida), `QR_INGRESO` (Lector de QR - Entrada), `QR_EGRESO` (Lector de QR - Salida) y `PREDIO` (Vigilancia).
+
+### 🚀 Hitos Previos (Agosto 2026) - Versión 9.8.0 (Database Migrations with Alembic & Automated Testing Overhaul)
+- [x] **Framework de Migraciones de DB (`alembic/`)**: Integración completa de Alembic para control de versiones de esquema SQLite/Postgres. Creación de `alembic.ini`, `alembic/env.py` con `render_as_batch=True` para SQLite, y generación de la primera migración inicial `c833a3129266_initial_schema.py`. Estampado del esquema con `alembic stamp head`.
+- [x] **Expansión de la Suite de Pruebas (`tests/`)**: Ampliación de la cobertura de tests unitarios e integración pasando de 6 a 15 pruebas automatizadas (rutas de autenticación con `TestClient`, motor ALPR/patentes, cortesía de 10 min, duplicate entry, control de aforo).
+- [x] **Integración Continua CI/CD (`.github/workflows/ci.yml`)**: Creación de pipeline de GitHub Actions para verificación automática de dependencias, parches de entorno, migraciones de Alembic y ejecución de Pytest en cada push/PR.
+
+### 🚀 Hitos Previos (Julio 2026) - Versión 9.7.0 (Granular Modularization Overhaul)
 - [x] **Modularización Granular de Reservas JS (`static/js/modules/reservas-*.js`)**: Descomposición del monolito `reservas.js` (903 líneas / 45 KB) en 4 submódulos ES6 especializados: `reservas-form.js` (formularios, validación, tarifas), `reservas-list.js` (renderizado de tarjetas, timeline, historial y paginación), `reservas-actions.js` (pago con saldo y simulación de reembolso) y `reservas-pass.js` (Pase Digital, QR `QRCode.js` y compartir ticket). `reservas.js` actúa como fachada re-exportando todo el API.
 - [x] **Modularización Granular de Sucursales JS (`static/js/modules/dashboard-admin-branches-*.js`)**: Separación de `dashboard-admin-branches.js` (705 líneas / 30 KB) en dos submódulos: `dashboard-admin-branches-crud.js` (CRUD sucursales, mapa Leaflet, geocoding, logo upload) y `dashboard-admin-branches-floors.js` (gestión de pisos `ParkingFloor`, aforos por piso y Planta Baja). `dashboard-admin-branches.js` actúa como fachada.
 - [x] **Partials de Modales HTML (`templates/dashboard/modals/` y `templates/profile/modals/`)**: Extracción de modales HTML embebidos hacia componentes partials reutilizables: `profile/modals/onboarding_modal.html`, `dashboard/modals/user_modals.html`, `dashboard/modals/branch_modals.html` y `dashboard/modals/promotion_modal.html`, incluidos mediante `{% include %}` en las vistas principales.
@@ -54,22 +83,22 @@
 - [x] **Unified Visual Style**: Sincronización estética total entre el formulario de inicio ("Quick Add") y la gestión de flota.
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
-### 🛠️ Arquitectura Actual (v9.6.0)
-- **Backend**: Clean Architecture con Servicios y Repositories. ~48 archivos Python en 6 paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`).
-- **Frontend**: Dashboard Premium modularizado. 29 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 40 templates HTML, 36 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+### 🛠️ Arquitectura Actual (v9.9.0)
+- **Backend**: Clean Architecture con Servicios y Repositories. ~64 archivos Python en 6 paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`).
+- **Frontend**: Dashboard Premium modularizado. 31 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 46 templates HTML, 38 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
 - **Multi-sucursal**: Full isolation por sucursal con gestión de pisos, aforos y configuración independiente.
 - **ALPR**: Pipeline completo de visión artificial (EasyOCR + OpenCV + PyTorch) con consenso de votos y streaming de video.
-- **Base de Datos**: SQLite (`parking.db`) con 13 tablas, migraciones inline sin framework externo.
+- **Base de Datos**: SQLite (`parking.db`) con 14 tablas, migraciones versionadas con **Alembic** (`alembic/`, primera migración `c833a3129266_initial_schema`).
 
 ### 📊 Cobertura de Funcionalidades
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.
 - **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago.
 - **Monitoreo**: ALPR en vivo con gestión centralizada, aforo real-time vía WebSocket y streaming de video multi-cámara.
 - **Fidelización**: Sistema de puntos (10 pts/$1000), promociones canjeables y cupones.
-- **Frontend**: Dashboard modular con 7 pestañas (Monitoreo, Reservas, Usuarios, Finanzas, Promociones, Sucursales, Configuración).
+- **Frontend**: Dashboard modular con 8 pestañas (Monitoreo, Reservas, Gestión de Usuarios, Reporte Financiero, Promociones, Soporte & Tickets, Sucursales, Configuración).
 
 ### Cambios técnicos recientes (2026-07-06)
 - ALPR: Fix en `validate_plate` y `validate_qr` — ahora buscan la última ENTRADA y verifican SALIDA posterior (mismo patrón que `manual_entry`), en lugar de solo mirar el último registro de cualquier tipo.

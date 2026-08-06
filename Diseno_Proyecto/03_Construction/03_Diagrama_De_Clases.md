@@ -11,8 +11,8 @@
 │  │    core/    │  │   models/   │  │  schemas/   │  │  routes/    ││
 │  │ config.py   │  │ enums.py    │  │ auth.py     │  │ auth.py     ││
 │  │ security.py │  │ user.py     │  │ user.py     │  │ views.py    ││
-│  │ database.py │  │ parking.py  │  │ parking.py  │  │ system.py   ││
-│  │ mqtt.py     │  │ reservation │  │ reservation │  │ reports.py  ││
+│  │ database.py │  │ parking.py  │  │ parking.py  │  │ reports.py  ││
+│  │ mqtt.py     │  │ reservation │  │ reservation │  │ system/     ││
 │  │ seed.py     │  │ notification│  │ notification│  │ admin/      ││
 │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  │ user/       ││
 │         │                │                │          │ parking/    ││
@@ -22,7 +22,7 @@
 │  │  AccessService  BillingService  ReservationService                │
 │  │  UserService    BranchService   EmailService                      │
 │  │  NotificationService  WorkerService  UserNotificationService      │
-│  │  TimeService                                                       │
+│  │  TimeService  ReportService  SupportService                         │
 │  └──────────────────────────────────────────────────────────────────┘
 │                                                                      │
 │  ┌─────────────┐  ┌─────────────────┐  ┌──────────────────────────┐ │
@@ -205,6 +205,26 @@
 │ + update_user(db, user_id, user_data) -> User                 │
 │ + delete_user(db, user_id)                                    │
 └───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│              services.report_service.ReportService             │
+├───────────────────────────────────────────────────────────────┤
+│ + get_financial_summary(db, date_from, date_to, branch) ->     │
+│ + get_payment_history(db, date_from, date_to, page) ->         │
+│ + get_access_history(db, date_from, date_to, page) ->          │
+│ # _apply_branch_filter(query, branch)                          │
+│ # _paginate(query, page)                                       │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│              services.support_service.SupportService           │
+├───────────────────────────────────────────────────────────────┤
+│ + create_ticket(db, user_id, data) -> SupportTicket           │
+│ + get_user_tickets(db, user_id) -> list                       │
+│ + list_tickets(db, sucursal, estado) -> list                  │
+│ + get_ticket(db, ticket_id, sucursal) -> SupportTicket        │
+│ + respond_ticket(db, ticket_id, respuesta) -> SupportTicket   │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ## Clases de Rutas (Endpoints)
@@ -247,6 +267,29 @@
 │  /admin/operations.py  -> manual entry/exit, barrier, cancel  │
 │  /admin/settings.py    -> prices, capacity settings           │
 │  /admin/virtual_time.py-> virtual time control                │
+│  /admin/support.py     -> list/respond support tickets        │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│           routes.user (Package with sub-routers)              │
+├───────────────────────────────────────────────────────────────┤
+│  /user/profile.py      -> get/update profile, change-password │
+│  /user/vehicles.py     -> CRUD vehicles                       │
+│  /user/balance.py      -> recharge, history, active-stays     │
+│  /user/reservations.py -> modify, pay, cancel                 │
+│  /user/fidelization.py -> promotions, redeem, points-history  │
+│  /user/notifications.py-> CRUD notifications, unread count    │
+│  /user/support.py      -> create/list support tickets         │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│           routes.system (Package with sub-routers)            │
+├───────────────────────────────────────────────────────────────┤
+│  /system/common.py     -> ConnectionManager, normalize name,  │
+│  │                        stop_all_cameras                    │
+│  /system/health.py     -> GET /v1/system/health               │
+│  /system/cameras.py    -> camera registry CRUD (virtual)      │
+│  /system/video.py      -> WS /v1/system/video (token-secure)  │
 └───────────────────────────────────────────────────────────────┘
 ```
 

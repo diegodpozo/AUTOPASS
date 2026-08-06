@@ -20,7 +20,7 @@ Diseno_Proyecto/
 │   └── 04_Arquitectura_General.md   # Clean Architecture, capas, patrones, flujo de datos
 │
 ├── 03_Construction/                  # FASE DE CONSTRUCCION
-│   ├── 01_Modelo_De_Datos.md        # DER, 12 entidades, columnas, relaciones
+│   ├── 01_Modelo_De_Datos.md        # DER, 14 entidades, columnas, relaciones
 │   ├── 02_Diagramas_De_Secuencia.md # 5 diagramas de secuencia detallados
 │   ├── 03_Diagrama_De_Clases.md     # Diagrama de clases por capa
 │   └── 04_Diseno_Frontend.md        # Arquitectura frontend, design system, componentes
@@ -41,7 +41,7 @@ Diseno_Proyecto/
 ### 1. Inception (Inicio)
 Define la **vision del sistema**: un gestor de estacionamientos inteligente con ALPR,
 multi-sucursal, multi-piso, facturacion trimodal y reservas. Identifica 4 roles de usuario
-(ADMIN, LOCAL_ADMIN, STAFF, USER) y establece el alcance de la version v9.6.0.
+(ADMIN, LOCAL_ADMIN, STAFF, USER) y establece el alcance de la version v9.9.0.
 
 ### 2. Elaboration (Elaboracion)
 Especifica **44 requisitos funcionales** y **29 no funcionales**, detalla **20 casos de uso**
@@ -49,11 +49,11 @@ con flujos principales y alternativos, y define la **arquitectura Clean Architec
 5 capas (Presentation, Transport, Business, Data, Infrastructure) mas frontend Jinja2 + WebSockets.
 
 ### 3. Construction (Construccion)
-Documenta el **modelo de datos** con 12 entidades (User, Vehicle, AccessLog, Reservation,
+Documenta el **modelo de datos** con 14 entidades (User, Vehicle, AccessLog, Reservation,
 ParkingFloor, ParkingAforo, Settings, ParkingCamera, PointsLog, Coupon, Promotion,
-UserNotification) y sus relaciones, **5 diagramas de secuencia** (ingreso ALPR, egreso con
+UserNotification, SupportTicket) y sus relaciones, **5 diagramas de secuencia** (ingreso ALPR, egreso con
 pago, reserva, worker de limpieza, worker de notificaciones, operacion manual),
-**diagrama de clases** completo por capa (10 servicios), y el **diseno del frontend** con
+**diagrama de clases** completo por capa (12 servicios), y el **diseno del frontend** con
 design system (Glassmorphism, dorado #C5A059, FAB).
 
 ### 4. Transition (Transicion)
@@ -74,6 +74,8 @@ Mapa completo de **rutas API** (~99 endpoints HTTP + 2 WebSocket), **arquitectur
 | ReservationService | CRUD reservas, pago, cancelacion, simulacion, auto-finalizacion |
 | BranchService | CRUD sucursales, resumen de capacidad trimodal |
 | UserService | CRUD usuarios, soft delete con anonimizacion |
+| ReportService | Analitica financiera y transacciones (resumen, historial UNION ALL, accesos) |
+| SupportService | Tickets de soporte (crear, consultar, gestionar y responder) |
 | EmailService | Envio de emails transaccionales (confirmacion, recordatorio, recuperacion) |
 | NotificationService | Notificaciones en tiempo real via WebSocket (OccupancyManager) |
 | UserNotificationService | CRUD de notificaciones in-app (create, read, mark) |
@@ -81,4 +83,4 @@ Mapa completo de **rutas API** (~99 endpoints HTTP + 2 WebSocket), **arquitectur
 | TimeService | Tiempo virtual para testing (offset persistido en JSON) |
 
 ## Version del Sistema
-**AUTOPASS v9.6.0** — Julio 2026
+**AUTOPASS v9.9.0** — Agosto 2026

@@ -28,7 +28,8 @@ def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(g
         branch_id=branch_id,
         nombre=data.nombre,
         capacidad_total=data.capacidad_total,
-        capacidad_motos=data.capacidad_motos
+        capacidad_motos=data.capacidad_motos,
+        capacidad_camionetas=data.capacidad_camionetas
     )
     db.add(new_floor)
     db.commit()
@@ -46,13 +47,14 @@ def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.Use
     return {"status": "ok"}
 
 @router.patch("/floors/{floor_id}", response_model=schemas.FloorResponse)
-def update_floor_capacity(floor_id: int, cap_autos: int, cap_motos: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+def update_floor_capacity(floor_id: int, cap_autos: int, cap_motos: int, cap_camionetas: int = 5, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA LA CAPACIDAD DE UN PISO."""
     floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
     floor.capacidad_total = cap_autos
     floor.capacidad_motos = cap_motos
+    floor.capacidad_camionetas = cap_camionetas
     db.commit()
     db.refresh(floor)
     return floor

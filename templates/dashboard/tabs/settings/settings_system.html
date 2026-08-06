@@ -195,7 +195,7 @@
                     <input type="text" id="floor-nombre" class="input-premium" placeholder="Ej: Piso 1, Subsuelo B" required>
                 </div>
             </div>
-            <div class="flex-row gap-20">
+            <div class="flex-row gap-15">
                 <div class="form-group-premium flex-1">
                     <label>CAP. AUTOS</label>
                     <div class="input-with-icon">
@@ -208,6 +208,13 @@
                     <div class="input-with-icon">
                         <i class="fas fa-motorcycle"></i>
                         <input type="number" id="floor-cap-motos" class="input-premium" value="10" required>
+                    </div>
+                </div>
+                <div class="form-group-premium flex-1">
+                    <label>CAP. CAMIONETAS</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-truck-pickup"></i>
+                        <input type="number" id="floor-cap-camionetas" class="input-premium" value="5" required>
                     </div>
                 </div>
             </div>
@@ -247,11 +254,11 @@
                 <div class="input-with-icon">
                     <i class="fas fa-layer-group"></i>
                     <select id="camera-tipo" class="input-premium select-premium" style="background: #111424; color: #fff;" required>
-                        <option value="ENTRADA">ENTRADA (Lectura Patente + QR)</option>
-                        <option value="SALIDA">SALIDA (Lectura Patente + QR)</option>
-                        <option value="PREDIO">PREDIO (Solo visualización / Vigilancia)</option>
-                        <option value="PATENTE">LECTURA DE PATENTE (Solo OCR)</option>
-                        <option value="QR">QR CODES (Solo lector de pases)</option>
+                        <option value="PATENTE_INGRESO">LECTURA DE PATENTE - ENTRADA</option>
+                        <option value="PATENTE_EGRESO">LECTURA DE PATENTE - SALIDA</option>
+                        <option value="QR_INGRESO">LECTOR DE QR - ENTRADA</option>
+                        <option value="QR_EGRESO">LECTOR DE QR - SALIDA</option>
+                        <option value="PREDIO">VIGILANCIA</option>
                     </select>
                 </div>
             </div>

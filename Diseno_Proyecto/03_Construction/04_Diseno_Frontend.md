@@ -3,7 +3,7 @@
 ## Arquitectura del Frontend
 
 ```
-templates/
+templates/                     # 46 templates HTML
 ├── base.html                  # Layout base con navbar, footer, sidebar
 ├── index.html                 # Landing page (publico)
 ├── dashboard.html             # Dashboard principal (admin/staff)
@@ -20,33 +20,48 @@ templates/
 │   ├── auth_modals.html       # Modales de login/registro
 │   ├── modals_global.html     # Modales globales de confirmacion
 │   ├── sidebar_user.html      # Sidebar de usuario
-│   └── virtual_time_banner.html # Banner de tiempo virtual (testing)
+│   ├── virtual_time_banner.html # Banner de tiempo virtual (testing)
+│   └── monitoreo_controls.html # Controles del panel de monitoreo
 ├── dashboard/
+│   ├── modals/                # Modales del dashboard admin
+│   │   ├── branch_modals.html
+│   │   ├── promotion_modal.html
+│   │   └── user_modals.html
 │   └── tabs/                  # Tabs del dashboard admin
 │       ├── users.html         # Gestion de usuarios
 │       ├── branches.html      # Gestion de sucursales + pisos
 │       ├── admin_reservations.html # Gestion de reservas
 │       ├── promotions.html    # Gestion de promociones
 │       ├── settings.html      # Configuracion (tarifas, capacidad)
+│       │   └── settings/      # Sub-tabs de configuracion
+│       │       ├── settings_rates.html
+│       │       ├── settings_floors.html
+│       │       ├── settings_monitoring.html
+│       │       └── settings_system.html
 │       ├── finance.html       # Reportes financieros
 │       ├── occupancy.html     # Estadisticas de ocupacion
-│       └── live.html          # Monitoreo en vivo (camaras)
+│       ├── live.html          # Monitoreo en vivo (camaras)
+│       └── tickets.html       # Soporte y tickets
 ├── profile/
+│   ├── modals.html            # Modales del perfil
+│   ├── modals/
+│   │   └── onboarding_modal.html # Tour de onboarding
 │   └── tabs/                  # Tabs del perfil de usuario
 │       ├── inicio.html        # Dashboard personal
 │       ├── reservas.html      # Mis reservas
 │       ├── vehiculos.html     # Mis vehiculos
 │       ├── puntos.html        # Puntos y fidelizacion
 │       ├── notificaciones.html # Notificaciones in-app
-│       └── cuenta.html        # Configuracion de cuenta
-└── emails/                    # Templates de email
+│       ├── cuenta.html        # Configuracion de cuenta
+│       └── ayuda.html         # Ayuda y soporte
+└── emails/                    # Templates de email (autocontenidos)
     ├── reservation_confirmation.html
     ├── reservation_reminder.html
     ├── reservation_auto_cancelled.html
     └── recovery.html
 
 static/
-├── css/
+├── css/                       # 38 archivos CSS
 │   ├── style.css              # Estilos legacy (en proceso de vaciado)
 │   ├── base/
 │   │   ├── reset.css          # Normalize / reset
@@ -71,25 +86,60 @@ static/
 │       ├── dashboard.css      # Dashboard
 │       ├── profile.css        # Perfil de usuario
 │       ├── contacto.css       # Pagina de contacto
-│       └── legal.css          # Terminos y privacidad
+│       ├── legal.css          # Terminos y privacidad
+│       ├── dashboard/         # Estilos del dashboard (5)
+│       │   ├── dashboard-base.css
+│       │   ├── dashboard-cards.css
+│       │   ├── dashboard-live.css
+│       │   ├── dashboard-settings.css
+│       │   └── dashboard-tables.css
+│       ├── landing/           # Estilos de la landing (5)
+│       │   ├── landing-features.css
+│       │   ├── landing-hero.css
+│       │   ├── landing-map.css
+│       │   ├── landing-modals.css
+│       │   └── landing-nav.css
+│       └── profile/           # Estilos del perfil (7)
+│           ├── profile-base.css
+│           ├── profile-help.css
+│           ├── profile-notifications.css
+│           ├── profile-points.css
+│           ├── profile-reservations.css
+│           ├── profile-tour.css
+│           └── profile-vehicles.css
 ├── js/
-│   ├── modules/               # Modulos ES6
+│   ├── modules/               # Modulos ES6 (31)
 │   │   ├── api.js             # Cliente HTTP centralizado (fetch wrapper)
 │   │   ├── utils.js           # Utilidades (validatePlate, detectVehicleType, showConfirm)
-│   │   ├── dashboard-stats.js # Estadisticas de aforo en tiempo real
-│   │   ├── dashboard-ui.js    # UI del dashboard (tabs, sidebar)
-│   │   ├── dashboard-admin.js # Logica admin del dashboard
-│   │   ├── dashboard-promotions.js # Gestion de promociones
+│   │   ├── ui.js              # Utilidades de UI general
+│   │   ├── auth.js            # Logica de autenticacion
+│   │   ├── landing.js         # Logica de la landing
+│   │   ├── profile.js         # Logica del perfil
 │   │   ├── notifications.js   # Gestion de notificaciones
 │   │   ├── tour.js            # Tour interactivo de onboarding
 │   │   ├── onboarding_helpers.js # Helpers del tour
-│   │   ├── auth.js            # Logica de autenticacion
-│   │   ├── profile.js         # Logica del perfil
-│   │   ├── landing.js         # Logica de la landing
-│   │   ├── reservas.js        # Gestion de reservas
 │   │   ├── vehicles.js        # Gestion de vehiculos
-│   │   ├── ui.js              # Utilidades de UI general
-│   │   └── virtual-time.js    # Control de tiempo virtual
+│   │   ├── reservas.js        # Gestion de reservas
+│   │   ├── reservas-list.js   # Lista de reservas
+│   │   ├── reservas-form.js   # Formulario de reservas
+│   │   ├── reservas-actions.js # Acciones de reservas (pagar, cancelar)
+│   │   ├── reservas-pass.js   # Pase digital con QR
+│   │   ├── virtual-time.js    # Control de tiempo virtual
+│   │   ├── dashboard-ui.js    # UI del dashboard (tabs, sidebar)
+│   │   ├── dashboard-stats.js # Estadisticas de aforo en tiempo real
+│   │   ├── dashboard-admin.js # Logica admin del dashboard
+│   │   ├── dashboard-admin-branches.js
+│   │   ├── dashboard-admin-branches-crud.js
+│   │   ├── dashboard-admin-branches-floors.js
+│   │   ├── dashboard-admin-settings.js
+│   │   ├── dashboard-admin-users.js
+│   │   ├── dashboard-reservations.js
+│   │   ├── dashboard-finance.js
+│   │   ├── dashboard-promotions.js
+│   │   ├── dashboard-tickets.js # Soporte y tickets
+│   │   ├── dashboard-operations.js
+│   │   ├── monitoreo-live.js  # Monitoreo de camaras en vivo
+│   │   └── profile-help.js    # Ayuda y soporte
 │   ├── auth.js                # Logica de autenticacion (root-level)
 │   ├── dashboard.js           # Logica del dashboard (root-level)
 │   ├── perfil.js              # Logica del perfil de usuario
@@ -183,21 +233,23 @@ static/
 ```
 Landing (publico)
 ├── Login (modales via auth_modals.html) ──► Dashboard (admin/staff)
-│                ├── Occupancy (ocupacion en tiempo real)
 │                ├── Live (monitoreo camaras en vivo)
-│                ├── Users (gestion de usuarios)
-│                ├── Branches (gestion sucursales + pisos)
 │                ├── Admin Reservations (gestion de reservas)
+│                ├── Users (gestion de usuarios)
+│                ├── Finance (reportes financieros)
 │                ├── Promotions (gestion de promociones)
-│                ├── Settings (tarifas, capacidad)
-│                └── Finance (reportes financieros)
+│                ├── Tickets (soporte y tickets)
+│                ├── Branches (gestion sucursales + pisos)
+│                ├── Settings (tarifas, capacidad; sub-tabs rates/floors/monitoring/system)
+│                └── Occupancy (estadisticas de ocupacion)
 ├── Login (modales via auth_modals.html) ──► Perfil (cliente)
 │                ├── Inicio (dashboard personal)
-│                ├── Reservas (mis reservas)
+│                ├── Reservas (mis reservas + pase digital QR)
 │                ├── Vehiculos (mi flota)
 │                ├── Puntos (fidelizacion)
 │                ├── Notificaciones (in-app)
-│                └── Cuenta (configuracion personal)
+│                ├── Cuenta (configuracion personal)
+│                └── Ayuda (soporte y tickets)
 ├── Nuestra Red (mapa sucursales)
 ├── Contacto
 └── Reset Password

@@ -1,4 +1,4 @@
-# Dependencias del Proyecto: AUTOPASS (v9.6.0)
+# Dependencias del Proyecto: AUTOPASS (v9.9.0)
 
 Este documento detalla las librerías y herramientas necesarias para el funcionamiento del sistema.
 
@@ -18,6 +18,7 @@ Este documento detalla las librerías y herramientas necesarias para el funciona
 - **`pydantic`** (2.12.5): Validación y serialización de datos (schemas).
 - **`python-dotenv`** (1.2.2): Gestión de variables de entorno (archivo `.env`).
 - **`jinja2`** (3.1.6): Motor de plantillas para renderizado de HTML con herencia.
+- **`alembic`** (1.19.0): Migraciones versionadas del esquema de base de datos (`alembic/`).
 
 ### Seguridad y Autenticación
 - **`passlib[bcrypt]`**: Hashing seguro de contraseñas.
@@ -84,6 +85,6 @@ uvicorn main:app --reload
 ---
 
 ## Notas de Compatibilidad
-- El `requirements.txt` incluye 86 dependencias pinneadas para reproducibilidad exacta.
+- El `requirements.txt` incluye 88 dependencias pinneadas para reproducibilidad exacta.
 - Para desarrollo, solo son estrictamente necesarias las librerías principales listadas arriba.
 - Las dependencias de ALPR (`torch`, `easyocr`, `opencv`) son pesadas (~2GB). Se pueden omitir si no se usa reconocimiento de patentes.

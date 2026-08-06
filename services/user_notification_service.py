@@ -75,6 +75,34 @@ class UserNotificationService:
         return count
 
     @staticmethod
+    def get_total_count(db: Session, user_id: int) -> int:
+        return db.query(models.UserNotification)\
+            .filter(models.UserNotification.user_id == user_id).count()
+
+    @staticmethod
+    def delete_notification(db: Session, notif_id: int, user_id: int) -> bool:
+        notif = db.query(models.UserNotification)\
+            .filter(
+                models.UserNotification.id == notif_id,
+                models.UserNotification.user_id == user_id
+            ).first()
+        if not notif:
+            return False
+        db.delete(notif)
+        db.commit()
+        return True
+
+    @staticmethod
+    def clear_read_notifications(db: Session, user_id: int) -> int:
+        deleted = db.query(models.UserNotification)\
+            .filter(
+                models.UserNotification.user_id == user_id,
+                models.UserNotification.leido == True
+            ).delete(synchronize_session=False)
+        db.commit()
+        return deleted
+
+    @staticmethod
     def mark_reservation_notifications_as_read(db: Session, user_id: int, reserva_id: int, tipo: str = None) -> int:
         """MARCA COMO LEIDAS TODAS LAS NOTIFICACIONES DE UNA RESERVA, OPCIONALMENTE FILTRANDO POR TIPO."""
         q = db.query(models.UserNotification).filter(

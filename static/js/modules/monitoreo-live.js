@@ -8,8 +8,6 @@ import { formatPlate, normalizeSystemName } from './utils.js';
 let camerasList = [];
 let activeWebSockets = {};
 let wsGeneral = null;
-let clockInterval = null;
-let durationInterval = null;
 
 export function initMonitoreoLive() {
     const token = localStorage.getItem('token');
@@ -18,9 +16,6 @@ export function initMonitoreoLive() {
         window.location.href = '/';
         return;
     }
-
-    initClock();
-    startDurationTicker();
 
     const userSucursal = localStorage.getItem('sucursal') || '';
     if (rol === 'admin') {
@@ -38,47 +33,6 @@ export function initMonitoreoLive() {
     }
 
     connectGeneralWS();
-}
-
-function initClock() {
-    const clockEl = document.getElementById('monitoreo-clock');
-    if (!clockEl) return;
-    const update = () => {
-        const now = new Date();
-        const dateStr = now.getFullYear() + '/' + 
-            String(now.getMonth() + 1).padStart(2, '0') + '/' + 
-            String(now.getDate()).padStart(2, '0');
-        const timeStr = now.toTimeString().split(' ')[0];
-        clockEl.innerText = `${dateStr}   ${timeStr}`;
-    };
-    update();
-    clockInterval = setInterval(update, 1000);
-}
-
-function startDurationTicker() {
-    durationInterval = setInterval(() => {
-        const now = new Date();
-        const dateStr = now.getFullYear() + '/' + 
-            String(now.getMonth() + 1).padStart(2, '0') + '/' + 
-            String(now.getDate()).padStart(2, '0');
-        const timeStr = now.toTimeString().split(' ')[0];
-        
-        document.querySelectorAll('.cctv-hud-time').forEach(el => {
-            el.innerText = `${dateStr}   ${timeStr}`;
-        });
-
-        document.querySelectorAll('.cctv-hud-duration').forEach(el => {
-            let ticks = parseInt(el.dataset.ticks || '0') + 1;
-            el.dataset.ticks = ticks;
-            
-            const hrs = Math.floor(ticks / 3600);
-            const mins = Math.floor((ticks % 3600) / 60);
-            const secs = ticks % 60;
-            const frames = Math.floor(Math.random() * 30);
-            
-            el.innerHTML = `<span style="color: #ffffff; margin-right: 6px; font-size: 0.65rem;">■</span>DUR : ${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
-        });
-    }, 1000);
 }
 
 async function loadBranchesSelect() {
@@ -188,37 +142,18 @@ function renderActiveSlot(box, slotId, cam) {
     const cctvCode = `CCTV ${String(slotId).padStart(3, '0')}`;
     
     let functionLabel = 'VIGILANCIA';
-    if (cam.tipo === 'ENTRADA') functionLabel = 'LECTURA PATENTE (ENTRADA)';
-    else if (cam.tipo === 'SALIDA') functionLabel = 'LECTURA PATENTE (SALIDA)';
-    else if (cam.tipo === 'PATENTE') functionLabel = 'LECTURA PATENTE';
-    else if (cam.tipo === 'QR') functionLabel = 'LECTURA QR';
-    else if (cam.tipo === 'PREDIO') functionLabel = 'VIGILANCIA';
-
-    const cameraLabel = `${cctvCode} - ${cam.nombre.toUpperCase()} [${functionLabel}]`;
-    const ticksOffset = Math.floor(Math.random() * 3600);
+    const cameraLabel = cam.nombre.toUpperCase();
 
     if (cam.is_running) {
         box.innerHTML = `
             <div class="cctv-hud-header">
                 <span>${cameraLabel}</span>
-                <div class="cctv-rec-indicator">
-                    <span class="cctv-rec-dot"></span>
-                    <span>REC</span>
-                    <i class="fas fa-wifi" style="margin-left: 5px; font-size: 0.7rem; color: #ffffff;"></i>
-                </div>
             </div>
             <img id="img-${cam.id}" class="cctv-video-feed" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
             <div class="cctv-scanlines"></div>
-            <div class="cctv-hud-footer">
-                <span class="cctv-hud-duration" data-ticks="${ticksOffset}"><span style="color: #ffffff; margin-right: 6px; font-size: 0.65rem;">■</span>DUR: 00:00:00:00</span>
-                <span class="cctv-hud-time">---/--/-- --:--:--</span>
-            </div>
             <div class="cctv-hover-actions">
                 <button class="cctv-btn danger" onclick="toggleCamera(${cam.id}, 'stop')" title="Detener Cámara">
                     <i class="fas fa-stop"></i>
-                </button>
-                <button class="cctv-btn" onclick="openGate(${slotId})" title="Abrir Barrera">
-                    <i class="fas fa-door-open"></i>
                 </button>
             </div>
         `;
@@ -227,27 +162,16 @@ function renderActiveSlot(box, slotId, cam) {
         box.innerHTML = `
             <div class="cctv-hud-header">
                 <span>${cameraLabel}</span>
-                <span style="color: #ecc94b; font-weight: bold;">[STANDBY]</span>
             </div>
-            <div class="test-pattern">
-                <div class="test-pattern-bars">
-                    <div class="test-pattern-bar bar-white"></div>
-                    <div class="test-pattern-bar bar-yellow"></div>
-                    <div class="test-pattern-bar bar-cyan"></div>
-                    <div class="test-pattern-bar bar-green"></div>
-                    <div class="test-pattern-bar bar-magenta"></div>
-                    <div class="test-pattern-bar bar-red"></div>
-                    <div class="test-pattern-bar bar-blue"></div>
+
+            <div class="cctv-offline-container">
+                <div class="cctv-offline-icon-box">
+                    <i class="fas fa-video-slash" style="font-size: 1.4rem; color: #64748b;"></i>
                 </div>
-                <div class="test-pattern-bottom">
-                    <div class="test-pattern-text">STANDBY DEVICE</div>
-                </div>
+                <div class="cctv-offline-title">CÁMARA DESCONECTADA</div>
+                <div class="cctv-offline-sub">Pasa el cursor para iniciar transmisión</div>
             </div>
             <div class="cctv-scanlines"></div>
-            <div class="cctv-hud-footer">
-                <span><span style="color: #ffffff; margin-right: 6px; font-size: 0.65rem;">■</span>DUR: 00:00:00:00</span>
-                <span class="cctv-hud-time">---/--/-- --:--:--</span>
-            </div>
             <div class="cctv-hover-actions">
                 <button class="cctv-btn" onclick="toggleCamera(${cam.id}, 'start')" title="Iniciar Cámara">
                     <i class="fas fa-play" style="color: #10b981;"></i>
@@ -255,6 +179,7 @@ function renderActiveSlot(box, slotId, cam) {
             </div>
         `;
     }
+
 }
 
 function connectCameraWebSocket(cam) {
@@ -334,18 +259,16 @@ async function loadLatestDetections() {
         const box = document.getElementById(`cctv-slot-${slotId}`);
         if (!box) return;
 
-        const footer = box.querySelector('.cctv-hud-footer');
-        if (!footer) return;
-
         let plateOverlay = box.querySelector('.cctv-plate-hud');
         if (plateOverlay) plateOverlay.remove();
 
         let text = '';
-        if (cam.tipo === 'ENTRADA' || cam.tipo === 'PATENTE') {
-            if (lastEntry) text = formatPlate(lastEntry.patente_detectada);
-        } else if (cam.tipo === 'SALIDA') {
+        const tipoUpper = (cam.tipo || '').toUpperCase();
+        if (tipoUpper.includes('EGRESO') || tipoUpper.includes('SALIDA')) {
             if (lastExit) text = formatPlate(lastExit.patente_detectada);
-        } else if (cam.tipo === 'QR') {
+        } else if (tipoUpper.includes('INGRESO') || tipoUpper.includes('ENTRADA') || tipoUpper.includes('PATENTE')) {
+            if (lastEntry) text = formatPlate(lastEntry.patente_detectada);
+        } else if (tipoUpper.includes('QR')) {
             if (lastQR) text = `QR: ${formatPlate(lastQR.patente_detectada)}`;
         }
 
@@ -353,8 +276,8 @@ async function loadLatestDetections() {
             const plateDiv = document.createElement('div');
             plateDiv.className = 'cctv-plate-hud';
             plateDiv.style.position = 'absolute';
-            plateDiv.style.bottom = '30px';
-            plateDiv.style.left = '10px';
+            plateDiv.style.bottom = '12px';
+            plateDiv.style.left = '12px';
             plateDiv.style.background = 'rgba(0, 0, 0, 0.8)';
             plateDiv.style.border = '1px solid #C5A059';
             plateDiv.style.padding = '2px 8px';

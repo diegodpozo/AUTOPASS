@@ -15,3 +15,6 @@ from .auth import Token
 from .notification import (
     NotificationResponse, NotificationListResponse, UnreadCountResponse
 )
+from .support import (
+    SupportTicketCreate, SupportTicketUpdate, SupportTicketResponse
+)

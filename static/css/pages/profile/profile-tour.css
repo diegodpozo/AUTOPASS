@@ -351,15 +351,25 @@
 }
 
 .leaflet-popup-close-button {
-    color: #888 !important;
-    padding: 10px !important;
-    font-size: 1.2rem !important;
-    transition: 0.3s !important;
+    color: #aaa !important;
+    top: 10px !important;
+    right: 12px !important;
+    padding: 0 !important;
+    font-size: 1.1rem !important;
+    width: 26px !important;
+    height: 26px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    transition: all 0.3s ease !important;
+    z-index: 100 !important;
 }
 
 .leaflet-popup-close-button:hover {
-    color: var(--dorado) !important;
-    background: transparent !important;
+    color: #fff !important;
+    background: rgba(197, 160, 89, 0.4) !important;
 }
 
 .map-and-stats-side {

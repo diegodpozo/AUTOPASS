@@ -19,6 +19,47 @@ function formatAddress(addr) {
     return addr;
 }
 
+function formatPoiAddress(t) {
+    if (!t) return '';
+    const street = t['addr:street'] || t['street'] || '';
+    const number = t['addr:housenumber'] || t['housenumber'] || '';
+    const suburb = t['addr:suburb'] || t['addr:district'] || t['addr:city'] || t['city'] || '';
+    
+    let parts = [];
+    if (street) {
+        parts.push(`${street}${number ? ' ' + number : ''}`);
+    }
+    if (suburb && !street.toLowerCase().includes(suburb.toLowerCase())) {
+        parts.push(suburb);
+    }
+    
+    if (parts.length > 0) return parts.join(', ');
+    return t['address'] || t['addr:full'] || '';
+}
+
+function getVehicleAvailability(ocupacion, capacidad) {
+    const totalCap = parseInt(capacidad) || 0;
+    const totalOcc = parseInt(ocupacion) || 0;
+    const disp = Math.max(0, totalCap - totalOcc);
+    const pctFree = totalCap > 0 ? (disp / totalCap) * 100 : 0;
+
+    let color = '#22c55e'; // Verde = Alta (>40% disponible)
+    let label = 'Alta';
+
+    if (totalCap === 0 || disp === 0) {
+        color = '#ef4444'; // Rojo = Agotado
+        label = 'Agotado';
+    } else if (pctFree <= 15) {
+        color = '#f97316'; // Naranja = Baja (<=15% disponible)
+        label = 'Baja';
+    } else if (pctFree <= 40) {
+        color = '#eab308'; // Amarillo = Media (15%-40% disponible)
+        label = 'Media';
+    }
+
+    return { disp, totalCap, color, label, pctFree };
+}
+
 window.getDirectionsTo = function(branchLat, branchLng, mode) {
     const googleUrl = (lat, lng) => `https://www.google.com/maps/dir/${lat},${lng}/${branchLat},${branchLng}`;
     const wazeUrl = (lat, lng) => `https://www.waze.com/ul?ll=${branchLat},${branchLng}&navigate=yes&to=${branchLat},${branchLng}&from=${lat},${lng}`;
@@ -71,24 +112,42 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
     const defaultZoom = (containerId === 'portal-map' || containerId === 'portal-map-fullscreen') ? 12 : 14;
     const newMapInstance = L.map(containerId).setView(hqCoords, defaultZoom);
 
-    // TILE STAMEN TONER (ALTO CONTRASTE, CALLES EN BLANCO)
-    const tileLayer = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
-        attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>',
-        subdomains: 'abcd',
-        minZoom: 0,
-        maxZoom: 20
-    }).addTo(newMapInstance);
-
-    tileLayer.on('tileerror', function() {
-        if (this._fallbacked) return;
-        this._fallbacked = true;
-        console.warn('[MAP] Stamen Toner fallback a CartoDB');
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(newMapInstance);
+    // MOSAICOS BASE ESTILO GOOGLE MAPS & CARTO (100% GRATUITOS)
+    const googleStreets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; <a href="https://www.google.com/maps" target="_blank">Google Maps</a>'
     });
+
+    const googleHybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; <a href="https://www.google.com/maps" target="_blank">Google Maps</a>'
+    });
+
+    const googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; <a href="https://www.google.com/maps" target="_blank">Google Maps</a>'
+    });
+
+    const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20,
+        subdomains: 'abcd',
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+    });
+
+    // Google Calles como capa predeterminada
+    googleStreets.addTo(newMapInstance);
+
+    // Selector de capas para cambiar entre Google Calles, Google Satélite, Híbrido y Oscuro
+    const baseMaps = {
+        "🗺️ Google Calles": googleStreets,
+        "🛰️ Google Satélite": googleSat,
+        "🌍 Google Híbrido": googleHybrid,
+        "🌙 CartoDB Oscuro": cartoDark
+    };
+    L.control.layers(baseMaps, null, { position: 'topleft' }).addTo(newMapInstance);
 
     // SI ES EL MAPA PRINCIPAL DE LA LANDING, GUARDAMOS LA INSTANCIA GLOBAL PARA GEOLOCALIZACION
     if (containerId === 'map') mapInstance = newMapInstance;
@@ -182,63 +241,83 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
             branches.forEach(p => {
                 if (!p.latitude || !p.longitude) return;
                 
-                // DETERMINAR COLOR Y MENSAJE POR DISPONIBILIDAD
-                const pct = (p.ocupacion_actual / p.capacidad_total) * 100;
-                const disponibles = p.capacidad_total - p.ocupacion_actual;
-                let statusColor = '#C5A059'; // DORADO = ALTA DISPONIBILIDAD
-                let statusText = 'Alta disponibilidad';
-                let statusDesc = 'Hay lugares disponibles para vos.';
-                
-                if (pct >= 100) {
-                    statusColor = '#ff4444'; // ROJO = COMPLETO
-                    statusText = 'Sucursal Completa';
-                    statusDesc = 'No hay disponibilidad en este momento.';
-                } else if (pct >= 85) {
-                    statusColor = '#8b5cf6'; // VIOLETA = LUGARES LIMITADOS
-                    statusText = 'Lugares limitados';
-                    statusDesc = 'Quedan pocas plazas. ¡Reservá ahora!';
-                } else if (pct > 50) {
-                    statusText = 'Disponibilidad moderada';
-                    statusDesc = 'Disponibilidad moderada.';
-                }
+                // DISPONIBILIDAD DISCRIMINADA POR TIPO DE VEHÍCULO
+                const autoStats = getVehicleAvailability(p.ocupacion_actual, p.capacidad_total);
+                const motoStats = getVehicleAvailability(p.ocupacion_motos, p.capacidad_motos);
+                const camionetaStats = getVehicleAvailability(p.ocupacion_camionetas, p.capacidad_camionetas);
+
+                // Color del marcador en el mapa basado en disponibilidad de autos
+                const statusColor = autoStats.color;
 
                 const formattedAddr = formatAddress(p.direccion);
-
                 const horarioText = p.is_24h ? '24 HORAS' : (p.horario ? p.horario.replace(' UN ', ' a ') : 'Consultar');
 
                 const popupContent = `
-                    <div style="text-align: center; min-width: 200px; padding: 9px; background: #0a0a0a; border-radius: 15px;">
-                        <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 9px; border: 2px solid #C5A059; padding: 2px; background: #000; object-fit: cover;">
-                        <br><b style="font-size: 1.09rem; color: #fff; font-family: 'Montserrat'; letter-spacing: 0.5px;">${p.nombre}</b>
-                        <br><span style="color: #888; font-size: 0.8rem; display: block; margin-top: 2px; text-transform: capitalize;">${formattedAddr}</span>
-                        <span style="color: var(--dorado); font-size: 0.75rem; display: block; margin-top: 5px;"><i class="fas fa-clock" style="margin-right: 5px;"></i>${horarioText}</span>
+                    <div style="text-align: center; width: 250px; padding: 14px 16px; background: #0a0a0a; border-radius: 18px; box-sizing: border-box;">
+                        <!-- LOGO Y TITULO -->
+                        <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 52px; height: 52px; border-radius: 50%; margin-bottom: 8px; border: 2px solid #C5A059; padding: 2px; background: #000; object-fit: cover;">
+                        <br><b style="font-size: 1.08rem; color: #fff; font-family: 'Montserrat', sans-serif; letter-spacing: 0.4px; line-height: 1.3;">${p.nombre}</b>
+                        <br><span style="color: #888; font-size: 0.78rem; display: block; margin-top: 3px; text-transform: capitalize; line-height: 1.3;">${formattedAddr}</span>
+                        <span style="color: var(--dorado); font-size: 0.75rem; display: inline-block; margin-top: 5px; margin-bottom: 10px; font-weight: 600;"><i class="fas fa-clock" style="margin-right: 5px;"></i>${horarioText}</span>
                         
-                        <div style="margin: 11px 0; padding: 11px; background: rgba(197, 160, 89, 0.03); border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.15);">
-                            <b style="color: ${statusColor}; font-size: 0.85rem; display: block; margin-bottom: 5px; letter-spacing: 1px;">${statusText.toUpperCase()}</b>
-                            <span style="color: #ddd; font-size: 0.75rem; display: block; margin-bottom: 7px; line-height: 1.4;">${statusDesc}</span>
-                            ${disponibles > 0 ? `<span style="color: #fff; font-size: 1.04rem; font-weight: 700; display: block; margin-bottom: 3px;">${formatNum(disponibles)} lugar${disponibles !== 1 ? 'es' : ''} disponible${disponibles !== 1 ? 's' : ''}</span>` : ''}
-                            
-                            <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 9px 0;">
-                                <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, ${statusColor} 0%, #fff 200%);"></div>
+                        <!-- DISPONIBILIDAD DISCRIMINADA POR VEHÍCULO -->
+                        <div style="margin: 8px 0 12px; padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 14px; border: 1px solid rgba(197, 160, 89, 0.2); text-align: left;">
+                            <div style="font-size: 0.65rem; font-weight: 800; color: #C5A059; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center;">
+                                Estado de Disponibilidad
+                            </div>
+
+                            <!-- Auto -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 7px 10px; background: rgba(0,0,0,0.45); border-radius: 8px; border-left: 3.5px solid ${autoStats.color};">
+                                <span style="color: #eee; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 7px;">
+                                    <i class="fas fa-car" style="color: #888; font-size: 0.85rem; width: 14px;"></i> Auto
+                                </span>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.7rem; font-weight: 800; color: ${autoStats.color}; text-transform: uppercase; letter-spacing: 0.5px;">${autoStats.label}</span>
+                                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${autoStats.color}; box-shadow: 0 0 8px ${autoStats.color}; display: inline-block;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Moto -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 7px 10px; background: rgba(0,0,0,0.45); border-radius: 8px; border-left: 3.5px solid ${motoStats.color};">
+                                <span style="color: #eee; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 7px;">
+                                    <i class="fas fa-motorcycle" style="color: #888; font-size: 0.85rem; width: 14px;"></i> Moto
+                                </span>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.7rem; font-weight: 800; color: ${motoStats.color}; text-transform: uppercase; letter-spacing: 0.5px;">${motoStats.label}</span>
+                                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${motoStats.color}; box-shadow: 0 0 8px ${motoStats.color}; display: inline-block;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Camioneta -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: rgba(0,0,0,0.45); border-radius: 8px; border-left: 3.5px solid ${camionetaStats.color};">
+                                <span style="color: #eee; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 7px;">
+                                    <i class="fas fa-truck-pickup" style="color: #888; font-size: 0.85rem; width: 14px;"></i> Camioneta
+                                </span>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.7rem; font-weight: 800; color: ${camionetaStats.color}; text-transform: uppercase; letter-spacing: 0.5px;">${camionetaStats.label}</span>
+                                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${camionetaStats.color}; box-shadow: 0 0 8px ${camionetaStats.color}; display: inline-block;"></span>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- BOTON RESERVAR -->
                         <a href="javascript:void(0)" onclick="irAReserva('${p.nombre}')" 
-                           style="background: #C5A059; color: #000; padding: 9px 18px; font-size: 0.7rem; 
+                           style="background: #C5A059; color: #000; padding: 10px 18px; font-size: 0.72rem; 
                                   font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
-                                  width: 100%; display: block; margin-top: 4px; border-radius: 10px;
-                                  text-decoration: none; transition: 0.3s; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);">
+                                  width: 100%; display: block; border-radius: 10px;
+                                  text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.25); box-sizing: border-box;">
                            RESERVÁ AQUÍ
                         </a>
 
-                        <div style="margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.08);">
-                            <div style="color:#888;font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;font-weight:600;">CÓMO LLEGAR</div>
-                            <div style="display:flex;gap:5px;justify-content:center;">
-                                <a href="javascript:void(0)" onclick="getDirectionsTo(${p.latitude}, ${p.longitude})" style="flex:1;background:#4285F4;color:#fff;padding:6px 5px;border-radius:8px;text-decoration:none;font-size:0.65rem;font-weight:700;text-align:center;letter-spacing:0.3px;display:flex;align-items:center;justify-content:center;gap:4px;transition:0.3s;">
-                                    <i class="fab fa-google" style="font-size:0.8rem;"></i> Google Maps
+                        <!-- COMO LLEGAR -->
+                        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+                            <div style="color: #888; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; font-weight: 600;">CÓMO LLEGAR</div>
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <a href="javascript:void(0)" onclick="getDirectionsTo(${p.latitude}, ${p.longitude})" style="flex: 1; background: #4285F4; color: #fff; padding: 7px 6px; border-radius: 8px; text-decoration: none; font-size: 0.68rem; font-weight: 700; text-align: center; letter-spacing: 0.3px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: 0.3s;">
+                                    <i class="fab fa-google" style="font-size: 0.8rem;"></i> Google Maps
                                 </a>
-                                <a href="javascript:void(0)" onclick="getDirectionsTo(${p.latitude}, ${p.longitude}, 'waze')" style="flex:1;background:#33CCFF;color:#000;padding:6px 5px;border-radius:8px;text-decoration:none;font-size:0.65rem;font-weight:700;text-align:center;letter-spacing:0.3px;display:flex;align-items:center;justify-content:center;gap:4px;transition:0.3s;">
-                                    <i class="fab fa-waze" style="font-size:0.8rem;"></i> Waze
+                                <a href="javascript:void(0)" onclick="getDirectionsTo(${p.latitude}, ${p.longitude}, 'waze')" style="flex: 1; background: #33CCFF; color: #000; padding: 7px 6px; border-radius: 8px; text-decoration: none; font-size: 0.68rem; font-weight: 700; text-align: center; letter-spacing: 0.3px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: 0.3s;">
+                                    <i class="fab fa-waze" style="font-size: 0.8rem;"></i> Waze
                                 </a>
                             </div>
                         </div>
@@ -322,8 +401,19 @@ function loadTheaters(mapObj, containerId) {
 
     const makeMarker = function(lat, lng, t, cfg, group) {
         const name = t.name || t.operator || t['short_name'] || '(Sin nombre)';
+        const addressStr = formatPoiAddress(t);
         return L.marker([lat, lng], { icon: cfg.icon })
-            .bindPopup(`<div style="text-align:center;min-width:150px;padding:8px;background:#0a0a0a;border-radius:12px;"><div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${cfg.label}</div><b style="font-size:0.9rem;color:#fff;font-family:'Montserrat',sans-serif;">${name}</b>${t['addr:street'] ? `<br><span style="color:#aaa;font-size:0.75rem;">${t['addr:street']} ${t['addr:housenumber'] || ''}</span>` : ''}</div>`)
+            .bindPopup(`
+                <div style="text-align:center; min-width:170px; padding:10px 12px; background:#0a0a0a; border-radius:14px; box-sizing:border-box;">
+                    <div style="font-size:0.65rem; color:#C5A059; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:800;">
+                        ${cfg.label}
+                    </div>
+                    <b style="font-size:0.92rem; color:#fff; font-family:'Montserrat',sans-serif; display:block; line-height:1.3;">
+                        ${name}
+                    </b>
+                    ${addressStr ? `<span style="color:#aaa; font-size:0.75rem; display:block; margin-top:4px; line-height:1.3;">${addressStr}</span>` : ''}
+                </div>
+            `)
             .addTo(group);
     };
 
@@ -431,11 +521,11 @@ function loadTheaters(mapObj, containerId) {
 }
 
 const ESTADIOS_FIJOS = [
-    { lat: -34.5453, lng: -58.4498, name: 'Estadio Monumental (River Plate)', sport: 'Fútbol' },
-    { lat: -34.6356, lng: -58.3642, name: 'La Bombonera (Boca Juniors)', sport: 'Fútbol' },
-    { lat: -34.6684, lng: -58.3706, name: 'Estadio Presidente Perón (Racing Club)', sport: 'Fútbol' },
-    { lat: -34.6526, lng: -58.4434, name: 'Estadio Pedro Bidegain (San Lorenzo)', sport: 'Fútbol' },
-    { lat: -34.6537, lng: -58.6689, name: 'Estadio Carlos Sacaan (Club Ituzaingó)', sport: 'Fútbol' },
+    { lat: -34.5453, lng: -58.4498, name: 'Estadio Mâs Monumental', address: 'Av. Pres. Figueroa Alcorta 7597, Núñez, CABA' },
+    { lat: -34.6356, lng: -58.3642, name: 'La Bombonera (Alberto J. Armando)', address: 'Brandsen 805, La Boca, CABA' },
+    { lat: -34.6684, lng: -58.3706, name: 'Estadio Presidente Perón (El Cilindro)', address: 'Pasaje Corbatta 800, Avellaneda' },
+    { lat: -34.6526, lng: -58.4434, name: 'Estadio Pedro Bidegain (Nuevo Gasómetro)', address: 'Av. F. Fernández de la Cruz 2145, CABA' },
+    { lat: -34.6537, lng: -58.6689, name: 'Estadio Carlos Sacaan', address: 'Los Pozos 48, Ituzaingó' },
 ];
 
 function loadStadiums(mapObj, containerId) {
@@ -451,7 +541,17 @@ function loadStadiums(mapObj, containerId) {
 
     ESTADIOS_FIJOS.forEach(d => {
         L.marker([d.lat, d.lng], { icon: stadiumIcon })
-            .bindPopup(`<div style="text-align:center;min-width:150px;padding:8px;background:#0a0a0a;border-radius:12px;"><div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Estadio</div><b style="font-size:0.9rem;color:#fff;font-family:'Montserrat',sans-serif;">${d.name}</b>${d.sport ? `<br><span style="color:#aaa;font-size:0.75rem;">${d.sport}</span>` : ''}</div>`)
+            .bindPopup(`
+                <div style="text-align:center; min-width:170px; padding:10px 12px; background:#0a0a0a; border-radius:14px; box-sizing:border-box;">
+                    <div style="font-size:0.65rem; color:#27AE60; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:800;">
+                        Estadio
+                    </div>
+                    <b style="font-size:0.92rem; color:#fff; font-family:'Montserrat',sans-serif; display:block; line-height:1.3;">
+                        ${d.name}
+                    </b>
+                    ${d.address ? `<span style="color:#aaa; font-size:0.75rem; display:block; margin-top:4px; line-height:1.3;">${d.address}</span>` : ''}
+                </div>
+            `)
             .addTo(layers.stadium);
     });
 

@@ -2,7 +2,17 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.6.0 - Julio 2026)
+## Últimas Actualizaciones (v9.9.0 - Agosto 2026)
+- **Mosaicos de Google Maps gratuitos sin API Key**: Capas `Google Calles`, `Google Satélite`, `Google Híbrido` y `CartoDB Oscuro` con selector multicapa en la landing y el CRUD de sucursales.
+- **Indicadores Circulares de Disponibilidad (Status Dots)**: Estado luminoso discriminado para Auto, Moto y Camioneta en los mapas.
+- **Centro de Notificaciones Rediseñado**: Chips de filtro, borrado individual/masivo y conteo exacto (`DELETE /v1/user/profile/notifications/{id}` y `clear-read`).
+- **Sistema de Tickets de Soporte (`SupportTicket`)**: Endpoints `/v1/user/support-tickets` y `/v1/admin/support-tickets` con aislamiento por sucursal y real-time.
+
+## Últimas Actualizaciones Previas (v9.8.x - Agosto 2026)
+- **Migraciones con Alembic**: Control de versiones de esquema (`alembic/`, migración inicial `c833a3129266_initial_schema`) y pipeline CI/CD en `.github/workflows/ci.yml`.
+- **Suite de Tests expandida**: 15+ pruebas automatizadas en `tests/` (auth con TestClient, ALPR, cortesía 10 min, notificaciones, soporte).
+
+## Últimas Actualizaciones Previas (v9.6.0 - Julio 2026)
 - **Modularización ALPR (`alpr/`)**: Refactorización del servicio de visión artificial monolítico en el paquete `alpr/` (`config`, `preprocessor`, `video_streamer`, `ws_client`, `ocr_engine`, `runner`) manteniendo compatibilidad total.
 - **Servicio de Reportes (`ReportService`)**: Abstracción de analítica financiera y transacciones en `services/report_service.py`, aligerando `routes/reports.py` (Clean Architecture).
 - **Rutas de Sistema (`routes/system/`)**: División del módulo `system.py` en submódulos especializados (`common.py`, `health.py`, `cameras.py`, `video.py`).
@@ -16,7 +26,7 @@ Solución empresarial para la gestión de estacionamientos que combina **Visión
 - **FAB "Nueva Reserva" en Perfil**: Botón flotante con animación expansiva, oculto en la tab "inicio". Reemplaza botones redundantes en cada tab del perfil.
 - **Monitoreo Limpio**: Cards de aforo sin texto repetido ("Tot. Disp." eliminado). Barras de progreso con colores dinámicos (verde/amarillo/naranja/rojo).
 - **Worker Robusto**: DB sessions con `try/finally` para evitar `QueuePool limit` errors. Pool size aumentado a 10 con overflow 20.
-- **Aforo Inteligente con Reservas**: Las reservas de Día/Semana/Quincena/Mes descuentan la plaza del aforo al iniciar el período (vía worker), no al pagar. La plaza se libera solo al vencer o cancelar.
+- **Ocupación Solo Física (v9.5+)**: El aforo refleja únicamente vehículos físicamente presentes; el ALPR (entrada/salida) maneja el conteo para todos los vehículos. Las reservas no horarias no pre-ocupan plaza.
 - **Restricción de Anticipación Selectiva**: Solo las reservas por hora requieren anticipación (1 hora configurable vía `RESERVA_HORA_MIN_SEGUNDOS`). Las de período largo no tienen restricción.
 - **Gestión Vertical (Multi-Piso)**: Soporte para múltiples niveles por sucursal con control de aforo independiente.
 - **Soporte Trimodal (Autos/Motos/Camionetas)**: Identificación y facturación diferenciada para motocicletas y camionetas con tarifas reducidas.

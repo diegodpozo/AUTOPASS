@@ -265,7 +265,7 @@ class AccessService:
 
             now = TimeService.now()
             gate_id = data.gate_id.upper() if data.gate_id else "ENTRADA"
-            is_entry = "ENTRADA" in gate_id
+            is_entry = "EGRESO" not in gate_id and "SALIDA" not in gate_id
             
             ultimo = db.query(models.AccessLog).filter(
                 models.AccessLog.patente_detectada == patente_qr,

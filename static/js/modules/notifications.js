@@ -1,9 +1,11 @@
 import api from './api.js';
-import { showToast } from './utils.js';
+import { showToast, showConfirm } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 let pollInterval = null;
 let lastNotifCount = 0;
+let currentFilter = 'ALL';
+let cachedNotifications = [];
 
 export async function loadNotifications() {
     const container = document.getElementById('notifications-container');
@@ -11,58 +13,126 @@ export async function loadNotifications() {
 
     container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Cargando notificaciones...</div>';
 
-    const res = await api.get('/user/profile/notifications');
+    const res = await api.get('/user/profile/notifications?limit=200');
     if (!res.ok) {
         container.innerHTML = '<div class="empty-state">Error al cargar notificaciones.</div>';
         return;
     }
 
     const { notifications, unread } = res.data;
+    cachedNotifications = notifications || [];
 
     const markBtn = document.getElementById('btn-mark-all-read');
     if (markBtn) {
         markBtn.style.display = unread > 0 ? 'inline-flex' : 'none';
     }
 
-    if (!notifications || notifications.length === 0) {
+    const clearReadBtn = document.getElementById('btn-clear-read-notifs');
+    if (clearReadBtn) {
+        const hasRead = cachedNotifications.some(n => n.leido);
+        clearReadBtn.style.display = hasRead ? 'inline-flex' : 'none';
+    }
+
+    renderNotificationList();
+}
+
+function renderNotificationList() {
+    const container = document.getElementById('notifications-container');
+    if (!container) return;
+
+    const filtered = filterNotificationsArray(cachedNotifications, currentFilter);
+
+    if (!filtered || filtered.length === 0) {
+        let msg = 'No tenés notificaciones.';
+        if (currentFilter === 'UNREAD') msg = 'No tenés notificaciones sin leer.';
+        else if (currentFilter === 'RESERVATION') msg = 'No hay notificaciones de reservas.';
+        else if (currentFilter === 'FINANCE') msg = 'No hay notificaciones de pagos o saldo.';
+        else if (currentFilter === 'SUPPORT') msg = 'No hay notificaciones de soporte.';
+
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-bell-slash" style="font-size: 3rem; color: var(--dorado); opacity:0.5; margin-bottom:15px;"></i>
-                <p>No tenés notificaciones.</p>
+                <p>${msg}</p>
             </div>`;
         return;
     }
 
     let html = '<div class="notif-list">';
-    for (const n of notifications) {
+    for (const n of filtered) {
         const isUnread = !n.leido;
         const timeAgo = getTimeAgo(n.created_at);
         const actions = getNotifActions(n);
+        const catClass = getNotifCategoryClass(n.tipo);
+        const iconClass = getNotifIcon(n.tipo);
+
         html += `
-            <div class="notif-item ${isUnread ? 'notif-unread' : ''}" data-id="${n.id}" ${isUnread ? `onclick="markNotifRead(${n.id}, this)"` : ''}>
-                <div class="notif-icon">
-                    <i class="fas ${getNotifIcon(n.tipo)}"></i>
+            <div class="notif-item ${isUnread ? 'notif-unread' : ''} ${catClass}" data-id="${n.id}" ${isUnread ? `onclick="markNotifRead(${n.id}, this)"` : ''}>
+                <div class="notif-icon-box ${catClass}">
+                    <i class="fas ${iconClass}"></i>
                 </div>
                 <div class="notif-content">
-                    <div class="notif-title">${n.titulo}</div>
+                    <div class="notif-header-row">
+                        <div class="notif-title">${n.titulo}</div>
+                        <span class="notif-time">${timeAgo}</span>
+                    </div>
                     <div class="notif-message">${n.mensaje}</div>
-                    <div class="notif-time">${timeAgo}</div>
                     ${actions ? `<div class="notif-actions">${actions}</div>` : ''}
                 </div>
-                ${isUnread ? `<span class="notif-unread-dot"></span>` : ''}
+                <div class="notif-side-actions">
+                    ${isUnread ? `<span class="notif-unread-dot" title="Sin leer"></span>` : ''}
+                    <button class="notif-delete-btn" onclick="deleteNotif(${n.id}, event, this)" title="Eliminar notificación">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>`;
     }
     html += '</div>';
     container.innerHTML = html;
 }
 
+function filterNotificationsArray(list, filter) {
+    if (!list) return [];
+    if (filter === 'UNREAD') return list.filter(n => !n.leido);
+    if (filter === 'RESERVATION') return list.filter(n => ['REMINDER_PAID', 'REMINDER_UNPAID', 'RESERVATION_STARTED', 'AUTO_CANCELLED', 'RESERVATION_CONFIRMED', 'RESERVATION_CANCELLED'].includes(n.tipo));
+    if (filter === 'FINANCE') return list.filter(n => ['BALANCE_RECHARGED', 'PROMO_REDEEMED', 'POINTS_EARNED'].includes(n.tipo));
+    if (filter === 'SUPPORT') return list.filter(n => n.tipo === 'SUPPORT_RESPONSE');
+    return list;
+}
+
+window.filterNotifs = function(filterType, btn) {
+    currentFilter = filterType;
+    document.querySelectorAll('.notif-chip').forEach(c => c.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderNotificationList();
+};
+
 function getNotifIcon(tipo) {
     switch (tipo) {
-        case 'REMINDER_PAID': return 'fa-circle-check';
+        case 'REMINDER_PAID': return 'fa-clock';
         case 'REMINDER_UNPAID': return 'fa-exclamation-triangle';
         case 'RESERVATION_STARTED': return 'fa-play-circle';
-        case 'AUTO_CANCELLED': return 'fa-times-circle';
+        case 'AUTO_CANCELLED':
+        case 'RESERVATION_CANCELLED': return 'fa-times-circle';
+        case 'RESERVATION_CONFIRMED': return 'fa-check-circle';
+        case 'BALANCE_RECHARGED': return 'fa-wallet';
+        case 'SUPPORT_RESPONSE': return 'fa-headset';
+        case 'PROMO_REDEEMED':
+        case 'POINTS_EARNED': return 'fa-gift';
         default: return 'fa-bell';
+    }
+}
+
+function getNotifCategoryClass(tipo) {
+    switch (tipo) {
+        case 'RESERVATION_CONFIRMED':
+        case 'BALANCE_RECHARGED': return 'notif-cat-success';
+        case 'REMINDER_UNPAID': return 'notif-cat-warning';
+        case 'AUTO_CANCELLED':
+        case 'RESERVATION_CANCELLED': return 'notif-cat-danger';
+        case 'SUPPORT_RESPONSE': return 'notif-cat-support';
+        case 'REMINDER_PAID':
+        case 'PROMO_REDEEMED': return 'notif-cat-gold';
+        default: return 'notif-cat-default';
     }
 }
 
@@ -70,16 +140,22 @@ function getNotifActions(n) {
     if (n.tipo === 'REMINDER_UNPAID' && n.reserva_id) {
         return `
             <button class="notif-btn notif-btn-confirm" onclick="confirmReminder(${n.id}, ${n.reserva_id}, this)">
-                <i class="fas fa-check"></i> CONFIRMAR RESERVA
+                <i class="fas fa-check"></i> CONFIRMAR
             </button>
             <button class="notif-btn notif-btn-pay" onclick="payFromNotif(${n.reserva_id})">
                 <i class="fas fa-credit-card"></i> PAGAR
             </button>`;
     }
-    if (n.tipo === 'REMINDER_PAID' && n.reserva_id) {
+    if ((n.tipo === 'REMINDER_PAID' || n.tipo === 'RESERVATION_CONFIRMED' || n.tipo === 'RESERVATION_STARTED') && n.reserva_id) {
         return `
             <button class="notif-btn notif-btn-view" onclick="goToReservation(${n.reserva_id})">
                 <i class="fas fa-eye"></i> VER RESERVA
+            </button>`;
+    }
+    if (n.tipo === 'SUPPORT_RESPONSE') {
+        return `
+            <button class="notif-btn notif-btn-support" onclick="window.showSection?.('help')">
+                <i class="fas fa-headset"></i> IR A SOPORTE
             </button>`;
     }
     return null;
@@ -116,8 +192,10 @@ export async function updateNotifBadge() {
         if (count > 0) {
             badge.style.display = 'inline-flex';
             badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.add('pulse');
         } else {
             badge.style.display = 'none';
+            badge.classList.remove('pulse');
         }
     }
 
@@ -129,7 +207,6 @@ export async function updateNotifBadge() {
 }
 
 function showNotifAlert(count) {
-    // REMOVER BANNER ANTERIOR SI EXISTE
     const old = document.getElementById('notif-alert-banner');
     if (old) old.remove();
 
@@ -140,14 +217,13 @@ function showNotifAlert(count) {
         <div class="notif-alert-content">
             <div class="notif-alert-icon"><i class="fas fa-bell"></i></div>
             <div class="notif-alert-text">
-                <strong>¡TENÉS ${count} MENSAJE${count !== 1 ? 'S' : ''}..!!</strong>
-                <span>Hacé clic para ver</span>
+                <strong>¡TENÉS ${count} MENSAJE${count !== 1 ? 'S' : ''} SIN LEER!</strong>
+                <span>Hacé clic para ver el centro de notificaciones</span>
             </div>
             <button class="notif-alert-close" onclick="dismissNotifAlert(event)"><i class="fas fa-times"></i></button>
         </div>
     `;
 
-    // CLIC EN EL BANNER LLEVA A NOTIFICACIONES
     banner.addEventListener('click', (e) => {
         if (e.target.closest('.notif-alert-close')) return;
         goToNotifications();
@@ -155,12 +231,10 @@ function showNotifAlert(count) {
 
     document.body.appendChild(banner);
 
-    // ANIMACION DE ENTRADA
     requestAnimationFrame(() => {
         banner.classList.add('visible');
     });
 
-    // AUTO-DISMIIS A LOS 10 SEGUNDOS
     setTimeout(() => {
         if (banner.parentNode) {
             banner.classList.remove('visible');
@@ -170,15 +244,7 @@ function showNotifAlert(count) {
 }
 
 function goToNotifications() {
-    const bell = document.querySelector('.nav-item[onclick*="notificaciones"]');
-    if (bell) {
-        bell.click();
-    } else {
-        // FALLBACK: ABRIR SECCION NOTIFICACIONES
-        const sectionBtn = document.querySelector('.notif-header-bell');
-        if (sectionBtn) sectionBtn.click();
-    }
-    // REMOVER BANNER
+    window.showSection?.('notificaciones');
     const banner = document.getElementById('notif-alert-banner');
     if (banner) banner.remove();
 }
@@ -193,13 +259,16 @@ window.dismissNotifAlert = function(e) {
 };
 
 window.markNotifRead = async function(notifId, el) {
-    el = el.closest?.('.notif-item') || el;
-    if (!el.classList.contains('notif-unread')) return;
-    el.classList.remove('notif-unread');
-    el.removeAttribute('onclick');
-    el.style.cursor = 'default';
-    const dot = el.querySelector('.notif-unread-dot');
-    if (dot) dot.remove();
+    el = el?.closest?.('.notif-item') || el;
+    if (el && !el.classList.contains('notif-unread')) return;
+    if (el) {
+        el.classList.remove('notif-unread');
+        const dot = el.querySelector('.notif-unread-dot');
+        if (dot) dot.remove();
+    }
+    const target = cachedNotifications.find(n => n.id === notifId);
+    if (target) target.leido = True;
+
     updateNotifBadge();
     await api.patch(`/user/profile/notifications/${notifId}/read`);
 };
@@ -207,14 +276,55 @@ window.markNotifRead = async function(notifId, el) {
 window.markAllNotifRead = async function() {
     const res = await api.post('/user/profile/notifications/read-all');
     if (!res.ok) return;
-    document.querySelectorAll('.notif-item.notif-unread').forEach(el => {
-        el.classList.remove('notif-unread');
-        const btn = el.querySelector('.notif-mark-read');
-        if (btn) btn.remove();
-    });
-    document.getElementById('btn-mark-all-read').style.display = 'none';
+    cachedNotifications.forEach(n => n.leido = true);
+    renderNotificationList();
+    const markBtn = document.getElementById('btn-mark-all-read');
+    if (markBtn) markBtn.style.display = 'none';
     updateNotifBadge();
     showToast('Todas las notificaciones marcadas como leídas', 'success');
+};
+
+window.deleteNotif = async function(notifId, e, btn) {
+    if (e) e.stopPropagation();
+    const res = await api.delete(`/user/profile/notifications/${notifId}`);
+    if (!res.ok) {
+        showToast('Error al eliminar notificación', 'error');
+        return;
+    }
+    cachedNotifications = cachedNotifications.filter(n => n.id !== notifId);
+    const item = btn?.closest('.notif-item');
+    if (item) {
+        item.style.transform = 'translateX(50px)';
+        item.style.opacity = '0';
+        setTimeout(() => {
+            renderNotificationList();
+            updateNotifBadge();
+        }, 300);
+    } else {
+        renderNotificationList();
+        updateNotifBadge();
+    }
+    showToast('Notificación eliminada', 'info');
+};
+
+window.clearReadNotifs = async function() {
+    const confirmed = await showConfirm(
+        '¿Borrar leídas?',
+        '¿Deseás borrar permanentemente todas las notificaciones leídas?',
+        'Borrar',
+        'Cancelar'
+    );
+    if (!confirmed) return;
+
+    const res = await api.delete('/user/profile/notifications/clear-read');
+    if (!res.ok) {
+        showToast('Error al borrar notificaciones', 'error');
+        return;
+    }
+    cachedNotifications = cachedNotifications.filter(n => !n.leido);
+    renderNotificationList();
+    updateNotifBadge();
+    showToast('Notificaciones leídas borradas', 'success');
 };
 
 window.confirmReminder = async function(notifId, reservaId, btn) {
@@ -226,8 +336,6 @@ window.confirmReminder = async function(notifId, reservaId, btn) {
     const item = btn.closest('.notif-item');
     if (item) {
         item.classList.remove('notif-unread');
-        const markBtn = item.querySelector('.notif-mark-read');
-        if (markBtn) markBtn.remove();
         const actionsDiv = item.querySelector('.notif-actions');
         if (actionsDiv) actionsDiv.remove();
     }
@@ -292,30 +400,33 @@ async function loadNotifDropdown() {
         body.innerHTML = '<div class="notif-dropdown-empty">Sin notificaciones</div>';
         return;
     }
-    let html = '<div class="notif-list">';
+    let html = '<div class="notif-list dropdown-list">';
     for (const n of notifications) {
         const isUnread = !n.leido;
         const timeAgo = getTimeAgo(n.created_at);
         const actions = getNotifActions(n);
+        const catClass = getNotifCategoryClass(n.tipo);
+        const iconClass = getNotifIcon(n.tipo);
+
         html += `
-            <div class="notif-item ${isUnread ? 'notif-unread' : ''}" data-id="${n.id}" ${isUnread ? `onclick="markNotifRead(${n.id}, this)"` : ''}>
-                <div class="notif-icon">
-                    <i class="fas ${getNotifIcon(n.tipo)}"></i>
+            <div class="notif-item dropdown-item ${isUnread ? 'notif-unread' : ''} ${catClass}" data-id="${n.id}" ${isUnread ? `onclick="markNotifRead(${n.id}, this)"` : ''}>
+                <div class="notif-icon-box sm ${catClass}">
+                    <i class="fas ${iconClass}"></i>
                 </div>
                 <div class="notif-content">
-                    <div class="notif-title">${n.titulo}</div>
+                    <div class="notif-header-row">
+                        <div class="notif-title">${n.titulo}</div>
+                        <span class="notif-time">${timeAgo}</span>
+                    </div>
                     <div class="notif-message">${n.mensaje}</div>
-                    <div class="notif-time">${timeAgo}</div>
                     ${actions ? `<div class="notif-actions">${actions}</div>` : ''}
                 </div>
-                ${isUnread ? `<span class="notif-unread-dot"></span>` : ''}
             </div>`;
     }
     html += '</div>';
     body.innerHTML = html;
 }
 
-// CERRAR DROPDOWN AL HACER CLIC FUERA
 document.addEventListener('click', function(e) {
     const bell = document.querySelector('.notif-header-bell');
     const dropdown = document.getElementById('notif-dropdown');
@@ -326,10 +437,9 @@ document.addEventListener('click', function(e) {
 
 window.loadNotifications = loadNotifications;
 
-// POLLING CADA 30 SEGUNDOS PARA EL BADGE
 export function startNotifPolling() {
     if (pollInterval) clearInterval(pollInterval);
-    lastNotifCount = -1; // INICIALIZAR PARA NO DISPARAR ALERTA EN EL PRIMER POLL
+    lastNotifCount = -1;
     updateNotifBadge();
     pollInterval = setInterval(updateNotifBadge, 30000);
 }
@@ -341,7 +451,6 @@ export function stopNotifPolling() {
     }
 }
 
-// INICIAR POLLING AUTOMATICAMENTE AL CARGAR EL MODULO
 document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('token')) {
         startNotifPolling();

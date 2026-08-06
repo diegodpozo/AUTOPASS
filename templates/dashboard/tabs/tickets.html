@@ -1,0 +1,141 @@
+<div id="tab-tickets" class="tab-view" style="display: none;">
+    <!-- KPIS DE TICKETS DE SOPORTE -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+        <div class="kpi-card highlight">
+            <div class="kpi-icon"><i class="fas fa-inbox"></i></div>
+            <div class="kpi-data">
+                <span class="label">Total Tickets</span>
+                <span class="value" id="stat-tickets-total">0</span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="kpi-data">
+                <span class="label">Pendientes</span>
+                <span class="value" id="stat-tickets-pending">0</span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fas fa-spinner"></i></div>
+            <div class="kpi-data">
+                <span class="label">En Proceso</span>
+                <span class="value" id="stat-tickets-process">0</span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="kpi-data">
+                <span class="label">Resueltos</span>
+                <span class="value" id="stat-tickets-resolved">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARJETA PRINCIPAL Y TABLA DE TICKETS -->
+    <div class="card">
+        <div class="card-header-premium">
+            <div class="header-info-group" style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                <div class="header-icon"><i class="fas fa-headset"></i></div>
+                <div class="header-text">
+                    <h3>GESTIÓN DE TICKETS DE SOPORTE</h3>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="filter-group-premium" title="Filtrar por estado del ticket">
+                    <i class="fas fa-filter"></i>
+                    <select id="ticket-admin-status-filter" class="select-premium-sm" onchange="loadAdminTickets()">
+                        <option value="TODOS">Todos</option>
+                        <option value="PENDIENTE">Pendientes</option>
+                        <option value="EN_PROCESO">En Proceso</option>
+                        <option value="RESUELTO">Resueltos</option>
+                    </select>
+                </div>
+                <div class="search-box-premium" title="Buscar por asunto, cliente o categoría">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="ticket-admin-search" placeholder="Buscar ticket..." onkeyup="filterTicketList(this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="table-centered">
+                <thead>
+                    <tr>
+                        <th>#ID</th>
+                        <th>Cliente</th>
+                        <th>Sucursal</th>
+                        <th>Categoría</th>
+                        <th>Asunto</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tickets-admin-table-body">
+                    <tr>
+                        <td colspan="8" class="text-center p-30 text-muted">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando tickets...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ATENDER / RESPONDER TICKET -->
+<div id="modal-ticket-answer" class="modal" style="display: none;">
+    <div class="modal-content glass-premium" style="max-width: 600px;">
+        <div class="modal-header">
+            <div class="flex-row items-center gap-10">
+                <div class="header-icon-box sm">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h3 style="color: var(--dorado);" id="ticket-modal-title">ATENDER TICKET #---</h3>
+            </div>
+            <span class="close-btn" onclick="closeModal('modal-ticket-answer')"><i class="fas fa-xmark"></i></span>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="ticket-modal-id">
+
+            <div class="info-card-premium mb-15">
+                <div class="flex-row justify-between items-center mb-5">
+                    <span id="ticket-modal-client" class="text-bold" style="color: #f8fafc;">---</span>
+                    <span id="ticket-modal-email" class="text-muted text-small">---</span>
+                </div>
+                <div class="flex-row gap-10 text-small">
+                    <span class="badge badge-info" id="ticket-modal-branch">---</span>
+                    <span class="badge badge-warning" id="ticket-modal-category">---</span>
+                </div>
+            </div>
+
+            <div class="mb-15 p-15" style="background: rgba(15, 23, 42, 0.8); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                <label class="text-muted text-small text-bold block mb-5">ASUNTO</label>
+                <h4 id="ticket-modal-subject" style="margin: 0 0 10px 0; color: #f1f5f9;">---</h4>
+                <label class="text-muted text-small text-bold block mb-5">MENSAJE DEL CLIENTE</label>
+                <p id="ticket-modal-message" style="margin: 0; color: #cbd5e1; white-space: pre-line; font-size: 0.92rem;">---</p>
+            </div>
+
+            <form onsubmit="submitTicketAnswer(event)">
+                <div class="form-group mb-15">
+                    <label for="ticket-answer-status" class="text-muted text-small text-bold block mb-5">NUEVO ESTADO</label>
+                    <select id="ticket-answer-status" class="form-control-custom" required>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Resuelto">Resuelto</option>
+                        <option value="Pendiente">Pendiente</option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-20">
+                    <label for="ticket-answer-text" class="text-muted text-small text-bold block mb-5">RESPUESTA AL CLIENTE</label>
+                    <textarea id="ticket-answer-text" class="form-control-custom" rows="4" placeholder="Escribí aquí la respuesta o resolución enviada al cliente..."></textarea>
+                </div>
+
+                <div class="flex-row justify-end gap-10">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('modal-ticket-answer')">CANCELAR</button>
+                    <button type="submit" id="btn-save-ticket-answer" class="btn btn-primary">GUARDAR CAMBIOS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
