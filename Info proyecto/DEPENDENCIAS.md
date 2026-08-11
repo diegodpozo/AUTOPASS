@@ -1,11 +1,11 @@
-# Dependencias del Proyecto: AUTOPASS (v9.9.0)
+# Dependencias del Proyecto: AUTOPASS (v9.9.1)
 
 Este documento detalla las librerías y herramientas necesarias para el funcionamiento del sistema.
 
 ## Requisitos de Entorno
 - **Python**: 3.14 (probado en Windows).
 - **Gestor de paquetes**: pip (actualizado).
-- **Base de datos**: SQLite (incluida con Python, archivo `parking.db`).
+- **Base de datos**: SQLite (incluida con Python, archivo `parking.db`) **o** Turso/libSQL en la nube (desde v9.9.1, la base online se configura vía `DATABASE_URL` en `.env`).
 
 ---
 
@@ -35,6 +35,8 @@ Este documento detalla las librerías y herramientas necesarias para el funciona
 ### Comunicación y Utilidades
 - **`paho-mqtt`** (2.1.0): Cliente MQTT para comunicación con barreras físicas. Usa `CallbackAPIVersion.VERSION2`.
 - **`websockets`** (16.0): Comunicación WebSocket para streaming de video y aforo en tiempo real.
+- **`libsql`** (0.1.11): Driver oficial de Turso/libSQL para base de datos en la nube (compatible con Windows). Se instala desde `requirements.txt`.
+- **`sqlalchemy-libsql`** (0.2.0): Dialecto SQLAlchemy para Turso. **Se instala con `--no-deps`** en `setup_backend.bat` porque su dependencia automática (`libsql-experimental`) no compila en Windows; el shim `libsql_experimental.py` en la raíz del proyecto provee la API que el dialecto espera usando el driver `libsql`.
 - **`email-validator`** (2.3.0): Validación de direcciones de email.
 - **`python-multipart`**: Soporte para subida de archivos (logos de sucursales).
 - **`requests`** (2.32.5): HTTP client para servicios externos.
@@ -76,6 +78,19 @@ Esto agrega el import faltante en `bidi/__init__.py` automáticamente.
 ```powershell
 python init_db.py  # Crea tablas y datos iniciales
 ```
+
+### Base de Datos Online (Turso/libSQL, v9.9.1+)
+
+El sistema soporta usar una base en la nube de Turso para que varias PC compartan los mismos datos. Solo hay que configurar dos variables en `.env`:
+
+```env
+DATABASE_URL=libsql://TU_NOMBRE.turso.io?secure=true
+TURSO_AUTH_TOKEN=eyJ... (database token generado en el dashboard de Turso)
+```
+
+- `?secure=true` es obligatorio para que el dialecto use HTTPS (sin él, Turso responde 308 redirect).
+- El dialecto `sqlite+libsql` se registra automáticamente al instalar `sqlalchemy-libsql`; el shim `libsql_experimental.py` en la raíz hace de puente con el driver `libsql`.
+- Si no se configuran estas variables, el sistema cae al default `sqlite:///./parking.db` (base local).
 
 ### Ejecución
 ```powershell
