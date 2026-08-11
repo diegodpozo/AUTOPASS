@@ -51,6 +51,11 @@ if %errorlevel% neq 0 (
 echo [+] Aplicando parche de compatibilidad EasyOCR + python-bidi...
 venv\Scripts\python.exe scripts\patch_bidi.py
 
+:: 4b. Instalar dialecto SQLAlchemy para Turso/libSQL (sin dependencias
+::     porque libsql-experimental no compila en Windows)
+echo [+] Instalando dialecto Turso/libSQL para SQLAlchemy...
+venv\Scripts\pip.exe install sqlalchemy-libsql==0.2.0 --no-deps
+
 :: 5. Configurar Variables de Entorno (.env)
 echo [+] Configurando archivo de variables de entorno (.env)...
 if not exist .env (

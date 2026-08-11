@@ -86,3 +86,5 @@ websockets==16.0
 Werkzeug==3.1.8
 alembic==1.19.0
 httpx==0.28.1
+libsql==0.1.11
+
