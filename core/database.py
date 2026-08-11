@@ -7,10 +7,22 @@ from core.config import settings
 # --- CONFIGURACION DE BASE DE DATOS ---
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-# CREACION DEL MOTOR DE BASE DE DATOS
-engine_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
-pool_args = {"pool_size": 10, "max_overflow": 20, "pool_timeout": 60} if not SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=engine_args, **pool_args)
+# LIBSQL/TURSO: el driver real es `libsql`; el dialecto se registra como sqlite+libsql
+IS_LIBSQL = SQLALCHEMY_DATABASE_URL.startswith(("libsql://", "sqlite+libsql://"))
+
+if IS_LIBSQL:
+    if not SQLALCHEMY_DATABASE_URL.startswith("sqlite+"):
+        SQLALCHEMY_DATABASE_URL = "sqlite+" + SQLALCHEMY_DATABASE_URL
+    from sqlalchemy.pool import QueuePool
+    connect_args = {"auth_token": settings.TURSO_AUTH_TOKEN}
+    pool_args = {"pool_size": 10, "max_overflow": 20, "pool_timeout": 60, "poolclass": QueuePool}
+    engine_args = {}
+else:
+    engine_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+    pool_args = {"pool_size": 10, "max_overflow": 20, "pool_timeout": 60} if not SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+    connect_args = {}
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={**connect_args, **engine_args}, **pool_args)
 
 # FABRICA DE SESIONES
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
