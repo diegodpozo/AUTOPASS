@@ -1,4 +1,10 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-06)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-11)
+
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.1 (Base de Datos Online con Turso/libSQL)
+- [x] **Base de Datos en la Nube (Turso/libSQL)**: Integración de una base SQLite en la nube de Turso para compartir los mismos datos desde múltiples PC. Configurable vía `DATABASE_URL=libsql://...?secure=true` y `TURSO_AUTH_TOKEN` en `.env`.
+- [x] **Driver libSQL para Windows**: Instalación de `libsql==0.1.11` (wheel nativo Windows) + `sqlalchemy-libsql==0.2.0` con `--no-deps` (el `libsql-experimental` no compila en Windows). Se creó el shim `libsql_experimental.py` en la raíz para que el dialecto SQLAlchemy funcione con el driver nuevo.
+- [x] **Soporte Multi-PC**: `core/database.py` detecta el prefijo `libsql://`, usa `QueuePool` y pasa el auth token automáticamente. Varias PC corriendo el backend comparten la misma base; cada una conserva local solo imágenes, logos y tiempo virtual.
+- [x] **Actualización de Instalador y Documentación**: `setup_backend.bat` instala el dialecto Turso, `requirements.txt` incluye `libsql`, y se actualizaron `DEPENDENCIAS.md` e `INICIALIZACION.md` con la configuración y verificación de la base online.
 
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.0 (Interactive Map Overhaul, Google Maps Integration & Trimodal Status Dots UI)
 - [x] **Mosaicos de Google Maps 100% Gratuitos sin API Key**: Integración de capas de mapas base de Google Maps (`Google Calles`, `Google Satélite`, `Google Híbrido`) y `CartoDB Oscuro` con un selector multicapa interactivo en `landing.js` y `dashboard-admin-branches-crud.js`.
@@ -83,7 +89,7 @@
 - [x] **Unified Visual Style**: Sincronización estética total entre el formulario de inicio ("Quick Add") y la gestión de flota.
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
-### 🛠️ Arquitectura Actual (v9.9.0)
+### 🛠️ Arquitectura Actual (v9.9.1)
 - **Backend**: Clean Architecture con Servicios y Repositories. ~64 archivos Python en 6 paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`).
 - **Frontend**: Dashboard Premium modularizado. 31 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 46 templates HTML, 38 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
@@ -91,7 +97,7 @@
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
 - **Multi-sucursal**: Full isolation por sucursal con gestión de pisos, aforos y configuración independiente.
 - **ALPR**: Pipeline completo de visión artificial (EasyOCR + OpenCV + PyTorch) con consenso de votos y streaming de video.
-- **Base de Datos**: SQLite (`parking.db`) con 14 tablas, migraciones versionadas con **Alembic** (`alembic/`, primera migración `c833a3129266_initial_schema`).
+- **Base de Datos**: **Turso/libSQL online** (`libsql://parking-mjac.aws-us-west-2.turso.io?secure=true`) compartida entre varias PC, con fallback a SQLite local (`parking.db`). Migraciones versionadas con **Alembic** (`alembic/`, primera migración `c833a3129266_initial_schema`).
 
 ### 📊 Cobertura de Funcionalidades
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.

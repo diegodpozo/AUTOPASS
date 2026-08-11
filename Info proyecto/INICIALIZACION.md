@@ -31,7 +31,13 @@ SMTP_PORT=587
 SMTP_USER=tu_email@gmail.com
 SMTP_PASSWORD=tu_password
 SMTP_FROM=noreply@autopass.com.ar
+
+# Opcional: Base de datos online (Turso/libSQL) para compartir datos entre varias PC
+# DATABASE_URL=libsql://TU_NOMBRE.turso.io?secure=true
+# TURSO_AUTH_TOKEN=eyJ... (database token generado en el dashboard de Turso)
 ```
+
+> **Base online (v9.9.1+):** Para usar una base en la nube en vez del SQLite local, completá `DATABASE_URL` con la URL `libsql://` de Turso (terminando en `?secure=true`) y `TURSO_AUTH_TOKEN` con el database token. El sistema detecta el prefijo `libsql://`, usa el dialecto `sqlite+libsql` y el token como autenticación. Varias PC pueden apuntar a la misma URL y compartir los datos.
 
 ## 3. Preparación y Migración de Base de Datos
 Este paso crea las tablas, los roles iniciales (Admin Global) y sincroniza las migraciones con Alembic:
@@ -90,6 +96,13 @@ Ejecutá los tests automáticos para asegurar que todos los módulos e integraci
 ```bash
 .\venv\Scripts\python.exe -m pytest tests/ --verbose
 ```
+
+### Verificación de Base Online (Turso)
+Si configuraste Turso, podés verificar la conexión ejecutando:
+```bash
+.\venv\Scripts\python.exe -c "from core.database import engine; from sqlalchemy import text; c=engine.connect(); print(c.execute(text(\"SELECT name FROM sqlite_master WHERE type='table'\")).fetchall()); c.close()"
+```
+Debe listar las 15 tablas del sistema (users, reservations, access_logs, etc.). Si da error `308 redirect`, falta `?secure=true` en `DATABASE_URL`.
 
 ---
 ### 🚦 Flujo de Prueba Rápido (ALPR)
