@@ -7,6 +7,10 @@ from core.config import settings
 # --- CONFIGURACION DE BASE DE DATOS ---
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
+# POSTGRES: si la URL viene sin driver (postgresql://...), usar psycopg 3
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql://") and "+" not in SQLALCHEMY_DATABASE_URL.split("://", 1)[0]:
+    SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://" + SQLALCHEMY_DATABASE_URL.split("://", 1)[1]
+
 # LIBSQL/TURSO: el driver real es `libsql`; el dialecto se registra como sqlite+libsql
 IS_LIBSQL = SQLALCHEMY_DATABASE_URL.startswith(("libsql://", "sqlite+libsql://"))
 

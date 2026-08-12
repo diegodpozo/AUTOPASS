@@ -35,6 +35,7 @@ Este documento detalla las librerías y herramientas necesarias para el funciona
 ### Comunicación y Utilidades
 - **`paho-mqtt`** (2.1.0): Cliente MQTT para comunicación con barreras físicas. Usa `CallbackAPIVersion.VERSION2`.
 - **`websockets`** (16.0): Comunicación WebSocket para streaming de video y aforo en tiempo real.
+- **`psycopg[binary]`** (3.3.4): Driver Postgres para la base en la nube Neon (compatible con Windows). Se instala desde `requirements.txt`; `core/database.py` normaliza `postgresql://` → `postgresql+psycopg://` automáticamente.
 - **`libsql`** (0.1.11): Driver oficial de Turso/libSQL para base de datos en la nube (compatible con Windows). Se instala desde `requirements.txt`.
 - **`sqlalchemy-libsql`** (0.2.0): Dialecto SQLAlchemy para Turso. **Se instala con `--no-deps`** en `setup_backend.bat` porque su dependencia automática (`libsql-experimental`) no compila en Windows; el shim `libsql_experimental.py` en la raíz del proyecto provee la API que el dialecto espera usando el driver `libsql`.
 - **`email-validator`** (2.3.0): Validación de direcciones de email.
@@ -79,18 +80,18 @@ Esto agrega el import faltante en `bidi/__init__.py` automáticamente.
 python init_db.py  # Crea tablas y datos iniciales
 ```
 
-### Base de Datos Online (Turso/libSQL, v9.9.1+)
+### Base de Datos Online (Neon/Postgres, v9.9.2+)
 
-El sistema soporta usar una base en la nube de Turso para que varias PC compartan los mismos datos. Solo hay que configurar dos variables en `.env`:
+El sistema soporta usar una base Postgres en la nube de Neon para que varias PC compartan los mismos datos. Solo hay que configurar `DATABASE_URL` en `.env` con la connection string (región recomendada `sa-east-1`, São Paulo):
 
 ```env
-DATABASE_URL=libsql://TU_NOMBRE.turso.io?secure=true
-TURSO_AUTH_TOKEN=eyJ... (database token generado en el dashboard de Turso)
+DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-- `?secure=true` es obligatorio para que el dialecto use HTTPS (sin él, Turso responde 308 redirect).
-- El dialecto `sqlite+libsql` se registra automáticamente al instalar `sqlalchemy-libsql`; el shim `libsql_experimental.py` en la raíz hace de puente con el driver `libsql`.
-- Si no se configuran estas variables, el sistema cae al default `sqlite:///./parking.db` (base local).
+- La URL puede venir como `postgresql://` (sin driver): `core/database.py` la normaliza a `postgresql+psycopg://` usando psycopg 3.
+- En el dashboard de Neon, usar **Connection pooling: OFF** (direct connection), que es la adecuada para SQLAlchemy.
+- La migración desde Turso/libSQL se hace con `scripts/migrate_turso_to_neon.py --to-url "<URL_NEON>"` (preserva IDs y sincroniza secuencias).
+- Si no se configura `DATABASE_URL` (o apunta a SQLite local), el sistema cae al default `sqlite:///./parking.db`.
 
 ### Ejecución
 ```powershell
