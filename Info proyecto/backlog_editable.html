@@ -307,10 +307,13 @@ function onData(snap){
   render();
 }
 function load(){
-  rows = clone(DATA);
   if(RTDB_ENABLED){
     $("#saveInd").innerHTML = '<span class="dot"></span> Guardado en la nube';
+    rows = [];
     db.on("value", onData);
+  } else {
+    rows = clone(DATA);
+    render();
   }
 }
 function persist(){
@@ -609,7 +612,7 @@ $("#exportCsv").addEventListener("click", exportCsv);
 $("#resetBtn").addEventListener("click", reset);
 $("#print").addEventListener("click", () => window.print());
 
-load(); render();
+load();
 if(!RTDB_ENABLED) toast("Sin Firebase configurado — modo local (localStorage)");
 </script>
 </body>
