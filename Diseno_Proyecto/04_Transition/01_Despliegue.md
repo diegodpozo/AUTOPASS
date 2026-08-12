@@ -76,7 +76,11 @@ Esto crea las tablas y datos iniciales:
 
 ### 7. Iniciar servidor
 ```powershell
-.\venv\Scripts\uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Producción (recomendado): run_server.bat abre el navegador cuando el server responde
+.\run_server.bat
+
+# Manual sin auto-reload
+.\venv\Scripts\uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
 ### 8. Iniciar servicio ALPR (producción)

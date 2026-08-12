@@ -5,6 +5,8 @@
 - [x] **Driver Postgres (psycopg 3)**: `psycopg[binary]==3.3.4` agregado a `requirements.txt`. `core/database.py` normaliza `postgresql://` → `postgresql+psycopg://` automáticamente.
 - [x] **Benchmark y Verificación**: `SELECT 1` ×5 a Neon en ~100 ms cada uno; suite completa 19/19 tests pasando contra Neon; datos verificados (11 access_logs, 24 reservations, 11 users).
 - [x] **Actualización de Configuración y Documentación**: `.env` actualizado con la connection string de Neon (se quitó `TURSO_AUTH_TOKEN`); se actualizaron `DEPENDENCIAS.md`, `INICIALIZACION.md` y `Readme.md`.
+- [x] **Optimización de Carga del Dashboard**: `/parking/current-occupancy` sin N+1 (salidas y reservas en bloque + tarifas precargadas en cache; ~349 → ~269 ms). En el frontend, `loadLiveStats` y `loadOccupancy` lanzan sus llamadas en paralelo (`Promise.all`) → la pestaña "live" pasa de ~1.4 s a ~500-600 ms.
+- [x] **Arranque Rápido del Servidor**: `run_server.bat` sin `--reload` (evita proceso duplicado y reinicios al guardar archivos) y abre el navegador **solo cuando el servidor responde** (waiter TCP con `TcpClient`, bypasea el proxy de sistema que hacía fallar `Invoke-WebRequest` a localhost). Ya no hace falta recargar la página al arrancar.
 
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.1 (Base de Datos Online con Turso/libSQL)
 - [x] **Base de Datos en la Nube (Turso/libSQL)**: Integración de una base SQLite en la nube de Turso para compartir los mismos datos desde múltiples PC. Configurable vía `DATABASE_URL=libsql://...?secure=true` y `TURSO_AUTH_TOKEN` en `.env`. (Superado en 9.9.2 por Neon/Postgres)
