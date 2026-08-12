@@ -2,6 +2,9 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
+## Últimas Actualizaciones (v9.9.2 - Agosto 2026)
+- **Migración a Neon/Postgres (sa-east-1)**: La base online pasó de Turso/Oregón (~1200 ms/query) a **Neon en São Paulo** con latencia medida de ~100 ms (12× más rápida). Configurable vía `DATABASE_URL=postgresql://...` en `.env` (fallback a SQLite local). Migración con `scripts/migrate_turso_to_neon.py`.
+
 ## Últimas Actualizaciones (v9.9.1 - Agosto 2026)
 - **Base de Datos Online (Turso/libSQL)**: La base se aloja en la nube de Turso y es compartida entre múltiples PC. Configurable vía `DATABASE_URL=libsql://...?secure=true` y `TURSO_AUTH_TOKEN` en `.env` (fallback a SQLite local). El instalador `setup_backend.bat` configura todo automáticamente.
 
@@ -55,14 +58,14 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 
 ## Inicio Rápido
 
-1. **Instalar dependencias:** `setup_backend.bat` (configura también la base online de Turso y el `.env`).
+1. **Instalar dependencias:** `setup_backend.bat` (configura también la base online y el `.env`).
 2. **Arrancar Servidor:** `run_server.bat`
 3. **Arrancar Cámaras:** Configurar IPs desde Dashboard (Ajustes > Monitoreo) y presionar Play (▶). El backend inicia el servicio automáticamente.
 
 ## Tecnologías
 
-- **Backend:** FastAPI (Python 3.14)
-- **Base de Datos:** SQLAlchemy — SQLite local o **Turso/libSQL en la nube** (compartida entre varias PC)
+- **Backend:** FastAPI (Python 3.13)
+- **Base de Datos:** SQLAlchemy — SQLite local o **Neon/Postgres en la nube** (compartida entre varias PC, región `sa-east-1`)
 - **Frontend:** Vanilla JS (ES6 Modules), CSS Moderno, Jinja2, Chart.js.
 - **IoT:** Paho-MQTT.
 - **IA:** OpenCV + EasyOCR + PyTorch (Deep Learning).

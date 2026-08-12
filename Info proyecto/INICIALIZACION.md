@@ -32,12 +32,11 @@ SMTP_USER=tu_email@gmail.com
 SMTP_PASSWORD=tu_password
 SMTP_FROM=noreply@autopass.com.ar
 
-# Opcional: Base de datos online (Turso/libSQL) para compartir datos entre varias PC
-# DATABASE_URL=libsql://TU_NOMBRE.turso.io?secure=true
-# TURSO_AUTH_TOKEN=eyJ... (database token generado en el dashboard de Turso)
+# Opcional: Base de datos online (Neon/Postgres) para compartir datos entre varias PC
+# DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-> **Base online (v9.9.1+):** Para usar una base en la nube en vez del SQLite local, completá `DATABASE_URL` con la URL `libsql://` de Turso (terminando en `?secure=true`) y `TURSO_AUTH_TOKEN` con el database token. El sistema detecta el prefijo `libsql://`, usa el dialecto `sqlite+libsql` y el token como autenticación. Varias PC pueden apuntar a la misma URL y compartir los datos.
+> **Base online (v9.9.2+):** Para usar una base en la nube en vez del SQLite local, completá `DATABASE_URL` con la connection string de Neon/Postgres (región recomendada `sa-east-1`). El sistema detecta el prefijo `postgresql://` y usa psycopg 3 automáticamente. Varias PC pueden apuntar a la misma URL y compartir los datos. La migración desde Turso/libSQL se hace con `scripts/migrate_turso_to_neon.py --to-url "<URL_NEON>"`.
 
 ## 3. Preparación y Migración de Base de Datos
 Este paso crea las tablas, los roles iniciales (Admin Global) y sincroniza las migraciones con Alembic:
