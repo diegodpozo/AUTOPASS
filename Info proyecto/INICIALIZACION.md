@@ -73,11 +73,14 @@ El sistema utiliza una arquitectura **RBAC** (Control de Acceso Basado en Roles)
 
 ### Iniciar Servidor Principal
 ```bash
-# Opción 1: Batch (Recomendado)
+# Opción 1: Batch (Recomendado) - abre el navegador cuando el server responde
 .\run_server.bat
 
-# Opción 2: Manual
-.\venv\Scripts\python.exe -m uvicorn main:app --reload
+# Opción 2: Manual (sin --reload, arranque rapido)
+.\venv\Scripts\python.exe -m uvicorn main:app --port 8000
+
+# Opción 3: Desarrollo con auto-reload (reinicia al guardar cambios en code/)
+.\venv\Scripts\python.exe -m uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir services --reload-dir models --reload-dir schemas
 ```
 
 ### Iniciar Cámaras (ALPR)

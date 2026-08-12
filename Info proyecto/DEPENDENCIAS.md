@@ -95,7 +95,11 @@ DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neond
 
 ### Ejecución
 ```powershell
-uvicorn main:app --reload
+# Producción (recomendado): arranque rapido, sin auto-reload
+uvicorn main:app --host 127.0.0.1 --port 8000
+
+# Desarrollo: auto-reload al modificar codigo
+uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir services
 ```
 
 ---

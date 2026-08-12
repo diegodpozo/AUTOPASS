@@ -78,7 +78,11 @@ python init_db.py  # Crea tablas y datos iniciales
 
 ### 4. Ejecución del Servidor
 ```powershell
-uvicorn main:app --reload
+# Producción (recomendado) - o ejecutar run_server.bat que abre el navegador al estar listo
+uvicorn main:app --host 127.0.0.1 --port 8000
+
+# Desarrollo con auto-reload
+uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir services
 ```
 
 ##  Scripts de Utilidad (`scripts/`)
