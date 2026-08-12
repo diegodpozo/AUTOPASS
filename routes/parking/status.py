@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Query
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import text
+from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy import text, and_, or_
 from typing import List, Dict
+import math
+import datetime
 import models, schemas
 from core.database import get_db
+from core.config import settings
 from core.security import get_operational_user, decode_access_token
 from services.billing_service import BillingService
 from services.notification_service import NotificationService
@@ -285,7 +288,7 @@ def get_parking_status(db: Session = Depends(get_db), user: models.User = Depend
 def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
     """LISTA VEHICULOS ESTACIONADOS EN LA SEDE DEL USUARIO CON DEUDA CALCULADA. OPTIMIZADO PARA UNICIDAD Y ORDEN."""
     sucursal = user.sucursal if user.rol != "admin" else None
-    
+
     # 1. OBTENEMOS LAS ENTRADAS MAS RECIENTES POR PATENTE EN LA SEDE
     # USAMOS UNA SUBCONSULTA PARA ENCONTRAR EL ID MAXIMO DE ENTRADA POR PATENTE
     from sqlalchemy import func
@@ -293,61 +296,109 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
         models.AccessLog.patente_detectada,
         func.max(models.AccessLog.id).label("max_id")
     ).filter(models.AccessLog.tipo_evento == "ENTRADA")
-    
+
     if sucursal:
         subq = subq.filter(models.AccessLog.sucursal == sucursal)
-    
+
     subq = subq.group_by(models.AccessLog.patente_detectada).subquery()
-    
-    # 2. CONSULTAMOS LOS DETALLES DE ESAS ENTRADAS
-    entradas = db.query(models.AccessLog).join(
+
+    # 2. CONSULTAMOS LOS DETALLES DE ESAS ENTRADAS (CON EL PISO CARGADO EN LA MISMA QUERY)
+    entradas = db.query(models.AccessLog).options(
+        selectinload(models.AccessLog.floor)
+    ).join(
         subq, models.AccessLog.id == subq.c.max_id
     ).order_by(models.AccessLog.fecha_hora.desc()).all()
-        
+
+    # 3. SALIDAS POSTERIORES POR (PATENTE, SUCURSAL): 1 SOLA QUERY AGRUPADA
+    salida_max = {}
+    if entradas:
+        patentes = {e.patente_detectada for e in entradas}
+        sucursales = {e.sucursal for e in entradas if e.sucursal}
+        rows = db.query(
+            models.AccessLog.patente_detectada,
+            models.AccessLog.sucursal,
+            func.max(models.AccessLog.id).label("max_salida_id")
+        ).filter(
+            models.AccessLog.tipo_evento == "SALIDA",
+            models.AccessLog.patente_detectada.in_(patentes),
+            models.AccessLog.sucursal.in_(sucursales)
+        ).group_by(models.AccessLog.patente_detectada, models.AccessLog.sucursal).all()
+        salida_max = {(p, s): m for p, s, m in rows}
+
+    # 4. RESERVAS DE LAS ENTRADAS: 1 SOLA QUERY
+    reservas = {}
+    res_ids = [e.reserva_id for e in entradas if e.reserva_id]
+    if res_ids:
+        reservas = {
+            r.id: r for r in db.query(models.Reservation).filter(models.Reservation.id.in_(res_ids)).all()
+        }
+
+    # 5. TARIFAS HORARIAS PRECARGADAS (EVITA 1 QUERY A SETTINGS POR VEHICULO)
+    RATE_CLAVES = {"Auto": "precio_hora", "Moto": "precio_hora_moto", "Camioneta": "precio_hora_camioneta"}
+    sucursales = {e.sucursal for e in entradas if e.sucursal}
+    rate_cond = models.Settings.clave.in_(list(RATE_CLAVES.values()))
+    if sucursales:
+        rate_cond = and_(
+            models.Settings.clave.in_(list(RATE_CLAVES.values())),
+            or_(models.Settings.sucursal.in_(sucursales), models.Settings.sucursal.is_(None))
+        )
+    else:
+        rate_cond = and_(models.Settings.clave.in_(list(RATE_CLAVES.values())), models.Settings.sucursal.is_(None))
+    rate_map = {
+        (r.clave, r.sucursal): float(r.valor)
+        for r in db.query(models.Settings).filter(rate_cond).all()
+    }
+
+    def rate_for(suc, tipo):
+        clave = RATE_CLAVES.get(tipo, "precio_hora")
+        if (clave, suc) in rate_map:
+            return rate_map[(clave, suc)]
+        if suc and (clave, None) in rate_map:
+            return rate_map[(clave, None)]
+        return settings.DEFAULT_HOURLY_RATE
+
+    def calc_debt(entry_time_str, suc, tipo):
+        delta = TimeService.now() - datetime.datetime.fromisoformat(entry_time_str)
+        bloques = max(1, math.ceil(delta.total_seconds() / 3600))
+        return float(bloques * rate_for(suc, tipo))
+
     res = []
     for e in entradas:
-        # 3. VERIFICAMOS SI ESA ENTRADA ESPECIFICA YA TIENE UNA SALIDA POSTERIOR
-        tiene_salida = db.query(models.AccessLog.id).filter(
-            models.AccessLog.patente_detectada == e.patente_detectada, 
-            models.AccessLog.tipo_evento == "SALIDA", 
-            models.AccessLog.id > e.id,
-            models.AccessLog.sucursal == e.sucursal
-        ).first()
-        
-        if not tiene_salida:
-            floor_name = None
-            if e.floor:
-                floor_name = e.floor.nombre
+        # 6. VERIFICAMOS SI ESA ENTRADA ESPECIFICA YA TIENE UNA SALIDA POSTERIOR
+        if salida_max.get((e.patente_detectada, e.sucursal), 0) > e.id:
+            continue
 
-            deuda = 0.0
-            ya_pago = e.pago_confirmado
-            reserva_info = None
+        floor_name = e.floor.nombre if e.floor else None
 
-            if e.reserva_id:
-                r = db.query(models.Reservation).filter(models.Reservation.id == e.reserva_id).first()
-                if r:
-                    reserva_info = {"id": r.id, "tipo_estadia": r.tipo_estadia, "estado_pago": r.estado_pago}
-                    now_str = TimeService.now_str()
-                    # SI LA RESERVA EXPIRÓ (COMPLETADA/CANCELADA O FECHA_FIN YA PASÓ), CALCULAR DEUDA DESDE ESE MOMENTO
-                    if r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str:
-                        deuda = BillingService.calculate_debt(r.fecha_fin, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
-                        deuda = max(0, deuda - (e.costo_estadia or 0))
-                        ya_pago = deuda == 0
-                    else:
-                        deuda = 0.0
-                        ya_pago = True
-            elif not e.pago_confirmado:
-                deuda = BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
+        deuda = 0.0
+        ya_pago = e.pago_confirmado
+        reserva_info = None
 
-            res.append({
-                "patente": e.patente_detectada, 
-                "tipo_vehiculo": e.tipo_vehiculo,
-                "ingreso": e.fecha_hora, 
-                "deuda": deuda, 
-                "ya_pago": ya_pago, 
-                "es_reserva": e.reserva_id is not None,
-                "reserva": reserva_info,
-                "sucursal": e.sucursal,
-                "floor_nombre": floor_name
-            })
+        if e.reserva_id:
+            r = reservas.get(e.reserva_id)
+            if r:
+                reserva_info = {"id": r.id, "tipo_estadia": r.tipo_estadia, "estado_pago": r.estado_pago}
+                now_str = TimeService.now_str()
+                # SI LA RESERVA EXPIRÓ (COMPLETADA/CANCELADA O FECHA_FIN YA PASÓ), CALCULAR DEUDA DESDE ESE MOMENTO
+                if r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str:
+                    deuda = calc_debt(r.fecha_fin, e.sucursal, e.tipo_vehiculo)
+                    deuda = max(0, deuda - (e.costo_estadia or 0))
+                    ya_pago = deuda == 0
+                else:
+                    deuda = 0.0
+                    ya_pago = True
+        elif not e.pago_confirmado:
+            deuda = calc_debt(e.fecha_hora, e.sucursal, e.tipo_vehiculo)
+
+        res.append({
+            "patente": e.patente_detectada,
+            "tipo_vehiculo": e.tipo_vehiculo,
+            "ingreso": e.fecha_hora,
+            "deuda": deuda,
+            "ya_pago": ya_pago,
+            "es_reserva": e.reserva_id is not None,
+            "reserva": reserva_info,
+            "sucursal": e.sucursal,
+            "floor_nombre": floor_name
+        })
     return res

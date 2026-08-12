@@ -40,7 +40,12 @@ export function initOccupancyWS() {
 }
 
 export async function loadLiveStats() {
-    const resStatus = await api.get('/parking/status');
+    // STATUS Y RESUMEN FINANCIERO EN PARALELO (2 RTT ANTES EN SERIE)
+    const [resStatus, resFinance] = await Promise.all([
+        api.get('/parking/status'),
+        api.get('/reports/financial-summary?period=day'),
+    ]);
+
     if (resStatus && resStatus.ok) {
         const { disponibilidad: free, ocupacion_actual: occupied, capacidad_total: total, ocupacion_motos: occMotos, capacidad_motos: capMotos, disponibilidad_motos: freeMotos, disponibilidad_camionetas: freeCamionetas, capacidad_camionetas: capCamionetas, ocupacion_camionetas: occCamionetas } = resStatus.data;
 
@@ -88,13 +93,10 @@ export async function loadLiveStats() {
         if (occMotosEl) occMotosEl.innerText = formatNum(occMotos);
     }
 
-    const resFinance = await api.get('/reports/financial-summary?period=day');
-    if (resFinance && resFinance.ok) {
-        const entriesEl = document.getElementById('stat-entries');
-        const moneyEl = document.getElementById('stat-money');
-        if (entriesEl) entriesEl.innerText = formatNum(resFinance.data.cantidad_pagos);
-        if (moneyEl) moneyEl.innerText = `$${formatNum(resFinance.data.total_recaudado)}`;
-    }
+    const entriesEl = document.getElementById('stat-entries');
+    const moneyEl = document.getElementById('stat-money');
+    if (entriesEl) entriesEl.innerText = formatNum(resFinance.data.cantidad_pagos);
+    if (moneyEl) moneyEl.innerText = `$${formatNum(resFinance.data.total_recaudado)}`;
 }
 
 let fullLogsData = [];
@@ -238,8 +240,11 @@ const itemsPerPageOcc = 10;
 let currentSearchQuery = '';
 
 export async function loadOccupancy() {
-    const res = await api.get('/parking/current-occupancy');
-    const resBranches = await api.get('/parking/branches');
+    // OCUPACION Y SUCURSALES EN PARALELO (2 RTT ANTES EN SERIE)
+    const [res, resBranches] = await Promise.all([
+        api.get('/parking/current-occupancy'),
+        api.get('/parking/branches'),
+    ]);
     
     if (res.ok) {
         fullOccupancyData = res.data;
