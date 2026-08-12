@@ -1,9 +1,11 @@
 import datetime
-from sqlalchemy.orm import Session
+import math
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func, union_all, literal_column
 import models
 from models.enums import UserRole, ReservationStatus, PaymentStatus, AccessEventType
 from services.billing_service import BillingService
+from services.time_service import TimeService
 
 class ReportService:
     """Servicio de Inteligencia de Negocio para analítica financiera y auditoría de accesos."""
@@ -156,26 +158,39 @@ class ReportService:
         count_final = count_logs + count_res
 
         # 4. Ingresos Proyectados (autos físicamente presentes)
-        q_parked = db.query(models.AccessLog).filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
-        
+        #    UNA SOLA QUERY con NOT EXISTS: entradas sin salida posterior y sin pago confirmado.
+        Log = models.AccessLog
+        Salida = aliased(models.AccessLog)
+        q_parked = db.query(Log).filter(
+            Log.tipo_evento == AccessEventType.ENTRADA,
+            Log.pago_confirmado == False,
+            ~db.query(Salida.id).filter(
+                Salida.patente_detectada == Log.patente_detectada,
+                Salida.tipo_evento == AccessEventType.SALIDA,
+                Salida.fecha_hora > Log.fecha_hora,
+                Salida.sucursal == Log.sucursal
+            ).exists()
+        )
+
         if vehicle_type != "all":
-            q_parked = q_parked.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+            q_parked = q_parked.filter(Log.tipo_vehiculo == vehicle_type)
 
         if sucursal:
             target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_parked = q_parked.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+            q_parked = q_parked.filter(Log.sucursal.like(f"%{target_name}%"))
         
         entradas = q_parked.all()
         deuda_proyectada = 0.0
+        # Cache de tarifas por (sucursal, tipo) para no repetir queries de Settings por vehículo
+        rate_cache = {}
         for e in entradas:
-            tiene_salida = db.query(models.AccessLog.id).filter(
-                models.AccessLog.patente_detectada == e.patente_detectada,
-                models.AccessLog.tipo_evento == AccessEventType.SALIDA,
-                models.AccessLog.fecha_hora > e.fecha_hora,
-                models.AccessLog.sucursal == e.sucursal
-            ).first()
-            if not tiene_salida and not e.pago_confirmado:
-                deuda_proyectada += BillingService.calculate_debt(e.fecha_hora, db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
+            key = (e.sucursal, e.tipo_vehiculo)
+            if key not in rate_cache:
+                rate_cache[key] = BillingService.get_hourly_rate(db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
+            precio_hora = rate_cache[key]
+            delta = TimeService.now() - datetime.datetime.fromisoformat(e.fecha_hora)
+            bloques_a_cobrar = max(1, math.ceil(delta.total_seconds() / 3600))
+            deuda_proyectada += bloques_a_cobrar * precio_hora
 
         return {
             "total_recaudado": total_final,

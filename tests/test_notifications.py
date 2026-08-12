@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from core.database import Base
 from services.user_notification_service import UserNotificationService
 from services.worker_service import WorkerService
