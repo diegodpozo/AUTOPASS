@@ -223,10 +223,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       Imprimir
     </button>
-    <button class="btn danger" id="resetBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-      Restablecer
-    </button>
   </section>
 
   <section class="stats" id="stats"></section>
@@ -582,20 +578,6 @@ function toast(msg){
   t._t = setTimeout(()=> t.classList.remove("show"), 2000);
 }
 
-function reset(){
-  if(!confirm("¿Restablecer a los datos originales? Se perderán los cambios actuales.")) return;
-  const d = clone(DATA);
-  if(RTDB_ENABLED){
-    rows = d;
-    saveToDb(d);
-  } else {
-    localStorage.removeItem(LSKEY);
-    rows = d;
-  }
-  render();
-  toast("Datos restablecidos");
-}
-
 function render(){
   build();
   applyFilters();
@@ -609,7 +591,6 @@ $("#fEstado").addEventListener("change", e => { filters.estado = e.target.value;
 $("#fResp").addEventListener("change", e => { filters.resp = e.target.value; applyFilters(); });
 $("#addRow").addEventListener("click", addRow);
 $("#exportCsv").addEventListener("click", exportCsv);
-$("#resetBtn").addEventListener("click", reset);
 $("#print").addEventListener("click", () => window.print());
 
 load();
