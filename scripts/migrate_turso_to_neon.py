@@ -25,6 +25,7 @@ TABLES = [
     models.ParkingFloor,
     models.ParkingAforo,
     models.Settings,
+    models.ParkingCamera,
     models.Promotion,
     models.Coupon,
     models.Reservation,
