@@ -77,6 +77,15 @@ export async function initVideoStreams() {
 }
 
 export function switchTab(tabId, element) {
+    const rol = localStorage.getItem('rol');
+    if (rol === 'staff') {
+        const restrictedStaff = ['users', 'finance', 'promotions', 'tickets', 'settings', 'branches'];
+        if (restrictedStaff.includes(tabId)) {
+            tabId = 'live';
+            element = document.querySelector(`.nav-item[onclick*="'live'"]`);
+        }
+    }
+
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     if (element) {
         element.classList.add('active');
@@ -189,13 +198,13 @@ export function toggleCollapsible(contentId, chevronId, maxHeight = '400px') {
 export async function loadCameraSettings() {
     const listEl = document.getElementById('camera-settings-list');
     if (!listEl) return;
-    listEl.innerHTML = `<tr><td colspan="5" class="text-center py-20"><i class="fas fa-spinner fa-spin text-dorado"></i> Cargando dispositivos...</td></tr>`;
+    listEl.innerHTML = `<div class="text-center py-20 text-muted" style="grid-column: 1 / -1; width: 100%;"><i class="fas fa-spinner fa-spin text-dorado mr-8"></i> Cargando dispositivos...</div>`;
 
     const res = await api.get('/system/cameras');
     if (res.ok) {
         renderCameraSettingsTable(res.data);
     } else {
-        listEl.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-danger">Error al cargar dispositivos: ${res.error || 'Desconocido'}</td></tr>`;
+        listEl.innerHTML = `<div class="text-center py-20 text-danger" style="grid-column: 1 / -1; width: 100%;">Error al cargar dispositivos: ${res.error || 'Desconocido'}</div>`;
     }
 }
 
@@ -204,7 +213,11 @@ export function renderCameraSettingsTable(cameras) {
     if (!listEl) return;
     
     if (cameras.length === 0) {
-        listEl.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-muted">No hay cámaras registradas.</td></tr>`;
+        listEl.innerHTML = `
+            <div class="text-center py-30 text-muted" style="grid-column: 1 / -1; width: 100%;">
+                <i class="fas fa-video-slash mb-10" style="font-size: 2.2rem; opacity: 0.3; display: block;"></i>
+                <p class="text-xs uppercase fw-800">No hay cámaras registradas</p>
+            </div>`;
         return;
     }
     
@@ -224,38 +237,43 @@ export function renderCameraSettingsTable(cameras) {
         const badgeClass = cam.is_running ? 'badge-success-light' : 'badge-danger-light';
         const badgeText = cam.is_running ? 'ONLINE' : 'OFFLINE';
         const tipoLabel = typeLabels[(cam.tipo || '').toUpperCase()] || cam.tipo;
-        
         return `
-            <tr>
-                <td class="text-bold">${toTitle(cam.nombre)}</td>
-                <td>
-                    <span class="badge-status badge-info-light">${tipoLabel}</span>
-                </td>
-                <td style="font-family: var(--font-mono); font-size: 0.8rem;">${cam.source}</td>
-                <td>
+            <div class="camera-card-premium glass-premium">
+                <div class="flex-col items-center text-center gap-10 mb-15">
+                    <div class="flex-row items-center justify-center gap-10">
+                        <div class="header-icon-box sm">
+                            <i class="fas fa-video text-dorado"></i>
+                        </div>
+                        <h4 class="text-white text-bold m-0 text-center" style="font-size: 1rem; letter-spacing: 0.5px;">${toTitle(cam.nombre)}</h4>
+                    </div>
                     <span class="badge-status ${badgeClass}" id="settings-cam-badge-${cam.id}">
                         <i class="fas ${cam.is_running ? 'fa-check-circle' : 'fa-times-circle'} mr-5"></i> ${badgeText}
                     </span>
-                </td>
-                <td>
-                    <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                        <button class="btn-action-mini" 
-                                id="settings-cam-btn-edit-${cam.id}"
-                                title="Editar Cámara">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action-mini danger" 
-                                onclick="deleteCamera(${cam.id})" 
-                                title="Eliminar Cámara">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                </div>
+                
+                <div class="camera-card-info p-12 mb-15" style="background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid rgba(255,255,255,0.04);">
+                    <div class="flex-row justify-between items-center mb-10 flex-wrap gap-5">
+                        <span class="text-xxs text-muted uppercase fw-800">TIPO / FUNCIÓN</span>
+                        <span class="badge-status badge-info-light" style="font-size: 0.68rem;">${tipoLabel}</span>
                     </div>
-                </td>
-            </tr>
+                    <div class="flex-row justify-between items-center flex-wrap gap-5">
+                        <span class="text-xxs text-muted uppercase fw-800">ORIGEN / IP</span>
+                        <span class="text-xs font-mono text-white text-truncate" style="max-width: 220px;" title="${cam.source}">${cam.source}</span>
+                    </div>
+                </div>
+
+                <div class="flex-row justify-center gap-10 camera-card-actions">
+                    <button class="btn-tab-sub btn-edit-cam" id="settings-cam-btn-edit-${cam.id}" style="padding: 6px 14px; font-size: 0.7rem;">
+                        <i class="fas fa-pen-to-square mr-5"></i> EDITAR
+                    </button>
+                    <button class="btn-tab-sub danger" onclick="deleteCamera(${cam.id})" style="padding: 6px 14px; font-size: 0.7rem; border-color: rgba(239, 68, 68, 0.4); color: #ef4444;">
+                        <i class="fas fa-trash-alt mr-5"></i> ELIMINAR
+                    </button>
+                </div>
+            </div>
         `;
     }).join('');
 
-    // Agregar event listeners para evitar inline stringify bugs con objetos
     cameras.forEach(cam => {
         const btnEdit = document.getElementById(`settings-cam-btn-edit-${cam.id}`);
         if (btnEdit) {

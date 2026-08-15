@@ -2,6 +2,11 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
+## Últimas Actualizaciones (v9.9.9 - Agosto 2026)
+- **Motor de Guías Interactivas por Función (`ayuda.html` & `tour.js`)**: Tours interactivos en tiempo real para *Alta de Vehículo*, *Crear Reserva*, *Cargar Saldo*, *Canjear Puntos* y *Pase Digital QR* (con desglose enfocado en Código QR, Datos de Estadía y Botón Compartir/Descargar PNG/WhatsApp).
+- **Selector Inteligente Visibilidad DOM (`getVisibleTarget`)**: Resolución automática de elementos activos en pantalla evitando saltos a elementos ocultos en pestañas inactivas.
+- **Animaciones Fluidas Morphing & Fade**: Movimiento elástico CSS (`cubic-bezier(0.25, 1, 0.5, 1)`) del recuadro dorado, máscara SVG y tarjetas informativas.
+
 ## Últimas Actualizaciones (v9.9.2 - Agosto 2026)
 - **Migración a Neon/Postgres (sa-east-1)**: La base online pasó de Turso/Oregón (~1200 ms/query) a **Neon en São Paulo** con latencia medida de ~100 ms (12× más rápida). Configurable vía `DATABASE_URL=postgresql://...` en `.env` (fallback a SQLite local). Migración con `scripts/migrate_turso_to_neon.py`.
 

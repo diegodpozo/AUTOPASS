@@ -5,7 +5,6 @@ import * as land from './modules/landing.js?v=9.3.0';
  */
 
 window.irAReserva = function(branchName = null) {
-    console.log(`[irAReserva] Iniciando para: ${branchName}`);
     if (!localStorage.getItem('token')) {
         if (window.openModal) window.openModal('loginModal');
         return;
@@ -30,8 +29,6 @@ window.irAReserva = function(branchName = null) {
  * SE EXPONE GLOBALMENTE PARA SER USADA POR EL MAPA INTEGRADO.
  */
 window.fillReservationForm = async function(branchName) {
-    console.log(`[fillReservationForm] Intentando auto-llenado local para: ${branchName}`);
-
     // 0. CERRAR MAPA FULLSCREEN SI ESTA ABIERTO
     if (window.closeFullMap) {
         window.closeFullMap();
@@ -50,7 +47,6 @@ window.fillReservationForm = async function(branchName) {
 
     // 2. ABRIR FORMULARIO SI ESTA CERRADO
     if (!container.classList.contains('open') && window.toggleReservaForm) {
-        console.log("[fillReservationForm] Abriendo formulario...");
         await window.toggleReservaForm();
     }
 
@@ -63,7 +59,6 @@ window.fillReservationForm = async function(branchName) {
         const vehicleSelect = document.querySelector('.res-vehicle');
         
         if (sucursalSelect && sucursalSelect.options.length > 1 && sucursalSelect.options[0].value === "") {
-            console.log(`[fillReservationForm] Llenando campos para ${branchName}`);
             const targetOption = Array.from(sucursalSelect.options).find(opt => opt.value === branchName);
             
             if (targetOption) {

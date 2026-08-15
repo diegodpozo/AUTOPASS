@@ -10,6 +10,15 @@ let revenueChart = null;
 let currentFinancePage = 1;
 const financeLimit = 15;
 
+export function toggleFinanceStatsCollapsible(button) {
+    if (!button) return;
+    button.classList.toggle('open');
+    const content = document.getElementById('finance-stats-collapsible-content');
+    if (content) {
+        content.classList.toggle('open');
+    }
+}
+
 export function toggleFinanceDateFilter() {
     const period = document.getElementById('fin-period')?.value;
     const dateGroup = document.getElementById('fin-date-group');
@@ -102,11 +111,11 @@ export async function loadFinanceData(resetPage = true) {
 
                 return `
                 <tr class="${rowClass}">
-                    <td><span class="text-light">${utils.formatDate(p.fecha_pago)}</span></td>
-                    <td><span class="plate-style">${p.patente_detectada}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
-                    <td class="text-bold ${amountClass}">$${utils.formatNum(p.costo_estadia)}</td>
-                    <td><span class="text-small">${metodoPago}</span></td>
-                    <td><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
+                    <td data-label="Fecha"><span class="text-light">${utils.formatDate(p.fecha_pago)}</span></td>
+                    <td data-label="Patente"><span class="plate-style">${p.patente_detectada}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
+                    <td data-label="Monto" class="text-bold ${amountClass}">$${utils.formatNum(p.costo_estadia)}</td>
+                    <td data-label="Método"><span class="text-small">${metodoPago}</span></td>
+                    <td data-label="Estado"><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
                 </tr>
             `}).join('') || '<tr><td colspan="5" class="text-center py-20">No hay transacciones en este período.</td></tr>';
         }

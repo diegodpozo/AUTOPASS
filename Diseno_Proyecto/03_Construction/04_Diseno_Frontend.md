@@ -61,7 +61,7 @@ templates/                     # 46 templates HTML
     └── recovery.html
 
 static/
-├── css/                       # 38 archivos CSS
+├── css/                       # 39 archivos CSS
 │   ├── style.css              # Estilos legacy (en proceso de vaciado)
 │   ├── base/
 │   │   ├── reset.css          # Normalize / reset
@@ -87,12 +87,13 @@ static/
 │       ├── profile.css        # Perfil de usuario
 │       ├── contacto.css       # Pagina de contacto
 │       ├── legal.css          # Terminos y privacidad
-│       ├── dashboard/         # Estilos del dashboard (5)
+│       ├── dashboard/         # Estilos del dashboard (6)
 │       │   ├── dashboard-base.css
 │       │   ├── dashboard-cards.css
 │       │   ├── dashboard-live.css
 │       │   ├── dashboard-settings.css
-│       │   └── dashboard-tables.css
+│       │   ├── dashboard-tables.css
+│       │   └── dashboard-admin-tour.css
 │       ├── landing/           # Estilos de la landing (5)
 │       │   ├── landing-features.css
 │       │   ├── landing-hero.css
@@ -108,7 +109,7 @@ static/
 │           ├── profile-tour.css
 │           └── profile-vehicles.css
 ├── js/
-│   ├── modules/               # Modulos ES6 (31)
+│   ├── modules/               # Modulos ES6 (32)
 │   │   ├── api.js             # Cliente HTTP centralizado (fetch wrapper)
 │   │   ├── utils.js           # Utilidades (validatePlate, detectVehicleType, showConfirm)
 │   │   ├── ui.js              # Utilidades de UI general
@@ -116,7 +117,8 @@ static/
 │   │   ├── landing.js         # Logica de la landing
 │   │   ├── profile.js         # Logica del perfil
 │   │   ├── notifications.js   # Gestion de notificaciones
-│   │   ├── tour.js            # Tour interactivo de onboarding
+│   │   ├── tour.js            # Tour interactivo de onboarding (clientes)
+│   │   ├── admin-tour.js      # Tour interactivo de onboarding (administradores)
 │   │   ├── onboarding_helpers.js # Helpers del tour
 │   │   ├── vehicles.js        # Gestion de vehiculos
 │   │   ├── reservas.js        # Gestion de reservas

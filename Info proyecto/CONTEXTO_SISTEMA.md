@@ -1,6 +1,6 @@
 #  Contexto del Sistema: AUTOPASS
 
-Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.9.0).
+Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v10.0.0).
 
 ## 📐 Arquitectura del Ecosistema
 
@@ -124,7 +124,7 @@ El frontend usa un patrón de **dos capas** para compatibilizar módulos ES6 con
 modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclick handlers
 ```
 
-### Módulos Frontend (31 módulos ES6)
+### Módulos Frontend (32 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -141,6 +141,7 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `dashboard-reservations.js` | CRUD reservas admin, confirmar pago, cancelar, actualizar |
 | `dashboard-promotions.js` | CRUD promociones, iconos |
 | `dashboard-tickets.js` | Gestión de tickets de soporte admin, auto-actualización real-time y búsqueda en vivo |
+| `admin-tour.js` | Tour guiado interactivo para administradores |
 | `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
 | `monitoreo-live.js` | Monitoreo CCTV en vivo, grilla dinámica de cámaras, controles DVR |
 | `api.js` | Cliente HTTP centralizado con manejo de tokens y errores |
@@ -157,7 +158,7 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `reservas-pass.js` | Renderizado de Pase Digital, QR `QRCode.js` y compartir ticket |
 | `vehicles.js` | CRUD vehículos de usuario, auto-detección de tipo |
 | `landing.js` | Landing page: mapa Leaflet, carrusel, header scroll |
-| `tour.js` | Tour guiado interactivo |
+| `tour.js` | Tour guiado interactivo para clientes |
 | `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
 
 ### Scripts Puente (Orquestadores)
@@ -168,13 +169,13 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `perfil.js` | Portal de Usuario | Importa `profile`, `vehicles`, `reservas`, `notifications` |
 | `main.js` | Todas las páginas | Utilidades globales (modal, sidebar, auth) |
 
-### CSS (38 archivos)
+### CSS (39 archivos)
 Organizado en `static/css/`:
 - `base/`: Variables, reset, tipografía, utilidades (4 archivos)
 - `layout/`: Sidebar, header, grid (3 archivos)
 - `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
-- `pages/`: landing, profile, dashboard, contacto, legal (5 + 17 sub-archivos)
-  - `pages/dashboard/`: dashboard-base, dashboard-cards, dashboard-live, dashboard-settings, dashboard-tables
+- `pages/`: landing, profile, dashboard, contacto, legal (5 + 18 sub-archivos)
+  - `pages/dashboard/`: dashboard-base, dashboard-cards, dashboard-live, dashboard-settings, dashboard-tables, dashboard-admin-tour
   - `pages/landing/`: landing-features, landing-hero, landing-map, landing-modals, landing-nav
   - `pages/profile/`: profile-base, profile-help, profile-notifications, profile-points, profile-reservations, profile-tour, profile-vehicles
 

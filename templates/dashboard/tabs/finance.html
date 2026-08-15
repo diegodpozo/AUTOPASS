@@ -1,102 +1,111 @@
 <!-- PESTAÑA: REPORTE FINANCIERO -->
 <div id="tab-finance" class="tab-view" style="display: none;">
     <div class="finance-layout">
-        <!-- SECCIÓN SUPERIOR: KPIS RÁPIDOS -->
-        <div class="kpi-grid kpi-grid-4">
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-money-bill-trend-up"></i></div>
-                <div class="kpi-data">
-                    <span class="label">Recaudación Neta</span>
-                    <span class="value" id="fin-total">$0</span>
+        <!-- KPIS Y MÉTRICAS FINANCIERAS (COLAPSIBLE EN MÓVIL) -->
+        <div class="finance-stats-collapsible">
+            <button type="button" class="user-stats-trigger" onclick="toggleFinanceStatsCollapsible(this)" title="Mostrar u ocultar resumen financiero">
+                <span><i class="fas fa-chart-pie mr-8"></i> RESUMEN Y MÉTRICAS FINANCIERAS</span>
+                <i class="fas fa-chevron-down trigger-icon"></i>
+            </button>
+            <div class="user-stats-content" id="finance-stats-collapsible-content">
+                <!-- SECCIÓN SUPERIOR: KPIS RÁPIDOS -->
+                <div class="kpi-grid kpi-grid-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><i class="fas fa-money-bill-trend-up"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Recaudación Neta</span>
+                            <span class="value" id="fin-total">$0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card danger-light">
+                        <div class="kpi-icon"><i class="fas fa-hand-holding-dollar" style="transform: rotate(180deg);"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Total Reembolsado</span>
+                            <span class="value" id="fin-refunded">$0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><i class="fas fa-receipt"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Tickets Emitidos</span>
+                            <span class="value" id="fin-count">0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card highlight">
+                        <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Ticket Promedio</span>
+                            <span class="value" id="fin-avg">$0</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="kpi-card danger-light">
-                <div class="kpi-icon"><i class="fas fa-hand-holding-dollar" style="transform: rotate(180deg);"></i></div>
-                <div class="kpi-data">
-                    <span class="label">Total Reembolsado</span>
-                    <span class="value" id="fin-refunded">$0</span>
-                </div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-receipt"></i></div>
-                <div class="kpi-data">
-                    <span class="label">Tickets Emitidos</span>
-                    <span class="value" id="fin-count">0</span>
-                </div>
-            </div>
-            <div class="kpi-card highlight">
-                <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
-                <div class="kpi-data">
-                    <span class="label">Ticket Promedio</span>
-                    <span class="value" id="fin-avg">$0</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- SEGUNDA FILA DE KPIS: MÉTRICAS DE EFICIENCIA -->
-        <div class="kpi-grid kpi-grid-3 mt-20">
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-sack-dollar"></i></div>
-                <div class="kpi-data">
-                    <span class="label">Ingresos Proyectados</span>
-                    <span class="value" id="fin-proyectado">$0</span>
+                <!-- SEGUNDA FILA DE KPIS: MÉTRICAS DE EFICIENCIA -->
+                <div class="kpi-grid kpi-grid-3 mt-20">
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><i class="fas fa-sack-dollar"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Ingresos Proyectados</span>
+                            <span class="value" id="fin-proyectado">$0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card" id="card-cancellation-rate">
+                        <div class="kpi-icon"><i class="fas fa-calendar-xmark"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Tasa de Cancelación</span>
+                            <span class="value" id="fin-cancel-rate">0%</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><i class="fas fa-ghost"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Incumplimiento de Reservas</span>
+                            <span class="value" id="fin-noshow">$0</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="kpi-card" id="card-cancellation-rate">
-                <div class="kpi-icon"><i class="fas fa-calendar-xmark"></i></div>
-                <div class="kpi-data">
-                    <span class="label">Tasa de Cancelación</span>
-                    <span class="value" id="fin-cancel-rate">0%</span>
-                </div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-ghost"></i></div>
-                <div class="kpi-data">
-                    <span class="label">Incumplimiento de Reservas</span>
-                    <span class="value" id="fin-noshow">$0</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- DESGLOSE POR CANAL -->
-        <div class="finance-breakdown-row mt-20">
-            <div class="card channel-card">
-                <div class="channel-header stay-channel">
-                    <i class="fas fa-car-side"></i>
-                    <span>ESTADÍAS</span>
-                </div>
-                <div class="channel-body">
-                    <div class="channel-stat">
-                        <span class="stat-label">Recaudado</span>
-                        <span class="stat-value" id="fin-stay-monto">$0</span>
+                <!-- DESGLOSE POR CANAL -->
+                <div class="finance-breakdown-row mt-20">
+                    <div class="card channel-card">
+                        <div class="channel-header stay-channel">
+                            <i class="fas fa-car-side"></i>
+                            <span>ESTADÍAS</span>
+                        </div>
+                        <div class="channel-body">
+                            <div class="channel-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-stay-monto">$0</span>
+                            </div>
+                            <div class="channel-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-stay-count">0</span>
+                            </div>
+                            <div class="channel-stat">
+                                <span class="stat-label">Promedio</span>
+                                <span class="stat-value" id="fin-stay-avg">$0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="channel-stat">
-                        <span class="stat-label">Cantidad</span>
-                        <span class="stat-value" id="fin-stay-count">0</span>
-                    </div>
-                    <div class="channel-stat">
-                        <span class="stat-label">Promedio</span>
-                        <span class="stat-value" id="fin-stay-avg">$0</span>
-                    </div>
-                </div>
-            </div>
-            <div class="card channel-card">
-                <div class="channel-header web-channel">
-                    <i class="fas fa-globe"></i>
-                    <span>RESERVAS</span>
-                </div>
-                <div class="channel-body">
-                    <div class="channel-stat">
-                        <span class="stat-label">Recaudado</span>
-                        <span class="stat-value" id="fin-res-monto">$0</span>
-                    </div>
-                    <div class="channel-stat">
-                        <span class="stat-label">Cantidad</span>
-                        <span class="stat-value" id="fin-res-count">0</span>
-                    </div>
-                    <div class="channel-stat">
-                        <span class="stat-label">Promedio</span>
-                        <span class="stat-value" id="fin-res-avg">$0</span>
+                    <div class="card channel-card">
+                        <div class="channel-header web-channel">
+                            <i class="fas fa-globe"></i>
+                            <span>RESERVAS</span>
+                        </div>
+                        <div class="channel-body">
+                            <div class="channel-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-res-monto">$0</span>
+                            </div>
+                            <div class="channel-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-res-count">0</span>
+                            </div>
+                            <div class="channel-stat">
+                                <span class="stat-label">Promedio</span>
+                                <span class="stat-value" id="fin-res-avg">$0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,10 +180,10 @@
                 <table class="table-centered">
                     <thead>
                         <tr>
-                            <th>Fecha y Hora</th>
+                            <th>Fecha</th>
                             <th>Patente</th>
-                            <th>Monto Abonado</th>
-                            <th>Método de Pago</th>
+                            <th>Monto</th>
+                            <th>Método</th>
                             <th>Estado</th>
                         </tr>
                     </thead>

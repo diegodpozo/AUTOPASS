@@ -148,7 +148,17 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
             aforo.ocupacion_camionetas -= 1
         elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
             aforo.ocupacion_motos -= 1
-        
+
+    if ultimo.floor_id:
+        floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == ultimo.floor_id).first()
+        if floor:
+            if ultimo.tipo_vehiculo == "Auto" and (floor.ocupacion_actual or 0) > 0:
+                floor.ocupacion_actual -= 1
+            elif ultimo.tipo_vehiculo == "Camioneta" and (floor.ocupacion_camionetas or 0) > 0:
+                floor.ocupacion_camionetas -= 1
+            elif ultimo.tipo_vehiculo == "Moto" and (floor.ocupacion_motos or 0) > 0:
+                floor.ocupacion_motos -= 1
+
     db.add(models.AccessLog(
         patente_detectada=p, 
         normalized_patente=p,
@@ -158,7 +168,8 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         pago_confirmado=True, 
         costo_estadia=0.0 if dentro_cortesia else None,
         metodo_pago="CAJA" if not dentro_cortesia else None,
-        sucursal=sucursal
+        sucursal=sucursal,
+        floor_id=ultimo.floor_id
     ))
     db.commit()
     try:
@@ -197,8 +208,20 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
     if (aforo):
         if (ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0):
             aforo.ocupacion_actual -= 1
+        elif (ultimo.tipo_vehiculo == "Camioneta" and aforo.ocupacion_camionetas > 0):
+            aforo.ocupacion_camionetas -= 1
         elif (ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0):
             aforo.ocupacion_motos -= 1
+
+    if ultimo.floor_id:
+        floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == ultimo.floor_id).first()
+        if floor:
+            if ultimo.tipo_vehiculo == "Auto" and (floor.ocupacion_actual or 0) > 0:
+                floor.ocupacion_actual -= 1
+            elif ultimo.tipo_vehiculo == "Camioneta" and (floor.ocupacion_camionetas or 0) > 0:
+                floor.ocupacion_camionetas -= 1
+            elif ultimo.tipo_vehiculo == "Moto" and (floor.ocupacion_motos or 0) > 0:
+                floor.ocupacion_motos -= 1
     
     if (minutos_transcurridos <= 10):
         # CORTESIA: SALIDA SIN CARGO

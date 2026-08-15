@@ -18,7 +18,6 @@ export function initOccupancyWS() {
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log('[WS Occupancy] Update received:', data);
         
         // REFRESCAR COMPONENTES CLAVE
         loadLiveStats();

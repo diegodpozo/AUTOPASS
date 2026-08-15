@@ -23,6 +23,7 @@ export async function loadVehicles() {
     }
     
     const vehicles = res.data || [];
+    window.userVehicles = vehicles;
     if (statVehicles) statVehicles.innerText = formatNum(vehicles.length);
     
     if (vehicles.length === 0) {

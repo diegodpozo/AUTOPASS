@@ -10,11 +10,42 @@ export async function loadPromotionsAdmin() {
     const tbody = document.getElementById('promotions-admin-table-body');
     if (!tbody) return;
 
+    const rol = localStorage.getItem('rol');
+    const isAdmin = rol === 'admin';
+    const isStaff = rol === 'staff';
+
+    const thSucursal = document.getElementById('th-promo-sucursal');
+    if (thSucursal) {
+        thSucursal.style.display = isAdmin ? '' : 'none';
+    }
+
+    const colSpan = isAdmin ? 5 : 4;
+
     const res = await api.get('/admin/promotions');
     if (res.ok) {
         tbody.innerHTML = res.data.map(p => {
             const branchLabel = p.sucursal ? p.sucursal.replace('AUTOPASS ', '') : 'Global';
             const branchClass = p.sucursal ? 'text-dorado' : 'text-success';
+
+            const toggleControl = isStaff
+                ? `<span class="badge ${p.activa ? 'badge-success' : 'badge-danger'}" style="font-size: 0.7rem; padding: 4px 10px; border-radius: 6px;">${p.activa ? 'ACTIVA' : 'INACTIVA'}</span>`
+                : `<label class="switch-premium" title="${p.activa ? 'Promoción Activa' : 'Promoción Inactiva'}">
+                        <input type="checkbox" ${p.activa ? 'checked' : ''} onchange="togglePromotion(${p.id})">
+                        <span class="slider-premium"></span>
+                   </label>`;
+
+            const actionCell = isStaff
+                ? `<span class="text-xs text-muted font-bold">SOLO LECTURA</span>`
+                : `<div class="flex-row gap-8 justify-center actions-reveal">
+                        <button class="btn-icon-premium sm danger btn-delete-promo" onclick="deletePromotion(${p.id})" title="Eliminar">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                   </div>`;
+
+            const branchTd = isAdmin ? `
+                <td data-label="Sucursal" class="text-center">
+                    <span class="text-xs font-bold ${branchClass}">${branchLabel.toUpperCase()}</span>
+                </td>` : '';
 
             return `
             <tr class="row-premium">
@@ -32,42 +63,31 @@ export async function loadPromotionsAdmin() {
                 <td data-label="Puntos" class="text-center">
                     <div class="points-badge-sm mx-auto"><i class="fas fa-star"></i> ${p.costo_puntos}</div>
                 </td>
-                <td data-label="Sucursal" class="text-center">
-                    <span class="text-xs font-bold ${branchClass}">${branchLabel.toUpperCase()}</span>
+                ${branchTd}
+                <td data-label="Estado" class="text-center">
+                    ${toggleControl}
                 </td>
-                <td data-label="Estado" class="text-center hidden-mobile">
-                    <label class="switch-premium" title="${p.activa ? 'Promoción Activa' : 'Promoción Inactiva'}">
-                        <input type="checkbox" ${p.activa ? 'checked' : ''} onchange="togglePromotion(${p.id})">
-                        <span class="slider-premium"></span>
-                    </label>
-                </td>
-                <td data-label="Acciones">
-                    <div class="flex-row gap-8 justify-center actions-reveal">
-                        <button class="btn-icon-premium sm danger btn-delete-promo" onclick="deletePromotion(${p.id})" title="Eliminar">
-                            <i class="fas fa-xmark"></i>
-                        </button>
-                    </div>
+                <td data-label="Acciones" class="text-center">
+                    ${actionCell}
                 </td>
             </tr>`;
-        }).join('') || '<tr><td colspan="5" class="text-center py-20">No hay promociones registradas.</td></tr>';
+        }).join('') || `<tr><td colspan="${colSpan}" class="text-center py-20">No hay promociones registradas.</td></tr>`;
     } else {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-danger">Error: ${res.error}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-20 text-danger">Error: ${res.error}</td></tr>`;
     }
 }
 
 export async function showCreatePromotionModal() {
     const rol = localStorage.getItem('rol');
+    if (rol === 'staff') return;
     const sucursal = localStorage.getItem('sucursal') || '';
     const field = document.querySelector('.admin-only-field');
     const select = document.getElementById('promo-sucursal');
     
-    if (field) {
-        field.style.display = 'block'; // MOSTRAR SIEMPRE PARA CONFIGURAR
-    }
-
-    if (select) {
-        if (rol === 'admin') {
-            //ADMIN GLOBAL: CARGAR TODAS LAS SUCURSALES DE LA DB
+    if (rol === 'admin') {
+        // ADMIN GLOBAL: MOSTRAR CAMPO SUCURSAL
+        if (field) field.style.display = 'block';
+        if (select) {
             const res = await api.get('/admin/branches');
             if (res.ok) {
                 let options = '<option value="">Global (Todas)</option>';
@@ -78,14 +98,14 @@ export async function showCreatePromotionModal() {
                 select.disabled = false;
                 select.value = "";
             }
-        } else if (rol === 'local_admin') {
-            // ADMIN LOCAL: SOLO SU PROPIA SUCURSAL Y BLOQUEADO
+        }
+    } else {
+        // ADMIN LOCAL / LOGUEADO POR SUCURSAL: OCULTAR CAMPO SUCURSAL
+        if (field) field.style.display = 'none';
+        if (select) {
             select.innerHTML = `<option value="${sucursal}">${sucursal.toUpperCase()}</option>`;
             select.value = sucursal;
             select.disabled = true;
-        } else {
-            //OTROS ROLES NO DEBERIAN VER ESTO, PERO POR SEGURIDAD:
-            if (field) field.style.display = 'none';
         }
     }
     
@@ -105,6 +125,7 @@ export function selectPromoIcon(element) {
 }
 
 export async function handleCreatePromotion() {
+    if (localStorage.getItem('rol') === 'staff') return;
     const payload = {
         titulo: document.getElementById('promo-titulo').value,
         descripcion: document.getElementById('promo-descripcion').value,
@@ -125,6 +146,7 @@ export async function handleCreatePromotion() {
 }
 
 export async function togglePromotion(id) {
+    if (localStorage.getItem('rol') === 'staff') return;
     const res = await api.post(`/admin/promotions/${id}/toggle`);
     if (res.ok) {
         showToast(res.data.activa ? 'Promoción activada' : 'Promoción desactivada', 'success');
@@ -135,6 +157,7 @@ export async function togglePromotion(id) {
 }
 
 export async function deletePromotion(id) {
+    if (localStorage.getItem('rol') === 'staff') return;
     if (!await showConfirm('Eliminar Promoción', '¿Estás seguro de eliminar este beneficio permanentemente?')) return;
     const res = await api.delete(`/admin/promotions/${id}`);
     if (res.ok) {

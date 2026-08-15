@@ -6,12 +6,13 @@ import * as ops from './modules/dashboard-operations.js';
 import * as reservations from './modules/dashboard-reservations.js';
 import * as finance from './modules/dashboard-finance.js';
 import * as tickets from './modules/dashboard-tickets.js';
+import * as adminTour from './modules/admin-tour.js';
 import * as baseUi from './modules/ui.js';
 import * as utils from './modules/utils.js';
 import { initVirtualTime } from './modules/virtual-time.js';
 
 /**
- * PUENTE / ORQUESTADOR: DASHBOARD.JS (v9.6.0)
+ * PUENTE / ORQUESTADOR: DASHBOARD.JS (v9.9.9)
  * MANTIENE LA INTERFAZ OPERATIVA CENTRALIZANDO LA LOGICA MODULAR.
  */
 
@@ -37,7 +38,18 @@ window.closeModal = baseUi.closeModal;
 window.filterTable = utils.filterTable;
 window.formatDate = utils.formatDate;
 
-// 3. OPERACIONES MANUALES
+// 3. TOURS GUIADOS Y AYUDA OPERATIVA DE ADMINISTRACION
+window.startAdminLiveTour = adminTour.startAdminLiveTour;
+window.startAdminReservationsTour = adminTour.startAdminReservationsTour;
+window.startAdminUsersTour = adminTour.startAdminUsersTour;
+window.startAdminFinanceTour = adminTour.startAdminFinanceTour;
+window.startAdminTicketsTour = adminTour.startAdminTicketsTour;
+window.startAdminBranchesSettingsTour = adminTour.startAdminBranchesSettingsTour;
+window.startAdminFullDashboardTour = adminTour.startAdminFullDashboardTour;
+window.openAdminHelpModal = adminTour.openAdminHelpModal;
+window.toggleAdminFaq = adminTour.toggleAdminFaq;
+
+// 4. OPERACIONES MANUALES
 window.manualEntry = ops.manualEntry;
 window.payOccupancy = (plate, amount) => ops.payOccupancy(plate, amount, () => {
     if (document.getElementById('tab-finance')?.style.display !== 'none') {
@@ -99,6 +111,7 @@ window.saveCapacities = admin.saveCapacities;
 window.saveSystemParam = admin.saveSystemParam;
 window.resetSys = admin.resetSys;
 window.exportFinanceData = admin.exportFinanceData;
+window.toggleFinanceStatsCollapsible = finance.toggleFinanceStatsCollapsible;
 
 // 8. SUCURSALES
 window.loadBranches = admin.loadBranches;
@@ -219,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             lastTab = 'users';
         }
     } else if (rol === 'staff') {
-        const restrictedStaff = ['users', 'finance', 'promotions', 'settings', 'branches'];
+        const restrictedStaff = ['users', 'finance', 'promotions', 'tickets', 'settings', 'branches'];
         if (!lastTab || restrictedStaff.includes(lastTab)) {
             lastTab = 'live';
         }

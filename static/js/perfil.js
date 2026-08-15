@@ -7,7 +7,7 @@ import { showToast } from './modules/utils.js?v=9.3.0';
 import { initMap } from './modules/landing.js?v=9.3.0';
 import { loadNotifications, updateNotifBadge, startNotifPolling } from './modules/notifications.js?v=9.3.0';
 import * as onboarding from './modules/onboarding_helpers.js?v=9.3.0';
-import { startReservationTour } from './modules/tour.js?v=9.3.0';
+import { startReservationTour, startAddVehicleTour, startCreateReservationTour, startRechargeBalanceTour, startRedeemPointsTour, startQrPassTour } from './modules/tour.js?v=9.3.0';
 import * as help from './modules/profile-help.js?v=9.8.5';
 
 /**
@@ -17,6 +17,11 @@ import * as help from './modules/profile-help.js?v=9.8.5';
 
 // TOUR & AYUDA
 window.startReservationTour = startReservationTour;
+window.startAddVehicleTour = startAddVehicleTour;
+window.startCreateReservationTour = startCreateReservationTour;
+window.startRechargeBalanceTour = startRechargeBalanceTour;
+window.startRedeemPointsTour = startRedeemPointsTour;
+window.startQrPassTour = startQrPassTour;
 window.toggleFaq = help.toggleFaq;
 window.filterHelpCategory = help.filterHelpCategory;
 window.filterHelpContent = help.filterHelpContent;
@@ -84,11 +89,16 @@ window.showSection = function(sectionId, el) {
     if (sectionId === 'ayuda') help.loadHelpBranches();
 };
 
-window.openFullMap = function() {
+window.openFullMap = function(pushState = true) {
     const overlay = document.getElementById('map-fullscreen-overlay');
     if (!overlay) return;
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+
+    if (pushState && (!history.state || !history.state.mapFullscreenOpen)) {
+        history.pushState({ mapFullscreenOpen: true }, '');
+    }
+
     setTimeout(() => {
         const fsMap = document.getElementById('portal-map-fullscreen');
         if (fsMap && !fsMap.classList.contains('map-initialized')) {
@@ -98,11 +108,23 @@ window.openFullMap = function() {
     }, 150);
 };
 
-window.closeFullMap = function() {
+window.closeFullMap = function(popState = true) {
     const overlay = document.getElementById('map-fullscreen-overlay');
     if (overlay) overlay.style.display = 'none';
     document.body.style.overflow = '';
+
+    if (popState && history.state && history.state.mapFullscreenOpen) {
+        history.back();
+    }
 };
+
+window.addEventListener('popstate', () => {
+    const overlay = document.getElementById('map-fullscreen-overlay');
+    if (overlay && overlay.style.display !== 'none') {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
 
 window.enterEditMode = function(field) {
     const item = document.getElementById(`item-${field}`);
@@ -201,6 +223,7 @@ window.openReservationOnboarding = onboarding.openReservationOnboarding;
 window.closeReservationOnboarding = onboarding.closeReservationOnboarding;
 window.skipReservationOnboarding = onboarding.skipReservationOnboarding;
 window.startReservationOnboarding = onboarding.startReservationOnboarding;
+window.checkFirstLoginOnboarding = onboarding.checkFirstLoginOnboarding;
 
 // Global error hooks para detectar problemas de runtime y mostrar alerta en UI
 window.addEventListener('error', (e) => {
@@ -240,22 +263,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         await res.loadReservations();
         res.initReservationForm();
         
-        // evitar bloqueo por scripts terceros: pequeño log
-        console.log('[PROFILE] Datos cargados: vehicles=', (vehicles && vehicles.length) || 0);
-        
-        // Si el usuario no tiene vehículos y es la primera vez que entra, mostrar modal onboarding amigable
+        // VERIFICAR PRIMER LOGUEO DEL USUARIO (tour de bienvenida automático solo primera vez)
         try {
-            if (vehicles && vehicles.length === 0) {
-                            // Mostrar modal siempre cuando el usuario no tenga vehículos (por petición)
-                            try {
-                                onboarding.openReservationOnboarding();
-                            }
-                            catch (e) { console.error('[ONBOARDING OPEN]', e); }
-
-                            // Dejar que el flujo de onboarding maneje cuándo iniciar el tour (post-add)
-                            console.log('[PROFILE] Tour start deferred to onboarding flow.');
-                        }
-        } catch (e) { console.error('[ONBOARDING] ', e); }
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const reservations = window.userReservations || [];
+            onboarding.checkFirstLoginOnboarding(userData, vehicles, reservations);
+        } catch (e) { console.error('[ONBOARDING CHECK]', e); }
         
         // REFRESCAR ESTADO DE LOS FORMULARIOS DE RESERVA/VEHICULOS (AHORA SIEMPRE VISIBLES)
         if (typeof res.refreshReservationFormState === 'function') {
@@ -269,7 +282,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const preBranch = urlParams.get('reserva_sucursal');
         if (preBranch) {
-            console.log(`[*] Detectado parámetro de reserva: ${preBranch}`);
             if (window.showSection) {
                 window.showSection('inicio', document.querySelector('.nav-item[onclick*="inicio"]'));
             }

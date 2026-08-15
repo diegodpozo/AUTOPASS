@@ -24,9 +24,6 @@ export function openReservationOnboarding() {
             section.setAttribute('aria-hidden', 'true');
         }
     } catch (e) { console.warn('[ONBOARDING] no pude aplicar blur al fondo', e); }
-
-    // marcar que mostramos onboarding en esta sesión (pero no iniciar tour todavía)
-    console.log('[ONBOARDING] Modal mostrado (esperando interacción).');
 }
 
 export function closeReservationOnboarding() {
@@ -53,13 +50,51 @@ export function closeReservationOnboarding() {
     // no marcar visto aquí — marcar sólo cuando usuario omite explícitamente o completa tour
 }
 
+export function checkFirstLoginOnboarding(user, vehicles = [], reservations = []) {
+    const userId = user && user.id ? user.id : (user && user.email ? user.email : null);
+    const userTourKey = userId ? `autopass_tour_seen_${userId}` : 'autopass_tour_seen_guest';
+
+    const hasSeen = localStorage.getItem(userTourKey) === '1' || localStorage.getItem('seen_reservation_onboarding') === '1';
+    const hasExistingData = (Array.isArray(vehicles) && vehicles.length > 0) || (Array.isArray(reservations) && reservations.length > 0);
+
+    if (hasSeen || hasExistingData) {
+        try {
+            if (userId) localStorage.setItem(userTourKey, '1');
+            localStorage.setItem('seen_reservation_onboarding', '1');
+        } catch (e) { /* ignore */ }
+        return;
+    }
+
+    try {
+        if (userId) localStorage.setItem(userTourKey, '1');
+        localStorage.setItem('seen_reservation_onboarding', '1');
+    } catch (e) { console.warn('[ONBOARDING] Error guardando visto flag:', e); }
+
+    openReservationOnboarding();
+}
+
 export function skipReservationOnboarding() {
     // marcar como visto y cerrar
-    try { localStorage.setItem('seen_reservation_onboarding','1'); } catch (e) { console.warn('[ONBOARDING] no pude setear seen flag', e); }
+    try {
+        localStorage.setItem('seen_reservation_onboarding','1');
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        if (userData && userData.id) {
+            localStorage.setItem(`autopass_tour_seen_${userData.id}`, '1');
+        }
+    } catch (e) { console.warn('[ONBOARDING] no pude setear seen flag', e); }
     closeReservationOnboarding();
 }
 
 export function startReservationOnboarding() {
+    // Marcar como visto
+    try {
+        localStorage.setItem('seen_reservation_onboarding','1');
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        if (userData && userData.id) {
+            localStorage.setItem(`autopass_tour_seen_${userData.id}`, '1');
+        }
+    } catch (e) { console.warn('[ONBOARDING] no pude setear seen flag', e); }
+
     // Cerrar modal y quitar blur para que el quick-add sea totalmente usable
     try {
         closeReservationOnboarding();
@@ -76,7 +111,6 @@ export function startReservationOnboarding() {
         import('./tour.js?v=9.3.0')
             .then(m => {
                 if (m && typeof m.startQuickAddTour === 'function') {
-                    console.log('[ONBOARDING] Iniciando Quick-Add Tour');
                     m.startQuickAddTour();
                 }
             })
@@ -87,15 +121,15 @@ export function startReservationOnboarding() {
     const handler = async (ev) => {
         try {
             document.removeEventListener('vehicle:added', handler);
-            console.log('[ONBOARDING] Vehículo agregado detected, iniciando mini-tour...');
+            // pequeño delay para que la UI se estabilice y el formulario de reserva se abra
             // pequeño delay para que la UI se estabilice y el formulario de reserva se abra
             setTimeout(async () => {
                 try {
                     const m = await import('./tour.js?v=9.3.0');
-                    if (m && typeof m.startReservationTour === 'function') {
-                        m.startReservationTour();
-                    } else if (typeof window.startReservationTour === 'function') {
-                        window.startReservationTour();
+                    if (m && typeof m.startPostAddReservationTour === 'function') {
+                        m.startPostAddReservationTour();
+                    } else if (typeof window.startPostAddReservationTour === 'function') {
+                        window.startPostAddReservationTour();
                     }
                 } catch (err) { console.error('[ONBOARDING] Error iniciando tour post-add:', err); }
             }, 450);

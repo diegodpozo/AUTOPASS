@@ -1,0 +1,171 @@
+<!-- MODAL: CENTRO DE AYUDA OPERATIVA Y TOURS PARA EMPLEADOS Y ADMINS -->
+<div id="modal-admin-help" class="modal" style="display: none;">
+    <div class="modal-content glass-premium" style="max-width: 820px; border: 1px solid rgba(0, 210, 255, 0.35); box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(0, 210, 255, 0.15);">
+        <div class="modal-header" style="border-bottom: 1px solid rgba(0, 210, 255, 0.2); padding-bottom: 15px;">
+            <div class="flex-row items-center gap-12">
+                <div class="header-icon-box" style="background: rgba(0, 210, 255, 0.12); border: 1px solid rgba(0, 210, 255, 0.3); color: #00D2FF;">
+                    <i class="fas fa-circle-question"></i>
+                </div>
+                <div>
+                    <h2 style="color: #ffffff; margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em;">CENTRO DE AYUDA OPERATIVA & TOURS</h2>
+                    <span style="color: #94a3b8; font-size: 0.78rem;">Instrucción técnica y guías paso a paso para Personal Staff y Administradores</span>
+                </div>
+            </div>
+            <span class="close-btn" onclick="closeModal('modal-admin-help')" style="color: #94a3b8;"><i class="fas fa-xmark"></i></span>
+        </div>
+
+        <div class="modal-body" style="max-height: calc(85vh - 120px); overflow-y: auto; padding-right: 5px;">
+            <!-- SECCIÓN 1: TOURS GUIADOS INTERACTIVOS -->
+            <div class="mb-25">
+                <div class="flex-row items-center justify-between mb-15">
+                    <h3 style="color: #00D2FF; font-size: 0.92rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-route"></i> TOURS GUIADOS INTERACTIVOS
+                    </h3>
+                    <button class="btn btn-primary" onclick="startAdminFullDashboardTour()" style="background: linear-gradient(135deg, #0284c7, #00d2ff); color: #090d16; border: none; font-size: 0.75rem; font-weight: 700; padding: 6px 14px; border-radius: 8px;">
+                        <i class="fas fa-play"></i> RECORRIDO COMPLETO
+                    </button>
+                </div>
+
+                <div class="admin-help-grid">
+                    <!-- Tour 1: Monitoreo -->
+                    <div class="admin-help-card">
+                        <div>
+                            <div class="admin-help-icon"><i class="fas fa-video"></i></div>
+                            <div class="admin-help-card-title">Monitoreo CCTV & ALPR</div>
+                            <div class="admin-help-card-desc">Grilla de cámaras en vivo, consola de lecturas EasyOCR, aforo físico real por tipo de vehículo y comandos de barreras.</div>
+                        </div>
+                        <button class="btn btn-outline btn-full" onclick="startAdminLiveTour()" style="border-color: rgba(0, 210, 255, 0.3); color: #00D2FF; font-size: 0.75rem;">
+                            INICIAR TOUR <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Tour 2: Reservas -->
+                    <div class="admin-help-card">
+                        <div>
+                            <div class="admin-help-icon"><i class="fas fa-calendar-check"></i></div>
+                            <div class="admin-help-card-title">Gestión de Reservas</div>
+                            <div class="admin-help-card-desc">Búsqueda por patente/comprobante, confirmación de pagos en caja, auditoría de fechas y cancelaciones con reembolso.</div>
+                        </div>
+                        <button class="btn btn-outline btn-full" onclick="startAdminReservationsTour()" style="border-color: rgba(0, 210, 255, 0.3); color: #00D2FF; font-size: 0.75rem;">
+                            INICIAR TOUR <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Tour 3: Usuarios -->
+                    <div class="admin-help-card hide-staff">
+                        <div>
+                            <div class="admin-help-icon"><i class="fas fa-users-gear"></i></div>
+                            <div class="admin-help-card-title">Usuarios & Permisos</div>
+                            <div class="admin-help-card-desc">Directorio de personal y clientes, acreditación de saldo en Billetera Virtual, suspención de cuentas y asignación de roles.</div>
+                        </div>
+                        <button class="btn btn-outline btn-full" onclick="startAdminUsersTour()" style="border-color: rgba(0, 210, 255, 0.3); color: #00D2FF; font-size: 0.75rem;">
+                            INICIAR TOUR <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Tour 4: Finanzas -->
+                    <div class="admin-help-card hide-staff">
+                        <div>
+                            <div class="admin-help-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="admin-help-card-title">Analítica Financiera</div>
+                            <div class="admin-help-card-desc">KPIs ejecutivos, ingresos por canal (Billetera/Efectivo/Tarjeta), categorización trimodal y exportación a formato CSV.</div>
+                        </div>
+                        <button class="btn btn-outline btn-full" onclick="startAdminFinanceTour()" style="border-color: rgba(0, 210, 255, 0.3); color: #00D2FF; font-size: 0.75rem;">
+                            INICIAR TOUR <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Tour 5: Soporte -->
+                    <div class="admin-help-card hide-staff">
+                        <div>
+                            <div class="admin-help-icon"><i class="fas fa-headset"></i></div>
+                            <div class="admin-help-card-title">Soporte & Tickets</div>
+                            <div class="admin-help-card-desc">Bandeja de consultas de clientes, filtros por sucursal y respuesta directa con notificaciones WebSockets.</div>
+                        </div>
+                        <button class="btn btn-outline btn-full" onclick="startAdminTicketsTour()" style="border-color: rgba(0, 210, 255, 0.3); color: #00D2FF; font-size: 0.75rem;">
+                            INICIAR TOUR <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Tour 6: Sucursales y Tarifas -->
+                    <div class="admin-help-card hide-staff">
+                        <div>
+                            <div class="admin-help-icon"><i class="fas fa-gears"></i></div>
+                            <div class="admin-help-card-title">Sucursales, Pisos & Tarifas</div>
+                            <div class="admin-help-card-desc">Arquitectura Multi-Piso (ParkingFloor), matriz de precios por categoría vehicular y configuración de cámaras IP.</div>
+                        </div>
+                        <button class="btn btn-outline btn-full" onclick="startAdminBranchesSettingsTour()" style="border-color: rgba(0, 210, 255, 0.3); color: #00D2FF; font-size: 0.75rem;">
+                            INICIAR TOUR <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: RESOLUCIÓN RÁPIDA DE CONTINGENCIAS (FAQ OPERATIVA) -->
+            <div>
+                <h3 style="color: #00D2FF; font-size: 0.92rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-shield-halved"></i> GUÍA DE RESOLUCIÓN RÁPIDA (FAQ OPERATIVA)
+                </h3>
+
+                <div class="admin-faq-accordion">
+                    <div class="admin-faq-item">
+                        <div class="admin-faq-question" onclick="toggleAdminFaq(this)">
+                            <span><i class="fas fa-triangle-exclamation text-amber" style="margin-right: 8px;"></i> ¿Qué hacer si la cámara ALPR no detecta la patente a la entrada?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="admin-faq-answer">
+                            Acceda a la pestaña <b>Monitoreo</b>. En el panel <b>Operaciones Manuales</b>, ingrese la patente del vehículo en el campo <i>Ingreso Manual</i>, seleccione la sucursal y presione <i>REGISTRAR INGRESO</i>. El sistema asociará el vehículo y emitirá el pulso de apertura a la barrera.
+                        </div>
+                    </div>
+
+                    <div class="admin-faq-item">
+                        <div class="admin-faq-question" onclick="toggleAdminFaq(this)">
+                            <span><i class="fas fa-ticket text-amber" style="margin-right: 8px;"></i> ¿Cómo cobrar y dar egreso a un cliente sin comprobante?</span>
+                            <div class="admin-faq-answer-container"></div>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="admin-faq-answer">
+                            En <b>Operaciones Manuales</b>, ingrese la patente en <i>Cobrar / Egreso Manual</i>. El sistema calculará el costo acumulado según el tiempo transcurrido desde la entrada ALPR. Tras registrar el cobro en efectivo o tarjeta, presione <i>EGRESAR Y LIBERAR</i> para registrar la salida y actualizar el aforo.
+                        </div>
+                    </div>
+
+                    <div class="admin-faq-item">
+                        <div class="admin-faq-question" onclick="toggleAdminFaq(this)">
+                            <span><i class="fas fa-wallet text-amber" style="margin-right: 8px;"></i> ¿Cómo acreditar saldo en la Billetera Virtual de un cliente?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="admin-faq-answer">
+                            Diríjase a la pestaña <b>Gestión de Usuarios</b>, busque al cliente por su correo o DNI y presione el botón con el icono de dólar (<b>$</b>). En la ventana emergente, ingrese el importe cobrado y presione <i>CARGAR SALDO</i>. El monto quedará disponible de inmediato para accesos por ALPR.
+                        </div>
+                    </div>
+
+                    <div class="admin-faq-item">
+                        <div class="admin-faq-question" onclick="toggleAdminFaq(this)">
+                            <span><i class="fas fa-camera text-amber" style="margin-right: 8px;"></i> ¿Cómo agregar o cambiar la dirección IP de una cámara CCTV?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="admin-faq-answer">
+                            En la pestaña <b>Configuración</b> -> <b>Cámaras IP</b>, edite o agregue un nuevo dispositivo indicando la URL RTSP o stream MJPEG. Asigne la función del dispositivo (Entrada ALPR, Salida ALPR, Lector QR o Predio) y guarde los cambios. El servicio reiniciará el stream sin detener el servidor.
+                        </div>
+                    </div>
+
+                    <div class="admin-faq-item">
+                        <div class="admin-faq-question" onclick="toggleAdminFaq(this)">
+                            <span><i class="fas fa-door-open text-amber" style="margin-right: 8px;"></i> ¿Cómo forzar la apertura manual de la barrera física?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="admin-faq-answer">
+                            En la pestaña <b>Monitoreo</b>, utilice los botones con el icono de barrera en el panel superior o dentro de Operaciones Manuales. Al presionar <b>Abrir Barrera (MQTT)</b>, se enviará una señal directa al controlador físico de la barrera.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer flex-row justify-end mt-20 pt-15" style="border-top: 1px solid rgba(255,255,255,0.08);">
+            <button class="btn btn-primary" onclick="closeModal('modal-admin-help')" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 24px; font-size: 0.8rem;">
+                ENTENDIDO
+            </button>
+        </div>
+    </div>
+</div>

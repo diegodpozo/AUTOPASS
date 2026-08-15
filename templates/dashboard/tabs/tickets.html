@@ -34,7 +34,7 @@
     <!-- TARJETA PRINCIPAL Y TABLA DE TICKETS -->
     <div class="card">
         <div class="card-header-premium">
-            <div class="header-info-group" style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <div class="header-info-group">
                 <div class="header-icon"><i class="fas fa-headset"></i></div>
                 <div class="header-text">
                     <h3>GESTIÓN DE TICKETS DE SOPORTE</h3>
@@ -101,7 +101,7 @@
             <div class="info-card-premium mb-15">
                 <div class="flex-row justify-between items-center mb-5">
                     <span id="ticket-modal-client" class="text-bold" style="color: #f8fafc;">---</span>
-                    <span id="ticket-modal-email" class="text-muted text-small">---</span>
+                    <span id="ticket-modal-email" class="text-muted text-small ticket-email-text">---</span>
                 </div>
                 <div class="flex-row gap-10 text-small">
                     <span class="badge badge-info" id="ticket-modal-branch">---</span>
@@ -131,7 +131,7 @@
                     <textarea id="ticket-answer-text" class="form-control-custom" rows="4" placeholder="Escribí aquí la respuesta o resolución enviada al cliente..."></textarea>
                 </div>
 
-                <div class="flex-row justify-end gap-10">
+                <div class="flex-row justify-end gap-10 modal-footer-buttons">
                     <button type="button" class="btn btn-outline" onclick="closeModal('modal-ticket-answer')">CANCELAR</button>
                     <button type="submit" id="btn-save-ticket-answer" class="btn btn-primary">GUARDAR CAMBIOS</button>
                 </div>

@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.9.0).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v10.0.0).
 
 ---
 
@@ -25,9 +25,9 @@ AUTOPASS/
 ├── tests/              # Pruebas unitarias (pytest)
 ├── static/
 │   ├── js/
-│   │   ├── modules/    # 31 módulos ES6 (lógica de negocio frontend)
+│   │   ├── modules/    # 32 módulos ES6 (lógica de negocio frontend)
 │   │   └── *.js        # 9 scripts puente (bridge: módulos → window.*)
-│   ├── css/            # 38 archivos CSS organizados en base/layout/components/pages
+│   ├── css/            # 39 archivos CSS organizados en base/layout/components/pages
 │   └── images/
 ├── templates/
 │   ├── dashboard/
@@ -45,7 +45,7 @@ AUTOPASS/
 
 ---
 
-## Capas y Responsabilidades (v9.9.0)
+## Capas y Responsabilidades (v10.0.0)
 
 ### 1. Capa de Servicios (Service Layer)
 Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
@@ -77,7 +77,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 
 ---
 
-### 3. Capa Frontend (Dashboard y Portal Modular - v9.6.0)
+### 3. Capa Frontend (Dashboard y Portal Modular - v10.0.0)
 
 #### Patrón de Arquitectura: Bridge Pattern
 El frontend utiliza un patrón de **dos capas** para compatibilizar módulos ES6 modernos con handlers `onclick` inline en HTML:
@@ -90,7 +90,7 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 - **Scripts Puente** (`static/js/*.js`): Importan módulos y exponen funciones al scope global (`window.*`) para compatibilidad con handlers inline en templates Jinja2.
 - **Carga**: Los scripts puente se cargan como `<script type="module">`. Los módulos se cargan en paralelo y se resuelven automáticamente.
 
-#### Módulos Frontend (`static/js/modules/` - 31 módulos ES6)
+#### Módulos Frontend (`static/js/modules/` - 32 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -107,9 +107,10 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 | `dashboard-reservations.js` | CRUD reservas admin, confirmar pago, cancelar, actualizar |
 | `dashboard-promotions.js` | CRUD promociones, selección de iconos |
 | `dashboard-tickets.js` | Gestión de tickets de soporte admin, auto-actualización real-time y búsqueda en vivo |
+| `admin-tour.js` | Tour guiado interactivo para administradores |
 | `monitoreo-live.js` | Monitoreo CCTV en vivo, grilla dinámica de cámaras, controles DVR |
 | `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
-| `api.js` | Cliente HTTP centralizado (GET/POST/PUT/PATCH/DELETE) con manejo de tokens y errores |
+| `api.js` | Cliente HTTP centralizado (GET/POST/PUT/PATCH/DELETE) with manejo de tokens y errores |
 | `utils.js` | Utilidades: `formatNum`, `toTitle`, `formatDate`, `showToast`, `showConfirm`, `validatePlate`, `detectVehicleType` |
 | `ui.js` | UI base: modales, sidebar, toggle password, logout |
 | `virtual-time.js` | Tiempo virtual del servidor (sync periódica cada 60s) |

@@ -1,0 +1,304 @@
+/* ==========================================================================
+   AUTOPASS - TOUR DE ADMINISTRACIÓN Y GUÍA OPERATIVA (v9.9.9)
+   ESTILOS TECNICOS PARA PERSONAL STAFF Y ADMINISTRADORES
+   ========================================================================== */
+
+#autopass-admin-tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+#autopass-admin-tour-overlay.active {
+    opacity: 1;
+}
+
+#autopass-admin-tour-overlay.interactive {
+    pointer-events: none;
+}
+
+#autopass-admin-tour-svg path {
+    transition: d 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+#autopass-admin-tour-highlight-rect {
+    transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+    stroke: #00D2FF !important;
+    stroke-width: 2px !important;
+    filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.6)) !important;
+}
+
+/* Tooltip Técnico de Administración */
+.admin-tour-tooltip {
+    position: fixed;
+    background: rgba(10, 16, 26, 0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(0, 210, 255, 0.35);
+    border-radius: 14px;
+    padding: 20px 22px;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 210, 255, 0.15);
+    color: #f8fafc;
+    z-index: 100000;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.22s ease, transform 0.22s ease, left 0.22s cubic-bezier(0.25, 1, 0.5, 1), top 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+    pointer-events: auto;
+}
+
+.admin-tour-tooltip.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.admin-tour-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.admin-tour-badge {
+    background: rgba(0, 210, 255, 0.12);
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    color: #38BDF8;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.admin-tour-badge i {
+    font-size: 0.65rem;
+}
+
+.admin-tour-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+}
+
+.admin-tour-title i {
+    color: #00D2FF;
+    font-size: 0.95rem;
+}
+
+.admin-tour-text {
+    font-size: 0.84rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin-bottom: 18px;
+}
+
+.admin-tour-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 14px;
+}
+
+.admin-tour-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-admin-tour-next {
+    background: linear-gradient(135deg, #0284c7, #00d2ff);
+    color: #090d16;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-admin-tour-next:hover {
+    filter: brightness(1.15);
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+}
+
+.btn-admin-tour-prev {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #94a3b8;
+    font-size: 0.78rem;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-admin-tour-prev:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.btn-admin-tour-prev:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.btn-admin-tour-end {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.2s ease;
+}
+
+.btn-admin-tour-end:hover {
+    color: #f1f5f9;
+}
+
+/* Flecha Indicadora */
+.admin-tour-arrow {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: 100001;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.admin-tour-arrow.active {
+    opacity: 1;
+}
+
+/* Modal de Ayuda Operativa de Administración */
+.admin-help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 15px;
+}
+
+.admin-help-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(0, 210, 255, 0.2);
+    border-radius: 12px;
+    padding: 18px;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.admin-help-card:hover {
+    border-color: rgba(0, 210, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 210, 255, 0.12);
+}
+
+.admin-help-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(0, 210, 255, 0.12);
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    color: #00D2FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 14px;
+}
+
+.admin-help-card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+.admin-help-card-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    line-height: 1.45;
+    margin-bottom: 16px;
+    flex-grow: 1;
+}
+
+.admin-faq-accordion {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-faq-item {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.admin-faq-item:hover {
+    border-color: rgba(0, 210, 255, 0.25);
+}
+
+.admin-faq-question {
+    padding: 14px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-faq-answer {
+    padding: 0 18px 14px 18px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    display: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 5px;
+    padding-top: 10px;
+}
+
+.admin-faq-item.open .admin-faq-answer {
+    display: block;
+}
+
+.admin-faq-item.open .admin-faq-question i {
+    transform: rotate(180deg);
+    color: #00D2FF;
+}
+
+.admin-faq-question i {
+    transition: transform 0.2s ease, color 0.2s ease;
+    font-size: 0.8rem;
+    color: #64748b;
+}
