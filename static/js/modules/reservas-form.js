@@ -587,12 +587,9 @@ export async function createReservation(e) {
     btn.disabled = true;
 
     const payload = { patente, fecha_inicio: inicio, fecha_fin: fin, sucursal_nombre: sucursal, tipo_estadia: tipo };
-    console.log('[RESERVAS] Enviando payload:', payload);
     const result = editingReservaId ? 
         await api.patch(`/user/reservations/${editingReservaId}`, payload) : 
         await api.post('/user/reservations', payload);
-
-    console.log('[RESERVAS] Resultado createReservation:', result);
 
     if (result.ok) {
         showToast(editingReservaId ? '¡Reserva actualizada!' : '¡Reserva creada con éxito!', 'success');
@@ -609,18 +606,15 @@ export async function createReservation(e) {
         if (window.loadProfile) window.loadProfile();
 
         try {
-            console.log('[RESERVAS] Dispatching reservation:created with data:', result.data);
             document.dispatchEvent(new CustomEvent('reservation:created', { detail: result.data || {} }));
         } catch (e) { console.warn('[RESERVAS] no se pudo dispatch reservation:created', e); }
 
         try {
             if (window.startReservationTourAtReservations && typeof window.startReservationTourAtReservations === 'function') {
-                console.log('[RESERVAS] Llamando startReservationTourAtReservations() como fallback');
                 setTimeout(() => { try { window.startReservationTourAtReservations(); } catch (e) { console.warn('[RESERVAS] startReservationTourAtReservations error', e); } }, 350);
             }
         } catch (e) { /* noop */ }
     } else { 
-        console.log('[RESERVAS] createReservation failed:', result.error || result);
         showToast(result.error || 'Error al procesar reserva', 'error'); 
     }
 

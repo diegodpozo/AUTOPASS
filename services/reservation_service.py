@@ -221,6 +221,9 @@ class ReservationService:
         if not res: 
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
         
+        if res.estado_reserva in [ReservationStatus.CANCELADA, ReservationStatus.COMPLETADA]:
+            raise HTTPException(status_code=400, detail=f"No se puede abonar una reserva en estado '{res.estado_reserva}'")
+
         if res.estado_pago == PaymentStatus.PAGADO:
             return {"status": "ok", "message": "La reserva ya ha sido abonada"}
         

@@ -42,12 +42,13 @@
             <div class="nav-item hide-super-admin" onclick="switchTab('admin-reservations', this)" title="Gestionar reservas del sistema"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span></div>
             
             <!-- SECCIONES EXCLUSIVAS ADMIN -->
-            <div class="nav-item" onclick="switchTab('users', this)" title="Administrar usuarios y permisos"><i class="fas fa-users-gear"></i> <span class="nav-text">Gestión de Usuarios</span></div>
-            <div class="nav-item hide-super-admin" onclick="switchTab('finance', this)" title="Ver analítica y reportes financieros"><i class="fas fa-chart-line"></i> <span class="nav-text">Reporte Financiero</span></div>
-            <div class="nav-item" onclick="switchTab('promotions', this)" title="Gestionar promociones y beneficios"><i class="fas fa-gift"></i> <span class="nav-text">Promociones</span></div>
-            <div class="nav-item" onclick="switchTab('tickets', this)" title="Atender tickets y consultas de clientes"><i class="fas fa-headset"></i> <span class="nav-text">Soporte & Tickets</span></div>
+            <div class="nav-item hide-staff" onclick="switchTab('users', this)" title="Administrar usuarios y permisos"><i class="fas fa-users-gear"></i> <span class="nav-text">Gestión de Usuarios</span></div>
+            <div class="nav-item hide-super-admin hide-staff" onclick="switchTab('finance', this)" title="Ver analítica y reportes financieros"><i class="fas fa-chart-line"></i> <span class="nav-text">Reporte Financiero</span></div>
+            <div class="nav-item hide-staff" onclick="switchTab('promotions', this)" title="Ver promociones y beneficios"><i class="fas fa-gift"></i> <span class="nav-text">Promociones</span></div>
+            <div class="nav-item hide-staff" onclick="switchTab('tickets', this)" title="Atender tickets y consultas de clientes"><i class="fas fa-headset"></i> <span class="nav-text">Soporte & Tickets</span></div>
             <div class="nav-item super-admin-only" onclick="switchTab('branches', this)" title="Gestionar sucursales de la red"><i class="fas fa-building-circle-check"></i> <span class="nav-text">Sucursales</span></div>
             <div class="nav-item local-admin-only" onclick="switchTab('settings', this)" title="Configurar parámetros del sistema"><i class="fas fa-gears"></i> <span class="nav-text">Configuración</span></div>
+            <div class="nav-item nav-item-help" onclick="openAdminHelpModal()" title="Centro de Ayuda Operativa y Tours de Administración" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;"><i class="fas fa-circle-question" style="color: #00D2FF;"></i> <span class="nav-text" style="color: #00D2FF; font-weight: 600;">Ayuda Operativa</span></div>
         </nav>
         <div class="sidebar-footer" onclick="logout()" title="Salir del sistema">
             <i class="fas fa-right-from-bracket"></i> <span>Cerrar Sesión</span>
@@ -234,6 +235,9 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL: CENTRO DE AYUDA OPERATIVA Y TOURS PARA ADMINS & STAFF -->
+    {% include "dashboard/modals/admin_help_modal.html" %}
 {% endblock %}
 
 {% block extra_scripts %}

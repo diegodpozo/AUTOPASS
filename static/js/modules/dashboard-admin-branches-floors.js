@@ -120,35 +120,38 @@ export async function loadFloors() {
     const pbCapCamionetas = resSettings.ok ? (resSettings.data.capacidad_camionetas ?? 5) : 5;
     
     let cardsHtml = `
-        <div class="level-block pb" id="level-block-pb" style="grid-template-columns: 1fr auto;">
-            <div class="level-main-content" style="justify-content: space-around; width: 100%;">
-                <div class="level-stats-grid" style="gap: 40px; width: 100%; justify-content: space-around;">
+        <div class="level-block pb" id="level-block-pb">
+            <div class="level-main-content" style="width: 100%; padding: 18px 25px;">
+                <div class="level-stats-grid" style="width: 100%; justify-content: space-around; gap: 20px; align-items: center;">
                     <div class="stat-item items-center text-center">
-                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-car mr-8 text-dorado" style="font-size: 1.2rem;"></i> Autos</span>
+                        <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-car mr-6 text-dorado"></i> Autos</span>
                         <div class="stat-val-box justify-center">
-                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled style="width: 100px; font-size: 1.6rem; text-align: center;">
+                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled style="width: 80px; font-size: 1.25rem; text-align: center;">
+                            <span class="stat-unit">u.</span>
                         </div>
                     </div>
                     <div class="stat-item items-center text-center">
-                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-motorcycle mr-8 text-dorado" style="font-size: 1.2rem;"></i> Motos</span>
+                        <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-motorcycle mr-6 text-dorado"></i> Motos</span>
                         <div class="stat-val-box justify-center">
-                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled style="width: 100px; font-size: 1.6rem; text-align: center;">
+                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled style="width: 80px; font-size: 1.25rem; text-align: center;">
+                            <span class="stat-unit">u.</span>
                         </div>
                     </div>
                     <div class="stat-item items-center text-center">
-                        <span class="text-sm text-white uppercase fw-900"><i class="fas fa-truck-pickup mr-8 text-dorado" style="font-size: 1.2rem;"></i> Camionetas</span>
+                        <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-truck-pickup mr-6 text-dorado"></i> Camionetas</span>
                         <div class="stat-val-box justify-center">
-                            <input type="number" id="pb-cap-camionetas" class="stat-val-input" value="${pbCapCamionetas}" min="0" disabled style="width: 100px; font-size: 1.6rem; text-align: center;">
+                            <input type="number" id="pb-cap-camionetas" class="stat-val-input" value="${pbCapCamionetas}" min="0" disabled style="width: 80px; font-size: 1.25rem; text-align: center;">
+                            <span class="stat-unit">u.</span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="level-actions">
-                <button class="btn-icon-premium sm btn-save-level" onclick="savePBCapacity()" style="display:none;" title="Guardar Cambios">
-                    <i class="fas fa-floppy-disk"></i>
-                </button>
                 <button class="btn-icon-premium sm btn-edit-level" onclick="toggleLevelEdit('pb')" title="Editar Plazas">
                     <i class="fas fa-pen-to-square"></i>
+                </button>
+                <button class="btn btn-primary sm btn-save-level" onclick="savePBCapacity()" style="display:none; height: 32px; border-radius: 8px;">
+                    APLICAR
                 </button>
             </div>
         </div>

@@ -99,24 +99,24 @@ function renderAdminTickets(tickets) {
         if (t.estado.toLowerCase() === 'resuelto') badgeClass = 'badge-success';
 
         return `
-            <tr>
-                <td class="text-bold text-dorado">#${t.id}</td>
-                <td>
+            <tr class="row-premium">
+                <td data-label="#ID" class="text-bold text-dorado">#${t.id}</td>
+                <td data-label="Cliente">
                     <div class="flex-col">
                         <span class="text-bold">${t.cliente_nombre || 'S/D'}</span>
-                        <span class="text-muted text-small">${t.cliente_email || ''}</span>
+                        <span class="text-muted text-small ticket-email-text" title="${t.cliente_email || ''}">${t.cliente_email || ''}</span>
                     </div>
                 </td>
-                <td><span class="badge badge-outline">${toTitle(t.sucursal)}</span></td>
-                <td><span class="text-bold">${toTitle(t.categoria)}</span></td>
-                <td>
+                <td data-label="Sucursal"><span class="badge badge-outline">${toTitle(t.sucursal)}</span></td>
+                <td data-label="Categoría"><span class="text-bold">${toTitle(t.categoria)}</span></td>
+                <td data-label="Asunto">
                     <div class="text-truncate" style="max-width: 200px;" title="${t.asunto}">
                         ${t.asunto}
                     </div>
                 </td>
-                <td><span class="badge ${badgeClass}">${t.estado}</span></td>
-                <td class="text-small text-muted">${formatDate(t.created_at)}</td>
-                <td>
+                <td data-label="Estado"><span class="badge ${badgeClass}">${t.estado}</span></td>
+                <td data-label="Fecha" class="text-small text-muted">${formatDate(t.created_at)}</td>
+                <td data-label="Acciones">
                     <button class="btn btn-primary sm" onclick="openTicketAnswerModal(${t.id})">
                         <i class="fas fa-edit"></i> Atender
                     </button>

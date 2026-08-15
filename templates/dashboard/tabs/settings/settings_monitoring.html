@@ -1,26 +1,15 @@
-                <!-- SECCIÓN 3: CONFIGURACIÓN DE CÁMARAS (v9.1.0) -->
+                <!-- SECCIÓN 3: CONFIGURACIÓN DE CÁMARAS (v9.9.0) -->
                 <div id="set-section-monitoring" class="settings-section" style="display: none;">
-                    <div class="flex-row justify-end items-center mb-20" style="padding-top: 10px;">
+                    <div class="flex-row justify-end items-center mb-20 camera-actions-bar" style="padding-top: 10px;">
                         <button class="btn btn-premium sm" onclick="showCreateCameraModal()" title="Agregar nueva cámara">
-                            <i class="fas fa-plus"></i> AGREGAR CÁMARA
+                            <i class="fas fa-plus mr-6"></i> AGREGAR CÁMARA
                         </button>
                     </div>
 
-                    <div class="table-container mt-10">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Cámara</th>
-                                    <th>Tipo</th>
-                                    <th>Dirección IP / Origen</th>
-                                    <th>Estado Proceso</th>
-                                    <th class="text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="camera-settings-list">
-                                <tr><td colspan="5" class="text-center py-20">Cargando dispositivos...</td></tr>
-                            </tbody>
-                        </table>
+                    <div id="camera-settings-list" class="camera-settings-grid mt-10">
+                        <div class="text-center py-20 text-muted" style="grid-column: 1 / -1; width: 100%;">
+                            <i class="fas fa-spinner fa-spin text-dorado mr-8"></i> Cargando dispositivos...
+                        </div>
                     </div>
                 </div>
 

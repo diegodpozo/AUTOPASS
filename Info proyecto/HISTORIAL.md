@@ -1,5 +1,27 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **AGOSTO 15, 2026 - SYSTEM INTEGRITY VALIDATIONS & TOAST NOTIFICATION OVERHAUL (V9.9.8)**:
+    *   **Protección e Integridad en Eliminación de Vehículos**: `delete_vehicle` en `services/user_service.py` valida si la patente posee reservas activas (`PENDIENTE_PAGO`, `PAGADA`, `EN_USO`). Si existen, bloquea la eliminación arrojando error HTTP 400 descriptivo ("No podés eliminar el vehículo porque tiene reservas activas o pendientes").
+    *   **Protección en Eliminación de Cuentas de Usuario**: `delete_user` en `services/user_service.py` e `user_admin_service.py` valida que el usuario no tenga reservas activas ni estadías en curso con saldo adeudado antes de ser dado de baja.
+    *   **Control Anti-Doble Reserva de Vehículo**: `create_reservation` en `services/reservation_service.py` impide generar dos reservas simultáneas para el mismo vehículo en períodos de tiempo superpuestos.
+    *   **Sincronización de Salida Manual y Aforo**: `manual_exit` en `services/access_service.py` verifica la presencia de estadía previa y libera el aforo físico únicamente si corresponde, registrando el timestamp exacto de salida.
+    *   **Validaciones de Aforo e Eliminación de Pisos**: `delete_floor` y `update_floor` en `services/branch_service.py` verifican la capacidad de ocupación actual antes de permitir reducir plazas o eliminar un nivel.
+    *   **Overhaul de Notificaciones Flotantes (Toasts)**:
+        *   Se removió completamente el banner/panel gigante e invasivo (`#notif-alert-banner`) al recibir notificaciones.
+        *   Las alertas en tiempo real utilizan únicamente el sistema de toasts flotantes compactos en la esquina superior derecha (`showToast` en `utils.js`).
+        *   Se eliminó el cierre automático por clic arbitrario en la pantalla; las notificaciones permanecen en pantalla durante exactamente 5 segundos (`5000ms`) y luego se desvanecen suavemente.
+    *   **Verificación Automática**: Suite completa de Pytest (24/24 pruebas pasando exitosamente en `tests/`).
+
+- **AGOSTO 15, 2026 - SMART TOUR SYSTEM OVERHAUL & UI REFINEMENTS (V9.9.5)**:
+    *   **Posicionamiento Fijo & Abrazamiento al Viewport (`tour.js`)**: Coordenadas de tooltip y flecha migradas a `position: fixed` relativo a `(0, 0)` del viewport. Clampeo con margen de 12px a los bordes de la ventana y fallback automático para móviles (`vw < 680px`). Manejo seguro de recorte SVG (`Math.max(0, ...)`) y navegación por teclado.
+    *   **Auto-Arranque de Tour Restringido al Primer Logueo**: Clave por usuario `autopass_tour_seen_${userId}` en `localStorage`. El tour solo inicia automáticamente en la primera sesión de cada usuario. Se removió el botón sobrante "TOUR APP" de la tab Inicio.
+    *   **Ramificación Inteligente de Tour Adaptativo**:
+        *   *Primer logueo sin vehículos*: Flujo Quick-Add en Inicio -> `startPostAddReservationTour()` finaliza la reserva directamente en Inicio -> Mapa -> Reservas -> Puntos, sin desviar la navegación a la tab de Vehículos.
+        *   *Repetición manual desde Ayuda con 1+ vehículos*: `existingVehiclesTourSteps` abre en Mis Vehículos -> despliega el formulario `#vehicle-form-container` ofreciendo la opción `¿Agregar un Nuevo Vehículo?` (con botón *Continuar*) -> formulario de reserva en Inicio -> Mapa -> Reservas -> Puntos.
+        *   *Repetición manual desde Ayuda sin vehículos*: `noVehiclesTourSteps` abre en Mis Vehículos -> Formulario -> Mapa -> Puntos.
+    *   **Evaluación de Visibilidad Multiselector**: `waitForVisible` evalúa todos los candidatos de selectores por coma en el DOM y retorna únicamente el que tenga dimensiones `offsetWidth > 0 && offsetHeight > 0`, corrigiendo salteos indeseados.
+    *   **Remoción de Flecha de Despliegue en Inputs de Patente**: Reemplazo de `.select-wrapper-premium` por `.input-wrapper-premium` en inputs de texto de patente en `inicio.html`, `vehiculos.html` y `admin_reservations.html`. Regla de resguardo CSS `.select-wrapper-premium:has(input)::after { display: none !important; }`.
+
 - **JULIO 27, 2026 - GRANULAR MODULARIZATION OVERHAUL (V9.7.0)**:
     *   **Modularización Granular de Reservas JS**: Descomposición de `reservas.js` (903 líneas / 45 KB) en 4 submódulos ES6 especializados: `reservas-form.js` (formularios, validación, tarifas), `reservas-list.js` (tarjetas, timeline, historial y paginación), `reservas-actions.js` (pago con saldo y cancelación con reembolso) y `reservas-pass.js` (Pase Digital, QR `QRCode.js` y compartir ticket). `reservas.js` re-exporta todo el API usando el patrón Fachada.
     *   **Modularización Granular de Sucursales JS**: Separación de `dashboard-admin-branches.js` (705 líneas / 30 KB) en dos submódulos: `dashboard-admin-branches-crud.js` (CRUD sucursales, mapa Leaflet, geocoding, logo upload) y `dashboard-admin-branches-floors.js` (gestión de pisos `ParkingFloor`, aforos por piso y Planta Baja). `dashboard-admin-branches.js` re-exporta el API completo.

@@ -38,20 +38,30 @@ def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(g
 
 @router.delete("/floors/{floor_id}")
 def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """ELIMINA UN PISO DE LA SUCURSAL."""
+    """ELIMINA UN PISO DE LA SUCURSAL TRAS VALIDAR QUE NO HAYA VEHICULOS ESTACIONADOS."""
     floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
+    if (floor.ocupacion_actual or 0) > 0 or (floor.ocupacion_motos or 0) > 0 or (floor.ocupacion_camionetas or 0) > 0:
+        raise HTTPException(status_code=400, detail="No se puede eliminar un piso que posee vehículos actualmente estacionados en él.")
+
     db.delete(floor)
     db.commit()
     return {"status": "ok"}
 
 @router.patch("/floors/{floor_id}", response_model=schemas.FloorResponse)
 def update_floor_capacity(floor_id: int, cap_autos: int, cap_motos: int, cap_camionetas: int = 5, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """ACTUALIZA LA CAPACIDAD DE UN PISO."""
+    """ACTUALIZA LA CAPACIDAD DE UN PISO VALIDANDO QUE SEA MAYOR O IGUAL A LA OCUPACION ACTUAL."""
     floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
+    if cap_autos < (floor.ocupacion_actual or 0):
+        raise HTTPException(status_code=400, detail=f"La capacidad de autos ({cap_autos}) no puede ser menor a la ocupación actual ({floor.ocupacion_actual}).")
+    if cap_motos < (floor.ocupacion_motos or 0):
+        raise HTTPException(status_code=400, detail=f"La capacidad de motos ({cap_motos}) no puede ser menor a la ocupación actual ({floor.ocupacion_motos}).")
+    if cap_camionetas < (floor.ocupacion_camionetas or 0):
+        raise HTTPException(status_code=400, detail=f"La capacidad de camionetas ({cap_camionetas}) no puede ser menor a la ocupación actual ({floor.ocupacion_camionetas}).")
+
     floor.capacidad_total = cap_autos
     floor.capacidad_motos = cap_motos
     floor.capacidad_camionetas = cap_camionetas
@@ -104,11 +114,33 @@ async def create_branch(
 
 @router.delete("/branches/{branch_id}")
 def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """ELIMINA UNA SUCURSAL (SOLO SUPER ADMIN)."""
+    """ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS."""
+    import datetime
+
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
+    # 1. VALIDAR OCUPACION FISICA
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+    if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0):
+        raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con vehículos físicamente en su interior.")
+    
+    if branch.floors:
+        total_occ = sum((f.ocupacion_actual or 0) + (f.ocupacion_motos or 0) + (f.ocupacion_camionetas or 0) for f in branch.floors)
+        if total_occ > 0:
+            raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con vehículos físicamente en su interior.")
+
+    # 2. VALIDAR RESERVAS ACTIVAS O PENDIENTES
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    active_res = db.query(models.Reservation).filter(
+        models.Reservation.sucursal_nombre == branch.nombre,
+        models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+        models.Reservation.fecha_fin >= now_str
+    ).first()
+    if active_res:
+        raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con reservas activas o pendientes.")
+
     db.delete(branch)
     db.commit()
     return {"status": "ok", "message": "Sucursal eliminada"}
@@ -168,11 +200,21 @@ async def update_branch(
 
 @router.post("/branches/{branch_id}/toggle")
 def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """ACTIVA O SUSPENDE UNA SUCURSAL."""
+    """ACTIVA O SUSPENDE UNA SUCURSAL VALIDANDO QUE NO HAYA VEHICULOS EN SU INTERIOR AL DESACTIVAR."""
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
+    if branch.activa:
+        # AL DESACTIVAR, VALIDAR SI HAY VEHICULOS ADENTRO
+        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+        if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0):
+            raise HTTPException(status_code=400, detail="No se puede desactivar una sucursal con vehículos en su interior.")
+        if branch.floors:
+            total_occ = sum((f.ocupacion_actual or 0) + (f.ocupacion_motos or 0) + (f.ocupacion_camionetas or 0) for f in branch.floors)
+            if total_occ > 0:
+                raise HTTPException(status_code=400, detail="No se puede desactivar una sucursal con vehículos en su interior.")
+
     branch.activa = not branch.activa
     db.commit()
     return {"status": "ok", "activa": branch.activa}

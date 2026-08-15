@@ -41,7 +41,7 @@
 
     <!-- TARJETAS DE ACCION RAPIDA Y GUIAS -->
     <div class="help-section-title">
-        <i class="fas fa-bolt"></i> GUÍAS RÁPIDAS Y NAVEGACIÓN
+        <i class="fas fa-bolt"></i> GUÍAS RÁPIDAS E INTERACTIVAS POR FUNCIÓN
     </div>
     <div class="help-quick-grid">
         <div class="help-quick-card">
@@ -49,10 +49,62 @@
                 <i class="fas fa-route"></i>
             </div>
             <div class="help-quick-body">
-                <h3>Tour Interactivo</h3>
-                <p>Volvé a realizar el recorrido guiado paso a paso por las principales funciones del portal de cliente.</p>
+                <h3>Tour Completo App</h3>
+                <p>Recorrido general paso a paso por todas las herramientas y secciones del portal.</p>
                 <button class="btn-help-action" onclick="startReservationTour()">
-                    <i class="fas fa-play-circle"></i> Iniciar Tour
+                    <i class="fas fa-play-circle"></i> Tour General
+                </button>
+            </div>
+        </div>
+
+        <div class="help-quick-card">
+            <div class="help-quick-icon icon-car">
+                <i class="fas fa-car"></i>
+            </div>
+            <div class="help-quick-body">
+                <h3>Alta de Vehículo</h3>
+                <p>Guía interactiva paso a paso para vincular patentes de Autos, Motos o Camionetas en vivo.</p>
+                <button class="btn-help-action" onclick="startAddVehicleTour()">
+                    <i class="fas fa-plus-circle"></i> Probar Alta de Vehículo
+                </button>
+            </div>
+        </div>
+
+        <div class="help-quick-card">
+            <div class="help-quick-icon icon-reserva">
+                <i class="fas fa-calendar-plus"></i>
+            </div>
+            <div class="help-quick-body">
+                <h3>Crear una Reserva</h3>
+                <p>Pasos guiados para elegir sucursal, tarifa por hora/período y generar tu reserva.</p>
+                <button class="btn-help-action" onclick="startCreateReservationTour()">
+                    <i class="fas fa-calendar-check"></i> Probar Crear Reserva
+                </button>
+            </div>
+        </div>
+
+        <div class="help-quick-card">
+            <div class="help-quick-icon icon-wallet">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="help-quick-body">
+                <h3>Cargar Saldo</h3>
+                <p>Guía interactiva para recargar tu Billetera Virtual y abonar de forma directa.</p>
+                <button class="btn-help-action" onclick="startRechargeBalanceTour()">
+                    <i class="fas fa-coins"></i> Probar Carga de Saldo
+                </button>
+            </div>
+        </div>
+
+        <div class="help-quick-card">
+            <div class="help-quick-icon icon-star">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="help-quick-body">
+                <h3>Canjear Puntos</h3>
+                <p>Conocé cómo acumular puntos y canjearlos por cupones y estadías 100% gratis.</p>
+                <button class="btn-help-action" onclick="startRedeemPointsTour()">
+                    <i class="fas fa-gift"></i> Probar Canje de Puntos
                 </button>
             </div>
         </div>
@@ -63,35 +115,9 @@
             </div>
             <div class="help-quick-body">
                 <h3>Pase Digital QR</h3>
-                <p>Generá tu código QR desde "Mis Reservas" para escanear en los tótems si la cámara no lee tu patente.</p>
-                <button class="btn-help-action" onclick="showSection('reservas')">
-                    <i class="fas fa-ticket-alt"></i> Ver Mis Pases
-                </button>
-            </div>
-        </div>
-
-        <div class="help-quick-card">
-            <div class="help-quick-icon icon-clock">
-                <i class="fas fa-stopwatch"></i>
-            </div>
-            <div class="help-quick-body">
-                <h3>Cortesía 10 Minutos</h3>
-                <p>Entrá y salí libremente dentro de los primeros 10 minutos sin costo adicional ($0.00 de estadía).</p>
-                <button class="btn-help-action" onclick="filterHelpCategory('alpr')">
-                    <i class="fas fa-info-circle"></i> Ver Detalles
-                </button>
-            </div>
-        </div>
-
-        <div class="help-quick-card">
-            <div class="help-quick-icon icon-wallet">
-                <i class="fas fa-wallet"></i>
-            </div>
-            <div class="help-quick-body">
-                <h3>Billetera & Saldo</h3>
-                <p>Cargá saldo virtual para agilizar tus ingresos y acumular Puntos AutoPass en cada reserva.</p>
-                <button class="btn-help-action" onclick="openRechargeModal()">
-                    <i class="fas fa-plus-circle"></i> Cargar Saldo
+                <p>Obtené tu código QR desde "Mis Reservas" para escanear en los tótems si falla ALPR.</p>
+                <button class="btn-help-action" onclick="startQrPassTour()">
+                    <i class="fas fa-ticket-alt"></i> Probar Pase Digital
                 </button>
             </div>
         </div>

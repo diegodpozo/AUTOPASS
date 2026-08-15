@@ -201,62 +201,10 @@ export async function updateNotifBadge() {
 
     // DETECTAR SI LLEGARON NOTIFICACIONES NUEVAS
     if (count > lastNotifCount && lastNotifCount !== -1) {
-        showNotifAlert(count);
+        showToast(`Tenés ${count} notificación${count !== 1 ? 'es' : ''} sin leer`, 'info');
     }
     lastNotifCount = count;
 }
-
-function showNotifAlert(count) {
-    const old = document.getElementById('notif-alert-banner');
-    if (old) old.remove();
-
-    const banner = document.createElement('div');
-    banner.id = 'notif-alert-banner';
-    banner.className = 'notif-alert-banner';
-    banner.innerHTML = `
-        <div class="notif-alert-content">
-            <div class="notif-alert-icon"><i class="fas fa-bell"></i></div>
-            <div class="notif-alert-text">
-                <strong>¡TENÉS ${count} MENSAJE${count !== 1 ? 'S' : ''} SIN LEER!</strong>
-                <span>Hacé clic para ver el centro de notificaciones</span>
-            </div>
-            <button class="notif-alert-close" onclick="dismissNotifAlert(event)"><i class="fas fa-times"></i></button>
-        </div>
-    `;
-
-    banner.addEventListener('click', (e) => {
-        if (e.target.closest('.notif-alert-close')) return;
-        goToNotifications();
-    });
-
-    document.body.appendChild(banner);
-
-    requestAnimationFrame(() => {
-        banner.classList.add('visible');
-    });
-
-    setTimeout(() => {
-        if (banner.parentNode) {
-            banner.classList.remove('visible');
-            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 500);
-        }
-    }, 10000);
-}
-
-function goToNotifications() {
-    window.showSection?.('notificaciones');
-    const banner = document.getElementById('notif-alert-banner');
-    if (banner) banner.remove();
-}
-
-window.dismissNotifAlert = function(e) {
-    if (e) e.stopPropagation();
-    const banner = document.getElementById('notif-alert-banner');
-    if (banner) {
-        banner.classList.remove('visible');
-        setTimeout(() => { if (banner.parentNode) banner.remove(); }, 500);
-    }
-};
 
 window.markNotifRead = async function(notifId, el) {
     el = el?.closest?.('.notif-item') || el;

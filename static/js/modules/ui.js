@@ -10,6 +10,20 @@ export function openModal(id) {
     const el = document.getElementById(id);
     if (!el) return;
     el.style.display = 'block';
+
+    // Restablecer botones de submit que hayan quedado deshabilitados o con spinner
+    const submitBtn = el.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        if (submitBtn.dataset.originalHtml) {
+            submitBtn.innerHTML = submitBtn.dataset.originalHtml;
+        } else if (id === 'loginModal') {
+            submitBtn.innerHTML = 'INICIAR SESIÓN';
+        } else if (id === 'registerModal') {
+            submitBtn.innerHTML = 'REGISTRARME';
+        }
+    }
+
     const emailInput = el.querySelector('input[type="email"]');
     if (emailInput) setTimeout(() => emailInput.focus(), 100);
 }
@@ -113,6 +127,19 @@ export function toggleHistorial() {
  * CIERRA LA SESION DEL USUARIO.
  */
 export function logout() {
+    // Preservar flags de tour visto por usuario antes de limpiar localStorage
+    const tourKeys = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('autopass_tour_seen_') || key.startsWith('seen_reservation_onboarding'))) {
+            tourKeys[key] = localStorage.getItem(key);
+        }
+    }
+
     localStorage.clear();
+
+    // Restaurar los flags de tour para no reiniciar la guía en posteriores inicios de sesión
+    Object.keys(tourKeys).forEach(k => localStorage.setItem(k, tourKeys[k]));
+
     window.location.href = '/';
 }

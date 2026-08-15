@@ -1,4 +1,45 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-12)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-15)
+
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 10.0.0 (Dashboard Settings Responsive & Compact Toasts Overhaul)
+- [x] **Rediseño Responsive de Configuración del Dashboard (`settings.html`)**:
+  - **Navegación e Interfaz**: Incorporación de `flex-wrap` en contenedores de botones (`.btn-tab-mini` y `.btn-tab-sub`) para distribución fluida en móviles sin scroll horizontal.
+  - **Grilla de Tarifas (`rates-form-grid`)**: Ajuste de ancho de campo en modo edición (`170px`) para adaptar inputs con íconos sin comprimir cifras numéricas.
+  - **Gestión de Plazas Simplificada**: Eliminación de insignias redundantes en Planta Baja (`#level-block-pb`). Presentación limpia centrada de capacidades por vehículo (Autos, Motos, Camionetas) y botón lateral `EDITAR` / `APLICAR`.
+  - **Tarjetas de Monitoreo de Cámaras (`camera-settings-grid`)**: Reemplazo de tabla HTML por grilla adaptativa de tarjetas glassmorphic (`.camera-card-premium`) (2 columnas en desktop, 1 columna en móvil). Botón `AGREGAR CÁMARA` y nombres de cámara centrados en responsive, y eliminación de etiquetas de sucursal redundantes.
+  - **Diagnóstico del Sistema (`diag-grid-premium`)**: Transformación a 1 columna en pantallas móviles (< 580px) previniendo desbordamiento de indicadores.
+- [x] **Rediseño Proporcional de Notificaciones Flotantes (`style.css`)**:
+  - Reducción del tamaño de fuente de `1.7rem` a `0.85rem` y de íconos de `2.4rem` a `1.2rem`.
+  - Ajuste de `min-width` de `640px` a `260px` y `max-width` a `420px`.
+  - Adaptación móvil en `@media (max-width: 768px)` flotando al tope con márgenes de `16px` y ancho adaptativo de `400px`.
+
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.9 (Interactive Feature Tours Engine & Smooth UI Transitions)
+- [x] **Guías Rápidas e Interactivas por Función (`ayuda.html`)**: Incorporación de tours interactivos guiados en tiempo real para las funciones clave del cliente:
+  - **Alta de Vehículo (`startAddVehicleTour()`)**: Recorrido interactivo desplegando `#add-vehicle-form` en la pestaña *Mis Vehículos* para registrar patentes en vivo.
+  - **Crear Reserva (`startCreateReservationTour()`)**: Guía paso a paso en *Inicio* para cotización por hora/período y selección de sucursal.
+  - **Cargar Saldo (`startRechargeBalanceTour()`)**: Guía interactiva destacando la Billetera Virtual y el modal `#rechargeModal`.
+  - **Canjear Puntos (`startRedeemPointsTour()`)**: Recorrido guiado por el catálogo de promociones y cupones en *Mis Puntos*.
+  - **Pase Digital QR (`startQrPassTour()`)**: Guía interactiva enfocada de 3 componentes en `#modal-pase-digital` (**Código QR**, **Datos de Estadía** y **Botón Compartir/Descargar** en PNG/WhatsApp).
+- [x] **Selector Inteligente de Elementos Visibles (`getVisibleTarget`)**: Implementación de resolución de selectores múltiples en `tour.js` para filtrar y seleccionar únicamente elementos con visibilidad real en el DOM (`offsetWidth > 0 && offsetHeight > 0`), evitando desvíos hacia elementos ocultos en pestañas inactivas.
+- [x] **Animaciones Fluidas de Transición (Morphing & Fade)**: Incorporación de curvas de aceleración CSS (`cubic-bezier(0.25, 1, 0.5, 1)`) en `profile-tour.css` para lograr un movimiento fluido del marco dorado de resaltado (`#autopass-tour-highlight-rect`), morphing de la máscara SVG (`path`) y desplazamiento suave de la tarjeta explicativa (`.tour-tooltip-premium`) y la flecha indicadora (`.tour-arrow-premium`).
+- [x] **Apertura Asíncrona Sincronizada del Pase Digital**: `showTourStep` convertido a `async` evaluando `await step.beforeShow()`, garantizando visibilidad inmediata del modal en 0ms y previniendo cierres/reaperturas o disparos involuntarios de modales de pago.
+
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.8 (System Integrity Validations & Toast Notification Overhaul)
+- [x] **Protección en Eliminación de Vehículos**: Bloqueo estricto en `delete_vehicle` (`services/user_service.py`) si la patente posee reservas en estado `PENDIENTE_PAGO`, `PAGADA` o `EN_USO`, previniendo inconsistencias en pases QR y accesos ALPR.
+- [x] **Validaciones en Baja de Usuarios**: Verificación previa en `delete_user` para impedir eliminar cuentas con reservas activas o estadías impagas pendientes.
+- [x] **Control Anti-Doble Reserva**: Detección de solapamiento de horarios en `create_reservation` para evitar reservas duplicadas simultáneas sobre el mismo vehículo.
+- [x] **Sincronización Aforo en Salidas Manuales**: `manual_exit` ajusta la ocupación física únicamente tras validar la presencia previa del vehículo en la sede.
+- [x] **Validaciones en Eliminación de Pisos**: Restricción en `delete_floor` / `update_floor` para impedir reducir o eliminar pisos si la ocupación física actual supera la nueva capacidad.
+- [x] **Refactor de Notificaciones Flotantes (Toasts)**: Eliminación del banner/sidebar invasivo (`#notif-alert-banner`). Notificaciones en tiempo real canalizadas por toasts flotantes compactos en la esquina superior derecha (`showToast`), con permanencia de **5 segundos exactos** sin cierre por clics accidentales en pantalla.
+
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.5 (Smart Tour System Overhaul & UI Refinements)
+- [x] **Rediseño del Sistema de Posicionamiento del Tour (`tour.js`)**: Modificación del cálculo de coordenadas de tooltip y flecha a `position: fixed` relativo a `(0, 0)` del viewport, eliminando desviaciones al scrollear. Incorporación de abrazamiento a bordes de pantalla (`margin: 12px`), fallback responsive en pantallas angostas (`vw < 680px`), cálculo seguro de recorte SVG con `Math.max(0, ...)` y soporte de navegación por teclado (Esc, Flechas).
+- [x] **Configuración de Auto-Arranque por Primer Logueo**: Implementación de `checkFirstLoginOnboarding(user)` en `onboarding_helpers.js` con clave por usuario `autopass_tour_seen_${userId}` en `localStorage`. El tour solo se dispara automáticamente en el primer inicio de sesión del usuario. Luego se puede reactivar manualmente desde el Centro de Ayuda y Soporte (`ayuda.html`). Removido el botón obsoleto "TOUR APP" de `inicio.html`.
+- [x] **Tour Adaptativo e Inteligente según Vehículos Registrados**:
+  - **Primer Logueo (0 vehículos)**: Guía rápida *Quick-Add* en pestaña Inicio -> `startPostAddReservationTour()` continúa sin interrupción la reserva en Inicio -> Mapa -> Reservas -> Puntos, sin enviar al usuario a la pestaña de vehículos.
+  - **Repetición Manual desde Ayuda (0 vehículos)**: `noVehiclesTourSteps` abre en la pestaña Mis Vehículos -> Formulario -> Mapa -> Puntos.
+  - **Repetición Manual desde Ayuda (1+ vehículos)**: `existingVehiclesTourSteps` inicia en la pestaña Mis Vehículos -> despliega `#vehicle-form-container` ofreciendo la opción `¿Agregar un Nuevo Vehículo?` (con botón *Continuar*) -> formulario de reserva en Inicio -> Mapa -> Reservas -> Puntos.
+- [x] **Evaluador de Visibilidad para Selectores Múltiples**: Actualización de `waitForVisible(sel)` en `tour.js` para iterar selectores separados por coma y retornar únicamente aquel que se encuentre visualmente activo en el DOM (`offsetWidth > 0 && offsetHeight > 0`), evitando salteos cuando el primer selector está oculto.
+- [x] **Remoción de Ícono de Despliegue en Inputs de Patente**: Reemplazo de `.select-wrapper-premium` por `.input-wrapper-premium` alrededor del campo de patente en `inicio.html`, `vehiculos.html` y `admin_reservations.html`. Adición de salvaguarda CSS `.select-wrapper-premium:not(:has(select))::after, .select-wrapper-premium:has(input)::after { display: none !important; }` en `profile-reservations.css`.
 
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.2 (Migración a Neon/Postgres en sa-east-1)
 - [x] **Migración de Turso/libSQL a Neon (Postgres)**: La base online pasó de Turso (`aws-us-west-2`, Oregón, ~1200 ms/query) a **Neon en São Paulo (`sa-east-1`)** con latencia medida de ~100 ms (12× más rápida). Migración realizada con `scripts/migrate_turso_to_neon.py` preservando IDs y sincronizando secuencias.
@@ -97,9 +138,9 @@
 - [x] **Unified Visual Style**: Sincronización estética total entre el formulario de inicio ("Quick Add") y la gestión de flota.
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
-### 🛠️ Arquitectura Actual (v9.9.1)
-- **Backend**: Clean Architecture con Servicios y Repositories. ~64 archivos Python en 6 paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`).
-- **Frontend**: Dashboard Premium modularizado. 31 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 46 templates HTML, 38 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+### 🛠️ Arquitectura Actual (v10.0.0)
+- **Backend**: Clean Architecture con Servicios y Repositories. 12 servicios en `services/`, ~98 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
+- **Frontend**: Dashboard Premium modularizado. 32 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 46 templates HTML, 39 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).

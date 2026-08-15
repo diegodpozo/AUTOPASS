@@ -9,7 +9,7 @@
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary btn-sm" onclick="showCreatePromotionModal()">
+                    <button class="btn btn-primary btn-sm hide-staff" onclick="showCreatePromotionModal()">
                         <i class="fas fa-plus"></i> NUEVA
                     </button>
                 </div>
@@ -21,15 +21,15 @@
                         <tr>
                             <th>Beneficio</th>
                             <th>Puntos</th>
-                            <th>Sucursal</th>
-                            <th class="hidden-mobile">Estado</th>
+                            <th id="th-promo-sucursal">Sucursal</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="promotions-admin-table-body">
                         <!-- Cargado dinámicamente -->
                         <tr>
-                            <td colspan="4" class="text-center p-20">Cargando promociones...</td>
+                            <td colspan="5" class="text-center p-20">Cargando promociones...</td>
                         </tr>
                     </tbody>
                 </table>

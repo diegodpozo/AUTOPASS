@@ -65,6 +65,7 @@ export async function handleLogin(e) {
     const password = document.getElementById('login-password').value;
     const errorMsg = document.getElementById('login-error');
     const originalText = btn.innerHTML;
+    btn.dataset.originalHtml = originalText;
 
     errorMsg.style.display = 'none';
     btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Ingresando...';
@@ -80,6 +81,12 @@ export async function handleLogin(e) {
         localStorage.setItem('apellido', toTitle(data.apellido));
         localStorage.setItem('sucursal', data.sucursal || '');
         
+        // Restablecer el estado del botón antes de navegar para evitar congelamientos en BFCache
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        const modal = document.getElementById('loginModal');
+        if (modal) modal.style.display = 'none';
+
         const isStaffOrAdmin = ['admin', 'local_admin', 'staff'].includes(data.rol);
         window.location.href = isStaffOrAdmin ? '/dashboard' : '/perfil';
     } else {

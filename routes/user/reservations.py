@@ -79,6 +79,11 @@ def get_user_reservations(db: Session = Depends(get_db), current_user: models.Us
 @router.post("/reservations")
 def create_user_reservation(res: schemas.UserReservationCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """CREA UNA NUEVA RESERVA Y PROCESA EL COBRO SI EL SALDO ES SUFICIENTE."""
+    from sqlalchemy import func
+
+    if current_user.is_blocked:
+        raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
+
     # DEBUG LOG: registrar payload entrante para diagnosticar mismatches de sucursal
     try:
         print(f"[RESERVATION CREATE] user={getattr(current_user,'id',None)} email={getattr(current_user,'email',None)} payload_sucursal={getattr(res,'sucursal_nombre',None)} payload_patente={getattr(res,'patente',None)}")
@@ -87,6 +92,18 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
 
     vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente, models.Vehicle.user_id == current_user.id).first()
     if not vehicle: raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
+
+    # VALIDAR SUPERPOSICION PARA LA MISMA PATENTE (DOUBLE BOOKING POR VEHICULO)
+    p_clean = res.patente.upper().replace(' ', '')
+    existing_overlap = db.query(models.Reservation).filter(
+        func.replace(func.upper(models.Reservation.patente), ' ', '') == p_clean,
+        models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+        models.Reservation.estado_pago.in_(["Pendiente", "Pagado"]),
+        models.Reservation.fecha_inicio < res.fecha_fin,
+        models.Reservation.fecha_fin > res.fecha_inicio
+    ).first()
+    if existing_overlap:
+        raise HTTPException(status_code=400, detail=f"El vehículo patente {res.patente} ya posee otra reserva en el período solicitado.")
     
     rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
     start = datetime.datetime.fromisoformat(res.fecha_inicio)
@@ -159,8 +176,14 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
 @router.patch("/reservations/{res_id}")
 def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """PERMITE MODIFICAR UNA RESERVA EXISTENTE AJUSTANDO SALDO Y PUNTOS SI CORRESPONDE."""
+    if current_user.is_blocked:
+        raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
+
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == current_user.id).first()
     if not res: raise HTTPException(status_code=404, detail="Reserva no encontrada")
+
+    if res.estado_reserva in ["Completada", "Cancelada"]:
+        raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva en estado '{res.estado_reserva}'.")
 
     tipo_efectivo = data.tipo_estadia if data.tipo_estadia else res.tipo_estadia
     suc_efectivo = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
@@ -228,6 +251,8 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
 @router.post("/reservations/{res_id}/pay")
 def pay_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """ABONA UNA RESERVA PENDIENTE CON EL SALDO DE LA CUENTA."""
+    if current_user.is_blocked:
+        raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
     return ReservationService.pay_reservation(db, current_user, res_id)
 
 @router.post("/reservations/{res_id}/confirm-reminder")

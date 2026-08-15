@@ -41,7 +41,7 @@ Diseno_Proyecto/
 ### 1. Inception (Inicio)
 Define la **vision del sistema**: un gestor de estacionamientos inteligente con ALPR,
 multi-sucursal, multi-piso, facturacion trimodal y reservas. Identifica 4 roles de usuario
-(ADMIN, LOCAL_ADMIN, STAFF, USER) y establece el alcance de la version v9.9.0.
+(ADMIN, LOCAL_ADMIN, STAFF, USER) y establece el alcance de la version v10.0.0.
 
 ### 2. Elaboration (Elaboracion)
 Especifica **44 requisitos funcionales** y **29 no funcionales**, detalla **20 casos de uso**
@@ -83,4 +83,4 @@ Mapa completo de **rutas API** (~99 endpoints HTTP + 2 WebSocket), **arquitectur
 | TimeService | Tiempo virtual para testing (offset persistido en JSON) |
 
 ## Version del Sistema
-**AUTOPASS v9.9.0** — Agosto 2026
+**AUTOPASS v10.0.0** — Agosto 2026

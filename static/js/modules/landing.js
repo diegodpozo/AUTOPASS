@@ -505,7 +505,6 @@ function loadTheaters(mapObj, containerId) {
             items.push({ lat, lng, tags: t, type: poiType });
             makeMarker(lat, lng, t, cfg, group);
         });
-        console.log(`[OVERPASS] Total: ${teatro + cinema} POIs (${teatro} Teatro/Museo, ${cinema} Cine)`);
         if (items.length === 0) return;
         setPoiCache(items);
         addPoiLegend(mapObj, containerId);
@@ -557,7 +556,6 @@ function loadStadiums(mapObj, containerId) {
 
     _stadiumsLoaded = true;
     addPoiLegend(mapObj, containerId);
-    console.log(`[ESTADIOS] ${ESTADIOS_FIJOS.length} cargados`);
 }
 
 let _stadiumsLoaded = false;
@@ -755,7 +753,6 @@ export function findNearestBranch(targetMap = null) {
     // USAR SHOWTOAST SI ESTA DISPONIBLE
     const toast = (msg, type) => {
         if (window.showToast) window.showToast(msg, type);
-        else console.log(msg);
     };
 
     toast('Buscando tu ubicación...', 'info');

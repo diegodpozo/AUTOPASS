@@ -394,50 +394,152 @@
     margin-bottom: 20px;
 }
 
+.level-block.pb {
+    grid-template-columns: 1fr auto;
+    background: rgba(197, 160, 89, 0.03);
+    border: 1px solid rgba(197, 160, 89, 0.15);
+}
+
+.rate-group.editing .rates-form-grid .form-group-premium {
+    max-width: 170px;
+}
+
+/* RESPONSIVE MEDIA QUERIES */
 @media (max-width: 1200px) {
     .settings-grid {
         grid-template-columns: 1fr;
     }
-    
     .rates-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 }
 
-@media (max-width: 600px) {
-    .rates-grid {
-        grid-template-columns: 1fr;
-    }
+@media (max-width: 768px) {
     .btn-tab-mini {
-        padding: 6px 10px;
-        font-size: 0.65rem;
-        flex: 1 1 40%;
+        padding: 8px 14px;
+        font-size: 0.7rem;
+        flex: 1 1 auto;
         text-align: center;
-        margin: 2px;
     }
-    .settings-content {
-        padding: 15px;
+    .btn-tab-sub {
+        padding: 7px 16px;
+        font-size: 0.68rem;
     }
-    .level-block {
-        grid-template-columns: 70px 1fr;
+    .building-grid {
+        padding: 5px;
+    }
+    .level-main-content {
+        padding: 18px 20px;
+        gap: 20px;
+    }
+    .level-identity {
+        min-width: 120px;
+    }
+    .level-stats-grid {
+        gap: 20px;
+    }
+}
+
+@media (max-width: 650px) {
+    .level-block:not(.pb) {
+        grid-template-columns: 60px 1fr;
+    }
+    .level-block.pb {
+        grid-template-columns: 1fr auto;
     }
     .level-actions {
         grid-column: span 2;
         justify-content: center;
         padding: 10px;
+        width: 100%;
+        border-top: 1px solid rgba(255,255,255,0.05);
     }
     .level-main-content {
-        padding: 15px;
+        padding: 14px 12px;
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
+    .level-identity {
+        min-width: auto;
+    }
     .level-stats-grid {
-        gap: 15px;
+        gap: 12px 20px;
         flex-wrap: wrap;
+        width: 100%;
+    }
+.camera-actions-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+@media (max-width: 650px) {
+    .camera-actions-bar {
+        justify-content: center !important;
+        width: 100%;
+    }
+    .camera-actions-bar .btn {
+        width: 100%;
+        max-width: 260px;
+        justify-content: center;
+    }
+    .camera-card-actions {
+        justify-content: center !important;
+        width: 100%;
+    }
+    .camera-settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 580px) {
+    .settings-body {
+        padding: 18px 10px !important;
+    }
+    .rates-grid {
+        grid-template-columns: 1fr;
     }
     .rates-form-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 15px;
+        gap: 15px 10px;
+        max-width: 100%;
+        margin-top: 20px;
+    }
+    .rates-form-grid .form-group-premium {
+        max-width: 100%;
+    }
+    .diag-grid-premium {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+    .diag-card-premium {
+        padding: 20px 15px !important;
+        border-radius: 18px !important;
+    }
+    .diag-multi-info {
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-tab-mini {
+        padding: 6px 10px;
+        font-size: 0.65rem;
+        flex: 1 1 45%;
+        text-align: center;
+    }
+    .btn-tab-sub {
+        padding: 6px 10px;
+        font-size: 0.65rem;
+        flex: 1 1 auto;
+    }
+    .modal-capacities-row {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    .modal-capacities-row .form-group-premium {
+        width: 100% !important;
     }
 }

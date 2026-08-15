@@ -62,6 +62,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// MANEJO DE NAVEGACIÓN ATRÁS/ADELANTE Y RESTAURACIÓN DE BFCACHE
+window.addEventListener('pageshow', () => {
+    const loggedIn = !!localStorage.getItem('token');
+    if (loggedIn) {
+        ui.closeModal('loginModal');
+        ui.closeModal('registerModal');
+    }
+
+    document.querySelectorAll('.modal button[type="submit"]').forEach(btn => {
+        btn.disabled = false;
+        if (btn.dataset.originalHtml) {
+            btn.innerHTML = btn.dataset.originalHtml;
+        } else if (btn.closest('#loginModal')) {
+            btn.innerHTML = 'INICIAR SESIÓN';
+        } else if (btn.closest('#registerModal')) {
+            btn.innerHTML = 'REGISTRARME';
+        }
+    });
+
+    window.updateAuthNav();
+});
+
 // CERRAR MODALES CON TECLA ESCAPE
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {

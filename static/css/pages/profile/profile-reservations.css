@@ -43,6 +43,11 @@
     line-height: 1;
 }
 
+.select-wrapper-premium:not(:has(select))::after,
+.select-wrapper-premium:has(input)::after {
+    display: none !important;
+}
+
 .select-wrapper-premium select {
     width: 100%;
     background: #111;

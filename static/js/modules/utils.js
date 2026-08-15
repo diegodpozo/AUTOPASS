@@ -49,7 +49,7 @@ export function formatDate(isoStr) {
  * MUESTRA UNA NOTIFICACION PREMIUM (TOAST).
  * TIPOS: 'SUCCESS', 'ERROR', 'INFO', 'POR DEFECTO'
  */
-export function showToast(msg, type = 'default') {
+export function showToast(msg, type = 'default', duration = 5000) {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
@@ -62,6 +62,7 @@ export function showToast(msg, type = 'default') {
     if (type === 'success') icon = 'fa-circle-check';
     else if (type === 'error') icon = 'fa-circle-exclamation';
     else if (type === 'info') icon = 'fa-circle-info';
+    else if (type === 'warning') icon = 'fa-triangle-exclamation';
 
     t.innerHTML = `
         <i class="fas ${icon} toast-icon"></i>
@@ -77,28 +78,8 @@ export function showToast(msg, type = 'default') {
         setTimeout(() => { if (t.parentNode) t.remove(); }, 400);
     };
 
-    // CIERRE AL HACER CLICK EN CUALQUIER PARTE DE LA PANTALLA
-    const handleDocumentClick = (e) => {
-        if (!t.contains(e.target)) {
-            closeToast();
-            document.removeEventListener('click', handleDocumentClick);
-        }
-    };
-    
-    // REGISTRAR LISTENER EN EL PROXIMO TICK PARA EVITAR QUE EL CLICK
-    // QUE DISPARO EL TOAST LO CIERRE INMEDIATAMENTE
-    setTimeout(() => {
-        document.addEventListener('click', handleDocumentClick);
-    }, 0);
-    
-    // LIMPIAR LISTENER SI EL TOAST SE REMUEVE DE OTRA FORMA
-    const observer = new MutationObserver(() => {
-        if (!t.parentNode) {
-            document.removeEventListener('click', handleDocumentClick);
-            observer.disconnect();
-        }
-    });
-    observer.observe(container, { childList: true });
+    // TEMPORIZADOR DE 5 SEGUNDOS PARA DESAPARECER AUTOMATICAMENTE
+    setTimeout(closeToast, duration);
 }
 
 /**
