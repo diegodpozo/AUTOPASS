@@ -40,6 +40,11 @@ class Settings:
     MQTT_TOPIC_ENTRADA: str = os.getenv("MQTT_TOPIC_ENTRADA", "parking/barrera/entrada/control")
     MQTT_TOPIC_SALIDA: str = os.getenv("MQTT_TOPIC_SALIDA", "parking/barrera/salida/control")
     
+    # HARDWARE / SERIAL (ARDUINO UNO)
+    SERIAL_ENABLED: bool = os.getenv("SERIAL_ENABLED", "true").lower() == "true"
+    SERIAL_PORT: str = os.getenv("SERIAL_PORT", "AUTO")
+    SERIAL_BAUDRATE: int = int(os.getenv("SERIAL_BAUDRATE", 9600))
+    
     # TARIFAS FALLBACK
     DEFAULT_HOURLY_RATE: float = 1500.0
     DEFAULT_BASE_RATE: float = 1000.0

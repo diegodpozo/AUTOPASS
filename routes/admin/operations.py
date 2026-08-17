@@ -11,24 +11,17 @@ from services.user_notification_service import UserNotificationService
 router = APIRouter()
 
 @router.post("/open-barrier")
-def open_barrier(gate_id: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user), request: Request = None):
-    """ENVIA UN COMANDO DE APERTURA MANUAL UN LA BARRERA VIA MQTT."""
-    from core.config import settings
-    
-    topic = settings.MQTT_TOPIC_ENTRADA if gate_id.upper() == "ENTRADA" else settings.MQTT_TOPIC_SALIDA
-    now = datetime.datetime.now().isoformat()
-    
-    if request and hasattr(request.app, 'mqtt_client'):
-        request.app.mqtt_client.publish(topic, json.dumps({
-            "command": "OPEN", 
-            "method": "MANUAL_OP", 
-            "staff_id": staff.id,
-            "sucursal": staff.sucursal,
-            "timestamp": now
-        }))
-        return {"status": "ok", "message": f"Comando de apertura enviado a {gate_id} ({staff.sucursal or 'Global'})"}
-    
-    raise HTTPException(status_code=503, detail="Servicio MQTT no disponible")
+def open_barrier(gate_id: str, command: str = "OPEN", db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user), request: Request = None):
+    """ENVIA UN COMANDO DE APERTURA O CIERRE DE BARRERA VIA MQTT Y SERIAL (ARDUINO)."""
+    from services.hardware_service import HardwareService
+    res = HardwareService.trigger_barrier(
+        gate_id=gate_id,
+        command=command,
+        method="MANUAL_OP",
+        details={"staff_id": staff.id, "sucursal": staff.sucursal},
+        request=request
+    )
+    return {"status": "ok", "message": f"Comando {command} enviado a barrera {gate_id} ({staff.sucursal or 'Global'})", "data": res}
 
 @router.post("/manual-entry")
 def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
@@ -109,15 +102,17 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
     try:
         from services.notification_service import NotificationService
         from services.access_service import normalize_name as _normalize_name
+        from services.hardware_service import HardwareService
         norm = _normalize_name(sucursal)
         print(f"[ADMIN OPS] Notificando cambio de aforo (manual entry) para sucursal={sucursal} norm={norm}")
         NotificationService.notify_occupancy_change(db, norm)
+        HardwareService.trigger_barrier("ENTRADA", "OPEN", method="MANUAL_ENTRY", details={"plate": p, "sucursal": sucursal}, request=request)
     except Exception as e:
-        print(f"[ADMIN OPS] Error notifying occupancy: {e}")
+        print(f"[ADMIN OPS] Error notifying occupancy/hardware: {e}")
     return {"status": "ok", "message": f"Ingreso manual registrado en {floor.nombre if floor else 'Planta Baja'}: {p} ({tipo_vehiculo})"}
 
 @router.post("/manual-exit")
-def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user), request: Request = None):
     """REGISTRA UNA SALIDA MANUAL DE LA SEDE."""
     from routes.parking import normalize_plate
     from services.time_service import TimeService
@@ -175,11 +170,14 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
     try:
         from services.notification_service import NotificationService
         from services.access_service import normalize_name as _normalize_name
+        from services.hardware_service import HardwareService
         norm = _normalize_name(sucursal)
         print(f"[ADMIN OPS] Notificando cambio de aforo (manual exit) para sucursal={sucursal} norm={norm}")
         NotificationService.notify_occupancy_change(db, norm)
+        HardwareService.trigger_barrier("SALIDA", "OPEN", method="MANUAL_EXIT", details={"plate": p, "sucursal": sucursal}, request=request)
     except Exception as e:
-        print(f"[ADMIN OPS] Error notifying occupancy: {e}")
+        print(f"[ADMIN OPS] Error notifying occupancy/hardware: {e}")
+
     msg = f"Salida manual registrada en {sucursal or 'Global'}: {p}" + (" (Cortesía)" if dentro_cortesia else "")
     return {"status": "ok", "message": msg}
 
