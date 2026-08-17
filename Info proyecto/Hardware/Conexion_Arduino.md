@@ -1,6 +1,9 @@
-# Guía de Conexión: Hardware Real (Arduino/ESP32)
+# Guía de Conexión: Hardware Real (Arduino Uno / ESP32)
 
-Esta guía explica cómo conectar un microcontrolador (ESP32 o Arduino con Wi-Fi) al sistema de ParkingTech para controlar barreras físicas con servomotores mediante MQTT.
+Esta guía explica cómo conectar microcontroladores al sistema de AUTOPASS para controlar barreras físicas con servomotores mediante USB Serial o MQTT.
+
+- 📄 **Guía Detallada Arduino Uno (2 Servos - Entrada/Salida USB Serial & MQTT)**: Ver [`GUIA_ARDUINO_UNO.md`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/Info%20proyecto/Hardware/GUIA_ARDUINO_UNO.md)
+- 📄 **Firmware Arduino Uno**: Ver [`firmware_arduino_uno.ino`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/Info%20proyecto/Hardware/firmware_arduino_uno.ino)
 
 ## Requisitos
 - **Microcontrolador**: ESP32 (Recomendado) o ESP8266.

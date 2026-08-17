@@ -147,12 +147,8 @@ class AccessService:
         print(f"[ACCESS SERVICE] Notificando cambio de aforo para sucursal={sucursal}")
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
-        cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
-            "command": "OPEN", 
-            "plate": p, 
-            "sucursal": sucursal,
-            "timestamp": now.isoformat()
-        })
+        from services.hardware_service import HardwareService
+        HardwareService.trigger_barrier("ENTRADA", "OPEN", method="ALPR", details={"plate": p, "sucursal": sucursal}, request=request)
             
         return {"status": "allowed", "action": "OPEN_GATE", "message": f"Acceso permitido en {sucursal or 'Global'}. Bienvenido {p}"}
 
@@ -209,12 +205,8 @@ class AccessService:
         db.commit()
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
-        cls._publish_mqtt(request, settings.MQTT_TOPIC_SALIDA, {
-            "command": "OPEN", 
-            "plate": p, 
-            "sucursal": sucursal,
-            "timestamp": now.isoformat()
-        })
+        from services.hardware_service import HardwareService
+        HardwareService.trigger_barrier("SALIDA", "OPEN", method="ALPR", details={"plate": p, "sucursal": sucursal}, request=request)
             
         return {"status": "allowed", "action": "OPEN_GATE", "message": f"Salida autorizada en {sucursal or 'Global'}. Adiós {p}"}
 
@@ -332,9 +324,8 @@ class AccessService:
                 print(f"[ACCESS SERVICE] Notificando cambio de aforo (QR) para sucursal={sucursal}")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
-                cls._publish_mqtt(request, settings.MQTT_TOPIC_ENTRADA, {
-                    "command": "OPEN", "plate": reserva.patente, "method": "QR", "sucursal": sucursal, "timestamp": now.isoformat()
-                })
+                from services.hardware_service import HardwareService
+                HardwareService.trigger_barrier("ENTRADA", "OPEN", method="QR", details={"plate": reserva.patente, "sucursal": sucursal}, request=request)
                     
                 return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido en {sucursal or 'Global'}. Bienvenido {reserva.patente}"}
             else:
@@ -364,9 +355,8 @@ class AccessService:
                 print(f"[ACCESS SERVICE] Notificando cambio de aforo (QR SALIDA) para sucursal={sucursal}")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
-                cls._publish_mqtt(request, settings.MQTT_TOPIC_SALIDA, {
-                    "command": "OPEN", "plate": reserva.patente, "method": "QR", "sucursal": sucursal, "timestamp": now.isoformat()
-                })
+                from services.hardware_service import HardwareService
+                HardwareService.trigger_barrier("SALIDA", "OPEN", method="QR", details={"plate": reserva.patente, "sucursal": sucursal}, request=request)
                     
                 return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido en {sucursal or 'Global'}. Adiós {reserva.patente}"}
                 

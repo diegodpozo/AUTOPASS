@@ -88,4 +88,5 @@ alembic==1.19.0
 httpx==0.28.1
 psycopg[binary]==3.3.4
 psycopg-binary==3.3.4
+pyserial==3.5
 
