@@ -17,9 +17,12 @@ from models import Base
 # access to the values within the .ini file in use.
 config = context.config
 
-# Set DB URL from settings if available
-if not config.get_main_option("sqlalchemy.url"):
-    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Set DB URL from settings (.env)
+db_url = settings.DATABASE_URL
+# Use psycopg3 instead of psycopg2 (psycopg2 not installed in venv)
+if db_url.startswith("postgresql://") and "+" not in db_url.split("://", 1)[0]:
+    db_url = "postgresql+psycopg://" + db_url.split("://", 1)[1]
+config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:

@@ -10,6 +10,7 @@ import * as adminTour from './modules/admin-tour.js';
 import * as baseUi from './modules/ui.js';
 import * as utils from './modules/utils.js';
 import { initVirtualTime } from './modules/virtual-time.js';
+import './modules/notifications.js';
 
 /**
  * PUENTE / ORQUESTADOR: DASHBOARD.JS (v9.9.9)

@@ -8,14 +8,6 @@
             <h2 class="help-hero-title">¿En qué podemos ayudarte hoy?</h2>
             <p class="help-hero-subtitle">Buscá respuestas rápidas sobre reservas, lectura de patentes ALPR, pases QR, aforo y pagos.</p>
             
-            <div class="help-search-wrapper">
-                <i class="fas fa-search help-search-icon"></i>
-                <input type="text" id="help-search-input" class="help-search-input" placeholder="Escribí tu duda (ej: ALPR, cancelar reserva, saldo, cortesía...)" oninput="filterHelpContent()">
-                <button class="help-search-clear" id="help-search-clear" onclick="clearHelpSearch()" style="display: none;">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
             <div class="help-category-pills" id="help-category-pills">
                 <button class="help-pill active" onclick="filterHelpCategory('all', this)">
                     <i class="fas fa-th-large"></i> Todas

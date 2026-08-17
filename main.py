@@ -54,7 +54,21 @@ async def startup_event():
         mqtt_client.connect_async(settings.MQTT_BROKER, settings.MQTT_PORT, 60)
         mqtt_client.loop_start()
         
-        # BASE DE DATOS
+        # BASE DE DATOS: APLICAR MIGRACIONES PENDIENTES Y LUEGO CREAR TABLAS NUEVAS
+        try:
+            from alembic.config import Config as AlembicConfig
+            from alembic import command as AlembicCommand
+            alembic_cfg = AlembicConfig("alembic.ini")
+            try:
+                AlembicCommand.upgrade(alembic_cfg, "head")
+                print("[System] Migraciones Alembic aplicadas correctamente.")
+            except Exception:
+                # Tablas ya existen de init_db(); stamp version y seguir
+                AlembicCommand.stamp(alembic_cfg, "head")
+                print("[System] Migraciones stamp (tablas ya existían).")
+        except Exception as alembic_err:
+            print(f"[System] Migraciones Alembic omitidas: {alembic_err}")
+
         init_db()
         
         # BACKGROUND WORKERS

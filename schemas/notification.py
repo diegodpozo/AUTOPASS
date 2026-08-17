@@ -10,6 +10,7 @@ class NotificationResponse(BaseModel):
     mensaje: str
     leido: bool
     reserva_id: Optional[int] = None
+    ticket_id: Optional[int] = None
     created_at: datetime
 
     class Config:

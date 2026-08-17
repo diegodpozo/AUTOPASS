@@ -13,7 +13,9 @@ class UserNotification(Base):
     mensaje        = Column(String, nullable=False)
     leido          = Column(Boolean, default=False)
     reserva_id     = Column(Integer, ForeignKey("reservations.id"), nullable=True)
+    ticket_id      = Column(Integer, ForeignKey("support_tickets.id"), nullable=True)
     created_at     = Column(DateTime, default=datetime.datetime.utcnow)
 
     user           = relationship("User", backref="notifications")
     reserva        = relationship("Reservation", backref="notifications")
+    ticket         = relationship("SupportTicket", backref="notifications")
