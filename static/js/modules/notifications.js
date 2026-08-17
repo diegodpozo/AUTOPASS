@@ -116,6 +116,7 @@ function getNotifIcon(tipo) {
         case 'RESERVATION_CONFIRMED': return 'fa-check-circle';
         case 'BALANCE_RECHARGED': return 'fa-wallet';
         case 'SUPPORT_RESPONSE': return 'fa-headset';
+        case 'NEW_DEVICE_LOGIN': return 'fa-shield-halved';
         case 'PROMO_REDEEMED':
         case 'POINTS_EARNED': return 'fa-gift';
         default: return 'fa-bell';
@@ -130,6 +131,7 @@ function getNotifCategoryClass(tipo) {
         case 'AUTO_CANCELLED':
         case 'RESERVATION_CANCELLED': return 'notif-cat-danger';
         case 'SUPPORT_RESPONSE': return 'notif-cat-support';
+        case 'NEW_DEVICE_LOGIN': return 'notif-cat-warning';
         case 'REMINDER_PAID':
         case 'PROMO_REDEEMED': return 'notif-cat-gold';
         default: return 'notif-cat-default';
@@ -401,6 +403,12 @@ export function stopNotifPolling() {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('token')) {
+        if (sessionStorage.getItem('autopass_device_alert') === '1') {
+            sessionStorage.removeItem('autopass_device_alert');
+            setTimeout(() => {
+                showToast('Iniciaste sesión en un dispositivo nuevo', 'warning');
+            }, 800);
+        }
         startNotifPolling();
     }
 });

@@ -25,3 +25,21 @@ document.addEventListener('DOMContentLoaded', () => {
         recoveryForm.onsubmit = auth.handleRecovery;
     }
 });
+
+const authBtnDefaults = {
+    'loginForm': 'Ingresar',
+    'registerForm': '<i class="fas fa-user-plus"></i> Finalizá tu Registro',
+    'recoveryForm': '<i class="fas fa-paper-plane"></i> Enviar Enlace'
+};
+
+window.addEventListener('pageshow', () => {
+    Object.entries(authBtnDefaults).forEach(([formId, html]) => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn && btn.disabled) {
+            btn.innerHTML = html;
+            btn.disabled = false;
+        }
+    });
+});

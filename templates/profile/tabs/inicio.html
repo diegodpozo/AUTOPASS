@@ -21,15 +21,15 @@
                     <div id="reserva-no-vehicles" style="display: none; padding: 40px 30px;">
                         <div class="empty-state-premium">
                             <div class="flex-row gap-20 items-center justify-center" style="flex-wrap: wrap; margin-bottom: 5px;">
-                                <div class="empty-icon-box" style="width: 60px; height: 60px;">
+                                <div class="empty-icon-box" role="button" tabindex="0" title="Agregar Moto" aria-label="Seleccionar tipo Moto" onclick="selectQuickVehicleType('Moto')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectQuickVehicleType('Moto');}" style="width: 60px; height: 60px; cursor: pointer;">
                                     <i class="fas fa-motorcycle main-icon" style="font-size: 1.5rem;"></i>
                                     <div class="icon-pulse"></div>
                                 </div>
-                                <div class="empty-icon-box">
+                                <div class="empty-icon-box" role="button" tabindex="0" title="Agregar Auto" aria-label="Seleccionar tipo Auto" onclick="selectQuickVehicleType('Auto')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectQuickVehicleType('Auto');}" style="cursor: pointer;">
                                     <i class="fas fa-car-rear main-icon"></i>
                                     <div class="icon-pulse"></div>
                                 </div>
-                                <div class="empty-icon-box" style="width: 60px; height: 60px;">
+                                <div class="empty-icon-box" role="button" tabindex="0" title="Agregar Camioneta" aria-label="Seleccionar tipo Camioneta" onclick="selectQuickVehicleType('Camioneta')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectQuickVehicleType('Camioneta');}" style="width: 60px; height: 60px; cursor: pointer;">
                                     <i class="fas fa-truck-pickup main-icon" style="font-size: 1.5rem;"></i>
                                     <div class="icon-pulse"></div>
                                 </div>

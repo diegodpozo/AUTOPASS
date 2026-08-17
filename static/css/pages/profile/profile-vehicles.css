@@ -25,6 +25,21 @@
     z-index: 2;
 }
 
+.empty-icon-box:hover {
+    background: rgba(197, 160, 89, 0.18);
+    border: 1px solid var(--dorado);
+    transform: translateY(-2px);
+}
+
+.empty-icon-box:focus-visible {
+    outline: 2px solid var(--dorado);
+    outline-offset: 3px;
+}
+
+.empty-icon-box {
+    transition: transform 0.25s ease, background 0.25s ease, border 0.25s ease;
+}
+
 .icon-pulse {
     position: absolute;
     width: 100%;

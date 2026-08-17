@@ -58,6 +58,15 @@ export function initPasswordValidation(passId, confirmId, strengthId, reqLenId, 
     }
 }
 
+function getDeviceId() {
+    let id = localStorage.getItem('autopass_device_id');
+    if (!id) {
+        id = 'dev-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
+        localStorage.setItem('autopass_device_id', id);
+    }
+    return id;
+}
+
 export async function handleLogin(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
@@ -71,7 +80,7 @@ export async function handleLogin(e) {
     btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Ingresando...';
     btn.disabled = true;
 
-    const res = await api.post('/auth/login', { email, password });
+    const res = await api.post('/auth/login', { email, password, device_id: getDeviceId() });
     
     if (res && res.ok) {
         const data = res.data;
@@ -86,6 +95,10 @@ export async function handleLogin(e) {
         btn.disabled = false;
         const modal = document.getElementById('loginModal');
         if (modal) modal.style.display = 'none';
+
+        if (data.nuevo_dispositivo) {
+            sessionStorage.setItem('autopass_device_alert', '1');
+        }
 
         const isStaffOrAdmin = ['admin', 'local_admin', 'staff'].includes(data.rol);
         window.location.href = isStaffOrAdmin ? '/dashboard' : '/perfil';

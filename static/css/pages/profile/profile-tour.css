@@ -829,6 +829,7 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
     transition: opacity 0.25s ease, transform 0.25s ease;
+    padding-right: 32px;
 }
 
 .tour-tooltip-text-premium {
@@ -909,6 +910,32 @@
 
 .tour-arrow-premium.active {
     opacity: 1;
+}
+
+.tour-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #bbb;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    z-index: 2;
+}
+
+.tour-close-btn:hover {
+    color: #fff;
+    background: rgba(197, 160, 89, 0.25);
+    border-color: var(--dorado);
 }
 
 /* ESTILOS REDISEÑADOS PARA ONBOARDING DE BIENVENIDA */
