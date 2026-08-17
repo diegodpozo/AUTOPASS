@@ -11,6 +11,7 @@ import models
 
 # IMPORTACION DE ROUTERS
 from routes import parking, reports, system, admin, user, auth
+from routes.system import stop_all_cameras
 from routes.views import router as views_router
 
 # --- CONFIGURACION DE LA APLICACION ---
@@ -67,7 +68,7 @@ async def startup_event():
 def shutdown_event():
     """LIMPIEZA DE RECURSOS AL APAGAR EL SERVIDOR."""
     print("[System] Apagando servidor, limpiando recursos...")
-    system.stop_all_cameras()
+    stop_all_cameras()
 
 # --- REGISTRO DE RUTAS ---
 # API V1

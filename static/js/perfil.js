@@ -218,6 +218,15 @@ window.hideQuickAddVehicle = () => {
     if (form) form.style.display = 'none';
 };
 
+window.selectQuickVehicleType = (tipo) => {
+    showQuickAddVehicle();
+    const form = document.getElementById('quick-add-vehicle-form');
+    const select = form?.querySelector('select[name="tipo"]');
+    if (!select) return;
+    select.value = tipo;
+    window.updateVehicleTypeIcon(tipo, 'quick-', form);
+};
+
 // Exponer helpers del onboarding para que el HTML los invoque
 window.openReservationOnboarding = onboarding.openReservationOnboarding;
 window.closeReservationOnboarding = onboarding.closeReservationOnboarding;

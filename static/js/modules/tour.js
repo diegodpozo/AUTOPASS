@@ -390,6 +390,7 @@ function createTourElements() {
 
     // tooltip inner
     tourTooltip.innerHTML = `
+        <button id="tour-close" class="tour-close-btn" aria-label="Cerrar tour" title="Cerrar tour">×</button>
         <div id="tour-title" class="tour-tooltip-title-premium"></div>
         <div id="tour-text" class="tour-tooltip-text-premium"></div>
         <div id="tour-buttons" class="tour-tooltip-buttons-premium">
@@ -402,6 +403,7 @@ function createTourElements() {
     document.getElementById('tour-prev').addEventListener('click', prevTourStep);
     document.getElementById('tour-next').addEventListener('click', nextTourStep);
     document.getElementById('tour-end').addEventListener('click', () => endTour(true));
+    document.getElementById('tour-close').addEventListener('click', () => endTour(true));
 
     // Listen to resize and scroll to reposition tooltip
     window.addEventListener('resize', handleWindowReposition, { passive: true });
@@ -1728,3 +1730,13 @@ function _handleReservationCreated(ev) {
 }
 
 document.addEventListener('reservation:created', _handleReservationCreated);
+document.addEventListener('reservation:created:debug', (ev) => {
+    console.log('[TOUR][DEBUG] reservation:created:debug recibido — detail:', ev && ev.detail ? ev.detail : ev);
+    _handleReservationCreated(ev);
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isTourActive) {
+        endTour(true);
+    }
+});
