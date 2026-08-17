@@ -23,8 +23,12 @@ class SupportTicketResponse(BaseModel):
     mensaje: str
     estado: str
     respuesta: Optional[str] = None
+    user_response: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+
+class SupportTicketReply(BaseModel):
+    mensaje: str

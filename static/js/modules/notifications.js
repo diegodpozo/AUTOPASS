@@ -95,7 +95,7 @@ function filterNotificationsArray(list, filter) {
     if (filter === 'UNREAD') return list.filter(n => !n.leido);
     if (filter === 'RESERVATION') return list.filter(n => ['REMINDER_PAID', 'REMINDER_UNPAID', 'RESERVATION_STARTED', 'AUTO_CANCELLED', 'RESERVATION_CONFIRMED', 'RESERVATION_CANCELLED'].includes(n.tipo));
     if (filter === 'FINANCE') return list.filter(n => ['BALANCE_RECHARGED', 'PROMO_REDEEMED', 'POINTS_EARNED'].includes(n.tipo));
-    if (filter === 'SUPPORT') return list.filter(n => n.tipo === 'SUPPORT_RESPONSE');
+    if (filter === 'SUPPORT') return list.filter(n => n.tipo === 'SUPPORT_RESPONSE' || n.tipo === 'SUPPORT_TICKET');
     return list;
 }
 
@@ -116,6 +116,7 @@ function getNotifIcon(tipo) {
         case 'RESERVATION_CONFIRMED': return 'fa-check-circle';
         case 'BALANCE_RECHARGED': return 'fa-wallet';
         case 'SUPPORT_RESPONSE': return 'fa-headset';
+        case 'SUPPORT_TICKET': return 'fa-ticket';
         case 'NEW_DEVICE_LOGIN': return 'fa-shield-halved';
         case 'PROMO_REDEEMED':
         case 'POINTS_EARNED': return 'fa-gift';
@@ -131,6 +132,7 @@ function getNotifCategoryClass(tipo) {
         case 'AUTO_CANCELLED':
         case 'RESERVATION_CANCELLED': return 'notif-cat-danger';
         case 'SUPPORT_RESPONSE': return 'notif-cat-support';
+        case 'SUPPORT_TICKET': return 'notif-cat-support';
         case 'NEW_DEVICE_LOGIN': return 'notif-cat-warning';
         case 'REMINDER_PAID':
         case 'PROMO_REDEEMED': return 'notif-cat-gold';
@@ -154,9 +156,10 @@ function getNotifActions(n) {
                 <i class="fas fa-eye"></i> VER RESERVA
             </button>`;
     }
-    if (n.tipo === 'SUPPORT_RESPONSE') {
+    if (n.tipo === 'SUPPORT_RESPONSE' || n.tipo === 'SUPPORT_TICKET') {
+        const ticketId = n.ticket_id || '';
         return `
-            <button class="notif-btn notif-btn-support" onclick="window.showSection?.('help')">
+            <button class="notif-btn notif-btn-support" onclick="openSupportTicketModal(${ticketId})">
                 <i class="fas fa-headset"></i> IR A SOPORTE
             </button>`;
     }
@@ -217,7 +220,7 @@ window.markNotifRead = async function(notifId, el) {
         if (dot) dot.remove();
     }
     const target = cachedNotifications.find(n => n.id === notifId);
-    if (target) target.leido = True;
+    if (target) target.leido = true;
 
     updateNotifBadge();
     await api.patch(`/user/profile/notifications/${notifId}/read`);

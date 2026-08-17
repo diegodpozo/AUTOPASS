@@ -111,9 +111,10 @@
 
             <div class="mb-15 p-15" style="background: rgba(15, 23, 42, 0.8); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
                 <label class="text-muted text-small text-bold block mb-5">ASUNTO</label>
-                <h4 id="ticket-modal-subject" style="margin: 0 0 10px 0; color: #f1f5f9;">---</h4>
-                <label class="text-muted text-small text-bold block mb-5">MENSAJE DEL CLIENTE</label>
-                <p id="ticket-modal-message" style="margin: 0; color: #cbd5e1; white-space: pre-line; font-size: 0.92rem;">---</p>
+                <h4 id="ticket-modal-subject" style="margin: 0; color: #f1f5f9;">---</h4>
+            </div>
+
+            <div id="ticket-admin-messages" style="max-height: 35vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 0 4px;">
             </div>
 
             <form onsubmit="submitTicketAnswer(event)">
@@ -128,12 +129,12 @@
 
                 <div class="form-group mb-20">
                     <label for="ticket-answer-text" class="text-muted text-small text-bold block mb-5">RESPUESTA AL CLIENTE</label>
-                    <textarea id="ticket-answer-text" class="form-control-custom" rows="4" placeholder="Escribí aquí la respuesta o resolución enviada al cliente..."></textarea>
+                    <textarea id="ticket-answer-text" class="form-control-custom" rows="3" placeholder="Escribí aquí la respuesta o resolución enviada al cliente..."></textarea>
                 </div>
 
                 <div class="flex-row justify-end gap-10 modal-footer-buttons">
                     <button type="button" class="btn btn-outline" onclick="closeModal('modal-ticket-answer')">CANCELAR</button>
-                    <button type="submit" id="btn-save-ticket-answer" class="btn btn-primary">GUARDAR CAMBIOS</button>
+                    <button type="submit" id="btn-save-ticket-answer" class="btn btn-primary">ENVIAR RESPUESTA</button>
                 </div>
             </form>
         </div>

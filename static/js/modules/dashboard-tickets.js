@@ -1,9 +1,10 @@
 import api from './api.js';
 import { showToast, formatDate, toTitle } from './utils.js';
 import { openModal, closeModal } from './ui.js';
+import { updateNotifBadge } from './notifications.js';
 
 /**
- * DASHBOARD TICKETS MODULE (v9.8.5)
+ * DASHBOARD TICKETS MODULE (v9.8.6)
  * Gestión y resolución de tickets de soporte desde el panel de administración.
  */
 
@@ -52,11 +53,9 @@ export function filterTicketList(query = '') {
     renderAdminTickets(filtered);
 }
 
-// Exponer globalmente para integrarse con WebSockets, inputs de búsqueda y bridge
 window.loadAdminTickets = loadAdminTickets;
 window.filterTicketList = filterTicketList;
 
-// Auto-actualización periódica cada 10 segundos
 if (!autoRefreshInterval) {
     autoRefreshInterval = setInterval(() => {
         const ticketsTab = document.getElementById('tab-tickets');
@@ -126,7 +125,32 @@ function renderAdminTickets(tickets) {
     }).join('');
 }
 
-export function openTicketAnswerModal(ticketId) {
+function renderAdminTicketMessages(messages) {
+    const container = document.getElementById('ticket-admin-messages');
+    if (!container) return;
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#888;padding:15px;font-size:0.85rem;">Sin mensajes aún</div>';
+        return;
+    }
+    container.innerHTML = messages.map(m => {
+        const isAdmin = m.is_admin;
+        const bgColor = isAdmin ? 'rgba(197, 160, 89, 0.1)' : 'rgba(255,255,255,0.03)';
+        const borderColor = isAdmin ? '#4caf50' : 'var(--dorado)';
+        const label = isAdmin ? 'Soporte' : 'Cliente';
+        const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+        return `
+            <div style="background:${bgColor};border-radius:10px;padding:12px;border-left:3px solid ${borderColor};">
+                <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;">
+                    <span>${label} — ${m.autor}</span>
+                    <span>${time}</span>
+                </div>
+                <div style="font-size:0.88rem;color:#ddd;line-height:1.5;white-space:pre-wrap;">${m.mensaje}</div>
+            </div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+export async function openTicketAnswerModal(ticketId) {
     const ticket = allTickets.find(t => t.id === ticketId);
     if (!ticket) return;
 
@@ -137,12 +161,20 @@ export function openTicketAnswerModal(ticketId) {
     document.getElementById('ticket-modal-branch').innerText = toTitle(ticket.sucursal);
     document.getElementById('ticket-modal-category').innerText = toTitle(ticket.categoria);
     document.getElementById('ticket-modal-subject').innerText = ticket.asunto;
-    document.getElementById('ticket-modal-message').innerText = ticket.mensaje;
     
     document.getElementById('ticket-answer-status').value = ticket.estado;
-    document.getElementById('ticket-answer-text').value = ticket.respuesta || '';
+    document.getElementById('ticket-answer-text').value = '';
 
     openModal('modal-ticket-answer');
+
+    const res = await api.get(`/admin/support-tickets/${ticketId}`);
+    if (res.ok && res.data.messages) {
+        renderAdminTicketMessages(res.data.messages);
+    } else {
+        renderAdminTicketMessages(ticket.messages);
+    }
+
+    api.patch(`/admin/support-tickets/${ticketId}/read-notifs`).then(() => updateNotifBadge());
 }
 
 export async function submitTicketAnswer(event) {
@@ -150,14 +182,19 @@ export async function submitTicketAnswer(event) {
 
     const ticketId = document.getElementById('ticket-modal-id')?.value;
     const status = document.getElementById('ticket-answer-status')?.value;
-    const responseText = document.getElementById('ticket-answer-text')?.value;
+    const responseText = document.getElementById('ticket-answer-text')?.value?.trim();
     const btn = document.getElementById('btn-save-ticket-answer');
 
     if (!ticketId || !status) return;
 
+    if (!responseText) {
+        showToast('Escribí una respuesta antes de enviar', 'info');
+        return;
+    }
+
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
     }
 
     const res = await api.patch(`/admin/support-tickets/${ticketId}`, {
@@ -166,8 +203,11 @@ export async function submitTicketAnswer(event) {
     });
 
     if (res.ok) {
-        showToast(`Ticket #${ticketId} actualizado a '${status}'`, 'success');
-        closeModal('modal-ticket-answer');
+        showToast(`Ticket #${ticketId} actualizado`, 'success');
+        document.getElementById('ticket-answer-text').value = '';
+        if (res.data.messages) {
+            renderAdminTicketMessages(res.data.messages);
+        }
         await loadAdminTickets();
     } else {
         showToast(res.error || 'Error al actualizar el ticket', 'error');
@@ -175,6 +215,6 @@ export async function submitTicketAnswer(event) {
 
     if (btn) {
         btn.disabled = false;
-        btn.innerHTML = 'GUARDAR CAMBIOS';
+        btn.innerHTML = 'ENVIAR RESPUESTA';
     }
 }

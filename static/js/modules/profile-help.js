@@ -189,3 +189,115 @@ export async function submitSupportTicket(event) {
         }
     }
 }
+
+let currentTicketId = null;
+
+function renderTicketMessages(messages) {
+    const container = document.getElementById('modal-ticket-messages');
+    if (!container) return;
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Sin mensajes</div>';
+        return;
+    }
+    container.innerHTML = messages.map(m => {
+        const isAdmin = m.is_admin;
+        const bgColor = isAdmin ? 'rgba(197, 160, 89, 0.1)' : 'rgba(255,255,255,0.03)';
+        const borderColor = isAdmin ? '#4caf50' : 'var(--dorado)';
+        const label = isAdmin ? 'Soporte' : 'Vos';
+        const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+        return `
+            <div style="background:${bgColor};border-radius:10px;padding:12px;border-left:3px solid ${borderColor};">
+                <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;">
+                    <span>${label} — ${m.autor}</span>
+                    <span>${time}</span>
+                </div>
+                <div style="font-size:0.88rem;color:#ddd;line-height:1.5;white-space:pre-wrap;">${m.mensaje}</div>
+            </div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+window.openSupportTicketModal = async function(ticketId) {
+    if (!ticketId) {
+        window.showSection?.('ayuda');
+        return;
+    }
+    currentTicketId = ticketId;
+
+    const modal = document.getElementById('support-ticket-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+
+    document.getElementById('modal-ticket-id').textContent = ticketId;
+    document.getElementById('modal-ticket-subject').textContent = 'Cargando...';
+    document.getElementById('modal-ticket-meta').textContent = '';
+    const msgContainer = document.getElementById('modal-ticket-messages');
+    if (msgContainer) msgContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
+    document.getElementById('modal-ticket-reply-input').value = '';
+
+    try {
+        const res = await api.get(`/user/support-tickets/${ticketId}`);
+        if (!res.ok) {
+            showToast('No se pudo cargar el ticket', 'error');
+            closeSupportTicketModal();
+            return;
+        }
+        const t = res.data;
+        document.getElementById('modal-ticket-id').textContent = t.id;
+        document.getElementById('modal-ticket-subject').textContent = t.asunto;
+        document.getElementById('modal-ticket-meta').textContent = `${toTitle(t.categoria)} · ${toTitle(t.sucursal)} · ${t.estado}`;
+
+        renderTicketMessages(t.messages);
+
+        const replyBox = document.getElementById('modal-ticket-reply-box');
+        if (t.estado === 'Resuelto' || t.estado === 'Cerrado') {
+            replyBox.style.display = 'none';
+        } else {
+            replyBox.style.display = 'block';
+        }
+    } catch (e) {
+        console.error('[SUPPORT MODAL]', e);
+        showToast('Error de conexión', 'error');
+        closeSupportTicketModal();
+    }
+};
+
+window.closeSupportTicketModal = function() {
+    const modal = document.getElementById('support-ticket-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+    currentTicketId = null;
+};
+
+window.submitTicketReply = async function() {
+    if (!currentTicketId) return;
+    const input = document.getElementById('modal-ticket-reply-input');
+    const btn = document.getElementById('modal-ticket-reply-btn');
+    const msg = input?.value?.trim();
+    if (!msg) {
+        showToast('Escribí tu respuesta antes de enviar', 'info');
+        return;
+    }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+    try {
+        const res = await api.patch(`/user/support-tickets/${currentTicketId}/reply`, { mensaje: msg });
+        if (res.ok) {
+            showToast('Respuesta enviada', 'success');
+            input.value = '';
+            if (res.data.messages) {
+                renderTicketMessages(res.data.messages);
+            } else {
+                openSupportTicketModal(currentTicketId);
+            }
+        } else {
+            showToast(res.error || 'Error al enviar', 'error');
+        }
+    } catch (e) {
+        showToast('Error de conexión', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-reply"></i> ENVIAR RESPUESTA'; }
+    }
+};

@@ -13,7 +13,8 @@ class UserNotificationService:
         tipo: str,
         titulo: str,
         mensaje: str,
-        reserva_id: Optional[int] = None
+        reserva_id: Optional[int] = None,
+        ticket_id: Optional[int] = None
     ) -> models.UserNotification:
         notif = models.UserNotification(
             user_id=user_id,
@@ -21,6 +22,7 @@ class UserNotificationService:
             titulo=titulo,
             mensaje=mensaje,
             reserva_id=reserva_id,
+            ticket_id=ticket_id,
             leido=False,
             created_at=datetime.datetime.utcnow()
         )
