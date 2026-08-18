@@ -45,10 +45,10 @@ def run_alpr_service():
 
             if GATE_TYPE in ("entrada", "salida", "qr"):
                 try:
-                    small = cv2.resize(frame, (320, 240))
-                    qr_data, _, _ = engine.qr_detector.detectAndDecode(small)
+                    qr_data, _, _ = engine.qr_detector.detectAndDecode(frame)
                     if qr_data:
-                        engine.send_event("qr", qr_data, frame)
+                        qr_text = qr_data[0] if isinstance(qr_data, (list, tuple)) and len(qr_data) > 0 else str(qr_data)
+                        engine.send_event("qr", qr_text, frame)
                         last_ocr_time = now
                         time.sleep(0.05)
                         continue
@@ -57,11 +57,13 @@ def run_alpr_service():
 
             if GATE_TYPE in ("entrada", "salida", "patente"):
                 if now - last_ocr_time > OCR_INTERVAL:
-                    if engine.detect_motion(frame):
+                    has_motion = engine.detect_motion(frame)
+                    if has_motion:
                         try:
                             if not engine.frame_queue.full():
                                 engine.frame_queue.put(frame)
                                 last_ocr_time = now
+                                print(f"[ALPR RUNNER] Frame enviado a OCR (queue={engine.frame_queue.qsize()})")
                             else:
                                 try:
                                     engine.frame_queue.get_nowait()
@@ -71,6 +73,9 @@ def run_alpr_service():
                                     pass
                         except Exception:
                             pass
+                    else:
+                        if int(now) % 10 == 0:
+                            print(f"[ALPR RUNNER] Sin movimiento (last_check={int(now)})")
             time.sleep(0.01)
     except Exception as e:
         print(f"[!] Error FATAL en el bucle principal: {e}")

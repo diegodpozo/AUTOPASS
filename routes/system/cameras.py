@@ -69,7 +69,10 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
         env = os.environ.copy()
         env["GATE_ID"] = gate_id
         env["VIDEO_SOURCE"] = source
-        env["GATE_TYPE"] = "entrada" if "ENTRADA" in gate_id else "salida"
+        if "QR" in gate_id.upper():
+            env["GATE_TYPE"] = "qr"
+        else:
+            env["GATE_TYPE"] = "entrada" if "ENTRADA" in gate_id else "salida"
         env["BACKEND_URL"] = base_url
         
         try:
@@ -226,7 +229,15 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
         env = os.environ.copy()
         env["GATE_ID"] = proc_id
         env["VIDEO_SOURCE"] = camera.source
-        env["GATE_TYPE"] = camera.tipo.lower()
+        gt = camera.tipo.lower()
+        if "qr" in gt:
+            env["GATE_TYPE"] = "qr"
+        elif "egreso" in gt or "salida" in gt:
+            env["GATE_TYPE"] = "salida"
+        elif "patente" in gt or "entrada" in gt:
+            env["GATE_TYPE"] = "entrada"
+        else:
+            env["GATE_TYPE"] = gt
         env["BACKEND_URL"] = base_url
         
         try:

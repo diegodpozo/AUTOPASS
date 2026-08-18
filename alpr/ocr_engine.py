@@ -38,19 +38,23 @@ class ALPREngine:
         return has_motion
 
     def ocr_worker(self):
+        print(f"[ALPR OCR] Worker iniciado. GATE_TYPE={GATE_TYPE}")
         while self.is_running:
             try:
                 frame = self.frame_queue.get(timeout=1)
+                print(f"[ALPR OCR] Frame recibido, procesando...")
                 
                 # QR DETECTION
                 qr_data, _, _ = self.qr_detector.detectAndDecode(frame)
                 if qr_data:
-                    print(f"[ALPR OCR] QR detectado: len={len(qr_data)} preview={qr_data[:80]}")
-                    self.send_event("qr", qr_data, frame)
+                    qr_text = qr_data[0] if isinstance(qr_data, (list, tuple)) and len(qr_data) > 0 else str(qr_data)
+                    print(f"[ALPR OCR] QR detectado: {qr_text[:80]}")
+                    self.send_event("qr", qr_text, frame)
                     time.sleep(1)
                     continue
                 
                 rois = ImagePreprocessor.find_plate_roi(frame, self.plate_cascade)
+                print(f"[ALPR OCR] ROIs encontrados: {len(rois)}")
                 for roi in rois:
                     is_mercosur = ImagePreprocessor.is_mercosur_candidate(roi)
                     if is_mercosur:
@@ -65,6 +69,7 @@ class ALPREngine:
                             results = []
 
                         if not results:
+                            print(f"[ALPR OCR] Sin resultados en ROI (variantes restantes)")
                             continue
                         
                         def _leftmost_x(rr):
