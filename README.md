@@ -67,11 +67,20 @@ AUTOPASS/
 - Python 3.14
 
 ### 2. Instalación
+
+#### Opción recomendada (automática)
 ```bash
 # Clonar el repositorio
 git clone https://github.com/MarianoJAC/AUTOPASS.git
 cd AUTOPASS
 
+# Ejecutar el instalador — crea venv, instala dependencias, configura .env,
+# inicializa la base de datos, aplica migraciones Alembic y corre los tests
+.\setup_backend.bat
+```
+
+#### Instalación manual
+```bash
 # Crear entorno virtual e instalar dependencias
 python -m venv venv
 .\venv\Scripts\activate
@@ -82,7 +91,7 @@ pip install -r requirements.txt
 ```
 
 ### 3. Configuración
-Crea o edita el archivo `.env` en la raíz:
+El instalador automático crea `.env` desde `.env.example`. Si instalás manualmente, creá o editá el archivo `.env` en la raíz:
 ```env
 DATABASE_URL=sqlite:///./parking.db
 SECRET_KEY=tu_secreto_aqui
@@ -104,7 +113,7 @@ SMTP_FROM=noreply@autopass.com.ar
 # DATABASE_URL=postgresql://user:pass@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-### 4. Inicializar Base de Datos
+### 4. Inicializar Base de Datos (solo instalación manual)
 ```bash
 .\venv\Scripts\python.exe init_db.py
 .\venv\Scripts\alembic.exe stamp head
