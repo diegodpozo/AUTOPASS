@@ -89,7 +89,7 @@ def login(form_data: schemas.UserLogin, request: Request, db: Session = Depends(
     nuevo_dispositivo = False
     device_id = (form_data.device_id or "").strip()
     if device_id:
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         user_agent = request.headers.get("user-agent") or None
         ip_address = request.client.host if request.client else None
         since = now - datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

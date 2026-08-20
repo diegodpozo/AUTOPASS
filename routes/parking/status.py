@@ -8,18 +8,16 @@ import models, schemas
 from core.database import get_db
 from core.config import settings
 from core.security import get_operational_user, decode_access_token
+from core.logger import get_logger
 from services.billing_service import BillingService
 from services.notification_service import NotificationService
 from services.time_service import TimeService
 from models.enums import ReservationStatus
-import unicodedata
+from core.normalize import normalize_name
+
+logger = get_logger("WS")
 
 router = APIRouter()
-
-def normalize_name(text: str):
-    if not text: return ""
-    text = text.upper().replace("AUTOPASS ", "").strip()
-    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
 
 class OccupancyManager:
     def __init__(self):
@@ -35,7 +33,7 @@ class OccupancyManager:
             self.active_connections[sucursal] = []
         self.active_connections[sucursal].append(websocket)
         try:
-            print(f"[WS] Conexión establecida: user={user.email} sucursal={sucursal}")
+            logger.info(f"Conexión establecida: user={user.email} sucursal={sucursal}")
         except Exception:
             pass
         return sucursal

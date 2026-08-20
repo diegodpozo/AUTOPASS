@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from core.database import Base
-import datetime
+from core.time import utcnow
 
 class UserSession(Base):
     __tablename__ = "user_sessions"
@@ -11,7 +11,7 @@ class UserSession(Base):
     device_id      = Column(String, nullable=False, index=True)
     user_agent     = Column(String, nullable=True)
     ip_address     = Column(String, nullable=True)
-    created_at     = Column(DateTime, default=datetime.datetime.utcnow)
-    last_login_at  = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    created_at     = Column(DateTime, default=utcnow)
+    last_login_at  = Column(DateTime, default=utcnow, index=True)
 
     user           = relationship("User", backref="sessions")

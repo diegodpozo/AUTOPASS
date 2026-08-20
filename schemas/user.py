@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator
 from typing import Optional
 import re
+from schemas.validators import validate_password_strength
 
 class UserBase(BaseModel):
     id: Optional[int] = None
@@ -56,13 +57,7 @@ class UserCreate(UserBase):
     @field_validator('password')
     @classmethod
     def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('La contraseña debe tener al menos 8 caracteres')
-        if not re.search(r"[A-Z]", v):
-            raise ValueError('La contraseña debe tener al menos una mayúscula')
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError('La contraseña debe tener al menos un carácter especial')
-        return v
+        return validate_password_strength(cls, v)
 
 class ChangePassword(BaseModel):
     current_password: str
@@ -71,13 +66,7 @@ class ChangePassword(BaseModel):
     @field_validator('new_password')
     @classmethod
     def validate_new_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('La contraseña debe tener al menos 8 caracteres')
-        if not re.search(r"[A-Z]", v):
-            raise ValueError('La contraseña debe tener al menos una mayúscula')
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError('La contraseña debe tener al menos un carácter especial')
-        return v
+        return validate_password_strength(cls, v)
 
 class UserLogin(BaseModel):
     email: str
@@ -93,13 +82,7 @@ class UserPasswordChange(BaseModel):
     @field_validator('new_password')
     @classmethod
     def validate_new_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('La contraseña debe tener al menos 8 caracteres')
-        if not re.search(r"[A-Z]", v):
-            raise ValueError('La contraseña debe tener al menos una mayúscula')
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError('La contraseña debe tener al menos un carácter especial')
-        return v
+        return validate_password_strength(cls, v)
 
 class PromotionCreate(BaseModel):
     titulo: str

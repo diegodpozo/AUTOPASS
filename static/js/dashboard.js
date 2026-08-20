@@ -158,6 +158,10 @@ window.loadAdminTickets = tickets.loadAdminTickets;
 window.openTicketAnswerModal = tickets.openTicketAnswerModal;
 window.submitTicketAnswer = tickets.submitTicketAnswer;
 window.filterTicketList = tickets.filterTicketList;
+window.openSupportTicketModal = (ticketId) => {
+    ui.switchTab('tickets', document.querySelector('.nav-item[onclick*="tickets"]'));
+    if (ticketId) setTimeout(() => tickets.openTicketAnswerModal(ticketId), 400);
+};
 
 // 13. DISPATCHER DE CARGA POR PESTAÑA
 window.loadTabData = async (tabId) => {

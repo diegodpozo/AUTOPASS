@@ -6,8 +6,11 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from jinja2 import Environment, FileSystemLoader
 from core.config import settings
+from core.logger import get_logger
 import threading
 import os
+
+logger = get_logger("EmailService")
 
 # CONFIGURACION DE JINJA2 PARA EMAILS
 template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "emails")
@@ -29,7 +32,7 @@ class EmailService:
                     return base64.b64encode(image_file.read()).decode('utf-8')
             return ""
         except Exception as e:
-            print(f"[MAIL ERROR] No se pudo cargar el logo desde {settings.LOGO_PATH}: {e}")
+            logger.error(f"No se pudo cargar el logo desde {settings.LOGO_PATH}: {e}")
             return ""
 
     @staticmethod
@@ -48,9 +51,9 @@ class EmailService:
                 if settings.SMTP_USER and settings.SMTP_PASSWORD:
                     server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 server.sendmail(settings.SMTP_FROM, to_email, msg.as_string())
-            print(f"[MAIL] Correo enviado exitosamente a {to_email}")
+            logger.info(f"Correo enviado exitosamente a {to_email}")
         except Exception as e:
-            print(f"[MAIL ERROR] No se pudo enviar el correo a {to_email}: {e}")
+            logger.error(f"No se pudo enviar el correo a {to_email}: {e}")
 
     @staticmethod
     def send_async_email(to_email: str, subject: str, html_content: str):

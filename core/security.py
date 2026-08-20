@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 import models
 from core.database import get_db
 from core.config import settings
+from core.time import utcnow
 from models.enums import UserRole
 
 # --- CONFIGURACION DE SEGURIDAD ---
@@ -32,9 +33,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """GENERA UN TOKEN JWT FIRMADO PARA LA SESION DEL USUARIO."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

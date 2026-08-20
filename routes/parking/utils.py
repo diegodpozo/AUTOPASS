@@ -23,10 +23,7 @@ def format_plate(p: str):
     
     return clean
 
-def normalize_name(s: str):
-    """FORMATEA NOMBRES Y APELLIDOS."""
-    if not s: return ""
-    return s.strip().title()
+from core.normalize import normalize_user_name as normalize_name
 
 def normalize_dni(s: str):
     """APLICA FORMATO DE PUNTOS AL DNI PARA VISUALIZACION."""

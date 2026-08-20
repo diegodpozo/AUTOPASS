@@ -8,9 +8,12 @@ import models, schemas
 from core.config import settings
 from core.database import get_db
 from core.security import get_current_user
+from core.logger import get_logger
 from services.billing_service import BillingService
 from services.reservation_service import ReservationService, verificar_disponibilidad
 from services.user_notification_service import UserNotificationService
+
+logger = get_logger("UserReservations")
 
 
 def _validar_horario_sucursal(db: Session, sucursal_nombre: str, start: datetime.datetime, end: datetime.datetime):
@@ -86,7 +89,7 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
 
     # DEBUG LOG: registrar payload entrante para diagnosticar mismatches de sucursal
     try:
-        print(f"[RESERVATION CREATE] user={getattr(current_user,'id',None)} email={getattr(current_user,'email',None)} payload_sucursal={getattr(res,'sucursal_nombre',None)} payload_patente={getattr(res,'patente',None)}")
+        logger.debug(f"RESERVATION CREATE user={getattr(current_user,'id',None)} email={getattr(current_user,'email',None)} payload_sucursal={getattr(res,'sucursal_nombre',None)} payload_patente={getattr(res,'patente',None)}")
     except Exception:
         pass
 
@@ -168,9 +171,9 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     )
     db.add(new_res)
     db.commit()
-    print(f"[DEBUG POST RESERVE] ID={new_res.id} estado_reserva={new_res.estado_reserva}")
+    logger.debug(f"POST RESERVE ID={new_res.id} estado_reserva={new_res.estado_reserva}")
     db.refresh(new_res)
-    print(f"[DEBUG POST RESERVE] ID={new_res.id} estado_reserva={new_res.estado_reserva}")
+    logger.debug(f"POST RESERVE ID={new_res.id} estado_reserva={new_res.estado_reserva}")
     return {"status": "ok", "monto": monto, "estado_pago": estado_pago}
 
 @router.patch("/reservations/{res_id}")
