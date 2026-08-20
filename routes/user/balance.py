@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 import models, schemas
 from core.database import get_db
 from core.security import get_current_user
+from core.logger import get_logger
 from services.billing_service import BillingService
+
+logger = get_logger("UserBalance")
 
 router = APIRouter()
 
@@ -77,6 +80,6 @@ def recharge_balance(data: schemas.RechargeBalance, db: Session = Depends(get_db
             f"Se acreditó con éxito ${data.monto:,.2f} en tu cuenta. Saldo actual: ${current_user.saldo:,.2f}."
         )
     except Exception as e:
-        print(f"[ERROR NOTIF] No se pudo notificar carga de saldo: {e}")
+        logger.error(f"No se pudo notificar carga de saldo: {e}")
 
     return {"status": "ok", "message": f"Carga de ${data.monto:.2f} exitosa"}

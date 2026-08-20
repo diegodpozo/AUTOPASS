@@ -56,7 +56,7 @@ class HardwareService:
                 cls._serial_port = serial.Serial(target_port, baudrate=settings.SERIAL_BAUDRATE, timeout=1)
                 time.sleep(2)  # Reset del bootloader de Arduino
                 cls._connected_port_name = target_port
-                print(f"[HARDWARE] Conectado exitosamente a Arduino Uno en puerto {target_port} ({settings.SERIAL_BAUDRATE} baudios)")
+                logger.info(f"Conectado exitosamente a Arduino Uno en puerto {target_port} ({settings.SERIAL_BAUDRATE} baudios)")
                 return cls._serial_port
             except Exception as e:
                 cls._serial_port = None
@@ -74,10 +74,10 @@ class HardwareService:
                 line = f"{raw_cmd.strip()}\n"
                 conn.write(line.encode('utf-8'))
                 conn.flush()
-                print(f"[HARDWARE SERIAL] -> Arduino ({cls._connected_port_name}): {line.strip()}")
+                logger.info(f"[HARDWARE SERIAL] -> Arduino ({cls._connected_port_name}): {line.strip()}")
                 return True
         except Exception as e:
-            print(f"[HARDWARE SERIAL ERROR] Error enviando a Arduino: {e}")
+            logger.error(f"Error enviando a Arduino: {e}")
             cls._serial_port = None
             cls._connected_port_name = None
             return False
@@ -88,13 +88,13 @@ class HardwareService:
         try:
             if request and hasattr(request, 'app') and hasattr(request.app, 'mqtt_client'):
                 request.app.mqtt_client.publish(topic, json.dumps(payload))
-                print(f"[HARDWARE MQTT] Publicado en {topic}: {payload.get('command')} gate={payload.get('gate')} method={payload.get('method')}")
+                logger.info(f"Publicado en {topic}: {payload.get('command')} gate={payload.get('gate')} method={payload.get('method')}")
             else:
                 from core.mqtt import mqtt_client
                 mqtt_client.publish(topic, json.dumps(payload))
-                print(f"[HARDWARE MQTT] Publicado directo en {topic}: {payload.get('command')} gate={payload.get('gate')}")
+                logger.info(f"Publicado directo en {topic}: {payload.get('command')} gate={payload.get('gate')}")
         except Exception as e:
-            print(f"[HARDWARE MQTT ERROR] No se pudo publicar MQTT: {e}")
+            logger.error(f"No se pudo publicar MQTT: {e}")
 
     @classmethod
     def trigger_barrier(

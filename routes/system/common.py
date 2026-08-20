@@ -5,6 +5,9 @@ from typing import Dict, List
 from fastapi import WebSocket
 from pydantic import BaseModel
 import models
+from core.logger import get_logger
+
+logger = get_logger("SystemCommon")
 
 CAMERA_PROCESSES: Dict[str, subprocess.Popen] = {}
 ALPR_HEARTBEATS = {}
@@ -23,7 +26,7 @@ def stop_all_cameras():
                     subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
                     proc.terminate()
-            print(f"[System] Cámara {gate_id} detenida correctamente.")
+            logger.info(f"Cámara {gate_id} detenida correctamente.")
         except Exception:
             pass
     CAMERA_PROCESSES.clear()
@@ -49,7 +52,7 @@ class ConnectionManager:
             user_branch_norm = normalize_system_name(user.sucursal)
             
             if branch_prefix and user_branch_norm and branch_prefix != user_branch_norm:
-                print(f"[WS Auth] Bloqueado: Usuario de {user_branch_norm} intentó ver {branch_prefix}")
+                logger.warning(f"Bloqueado: Usuario de {user_branch_norm} intentó ver {branch_prefix}")
                 await websocket.close(code=4003)
                 return False
 

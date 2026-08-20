@@ -3,12 +3,15 @@ import time
 import datetime
 from core.database import SessionLocal
 from core.config import settings
+from core.logger import get_logger
 from services.reservation_service import ReservationService
 from services.user_notification_service import UserNotificationService
 from services.email_service import EmailService
 from services.time_service import TimeService
 import models
 from models.enums import PaymentStatus, ReservationStatus, AccessEventType
+
+logger = get_logger("WorkerService")
 
 NOTIFICATION_CHECK_INTERVAL = 30  # SEGUNDOS
 
@@ -30,7 +33,7 @@ class WorkerService:
     @staticmethod
     def _reservation_cleanup_worker():
         """HILO DE FONDO QUE LIMPIA Y FINALIZA RESERVAS PERIODICAMENTE."""
-        print("[SYSTEM] Hilo de mantenimiento de reservas iniciado.")
+        logger.info("Hilo de mantenimiento de reservas iniciado.")
         while True:
             db = None
             try:
@@ -38,7 +41,7 @@ class WorkerService:
                 ReservationService.cleanup_overdue_reservations(db)
                 ReservationService.auto_finalize_all_reservations(db)
             except Exception as e:
-                print(f"[ERROR] En el trabajador de reservas: {e}")
+                logger.error(f"En el trabajador de reservas: {e}")
             finally:
                 if db:
                     try:
@@ -50,7 +53,7 @@ class WorkerService:
     @staticmethod
     def _notification_worker():
         """HILO DE FONDO QUE MANEJA RECORDATORIOS Y CANCELACION AUTOMATICA."""
-        print("[SYSTEM] Hilo de notificaciones de reservas iniciado.")
+        logger.info("Hilo de notificaciones de reservas iniciado.")
         while True:
             db = None
             try:
@@ -59,7 +62,7 @@ class WorkerService:
                 WorkerService._process_started_reservations(db)
                 WorkerService._process_auto_cancellations(db)
             except Exception as e:
-                print(f"[ERROR] En el trabajador de notificaciones: {e}")
+                logger.error(f"En el trabajador de notificaciones: {e}")
             finally:
                 if db:
                     try:
@@ -123,9 +126,9 @@ class WorkerService:
                     "pagada": pagada
                 }
                 EmailService.send_reservation_reminder(user.email, user.nombre, res_data)
-                print(f"[NOTIF] Recordatorio enviado a {user.email} para reserva #{res.id}")
+                logger.info(f"Recordatorio enviado a {user.email} para reserva #{res.id}")
             except Exception as e:
-                print(f"[ERROR NOTIF] Procesando recordatorio reserva #{res.id}: {e}")
+                logger.error(f"Procesando recordatorio reserva #{res.id}: {e}")
 
     @staticmethod
     def _process_started_reservations(db):
@@ -172,9 +175,9 @@ class WorkerService:
                 UserNotificationService.create_notification(
                     db, user.id, "RESERVATION_STARTED", titulo, mensaje, res.id
                 )
-                print(f"[NOTIF] Aviso de inicio enviado para reserva #{res.id}")
+                logger.info(f"Aviso de inicio enviado para reserva #{res.id}")
             except Exception as e:
-                print(f"[ERROR NOTIF] Procesando inicio de reserva #{res.id}: {e}")
+                logger.error(f"Procesando inicio de reserva #{res.id}: {e}")
 
     @staticmethod
     def _process_auto_cancellations(db):
@@ -228,6 +231,6 @@ class WorkerService:
                     }
                     EmailService.send_auto_cancelled_notification(user.email, user.nombre, res_data)
 
-                print(f"[NOTIF] Reserva #{res.id} cancelada automaticamente por falta de pago/ingreso")
+                logger.info(f"Reserva #{res.id} cancelada automaticamente por falta de pago/ingreso")
             except Exception as e:
-                print(f"[ERROR NOTIF] Cancelando reserva #{res.id}: {e}")
+                logger.error(f"Cancelando reserva #{res.id}: {e}")

@@ -6,7 +6,10 @@ from sqlalchemy import func
 import models
 from core.database import get_db
 from core.security import get_operational_user
+from core.logger import get_logger
 from services.user_notification_service import UserNotificationService
+
+logger = get_logger("AdminOps")
 
 router = APIRouter()
 
@@ -104,11 +107,11 @@ def manual_entry(plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, 
         from services.access_service import normalize_name as _normalize_name
         from services.hardware_service import HardwareService
         norm = _normalize_name(sucursal)
-        print(f"[ADMIN OPS] Notificando cambio de aforo (manual entry) para sucursal={sucursal} norm={norm}")
+        logger.info(f"Notificando cambio de aforo (manual entry) para sucursal={sucursal} norm={norm}")
         NotificationService.notify_occupancy_change(db, norm)
         HardwareService.trigger_barrier("ENTRADA", "OPEN", method="MANUAL_ENTRY", details={"plate": p, "sucursal": sucursal}, request=request)
     except Exception as e:
-        print(f"[ADMIN OPS] Error notifying occupancy/hardware: {e}")
+        logger.error(f"Error notifying occupancy/hardware: {e}")
     return {"status": "ok", "message": f"Ingreso manual registrado en {floor.nombre if floor else 'Planta Baja'}: {p} ({tipo_vehiculo})"}
 
 @router.post("/manual-exit")
@@ -172,11 +175,11 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         from services.access_service import normalize_name as _normalize_name
         from services.hardware_service import HardwareService
         norm = _normalize_name(sucursal)
-        print(f"[ADMIN OPS] Notificando cambio de aforo (manual exit) para sucursal={sucursal} norm={norm}")
+        logger.info(f"Notificando cambio de aforo (manual exit) para sucursal={sucursal} norm={norm}")
         NotificationService.notify_occupancy_change(db, norm)
         HardwareService.trigger_barrier("SALIDA", "OPEN", method="MANUAL_EXIT", details={"plate": p, "sucursal": sucursal}, request=request)
     except Exception as e:
-        print(f"[ADMIN OPS] Error notifying occupancy/hardware: {e}")
+        logger.error(f"Error notifying occupancy/hardware: {e}")
 
     msg = f"Salida manual registrada en {sucursal or 'Global'}: {p}" + (" (Cortesía)" if dentro_cortesia else "")
     return {"status": "ok", "message": msg}

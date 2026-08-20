@@ -2,14 +2,8 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from typing import List, Optional
 import models, schemas
-import datetime
-import unicodedata
-
-def normalize_branch_name(text: str) -> str:
-    if not text:
-        return ""
-    text = text.upper().replace("AUTOPASS ", "").strip()
-    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+from core.time import utcnow
+from core.normalize import normalize_branch_name
 
 class SupportService:
 
@@ -61,7 +55,7 @@ class SupportService:
             ticket_id=ticket.id,
             user_id=user.id,
             mensaje=ticket_data.mensaje,
-            created_at=datetime.datetime.utcnow()
+            created_at=utcnow()
         )
         db.add(msg)
         db.commit()
@@ -158,7 +152,7 @@ class SupportService:
                 ticket_id=ticket.id,
                 user_id=current_user.id,
                 mensaje=respuesta,
-                created_at=datetime.datetime.utcnow()
+                created_at=utcnow()
             )
             db.add(msg)
 
@@ -219,7 +213,7 @@ class SupportService:
             ticket_id=ticket.id,
             user_id=user_id,
             mensaje=mensaje,
-            created_at=datetime.datetime.utcnow()
+            created_at=utcnow()
         )
         db.add(msg)
         ticket.user_response = mensaje

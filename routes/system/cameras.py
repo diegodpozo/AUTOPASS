@@ -8,7 +8,10 @@ import models
 import schemas
 from core.database import get_db
 from core.security import get_operational_user
+from core.logger import get_logger
 from routes.system.common import CAMERA_PROCESSES, CameraConfig, normalize_system_name
+
+logger = get_logger("Cameras")
 
 router = APIRouter()
 
@@ -76,8 +79,8 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
         env["BACKEND_URL"] = base_url
         
         try:
-            print(f"[*] Iniciando ALPR para {gate_id} con fuente: {source}")
-            print(f"[*] Backend URL inyectada: {base_url}")
+            logger.info(f"Iniciando ALPR para {gate_id} con fuente: {source}")
+            logger.info(f"Backend URL inyectada: {base_url}")
             proc = subprocess.Popen(
                 [sys.executable, "alpr_service.py"],
                 env=env,
@@ -241,7 +244,7 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
         env["BACKEND_URL"] = base_url
         
         try:
-            print(f"[*] Iniciando ALPR para {camera.nombre} ({proc_id}) con fuente: {camera.source}")
+            logger.info(f"Iniciando ALPR para {camera.nombre} ({proc_id}) con fuente: {camera.source}")
             proc = subprocess.Popen(
                 [sys.executable, "alpr_service.py"],
                 env=env,

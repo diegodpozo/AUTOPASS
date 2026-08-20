@@ -4,6 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from core.config import settings
+from core.logger import setup_logging, get_logger
+
+setup_logging()
+logger = get_logger("System")
 from core.database import engine, init_db
 from core.mqtt import mqtt_client
 from services.worker_service import WorkerService
@@ -61,13 +65,13 @@ async def startup_event():
             alembic_cfg = AlembicConfig("alembic.ini")
             try:
                 AlembicCommand.upgrade(alembic_cfg, "head")
-                print("[System] Migraciones Alembic aplicadas correctamente.")
+                logger.info("Migraciones Alembic aplicadas correctamente.")
             except Exception:
                 # Tablas ya existen de init_db(); stamp version y seguir
                 AlembicCommand.stamp(alembic_cfg, "head")
-                print("[System] Migraciones stamp (tablas ya existían).")
+                logger.info("Migraciones stamp (tablas ya existían).")
         except Exception as alembic_err:
-            print(f"[System] Migraciones Alembic omitidas: {alembic_err}")
+            logger.warning(f"Migraciones Alembic omitidas: {alembic_err}")
 
         init_db()
         
@@ -76,12 +80,12 @@ async def startup_event():
         WorkerService.start_notification_worker()
         
     except Exception as e: 
-        print(f"Error en fase de inicio (MQTT/DB): {e}")
+        logger.error(f"Error en fase de inicio (MQTT/DB): {e}")
 
 @app.on_event("shutdown")
 def shutdown_event():
     """LIMPIEZA DE RECURSOS AL APAGAR EL SERVIDOR."""
-    print("[System] Apagando servidor, limpiando recursos...")
+    logger.info("Apagando servidor, limpiando recursos...")
     stop_all_cameras()
 
 # --- REGISTRO DE RUTAS ---

@@ -8,7 +8,10 @@ import models
 from core.database import get_db
 from core.security import get_operational_user, decode_access_token
 from core.config import settings
+from core.logger import get_logger
 from routes.system.common import manager
+
+logger = get_logger("VideoWS")
 
 router = APIRouter()
 
@@ -26,25 +29,25 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
             pass
 
     if not user:
-        print(f"[WS] Nodo ALPR conectado: {camera_id}")
+        logger.info(f"Nodo ALPR conectado: {camera_id}")
         await websocket.accept()
         try:
             while True:
                 data = await websocket.receive_text()
                 await manager.broadcast_frame(camera_id, data)
         except WebSocketDisconnect:
-            print(f"[WS] Nodo ALPR desconectado: {camera_id}")
+            logger.info(f"Nodo ALPR desconectado: {camera_id}")
         except Exception as e:
-            print(f"[WS] Error en nodo ALPR {camera_id}: {e}")
+            logger.error(f"Error en nodo ALPR {camera_id}: {e}")
     else:
-        print(f"[WS] Espectador conectado: {user.email} -> {camera_id}")
+        logger.info(f"Espectador conectado: {user.email} -> {camera_id}")
         success = await manager.connect(websocket, camera_id, user)
         if success:
             try:
                 while True:
                     await websocket.receive_text()
             except WebSocketDisconnect:
-                print(f"[WS] Espectador desconectado: {user.email} -> {camera_id}")
+                logger.info(f"Espectador desconectado: {user.email} -> {camera_id}")
                 manager.disconnect(websocket, camera_id)
 
 @router.post("/update-frame/{camera_id}")

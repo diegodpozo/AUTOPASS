@@ -1,7 +1,10 @@
 import datetime
 import models
 from core.security import get_password_hash
+from core.logger import get_logger
 from sqlalchemy.orm import Session
+
+logger = get_logger("Seed")
 
 # --- DATOS DE USUARIOS INICIALES ---
 INITIAL_USERS = [
@@ -61,13 +64,13 @@ INITIAL_PROMOS = [
 
 def seed_initial_data(db: Session):
     """ORQUESTADOR DE SEEDING PARA DATOS MAESTROS."""
-    print("[*] Iniciando proceso de Seeding...")
+    logger.info("Iniciando proceso de Seeding...")
     
     # 1. USUARIOS
     for u_data in INITIAL_USERS:
         exists = db.query(models.User).filter(models.User.email == u_data["email"]).first()
         if not exists:
-            print(f"    - Creando {u_data['rol'].upper()}: {u_data['email']}")
+            logger.info(f"Creando {u_data['rol'].upper()}: {u_data['email']}")
             db.add(models.User(
                 nombre=u_data["nombre"],
                 apellido=u_data["apellido"],
@@ -83,12 +86,12 @@ def seed_initial_data(db: Session):
         else:
             if "." in (exists.dni or ""):
                 exists.dni = exists.dni.replace(".", "")
-                print(f"    - Normalizando DNI: {exists.email}")
+                logger.info(f"Normalizando DNI: {exists.email}")
 
     #2. AFORO GLOBAL
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == None).first()
     if not aforo:
-        print("    - Inicializando capacidad global")
+        logger.info("Inicializando capacidad global")
         db.add(models.ParkingAforo(
             capacidad_total=20,
             ocupacion_actual=0,
@@ -111,7 +114,7 @@ def seed_initial_data(db: Session):
 
     # 4. PROMOCIONES
     if db.query(models.Promotion).count() == 0:
-        print("    - Cargando catálogo de beneficios")
+        logger.info("Cargando catálogo de beneficios")
         for p in INITIAL_PROMOS:
             db.add(models.Promotion(**p))
 
@@ -124,7 +127,7 @@ def seed_initial_data(db: Session):
             {"nombre": "AUTOPASS Morón", "direccion": "Av. J. M. de Rosas 658, Morón", "telefono": "11 4567-8903", "horario": "07:00 a 00:00", "is_24h": False, "latitude": -34.6508, "longitude": -58.6228}
         ]
         for s in red_inicial:
-            print(f"    - Agregando sucursal: {s['nombre']}")
+            logger.info(f"Agregando sucursal: {s['nombre']}")
             db.add(models.ParkingBranch(**s, logo_url="/static/images/logo.png"))
     else:
         # PARCHES PARA DATOS EXISTENTES
@@ -139,4 +142,4 @@ def seed_initial_data(db: Session):
             db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre, models.ParkingBranch.latitude == None).update({models.ParkingBranch.latitude: lat, models.ParkingBranch.longitude: lng})
 
     db.commit()
-    print("[OK] Seeding completado.\n")
+    logger.info("Seeding completado.")

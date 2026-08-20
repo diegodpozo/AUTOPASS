@@ -8,15 +8,13 @@ from fastapi import Request
 import models
 import schemas
 from core.config import settings
+from core.logger import get_logger
 from models.enums import VehicleType, AccessEventType, ReservationStatus, PaymentStatus
 from services.notification_service import NotificationService
 from services.time_service import TimeService
-import unicodedata
+from core.normalize import normalize_name
 
-def normalize_name(text: str):
-    if not text: return ""
-    text = text.upper().replace("AUTOPASS ", "").strip()
-    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+logger = get_logger("AccessService")
 
 class AccessService:
     @staticmethod
@@ -43,7 +41,7 @@ class AccessService:
         from routes.parking.utils import normalize_plate
         # Log request for debugging ALPR integration
         try:
-            print(f"[ACCESS SERVICE] validate_plate called. gate_id={getattr(data, 'gate_id', None)} plate_present={'plate' in data.__dict__}")
+            logger.debug(f"validate_plate called. gate_id={getattr(data, 'gate_id', None)} plate_present={'plate' in data.__dict__}")
         except Exception:
             pass
         p = normalize_plate(data.plate)
@@ -144,7 +142,7 @@ class AccessService:
             sucursal=sucursal
         ))
         db.commit()
-        print(f"[ACCESS SERVICE] Notificando cambio de aforo para sucursal={sucursal}")
+        logger.info(f"Notificando cambio de aforo para sucursal={sucursal}")
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
         from services.hardware_service import HardwareService
@@ -215,7 +213,7 @@ class AccessService:
         from routes.parking.utils import normalize_plate
         # Log request for debugging QR integration
         try:
-            print(f"[ACCESS SERVICE] validate_qr called. gate_id={getattr(data, 'gate_id', None)} qr_len={len(getattr(data, 'qr_data',''))}")
+            logger.debug(f"validate_qr called. gate_id={getattr(data, 'gate_id', None)} qr_len={len(getattr(data, 'qr_data',''))}")
         except Exception:
             pass
         try:
@@ -321,7 +319,7 @@ class AccessService:
                     sucursal=sucursal
                 ))
                 db.commit()
-                print(f"[ACCESS SERVICE] Notificando cambio de aforo (QR) para sucursal={sucursal}")
+                logger.info(f"Notificando cambio de aforo (QR) para sucursal={sucursal}")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 from services.hardware_service import HardwareService
@@ -352,7 +350,7 @@ class AccessService:
                     sucursal=sucursal
                 ))
                 db.commit()
-                print(f"[ACCESS SERVICE] Notificando cambio de aforo (QR SALIDA) para sucursal={sucursal}")
+                logger.info(f"Notificando cambio de aforo (QR SALIDA) para sucursal={sucursal}")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 from services.hardware_service import HardwareService
