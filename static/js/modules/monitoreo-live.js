@@ -8,6 +8,7 @@ import { formatPlate, normalizeSystemName } from './utils.js';
 let camerasList = [];
 let activeWebSockets = {};
 let wsGeneral = null;
+let okTimers = {};
 
 export function initMonitoreoLive() {
     const token = localStorage.getItem('token');
@@ -150,6 +151,7 @@ function renderActiveSlot(box, slotId, cam) {
                 <span>${cameraLabel}</span>
             </div>
             <img id="img-${cam.id}" class="cctv-video-feed" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+            <div class="cctv-status idle" id="status-${cam.id}">ÚLTIMA DETECCIÓN</div>
             <div class="cctv-scanlines"></div>
             <div class="cctv-hover-actions">
                 <button class="cctv-btn danger" onclick="toggleCamera(${cam.id}, 'stop')" title="Detener Cámara">
@@ -204,6 +206,11 @@ function connectCameraWebSocket(cam) {
             if (!img.classList.contains('loaded')) {
                 img.classList.add('loaded');
             }
+        }
+        const statusEl = document.getElementById(`status-${cam.id}`);
+        if (statusEl && !statusEl.classList.contains('ok')) {
+            statusEl.className = 'cctv-status reading';
+            statusEl.innerText = 'LEYENDO...';
         }
     };
     
@@ -272,22 +279,21 @@ async function loadLatestDetections() {
             if (lastQR) text = `QR: ${formatPlate(lastQR.patente_detectada)}`;
         }
 
+        const statusEl = document.getElementById(`status-${cam.id}`);
+        if (!statusEl) return;
+
         if (text) {
-            const plateDiv = document.createElement('div');
-            plateDiv.className = 'cctv-plate-hud';
-            plateDiv.style.position = 'absolute';
-            plateDiv.style.bottom = '12px';
-            plateDiv.style.left = '12px';
-            plateDiv.style.background = 'rgba(0, 0, 0, 0.8)';
-            plateDiv.style.border = '1px solid #C5A059';
-            plateDiv.style.padding = '2px 8px';
-            plateDiv.style.fontSize = '0.75rem';
-            plateDiv.style.color = '#C5A059';
-            plateDiv.style.zIndex = '15';
-            plateDiv.style.pointerEvents = 'none';
-            plateDiv.innerText = `LAST DETECT: ${text}`;
-            
-            box.appendChild(plateDiv);
+            statusEl.className = 'cctv-status ok';
+            statusEl.innerText = `LECTURA OK..! ${text}`;
+
+            if (okTimers[cam.id]) clearTimeout(okTimers[cam.id]);
+            okTimers[cam.id] = setTimeout(() => {
+                const el = document.getElementById(`status-${cam.id}`);
+                if (el && el.classList.contains('ok')) {
+                    el.className = 'cctv-status idle';
+                    el.innerText = `ÚLTIMA DETECCIÓN: ${text}`;
+                }
+            }, 8000);
         }
     });
 }
