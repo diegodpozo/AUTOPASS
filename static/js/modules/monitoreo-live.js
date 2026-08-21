@@ -9,6 +9,7 @@ let camerasList = [];
 let activeWebSockets = {};
 let wsGeneral = null;
 let okTimers = {};
+let lastEventData = null;
 
 export function initMonitoreoLive() {
     const token = localStorage.getItem('token');
@@ -304,11 +305,48 @@ function connectGeneralWS() {
     const wsUrl = `${protocol}//${window.location.host}/v1/parking/ws?token=${token}`;
     
     wsGeneral = new WebSocket(wsUrl);
-    wsGeneral.onmessage = () => {
+    wsGeneral.onmessage = (event) => {
+        try {
+            const msg = JSON.parse(event.data);
+            if (msg.data && msg.data.last_event) {
+                lastEventData = msg.data.last_event;
+                showLastEventOnCameras();
+            }
+        } catch (e) {}
         loadLatestDetections();
     };
 
     wsGeneral.onclose = () => {
         setTimeout(connectGeneralWS, 5000);
     };
+}
+
+function showLastEventOnCameras() {
+    if (!lastEventData) return;
+
+    const { type, plate, message, status } = lastEventData;
+    const isOk = status === 'ok';
+
+    camerasList.forEach((cam, idx) => {
+        const slotId = idx + 1;
+        const box = document.getElementById(`cctv-slot-${slotId}`);
+        if (!box) return;
+
+        let eventLine = box.querySelector('.cctv-event-line');
+        if (!eventLine) {
+            eventLine = document.createElement('div');
+            eventLine.className = 'cctv-event-line';
+            box.appendChild(eventLine);
+        }
+
+        eventLine.className = `cctv-event-line ${isOk ? 'event-ok' : 'event-error'}`;
+        const icon = isOk ? '&#10003;' : '&#10007;';
+        eventLine.innerHTML = `<span class="event-icon">${icon}</span> ${message}`;
+
+        if (eventLine._hideTimer) clearTimeout(eventLine._hideTimer);
+        eventLine.style.opacity = '1';
+        eventLine._hideTimer = setTimeout(() => {
+            eventLine.style.opacity = '0';
+        }, 5000);
+    });
 }

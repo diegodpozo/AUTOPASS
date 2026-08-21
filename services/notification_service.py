@@ -1,4 +1,5 @@
 import asyncio
+import time
 from sqlalchemy.orm import Session
 from typing import Optional
 from core.logger import get_logger
@@ -8,6 +9,7 @@ logger = get_logger("NotificationService")
 class NotificationService:
     _occupancy_manager = None
     _loop = None
+    _last_events = {}
 
     @classmethod
     def set_occupancy_manager(cls, manager):
@@ -17,6 +19,25 @@ class NotificationService:
     def set_event_loop(cls, loop):
         """Registra el event loop principal para permitir notificaciones desde hilos sincrónicos."""
         cls._loop = loop
+
+    @classmethod
+    def set_last_event(cls, sucursal_norm: str, event_type: str, plate: str, message: str, status: str = "ok"):
+        """Almacena el último evento de detección para una sucursal."""
+        cls._last_events[sucursal_norm] = {
+            "type": event_type,
+            "plate": plate,
+            "message": message,
+            "status": status,
+            "timestamp": time.time()
+        }
+
+    @classmethod
+    def get_last_event(cls, sucursal_norm: str) -> Optional[dict]:
+        """Obtiene el último evento de detección para una sucursal."""
+        ev = cls._last_events.get(sucursal_norm)
+        if ev and (time.time() - ev["timestamp"]) < 10:
+            return ev
+        return None
 
     @classmethod
     def notify_occupancy_change(cls, db: Session = None, sucursal_norm: Optional[str] = None):

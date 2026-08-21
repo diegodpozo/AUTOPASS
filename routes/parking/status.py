@@ -132,7 +132,7 @@ class OccupancyManager:
                     break
             
             if not a:
-                return {"type": "BRANCH_UPDATE", "data": {"capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20, "capacidad_motos": 10, "ocupacion_motos": 0, "disponibilidad_motos": 10, "capacidad_camionetas": 5, "ocupacion_camionetas": 0, "disponibilidad_camionetas": 5}}
+                return {"type": "BRANCH_UPDATE", "data": {"capacidad_total": 20, "ocupacion_actual": 0, "disponibilidad": 20, "capacidad_motos": 10, "ocupacion_motos": 0, "disponibilidad_motos": 10, "capacidad_camionetas": 5, "ocupacion_camionetas": 0, "disponibilidad_camionetas": 5, "last_event": NotificationService.get_last_event(sucursal_norm)}}
             
             cap_total = a.capacidad_total
             occ_total = a.ocupacion_actual
@@ -152,7 +152,8 @@ class OccupancyManager:
                 "ocupacion_camionetas": occ_camionetas,
                 "disponibilidad": cap_total - occ_total,
                 "disponibilidad_motos": cap_motos - occ_motos,
-                "disponibilidad_camionetas": cap_camionetas - occ_camionetas
+                "disponibilidad_camionetas": cap_camionetas - occ_camionetas,
+                "last_event": NotificationService.get_last_event(sucursal_norm)
             }
         }
 
