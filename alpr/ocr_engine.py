@@ -61,12 +61,14 @@ class ALPREngine:
         while self.is_running:
             try:
                 frame = self.frame_queue.get(timeout=1)
+                t_start = time.time()
                 print(f"[ALPR OCR] Frame recibido, procesando...")
 
                 qr_data, _, _ = self.qr_detector.detectAndDecode(frame)
                 if qr_data:
                     qr_text = qr_data[0] if isinstance(qr_data, (list, tuple)) and len(qr_data) > 0 else str(qr_data)
-                    print(f"[ALPR OCR] QR detectado: {qr_text[:80]}")
+                    elapsed = time.time() - t_start
+                    print(f"[ALPR OCR] QR detectado: {qr_text[:80]} ({elapsed:.2f}s)")
                     self.send_event("qr", qr_text, frame)
                     time.sleep(1)
                     continue
@@ -75,11 +77,12 @@ class ALPREngine:
                 main_roi = frame[int(h*0.15):int(h*0.92), int(w*0.05):int(w*0.95)]
 
                 texts, scores, polys = self._ocr_single_roi(main_roi)
+                t_ocr = time.time() - t_start
 
                 if texts:
-                    print(f"[ALPR OCR] {len(texts)} textos detectados: {texts}")
+                    print(f"[ALPR OCR] {len(texts)} textos detectados: {texts} (OCR: {t_ocr:.2f}s)")
                 else:
-                    print(f"[ALPR OCR] Nada detectado en frame")
+                    print(f"[ALPR OCR] Nada detectado en frame (OCR: {t_ocr:.2f}s)")
                     continue
 
                 detections = []
@@ -140,7 +143,7 @@ class ALPREngine:
                     print(f"[ALPR] Rechazada: '{plate}' (largo/formato inválido)")
                     continue
 
-                print(f"[ALPR] Patente detectada: {plate} (Conf: {avg_conf:.2f}) [PaddleOCR]")
+                print(f"[ALPR] Patente detectada: {plate} (Conf: {avg_conf:.2f}) [PaddleOCR] ({t_ocr:.2f}s OCR + {(time.time()-t_start-t_ocr):.2f}s post)")
 
                 now = time.time()
                 self.vote_buffer.append((plate, avg_conf, now))
@@ -189,6 +192,7 @@ class ALPREngine:
 
     def _dispatch_request(self, type, data, frame):
         """Codifica el frame y envia la peticion HTTP al backend."""
+        t_dispatch = time.time()
         try:
             _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             img_b64 = base64.b64encode(buffer).decode('utf-8')
@@ -200,17 +204,19 @@ class ALPREngine:
             payload = {"gate_id": GATE_ID, "image_base64": img_b64, payload_key: data}
             try:
                 resp = requests.post(f"{BACKEND_URL}{endpoint}", json=payload, timeout=5)
+                elapsed = time.time() - t_dispatch
                 if resp.ok:
                     msg = resp.json().get("message", "")
                     if "bienvenido" in msg.lower():
-                        print(f"[OK] Ingreso: Bienvenido {data}!")
+                        print(f"[OK] Ingreso: Bienvenido {data}! (backend: {elapsed:.2f}s)")
                     elif "hasta luego" in msg.lower() or "salida" in msg.lower():
-                        print(f"[OK] Salida: Hasta luego {data}!")
+                        print(f"[OK] Salida: Hasta luego {data}! (backend: {elapsed:.2f}s)")
                     else:
-                        print(f"[OK] {msg}")
+                        print(f"[OK] {msg} (backend: {elapsed:.2f}s)")
                 else:
-                    print(f"[ERROR] {resp.status_code}: {resp.text[:200]}")
+                    print(f"[ERROR] {resp.status_code}: {resp.text[:200]} (backend: {elapsed:.2f}s)")
             except Exception as re:
-                print(f"[ALPR ERROR] Error enviando peticion al backend: {type(re).__name__} - {re}")
+                elapsed = time.time() - t_dispatch
+                print(f"[ALPR ERROR] Error enviando peticion al backend: {type(re).__name__} - {re} (backend: {elapsed:.2f}s)")
         except Exception as e:
             print(f"[ALPR ERROR] Error preparando/serializando frame: {type(e).__name__} - {e}")
