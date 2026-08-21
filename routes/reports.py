@@ -61,3 +61,12 @@ def get_reports_access(
 ):
     """Consulta el historial de eventos ALPR delegando en ReportService."""
     return ReportService.get_access_logs(db=db, staff=staff, patente=patente)
+
+@router.get("/ocr-stats")
+def get_ocr_stats(
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    staff: models.User = Depends(get_operational_user)
+):
+    """Estadísticas de tiempos de procesamiento OCR."""
+    return ReportService.get_ocr_stats(db=db, staff=staff, limit=limit)

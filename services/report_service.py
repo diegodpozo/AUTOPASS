@@ -319,3 +319,43 @@ class ReportService:
         if patente:
             q = q.filter(models.AccessLog.patente_detectada.like(f"%{patente.upper()}%"))
         return q.order_by(models.AccessLog.id.desc()).all()
+
+    @classmethod
+    def get_ocr_stats(cls, db: Session, staff: models.User, limit: int = 100) -> dict:
+        """Estadísticas de tiempos de procesamiento OCR."""
+        q = db.query(models.AccessLog).filter(models.AccessLog.ocr_time.isnot(None))
+        if str(staff.rol) != UserRole.ADMIN.value:
+            target_name = staff.sucursal.replace('AUTOPASS ', '').strip()
+            q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+        
+        logs = q.order_by(models.AccessLog.id.desc()).limit(limit).all()
+        
+        ocr_times = [l.ocr_time for l in logs if l.ocr_time is not None]
+        
+        if not ocr_times:
+            return {"logs": [], "stats": {"count": 0, "avg_ocr": 0, "min_ocr": 0, "max_ocr": 0, "p90_ocr": 0}}
+        
+        sorted_times = sorted(ocr_times)
+        p90_idx = int(len(sorted_times) * 0.9)
+
+        bt_times = [l.backend_time for l in logs if l.backend_time is not None]
+
+        return {
+            "logs": [{
+                "id": l.id,
+                "patente": l.patente_detectada,
+                "tipo_evento": l.tipo_evento,
+                "fecha_hora": l.fecha_hora,
+                "ocr_time": round(l.ocr_time, 3) if l.ocr_time else None,
+                "backend_time": round(l.backend_time, 3) if l.backend_time else None,
+                "sucursal": l.sucursal
+            } for l in logs],
+            "stats": {
+                "count": len(ocr_times),
+                "avg_ocr": round(sum(ocr_times) / len(ocr_times), 3),
+                "min_ocr": round(min(ocr_times), 3),
+                "max_ocr": round(max(ocr_times), 3),
+                "p90_ocr": round(sorted_times[p90_idx], 3) if p90_idx < len(sorted_times) else round(sorted_times[-1], 3),
+                "avg_backend": round(sum(bt_times) / len(bt_times), 3) if bt_times else 0
+            }
+        }

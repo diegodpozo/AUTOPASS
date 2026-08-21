@@ -5,6 +5,8 @@ class PlateValidation(BaseModel):
     plate: str
     gate_id: str
     image_base64: Optional[str] = None
+    ocr_time: Optional[float] = None
+    backend_time: Optional[float] = None
 
 class QRValidation(BaseModel):
     qr_data: str

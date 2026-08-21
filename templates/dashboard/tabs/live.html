@@ -206,6 +206,56 @@
                 </div>
             </div>
 
+            <!-- PANEL ESTADÍSTICAS OCR -->
+            <div class="card mt-10">
+                <div class="card-header-premium" style="padding: 15px 20px;">
+                    <div class="header-info-group">
+                        <div class="header-icon" style="font-size: 0.9rem;"><i class="fas fa-microchip"></i></div>
+                        <div class="header-text">
+                            <h3 style="font-size: 0.85rem;">ESTADÍSTICAS OCR</h3>
+                        </div>
+                    </div>
+                    <button class="btn btn-premium sm" onclick="loadOcrStats()" style="font-size: 0.65rem; padding: 5px 12px;" title="Actualizar estadísticas">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div style="padding: 15px 20px; background: rgba(0,0,0,0.1);">
+                    <div id="ocr-stats-summary" style="display: flex; gap: 10px; margin-bottom: 12px;">
+                        <div style="flex: 1; text-align: center; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 700;">PROMEDIO</div>
+                            <div id="ocr-avg" style="font-size: 1.1rem; font-weight: 900; color: var(--dorado); margin-top: 4px;">--</div>
+                        </div>
+                        <div style="flex: 1; text-align: center; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 700;">MÍNIMO</div>
+                            <div id="ocr-min" style="font-size: 1.1rem; font-weight: 900; color: #10b981; margin-top: 4px;">--</div>
+                        </div>
+                        <div style="flex: 1; text-align: center; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 700;">MÁXIMO</div>
+                            <div id="ocr-max" style="font-size: 1.1rem; font-weight: 900; color: #ef4444; margin-top: 4px;">--</div>
+                        </div>
+                        <div style="flex: 1; text-align: center; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 700;">P90</div>
+                            <div id="ocr-p90" style="font-size: 1.1rem; font-weight: 900; color: #f59e0b; margin-top: 4px;">--</div>
+                        </div>
+                    </div>
+                    <div style="max-height: 250px; overflow-y: auto;">
+                        <table style="width: 100%; font-size: 0.65rem;">
+                            <thead>
+                                <tr style="color: #888; text-transform: uppercase; font-weight: 700;">
+                                    <th style="padding: 4px 0; text-align: left;">Hora</th>
+                                    <th style="padding: 4px 0; text-align: left;">Patente</th>
+                                    <th style="padding: 4px 0; text-align: left;">Tipo</th>
+                                    <th style="padding: 4px 0; text-align: right;">OCR (s)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ocr-stats-body">
+                                <tr><td colspan="4" style="text-align: center; color: #666; padding: 10px;">Sin datos aún</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
