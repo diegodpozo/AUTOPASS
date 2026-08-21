@@ -11,7 +11,7 @@ def run_alpr_service():
     """Ejecuta el ciclo principal del servicio ALPR."""
     print(f"[*] Iniciando VideoStreamer con fuente: {VIDEO_SOURCE}")
     try:
-        streamer = VideoStreamer(VIDEO_SOURCE, target_width=640).start()
+        streamer = VideoStreamer(VIDEO_SOURCE, target_width=1280).start()
     except Exception as e:
         print(f"[!] Error FATAL al iniciar VideoStreamer: {e}")
         return

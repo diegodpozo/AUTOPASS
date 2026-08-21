@@ -12,10 +12,14 @@ class ImagePreprocessor:
         if not is_mercosur:
             if re.match(r'^[A-Z]{3}\d{3}$', plate):
                 return "ARGENTINA (Antigua)"
+            if re.match(r'^[A-Z]{2}\d{3}$', plate):
+                return "ARGENTINA (Moto Antigua)"
             return "DESCONOCIDO"
         
         if re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$', plate):
             return "ARGENTINA (Mercosur)"
+        if re.match(r'^[A-Z]{2}\d{3}[A-Z]$', plate):
+            return "ARGENTINA (Moto Mercosur)"
         if re.match(r'^[A-Z]{3}\d[A-Z]\d{2}$', plate):
             return "BRASIL"
         if re.match(r'^[A-Z]{3}\d{4}$', plate):
@@ -64,76 +68,93 @@ class ImagePreprocessor:
         return [sharpened, v2, v2_inv]
 
     @staticmethod
-    def find_plate_roi(frame, plate_cascade) -> list:
-        """Encuentra regiones de interés (ROI) donde puede ubicarse una patente."""
+    def _iou(b1, b2):
+        x0 = max(b1[0], b2[0]); y0 = max(b1[1], b2[1])
+        x1 = min(b1[2], b2[2]); y1 = min(b1[3], b2[3])
+        inter = max(0, x1-x0) * max(0, y1-y0)
+        a1 = (b1[2]-b1[0]) * (b1[3]-b1[1])
+        a2 = (b2[2]-b2[0]) * (b2[3]-b2[1])
+        union = a1 + a2 - inter
+        return inter / union if union > 0 else 0
+
+    @staticmethod
+    def _is_valid_plate_roi(crop, frame_w, frame_h):
+        ch, cw = crop.shape[:2]
+        if cw < 80 or ch < 20:
+            return False
+        if cw > frame_w * 0.85:
+            return False
+        aspect = cw / max(ch, 1)
+        return 1.5 <= aspect <= 8.0
+
+    @staticmethod
+    def find_plate_roi(frame, plate_cascade=None) -> list:
+        """Encuentra regiones de interés donde puede ubicarse una patente."""
         h, w = frame.shape[:2]
-        main_roi = frame[int(h*0.1):int(h*0.9), int(w*0.05):int(w*0.95)]
+        main_roi = frame[int(h*0.15):int(h*0.92), int(w*0.05):int(w*0.95)]
         rh, rw = main_roi.shape[:2]
         gray = cv2.cvtColor(main_roi, cv2.COLOR_BGR2GRAY)
-        
-        candidates = []
-        seen_boxes = set()
 
-        # 1) Cascada Haar
-        try:
-            plates = plate_cascade.detectMultiScale(gray, 1.1, 4)
-        except Exception:
-            plates = []
+        raw_boxes = []
 
-        for (x, y, pw, ph) in plates:
-            pad_w = int(pw*0.15)
-            pad_h = int(ph*0.2)
-            x0 = max(0, x-pad_w); y0 = max(0, y-pad_h)
-            x1 = min(rw, x+pw+pad_w); y1 = min(rh, y+ph+pad_h)
-            box = (x0, y0, x1, y1)
-            if box not in seen_boxes:
-                candidates.append(main_roi[y0:y1, x0:x1])
-                seen_boxes.add(box)
+        strip_configs = [
+            (0.55, 0.75, "strip_bottom"),
+            (0.30, 0.50, "strip_center"),
+        ]
+        SEGMENT_W = 320
+        for y_pct0, y_pct1, tag in strip_configs:
+            sy0, sy1 = int(rh*y_pct0), int(rh*y_pct1)
+            strip_h = sy1 - sy0
+            if strip_h < 20:
+                continue
+            n_segs = max(1, (rw + SEGMENT_W - 1) // SEGMENT_W)
+            seg_w = rw // n_segs
+            for i in range(n_segs):
+                sx0 = i * seg_w
+                sx1 = min(rw, sx0 + seg_w)
+                raw_boxes.append((sx0, sy0, sx1, sy1, tag))
 
-        # 2) Franjas útiles
-        try:
-            bottom_strip = main_roi[int(rh*0.55):int(rh*0.95), :]
-            cbox = (0, int(rh*0.55), rw, int(rh*0.95))
-            if cbox not in seen_boxes:
-                candidates.append(bottom_strip)
-                seen_boxes.add(cbox)
-        except Exception:
-            pass
-
-        try:
-            central_strip = main_roi[int(rh*0.3):int(rh*0.7), :]
-            cbox = (0, int(rh*0.3), rw, int(rh*0.7))
-            if cbox not in seen_boxes:
-                candidates.append(central_strip)
-                seen_boxes.add(cbox)
-        except Exception:
-            pass
-
-        # 3) Detección basada en contornos
         try:
             blur = cv2.bilateralFilter(gray, 9, 75, 75)
             edged = cv2.Canny(blur, 50, 200)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,3))
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 3))
             closed = cv2.morphologyEx(edged, cv2.MORPH_CLOSE, kernel)
             contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for cnt in contours:
                 area = cv2.contourArea(cnt)
-                if area < (rw*rh)*0.001:
+                if area < (rw * rh) * 0.001:
                     continue
                 x, y, cw, ch = cv2.boundingRect(cnt)
                 aspect = (cw / float(ch)) if ch > 0 else 0
-                if 0.6 <= aspect <= 6.0 and cw > rw*0.12:
-                    pad_x = int(cw * 0.12)
-                    pad_y = int(ch * 0.25)
-                    x0 = max(0, x-pad_x); y0 = max(0, y-pad_y)
-                    x1 = min(rw, x+cw+pad_x); y1 = min(rh, y+ch+pad_y)
-                    box = (x0, y0, x1, y1)
-                    if box not in seen_boxes:
-                        candidates.append(main_roi[y0:y1, x0:x1])
-                        seen_boxes.add(box)
+                if not (1.5 <= aspect <= 8.0 and cw > rw * 0.08):
+                    continue
+                pad_x, pad_y = int(cw * 0.10), int(ch * 0.25)
+                bx0 = max(0, x-pad_x); by0 = max(0, y-pad_y)
+                bx1 = min(rw, x+cw+pad_x); by1 = min(rh, y+ch+pad_y)
+                raw_boxes.append((bx0, by0, bx1, by1, "contour"))
         except Exception:
             pass
 
+        priority = {"contour": 0, "strip_center": 1, "strip_bottom": 2}
+        raw_boxes.sort(key=lambda b: (priority.get(b[4], 9), -(b[2]-b[0])*(b[3]-b[1])))
+
+        merged = []
+        for box in raw_boxes[:20]:
+            b = box[:4]
+            crop = main_roi[b[1]:b[3], b[0]:b[2]]
+            if not ImagePreprocessor._is_valid_plate_roi(crop, rw, rh):
+                continue
+            skip = False
+            for existing in merged:
+                if ImagePreprocessor._iou(b, existing) > 0.4:
+                    skip = True
+                    break
+            if not skip:
+                merged.append(b)
+                if len(merged) >= 10:
+                    break
+
+        candidates = [main_roi[b[1]:b[3], b[0]:b[2]] for b in merged]
         if not candidates:
             candidates.append(main_roi)
 

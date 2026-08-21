@@ -17,6 +17,22 @@ if not exist venv (
 echo [+] Activando entorno virtual...
 call venv\Scripts\activate
 
+:: Instalar/actualizar dependencias automaticamente
+echo [+] Verificando dependencias (puede demorar la primera vez)...
+pip install -r requirements.txt --quiet 2>nul
+if errorlevel 1 (
+    echo [!] Error al instalar dependencias. Revisa requirements.txt
+    pause
+    exit /b
+)
+
+:: Verificar variable ALPR_FORCE_OCR en .env
+findstr /C:"ALPR_FORCE_OCR=true" .env >nul 2>&1
+if errorlevel 1 (
+    echo [+] Agregando ALPR_FORCE_OCR=true al .env...
+    echo ALPR_FORCE_OCR=true>> .env
+)
+
 :: Abrir navegador automaticamente SOLO cuando el servidor responda
 :: (waiter TCP en segundo plano; usa TcpClient para bypasear el proxy de sistema,
 ::  que hace que Invoke-WebRequest a localhost de timeout)

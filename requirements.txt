@@ -10,7 +10,8 @@ click==8.3.1
 colorama==0.4.6
 cryptography==46.0.5
 dnspython==2.8.0
-easyocr==1.7.2
+paddleocr==3.7.0
+paddlepaddle==3.2.2
 ecdsa==0.19.1
 email-validator==2.3.0
 fastapi==0.135.1
@@ -73,7 +74,7 @@ SQLAlchemy==2.0.48
 starlette==0.52.1
 sympy==1.14.0
 tifffile==2026.5.2
-torch==2.11.0
+torch==2.13.0+cpu
 torchvision==0.26.0
 tqdm==4.67.3
 typing-inspection==0.4.2
