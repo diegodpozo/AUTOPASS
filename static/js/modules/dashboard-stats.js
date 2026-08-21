@@ -424,3 +424,32 @@ export async function cancelStay(plate, type, debt, ingreso) {
         showToast(res.error, 'error');
     }
 }
+
+export async function loadOcrStats() {
+    const res = await api.get('/reports/ocr-stats?limit=50');
+    if (!res || !res.ok) return;
+
+    const { logs, stats } = res.data;
+
+    document.getElementById('ocr-avg').textContent = stats.count > 0 ? `${stats.avg_ocr}s` : '--';
+    document.getElementById('ocr-min').textContent = stats.count > 0 ? `${stats.min_ocr}s` : '--';
+    document.getElementById('ocr-max').textContent = stats.count > 0 ? `${stats.max_ocr}s` : '--';
+    document.getElementById('ocr-p90').textContent = stats.count > 0 ? `${stats.p90_ocr}s` : '--';
+
+    const tbody = document.getElementById('ocr-stats-body');
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 10px;">Sin datos aún</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = logs.map(l => {
+        const time = l.fecha_hora ? l.fecha_hora.split('T')[1]?.substring(0, 8) || l.fecha_hora.substring(11, 19) : '--';
+        const tipo = l.tipo_evento === 'ENTRADA' ? '<span style="color:#10b981">ENT</span>' : '<span style="color:#ef4444">SAL</span>';
+        return `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 4px 0; color: #aaa;">${time}</td>
+            <td style="padding: 4px 0; font-weight: 700; color: #fff;">${l.patente || '--'}</td>
+            <td style="padding: 4px 0;">${tipo}</td>
+            <td style="padding: 4px 0; text-align: right; font-weight: 700; color: ${l.ocr_time > 2 ? '#ef4444' : l.ocr_time > 1 ? '#f59e0b' : '#10b981'};">${l.ocr_time !== null ? l.ocr_time + 's' : '--'}</td>
+        </tr>`;
+    }).join('');
+}

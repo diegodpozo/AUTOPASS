@@ -52,6 +52,8 @@ class AccessLog(Base):
     metodo_pago = Column(String, nullable=True) # 'DIGITAL' O 'CAJA'
     costo_estadia = Column(Float, default=0.0)
     sucursal = Column(String, nullable=True)
+    ocr_time = Column(Float, nullable=True)
+    backend_time = Column(Float, nullable=True)
 
     reservation = relationship("Reservation", back_populates="access_logs")
     floor = relationship("ParkingFloor")

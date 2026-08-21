@@ -141,7 +141,9 @@ class AccessService:
             imagen_path=img_name, 
             reserva_id=reserva.id if reserva else None,
             pago_confirmado=True if (reserva and reserva.estado_pago == PaymentStatus.PAGADO) else False,
-            sucursal=sucursal
+            sucursal=sucursal,
+            ocr_time=data.ocr_time,
+            backend_time=data.backend_time
         ))
         db.commit()
         logger.info(f"Notificando cambio de aforo para sucursal={sucursal}")
@@ -203,7 +205,9 @@ class AccessService:
             tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=now.isoformat(), 
             pago_confirmado=True, 
-            sucursal=sucursal
+            sucursal=sucursal,
+            ocr_time=data.ocr_time,
+            backend_time=data.backend_time
         ))
         db.commit()
         NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "SALIDA", p, f"Hasta luego {p}", "ok")

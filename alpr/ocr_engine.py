@@ -69,7 +69,7 @@ class ALPREngine:
                     qr_text = qr_data[0] if isinstance(qr_data, (list, tuple)) and len(qr_data) > 0 else str(qr_data)
                     elapsed = time.time() - t_start
                     print(f"[ALPR OCR] QR detectado: {qr_text[:80]} ({elapsed:.2f}s)")
-                    self.send_event("qr", qr_text, frame)
+                    self.send_event("qr", qr_text, frame, ocr_time=elapsed)
                     time.sleep(1)
                     continue
 
@@ -168,7 +168,7 @@ class ALPREngine:
                 except Exception:
                     pass
 
-                self.send_event("plate", plate, frame)
+                self.send_event("plate", plate, frame, ocr_time=t_ocr)
                 self.vote_buffer = []
                 break
 
@@ -177,7 +177,7 @@ class ALPREngine:
             except Exception as e:
                 print(f"[ALPR OCR] Exception en ocr_worker: {type(e).__name__} - {e}")
 
-    def send_event(self, type, data, frame):
+    def send_event(self, type, data, frame, ocr_time=None):
         """Evita duplicados con debounce y delega el envio HTTP al pool de hilos."""
         try:
             key = f"{type}:" + re.sub(r'\s+', '', str(data)).upper()
@@ -188,9 +188,9 @@ class ALPREngine:
             self.last_validation_time = now
         except Exception:
             pass
-        self.executor.submit(self._dispatch_request, type, data, frame)
+        self.executor.submit(self._dispatch_request, type, data, frame, ocr_time)
 
-    def _dispatch_request(self, type, data, frame):
+    def _dispatch_request(self, type, data, frame, ocr_time=None):
         """Codifica el frame y envia la peticion HTTP al backend."""
         t_dispatch = time.time()
         try:
@@ -202,6 +202,8 @@ class ALPREngine:
                 endpoint = "/v1/access/validate-qr"
             payload_key = "plate" if type != "qr" else "qr_data"
             payload = {"gate_id": GATE_ID, "image_base64": img_b64, payload_key: data}
+            if ocr_time is not None:
+                payload["ocr_time"] = round(ocr_time, 3)
             try:
                 resp = requests.post(f"{BACKEND_URL}{endpoint}", json=payload, timeout=5)
                 elapsed = time.time() - t_dispatch
