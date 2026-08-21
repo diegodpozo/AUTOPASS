@@ -72,6 +72,7 @@ class AccessService:
                 models.AccessLog.sucursal == sucursal
             ).first()
             if not tiene_salida:
+                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, "Vehículo ya dentro de esta sede", "error")
                 return {"status": "denied", "message": "El vehículo ya figura dentro de esta sede"}
         
         # DETERMINAR TIPO DE VEHICULO (normalizando espacios en ambos lados)
@@ -128,6 +129,7 @@ class AccessService:
             else:
                 aforo.ocupacion_motos += 1
         else:
+            NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, "Capacidad máxima alcanzada", "error")
             return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
             
         db.add(models.AccessLog(
@@ -143,6 +145,7 @@ class AccessService:
         ))
         db.commit()
         logger.info(f"Notificando cambio de aforo para sucursal={sucursal}")
+        NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "INGRESO", p, f"Bienvenido {p}", "ok")
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
         from services.hardware_service import HardwareService
@@ -172,6 +175,7 @@ class AccessService:
         ).order_by(models.AccessLog.id.desc()).first()
         
         if not ultimo or ultimo.tipo_evento != AccessEventType.ENTRADA: 
+            NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, "Sin registro de ingreso", "error")
             return {"status": "error", "message": "El vehículo no tiene registro de ingreso en esta sede"}
         
         if not (ultimo.pago_confirmado or (ultimo.reservation and ultimo.reservation.estado_pago == PaymentStatus.PAGADO)):
@@ -179,6 +183,7 @@ class AccessService:
             entrada_dt = datetime.datetime.fromisoformat(fecha_str)
             minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
             if minutos_transcurridos > 10:
+                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, f"Deuda pendiente ({int(minutos_transcurridos)} min)", "error")
                 return {"status": "denied", "message": f"Deuda pendiente de pago en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min"}
             
         aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
@@ -201,6 +206,7 @@ class AccessService:
             sucursal=sucursal
         ))
         db.commit()
+        NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "SALIDA", p, f"Hasta luego {p}", "ok")
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
         from services.hardware_service import HardwareService
@@ -320,6 +326,7 @@ class AccessService:
                 ))
                 db.commit()
                 logger.info(f"Notificando cambio de aforo (QR) para sucursal={sucursal}")
+                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "INGRESO", reserva.patente, f"QR - Bienvenido {reserva.patente}", "ok")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 from services.hardware_service import HardwareService
@@ -351,6 +358,7 @@ class AccessService:
                 ))
                 db.commit()
                 logger.info(f"Notificando cambio de aforo (QR SALIDA) para sucursal={sucursal}")
+                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "SALIDA", reserva.patente, f"QR - Hasta luego {reserva.patente}", "ok")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 from services.hardware_service import HardwareService
