@@ -5,7 +5,7 @@ import threading
 class VideoStreamer:
     """Captura video en un hilo separado y provee acceso thread-safe al último frame."""
 
-    def __init__(self, source, target_width=640):
+    def __init__(self, source, target_width=1280):
         if isinstance(source, str) and source.startswith("http"):
             self.cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -13,8 +13,8 @@ class VideoStreamer:
             self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
         else:
             self.cap = cv2.VideoCapture(source)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.target_width = target_width
         self.current_frame = None
         self.is_running = True

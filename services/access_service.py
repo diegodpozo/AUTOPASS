@@ -49,14 +49,14 @@ class AccessService:
         sucursal = None
         if data.gate_id and '_' in data.gate_id:
             suc_short = data.gate_id.split('_')[0]
-            if suc_short == "ENTRADA":
-                sucursal = None
-            else:
-                try:
-                    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{suc_short}%")).first()
-                    sucursal = branch.nombre if branch else suc_short
-                except Exception:
-                    sucursal = suc_short
+            try:
+                branches = db.query(models.ParkingBranch).all()
+                for b in branches:
+                    if normalize_name(b.nombre) == suc_short:
+                        sucursal = b.nombre
+                        break
+            except Exception:
+                pass
         
         ultima_entrada = db.query(models.AccessLog).filter(
             models.AccessLog.normalized_patente == p,
@@ -157,14 +157,14 @@ class AccessService:
         sucursal = None
         if data.gate_id and '_' in data.gate_id:
             suc_short = data.gate_id.split('_')[0]
-            sucursal = None if suc_short == 'ENTRADA' else suc_short
-            if sucursal:
-                try:
-                    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal}%")).first()
-                    if branch:
-                        sucursal = branch.nombre
-                except Exception:
-                    pass
+            try:
+                branches = db.query(models.ParkingBranch).all()
+                for b in branches:
+                    if normalize_name(b.nombre) == suc_short:
+                        sucursal = b.nombre
+                        break
+            except Exception:
+                pass
 
         ultimo = db.query(models.AccessLog).filter(
             models.AccessLog.normalized_patente == p,

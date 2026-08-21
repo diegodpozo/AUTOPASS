@@ -21,9 +21,12 @@ def list_branches(db: Session = Depends(get_db)):
 @router.post("/{branch_id}/floors", response_model=schemas.FloorResponse)
 def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """AGREGA UN NUEVO PISO A LA SUCURSAL."""
+    if not nombre.strip().upper().startswith("AUTOPASS"):
+        raise HTTPException(status_code=400, detail="El nombre de la sucursal debe comenzar con 'AUTOPASS'")
+
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
-    if not branch: raise HTTPException(status_code=404, detail="Sucursal no encontrada")
-    
+    if not branch:
+        raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     new_floor = models.ParkingFloor(
         branch_id=branch_id,
         nombre=data.nombre,
@@ -83,6 +86,9 @@ async def create_branch(
     admin: models.User = Depends(get_super_admin)
 ):
     """CREA UNA NUEVA SUCURSAL CON CARGA DE LOGO LOCAL."""
+    if not nombre.strip().upper().startswith("AUTOPASS"):
+        raise HTTPException(status_code=400, detail="El nombre de la sucursal debe comenzar con 'AUTOPASS'")
+
     existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre).first()
     if existing:
         raise HTTPException(status_code=400, detail="La sucursal ya existe")

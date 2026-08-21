@@ -5,7 +5,7 @@
 /* GRID PRINCIPAL DE MONITOREO (TABLA DE REGISTROS A LA IZQ, OPERACIÓN MANUAL A LA DER) */
 .monitoring-grid {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 1fr 408px;
     gap: 20px;
     align-items: start;
 }
