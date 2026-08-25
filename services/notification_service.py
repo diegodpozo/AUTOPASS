@@ -52,7 +52,7 @@ class NotificationService:
             if cls._loop and cls._loop.is_running():
                 try:
                     asyncio.run_coroutine_threadsafe(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm), cls._loop)
-                    logger.info(f"Scheduled broadcast_update for sucursal={sucursal_norm}")
+                    logger.debug(f"Scheduled broadcast_update for sucursal={sucursal_norm}")
                 except Exception as e:
                     logger.error(f"Error scheduling broadcast: {e}")
                 return
@@ -67,7 +67,7 @@ class NotificationService:
             if loop and loop.is_running():
                 try:
                     loop.create_task(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm))
-                    logger.info(f"Created task broadcast_update for sucursal={sucursal_norm} in current loop")
+                    logger.debug(f"Created task broadcast_update for sucursal={sucursal_norm} in current loop")
                 except Exception as e:
                     logger.error(f"Error creating task in current loop: {e}")
             else:

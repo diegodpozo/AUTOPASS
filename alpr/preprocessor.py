@@ -8,18 +8,15 @@ class ImagePreprocessor:
 
     @staticmethod
     def identify_country(plate: str, is_mercosur: bool) -> str:
-        """Identifica el país probable basado en el formato y la franja azul."""
-        if not is_mercosur:
-            if re.match(r'^[A-Z]{3}\d{3}$', plate):
-                return "ARGENTINA (Antigua)"
-            if re.match(r'^[A-Z]{2}\d{3}$', plate):
-                return "ARGENTINA (Moto Antigua)"
-            return "DESCONOCIDO"
-        
+        """Identifica el país probable basado en el formato y la franja azul (compatible con impresiones en papel B&N)."""
         if re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$', plate):
             return "ARGENTINA (Mercosur)"
-        if re.match(r'^[A-Z]{2}\d{3}[A-Z]$', plate):
+        if re.match(r'^[A-Z]{2}\d{3}[A-Z]$|^[A-Z]\d{3}[A-Z]{3}$|^[A-Z]\d{3}[A-Z]{2}$', plate):
             return "ARGENTINA (Moto Mercosur)"
+        if re.match(r'^[A-Z]{3}\d{3}$', plate):
+            return "ARGENTINA (Antigua)"
+        if re.match(r'^[A-Z]{2}\d{3}$', plate):
+            return "ARGENTINA (Moto Antigua)"
         if re.match(r'^[A-Z]{3}\d[A-Z]\d{2}$', plate):
             return "BRASIL"
         if re.match(r'^[A-Z]{3}\d{4}$', plate):
@@ -27,7 +24,9 @@ class ImagePreprocessor:
         if re.match(r'^[A-Z]{4}\d{3}$|^\d{3}[A-Z]{4}$', plate):
             return "PARAGUAY"
         
-        return "MERCOSUR (Otro)"
+        if is_mercosur:
+            return "MERCOSUR (Otro)"
+        return "DESCONOCIDO"
 
     @staticmethod
     def detect_motion(frame, prev_gray) -> tuple[bool, np.ndarray]:
@@ -162,17 +161,17 @@ class ImagePreprocessor:
 
     @staticmethod
     def is_mercosur_candidate(roi) -> bool:
-        """Detecta si un ROI tiene la franja azul característica del MERCOSUR."""
+        """Detecta si un ROI tiene la franja azul característica del MERCOSUR (adaptado para papel e impresiones)."""
         try:
             hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            lower_blue = np.array([100, 100, 50])
-            upper_blue = np.array([130, 255, 255])
+            lower_blue = np.array([90, 40, 40])
+            upper_blue = np.array([135, 255, 255])
             mask = cv2.inRange(hsv, lower_blue, upper_blue)
             
             h, w = mask.shape[:2]
-            top_strip = mask[0:int(h*0.3), :]
-            blue_ratio = np.sum(top_strip > 0) / top_strip.size
-            return blue_ratio > 0.1
+            top_strip = mask[0:int(h*0.35), :]
+            blue_ratio = np.sum(top_strip > 0) / max(1, top_strip.size)
+            return blue_ratio > 0.06
         except Exception:
             return False
 
@@ -181,8 +180,8 @@ class ImagePreprocessor:
         """Recorta por debajo de la franja azul MERCOSUR si está presente."""
         try:
             hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            lower_blue = np.array([100, 80, 50])
-            upper_blue = np.array([130, 255, 255])
+            lower_blue = np.array([90, 40, 40])
+            upper_blue = np.array([135, 255, 255])
             mask = cv2.inRange(hsv, lower_blue, upper_blue)
             h, w = mask.shape[:2]
             top_mask = mask[0:int(h*0.5), :]

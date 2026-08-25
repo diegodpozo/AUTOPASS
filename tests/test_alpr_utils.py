@@ -21,3 +21,12 @@ def test_format_plate_mercosur_brasil():
 def test_normalize_dni():
     assert normalize_dni("12345678") == "12.345.678"
     assert normalize_dni("7654321") == "7.654.321"
+
+def test_identify_country_bw_paper_printed_plate():
+    from alpr.preprocessor import ImagePreprocessor
+    # Test printed paper plate without blue strip (is_mercosur=False)
+    assert ImagePreprocessor.identify_country("AA123BB", False) == "ARGENTINA (Mercosur)"
+    assert ImagePreprocessor.identify_country("AF456GH", False) == "ARGENTINA (Mercosur)"
+    assert ImagePreprocessor.identify_country("A012BCD", False) == "ARGENTINA (Moto Mercosur)"
+    assert ImagePreprocessor.identify_country("AAA111", False) == "ARGENTINA (Antigua)"
+

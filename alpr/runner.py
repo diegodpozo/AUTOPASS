@@ -9,7 +9,6 @@ from alpr.ws_client import ws_monitoring_worker
 
 def run_alpr_service():
     """Ejecuta el ciclo principal del servicio ALPR."""
-    print(f"[*] Iniciando VideoStreamer con fuente: {VIDEO_SOURCE}")
     try:
         streamer = VideoStreamer(VIDEO_SOURCE, target_width=1280).start()
     except Exception as e:
@@ -23,7 +22,7 @@ def run_alpr_service():
     try:
         if GATE_TYPE == "predio":
             threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer),), daemon=True).start()
-            print(f"[*] Modo PREDIO: Streaming activo en {GATE_ID}. Escaneo desactivado.")
+            print(f"[OK] Servicio de cámara activo: {GATE_ID} | Modo: PREDIO (Solo Streaming)")
             while True:
                 time.sleep(1)
 
@@ -33,7 +32,7 @@ def run_alpr_service():
             threading.Thread(target=engine.ocr_worker, daemon=True).start()
             
         threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer),), daemon=True).start()
-        print(f"[*] Bucle de escaneo activo en {GATE_ID} (Modo: {GATE_TYPE.upper()}). 'Ctrl+C' para salir.")
+        print(f"[OK] Servicio de cámara activo: {GATE_ID} | Modo: {GATE_TYPE.upper()} | Motor: {getattr(engine, 'engine_type', 'OCR')}")
         
         last_ocr_time = 0
         while True:
@@ -63,7 +62,6 @@ def run_alpr_service():
                             if not engine.frame_queue.full():
                                 engine.frame_queue.put(frame)
                                 last_ocr_time = now
-                                print(f"[ALPR RUNNER] Frame enviado a OCR (queue={engine.frame_queue.qsize()})")
                             else:
                                 try:
                                     engine.frame_queue.get_nowait()
@@ -74,8 +72,7 @@ def run_alpr_service():
                         except Exception:
                             pass
                     else:
-                        if int(now) % 10 == 0:
-                            print(f"[ALPR RUNNER] Sin movimiento (last_check={int(now)})")
+                        pass
             time.sleep(0.01)
     except Exception as e:
         print(f"[!] Error FATAL en el bucle principal: {e}")

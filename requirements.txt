@@ -41,9 +41,10 @@ pyclipper>=1.3.0
 paho-mqtt==2.1.0
 pyserial==3.5
 
-# === AI / OCR (puede fallar en Python 3.14+) ===
-paddleocr==3.7.0
-paddlepaddle==3.2.2
+# === AI / OCR ===
+rapidocr-onnxruntime>=1.2.0
+paddleocr==3.7.0; python_version < '3.14'
+paddlepaddle==3.2.2; python_version < '3.14'
 google-generativeai==0.8.6
 google-api-python-client==2.192.0
 google-auth==2.49.1

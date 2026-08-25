@@ -80,7 +80,6 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
         
         try:
             logger.info(f"Iniciando ALPR para {gate_id} con fuente: {source}")
-            logger.info(f"Backend URL inyectada: {base_url}")
             proc = subprocess.Popen(
                 [sys.executable, "alpr_service.py"],
                 env=env,

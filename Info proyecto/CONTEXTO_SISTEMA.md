@@ -41,9 +41,10 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `repositories/reservation_repository.py`: Acceso a datos de reservas.
 
 5.  **Gestión de Accesos ALPR (`alpr/` + `alpr_service.py`)**:
-    *   `alpr/`: Paquete modular desacoplado compuesto por `config.py` (variables y regexes), `preprocessor.py` (filtros Moiré, recorte MERCOSUR, ROI), `video_streamer.py` (captura thread-safe OpenCV), `ws_client.py` (WebSocket streamer), `ocr_engine.py` (PaddleOCR, QR y consenso de votación) y `runner.py` (orquestador).
+    *   `alpr/`: Paquete modular desacoplado compuesto por `config.py` (variables y regexes), `preprocessor.py` (filtros Moiré, recorte MERCOSUR adaptativo B&N/color, ROI), `video_streamer.py` (captura thread-safe OpenCV), `ws_client.py` (WebSocket streamer), `ocr_engine.py` (RapidOCR ONNX / PaddleOCR dual, QR, prioridad de 7 caracteres y consenso de votación) y `runner.py` (orquestador).
     *   `alpr_service.py`: Script wrapper en la raíz que ejecuta `alpr.runner.run_alpr_service()`, garantizando compatibilidad 100% con ejecuciones de subproceso.
-    *   **Arquitectura Interna**: Sistema de consenso con búfer de votos, cola de frames con política drop-oldest, detección de movimiento, recorte de banda azul MERCOSUR, detección de QR rápido, envío de frames por WebSocket, persistencia de última patente aceptada con cooldown.
+    *   **Arquitectura Interna**: Soporte dual RapidOCR (ONNX compatible con Python 3.14+) / PaddleOCR, prioridad de patentes completas de 7 caracteres (`full_7_pattern`), escalado ROI automático a 80px para precisión de dígitos, sistema de consenso con búfer de votos, cola de frames con política drop-oldest, detección de movimiento, recorte adaptativo MERCOSUR (compatible con hojas de papel impresas), detección de QR rápido, envío de frames por WebSocket, persistencia de última patente aceptada con cooldown.
+    *   **Generador de Patentes de Prueba**: Script `scripts/generate_test_plates.py` para generar [static/test_plates.html](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/test_plates.html) con patentes A4 imprimibles.
     *   **Gestión de Cámaras**: Configuración de IP por puerta (entrada/salida) en DB vía `Settings`, start/stop de procesos ALPR desde dashboard, service restart.
 
 ##  Configuración y Seguridad
