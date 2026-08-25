@@ -154,12 +154,17 @@ Organización en 4 capas bajo `static/css/` (39 archivos totales):
 
 ### 4. Capa de Servicio ALPR (`alpr/` + `alpr_service.py`)
 Servicio independiente de visión artificial modularizado en el paquete `alpr/` (`config.py`, `preprocessor.py`, `video_streamer.py`, `ws_client.py`, `ocr_engine.py`, `runner.py`); `alpr_service.py` actúa como wrapper ejecutable en la raíz que delega en `alpr.runner.run_alpr_service()`.
+- **Motor OCR Dual:** `RapidOCR` ONNX (optimizado para Python 3.14+) con fallback automático a `PaddleOCR`.
+- **Extracción Prioritaria de 7 Caracteres:** Combina bloques de texto espacialmente (`full_7_pattern`) antes de evaluar 6 caracteres para evitar truncar letras finales.
+- **Escalado Inteligente ROI:** Re-escalado automático a 80px de alto en recortes pequeños para evitar confusión entre dígitos (ej. `6` vs `5`).
+- **Adaptación para Pruebas en Papel:** Reconocimiento de país por regex B&N y consenso en 1 voto si la confianza es $\ge 0.40$.
+- **Generador de Patentes:** Script `scripts/generate_test_plates.py` -> `static/test_plates.html` con patentes A4 imprimibles.
 - **Sistema de Consenso:** Buffer de votos (múltiples lecturas de la misma patente) antes de enviar al backend para evitar falsos positivos.
 - **Detección de QR:** Escaneo directo de QR en cada frame (Quick QR), alternativa a patente.
 - **Video WebSocket:** Envía frames en tiempo real al backend (`/v1/system/ws/video/{gate_id}`) para visualización en dashboard.
 - **Cola de Frames:** Política drop-oldest para no acumular frames sin procesar.
 - **Detección de Movimiento:** Ignora frames estáticos para optimizar procesamiento.
-- **Recorte MERCOSUR:** Detecta y recorta la banda azul de patentes MERCOSUR para mejorar OCR.
+- **Recorte MERCOSUR:** Detecta y recorta la banda azul de patentes MERCOSUR para mejorar OCR (adaptado a color y B&N).
 - **ROI (Region of Interest):** Múltiples estrategias de detección de región de placa.
 - **Imágenes de Debug:** Guarda imágenes de patentes aceptadas (solo Argentina).
 - **Des-duplicación:** Cooldown por patente para no re-enviar la misma.

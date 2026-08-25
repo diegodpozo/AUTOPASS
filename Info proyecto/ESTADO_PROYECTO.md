@@ -1,5 +1,21 @@
 # Estado del Proyecto: AUTOPASS (Actualizado 2026-08-25)
 
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.10.0 (ALPR Paper Testing Engine, Dual RapidOCR/PaddleOCR & 7-Char Priority Matching)
+- [x] **Soporte Dual de Motor OCR (RapidOCR ONNX / PaddleOCR)**:
+  - Integración de `rapidocr-onnxruntime` como motor OCR nativo para Python 3.14+, eliminando la dependencia rígida de `paddlepaddle` en sistemas modernos.
+  - Conmutación automática y transparente entre RapidOCR y PaddleOCR en `alpr/ocr_engine.py`.
+- [x] **Optimización para Lectura de Patentes Impresas en Papel**:
+  - **Identificación de País Independiente del Color (`identify_country`)**: Priorización de coincidencia regex de patrones MERCOSUR/Antiguos para reconocer patentes impresas en papel en blanco y negro sin franja azul.
+  - **Detección Azul HSV Adaptativa (`is_mercosur_candidate`)**: Tolerancia ampliada (`lower_blue` = `[90, 40, 40]`) para capturar la franja azul en hojas de papel impresas con tinta de inyección o láser.
+  - **Consenso Rápido de 1 Voto para Pruebas**: Validación instantánea en 1 voto si la patente coincide con un formato MERCOSUR válido y confianza $\ge 0.40$.
+- [x] **Extracción Prioritaria de 7 Caracteres & Escalado ROI**:
+  - **Priorización de 7 Caracteres (`full_7_pattern`)**: Combinación de bloques de texto antes de evaluar substrings de 6 caracteres, evitando truncar patentes como `AG 536 CR` en `AG 536 C`.
+  - **Escalado Inteligente de ROI (`_ocr_single_roi`)**: Re-escalado automático por interpolación cúbica a 80px de alto para cultivos pequeños, afinando bordes y previniendo la confusión de dígitos como `6` vs `5`.
+- [x] **Generador de Patentes de Prueba Imprimibles (`scripts/generate_test_plates.py`)**:
+  - Creación del script utilitario que genera [static/test_plates.html](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/test_plates.html) con patentes MERCOSUR (Auto/Moto/Camioneta/Brasil) listas para imprimir en A4 o proyectar en pantallas.
+- [x] **Resolución de Bug de Interrupción en Hilo Worker (`ocr_worker`)**:
+  - Reemplazo del comando `break` por `continue` con pausa de `0.5s` al enviar evento de patente, manteniendo el hilo de captura y escaneo en vivo activo indefinidamente.
+
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.0+ (Dashboard Settings Responsive & Setup Modernization)
 - [x] **Rediseño Responsive de Configuración del Dashboard (`settings.html`)**:
   - **Navegación e Interfaz**: Incorporación de `flex-wrap` en contenedores de botones (`.btn-tab-mini` y `.btn-tab-sub`) para distribución fluida en móviles sin scroll horizontal.

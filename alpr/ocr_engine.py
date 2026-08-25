@@ -5,13 +5,20 @@ import os
 import re
 import base64
 import queue
-os.environ['PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK'] = 'True'
+OCR_ENGINE_NAME = None
 try:
-    from paddleocr import PaddleOCR
-    PADDLE_AVAILABLE = True
+    from rapidocr_onnxruntime import RapidOCR
+    OCR_ENGINE_NAME = "RapidOCR"
 except ImportError:
-    PADDLE_AVAILABLE = False
-    print("[ALPR] WARNING: paddleocr no instalado. Motor OCR deshabilitado.")
+    try:
+        from paddleocr import PaddleOCR
+        OCR_ENGINE_NAME = "PaddleOCR"
+    except ImportError:
+        OCR_ENGINE_NAME = None
+
+if not OCR_ENGINE_NAME:
+    print("[ALPR] WARNING: Ni rapidocr-onnxruntime ni paddleocr están instalados.")
+
 from concurrent.futures import ThreadPoolExecutor
 from alpr.config import (
     GATE_ID, GATE_TYPE, BACKEND_URL, COOLDOWN_SECONDS, OCR_INTERVAL,
@@ -20,21 +27,24 @@ from alpr.config import (
 )
 from alpr.preprocessor import ImagePreprocessor
 
-
 class ALPREngine:
-    """Motor principal de vision artificial: PaddleOCR, QR, consenso y despacho de eventos."""
+    """Motor principal de vision artificial: RapidOCR / PaddleOCR, QR, consenso y despacho de eventos."""
 
     def __init__(self):
-        print("[*] Cargando motores de IA...")
-        if not PADDLE_AVAILABLE:
-            raise RuntimeError("PaddleOCR no esta instalado. Instala paddleocr y paddlepaddle para usar el ALPR.")
-        self.reader = PaddleOCR(
-            use_doc_orientation_classify=False,
-            use_doc_unwarping=False,
-            use_textline_orientation=False
-        )
-        self.qr_detector = cv2.QRCodeDetector()
+        if OCR_ENGINE_NAME == "RapidOCR":
+            self.engine_type = "RapidOCR"
+            self.reader = RapidOCR()
+        elif OCR_ENGINE_NAME == "PaddleOCR":
+            self.engine_type = "PaddleOCR"
+            self.reader = PaddleOCR(
+                use_doc_orientation_classify=False,
+                use_doc_unwarping=False,
+                use_textline_orientation=False
+            )
+        else:
+            raise RuntimeError("No hay un motor OCR instalado. Ejecuta: pip install rapidocr-onnxruntime")
 
+        self.qr_detector = cv2.QRCodeDetector()
         self.frame_queue = queue.Queue(maxsize=FRAME_QUEUE_MAXSIZE)
         self.vote_buffer = []
         self.last_validated_plate = ""
@@ -44,38 +54,64 @@ class ALPREngine:
         self.prev_gray = None
 
     def detect_motion(self, frame) -> bool:
-        has_motion, self.prev_gray = ImagePreprocessor.detect_motion(frame, self.prev_gray)
-        return has_motion
-
-    def _ocr_single_roi(self, roi_color):
-        """Ejecuta PaddleOCR sobre un ROI en color y retorna textos+scores."""
+        """Detecta variacion significativa entre frames consecutivos."""
         try:
-            raw = self.reader.ocr(roi_color)
-        except Exception as e:
-            print(f"[ALPR OCR] Error PaddleOCR: {type(e).__name__} - {e}")
-            return [], [], []
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.GaussianBlur(gray, (21, 21), 0)
+            if self.prev_gray is None:
+                self.prev_gray = gray
+                return True
+            diff = cv2.absdiff(self.prev_gray, gray)
+            self.prev_gray = gray
+            non_zero = cv2.countNonZero(cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1])
+            return non_zero > 1500
+        except Exception:
+            return True
 
-        if not raw or not raw[0]:
+    def _ocr_single_roi(self, roi_img):
+        """Ejecuta OCR sobre una ROI recortada."""
+        if roi_img is None or roi_img.size == 0:
             return [], [], []
-        jd = raw[0].json['res']
-        texts = jd.get('rec_texts', [])
-        scores = jd.get('rec_scores', [])
-        polys = jd.get('rec_polys', [])
-        return texts, scores, polys
+        try:
+            h, w = roi_img.shape[:2]
+            if h < 80 and h > 0:
+                scale = 80.0 / h
+                roi_img = cv2.resize(roi_img, (int(w * scale), 80), interpolation=cv2.INTER_CUBIC)
+            if self.engine_type == "RapidOCR":
+                result, _ = self.reader(roi_img)
+                if not result:
+                    return [], [], []
+                texts = [res[1] for res in result]
+                scores = [float(res[2]) for res in result]
+                polys = [res[0] for res in result]
+                return texts, scores, polys
+            elif self.engine_type == "PaddleOCR":
+                result = self.reader.ocr(roi_img, cls=False)
+                if not result or not result[0]:
+                    return [], [], []
+                texts = [line[1][0] for line in result[0]]
+                scores = [float(line[1][1]) for line in result[0]]
+                polys = [line[0] for line in result[0]]
+                return texts, scores, polys
+        except Exception as e:
+            print(f"[ALPR OCR] Error {self.engine_type}: {type(e).__name__} - {e}")
+            return [], [], []
 
     def ocr_worker(self):
-        print(f"[ALPR OCR] Worker iniciado. Motor=PaddleOCR | GATE_TYPE={GATE_TYPE}")
+        full_7_pattern = re.compile(
+            r'[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|\d{3}[A-Z]{4}|[A-Z]\d{3}[A-Z]{3}'
+        )
+
         while self.is_running:
             try:
                 frame = self.frame_queue.get(timeout=1)
                 t_start = time.time()
-                print(f"[ALPR OCR] Frame recibido, procesando...")
 
                 qr_data, _, _ = self.qr_detector.detectAndDecode(frame)
                 if qr_data:
                     qr_text = qr_data[0] if isinstance(qr_data, (list, tuple)) and len(qr_data) > 0 else str(qr_data)
                     elapsed = time.time() - t_start
-                    print(f"[ALPR OCR] QR detectado: {qr_text[:80]} ({elapsed:.2f}s)")
+                    print(f"[ALPR] Código QR leído: {qr_text[:80]}")
                     self.send_event("qr", qr_text, frame, ocr_time=elapsed)
                     time.sleep(1)
                     continue
@@ -86,10 +122,7 @@ class ALPREngine:
                 texts, scores, polys = self._ocr_single_roi(main_roi)
                 t_ocr = time.time() - t_start
 
-                if texts:
-                    print(f"[ALPR OCR] {len(texts)} textos detectados: {texts} (OCR: {t_ocr:.2f}s)")
-                else:
-                    print(f"[ALPR OCR] Nada detectado en frame (OCR: {t_ocr:.2f}s)")
+                if not texts:
                     continue
 
                 detections = []
@@ -101,21 +134,48 @@ class ALPREngine:
                     if i < len(polys):
                         bbox = [[int(p[0]), int(p[1])] for p in polys[i]]
                     else:
-                        bbox = [[0, 0], [0, 0], [0, 0], [0, 0]]
-                    detections.append({"text": t.upper(), "confidence": conf, "bbox": bbox})
+                        bbox = [[0,0],[10,0],[10,10],[0,10]]
+                    detections.append({"text": t, "confidence": conf, "bbox": bbox})
+
+                if not detections:
+                    continue
 
                 is_mercosur = ImagePreprocessor.is_mercosur_candidate(main_roi)
 
                 plate = None
                 avg_conf = 0.0
 
-                for det in detections:
-                    t = re.sub(r'[^A-Z0-9]', '', det["text"])
-                    if re.search(LATAM_PLATE_PATTERN, t):
-                        plate = t
-                        avg_conf = det["confidence"]
-                        print(f"[ALPR OCR] Patente directa: {plate} (conf={avg_conf:.2f})")
-                        break
+                # 1. PRIORIDAD 1: SI HAY MULTIPLES DETECCIONES (EJ: "AG 536 C" Y "R"), PROBAR COMBINARLAS PARA OBTENER 7 CARACTERES
+                if len(detections) >= 2:
+                    try:
+                        by_x = sorted(detections, key=lambda d: d["bbox"][0][0])
+                        combined_x = "".join(re.sub(r'[^A-Z0-9]', '', d["text"]) for d in by_x)
+                        match_7 = full_7_pattern.search(combined_x)
+                        if match_7:
+                            plate = match_7.group(0)
+                            avg_conf = sum(d["confidence"] for d in by_x) / max(1, len(by_x))
+                    except Exception:
+                        pass
+
+                # 2. PRIORIDAD 2: BUSCAR 7 CARACTERES COMPLETOS EN DETECCION UNICA
+                if not plate:
+                    for det in detections:
+                        t = re.sub(r'[^A-Z0-9]', '', det["text"])
+                        match_7 = full_7_pattern.search(t)
+                        if match_7:
+                            plate = match_7.group(0)
+                            avg_conf = det["confidence"]
+                            break
+
+                # 3. PRIORIDAD 3: PATRON GENERAL / 6 CARACTERES
+                if not plate:
+                    for det in detections:
+                        t = re.sub(r'[^A-Z0-9]', '', det["text"])
+                        match_gen = re.search(LATAM_PLATE_PATTERN, t)
+                        if match_gen:
+                            plate = match_gen.group(0)
+                            avg_conf = det["confidence"]
+                            break
 
                 if not plate and len(detections) >= 2:
                     try:
@@ -125,7 +185,6 @@ class ALPREngine:
                         if match:
                             plate = re.sub(r'[^A-Z0-9]', '', match.group(0))
                             avg_conf = sum(d["confidence"] for d in by_y) / max(1, len(by_y))
-                            print(f"[ALPR OCR] Patente combinada (y-axis): {plate} (conf={avg_conf:.2f})")
                     except Exception:
                         pass
 
@@ -137,7 +196,26 @@ class ALPREngine:
                         if match:
                             plate = re.sub(r'[^A-Z0-9]', '', match.group(0))
                             avg_conf = sum(d["confidence"] for d in by_x) / max(1, len(by_x))
-                            print(f"[ALPR OCR] Patente combinada (x-axis): {plate} (conf={avg_conf:.2f})")
+                    except Exception:
+                        pass
+
+                if not plate:
+                    # FALLBACK PARA PATENTES IMPRESAS EN PAPEL / POSICIONES FUERA DE CENTRO
+                    try:
+                        candidates = ImagePreprocessor.find_plate_roi(frame)
+                        for cand in candidates:
+                            c_texts, c_scores, c_polys = self._ocr_single_roi(cand)
+                            if not c_texts:
+                                continue
+                            for i, text in enumerate(c_texts):
+                                t = re.sub(r'[^A-Z0-9]', '', text.strip().upper())
+                                match = re.search(LATAM_PLATE_PATTERN, t)
+                                if match:
+                                    plate = re.sub(r'[^A-Z0-9]', '', match.group(0))
+                                    avg_conf = float(c_scores[i]) if i < len(c_scores) else 0.50
+                                    break
+                            if plate:
+                                break
                     except Exception:
                         pass
 
@@ -147,10 +225,7 @@ class ALPREngine:
                 country = ImagePreprocessor.identify_country(plate, is_mercosur)
 
                 if len(plate) < 5 or len(plate) > 8 or not re.search(r'[A-Z]', plate) or not re.search(r'\d', plate):
-                    print(f"[ALPR] Rechazada: '{plate}' (largo/formato inválido)")
                     continue
-
-                print(f"[ALPR] Patente detectada: {plate} (Conf: {avg_conf:.2f}) [PaddleOCR] ({t_ocr:.2f}s OCR + {(time.time()-t_start-t_ocr):.2f}s post)")
 
                 now = time.time()
                 self.vote_buffer.append((plate, avg_conf, now))
@@ -158,13 +233,14 @@ class ALPREngine:
                 same_votes = [v for v in self.vote_buffer if v[0] == plate]
 
                 is_moto = bool(MOTO_PATTERN.match(plate))
+                is_valid_format = bool(re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$|^[A-Z]{3}\d{3}$|^[A-Z]{2}\d{3}[A-Z]$|^[A-Z]\d{3}[A-Z]{3}$|^[A-Z]{3}\d[A-Z]\d{2}$', plate))
+                req_votes = 1 if (is_valid_format and avg_conf >= 0.40) else CONSENSUS_REQUIRED
 
                 if is_moto:
-                    if avg_conf < MOTO_MIN_CONFIDENCE or len(same_votes) < CONSENSUS_REQUIRED:
-                        print(f"[ALPR] Moto '{plate}' pendiente: conf={avg_conf:.2f} (min={MOTO_MIN_CONFIDENCE}) votos={len(same_votes)}/{CONSENSUS_REQUIRED}")
+                    if avg_conf < MOTO_MIN_CONFIDENCE and len(same_votes) < req_votes:
                         continue
                 else:
-                    if avg_conf < CONFIDENCE_THRESHOLD and len(same_votes) < CONSENSUS_REQUIRED:
+                    if avg_conf < CONFIDENCE_THRESHOLD and len(same_votes) < req_votes:
                         continue
 
                 try:
@@ -175,9 +251,11 @@ class ALPREngine:
                 except Exception:
                     pass
 
+                print(f"[ALPR] Patente aceptada: {plate} [{country}] (Conf: {avg_conf:.2f})")
                 self.send_event("plate", plate, frame, ocr_time=t_ocr)
                 self.vote_buffer = []
-                break
+                time.sleep(0.5)
+                continue
 
             except queue.Empty:
                 continue

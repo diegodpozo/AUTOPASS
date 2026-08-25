@@ -65,11 +65,11 @@ async def startup_event():
             alembic_cfg = AlembicConfig("alembic.ini")
             try:
                 AlembicCommand.upgrade(alembic_cfg, "head")
-                logger.info("Migraciones Alembic aplicadas correctamente.")
+                logger.debug("Migraciones Alembic aplicadas correctamente.")
             except Exception:
                 # Tablas ya existen de init_db(); stamp version y seguir
                 AlembicCommand.stamp(alembic_cfg, "head")
-                logger.info("Migraciones stamp (tablas ya existían).")
+                logger.debug("Migraciones stamp (tablas ya existían).")
         except Exception as alembic_err:
             logger.warning(f"Migraciones Alembic omitidas: {alembic_err}")
 

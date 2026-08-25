@@ -6,11 +6,9 @@ from alpr.config import WS_BACKEND_URL, GATE_ID
 
 async def ws_monitoring_worker(streamer):
     """Streaming de frames por WebSocket al backend con reconexión automática."""
-    print(f"[*] Intentando conectar streaming a: {WS_BACKEND_URL}")
     while streamer.is_running:
         try:
             async with websockets.connect(WS_BACKEND_URL, ping_interval=20, ping_timeout=20) as websocket:
-                print(f"[*] WS Conectado exitosamente para streaming en {GATE_ID}")
                 while streamer.is_running:
                     frame = streamer.get_frame()
                     if frame is not None:

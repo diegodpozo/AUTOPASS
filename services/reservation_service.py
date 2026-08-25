@@ -7,9 +7,11 @@ from services.email_service import EmailService
 from services.notification_service import NotificationService
 from services.time_service import TimeService
 from repositories.reservation_repository import ReservationRepository
-from repositories.user_repository import UserRepository
 from fastapi import HTTPException
 from models.enums import ReservationStatus, PaymentStatus, VehicleType, AccessEventType
+from core.logger import get_logger
+
+logger = get_logger("ReservationService")
 
 # --- HELPERS DE AFORO ---
 
@@ -73,12 +75,6 @@ class ReservationService:
     @staticmethod
     def create_reservation(db: Session, data: schemas.AdminReservationCreate) -> models.Reservation:
         """CREA UNA NUEVA RESERVA MANUAL DESDE EL PANEL ADMINISTRATIVO."""
-        # DEBUG: registrar payload admin para verificar sucursal
-        try:
-            print(f"[ADMIN RES CREATE] user_id={getattr(data,'user_id',None)} patente={getattr(data,'patente',None)} sucursal_nombre={getattr(data,'sucursal_nombre',None)}")
-        except Exception:
-            pass
-        
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente).first()
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
@@ -163,9 +159,8 @@ class ReservationService:
         ).all()
         
         if overdue:
-            print(f"[DEBUG CLEANUP] Encontradas {len(overdue)} reservas para cancelar. Cutoff: {cutoff_str}")
+            logger.info(f"Cancelando {len(overdue)} reservas impagas vencidas. Cutoff: {cutoff_str}")
             for r in overdue:
-                print(f"[DEBUG CLEANUP] Cancelando Reserva ID: {r.id}, Inicio: {r.fecha_inicio}")
                 r.estado_reserva = ReservationStatus.CANCELADA
                 r.estado_pago = PaymentStatus.FALLIDO
             db.commit()
@@ -176,12 +171,7 @@ class ReservationService:
     def auto_finalize_reservations(db: Session, user_id: int):
         """MARCA COMO COMPLETADAS LAS RESERVAS DE UN USUARIO CUYO TIEMPO DE ESTADIA YA EXPIRO."""
         now_str = TimeService.now_str()
-        print(f"[DEBUG auto_finalize_reservations] now_str={now_str} user_id={user_id}")
         past_reservations = ReservationRepository.get_past_reservations(db, user_id, now_str)
-        print(f"[DEBUG auto_finalize_reservations] encontradas {len(past_reservations)} reservas vencidas")
-        for r in past_reservations:
-            print(f"[DEBUG auto_finalize_reservations]   -> ID={r.id} fin={r.fecha_fin} ahora={now_str} fin<ahora? {r.fecha_fin < now_str}")
-        
         if past_reservations:
             for r in past_reservations:
                 r.estado_reserva = ReservationStatus.COMPLETADA
@@ -191,19 +181,14 @@ class ReservationService:
     def auto_finalize_all_reservations(db: Session):
         """MARCA COMO COMPLETADAS TODAS LAS RESERVAS VENCIDAS DEL SISTEMA."""
         now_str = TimeService.now_str()
-        print(f"[DEBUG auto_finalize_ALL] now_str={now_str}")
         # BUSCAMOS RESERVAS QUE ESTEN PENDIENTES O ACTIVAS PERO CUYA FECHA_FIN YA PASO
         vencidas = db.query(models.Reservation).filter(
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_fin < now_str
         ).all()
         
-        print(f"[DEBUG auto_finalize_ALL] encontradas {len(vencidas)} reservas vencidas")
-        for r in vencidas:
-            print(f"[DEBUG auto_finalize_ALL]   -> ID={r.id} fin={r.fecha_fin} ahora={now_str} fin<ahora? {r.fecha_fin < now_str}")
-        
         if vencidas:
-            print(f"[SYSTEM] Finalizando {len(vencidas)} reservas vencidas.")
+            logger.info(f"Finalizando {len(vencidas)} reservas vencidas.")
             for r in vencidas:
                 r.estado_reserva = ReservationStatus.COMPLETADA
                 # LIBERAR PLAZA SI ES NO HORARIA (NUNCA SE LIBERA EN SALIDA FISICA)
