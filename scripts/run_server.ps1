@@ -1,4 +1,4 @@
-# AUTOPASS - Modern Server Runner (PowerShell Engine)
+﻿# AUTOPASS - Modern Server Runner (PowerShell Engine)
 $ErrorActionPreference = "Continue"
 $Host.UI.RawUI.WindowTitle = "AUTOPASS - Servidor de Produccion v10.0"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
