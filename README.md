@@ -8,7 +8,7 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 
 ## Características Principales
 
-- **Visión Artificial (ALPR)** — Reconocimiento de patentes y códigos QR en tiempo real con EasyOCR + OpenCV + PyTorch, sistema de consenso de votos y detección de movimiento
+- **Visión Artificial (ALPR)** — Reconocimiento de patentes y códigos QR en tiempo real con PaddleOCR + OpenCV, sistema de consenso de votos y detección de movimiento
 - **Multi-Sucursal** — Gestión independiente de tarifas, aforo, pisos y personal por sucursal
 - **Multi-Piso** — Soporte para N niveles por sucursal con capacidad trimodal configurable (Autos/Motos/Camionetas)
 - **Facturación Trimodal** — Motor de precios diferenciados por tipo de vehículo y período (Hora/Día/Semana/Quincena/Mes)
@@ -36,11 +36,11 @@ AUTOPASS/
 │   ├── user/           # Portal usuario (profile, vehicles, reservations, balance, fidelization, notifications, support)
 │   ├── parking/        # Control de acceso (ALPR/QR, status, utils)
 │   └── system/         # Sistema (health, cameras, video, common)
-├── services/           # Lógica de negocio (12 servicios)
+├── services/           # Lógica de negocio (13 servicios)
 ├── repositories/       # Data Access Layer
 ├── alpr/               # Paquete modular de visión artificial
 ├── static/
-│   ├── js/modules/     # 32 módulos ES6
+│   ├── js/modules/     # 36 módulos ES6
 │   └── css/            # 39 archivos CSS (Glassmorphism Premium)
 ├── templates/          # Jinja2 (dashboard 9 tabs, profile 7 tabs, emails, modales)
 ├── tests/              # Suite de pruebas automatizadas (pytest)
@@ -55,7 +55,7 @@ AUTOPASS/
 | Backend | FastAPI (Python 3.14) |
 | Base de Datos | SQLAlchemy — Neon/Postgres (sa-east-1) o SQLite local |
 | Frontend | Vanilla JS (ES6 Modules), CSS Moderno, Jinja2 |
-| Visión Artificial | OpenCV + EasyOCR + PyTorch |
+| Visión Artificial | PaddleOCR + OpenCV |
 | IoT | ESP32 + Paho-MQTT |
 | Real-time | WebSockets, MQTT |
 | Migraciones | Alembic |
@@ -85,9 +85,6 @@ cd AUTOPASS
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
-
-# Parche post-instalación (EasyOCR)
-.\venv\Scripts\python.exe scripts\patch_bidi.py
 ```
 
 ### 3. Configuración
@@ -96,8 +93,8 @@ El instalador automático crea `.env` desde `.env.example`. Si instalás manualm
 DATABASE_URL=sqlite:///./parking.db
 SECRET_KEY=tu_secreto_aqui
 MQTT_BROKER=broker.hivemq.com
-MQTT_TOPIC_ENTRADA=autopass/entrada
-MQTT_TOPIC_SALIDA=autopass/salida
+MQTT_TOPIC_ENTRADA=parking/barrera/entrada/control
+MQTT_TOPIC_SALIDA=parking/barrera/salida/control
 IMAGE_DIR=captured_images
 RESERVA_HORA_MIN_SEGUNDOS=1800
 MAINTENANCE_INTERVAL_SECONDS=300
@@ -116,8 +113,8 @@ SMTP_FROM=noreply@autopass.com.ar
 ### 4. Inicializar Base de Datos (solo instalación manual)
 ```bash
 .\venv\Scripts\python.exe init_db.py
-.\venv\Scripts\alembic.exe stamp head
-.\venv\Scripts\alembic.exe upgrade head
+.\venv\Scripts\python.exe -m alembic stamp head
+.\venv\Scripts\python.exe -m alembic upgrade head
 ```
 
 ### 5. Ejecutar
@@ -159,6 +156,7 @@ SMTP_FROM=noreply@autopass.com.ar
 | UserNotificationService | CRUD de notificaciones in-app |
 | WorkerService | 3 hilos: limpieza (300s), recordatorios, auto-cancelación |
 | TimeService | Tiempo virtual para testing |
+| HardwareService | Control de barreras MQTT y comunicación con ESP32 |
 
 ## Frontend
 

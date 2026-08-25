@@ -1,6 +1,6 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-15)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-25)
 
-### 🚀 Hitos Recientes (Agosto 2026) - Versión 10.0.0 (Dashboard Settings Responsive & Compact Toasts Overhaul)
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.0+ (Dashboard Settings Responsive & Setup Modernization)
 - [x] **Rediseño Responsive de Configuración del Dashboard (`settings.html`)**:
   - **Navegación e Interfaz**: Incorporación de `flex-wrap` en contenedores de botones (`.btn-tab-mini` y `.btn-tab-sub`) para distribución fluida en móviles sin scroll horizontal.
   - **Grilla de Tarifas (`rates-form-grid`)**: Ajuste de ancho de campo en modo edición (`170px`) para adaptar inputs con íconos sin comprimir cifras numéricas.
@@ -44,7 +44,7 @@
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.2 (Migración a Neon/Postgres en sa-east-1)
 - [x] **Migración de Turso/libSQL a Neon (Postgres)**: La base online pasó de Turso (`aws-us-west-2`, Oregón, ~1200 ms/query) a **Neon en São Paulo (`sa-east-1`)** con latencia medida de ~100 ms (12× más rápida). Migración realizada con `scripts/migrate_turso_to_neon.py` preservando IDs y sincronizando secuencias.
 - [x] **Driver Postgres (psycopg 3)**: `psycopg[binary]==3.3.4` agregado a `requirements.txt`. `core/database.py` normaliza `postgresql://` → `postgresql+psycopg://` automáticamente.
-- [x] **Benchmark y Verificación**: `SELECT 1` ×5 a Neon en ~100 ms cada uno; suite completa 19/19 tests pasando contra Neon; datos verificados (11 access_logs, 24 reservations, 11 users).
+- [x] **Benchmark y Verificación**: `SELECT 1` ×5 a Neon en ~100 ms cada uno; suite completa 24/24 tests pasando contra Neon; datos verificados (11 access_logs, 24 reservations, 11 users).
 - [x] **Actualización de Configuración y Documentación**: `.env` actualizado con la connection string de Neon (se quitó `TURSO_AUTH_TOKEN`); se actualizaron `DEPENDENCIAS.md`, `INICIALIZACION.md` y `Readme.md`.
 - [x] **Optimización de Carga del Dashboard**: `/parking/current-occupancy` sin N+1 (salidas y reservas en bloque + tarifas precargadas en cache; ~349 → ~269 ms). En el frontend, `loadLiveStats` y `loadOccupancy` lanzan sus llamadas en paralelo (`Promise.all`) → la pestaña "live" pasa de ~1.4 s a ~500-600 ms.
 - [x] **Arranque Rápido del Servidor**: `run_server.bat` sin `--reload` (evita proceso duplicado y reinicios al guardar archivos) y abre el navegador **solo cuando el servidor responde** (waiter TCP con `TcpClient`, bypasea el proxy de sistema que hacía fallar `Invoke-WebRequest` a localhost). Ya no hace falta recargar la página al arrancar.
@@ -138,14 +138,14 @@
 - [x] **Unified Visual Style**: Sincronización estética total entre el formulario de inicio ("Quick Add") y la gestión de flota.
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
-### 🛠️ Arquitectura Actual (v10.0.0)
-- **Backend**: Clean Architecture con Servicios y Repositories. 12 servicios en `services/`, ~98 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
-- **Frontend**: Dashboard Premium modularizado. 32 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 46 templates HTML, 39 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+### 🛠️ Arquitectura Actual (v9.9.0+)
+- **Backend**: Clean Architecture con Servicios y Repositories. 13 servicios en `services/`, ~77 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
+- **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 47 templates HTML, 39 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
 - **Multi-sucursal**: Full isolation por sucursal con gestión de pisos, aforos y configuración independiente.
-- **ALPR**: Pipeline completo de visión artificial (EasyOCR + OpenCV + PyTorch) con consenso de votos y streaming de video.
+- **ALPR**: Pipeline completo de visión artificial (PaddleOCR + OpenCV) con consenso de votos y streaming de video.
 - **Base de Datos**: **Neon/Postgres online** (`postgresql://...@ep-silent-math-acirnekl.sa-east-1.aws.neon.tech/neondb`) en región `sa-east-1` (São Paulo), compartida entre varias PC, con fallback a SQLite local (`parking.db`). Migraciones versionadas con **Alembic** (`alembic/`, primera migración `c833a3129266_initial_schema`).
 
 ### 📊 Cobertura de Funcionalidades

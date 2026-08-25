@@ -45,12 +45,14 @@ export async function loadAdminReservations() {
                 <td data-label="Estado Reserva"><span class="badge-status badge-${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</span></td>
                 <td data-label="Acciones">
                     <div class="flex-row gap-8 justify-center actions-reveal">
+                        ${r.estado_reserva !== 'Completada' && r.estado_reserva !== 'Cancelada' ? `
                         <button class="btn-icon-premium sm" onclick="openEditReservationModal(${r.id})" title="Editar Reserva">
                             <i class="fas fa-pen-to-square"></i>
                         </button>
                         <button class="btn-icon-premium sm danger" onclick="cancelReservationAdmin(${r.id})" title="Cancelar Reserva">
                             <i class="fas fa-xmark"></i>
                         </button>
+                        ` : `<span class="text-xs text-muted">—</span>`}
                     </div>
                 </td>
             </tr>`).join('') || '<tr><td colspan="8" class="text-center py-20">No hay reservas.</td></tr>';

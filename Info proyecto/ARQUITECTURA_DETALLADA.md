@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v10.0.0).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.9.0).
 
 ---
 
@@ -19,13 +19,13 @@ AUTOPASS/
 │   ├── user/           # User portal (profile, vehicles, reservations, balance, fidelization, notifications, support)
 │   ├── parking/        # Access control (access, status, utils)
 │   └── system/         # System management (health, cameras, video, common)
-├── services/           # Inteligencia de Negocio (12 servicios)
+├── services/           # Inteligencia de Negocio (13 servicios)
 ├── repositories/       # Data Access (user, reservation)
 ├── scripts/            # Utilidades (migraciones, backfill, test, patch)
 ├── tests/              # Pruebas unitarias (pytest)
 ├── static/
 │   ├── js/
-│   │   ├── modules/    # 32 módulos ES6 (lógica de negocio frontend)
+│   │   ├── modules/    # 36 módulos ES6 (lógica de negocio frontend)
 │   │   └── *.js        # 9 scripts puente (bridge: módulos → window.*)
 │   ├── css/            # 39 archivos CSS organizados en base/layout/components/pages
 │   └── images/
@@ -77,7 +77,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 
 ---
 
-### 3. Capa Frontend (Dashboard y Portal Modular - v10.0.0)
+### 3. Capa Frontend (Dashboard y Portal Modular - v9.9.0)
 
 #### Patrón de Arquitectura: Bridge Pattern
 El frontend utiliza un patrón de **dos capas** para compatibilizar módulos ES6 modernos con handlers `onclick` inline en HTML:
@@ -90,7 +90,7 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 - **Scripts Puente** (`static/js/*.js`): Importan módulos y exponen funciones al scope global (`window.*`) para compatibilidad con handlers inline en templates Jinja2.
 - **Carga**: Los scripts puente se cargan como `<script type="module">`. Los módulos se cargan en paralelo y se resuelven automáticamente.
 
-#### Módulos Frontend (`static/js/modules/` - 32 módulos ES6)
+#### Módulos Frontend (`static/js/modules/` - 36 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -124,6 +124,10 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 | `reservas-pass.js` | Renderizado de Pase Digital, QR `QRCode.js` y compartir ticket |
 | `vehicles.js` | CRUD vehículos de usuario, auto-detección de tipo |
 | `landing.js` | Landing page: mapa Leaflet, carrusel, header scroll |
+| `landing-carousel.js` | Carrusel de imágenes de la landing |
+| `landing-data.js` | Cache de POIs y datos de estadios |
+| `landing-map.js` | Mapa interactivo Leaflet con selector multicapa (Google Maps, CartoDB) |
+| `dashboard-cameras.js` | Configuración y control de cámaras del dashboard |
 | `tour.js` | Tour guiado interactivo |
 | `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
 
@@ -136,12 +140,12 @@ El orquestador centraliza todas las asignaciones `window.*`:
 - Reservas: `window.openEditReservationModal`, `window.cancelReservationAdmin`
 
 #### Estilo CSS
-Organización en 4 capas bajo `static/css/` (38 archivos totales):
+Organización en 4 capas bajo `static/css/` (39 archivos totales):
 - `base/`: Variables CSS, reset, tipografía, utilidades (4 archivos)
 - `layout/`: Sidebar, header, grid (3 archivos)
 - `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
 - `pages/`: landing, profile, dashboard, contacto, legal (5 archivos + 17 sub-archivos)
-  - `pages/dashboard/`: `dashboard-base.css`, `dashboard-cards.css`, `dashboard-live.css`, `dashboard-settings.css`, `dashboard-tables.css`
+  - `pages/dashboard/`: `dashboard-base.css`, `dashboard-cards.css`, `dashboard-live.css`, `dashboard-settings.css`, `dashboard-tables.css`, `dashboard-admin-tour.css`
   - `pages/landing/`: `landing-features.css`, `landing-hero.css`, `landing-map.css`, `landing-modals.css`, `landing-nav.css`
   - `pages/profile/`: `profile-base.css`, `profile-help.css`, `profile-notifications.css`, `profile-points.css`, `profile-reservations.css`, `profile-tour.css`, `profile-vehicles.css`
 - `style.css` (raíz): Estilos globales adicionales

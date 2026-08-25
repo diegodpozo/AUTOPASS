@@ -4,7 +4,7 @@ Este documento describe la arquitectura de comunicación y el flujo de datos del
 
 ## 📐 Arquitectura del Ecosistema
 
-El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una estructura modular por capas:
+El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una estructura modular por capas (v9.9.0).
 
 1.  **Capa Core (`core/`)**:
     *   `core/config.py`: Gestión centralizada de variables de entorno y constantes.
@@ -41,7 +41,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `repositories/reservation_repository.py`: Acceso a datos de reservas.
 
 5.  **Gestión de Accesos ALPR (`alpr/` + `alpr_service.py`)**:
-    *   `alpr/`: Paquete modular desacoplado compuesto por `config.py` (variables y regexes), `preprocessor.py` (filtros Moiré, recorte MERCOSUR, ROI), `video_streamer.py` (captura thread-safe OpenCV), `ws_client.py` (WebSocket streamer), `ocr_engine.py` (EasyOCR, QR y consenso de votación) y `runner.py` (orquestador).
+    *   `alpr/`: Paquete modular desacoplado compuesto por `config.py` (variables y regexes), `preprocessor.py` (filtros Moiré, recorte MERCOSUR, ROI), `video_streamer.py` (captura thread-safe OpenCV), `ws_client.py` (WebSocket streamer), `ocr_engine.py` (PaddleOCR, QR y consenso de votación) y `runner.py` (orquestador).
     *   `alpr_service.py`: Script wrapper en la raíz que ejecuta `alpr.runner.run_alpr_service()`, garantizando compatibilidad 100% con ejecuciones de subproceso.
     *   **Arquitectura Interna**: Sistema de consenso con búfer de votos, cola de frames con política drop-oldest, detección de movimiento, recorte de banda azul MERCOSUR, detección de QR rápido, envío de frames por WebSocket, persistencia de última patente aceptada con cooldown.
     *   **Gestión de Cámaras**: Configuración de IP por puerta (entrada/salida) en DB vía `Settings`, start/stop de procesos ALPR desde dashboard, service restart.
@@ -63,15 +63,10 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
 ```powershell
 python -m venv venv
 .\venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-core.txt
 ```
 
-### 2. Parche EasyOCR (Post-instalación)
-```powershell
-.\venv\Scripts\python.exe scripts\patch_bidi.py
-```
-
-### 3. Inicialización de Base de Datos
+### 2. Inicialización de Base de Datos
 ```powershell
 python init_db.py  # Crea tablas y datos iniciales
 ```
@@ -95,7 +90,7 @@ uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir ser
 - `query_fg112.py`: Consulta específica para patente FG 112 LO.
 - `query_res.py`: Consulta reservas por patente.
 - `test_video.py`: Test de fuente de video.
-- `patch_bidi.py`: Parche post-instalación de EasyOCR.
+- `patch_bidi.py`: (Legacy) Parche post-instalación de python-bidi para EasyOCR. Ya no se necesita con PaddleOCR.
 
 ##  Frontend Features No Documentadas Anteriormente
 - **Sistema de Tour**: `tour.js` y `onboarding_helpers.js` para guiar nuevos usuarios.
@@ -111,7 +106,7 @@ uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir ser
 - **Logo de Sucursal**: Upload de logo personalizado por sucursal.
 - **Exportación CSV**: Exportar datos financieros a CSV.
 - **Flujo de Registro Rápido de Vehículo**: Integración directa con flujo de reserva.
-- **Dashboard Modular (v9.6.0+)**: Lógica JS del dashboard dividida en 14 módulos ES6 (`dashboard-ui.js`, `dashboard-stats.js`, `dashboard-admin.js`, `dashboard-admin-users.js`, `dashboard-admin-branches.js`, `dashboard-admin-branches-crud.js`, `dashboard-admin-branches-floors.js`, `dashboard-admin-settings.js`, `dashboard-finance.js`, `dashboard-operations.js`, `dashboard-reservations.js`, `dashboard-promotions.js`, `dashboard-tickets.js`, `monitoreo-live.js`) con un script puente `dashboard.js` que orquesta la exposición global. Esto mejora mantenibilidad, permite tree-shaking futuro y separa responsabilidades claramente.
+- **Dashboard Modular (v9.6.0+)**: Lógica JS del dashboard dividida en módulos ES6 especializados con scripts puente que orquestan la exposición global. Esto mejora mantenibilidad, permite tree-shaking futuro y separa responsabilidades claramente.
 
 ---
 
@@ -124,7 +119,7 @@ El frontend usa un patrón de **dos capas** para compatibilizar módulos ES6 con
 modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclick handlers
 ```
 
-### Módulos Frontend (32 módulos ES6)
+### Módulos Frontend (36 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -158,6 +153,10 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `reservas-pass.js` | Renderizado de Pase Digital, QR `QRCode.js` y compartir ticket |
 | `vehicles.js` | CRUD vehículos de usuario, auto-detección de tipo |
 | `landing.js` | Landing page: mapa Leaflet, carrusel, header scroll |
+| `landing-carousel.js` | Carrusel de imágenes de la landing |
+| `landing-data.js` | Cache de POIs y datos de estadios |
+| `landing-map.js` | Mapa interactivo Leaflet con selector multicapa (Google Maps, CartoDB) |
+| `dashboard-cameras.js` | Configuración y control de cámaras del dashboard |
 | `tour.js` | Tour guiado interactivo para clientes |
 | `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
 

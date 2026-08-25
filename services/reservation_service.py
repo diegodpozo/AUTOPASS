@@ -340,6 +340,9 @@ class ReservationService:
         
         if res.estado_reserva == ReservationStatus.CANCELADA:
             return {"status": "ok", "message": "La reserva ya se encuentra cancelada"}
+        
+        if res.estado_reserva == ReservationStatus.COMPLETADA:
+            return {"status": "error", "message": "La reserva ya finalizó y no puede cancelarse"}
             
         # USAMOS LA SIMULACION PARA OBTENER EL MONTO
         sim = ReservationService.simulate_refund(db, res)

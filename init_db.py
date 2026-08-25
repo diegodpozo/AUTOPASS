@@ -11,7 +11,11 @@ def create_tables():
 
 def migrate_db():
     """EJECUTA MIGRACIONES MANUALES PARA SQLITE (AGREGADO DE COLUMNAS)."""
-    db_file = settings.DATABASE_URL.replace("sqlite:///./", "").replace("sqlite:///", "")
+    db_url = settings.DATABASE_URL
+    if not db_url.startswith("sqlite"):
+        print("[*] Base de datos no es SQLite, saltando migraciones manuales (usa Alembic).")
+        return
+    db_file = db_url.replace("sqlite:///./", "").replace("sqlite:///", "")
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
     
