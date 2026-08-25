@@ -1,4 +1,4 @@
-# AUTOPASS - Modern Setup Engine (PowerShell Engine)
+﻿# AUTOPASS - Modern Setup Engine (PowerShell Engine)
 $ErrorActionPreference = "Continue"
 $Host.UI.RawUI.WindowTitle = "AUTOPASS - Modern Setup Engine v10.0"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
