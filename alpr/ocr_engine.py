@@ -6,7 +6,12 @@ import re
 import base64
 import queue
 os.environ['PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK'] = 'True'
-from paddleocr import PaddleOCR
+try:
+    from paddleocr import PaddleOCR
+    PADDLE_AVAILABLE = True
+except ImportError:
+    PADDLE_AVAILABLE = False
+    print("[ALPR] WARNING: paddleocr no instalado. Motor OCR deshabilitado.")
 from concurrent.futures import ThreadPoolExecutor
 from alpr.config import (
     GATE_ID, GATE_TYPE, BACKEND_URL, COOLDOWN_SECONDS, OCR_INTERVAL,
@@ -21,6 +26,8 @@ class ALPREngine:
 
     def __init__(self):
         print("[*] Cargando motores de IA...")
+        if not PADDLE_AVAILABLE:
+            raise RuntimeError("PaddleOCR no esta instalado. Instala paddleocr y paddlepaddle para usar el ALPR.")
         self.reader = PaddleOCR(
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,

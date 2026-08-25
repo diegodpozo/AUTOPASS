@@ -48,7 +48,7 @@ class AccessService:
         # Normalizar sucursal a partir de gate_id: intentar mapear a nombre completo en parking_branches
         sucursal = None
         if data.gate_id and '_' in data.gate_id:
-            suc_short = data.gate_id.split('_')[0]
+            suc_short = normalize_name(data.gate_id.split('_')[0])
             try:
                 branches = db.query(models.ParkingBranch).all()
                 for b in branches:
@@ -161,7 +161,7 @@ class AccessService:
         p = normalize_plate(data.plate)
         sucursal = None
         if data.gate_id and '_' in data.gate_id:
-            suc_short = data.gate_id.split('_')[0]
+            suc_short = normalize_name(data.gate_id.split('_')[0])
             try:
                 branches = db.query(models.ParkingBranch).all()
                 for b in branches:
@@ -226,18 +226,19 @@ class AccessService:
             logger.debug(f"validate_qr called. gate_id={getattr(data, 'gate_id', None)} qr_len={len(getattr(data, 'qr_data',''))}")
         except Exception:
             pass
+        sucursal = None
         try:
-            sucursal = None
             if data.gate_id and '_' in data.gate_id:
-                suc_short = data.gate_id.split('_')[0]
-                sucursal = None if suc_short == 'ENTRADA' else suc_short
-                if sucursal:
-                    try:
-                        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal}%")).first()
-                        if branch:
-                            sucursal = branch.nombre
-                    except Exception:
-                        pass
+                suc_short = normalize_name(data.gate_id.split('_')[0])
+            if suc_short not in ('ENTRADA', 'SALIDA'):
+                sucursal = suc_short
+            if sucursal:
+                try:
+                    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal}%")).first()
+                    if branch:
+                        sucursal = branch.nombre
+                except Exception:
+                    pass
             parts = data.qr_data.split('|')
             if len(parts) < 3 or parts[0] != "AUTOPASS":
                 return {"status": "error", "message": "Formato de QR inválido"}

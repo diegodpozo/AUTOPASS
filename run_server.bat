@@ -17,14 +17,8 @@ if not exist venv (
 echo [+] Activando entorno virtual...
 call venv\Scripts\activate
 
-:: Instalar/actualizar dependencias automaticamente
-echo [+] Verificando dependencias (puede demorar la primera vez)...
-pip install -r requirements.txt --quiet 2>nul
-if errorlevel 1 (
-    echo [!] Error al instalar dependencias. Revisa requirements.txt
-    pause
-    exit /b
-)
+:: NO reinstalar dependencias aqui (ya se hizo en setup_backend.bat)
+:: Si falta algo, ver setup_log.txt
 
 :: Verificar variable ALPR_FORCE_OCR en .env
 findstr /C:"ALPR_FORCE_OCR=true" .env >nul 2>&1

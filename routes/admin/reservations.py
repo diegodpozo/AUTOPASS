@@ -130,7 +130,7 @@ def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: 
     result = ReservationService.cancel_reservation(db, None, res_id)
     if result["status"] == "ok":
         reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
-        if reserva and reserva.user:
+        if reserva and reserva.user and reserva.estado_reserva == "Cancelada":
             UserNotificationService.create_notification(
                 db, user_id=reserva.user.id,
                 tipo="reserva_cancelada_admin",

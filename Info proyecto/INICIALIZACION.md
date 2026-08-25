@@ -19,8 +19,8 @@ Crea o edita el archivo `.env` en la raíz:
 DATABASE_URL=sqlite:///./parking.db
 SECRET_KEY=tu_secreto_aqui
 MQTT_BROKER=broker.hivemq.com
-MQTT_TOPIC_ENTRADA=autopass/entrada
-MQTT_TOPIC_SALIDA=autopass/salida
+MQTT_TOPIC_ENTRADA=parking/barrera/entrada/control
+MQTT_TOPIC_SALIDA=parking/barrera/salida/control
 IMAGE_DIR=captured_images
 RESERVA_HORA_MIN_SEGUNDOS=1800  # Tiempo mínimo de anticipación para reservas por hora (en segundos, default 30 min)
 MAINTENANCE_INTERVAL_SECONDS=300  # Intervalo de limpieza de reservas vencidas
