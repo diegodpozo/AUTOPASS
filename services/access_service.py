@@ -204,7 +204,7 @@ class AccessService:
             tipo_evento=AccessEventType.SALIDA, 
             tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=now.isoformat(), 
-            pago_confirmado=True, 
+            pago_confirmado=ultimo.pago_confirmado, 
             sucursal=sucursal,
             ocr_time=data.ocr_time,
             backend_time=data.backend_time

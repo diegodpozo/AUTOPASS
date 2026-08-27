@@ -1,9 +1,11 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional
 import re
 from schemas.validators import validate_password_strength
 
 class UserBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: Optional[int] = None
     nombre: str
     apellido: str
@@ -16,9 +18,6 @@ class UserBase(BaseModel):
     puntos_acumulados: Optional[int] = 0
     saldo: Optional[float] = 0.0
     is_blocked: Optional[bool] = False
-
-    class Config:
-        from_attributes = True
 
     @field_validator('telefono')
     @classmethod
@@ -93,6 +92,8 @@ class PromotionCreate(BaseModel):
     sucursal: Optional[str] = None
 
 class PromotionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     titulo: str
     descripcion: str
@@ -101,6 +102,3 @@ class PromotionResponse(BaseModel):
     categoria: str
     activa: bool
     sucursal: Optional[str] = None
-
-    class Config:
-        from_attributes = True

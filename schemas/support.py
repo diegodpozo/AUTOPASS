@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -13,6 +13,8 @@ class SupportTicketUpdate(BaseModel):
     respuesta: Optional[str] = None
 
 class SupportTicketResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     cliente_nombre: Optional[str] = None
@@ -26,9 +28,6 @@ class SupportTicketResponse(BaseModel):
     user_response: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class SupportTicketReply(BaseModel):
     mensaje: str

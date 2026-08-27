@@ -63,7 +63,7 @@ con 8 casos criticos, **virtual time service** para testing, y **operaciones y m
 
 ### 5. Apendices
 Mapa completo de **rutas API** (~99 endpoints HTTP + 2 WebSocket), **arquitectura del sistema ALPR**
-(EasyOCR + OpenCV con consenso y cooldown), e **integracion con hardware** ESP32 via MQTT.
+(motor OCR dual RapidOCR/PaddleOCR + OpenCV con consenso y cooldown), e **integracion con hardware** ESP32 via MQTT.
 
 ## Servicios del Sistema
 

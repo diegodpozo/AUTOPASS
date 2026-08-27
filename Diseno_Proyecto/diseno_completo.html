@@ -218,7 +218,7 @@ pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit}
 <tr><td>Frontend Developer</td><td>Jinja2, CSS Glassmorphism, JS modular, WebSockets</td></tr>
 <tr><td>DevOps</td><td>Entorno producción, despliegue, scripts</td></tr>
 <tr><td>QA / Tester</td><td>pytest, integración, flujos críticos</td></tr>
-<tr><td>Especialista Visión Artificial</td><td>EasyOCR + OpenCV, tuning ALPR</td></tr>
+<tr><td>Especialista Visión Artificial</td><td>RapidOCR/PaddleOCR + OpenCV, tuning ALPR</td></tr>
 </table></div>
 <h3>Cronograma de Alto Nivel</h3>
 <div class="table-wrap"><table><tr><th>Hito</th><th>Versión</th><th>Fecha</th><th>Entregable Principal</th></tr>
@@ -331,6 +331,8 @@ pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit}
 <tr><td>RF-10</td><td>Validación de salida</td><td>Verificar pago o reserva vigente antes de abrir barrera</td><td><span class="badge alta">ALTA</span></td></tr>
 <tr><td>RF-11</td><td>Cortesía 10 min</td><td>Salida sin cargo si la estadía ≤ 10 minutos</td><td><span class="badge alta">ALTA</span></td></tr>
 <tr><td>RF-12</td><td>Cancelación de estadía</td><td>Cancelar estadía activa sin costo (cortesía)</td><td><span class="badge media">MEDIA</span></td></tr>
+<tr><td>RF-45</td><td>Cortesía countdown</td><td>Contador regresivo verde de 10 min al ingresar; tras expirar, mostrar monto a pagar</td><td><span class="badge alta">ALTA</span></td></tr>
+<tr><td>RF-46</td><td>ALPR post-lectura</td><td>Pausa de 5 segundos después de aceptar una patente antes de volver a escanear</td><td><span class="badge alta">ALTA</span></td></tr>
 </table></div>
 <h3>📅 Reservas</h3>
 <div class="table-wrap"><table><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Prioridad</th></tr>
@@ -469,7 +471,7 @@ pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit}
 <div class="flow">
 <div class="flow-node">📷 Cámara ALPR capta patente</div>
 <div class="flow-arrow">▼ frame</div>
-<div class="flow-node">🖥️ Procesador ALPR (EasyOCR) reconoce texto</div>
+<div class="flow-node">🖥️ Procesador ALPR (RapidOCR/PaddleOCR) reconoce texto</div>
 <div class="flow-arrow">▼ patente string</div>
 <div class="flow-node">📡 AccessService.validate_entry()</div>
 <div class="flow-arrow">▼ verificación</div>
@@ -541,7 +543,7 @@ pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit}
 <tr><td>Datos</td><td>SQLAlchemy 2.0</td><td>ORM para acceso a base de datos</td></tr>
 <tr><td>Datos</td><td>Pydantic</td><td>Schemas de validación y serialización</td></tr>
 <tr><td>Infraestructura</td><td>SQLite / PostgreSQL</td><td>Base de datos relacional</td></tr>
-<tr><td>Infraestructura</td><td>OpenCV + EasyOCR</td><td>Visión artificial para ALPR</td></tr>
+<tr><td>Infraestructura</td><td>OpenCV + RapidOCR/PaddleOCR</td><td>Visión artificial para ALPR</td></tr>
 </table></div>
 <h3>Patrones de Diseño</h3>
 <div class="table-wrap"><table><tr><th>Patrón</th><th>Uso</th><th>Ubicación</th></tr>
@@ -558,7 +560,7 @@ pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit}
 <div class="flow">
 <div class="flow-node">📷 Cámara IP<span class="tag" style="background:#f4433622;color:#ef9a9a;">RTSP</span></div>
 <div class="flow-arrow">▼ frame</div>
-<div class="flow-node">🖥️ ALPR Processor<span class="tag" style="background:#4caf5022;color:#a5d6a7;">EasyOCR</span></div>
+<div class="flow-node">🖥️ ALPR Processor<span class="tag" style="background:#4caf5022;color:#a5d6a7;">RapidOCR</span></div>
 <div class="flow-arrow">▼ patente</div>
 <div class="flow-node">📡 AccessService<span class="tag" style="background:#2196f322;color:#64B5F6;">FastAPI</span></div>
 <div class="flow-arrow">▼ acción (open/close)</div>
@@ -1010,7 +1012,7 @@ static/
 
 <div class="section" id="alpr">
 <h2>📷 Arquitectura ALPR</h2>
-<div class="card gold-border"><p>El módulo ALPR (Automatic License Plate Recognition) es el corazón del sistema de acceso automatizado. Utiliza <strong>OpenCV</strong> para preprocesamiento de imágenes y <strong>EasyOCR</strong> para el reconocimiento óptico de caracteres.</p></div>
+<div class="card gold-border"><p>El módulo ALPR (Automatic License Plate Recognition) es el corazón del sistema de acceso automatizado. Utiliza <strong>OpenCV</strong> para preprocesamiento de imágenes y un motor dual <strong>RapidOCR (ONNX)</strong> / <strong>PaddleOCR</strong> para el reconocimiento óptico de caracteres, con conmutación automática entre motores.</p></div>
 <h3>Arquitectura Interna de ALPR</h3>
 <div class="flow">
 <div class="flow-node">📷 Frame de cámara IP<span class="tag" style="background:#f4433622;color:#ef9a9a;">RTSP</span></div>
@@ -1019,7 +1021,7 @@ static/
 <div class="flow-arrow">▼ frame procesado</div>
 <div class="flow-node">📐 Detector de ROI<span class="tag" style="background:#2196f322;color:#64B5F6;">Contornos</span></div>
 <div class="flow-arrow">▼ región candidata</div>
-<div class="flow-node">👁️ EasyOCR<span class="tag" style="background:#4caf5022;color:#81C784;">Reconocimiento</span></div>
+<div class="flow-node">👁️ RapidOCR<span class="tag" style="background:#4caf5022;color:#81C784;">Reconocimiento</span></div>
 <div class="flow-arrow">▼ texto extraído</div>
 <div class="flow-node">🧹 Post-procesador<span class="tag" style="background:#ff980022;color:#ffcc80;">Regex</span></div>
 <div class="flow-arrow">▼ patente normalizada</div>

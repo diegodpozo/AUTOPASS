@@ -5,7 +5,7 @@ Solución empresarial para la gestión de estacionamientos que combina **Visión
 ## Últimas Actualizaciones (v9.9.0+ - Agosto 2026)
 - **Setup Modernizado**: Instalador etapeado (`setup_backend.bat`) con dependencias divididas en `requirements-core.txt` (obligatorio) y `requirements-ai.txt` (opcional). Output limpio sin spameo de pip.
 - **Migración a Neon/Postgres (sa-east-1)**: La base online pasó de Turso/Oregón (~1200 ms/query) a **Neon en São Paulo** con latencia medida de ~100 ms (12× más rápida). Configurable vía `DATABASE_URL=postgresql://...` en `.env` (fallback a SQLite local).
-- **PaddleOCR**: Motor OCR migrado de EasyOCR a PaddleOCR para mejor rendimiento y compatibilidad.
+- **OCR Dual (v9.10.0)**: Motor OCR **RapidOCR ONNX** como primario (compatible con Python 3.14+) con fallback a **PaddleOCR** para Python < 3.14. Reemplaza por completo a EasyOCR.
 
 ## Versiones Previas
 - **v9.8.x**: Migraciones con Alembic, suite de tests expandida (24 pruebas).
@@ -43,4 +43,4 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 - **Base de Datos:** SQLAlchemy — SQLite local o **Neon/Postgres en la nube** (compartida entre varias PC, región `sa-east-1`)
 - **Frontend:** Vanilla JS (ES6 Modules), CSS Moderno, Jinja2, Chart.js.
 - **IoT:** Paho-MQTT.
-- **IA:** OpenCV + EasyOCR + PyTorch (Deep Learning).
+- **IA:** OpenCV + RapidOCR ONNX / PaddleOCR (lectura de patentes) + detección QR y consenso de votos.

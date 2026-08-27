@@ -42,16 +42,16 @@ PLATE_ALLOWLIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 LATAM_PLATE_PATTERN = (
     r'\b(' +
-    r'[A-Z]{3}\d[A-Z]\d{2}' + r'|' +
-    r'[A-Z]{4}\d{3}' + r'|' +
-    r'\d{3}[A-Z]{4}' + r'|' +
-    r'[A-Z]{2}\d{3}[A-Z]{2}' + r'|' +
-    r'[A-Z]{3}\d{4}' + r'|' +
-    r'[A-Z]{3}\d{3}' + r'|' +
-    r'[A-Z]{2}\d{3}[A-Z]' + r'|' +
-    r'[A-Z]{2}\d{3}' +
+    r'[A-Z]{3}\d[A-Z]\d{2}' + r'|' +  # Brasil Auto Mercosur
+    r'[A-Z]{4}\d{3}' + r'|' +         # Paraguay Auto Mercosur
+    r'[A-Z]{2}\d{3}[A-Z]{2}' + r'|' +  # Argentina Auto Mercosur
+    r'[A-Z]{3}\d{4}' + r'|' +         # Uruguay Auto
+    r'[A-Z]{3}\d{3}' + r'|' +         # Argentina Auto Antigua
+    r'[A-Z]\d{3}[A-Z]{3}' + r'|' +   # Argentina Moto Mercosur
+    r'[A-Z]{2}\d{3}[A-Z]' + r'|' +   # Argentina Moto Mercosur
+    r'[A-Z]{2}\d{3}' +               # Argentina Moto Antigua
     r')\b'
 )
 
-MOTO_PATTERN = re.compile(r'^[A-Z]{2}\d{3}$|^[A-Z]{2}\d{3}[A-Z]$')
+MOTO_PATTERN = re.compile(r'^[A-Z]{2}\d{3}$|^[A-Z]{2}\d{3}[A-Z]$|^[A-Z]\d{3}[A-Z]{3}$')
 MOTO_MIN_CONFIDENCE = float(os.getenv("ALPR_MOTO_CONFIDENCE", 0.85))

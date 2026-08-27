@@ -1,4 +1,11 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-25)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-27)
+
+### 🚀 Hitos Recientes (Agosto 2026) - Seguridad (Rate Limiting, Sesiones Multi-Dispositivo & Soft Delete)
+- [x] **Rate Limiting por IP (SlowAPI)**: Nueva dependencia `slowapi==0.1.9` con `core/limiter.py`. Límite global default `300/min` y límites específicos en los endpoints públicos de auth: `/login` 15/min, `/register` 10/min, `/forgot-password` 5/min, `/reset-password` 10/min. Activado con `app.state.limiter` y `RateLimitExceeded` handler en `main.py` (mitiga fuerza bruta de login y abuso de registro).
+- [x] **Gestión de Sesiones Multi-Dispositivo (`UserSession`)**: Nueva tabla `user_sessions` (migración Alembic `b7e3a1d2c4f5`) que registra en cada login `device_id`, `user_agent` e `ip_address`. Al detectar acceso desde otro dispositivo real (mismo user-agent + IP se absorben como el mismo PC), se dispara una notificación in-app `NEW_DEVICE_LOGIN` ("Nuevo inicio de sesión").
+- [x] **Soft Delete de Usuarios (`is_deleted`)**: El borrado de usuarios pasa a ser lógico — `delete_user` marca `is_deleted = True` en lugar de eliminar la fila. Todas las consultas de usuarios (auth, admin, services) filtran `is_deleted == False`, preservando integridad referencial de reservas, accesos y tickets.
+- [x] **Token de Recuperación con Propósito**: `forgot-password`/`reset-password` usan un JWT con `purpose: "recovery"` y expiración de `RECOVERY_TOKEN_EXPIRE_MINUTES` (30 min); `reset-password` valida el propósito antes de actualizar la contraseña.
+- [x] **Normalización de Email en Login**: El email se normaliza a minúsculas/trim antes de autenticar y al buscar usuarios.
 
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.10.0 (ALPR Paper Testing Engine, Dual RapidOCR/PaddleOCR & 7-Char Priority Matching)
 - [x] **Soporte Dual de Motor OCR (RapidOCR ONNX / PaddleOCR)**:
@@ -7,7 +14,7 @@
 - [x] **Optimización para Lectura de Patentes Impresas en Papel**:
   - **Identificación de País Independiente del Color (`identify_country`)**: Priorización de coincidencia regex de patrones MERCOSUR/Antiguos para reconocer patentes impresas en papel en blanco y negro sin franja azul.
   - **Detección Azul HSV Adaptativa (`is_mercosur_candidate`)**: Tolerancia ampliada (`lower_blue` = `[90, 40, 40]`) para capturar la franja azul en hojas de papel impresas con tinta de inyección o láser.
-  - **Consenso Rápido de 1 Voto para Pruebas**: Validación instantánea en 1 voto si la patente coincide con un formato MERCOSUR válido y confianza $\ge 0.40$.
+  - **Consenso Rápido de 1 Voto para Pruebas**: Validación instantánea en 1 voto si la patente coincide con un formato conocido (`KNOWN_PLATE_FORMATS`) y confianza alta: $\ge 0.75$ para vehículos no moto y $\ge 0.85$ (`MOTO_MIN_CONFIDENCE`) para motos. Las lecturas de baja confianza requieren `CONSENSUS_REQUIRED` (2) votos en la ventana de 4s.
 - [x] **Extracción Prioritaria de 7 Caracteres & Escalado ROI**:
   - **Priorización de 7 Caracteres (`full_7_pattern`)**: Combinación de bloques de texto antes de evaluar substrings de 6 caracteres, evitando truncar patentes como `AG 536 CR` en `AG 536 C`.
   - **Escalado Inteligente de ROI (`_ocr_single_roi`)**: Re-escalado automático por interpolación cúbica a 80px de alto para cultivos pequeños, afinando bordes y previniendo la confusión de dígitos como `6` vs `5`.

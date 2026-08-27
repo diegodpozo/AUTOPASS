@@ -372,6 +372,7 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
         deuda = 0.0
         ya_pago = e.pago_confirmado
         reserva_info = None
+        en_cortesia = False
 
         if e.reserva_id:
             r = reservas.get(e.reserva_id)
@@ -388,6 +389,10 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
                     ya_pago = True
         elif not e.pago_confirmado:
             deuda = calc_debt(e.fecha_hora, e.sucursal, e.tipo_vehiculo)
+            entrada_dt = datetime.datetime.fromisoformat(e.fecha_hora)
+            minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
+            if minutos_transcurridos <= 10:
+                en_cortesia = True
 
         res.append({
             "patente": e.patente_detectada,
@@ -395,6 +400,7 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
             "ingreso": e.fecha_hora,
             "deuda": deuda,
             "ya_pago": ya_pago,
+            "en_cortesia": en_cortesia,
             "es_reserva": e.reserva_id is not None,
             "reserva": reserva_info,
             "sucursal": e.sucursal,

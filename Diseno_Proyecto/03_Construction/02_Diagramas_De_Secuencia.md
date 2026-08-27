@@ -225,6 +225,49 @@ WorkerService (Thread)     UserNotificationService       EmailService         DB
     │                           │◄─────────────────────────│                  │
 ```
 
+## 6. Flujo de Dashboard — Cortesía Countdown
+
+```
+Dashboard (Browser)     Backend API         AccessService       DB
+    │                      │                     │                │
+    │  1. GET /current-    │                     │                │
+    │     occupancy        │                     │                │
+    │─────────────────────►│                     │                │
+    │                      │                     │                │
+    │                      │ 2. Query entradas   │                │
+    │                      │    sin salida       │                │
+    │                      │──────────────────────────────────►   │
+    │                      │◄──────────────────────────────────   │
+    │                      │                     │                │
+    │                      │ 3. Para cada vehículo:               │
+    │                      │    - Calcular minutos desde entrada  │
+    │                      │    - Si ≤10 min y no pagó:           │
+    │                      │      en_cortesia = true              │
+    │                      │    - Si >10 min:                     │
+    │                      │      en_cortesia = false, deuda = X  │
+    │                      │                     │                │
+    │  4. Respuesta con    │                     │                │
+    │     en_cortesia,     │                     │                │
+    │     deuda, ya_pago   │                     │                │
+    │◄────────────────────│                     │                │
+    │                      │                     │                │
+    │  5. Renderizar tabla:│                     │                │
+    │     Si en_cortesia:  │                     │                │
+    │       Mostrar MM:SS  │                     │                │
+    │       verde (countdown)                   │                │
+    │     Si ya_pago:      │                     │                │
+    │       Mostrar PAGADO │                     │                │
+    │     Si no y >10 min: │                     │                │
+    │       Mostrar $X rojo│                     │                │
+    │                      │                     │                │
+    │  6. setInterval(1s): │                     │                │
+    │     Actualizar todos │                     │                │
+    │     los countdowns   │                     │                │
+    │     Cuando llega a   │                     │                │
+    │     00:00: re-render │                     │                │
+    │     → mostrar $X rojo│                     │                │
+```
+
 ## 5. Flujo de Operación Manual (STAFF)
 
 ```

@@ -29,4 +29,9 @@ def test_identify_country_bw_paper_printed_plate():
     assert ImagePreprocessor.identify_country("AF456GH", False) == "ARGENTINA (Mercosur)"
     assert ImagePreprocessor.identify_country("A012BCD", False) == "ARGENTINA (Moto Mercosur)"
     assert ImagePreprocessor.identify_country("AAA111", False) == "ARGENTINA (Antigua)"
+    assert ImagePreprocessor.identify_country("WXYZ789", False) == "PARAGUAY (Mercosur)"
+
+def test_paraguay_auto_format():
+    assert format_plate("WXYZ789") == "WXYZ 789"
+
 

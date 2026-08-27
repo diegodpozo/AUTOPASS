@@ -8,13 +8,17 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
 
 1.  **Capa Core (`core/`)**:
     *   `core/config.py`: Gestión centralizada de variables de entorno y constantes.
-    *   `core/security.py`: Motor de seguridad con **RBAC (Role-Based Access Control)** y JWT.
+    *   `core/security.py`: Motor de seguridad con **RBAC (Role-Based Access Control)**, JWT y dependencias de autenticación por rol.
     *   `core/database.py`: Gestión de persistencia y sesiones (SQLAlchemy).
     *   `core/mqtt.py`: Orquestador de comunicación con barreras físicas vía MQTT.
     *   `core/seed.py`: Poblado inicial de datos (roles, sucursales, tarifas).
+    *   `core/limiter.py`: **Rate limiting (SlowAPI)** por IP — límite global default `300/min` y límites específicos en los endpoints de auth.
+    *   `core/logger.py`: Configuración global de logging (`setup_logging`) y `get_logger`.
+    *   `core/time.py`: `utcnow()` — fecha/hora UTC como datetime naive (base de timestamps).
+    *   `core/normalize.py`: Normalización de nombres/sucursales (`normalize_name`, `normalize_branch_name`, `normalize_user_name`).
 
 2. **Backend Multi-Sucursal (FastAPI - `routes/`)**: 
-    *   `routes/auth.py`: Autenticación, registro de usuarios, gestión de tokens JWT, recuperación de contraseña (`/forgot-password`, `/reset-password`).
+    *   `routes/auth.py`: Autenticación, registro de usuarios, gestión de tokens JWT, recuperación de contraseña (`/forgot-password`, `/reset-password`), registro de sesiones multi-dispositivo (`UserSession`) y rate limiting (SlowAPI).
     *   `routes/admin/`: **Modular** — `users.py` (CRUD, toggle-block, balance, password, delete, role), `branches.py` (CRUD con logo upload, toggle activo, floors), `reservations.py` (CRUD, confirm-payment, cancel, update), `promotions.py` (CRUD, toggle activo), `operations.py` (manual entry/exit, open-barrier, cancel-stay, manual-entry), `settings.py` (prices, capacity), `virtual_time.py` (status, advance, set, reset), `support.py` (listar y responder tickets de soporte).
     *   `routes/user/`: **Modular** — `profile.py` (get/update profile, change-password), `reservations.py` (CRUD, modify, pay, cancel-simulation, cancel), `vehicles.py` (CRUD), `balance.py` (recharge, payment-history, active-stays, rates), `fidelization.py` (promotions, redeem, points-history), `notifications.py` (CRUD notificaciones in-app, unread count, mark read, delete single, clear read), `support.py` (crear y consultar tickets de soporte).
     *   `routes/parking/`: **Modular** — `access.py` (ALPR/QR, validate-plate, pay-stay, exit-plate, validate-qr), `status.py` (aforo + WebSockets, current-occupancy, branches, ws), `utils.py` (normalize_plate, format_plate, normalize_dni).
@@ -48,15 +52,18 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   **Gestión de Cámaras**: Configuración de IP por puerta (entrada/salida) en DB vía `Settings`, start/stop de procesos ALPR desde dashboard, service restart.
 
 ##  Configuración y Seguridad
-- **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`). Incluye `RESERVA_HORA_MIN_SEGUNDOS` para tiempo mínimo de anticipación en reservas por hora, `MAINTENANCE_INTERVAL_SECONDS` para intervalo de limpieza, `SMTP_*` para configuración de email.
-- **Token JWT**: Protección robusta de endpoints con validación de roles en tiempo real. Decodificación vía `decode_access_token` en `core/security.py`.
+- **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`). Incluye `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*`, `ACCESS_TOKEN_EXPIRE_MINUTES` (default 1440 = 24h), `ALGORITHM` (HS256), `SECRET_KEY` y `ALLOWED_ORIGINS` para CORS.
+- **Token JWT**: Protección robusta de endpoints con validación de roles en tiempo real. Decodificación vía `decode_access_token` en `core/security.py`. El payload incluye `sub` (email) y `rol`. `create_access_token` firma con expiración por defecto de 15 min si no se pasa `expires_delta` (pero el login usa `ACCESS_TOKEN_EXPIRE_MINUTES`, default 24h).
 - **RBAC**: Roles `ADMIN` (global), `LOCAL_ADMIN` (por sucursal), `STAFF` (operativo), `USER` (cliente). Dependencias: `get_super_admin` (solo ADMIN), `get_local_manager` (ADMIN/LOCAL_ADMIN), `get_operational_user` (ADMIN/LOCAL_ADMIN/STAFF), `get_current_user` (todos autenticados).
-- **Bloqueo de Usuarios**: `User.is_blocked` permite bloqueo administrativo. `authenticate_user` verifica el flag y rechaza login si está bloqueado.
-- **Auth Endpoints**:
-  - `POST /v1/auth/login`: Login con email/contraseña, retorna token + datos del usuario (nombre, apellido, sucursal, rol).
-  - `POST /v1/auth/register`: Auto-registro de clientes.
-  - `POST /v1/auth/forgot-password`: Envía email con token de recuperación.
-  - `POST /v1/auth/reset-password`: Cambia contraseña con token válido.
+- **Bloqueo de Usuarios**: `User.is_blocked` permite bloqueo administrativo. `authenticate_user` verifica el flag y rechaza login si está bloqueado (403).
+- **Soft Delete**: `User.is_deleted` implementa borrado lógico; todos los queries de usuarios filtran `is_deleted == False` y `delete_user` marca `is_deleted = True` en vez de eliminar físicamente.
+- **Rate Limiting (SlowAPI)**: Límite global default `300/min` por IP (`core/limiter.py`). Límites específicos en auth: `login` 15/min, `register` 10/min, `forgot-password` 5/min, `reset-password` 10/min. Se activa con `app.state.limiter` + exception handler en `main.py`.
+- **Gestión de Sesiones Multi-Dispositivo (`UserSession`)**: En cada login con `device_id`, se registra en la tabla `user_sessions` (device_id, user_agent, ip_address). Detecta logins desde **otros dispositivos** (mismo user-agent + IP se absorben como el mismo PC) y dispara una notificación in-app `NEW_DEVICE_LOGIN` de seguridad. Migración Alembic: `b7e3a1d2c4f5_add_user_sessions.py`.
+- **Auth Endpoints** (todos Públicos, con rate limit):
+  - `POST /v1/auth/login`: Login con email/contraseña (email normalizado a minúsculas). Retorna `access_token`, `rol`, nombre, apellido, sucursal y `nuevo_dispositivo` (flag de detección multi-dispositivo). **Límite: 15/min**.
+  - `POST /v1/auth/register`: Auto-registro de clientes (rol `USER`). **Límite: 10/min**.
+  - `POST /v1/auth/forgot-password`: Envía email con token de recuperación. No revela si el email existe (respuesta neutra). El token lleva `purpose: "recovery"` y expira en `RECOVERY_TOKEN_EXPIRE_MINUTES` (30 min). **Límite: 5/min**.
+  - `POST /v1/auth/reset-password`: Cambia contraseña con token de recuperación válido (valida `purpose == "recovery"`). **Límite: 10/min**.
 
 ## 🛠️ Comandos de Inicio Rápido
 

@@ -128,7 +128,7 @@ static/
 │   │   ├── reservas-pass.js   # Pase digital con QR
 │   │   ├── virtual-time.js    # Control de tiempo virtual
 │   │   ├── dashboard-ui.js    # UI del dashboard (tabs, sidebar)
-│   │   ├── dashboard-stats.js # Estadisticas de aforo en tiempo real
+│   │   ├── dashboard-stats.js # Estadisticas de aforo en tiempo real + cortesía countdown
 │   │   ├── dashboard-admin.js # Logica admin del dashboard
 │   │   ├── dashboard-admin-branches.js
 │   │   ├── dashboard-admin-branches-crud.js

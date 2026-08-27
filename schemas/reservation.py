@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class ReservationCreate(BaseModel):
@@ -35,6 +35,8 @@ class ReservationUpdate(BaseModel):
     estado_reserva: Optional[str] = None
 
 class UserReservationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     patente: str
     fecha_inicio: str
@@ -50,6 +52,3 @@ class UserReservationResponse(BaseModel):
     user_email: Optional[str] = None
     usuario_nombre: Optional[str] = None
     usuario_apellido: Optional[str] = None
-
-    class Config:
-        from_attributes = True

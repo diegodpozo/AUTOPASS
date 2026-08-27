@@ -9,12 +9,14 @@ from core.config import settings
 from services.email_service import EmailService
 from services.user_service import UserService
 from services.user_notification_service import UserNotificationService
+from core.limiter import limiter
 from models.enums import UserRole
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
 
 @router.post("/register")
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def register(request: Request, user: schemas.UserCreate, db: Session = Depends(get_db)):
     """REGISTRA UN NUEVO USUARIO EN EL SISTEMA."""
     # USERSERVICE YA MANEJA VALIDACIONES DE DUPLICADOS Y NORMALIZACION
     try:
@@ -26,9 +28,10 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Error interno al guardar el usuario.")
 
 @router.post("/forgot-password")
-def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def forgot_password(request: Request, body: schemas.auth.ForgotPasswordRequest, db: Session = Depends(get_db)):
     """GENERA UN TOKEN DE RECUPERACION Y ENVIA UN CORREO AL USUARIO."""
-    user = db.query(models.User).filter(models.User.email == request.email.lower().strip(), models.User.is_deleted == False).first()
+    user = db.query(models.User).filter(models.User.email == body.email.lower().strip(), models.User.is_deleted == False).first()
     if not user:
         #POR SEGURIDAD, NO REVELAMOS SI EL CORREO EXISTE O NO
         return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
@@ -46,12 +49,13 @@ def forgot_password(request: schemas.auth.ForgotPasswordRequest, db: Session = D
     return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
 
 @router.post("/reset-password")
-def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def reset_password(request: Request, body: schemas.auth.ResetPasswordRequest, db: Session = Depends(get_db)):
     """VALIDA EL TOKEN Y ACTUALIZA LA CONTRASENA DEL USUARIO."""
     from jose import jwt, JWTError
     
     try:
-        payload = jwt.decode(request.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(body.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         purpose: str = payload.get("purpose")
         
@@ -66,13 +70,14 @@ def reset_password(request: schemas.auth.ResetPasswordRequest, db: Session = Dep
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
     
     # ACTUALIZAR CONTRASENA
-    user.password_hash = get_password_hash(request.new_password)
+    user.password_hash = get_password_hash(body.new_password)
     db.commit()
     
     return {"status": "ok", "message": "Tu contraseña ha sido actualizada exitosamente. Ya podés iniciar sesión."}
 
 @router.post("/login")
-def login(form_data: schemas.UserLogin, request: Request, db: Session = Depends(get_db)):
+@limiter.limit("15/minute")
+def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """AUTENTICA AL USUARIO Y RETORNA UN TOKEN JWT DE ACCESO."""
     # NORMALIZAR EMAIL PARA EVITAR ERRORES DE TIPEO O MAYUSCULAS
     email_normalized = form_data.email.lower().strip()

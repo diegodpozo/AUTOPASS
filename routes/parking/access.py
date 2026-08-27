@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 import time
 import schemas
 from core.database import get_db
+from core.limiter import limiter
 from services.billing_service import BillingService
 from services.access_service import AccessService
 from .utils import normalize_plate
@@ -10,7 +11,8 @@ from .utils import normalize_plate
 router = APIRouter()
 
 @router.post("/access/validate-plate", response_model=schemas.AccessResponse)
-def validate_plate(data: schemas.PlateValidation, db: Session = Depends(get_db), request: Request = None):
+@limiter.limit("120/minute")
+def validate_plate(request: Request, data: schemas.PlateValidation, db: Session = Depends(get_db)):
     """VALIDA UNA PATENTE DETECTADA."""
     t0 = time.time()
     result = AccessService.validate_plate(db, data, request)
@@ -24,7 +26,8 @@ def validate_plate(data: schemas.PlateValidation, db: Session = Depends(get_db),
     return result
 
 @router.post("/access/exit-plate", response_model=schemas.AccessResponse)
-def exit_plate(data: schemas.PlateValidation, db: Session = Depends(get_db), request: Request = None):
+@limiter.limit("120/minute")
+def exit_plate(request: Request, data: schemas.PlateValidation, db: Session = Depends(get_db)):
     """VALIDA LA SALIDA DE UN VEHICULO."""
     t0 = time.time()
     result = AccessService.exit_plate(db, data, request)
@@ -38,7 +41,8 @@ def exit_plate(data: schemas.PlateValidation, db: Session = Depends(get_db), req
     return result
 
 @router.post("/access/validate-qr", response_model=schemas.AccessResponse)
-def validate_qr(data: schemas.QRValidation, db: Session = Depends(get_db), request: Request = None):
+@limiter.limit("60/minute")
+def validate_qr(request: Request, data: schemas.QRValidation, db: Session = Depends(get_db)):
     """VALIDA UN PASE DIGITAL (QR)."""
     return AccessService.validate_qr(db, data, request)
 

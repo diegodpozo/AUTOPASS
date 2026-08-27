@@ -8,10 +8,7 @@ Sigue estos pasos para poner en marcha el sistema bajo la nueva arquitectura mod
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-> **⚠️ POST-INSTALACIÓN:** Después de instalar dependencias, ejecutá el siguiente parche para evitar un error de importación de EasyOCR:
-> ```bash
-> .\venv\Scripts\python.exe scripts\patch_bidi.py
-> ```
+> **Nota OCR (v9.10.0+):** El motor OCR es **RapidOCR ONNX** (compatible con Python 3.14+) con fallback a **PaddleOCR** en Python < 3.14. Ya no se usa EasyOCR, por lo que el parche legacy `scripts/patch_bidi.py` fue eliminado y no es necesario ejecutarlo.
 
 ## 2. Configuración de Entorno
 Crea o edita el archivo `.env` en la raíz:

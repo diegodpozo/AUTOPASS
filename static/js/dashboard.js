@@ -58,7 +58,6 @@ window.payOccupancy = (plate, amount) => ops.payOccupancy(plate, amount, () => {
     }
 });
 window.cancelStay = stats.cancelStay;
-window.loadOcrStats = stats.loadOcrStats;
 window.manualExit = ops.manualExit;
 window.showLogDetail = ops.showLogDetail;
 
@@ -171,7 +170,6 @@ window.loadTabData = async (tabId) => {
             stats.loadLiveStats();
             stats.loadRecentLogs();
             stats.loadOccupancy();
-            stats.loadOcrStats();
             break;
         case 'admin-reservations':
             reservations.loadAdminReservations();

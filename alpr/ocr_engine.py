@@ -5,6 +5,7 @@ import os
 import re
 import base64
 import queue
+import numpy as np
 OCR_ENGINE_NAME = None
 try:
     from rapidocr_onnxruntime import RapidOCR
@@ -52,11 +53,27 @@ class ALPREngine:
         self.is_running = True
         self.executor = ThreadPoolExecutor(max_workers=3)
         self.prev_gray = None
+        self.active_detections = []
+        self.last_detection_time = 0
+        self.accepted_event = None
+
+    def flush_queue(self):
+        """Descarta todos los frames obsoletos acumulados en la cola de escaneo."""
+        try:
+            while not self.frame_queue.empty():
+                try:
+                    self.frame_queue.get_nowait()
+                except Exception:
+                    break
+        except Exception:
+            pass
 
     def detect_motion(self, frame) -> bool:
-        """Detecta variacion significativa entre frames consecutivos."""
+        """Detecta variacion significativa entre frames consecutivos en la zona de patente."""
         try:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            h, w = frame.shape[:2]
+            roi = frame[int(h*0.25):int(h*0.85), int(w*0.10):int(w*0.90)]
+            gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
             gray = cv2.GaussianBlur(gray, (21, 21), 0)
             if self.prev_gray is None:
                 self.prev_gray = gray
@@ -64,7 +81,7 @@ class ALPREngine:
             diff = cv2.absdiff(self.prev_gray, gray)
             self.prev_gray = gray
             non_zero = cv2.countNonZero(cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1])
-            return non_zero > 1500
+            return non_zero > 800
         except Exception:
             return True
 
@@ -99,13 +116,23 @@ class ALPREngine:
 
     def ocr_worker(self):
         full_7_pattern = re.compile(
-            r'[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|\d{3}[A-Z]{4}|[A-Z]\d{3}[A-Z]{3}'
+            r'[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|[A-Z]\d{3}[A-Z]{3}'
+        )
+        HEADER_NOISE_WORDS = re.compile(
+            r'\b(REPUBLICA|ARGENTINA|MERCOSUR|BRASIL|URUGUAY|PARAGUAY|GENTINA|TINA|REPU|MERCO|SUR)\b',
+            re.IGNORECASE
         )
 
         while self.is_running:
             try:
                 frame = self.frame_queue.get(timeout=1)
                 t_start = time.time()
+
+                # Descarte de frames en negro / tapados
+                gray_check = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                if cv2.mean(gray_check)[0] < 12:
+                    self.vote_buffer = []
+                    continue
 
                 qr_data, _, _ = self.qr_detector.detectAndDecode(frame)
                 if qr_data:
@@ -119,6 +146,10 @@ class ALPREngine:
                 h, w = frame.shape[:2]
                 main_roi = frame[int(h*0.15):int(h*0.92), int(w*0.05):int(w*0.95)]
 
+                is_mercosur = ImagePreprocessor.is_mercosur_candidate(main_roi)
+                if is_mercosur:
+                    main_roi = ImagePreprocessor.crop_below_blue(main_roi)
+
                 texts, scores, polys = self._ocr_single_roi(main_roi)
                 t_ocr = time.time() - t_start
 
@@ -130,17 +161,22 @@ class ALPREngine:
                     t = text.strip()
                     if not t or len(t) < 2:
                         continue
+                    # Limpiar texto del borde/cabecera (ej: ARGENTINA, REPUBLICA, TINA)
+                    clean_header_text = HEADER_NOISE_WORDS.sub('', t.upper()).strip()
+                    if not clean_header_text or len(clean_header_text) < 2:
+                        continue
                     conf = float(scores[i]) if i < len(scores) else 0.0
                     if i < len(polys):
                         bbox = [[int(p[0]), int(p[1])] for p in polys[i]]
                     else:
                         bbox = [[0,0],[10,0],[10,10],[0,10]]
-                    detections.append({"text": t, "confidence": conf, "bbox": bbox})
+                    detections.append({"text": clean_header_text, "confidence": conf, "bbox": bbox})
 
                 if not detections:
                     continue
 
-                is_mercosur = ImagePreprocessor.is_mercosur_candidate(main_roi)
+                self.active_detections = detections
+                self.last_detection_time = time.time()
 
                 plate = None
                 avg_conf = 0.0
@@ -201,6 +237,9 @@ class ALPREngine:
 
                 if not plate:
                     # FALLBACK PARA PATENTES IMPRESAS EN PAPEL / POSICIONES FUERA DE CENTRO
+                    # Se exige confianza más alta (0.65) ya que estas son detecciones
+                    # de menor calidad obtenidas por caza de contornos.
+                    FALLBACK_MIN_CONFIDENCE = 0.65
                     try:
                         candidates = ImagePreprocessor.find_plate_roi(frame)
                         for cand in candidates:
@@ -210,9 +249,10 @@ class ALPREngine:
                             for i, text in enumerate(c_texts):
                                 t = re.sub(r'[^A-Z0-9]', '', text.strip().upper())
                                 match = re.search(LATAM_PLATE_PATTERN, t)
-                                if match:
+                                c_conf = float(c_scores[i]) if i < len(c_scores) else 0.0
+                                if match and c_conf >= FALLBACK_MIN_CONFIDENCE:
                                     plate = re.sub(r'[^A-Z0-9]', '', match.group(0))
-                                    avg_conf = float(c_scores[i]) if i < len(c_scores) else 0.50
+                                    avg_conf = c_conf
                                     break
                             if plate:
                                 break
@@ -224,7 +264,17 @@ class ALPREngine:
 
                 country = ImagePreprocessor.identify_country(plate, is_mercosur)
 
-                if len(plate) < 5 or len(plate) > 8 or not re.search(r'[A-Z]', plate) or not re.search(r'\d', plate):
+                KNOWN_PLATE_FORMATS = re.compile(
+                    r'^[A-Z]{2}\d{3}[A-Z]{2}$'   # ARG Mercosur (AA 123 AA)
+                    r'|^[A-Z]{3}\d{3}$'            # ARG Antigua (ABC 123)
+                    r'|^[A-Z]{2}\d{3}$'            # ARG Moto Antigua (AB 123)
+                    r'|^[A-Z]{2}\d{3}[A-Z]$'       # ARG Moto Mercosur (AB 123 A)
+                    r'|^[A-Z]\d{3}[A-Z]{3}$'       # ARG Moto Mercosur alternativo (A 123 AAA)
+                    r'|^[A-Z]{3}\d[A-Z]\d{2}$'     # Brasil (ABC 1D23)
+                    r'|^[A-Z]{3}\d{4}$'            # Uruguay (ABC 1234)
+                    r'|^[A-Z]{4}\d{3}$'            # Paraguay Auto Mercosur (ABCD 123)
+                )
+                if not KNOWN_PLATE_FORMATS.match(plate):
                     continue
 
                 now = time.time()
@@ -233,15 +283,32 @@ class ALPREngine:
                 same_votes = [v for v in self.vote_buffer if v[0] == plate]
 
                 is_moto = bool(MOTO_PATTERN.match(plate))
-                is_valid_format = bool(re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$|^[A-Z]{3}\d{3}$|^[A-Z]{2}\d{3}[A-Z]$|^[A-Z]\d{3}[A-Z]{3}$|^[A-Z]{3}\d[A-Z]\d{2}$', plate))
-                req_votes = 1 if (is_valid_format and avg_conf >= 0.40) else CONSENSUS_REQUIRED
+                is_valid_format = bool(re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$|^[A-Z]{3}\d{3}$|^[A-Z]{2}\d{3}[A-Z]$|^[A-Z]\d{3}[A-Z]{3}$|^[A-Z]{3}\d[A-Z]\d{2}$|^[A-Z]{4}\d{3}$', plate))
+
+                if detections:
+                    det = detections[0]
+                    xs = [p[0] for p in det["bbox"]]
+                    ys = [p[1] for p in det["bbox"]]
+                    bbox_w = max(xs) - min(xs)
+                    bbox_h = max(ys) - min(ys)
+                    if bbox_h > 0:
+                        aspect = bbox_w / bbox_h
+                        # Si coincide con patrón de moto (ej: AC404) pero la caja es rectangular horizontal de auto (> 2.2), es un recorte incompleto.
+                        if is_moto and aspect > 2.2:
+                            continue
 
                 if is_moto:
-                    if avg_conf < MOTO_MIN_CONFIDENCE and len(same_votes) < req_votes:
-                        continue
+                    high_conf = avg_conf >= MOTO_MIN_CONFIDENCE
                 else:
-                    if avg_conf < CONFIDENCE_THRESHOLD and len(same_votes) < req_votes:
-                        continue
+                    high_conf = avg_conf >= 0.75
+
+                if high_conf and is_valid_format:
+                    req_votes = 1
+                else:
+                    req_votes = max(2, CONSENSUS_REQUIRED)
+
+                if len(same_votes) < req_votes:
+                    continue
 
                 try:
                     if 'ARGENTINA' in country.upper():
@@ -252,9 +319,21 @@ class ALPREngine:
                     pass
 
                 print(f"[ALPR] Patente aceptada: {plate} [{country}] (Conf: {avg_conf:.2f})")
+                self.accepted_event = {
+                    "plate": plate,
+                    "country": country,
+                    "conf": avg_conf,
+                    "time": time.time()
+                }
                 self.send_event("plate", plate, frame, ocr_time=t_ocr)
                 self.vote_buffer = []
-                time.sleep(0.5)
+                self.active_detections = []
+                self.flush_queue()
+
+                # Vaciado activo de la cola durante el cooldown de 5 segundos
+                for _ in range(10):
+                    time.sleep(0.5)
+                    self.flush_queue()
                 continue
 
             except queue.Empty:
@@ -262,12 +341,122 @@ class ALPREngine:
             except Exception as e:
                 print(f"[ALPR OCR] Exception en ocr_worker: {type(e).__name__} - {e}")
 
+    def get_frame_with_overlay(self, frame):
+        """Superpone bounding boxes, HUD de OCR y banner de confirmacion sobre el frame para el streaming."""
+        if frame is None:
+            return frame
+        
+        now = time.time()
+        active_dets = self.active_detections if (now - self.last_detection_time <= 1.5) else []
+        accepted_ev = self.accepted_event if (self.accepted_event and (now - self.accepted_event.get("time", 0) <= 3.0)) else None
+
+        if not active_dets and not accepted_ev:
+            return frame
+
+        return self.draw_overlay(frame, active_detections=active_dets, accepted_event=accepted_ev)
+
+    @staticmethod
+    def draw_overlay(frame, active_detections=None, accepted_event=None):
+        """Dibuja recuadros verde neon, esquinas HUD CCTV y etiqueta de texto sobre el frame."""
+        if frame is None:
+            return frame
+
+        out_frame = frame.copy()
+        h, w = out_frame.shape[:2]
+        roi_offset_x = int(w * 0.05)
+        roi_offset_y = int(h * 0.15)
+
+        if active_detections:
+            for det in active_detections:
+                raw_bbox = det.get("bbox", [])
+                text = det.get("text", "")
+                conf = det.get("confidence", 0.0)
+
+                if not raw_bbox or len(raw_bbox) < 4:
+                    continue
+
+                pts = []
+                for p in raw_bbox:
+                    px = int(p[0] + roi_offset_x)
+                    py = int(p[1] + roi_offset_y)
+                    pts.append([px, py])
+
+                pts_arr = np.array(pts, np.int32).reshape((-1, 1, 2))
+
+                # Caja principal (Verde Neón)
+                cv2.polylines(out_frame, [pts_arr], isClosed=True, color=(0, 255, 127), thickness=2)
+
+                min_x = max(0, min(p[0] for p in pts))
+                max_x = min(w - 1, max(p[0] for p in pts))
+                min_y = max(0, min(p[1] for p in pts))
+                max_y = min(h - 1, max(p[1] for p in pts))
+                corner_len = max(6, int((max_x - min_x) * 0.2))
+
+                # Esquinas estilo HUD CCTV (Amarillo Dorado)
+                hud_color = (0, 215, 255)
+                # Top-Left
+                cv2.line(out_frame, (min_x, min_y), (min_x + corner_len, min_y), hud_color, 2)
+                cv2.line(out_frame, (min_x, min_y), (min_x, min_y + corner_len), hud_color, 2)
+                # Top-Right
+                cv2.line(out_frame, (max_x, min_y), (max_x - corner_len, min_y), hud_color, 2)
+                cv2.line(out_frame, (max_x, min_y), (max_x, min_y + corner_len), hud_color, 2)
+                # Bottom-Left
+                cv2.line(out_frame, (min_x, max_y), (min_x + corner_len, max_y), hud_color, 2)
+                cv2.line(out_frame, (min_x, max_y), (min_x, max_y + corner_len), hud_color, 2)
+                # Bottom-Right
+                cv2.line(out_frame, (max_x, max_y), (max_x - corner_len, max_y), hud_color, 2)
+                cv2.line(out_frame, (max_x, max_y), (max_x, max_y - corner_len), hud_color, 2)
+
+                # Banner de información de la patente arriba de la caja
+                clean_text = re.sub(r'[^A-Z0-9]', '', text)
+                if len(clean_text) >= 3:
+                    label = f"{clean_text} ({int(conf * 100)}%)"
+                    (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
+                    label_y = max(min_y - 6, text_h + 6)
+
+                    # Fondo translúcido oscuro
+                    cv2.rectangle(out_frame, (min_x, label_y - text_h - 4), (min_x + text_w + 6, label_y + 4), (15, 23, 42), -1)
+                    cv2.rectangle(out_frame, (min_x, label_y - text_h - 4), (min_x + text_w + 6, label_y + 4), (0, 255, 127), 1)
+                    cv2.putText(out_frame, label, (min_x + 3, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1, cv2.LINE_AA)
+
+        if accepted_event and (time.time() - accepted_event.get("time", 0) <= 3.0):
+            plate = accepted_event.get("plate", "")
+            country = accepted_event.get("country", "")
+            conf = accepted_event.get("conf", 0.0)
+
+            banner_h = 38
+            overlay_sub = out_frame.copy()
+            cv2.rectangle(overlay_sub, (0, 0), (w, banner_h), (16, 185, 129), -1)
+            cv2.addWeighted(overlay_sub, 0.85, out_frame, 0.15, 0, out_frame)
+
+            msg = f"[OK] LECTURA CONFIRMADA: {plate} [{country}] ({int(conf * 100)}%)"
+            cv2.putText(out_frame, msg, (12, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2, cv2.LINE_AA)
+
+        return out_frame
+
+    @staticmethod
+    def _plate_close(a: str, b: str, max_dist: int = 1) -> bool:
+        """Compara dos patentes normalizadas, permitiendo hasta max_dist caracteres de diferencia o coincidencia de bloque numérico."""
+        if a == b:
+            return True
+        # Si comparten los mismos 3+ dígitos (ej: NVZ087 vs VZ087AR vs TINA087), es una variante/alucinación en la misma escena
+        digits_a = re.sub(r'\D', '', a)
+        digits_b = re.sub(r'\D', '', b)
+        if len(digits_a) >= 3 and digits_a == digits_b:
+            return True
+        if len(a) != len(b) or abs(len(a) - len(b)) > max_dist:
+            return False
+        diff = sum(1 for x, y in zip(a, b) if x != y)
+        return diff <= max_dist
+
     def send_event(self, type, data, frame, ocr_time=None):
         """Evita duplicados con debounce y delega el envio HTTP al pool de hilos."""
         try:
-            key = f"{type}:" + re.sub(r'\s+', '', str(data)).upper()
+            key = re.sub(r'[^A-Z0-9]', '', str(data)).upper()
             now = time.time()
-            if self.last_validated_plate == key and (now - getattr(self, 'last_validation_time', 0)) < COOLDOWN_SECONDS:
+            last_key = re.sub(r'[^A-Z0-9]', '', self.last_validated_plate).upper()
+            elapsed = now - getattr(self, 'last_validation_time', 0)
+            if elapsed < COOLDOWN_SECONDS and self._plate_close(key, last_key):
                 return
             self.last_validated_plate = key
             self.last_validation_time = now

@@ -7,7 +7,7 @@
 - **Python**: 3.14 (probado en Windows)
 - **Base de datos**: SQLite (archivo local)
 - **Migraciones**: Alembic (`alembic/`, migración inicial `c833a3129266_initial_schema`)
-- **RAM**: 4 GB mínimo (8 GB recomendado para ALPR con EasyOCR)
+- **RAM**: 4 GB mínimo (8 GB recomendado para ALPR con motor OCR dual RapidOCR/PaddleOCR)
 - **Cámara**: Webcam o archivo de video para simulación
 
 ### Producción
@@ -16,7 +16,7 @@
 - **Base de datos**: PostgreSQL 13+
 - **Migraciones**: Alembic
 - **RAM**: 8 GB mínimo (16 GB recomendado para múltiples cámaras ALPR)
-- **GPU**: Opcional (PyTorch puede usar CUDA para acelerar EasyOCR)
+- **GPU**: Opcional (RapidOCR/PaddleOCR corren en CPU sin aceleración; GPU no requerida)
 - **Disco**: 50 GB SSD mínimo
 - **Red**: Conexión estable a cámaras IP (LAN) + broker MQTT
 
@@ -39,9 +39,10 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-### 4. Parche EasyOCR (post-instalación obligatorio)
+### 4. Verificar motor OCR (opcional)
+El motor OCR es **RapidOCR ONNX** (default, compatible con Python 3.14+) o **PaddleOCR** (fallback, Python < 3.14). No se requiere ningún parche post-instalación.
 ```powershell
-.\venv\Scripts\python.exe scripts\patch_bidi.py
+.\venv\Scripts\python.exe -c "from alpr.ocr_engine import OCR_ENGINE_NAME; print('OCR:', OCR_ENGINE_NAME)"
 ```
 
 ### 5. Configurar variables de entorno
@@ -94,7 +95,7 @@ O manualmente para pruebas:
 
 | Script | Propósito |
 |--------|-----------|
-| `setup_backend.bat` | Crea venv, instala dependencias, aplica parche, inicializa DB |
+| `setup_backend.bat` | Crea venv, instala dependencias, configura `.env`, inicializa DB y corre tests |
 | `run_server.bat` | Inicia Uvicorn con configuración de producción |
 
 ## Configuración de Producción (PostgreSQL)

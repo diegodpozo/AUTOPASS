@@ -11,7 +11,7 @@ El proyecto sigue una organización basada en la separación de responsabilidade
 ```text
 AUTOPASS/
 ├── alpr/               # Paquete modular ALPR (Vision, Preprocessing, Consensus, WS Streamer)
-├── core/               # Infraestructura (Configuración, Seguridad, DB, MQTT, Seed)
+├── core/               # Infraestructura (Configuración, Seguridad/RBAC/JWT, Rate Limit, DB, MQTT, Logger, Time, Normalize, Seed)
 ├── models/             # Entidades SQLAlchemy + Enums (Domain Layer)
 ├── schemas/            # Validación Pydantic
 ├── routes/             # Endpoints (Transport Layer - Delgados, organizados por submódulos)
@@ -73,7 +73,8 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **Pago y Liquidación:** `AccessLog` incluye `costo_estadia`, `metodo_pago` ('DIGITAL'/'CAJA'), `fecha_pago`, `pago_confirmado`, `floor_id`.
 - **Sucursales Geo-localizadas:** `ParkingBranch` incluye `logo_url`, `activa`, `latitude`, `longitude` para mapa interactivo y toggle de activación.
 - **Reservas:** `Reservation` incluye `monto_reembolsado`, `sucursal_info` (JSON), `cliente_nombre`, `tipo_estadia`.
-- **Usuarios:** `User` incluye `apellido`, `dni`, `telefono`, `direccion`, `saldo`, `is_blocked` para bloqueo administrativo.
+- **Usuarios:** `User` incluye `apellido`, `dni`, `telefono`, `direccion`, `saldo`, `is_blocked` (bloqueo administrativo, impide login) e `is_deleted` (borrado lógico/soft delete). `delete_user` marca `is_deleted = True` y todas las consultas filtran `is_deleted == False`.
+- **Sesiones:** `UserSession` (`user_sessions`) registra cada login con `device_id`, `user_agent` e `ip_address`, habilitando la detección de inicios de sesión desde otros dispositivos (`NEW_DEVICE_LOGIN`).
 
 ---
 
@@ -157,7 +158,7 @@ Servicio independiente de visión artificial modularizado en el paquete `alpr/` 
 - **Motor OCR Dual:** `RapidOCR` ONNX (optimizado para Python 3.14+) con fallback automático a `PaddleOCR`.
 - **Extracción Prioritaria de 7 Caracteres:** Combina bloques de texto espacialmente (`full_7_pattern`) antes de evaluar 6 caracteres para evitar truncar letras finales.
 - **Escalado Inteligente ROI:** Re-escalado automático a 80px de alto en recortes pequeños para evitar confusión entre dígitos (ej. `6` vs `5`).
-- **Adaptación para Pruebas en Papel:** Reconocimiento de país por regex B&N y consenso en 1 voto si la confianza es $\ge 0.40$.
+- **Adaptación para Pruebas en Papel:** Reconocimiento de país por regex B&N (independiente del color) y consenso rápido de 1 voto si la confianza es alta ($\ge 0.75$ no-moto, $\ge 0.85$ moto) y el formato es válido.
 - **Generador de Patentes:** Script `scripts/generate_test_plates.py` -> `static/test_plates.html` con patentes A4 imprimibles.
 - **Sistema de Consenso:** Buffer de votos (múltiples lecturas de la misma patente) antes de enviar al backend para evitar falsos positivos.
 - **Detección de QR:** Escaneo directo de QR en cada frame (Quick QR), alternativa a patente.
