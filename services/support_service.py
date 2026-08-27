@@ -104,6 +104,24 @@ class SupportService:
         if estado_filter and estado_filter != "TODOS":
             tickets = [t for t in tickets if t.estado.upper() == estado_filter.upper()]
 
+        # Auto-limpiar notificaciones pendientes de tickets que ya fueron resueltos o cancelados
+        resolved_ticket_ids = [t.id for t in tickets if t.estado.lower() in ("resuelto", "cancelado")]
+        if resolved_ticket_ids:
+            db.query(models.UserNotification).filter(
+                models.UserNotification.ticket_id.in_(resolved_ticket_ids),
+                models.UserNotification.leido == False
+            ).update({"leido": True}, synchronize_session=False)
+            db.commit()
+
+        # Obtener los ticket_id que tienen notificaciones sin leer para el usuario actual
+        unread_ticket_ids = set(
+            r[0] for r in db.query(models.UserNotification.ticket_id).filter(
+                models.UserNotification.user_id == current_user.id,
+                models.UserNotification.ticket_id.isnot(None),
+                models.UserNotification.leido == False
+            ).all()
+        )
+
         result = []
         for t in tickets:
             messages = db.query(models.SupportTicketMessage).filter(
@@ -120,6 +138,7 @@ class SupportService:
                 "mensaje": t.mensaje,
                 "estado": t.estado,
                 "respuesta": t.respuesta,
+                "has_unread": t.id in unread_ticket_ids,
                 "messages": [
                     {
                         "id": m.id,
@@ -155,6 +174,12 @@ class SupportService:
                 created_at=utcnow()
             )
             db.add(msg)
+
+        # Marcar todas las notificaciones asociadas a este ticket como leídas
+        db.query(models.UserNotification).filter(
+            models.UserNotification.ticket_id == ticket_id,
+            models.UserNotification.leido == False
+        ).update({"leido": True})
 
         db.commit()
         db.refresh(ticket)

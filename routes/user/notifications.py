@@ -53,6 +53,14 @@ def mark_all_as_read(
     """MARCA TODAS LAS NOTIFICACIONES COMO LEIDAS."""
     UserNotificationService.mark_all_as_read(db, current_user.id)
 
+@router.delete("/profile/notifications/clear-read", status_code=204)
+def clear_read_notifications(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """ELIMINA TODAS LAS NOTIFICACIONES MARCADAS COMO LEIDAS."""
+    UserNotificationService.clear_read_notifications(db, current_user.id)
+
 @router.delete("/profile/notifications/{notif_id}", status_code=204)
 def delete_notification(
     notif_id: int,
@@ -62,10 +70,3 @@ def delete_notification(
     """ELIMINA UNA NOTIFICACION ESPECIFICA."""
     UserNotificationService.delete_notification(db, notif_id, current_user.id)
 
-@router.delete("/profile/notifications/clear-read", status_code=204)
-def clear_read_notifications(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    """ELIMINA TODAS LAS NOTIFICACIONES MARCADAS COMO LEIDAS."""
-    UserNotificationService.clear_read_notifications(db, current_user.id)

@@ -111,9 +111,9 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-### Base de Datos Online (Neon/Postgres)
+### Base de Datos Online (Neon/Postgres) — Default
 
-El sistema soporta usar una base Postgres en la nube de Neon para que varias PC compartan los mismos datos. Solo hay que configurar `DATABASE_URL` en `.env` con la connection string (región recomendada `sa-east-1`, São Paulo):
+El sistema usa **por defecto** la base Postgres en la nube de Neon para que varias PC compartan los mismos datos. El `.env.example` viene con la connection string de Neon activa, y el setup automático (`setup_backend.bat`) la copia a `.env` si esta no existe. Por eso **toda PC nueva instalada se conecta automáticamente a la base compartida** (región recomendada `sa-east-1`, São Paulo):
 
 ```env
 DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
@@ -121,7 +121,8 @@ DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neond
 
 - La URL puede venir como `postgresql://` (sin driver): `core/database.py` la normaliza a `postgresql+psycopg://` usando psycopg 3.
 - En el dashboard de Neon, usar **Connection pooling: OFF** (direct connection), que es la adecuada para SQLAlchemy.
-- Si no se configura `DATABASE_URL` (o apunta a SQLite local), el sistema cae al default `sqlite:///./parking.db`.
+- ⚠️ Como todas las PC apuntan a la misma base, los cambios afectan a todas las instalaciones.
+- Si se prefiere una base local aislada en una PC, reemplazar `DATABASE_URL` por `sqlite:///./parking.db` en su `.env` (ya no es el default).
 
 ### Ejecución
 ```powershell

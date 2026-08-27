@@ -14,6 +14,7 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 - **Facturación Trimodal** — Motor de precios diferenciados por tipo de vehículo y período (Hora/Día/Semana/Quincena/Mes)
 - **Reservaciones** — Creación, pago, cancelación con reembolso, anticipación configurable y auto-cancelación
 - **Fidelización** — Sistema de puntos (10 pts/$1000), catálogo de promociones canjeables y cupones
+- **Mapas Interactivos & Filtro de Localidades** — Mosaico de Google Maps con buscador autocompletado en tiempo real, desglose de direcciones exactas, aviso de disponibilidad por zona y navegación animada `flyTo`
 - **Dashboard Admin Premium** — 8 pestañas modulares: Monitoreo, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración
 - **Portal de Usuario** — Perfil, reservas, vehículos, billetera virtual, pase digital QR, notificaciones
 - **Real-time** — WebSocket (aforo), MQTT (barreras), polling de notificaciones

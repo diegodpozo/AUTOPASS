@@ -1,5 +1,33 @@
 # Estado del Proyecto: AUTOPASS (Actualizado 2026-08-27)
 
+### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.12.0 (Notificaciones de Usuario, Permisos de Sucursal & Soporte Visual Admin)
+- [x] **Visibilidad Permanente & Estados de Botones de Notificaciones**:
+  - Los botones **"Marcar como leídas"** (`#btn-mark-all-read`) y **"Borrar notificaciones"** (`#btn-clear-read-notifs`) en [notificaciones.html](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/templates/profile/tabs/notificaciones.html) permanecen siempre visibles (`inline-flex`).
+  - "Marcar como leídas" se habilita únicamente cuando existen notificaciones sin leer (`unread > 0`).
+  - "Borrar notificaciones" se habilita cuando existen notificaciones leídas (`n.leido == True`), deshabilitándose automáticamente si todas están sin leer o no hay notificaciones.
+  - Al borrar notificaciones, se emite el toast *"Se han borrado todas las notificaciones"* y el botón *"Marcar como leídas"* utiliza un ícono de check simple (`<i class="fas fa-check"></i>`).
+- [x] **Corrección de Falsos Positivos en Notificación `NEW_DEVICE_LOGIN`**:
+  - Preservación de `autopass_device_id` en `localStorage.clear()` al cerrar sesión en [ui.js](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/js/modules/ui.js) y [api.js](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/js/modules/api.js).
+  - Filtrado en `routes/auth.py` para ignorar re-inicios de sesión desde el mismo navegador/user-agent.
+- [x] **Permisos de Sucursal para Administrador Local (`local_admin`)**:
+  - Habilitación de gestión completa en [routes/admin/users.py](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/routes/admin/users.py) para que los Administradores de Sucursal puedan consultar, editar, cambiar roles de personal y eliminar usuarios de su sede o clientes registrados.
+  - Normalización de nombres de sucursal mediante `normalize_branch_name` en todas las rutas de administración de usuarios (`list_users`, `update_user_admin`, `change_user_role`, `toggle_user_block`, `adjust_user_balance`, `change_user_password`, `delete_user`).
+  - Salvaguarda jerárquica que impide a los Administradores Locales modificar o eliminar a un Administrador Global (`UserRole.ADMIN`).
+- [x] **Diferenciación Visual & Auto-Limpieza en Tickets de Soporte**:
+  - Inclusión del estado `has_unread` en `get_admin_tickets` ([support_service.py](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/services/support_service.py)) indicando si el administrador tiene notificaciones pendientes sobre el ticket.
+  - Insignia brillante `<span class="ticket-unread-tag"><i class="fas fa-bell pulse"></i> SIN LEER</span>` junto al `#ID` y resaltado de fila con borde e iluminación dorada (`.ticket-row-attention`).
+  - Botón de acción brillante `ATENDER` (`btn-gold-glow`) para tickets que requieren atención y `Ver Historia` para tickets resueltos.
+  - Auto-limpieza en backend y frontend de notificaciones al abrir o responder un ticket (`update_ticket_status`), actualizando en vivo el contador del menú lateral (`updateNotifBadge`).
+- [x] **Rediseño de Ayuda Operativa (`admin_help_modal.html`)**: Hero banner con insignias de estado, buscador en tiempo real (`filterAdminHelpSearch`), 7 chips de categoría (`filterAdminHelpCategory`), tarjetas de acceso rápido y preguntas frecuentes en acordeón.
+- [x] **Rediseño Admin Tour (`dashboard-admin-tour.css`)**: Migración de tonos cian `#00D2FF` a la paleta de marca **Champagne Gold (`var(--dorado)`)** y **Royal Velvet (`var(--violet-brand)`)**, con resaltado SVG en `#dfba6b`.
+- [x] **Buscador de Mapa por Localidad con Autocompletado (`landing-map.js` & `landing-map.css`)**:
+  - Barra de búsqueda interactiva alineada horizontalmente al lado de los botones de zoom (`+` / `-`).
+  - Búsqueda y autocompletado en tiempo real con desglose de sucursal y dirección exacta.
+  - Alerta amigable cuando no se encuentran sucursales en la localidad ingresada.
+  - Animación de vuelo (`flyTo([lat, lng], 16)`), auto-popup de estado trimodal y botón de reserva al seleccionar una sede.
+  - Fondo opaco obsidiana profunda (`#090b0e`) con doble marco dorado de alto contraste.
+- [x] **Limpieza de Interfaz de Mapa**: Remoción del control de capas base (`L.control.layers`) manteniendo únicamente el mosaico de **Google Calles**.
+
 ### 🚀 Hitos Recientes (Agosto 2026) - Seguridad (Rate Limiting, Sesiones Multi-Dispositivo & Soft Delete)
 - [x] **Rate Limiting por IP (SlowAPI)**: Nueva dependencia `slowapi==0.1.9` con `core/limiter.py`. Límite global default `300/min` y límites específicos en los endpoints públicos de auth: `/login` 15/min, `/register` 10/min, `/forgot-password` 5/min, `/reset-password` 10/min. Activado con `app.state.limiter` y `RateLimitExceeded` handler en `main.py` (mitiga fuerza bruta de login y abuso de registro).
 - [x] **Gestión de Sesiones Multi-Dispositivo (`UserSession`)**: Nueva tabla `user_sessions` (migración Alembic `b7e3a1d2c4f5`) que registra en cada login `device_id`, `user_agent` e `ip_address`. Al detectar acceso desde otro dispositivo real (mismo user-agent + IP se absorben como el mismo PC), se dispara una notificación in-app `NEW_DEVICE_LOGIN` ("Nuevo inicio de sesión").

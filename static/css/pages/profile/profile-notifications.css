@@ -124,7 +124,38 @@
     cursor: pointer;
 }
 
-/* --- BOTON LIMPIAR LEIDAS HEADER --- */
+/* --- ACCIONES EN HEADER / FILTER BAR --- */
+.notif-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-notif-mark-read {
+    background: rgba(197, 160, 89, 0.12);
+    border: 1px solid rgba(197, 160, 89, 0.35);
+    color: var(--dorado);
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s ease;
+}
+
+.btn-notif-mark-read:hover {
+    background: var(--dorado);
+    border-color: var(--dorado);
+    color: #000;
+    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
+    transform: translateY(-1px);
+}
+
 .btn-notif-clear-read {
     background: rgba(239, 68, 68, 0.12);
     border: 1px solid rgba(239, 68, 68, 0.35);
@@ -147,6 +178,18 @@
     color: #fff;
     box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
     transform: translateY(-1px);
+}
+
+.btn-notif-mark-read:disabled,
+.btn-notif-clear-read:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: none !important;
+    transform: none !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #666 !important;
 }
 
 /* --- ICONO CATEGORIA --- */

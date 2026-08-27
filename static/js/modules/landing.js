@@ -1,4 +1,4 @@
-import { initMap, findNearestBranch } from './landing-map.js';
+import { initMap, findNearestBranch, filterMapByLocality } from './landing-map.js';
 import { InicializarCarrusel } from './landing-carousel.js';
 
 export function handleHeaderScroll() {
@@ -21,4 +21,4 @@ export function checkAuthState() {
     }
 }
 
-export { initMap, findNearestBranch, InicializarCarrusel };
+export { initMap, findNearestBranch, filterMapByLocality, InicializarCarrusel };

@@ -5,7 +5,7 @@ import * as ui from './modules/ui.js?v=9.3.0';
 import { initPasswordValidation } from './modules/auth.js?v=9.3.0';
 import { showToast } from './modules/utils.js?v=9.3.0';
 import { initMap } from './modules/landing.js?v=9.3.0';
-import { loadNotifications, updateNotifBadge, startNotifPolling } from './modules/notifications.js?v=9.3.0';
+import * as notif from './modules/notifications.js?v=9.8.6';
 import * as onboarding from './modules/onboarding_helpers.js?v=9.3.0';
 import { startReservationTour, startAddVehicleTour, startCreateReservationTour, startRechargeBalanceTour, startRedeemPointsTour, startQrPassTour } from './modules/tour.js?v=9.3.0';
 import * as help from './modules/profile-help.js?v=9.8.5';
@@ -28,6 +28,12 @@ window.filterHelpContent = help.filterHelpContent;
 window.clearHelpSearch = help.clearHelpSearch;
 window.submitSupportTicket = help.submitSupportTicket;
 window.loadHelpBranches = help.loadHelpBranches;
+
+// NOTIFICACIONES
+window.loadNotifications = notif.loadNotifications;
+window.markAllNotifRead = notif.markAllNotifRead;
+window.clearReadNotifs = notif.clearReadNotifs;
+window.deleteNotif = notif.deleteNotif;
 
 // PERFIL
 window.loadProfile = prof.loadProfile;
@@ -285,7 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // 3. INICIAR POLLING DE NOTIFICACIONES
-        startNotifPolling();
+        notif.startNotifPolling();
 
         // 4. VERIFICAR SI VENIMOS DEL MAPA CON UNA SUCURSAL PRE-SELECCIONADA
         const urlParams = new URLSearchParams(window.location.search);

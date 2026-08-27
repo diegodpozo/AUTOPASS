@@ -5,11 +5,6 @@
                 <i class="fas fa-bell" style="color: var(--dorado); margin-right: 10px;"></i> CENTRO DE NOTIFICACIONES
             </h1>
         </div>
-        <div class="btn-group-header">
-            <button class="btn-primary btn-compact" onclick="markAllNotifRead()" id="btn-mark-all-read" style="display:none;">
-                <i class="fas fa-check-double"></i> MARCAR LEÍDAS
-            </button>
-        </div>
     </div>
 
     <!-- FILTROS DE CATEGORIA -->
@@ -31,9 +26,14 @@
                 <i class="fas fa-headset"></i> Soporte
             </button>
         </div>
-        <button class="btn-notif-clear-read" onclick="clearReadNotifs()" id="btn-clear-read-notifs" style="display:none;">
-            <i class="fas fa-trash-alt"></i> Borrar leídas
-        </button>
+        <div class="notif-filter-actions">
+            <button class="btn-notif-mark-read" onclick="markAllNotifRead()" id="btn-mark-all-read" disabled>
+                <i class="fas fa-check"></i> Marcar como leídas
+            </button>
+            <button class="btn-notif-clear-read" onclick="clearReadNotifs()" id="btn-clear-read-notifs" disabled>
+                <i class="fas fa-trash-alt"></i> Borrar notificaciones
+            </button>
+        </div>
     </div>
 
     <div id="notifications-container">

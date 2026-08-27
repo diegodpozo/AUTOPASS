@@ -32,3 +32,36 @@ def test_update_user_success(db):
     update_data = UserAdminUpdate(nombre="JuanNuevo")
     updated = UserService.update_user(db, user.id, update_data)
     assert updated.nombre == "Juannuevo"
+
+def test_local_admin_permissions_on_branch_users(db):
+    from routes.admin.users import delete_user, update_user_admin, change_user_role
+    from schemas import UserAdminUpdate
+
+    local_admin = User(nombre="AdminLocal", apellido="Moron", dni="11111111", email="admmoron@test.com", password_hash="hash", rol=UserRole.LOCAL_ADMIN, sucursal="AUTOPASS Morón")
+    staff = User(nombre="Pedro", apellido="Staff", dni="22222222", email="staff@test.com", password_hash="hash", rol=UserRole.STAFF, sucursal="Morón")
+    client = User(nombre="Maria", apellido="Cliente", dni="33333333", email="maria@test.com", password_hash="hash", rol=UserRole.USER, sucursal=None)
+    global_admin = User(nombre="SuperAdmin", apellido="Global", dni="44444444", email="admin@test.com", password_hash="hash", rol=UserRole.ADMIN, sucursal=None)
+    
+    db.add_all([local_admin, staff, client, global_admin])
+    db.commit()
+
+    # 1. Local admin can edit staff in their branch (with normalized sucursal)
+    up = UserAdminUpdate(nombre="PedroEditado")
+    res_up = update_user_admin(staff.id, up, db=db, admin=local_admin)
+    assert res_up["status"] == "ok"
+
+    # 2. Local admin can change role of staff in their branch
+    res_role = change_user_role(staff.id, UserRole.STAFF, db=db, admin=local_admin)
+    assert res_role["status"] == "ok"
+
+    # 3. Local admin can delete staff in their branch
+    res_del = delete_user(staff.id, db=db, admin=local_admin)
+    assert res_del["status"] == "ok"
+    assert staff.is_deleted is True
+
+    # 4. Local admin CANNOT delete Global Admin
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc:
+        delete_user(global_admin.id, db=db, admin=local_admin)
+    assert exc.value.status_code == 403
+

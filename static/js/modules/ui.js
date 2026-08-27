@@ -127,19 +127,23 @@ export function toggleHistorial() {
  * CIERRA LA SESION DEL USUARIO.
  */
 export function logout() {
-    // Preservar flags de tour visto por usuario antes de limpiar localStorage
-    const tourKeys = {};
+    // Preservar flags de tour y device_id antes de limpiar localStorage
+    const savedKeys = {};
+    const keepPrefixes = ['autopass_tour_seen_', 'seen_reservation_onboarding'];
+    const keepExact = ['autopass_device_id'];
+
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith('autopass_tour_seen_') || key.startsWith('seen_reservation_onboarding'))) {
-            tourKeys[key] = localStorage.getItem(key);
+        if (!key) continue;
+        if (keepExact.includes(key) || keepPrefixes.some(p => key.startsWith(p))) {
+            savedKeys[key] = localStorage.getItem(key);
         }
     }
 
     localStorage.clear();
 
-    // Restaurar los flags de tour para no reiniciar la guía en posteriores inicios de sesión
-    Object.keys(tourKeys).forEach(k => localStorage.setItem(k, tourKeys[k]));
+    // Restaurar los flags y device_id preservados
+    Object.keys(savedKeys).forEach(k => localStorage.setItem(k, savedKeys[k]));
 
     window.location.href = '/';
 }
