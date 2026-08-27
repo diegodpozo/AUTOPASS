@@ -1,5 +1,20 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **AGOSTO 27, 2026 - NOTIFICACIONES, PERMISOS SUCURSAL & SOPORTE VISUAL ADMIN (V9.12.0)**:
+    *   **Visibilidad Permanente de Botones de Notificación de Usuario**:
+        *   Los botones **"Marcar como leídas"** (`#btn-mark-all-read`) y **"Borrar notificaciones"** (`#btn-clear-read-notifs`) en `notificaciones.html` permanecen siempre visibles (`display: inline-flex`).
+        *   Se parametrizaron los estados `disabled` dinámicos: "Marcar como leídas" activo solo con `unread > 0`; "Borrar notificaciones" activo solo con notificaciones leídas (`leido == True`).
+        *   Mensaje toast *"Se han borrado todas las notificaciones"* y actualización de icono a check simple (`fa-check`).
+    *   **Solución a Falso Positivo de `NEW_DEVICE_LOGIN`**: Preservación de `autopass_device_id` en `localStorage.clear()` al cerrar sesión en `ui.js` y `api.js`, y filtrado por `user_agent` en `routes/auth.py`.
+    *   **Permisos Completos de Sucursal para Administrador Local (`local_admin`)**:
+        *   Reestructuración de permisos en `routes/admin/users.py` permitiendo a los Administradores de Sucursal consultar, editar, modificar roles de personal y borrar usuarios de su sucursal y clientes.
+        *   Normalización con `normalize_branch_name` en todas las rutas de usuarios para equiparar `"AUTOPASS Morón"` y `"Morón"`.
+        *   Protección jerárquica impidiendo modificar o eliminar Administradores Globales.
+    *   **Diferenciación Visual & Auto-Limpieza en Tickets de Soporte**:
+        *   Inclusión de `has_unread` en `get_admin_tickets` (`support_service.py`) para identificar tickets con notificaciones pendientes.
+        *   Insignia brillante `<span class="ticket-unread-tag"><i class="fas fa-bell pulse"></i> SIN LEER</span>` junto al `#ID`, insignias de estado con íconos y filas destacadas con resplandor dorado (`.ticket-row-attention`).
+        *   Auto-limpieza de notificaciones en `update_ticket_status` y actualización instantánea en vivo del contador del menú lateral (`updateNotifBadge`).
+
 - **AGOSTO 15, 2026 - SYSTEM INTEGRITY VALIDATIONS & TOAST NOTIFICATION OVERHAUL (V9.9.8)**:
     *   **Protección e Integridad en Eliminación de Vehículos**: `delete_vehicle` en `services/user_service.py` valida si la patente posee reservas activas (`PENDIENTE_PAGO`, `PAGADA`, `EN_USO`). Si existen, bloquea la eliminación arrojando error HTTP 400 descriptivo ("No podés eliminar el vehículo porque tiene reservas activas o pendientes").
     *   **Protección en Eliminación de Cuentas de Usuario**: `delete_user` en `services/user_service.py` e `user_admin_service.py` valida que el usuario no tenga reservas activas ni estadías en curso con saldo adeudado antes de ser dado de baja.

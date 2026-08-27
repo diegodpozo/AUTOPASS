@@ -93,13 +93,36 @@ function renderAdminTickets(tickets) {
     }
 
     tableBody.innerHTML = tickets.map(t => {
+        const isUnread = !!t.has_unread;
+        const isPending = t.estado.toLowerCase() === 'pendiente';
+        const isProcess = t.estado.toLowerCase() === 'en proceso';
+        const isResolved = t.estado.toLowerCase() === 'resuelto';
+
+        let rowClass = 'row-premium';
+        if (isUnread || isPending) {
+            rowClass += ' ticket-row-attention';
+        }
+
         let badgeClass = 'badge-warning';
-        if (t.estado.toLowerCase() === 'en proceso') badgeClass = 'badge-info';
-        if (t.estado.toLowerCase() === 'resuelto') badgeClass = 'badge-success';
+        let badgeIcon = 'fa-clock';
+        if (isProcess) { badgeClass = 'badge-info'; badgeIcon = 'fa-spinner fa-spin'; }
+        if (isResolved) { badgeClass = 'badge-success'; badgeIcon = 'fa-check-circle'; }
+
+        const unreadTag = isUnread 
+            ? `<span class="ticket-unread-tag" title="Tenés notificaciones sin leer de este ticket"><i class="fas fa-bell pulse"></i> SIN LEER</span>` 
+            : (isPending ? `<span class="ticket-unread-tag" style="border-color: rgba(245,158,11,0.5); color: #f59e0b; background: rgba(245,158,11,0.15);"><i class="fas fa-exclamation-circle"></i> PENDIENTE</span>` : '');
+
+        const actionBtnClass = (isPending || isUnread) ? 'btn-gold-glow sm' : 'btn-outline sm';
+        const actionBtnText = isResolved ? 'Ver Historia' : 'Atender';
 
         return `
-            <tr class="row-premium">
-                <td data-label="#ID" class="text-bold text-dorado">#${t.id}</td>
+            <tr class="${rowClass}">
+                <td data-label="#ID" class="text-bold text-dorado">
+                    <div class="flex-row items-center gap-5">
+                        #${t.id}
+                        ${unreadTag}
+                    </div>
+                </td>
                 <td data-label="Cliente">
                     <div class="flex-col">
                         <span class="text-bold">${t.cliente_nombre || 'S/D'}</span>
@@ -113,11 +136,15 @@ function renderAdminTickets(tickets) {
                         ${t.asunto}
                     </div>
                 </td>
-                <td data-label="Estado"><span class="badge ${badgeClass}">${t.estado}</span></td>
+                <td data-label="Estado">
+                    <span class="badge ${badgeClass}">
+                        <i class="fas ${badgeIcon}" style="margin-right: 4px;"></i> ${t.estado}
+                    </span>
+                </td>
                 <td data-label="Fecha" class="text-small text-muted">${formatDate(t.created_at)}</td>
                 <td data-label="Acciones">
-                    <button class="btn btn-primary sm" onclick="openTicketAnswerModal(${t.id})">
-                        <i class="fas fa-edit"></i> Atender
+                    <button class="btn ${actionBtnClass}" onclick="openTicketAnswerModal(${t.id})">
+                        <i class="fas ${isResolved ? 'fa-eye' : 'fa-edit'}"></i> ${actionBtnText}
                     </button>
                 </td>
             </tr>
@@ -174,7 +201,8 @@ export async function openTicketAnswerModal(ticketId) {
         renderAdminTicketMessages(ticket.messages);
     }
 
-    api.patch(`/admin/support-tickets/${ticketId}/read-notifs`).then(() => updateNotifBadge());
+    await api.patch(`/admin/support-tickets/${ticketId}/read-notifs`);
+    await updateNotifBadge();
 }
 
 export async function submitTicketAnswer(event) {
@@ -208,6 +236,7 @@ export async function submitTicketAnswer(event) {
         if (res.data.messages) {
             renderAdminTicketMessages(res.data.messages);
         }
+        await updateNotifBadge();
         await loadAdminTickets();
     } else {
         showToast(res.error || 'Error al actualizar el ticket', 'error');

@@ -106,13 +106,12 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
         ).first()
 
         # 2) SI EL NAVEGADOR REGENERO EL DEVICE_ID (INCOGNITO, STORAGE BORRADO,
-        #    OTRO ORIGEN localhost vs 127.0.0.1) PERO ES EL MISMO PC
-        #    (MISMO USER-AGENT + MISMA IP), ABSORBEMOS LA SESION RECIENTE.
-        if not session and user_agent and ip_address:
+        #    OTRO ORIGEN localhost vs 127.0.0.1) PERO ES EL MISMO NAVEGADOR (MISMO USER-AGENT),
+        #    ABSORBEMOS LA SESION RECIENTE.
+        if not session and user_agent:
             session = db.query(models.UserSession).filter(
                 models.UserSession.user_id == user.id,
                 models.UserSession.user_agent == user_agent,
-                models.UserSession.ip_address == ip_address,
                 models.UserSession.last_login_at >= since
             ).order_by(models.UserSession.last_login_at.desc()).first()
             if session:
@@ -136,18 +135,14 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
         db.commit()
 
         # CONTAR OTROS DISPOSITIVOS CON SESION ACTIVA (LOGIN DENTRO DE LA VENTANA DEL TOKEN).
-        # SE IGNORAN SESIONES DEL MISMO PC (MISMO USER-AGENT + MISMA IP) PARA QUE
-        # EL CAMBIO DE DEVICE_ID NO DISPARE AVISOS FALSOS.
+        # SE IGNORAN SESIONES DEL MISMO NAVEGADOR (MISMO USER-AGENT) PARA EVITAR AVISOS FALSOS.
         other_q = db.query(models.UserSession.device_id).filter(
             models.UserSession.user_id == user.id,
             models.UserSession.device_id != device_id,
             models.UserSession.last_login_at >= since
         )
-        if user_agent and ip_address:
-            other_q = other_q.filter(~and_(
-                models.UserSession.user_agent == user_agent,
-                models.UserSession.ip_address == ip_address,
-            ))
+        if user_agent:
+            other_q = other_q.filter(models.UserSession.user_agent != user_agent)
         other_active = other_q.distinct().count()
 
         if other_active > 0:

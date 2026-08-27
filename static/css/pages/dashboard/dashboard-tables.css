@@ -330,3 +330,42 @@ tr:hover .btn-delete-promo {
         font-size: 0.75rem;
     }
 }
+
+/* TICKETS DESTACADOS (PENDIENTES O SIN LEER) */
+.ticket-row-attention {
+    background: rgba(197, 160, 89, 0.07) !important;
+    border-left: 3px solid var(--dorado) !important;
+}
+
+.ticket-row-attention:hover {
+    background: rgba(197, 160, 89, 0.14) !important;
+}
+
+.ticket-unread-tag {
+    background: linear-gradient(135deg, rgba(197, 160, 89, 0.3), rgba(197, 160, 89, 0.15));
+    border: 1px solid var(--dorado);
+    color: var(--dorado);
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 0 10px rgba(197, 160, 89, 0.2);
+}
+
+.btn-gold-glow {
+    background: var(--dorado) !important;
+    color: #000 !important;
+    font-weight: 800 !important;
+    border: none !important;
+    box-shadow: 0 0 12px rgba(197, 160, 89, 0.4) !important;
+}
+
+.btn-gold-glow:hover {
+    background: #d4af37 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(197, 160, 89, 0.6) !important;
+}

@@ -4,6 +4,7 @@ from typing import List
 import models, schemas
 from core.database import get_db
 from core.security import get_local_manager, get_super_admin, get_password_hash
+from core.normalize import normalize_branch_name
 from models.enums import UserRole
 from services.user_service import UserService
 from services.user_notification_service import UserNotificationService
@@ -15,20 +16,20 @@ def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_l
     """RETORNA LA LISTA DE USUARIOS. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES REGISTRADOS."""
     q = db.query(models.User).filter(models.User.is_deleted == False)
     if str(admin.rol) != UserRole.ADMIN.value:
-        from sqlalchemy import or_
-        q = q.filter(
-            or_(
-                models.User.rol == UserRole.USER,  # CLIENTES REGISTRADOS SON VISIBLES PARA TODOS LOS GESTORES
-                models.User.sucursal == admin.sucursal # PERSONAL Y CLIENTES ESPECIFICOS DE LA SEDE
-            )
-        )
+        admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+        all_users = q.all()
+        filtered = []
+        for u in all_users:
+            if str(u.rol) == UserRole.USER.value or normalize_branch_name(u.sucursal or "") == admin_suc_norm:
+                filtered.append(u)
+        return filtered
     return q.all()
 
 @router.post("/users")
 def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE AL ADMINISTRADOR CREAR UN NUEVO USUARIO. LOS LOCALES SOLO CREAN PARA SU SEDE."""
     if str(admin.rol) != UserRole.ADMIN.value:
-        if rol == UserRole.ADMIN: 
+        if str(rol) == UserRole.ADMIN.value: 
             raise HTTPException(status_code=403, detail="No podés crear un Administrador Global")
         user_data.sucursal = admin.sucursal
     
@@ -42,11 +43,19 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     if str(admin.rol) != UserRole.ADMIN.value:
-        if user.sucursal != admin.sucursal and user.rol != UserRole.USER:
-            raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
-        if user_data.rol and user_data.rol == UserRole.ADMIN:
+        admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+        user_suc_norm = normalize_branch_name(user.sucursal or "")
+        
+        if str(user.rol) == UserRole.ADMIN.value:
+            raise HTTPException(status_code=403, detail="No tenés permisos para modificar a un Administrador Global")
+
+        if str(user.rol) != UserRole.USER.value and user_suc_norm != admin_suc_norm:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre un usuario de otra sucursal")
+
+        if user_data.rol and str(user_data.rol) == UserRole.ADMIN.value:
             raise HTTPException(status_code=403, detail="No podés asignar el rol de Administrador Global")
-        if user_data.sucursal and user_data.sucursal != admin.sucursal:
+
+        if user_data.sucursal and normalize_branch_name(user_data.sucursal) != admin_suc_norm:
              raise HTTPException(status_code=403, detail="No podés cambiar la sucursal de un usuario fuera de tu jurisdicción")
 
     updated = UserService.update_user(db, user_id, user_data)
@@ -62,10 +71,19 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
     raise HTTPException(status_code=400, detail="Error al actualizar el usuario")
 
 @router.post("/users/{user_id}/role")
-def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """SOLO EL ADMIN GLOBAL PUEDE CAMBIAR ROLES DE NIVEL JERARQUICO."""
+def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+    """PERMITE CAMBIAR EL ROL DE UN USUARIO. LOS LOCALES SOLO GESTIONAN ROLES DE SU SUCURSAL."""
     user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if str(admin.rol) != UserRole.ADMIN.value:
+        admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+        user_suc_norm = normalize_branch_name(user.sucursal or "")
+        if str(user.rol) == UserRole.ADMIN.value or str(nuevo_rol) == UserRole.ADMIN.value:
+            raise HTTPException(status_code=403, detail="No tenés permisos para asignar o modificar el rol de Administrador Global")
+        if str(user.rol) != UserRole.USER.value and user_suc_norm != admin_suc_norm:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre usuarios de otra sucursal")
+
     user.rol = nuevo_rol
     db.commit()
 
@@ -81,13 +99,18 @@ def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(ge
 
 @router.post("/users/{user_id}/toggle-block")
 def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """ALTERNA EL ESTADO DE BLOQUEO. LOS LOCALES SOLO BLOQUEAN A SU GENTE."""
+    """ALTERNA EL ESTADO DE BLOQUEO. LOS LOCALES SOLO BLOQUEAN A SU GENTE O CLIENTES."""
     user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    if str(admin.rol) != UserRole.ADMIN.value and user.sucursal != admin.sucursal and user.rol != UserRole.USER:
-        raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
+    if str(admin.rol) != UserRole.ADMIN.value:
+        admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+        user_suc_norm = normalize_branch_name(user.sucursal or "")
+        if str(user.rol) == UserRole.ADMIN.value:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre un Administrador Global")
+        if str(user.rol) != UserRole.USER.value and user_suc_norm != admin_suc_norm:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
 
     if user.id == admin.id:
         raise HTTPException(status_code=400, detail="No podés bloquear tu propia cuenta")
@@ -113,8 +136,13 @@ def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db
     user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    if str(admin.rol) != UserRole.ADMIN.value and user.sucursal != admin.sucursal and user.rol != UserRole.USER:
-        raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
+    if str(admin.rol) != UserRole.ADMIN.value:
+        admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+        user_suc_norm = normalize_branch_name(user.sucursal or "")
+        if str(user.rol) == UserRole.ADMIN.value:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre un Administrador Global")
+        if str(user.rol) != UserRole.USER.value and user_suc_norm != admin_suc_norm:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
         
     user.saldo = monto
     db.commit()
@@ -136,8 +164,13 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    if str(admin.rol) != UserRole.ADMIN.value and user.sucursal != admin.sucursal and user.rol != UserRole.USER:
-        raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
+    if str(admin.rol) != UserRole.ADMIN.value:
+        admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+        user_suc_norm = normalize_branch_name(user.sucursal or "")
+        if str(user.rol) == UserRole.ADMIN.value:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre un Administrador Global")
+        if str(user.rol) != UserRole.USER.value and user_suc_norm != admin_suc_norm:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre este usuario")
 
     user.password_hash = get_password_hash(payload.new_password)
     db.commit()
@@ -154,14 +187,22 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
 
 @router.delete("/users/{user_id}")
 @router.post("/users/{user_id}/delete")
-def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """SOLO EL ADMIN GLOBAL PUEDE BORRAR CUENTAS DEFINITIVAMENTE."""
+def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+    """PERMITE A UN ADMINISTRADOR BORRAR CUENTAS DE SU SUCURSAL O CLIENTES."""
     if user_id == admin.id: 
         raise HTTPException(status_code=400, detail="No podés eliminar tu propia cuenta")
     
     user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if str(admin.rol) != UserRole.ADMIN.value:
+        admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+        user_suc_norm = normalize_branch_name(user.sucursal or "")
+        if str(user.rol) == UserRole.ADMIN.value:
+            raise HTTPException(status_code=403, detail="No podés eliminar a un Administrador Global")
+        if str(user.rol) != UserRole.USER.value and user_suc_norm != admin_suc_norm:
+            raise HTTPException(status_code=403, detail="No tenés permisos para eliminar usuarios de otra sucursal")
 
     if user.rol == UserRole.USER:
         UserNotificationService.create_notification(

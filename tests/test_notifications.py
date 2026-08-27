@@ -92,3 +92,33 @@ def test_support_ticket_response_notification(db_session: Session):
     assert len(notifs) == 1
     assert notifs[0].tipo == "SUPPORT_RESPONSE"
     assert "Resuelto" in notifs[0].mensaje or "acreditado" in notifs[0].mensaje
+
+def test_delete_read_notifications_route(db_session: Session):
+    from routes.user.notifications import clear_read_notifications, delete_notification
+    user = models.User(
+        email="route_notif@example.com",
+        password_hash="hash",
+        nombre="Route",
+        apellido="Test",
+        dni="99887766",
+        rol="user"
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    n1 = UserNotificationService.create_notification(db_session, user.id, "TEST", "T1", "M1")
+    n2 = UserNotificationService.create_notification(db_session, user.id, "TEST", "T2", "M2")
+    
+    UserNotificationService.mark_as_read(db_session, n1.id, user.id)
+
+    # Test clear_read_notifications endpoint
+    clear_read_notifications(db=db_session, current_user=user)
+
+    remaining = UserNotificationService.get_user_notifications(db_session, user.id)
+    assert len(remaining) == 1
+    assert remaining[0].id == n2.id
+
+    # Test delete_notification endpoint for individual item
+    delete_notification(notif_id=n2.id, db=db_session, current_user=user)
+    assert UserNotificationService.get_total_count(db_session, user.id) == 0
+

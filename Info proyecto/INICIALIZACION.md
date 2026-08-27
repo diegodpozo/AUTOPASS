@@ -11,9 +11,12 @@ Sigue estos pasos para poner en marcha el sistema bajo la nueva arquitectura mod
 > **Nota OCR (v9.10.0+):** El motor OCR es **RapidOCR ONNX** (compatible con Python 3.14+) con fallback a **PaddleOCR** en Python < 3.14. Ya no se usa EasyOCR, por lo que el parche legacy `scripts/patch_bidi.py` fue eliminado y no es necesario ejecutarlo.
 
 ## 2. Configuración de Entorno
-Crea o edita el archivo `.env` en la raíz:
+Crea o edita el archivo `.env` en la raíz. **El setup automático** (`setup_backend.bat`) copia `.env.example → .env` si no existe, y `.env.example` viene **por defecto con la base online de Neon activa**, por lo que cualquier PC nueva se conecta automáticamente a la misma base compartida:
+
 ```env
-DATABASE_URL=sqlite:///./parking.db
+# Base online (Neon/Postgres, sa-east-1 - Sao Paulo): default compartido entre varias PC.
+# Para usar SQLite local, reemplazar por: DATABASE_URL=sqlite:///./parking.db
+DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 SECRET_KEY=tu_secreto_aqui
 MQTT_BROKER=broker.hivemq.com
 MQTT_TOPIC_ENTRADA=parking/barrera/entrada/control
@@ -28,12 +31,9 @@ SMTP_PORT=587
 SMTP_USER=tu_email@gmail.com
 SMTP_PASSWORD=tu_password
 SMTP_FROM=noreply@autopass.com.ar
-
-# Opcional: Base de datos online (Neon/Postgres) para compartir datos entre varias PC
-# DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-> **Base online (v9.9.2+):** Para usar una base en la nube en vez del SQLite local, completá `DATABASE_URL` con la connection string de Neon/Postgres (región recomendada `sa-east-1`). El sistema detecta el prefijo `postgresql://` y usa psycopg 3 automáticamente. Varias PC pueden apuntar a la misma URL y compartir los datos. La migración desde Turso/libSQL se hace con `scripts/migrate_turso_to_neon.py --to-url "<URL_NEON>"`.
+> **Base online (v9.9.2+):** El sistema usa por defecto la base compartida de **Neon/Postgres** (región `sa-east-1`). Varias PC que corran el backend apuntan a la misma URL y comparten los datos (afectará a todas las PC). El sistema detecta el prefijo `postgresql://` y usa psycopg 3 automáticamente. Si preferís una base local aislada en una PC, reemplazá `DATABASE_URL` por `sqlite:///./parking.db`. La migración desde Turso/libSQL se hace con `scripts/migrate_turso_to_neon.py --to-url "<URL_NEON>"`.
 
 ## 3. Preparación y Migración de Base de Datos
 Este paso crea las tablas, los roles iniciales (Admin Global) y sincroniza las migraciones con Alembic:

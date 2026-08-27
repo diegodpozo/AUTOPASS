@@ -43,7 +43,21 @@ const api = {
             
             if (response.status === 401 && token) {
                 console.warn('Sesión expirada.');
+                const savedKeys = {};
+                const keepPrefixes = ['autopass_tour_seen_', 'seen_reservation_onboarding'];
+                const keepExact = ['autopass_device_id'];
+
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key) continue;
+                    if (keepExact.includes(key) || keepPrefixes.some(p => key.startsWith(p))) {
+                        savedKeys[key] = localStorage.getItem(key);
+                    }
+                }
+
                 localStorage.clear();
+                Object.keys(savedKeys).forEach(k => localStorage.setItem(k, savedKeys[k]));
+
                 window.location.href = '/';
                 return null;
             }
