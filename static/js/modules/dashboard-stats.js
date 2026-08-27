@@ -305,6 +305,49 @@ export function renderOccupancyTable() {
     const tbodies = [document.getElementById('occ-list'), document.getElementById('occ-list-tab')];
     tbodies.forEach(el => { if (el) el.innerHTML = html; });
     renderOccupancyPagination();
+    if (document.querySelectorAll('[data-cortesia-ingreso]').length > 0) {
+        startCortesiaTimer();
+    }
+}
+
+let cortesiaTimer = null;
+
+function getCortesiaRemainingMs(ingreso) {
+    const entryDate = new Date(ingreso);
+    const elapsedMs = getVirtualNow() - entryDate;
+    return Math.max(0, 10 * 60 * 1000 - elapsedMs);
+}
+
+function formatCortesiaTimer(ms) {
+    if (ms <= 0) return null;
+    const totalSec = Math.ceil(ms / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function startCortesiaTimer() {
+    if (cortesiaTimer) return;
+    cortesiaTimer = setInterval(() => {
+        const badges = document.querySelectorAll('[data-cortesia-ingreso]');
+        let anyActive = false;
+        badges.forEach(el => {
+            const ingreso = el.getAttribute('data-cortesia-ingreso');
+            const remaining = getCortesiaRemainingMs(ingreso);
+            const timeStr = formatCortesiaTimer(remaining);
+            if (timeStr) {
+                el.textContent = timeStr;
+                anyActive = true;
+            } else {
+                renderOccupancyTable();
+                anyActive = false;
+            }
+        });
+        if (!anyActive && cortesiaTimer) {
+            clearInterval(cortesiaTimer);
+            cortesiaTimer = null;
+        }
+    }, 1000);
 }
 
 function buildOccupancyRows() {
@@ -318,9 +361,11 @@ function buildOccupancyRows() {
         const diffMs = now - date;
         const duration = `${Math.floor(diffMs / 3600000)}h ${Math.floor((diffMs % 3600000) / 60000)}m`;
 
-        const statusBadge = occ.ya_pago ? 
+        const statusBadge = occ.ya_pago ?
             `<span class="text-secondary text-bold">PAGADO</span>` :
-            `<span class="text-danger text-bold">$${formatNum(occ.deuda)}</span>`;
+            occ.en_cortesia ?
+                `<span class="text-bold" style="color: #10b981;" data-cortesia-ingreso="${occ.ingreso}">${formatCortesiaTimer(getCortesiaRemainingMs(occ.ingreso)) || '00:00'}</span>` :
+                `<span class="text-danger text-bold">$${formatNum(occ.deuda)}</span>`;
 
         const floorInfo = occ.floor_nombre ? `<div class="text-xs text-muted mt-2">${occ.floor_nombre}</div>` : '';
 
@@ -337,7 +382,7 @@ function buildOccupancyRows() {
             <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">
                 <div class="flex-row gap-5 justify-center">
-                    ${!occ.ya_pago ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
+                    ${(!occ.ya_pago && !occ.en_cortesia) ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
                     <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-door-open"></i></button>
                     ${(!(occ.reserva && occ.reserva.tipo_estadia && occ.reserva.estado_pago) || !(occ.reserva.tipo_estadia !== 'hora' && occ.reserva.estado_pago === 'Pagado')) ? `<button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${formatNum(occ.deuda)}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>` : ''}
                 </div>
@@ -423,33 +468,4 @@ export async function cancelStay(plate, type, debt, ingreso) {
     } else {
         showToast(res.error, 'error');
     }
-}
-
-export async function loadOcrStats() {
-    const res = await api.get('/reports/ocr-stats?limit=50');
-    if (!res || !res.ok) return;
-
-    const { logs, stats } = res.data;
-
-    document.getElementById('ocr-avg').textContent = stats.count > 0 ? `${stats.avg_ocr}s` : '--';
-    document.getElementById('ocr-min').textContent = stats.count > 0 ? `${stats.min_ocr}s` : '--';
-    document.getElementById('ocr-max').textContent = stats.count > 0 ? `${stats.max_ocr}s` : '--';
-    document.getElementById('ocr-p90').textContent = stats.count > 0 ? `${stats.p90_ocr}s` : '--';
-
-    const tbody = document.getElementById('ocr-stats-body');
-    if (!logs || logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 10px;">Sin datos aún</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = logs.map(l => {
-        const time = l.fecha_hora ? l.fecha_hora.split('T')[1]?.substring(0, 8) || l.fecha_hora.substring(11, 19) : '--';
-        const tipo = l.tipo_evento === 'ENTRADA' ? '<span style="color:#10b981">ENT</span>' : '<span style="color:#ef4444">SAL</span>';
-        return `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 4px 0; color: #aaa;">${time}</td>
-            <td style="padding: 4px 0; font-weight: 700; color: #fff;">${l.patente || '--'}</td>
-            <td style="padding: 4px 0;">${tipo}</td>
-            <td style="padding: 4px 0; text-align: right; font-weight: 700; color: ${l.ocr_time > 2 ? '#ef4444' : l.ocr_time > 1 ? '#f59e0b' : '#10b981'};">${l.ocr_time !== null ? l.ocr_time + 's' : '--'}</td>
-        </tr>`;
-    }).join('');
 }

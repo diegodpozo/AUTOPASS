@@ -100,7 +100,7 @@
 3. **Firewall**: Restringir puertos (solo 443/80 para web, 1883 para MQTT saliente)
 4. **PostgreSQL**: Usar usuario dedicado con privilegios mínimos
 5. **Logs**: No loguear contraseñas ni tokens JWT completos
-6. **Actualizaciones**: Mantener EasyOCR, PyTorch y dependencias actualizadas
+6. **Actualizaciones**: Mantener RapidOCR/PaddleOCR (motor OCR dual) y dependencias actualizadas
 
 ### Variables de Entorno Sensibles
 | Variable | Protección |

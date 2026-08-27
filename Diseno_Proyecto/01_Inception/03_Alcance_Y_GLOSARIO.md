@@ -11,7 +11,7 @@
 - [x] Refresh de token
 
 ### Módulo de Acceso (ALPR + QR)
-- [x] Reconocimiento automático de patentes (EasyOCR + OpenCV)
+- [x] Reconocimiento automático de patentes (motor OCR dual RapidOCR/PaddleOCR + OpenCV)
 - [x] Detección de códigos QR en tiempo real
 - [x] Validación de entrada con reserva o "al paso"
 - [x] Validación de salida con verificación de pago
@@ -80,7 +80,7 @@
 | Término | Definición |
 |---------|------------|
 | **ALPR** | Automatic License Plate Recognition - Reconocimiento automático de patentes |
-| **OCR** | Optical Character Recognition - EasyOCR para lectura de texto en imágenes |
+| **OCR** | Optical Character Recognition - motor dual RapidOCR/PaddleOCR para lectura de texto en imágenes |
 | **ROI** | Region of Interest - Región de la imagen donde se busca la patente |
 | **MQTT** | Protocolo de mensajería IoT para comunicación con barreras físicas |
 | **RBAC** | Role-Based Access Control - Control de acceso basado en roles |

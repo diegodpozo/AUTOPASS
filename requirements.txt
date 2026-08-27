@@ -23,6 +23,7 @@ python-jose==3.5.0
 passlib==1.7.4
 bcrypt==5.0.0
 cryptography==46.0.5
+slowapi==0.1.9
 
 # === CV / IMAGING ===
 opencv-python==4.13.0.92

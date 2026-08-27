@@ -21,8 +21,8 @@ class ImagePreprocessor:
             return "BRASIL"
         if re.match(r'^[A-Z]{3}\d{4}$', plate):
             return "URUGUAY"
-        if re.match(r'^[A-Z]{4}\d{3}$|^\d{3}[A-Z]{4}$', plate):
-            return "PARAGUAY"
+        if re.match(r'^[A-Z]{4}\d{3}$', plate):
+            return "PARAGUAY (Mercosur)"
         
         if is_mercosur:
             return "MERCOSUR (Otro)"
@@ -79,12 +79,12 @@ class ImagePreprocessor:
     @staticmethod
     def _is_valid_plate_roi(crop, frame_w, frame_h):
         ch, cw = crop.shape[:2]
-        if cw < 80 or ch < 20:
+        if cw < 70 or ch < 18:
             return False
         if cw > frame_w * 0.85:
             return False
         aspect = cw / max(ch, 1)
-        return 1.5 <= aspect <= 8.0
+        return 1.5 <= aspect <= 6.0
 
     @staticmethod
     def find_plate_roi(frame, plate_cascade=None) -> list:

@@ -14,9 +14,10 @@ Ubicación: `tests/`
 | `test_user_service.py` | UserService | Creación con normalización de DNI y patente |
 | `test_branch_service.py` | BranchService | CRUD sucursales, pisos, capacity summary |
 | `test_routes_auth.py` | Rutas de autenticación | TestClient sobre login/registro/recuperación |
-| `test_alpr_utils.py` | Utilidades ALPR | Normalización de patentes, preprocesado |
+| `test_alpr_utils.py` | Utilidades ALPR | Normalización de patentes, preprocesado, formatos |
 | `test_notifications.py` | UserNotificationService | Creación, marcado leído, conteo no leídas |
 | `test_support_service.py` | SupportService | Creación de tickets, consulta, respuesta admin |
+| `test_new_validations.py` | Validaciones integrales | Protección eliminación vehículos/usuarios, anti-doble reserva, validación pisos |
 
 **Ejecución:**
 ```powershell
@@ -75,6 +76,14 @@ Los flujos de extremo a extremo (registro → login → reserva → pago → can
 1. Registrar entrada
 2. Enviar salida inmediatamente (después de 10 min de cortesía)
 3. Verificar: rechazo con monto de deuda
+
+### TC-04b: Cortesía countdown en dashboard
+1. Registrar entrada manual
+2. Consultar `GET /parking/current-occupancy`
+3. Verificar: `en_cortesia = true` para el vehículo
+4. Avanzar virtual time +11 minutos
+5. Consultar nuevamente
+6. Verificar: `en_cortesia = false`, `deuda > 0`
 
 ### TC-05: Cancelación de reserva con reembolso
 1. Crear y pagar reserva de SEMANA
@@ -150,6 +159,6 @@ POST /v1/admin/virtual-time/reset
 
 ## Estrategia de Datos de Prueba
 
-- **Patentes de prueba**: `ABC 123`, `ABC 1D23`, `A123ABC` (moto)
+- **Patentes de prueba**: `AB 536 CR` (Mercosur), `ABC 1D23` (Brasil), `A123ABC` (Moto Mercosur), `PHA 498` (Antigua)
 - **Usuarios de prueba**: admin@autopass.com / admin123 (ADMIN), local@test.com / test123 (LOCAL_ADMIN)
 - **Sucursal de prueba**: "Sucursal Principal" creada por seed.py

@@ -18,8 +18,15 @@ from routes import parking, reports, system, admin, user, auth
 from routes.system import stop_all_cameras
 from routes.views import router as views_router
 
+# RATE LIMITING
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from core.limiter import limiter
+
 # --- CONFIGURACION DE LA APLICACION ---
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.mqtt_client = mqtt_client #INYECCION PARA ACCESO GLOBAL
 
 # DIRECTORIO PARA IMAGENES Y UPLOADS

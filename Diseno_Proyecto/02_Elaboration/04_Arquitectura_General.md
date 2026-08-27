@@ -73,7 +73,7 @@
 | **Negocio** | Python 3.9+, Services Layer | Lógica de acceso, facturación, reservas, workers |
 | **Datos** | SQLAlchemy 2.0 ORM | Modelos de BD, consultas, migraciones |
 | **Infraestructura** | core/config.py, core/security.py, core/database.py | Config, JWT+bcrypt, sesiones DB |
-| **Visión Artificial** | OpenCV, EasyOCR, PyTorch | ALPR, detección de QR, procesamiento de imágenes |
+| **Visión Artificial** | OpenCV, RapidOCR ONNX / PaddleOCR | ALPR, detección de QR, procesamiento de imágenes |
 | **IoT** | Paho-MQTT | Comunicación con barreras ESP32 |
 | **Email** | smtplib, Jinja2 | Notificaciones transaccionales |
 | **Base de datos** | SQLite (dev) / PostgreSQL (prod) | Persistencia |

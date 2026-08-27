@@ -4,14 +4,16 @@ import asyncio
 import websockets
 from alpr.config import WS_BACKEND_URL, GATE_ID
 
-async def ws_monitoring_worker(streamer):
-    """Streaming de frames por WebSocket al backend con reconexión automática."""
+async def ws_monitoring_worker(streamer, engine=None):
+    """Streaming de frames por WebSocket al backend con reconexión automática y overlay HUD/BoundingBox."""
     while streamer.is_running:
         try:
             async with websockets.connect(WS_BACKEND_URL, ping_interval=20, ping_timeout=20) as websocket:
                 while streamer.is_running:
                     frame = streamer.get_frame()
                     if frame is not None:
+                        if engine is not None:
+                            frame = engine.get_frame_with_overlay(frame)
                         try:
                             view_frame = cv2.resize(frame, (640, 360))
                             _, buffer = cv2.imencode('.jpg', view_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])

@@ -31,10 +31,12 @@ def run_alpr_service():
         if GATE_TYPE in ("entrada", "salida", "patente"):
             threading.Thread(target=engine.ocr_worker, daemon=True).start()
             
-        threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer),), daemon=True).start()
+        threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer, engine),), daemon=True).start()
         print(f"[OK] Servicio de cámara activo: {GATE_ID} | Modo: {GATE_TYPE.upper()} | Motor: {getattr(engine, 'engine_type', 'OCR')}")
         
         last_ocr_time = 0
+        motion_skip_count = 0
+        last_motion_log = time.time()
         while True:
             frame = streamer.get_frame()
             if frame is None:
@@ -72,7 +74,11 @@ def run_alpr_service():
                         except Exception:
                             pass
                     else:
-                        pass
+                        motion_skip_count += 1
+                        if time.time() - last_motion_log >= 5:
+                            print(f"[ALPR] Sin movimiento: {motion_skip_count} frames descartados en los últimos {int(time.time() - last_motion_log)}s")
+                            motion_skip_count = 0
+                            last_motion_log = time.time()
             time.sleep(0.01)
     except Exception as e:
         print(f"[!] Error FATAL en el bucle principal: {e}")

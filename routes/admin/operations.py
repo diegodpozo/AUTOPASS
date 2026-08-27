@@ -163,7 +163,7 @@ def manual_exit(plate: str, db: Session = Depends(get_db), staff: models.User = 
         tipo_evento="SALIDA", 
         tipo_vehiculo=ultimo.tipo_vehiculo, 
         fecha_hora=TimeService.now().isoformat(), 
-        pago_confirmado=True, 
+        pago_confirmado=ultimo.pago_confirmado, 
         costo_estadia=0.0 if dentro_cortesia else None,
         metodo_pago="CAJA" if not dentro_cortesia else None,
         sucursal=sucursal,
@@ -232,7 +232,7 @@ def cancel_stay(plate: str, db: Session = Depends(get_db), staff: models.User = 
             tipo_evento="SALIDA", 
             tipo_vehiculo=ultimo.tipo_vehiculo,
             fecha_hora=TimeService.now().isoformat(), 
-            pago_confirmado=True, 
+            pago_confirmado=False, 
             costo_estadia=0.0,
             sucursal=sucursal
         ))

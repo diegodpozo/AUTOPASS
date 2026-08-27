@@ -84,10 +84,12 @@
 1. El ALPR envía patente a `POST /v1/access/exit-plate`
 2. El backend verifica que el vehículo está dentro
 3. El backend verifica el tiempo de estadía:
-   - Si ≤ 10 minutos: permite salida sin cargo (cortesía)
+   - Si ≤ 10 minutos: permite salida sin cargo (cortesía). El costo de estadía se registra como $0
    - Si > 10 minutos: verifica que haya pagado (`pago_confirmado` o reserva paga)
 4. Si todo OK: registra SALIDA, actualiza aforo, envía "OPEN" por MQTT
 5. Si no ha pagado: rechaza con monto de deuda
+
+**Nota de facturación:** Los 10 minutos de cortesía siempre se contabilizan para la primera hora de facturación. Si el vehículo se queda 50 minutos, se cobra 1 hora completa (que incluye esos 10 min).
 
 **Postcondiciones:** Vehículo registrado como SALIDA, barrera abierta, aforo actualizado
 

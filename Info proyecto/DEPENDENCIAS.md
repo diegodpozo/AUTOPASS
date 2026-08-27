@@ -36,7 +36,8 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paqu
 ### Seguridad y Autenticación
 - **`python-jose`** (3.5.0): Generación y validación de tokens JWT.
 - **`passlib`** (1.7.4): Hashing seguro de contraseñas.
-- **`bcrypt`** (5.0.0): Backend de hashing para passlib.
+- **`bcrypt`** (5.0.0): Backend de hashing para passlib (usado directamente por `core/security.py`).
+- **`slowapi`** (0.1.9): Rate limiting por IP en endpoints públicos de auth (login/register/recuperación) y límite global por defecto 300/min.
 - **`cryptography`** (46.0.5): Dependencia de python-jose.
 
 ### Visión Artificial (CV)
@@ -71,13 +72,14 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paqu
 
 ---
 
-## Librerías IA Opcionales (`requirements-ai.txt`)
+## Librerías de OCR (Visión Artificial)
 
-> Estas dependencias son **opcionales**. Si fallan la instalación (ej: Python 3.14+ sin wheel compatible), el sistema funciona normalmente sin ALPR.
+> El motor OCR es **dual** (v9.10.0). `rapidocr-onnxruntime` es obligatorio (compatible con Python 3.14+). `paddleocr`/`paddlepaddle` no tienen wheel para Python 3.14+ y solo se instalan en Python < 3.14; en ese caso actúan como fallback automático.
 
-### OCR (Visión Artificial)
-- **`paddleocr`** (3.7.0): Motor de OCR para lectura de patentes y QR.
-- **`paddlepaddle`** (3.2.2): Backend de Deep Learning para PaddleOCR.
+### OCR (Motor Dual)
+- **`rapidocr-onnxruntime`** (>=1.2.0): Motor primario, optimizado para Python 3.14+ (sin dependencia de paddlepaddle).
+- **`paddleocr`** (3.7.0): Motor de OCR fallback (solo `python_version < '3.14'`).
+- **`paddlepaddle`** (3.2.2): Backend de Deep Learning para PaddleOCR (solo `python_version < '3.14'`).
 
 ### Google Gemini
 - **`google-generativeai`** (0.8.6): Integración con Gemini para funcionalidades AI.
@@ -133,5 +135,6 @@ DATABASE_URL=postgresql://usuario:password@ep-xxxx.sa-east-1.aws.neon.tech/neond
 ---
 
 ## Notas de Compatibilidad
-- Las dependencias de IA (`paddleocr`, `paddlepaddle`) son pesadas (~2GB) y pueden no tener wheel para Python 3.14+. Se omiten automáticamente si no están disponibles.
-- `scripts/patch_bidi.py` fue eliminado — era un parche legacy de EasyOCR que ya no se necesita con PaddleOCR.
+- `rapidocr-onnxruntime` (motor primario) funciona en Python 3.14+ sin `paddlepaddle`.
+- `paddleocr`/`paddlepaddle` (~2GB) no tienen wheel para Python 3.14+. Solo se instalan en Python < 3.14 y actúan como fallback si RapidOCR no está disponible.
+- `scripts/patch_bidi.py` fue eliminado — era un parche legacy de EasyOCR que ya no se necesita con RapidOCR/PaddleOCR.

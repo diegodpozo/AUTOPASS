@@ -21,6 +21,8 @@
 | RF-10 | Validación de salida | El sistema debe verificar que el vehículo haya pagado o tenga reserva vigente antes de abrir barrera | Alta |
 | RF-11 | Cortesía 10 min | El sistema debe permitir salida sin cargo si la estadía ≤ 10 minutos | Alta |
 | RF-12 | Cancelación de estadía | El sistema debe cancelar una estadía activa sin costo (cortesía) | Media |
+| RF-45 | Cortesía countdown | El dashboard debe mostrar un contador regresivo verde de los 10 min de cortesía al ingresar un vehículo; tras expirar, mostrar el monto a pagar | Alta |
+| RF-46 | ALPR post-lectura | El ALPR debe pausar 5 segundos después de aceptar una patente antes de volver a escanear | Alta |
 
 ## Módulo de Reservas
 

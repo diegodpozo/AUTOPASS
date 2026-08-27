@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 
 class PlateValidation(BaseModel):
@@ -38,15 +38,14 @@ class FloorCreate(FloorBase):
     pass
 
 class FloorResponse(FloorBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     branch_id: int
     ocupacion_actual: int = 0
     ocupacion_motos: int = 0
     capacidad_camionetas: int = 5
     ocupacion_camionetas: int = 0
-
-    class Config:
-        from_attributes = True
 
 class BranchBase(BaseModel):
     nombre: str
@@ -63,6 +62,8 @@ class BranchCreate(BranchBase):
     pass
 
 class BranchResponse(BranchBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     admin_name: Optional[str] = None
     floors: List[FloorResponse] = []
@@ -74,10 +75,9 @@ class BranchResponse(BranchBase):
     ocupacion_motos_total: int = 0
     ocupacion_camionetas_total: int = 0
 
-    class Config:
-        from_attributes = True
-
 class BranchPublicResponse(BranchBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     ocupacion_actual: int = 0
     capacidad_total: int = 20
@@ -86,9 +86,6 @@ class BranchPublicResponse(BranchBase):
     ocupacion_camionetas: int = 0
     capacidad_camionetas: int = 5
     floors: List[FloorResponse] = []
-
-    class Config:
-        from_attributes = True
 
 class CameraBase(BaseModel):
     nombre: str
@@ -101,9 +98,8 @@ class CameraCreate(CameraBase):
     pass
 
 class CameraResponse(CameraBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     is_running: bool = False
-
-    class Config:
-        from_attributes = True
 

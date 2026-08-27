@@ -1,12 +1,12 @@
 # Mapa Completo de Rutas API — AUTOPASS
 
 ## Prefijo: `/v1/auth`
-| Método | Ruta | Función | Rol Requerido |
-|--------|------|---------|---------------|
-| POST | `/login` | Iniciar sesión | Público |
-| POST | `/register` | Registrarse | Público |
-| POST | `/forgot-password` | Solicitar recuperación | Público |
-| POST | `/reset-password` | Resetear contraseña | Público |
+| Método | Ruta | Función | Rol Requerido | Rate Limit |
+|--------|------|---------|---------------|------------|
+| POST | `/login` | Iniciar sesión (registra `UserSession`, retorna `nuevo_dispositivo`) | Público | 15/min |
+| POST | `/register` | Registrarse (rol `USER`) | Público | 10/min |
+| POST | `/forgot-password` | Solicitar recuperación (token `purpose: recovery`, 30 min) | Público | 5/min |
+| POST | `/reset-password` | Resetear contraseña | Público | 10/min |
 
 ## Prefijo: `/v1/admin`
 | Método | Ruta | Función | Rol Requerido |

@@ -139,6 +139,19 @@
 | tipo | String (default "Auto") | Auto, Moto o Camioneta |
 | is_favorite | Boolean (default False) | Vehículo favorito del usuario |
 
+### UserSession (models/user_session.py)
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| id | Integer PK | Identificador único |
+| user_id | Integer FK→users.id (indexed) | Usuario de la sesión |
+| device_id | String (indexed) | Identificador del dispositivo/navegador |
+| user_agent | String (nullable) | User-Agent del navegador |
+| ip_address | String (nullable) | IP de origen |
+| created_at | DateTime (default utcnow) | Fecha de creación |
+| last_login_at | DateTime (default utcnow, indexed) | Último login |
+
+> Nota: `UserSession` habilita la detección de inicios de sesión desde otros dispositivos (notificación `NEW_DEVICE_LOGIN`). Migración Alembic: `b7e3a1d2c4f5_add_user_sessions.py`.
+
 ### AccessLog (models/parking.py)
 | Columna | Tipo | Descripción |
 |---------|------|-------------|

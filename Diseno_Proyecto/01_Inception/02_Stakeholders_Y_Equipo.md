@@ -20,7 +20,7 @@
 | **Frontend Developer** | Desarrolla templates Jinja2, CSS Glassmorphism, JS modular, WebSockets cliente |
 | **DevOps** | Configura entorno de producción, despliegue, monitoreo, scripts de inicialización |
 | **QA / Tester** | Pruebas unitarias (pytest), pruebas de integración, validación de flujos críticos |
-| **Especialista en Visión Artificial** | Configura y optimiza EasyOCR + OpenCV para ALPR, tuning de parámetros |
+| **Especialista en Visión Artificial** | Configura y optimiza el motor OCR dual (RapidOCR/PaddleOCR) + OpenCV para ALPR, tuning de parámetros |
 
 ## Cronograma de Alto Nivel
 
