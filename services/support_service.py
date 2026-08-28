@@ -252,3 +252,30 @@ class SupportService:
             mensaje=f"El cliente respondió en ticket #{ticket.id}: {mensaje[:100]}"
         )
         return ticket
+
+    @staticmethod
+    def get_admin_pending_count(db: Session, current_user) -> int:
+        """CUENTA LOS TICKETS DE SOPORTE PENDIENTES (NO RESUELTOS) QUE PUEDE VER
+        EL ADMINISTRADOR ACTUAL, SEGUN SU ROL Y SUCURSAL. Este contador alimenta
+        la burbuja de 'Soporte & Tickets' del menu lateral (no las notificaciones)."""
+        all_tickets = db.query(models.SupportTicket).all()
+
+        if current_user.rol != "admin":
+            user_suc_norm = normalize_branch_name(current_user.sucursal or "")
+            scoped = [
+                t for t in all_tickets
+                if user_suc_norm and normalize_branch_name(t.sucursal or "") == user_suc_norm
+            ]
+        else:
+            # El super admin por defecto ve los tickets generales o sin sucursal (misma regla que get_admin_tickets)
+            scoped = [
+                t for t in all_tickets
+                if t.sucursal == "General"
+                or normalize_branch_name(t.sucursal or "") == "GENERAL"
+                or not t.sucursal
+            ]
+
+        return len([
+            t for t in scoped
+            if (t.estado or "").strip().lower() not in ("resuelto", "resuelta")
+        ])

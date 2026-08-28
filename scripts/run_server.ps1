@@ -38,7 +38,22 @@ if (Test-Path ".env") {
 
 # 3. LANZAR APERTURA AUTOMATICA DE NAVEGADOR
 Write-Host "        [OK] Lanzador de navegador automático listo (http://localhost:8000)." -ForegroundColor Green
-Start-Process -WindowStyle Hidden -FilePath "powershell.exe" -ArgumentList "-WindowStyle Hidden -Command `"`$c=New-Object Net.Sockets.TcpClient; for(`$i=0;`$i -lt 90;`$i++){ try{ `$c.Connect('127.0.0.1',8000); Start-Process 'http://localhost:8000'; break }catch{} finally{ `$c.Dispose() }; Start-Sleep -Seconds 1 }`""
+$browserCmd = @'
+$client = New-Object Net.Sockets.TcpClient
+for ($i = 0; $i -lt 90; $i++) {
+    try {
+        $c = New-Object Net.Sockets.TcpClient
+        $c.Connect('127.0.0.1', 8000)
+        Start-Process 'http://localhost:8000'
+        break
+    } catch {
+        Start-Sleep -Seconds 1
+    } finally {
+        try { $c.Dispose() } catch {}
+    }
+}
+'@
+Start-Process -WindowStyle Hidden -FilePath "powershell.exe" -ArgumentList "-NoProfile -WindowStyle Hidden -Command", $browserCmd
 
 Write-Host ""
 Write-Host " ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor Cyan

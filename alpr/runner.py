@@ -4,8 +4,10 @@ import asyncio
 import threading
 from alpr.config import VIDEO_SOURCE, GATE_TYPE, GATE_ID, OCR_INTERVAL
 from alpr.video_streamer import VideoStreamer
-from alpr.ocr_engine import ALPREngine
+from alpr.ocr_engine import ALPREngine, ReadingStatusNotifier
 from alpr.ws_client import ws_monitoring_worker
+
+_reading_notifier = ReadingStatusNotifier()
 
 def run_alpr_service():
     """Ejecuta el ciclo principal del servicio ALPR."""
@@ -60,6 +62,7 @@ def run_alpr_service():
                 if now - last_ocr_time > OCR_INTERVAL:
                     has_motion = engine.detect_motion(frame)
                     if has_motion:
+                        _reading_notifier.notify_reading()
                         try:
                             if not engine.frame_queue.full():
                                 engine.frame_queue.put(frame)

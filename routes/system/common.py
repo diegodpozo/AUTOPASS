@@ -1,4 +1,5 @@
 import os
+import json
 import subprocess
 import unicodedata
 from typing import Dict, List
@@ -82,6 +83,20 @@ class ConnectionManager:
                 except Exception:
                     disconnected.append(connection)
             
+            for conn in disconnected:
+                self.disconnect(conn, camera_id)
+
+    async def broadcast_console(self, camera_id: str, line: str):
+        """ENVIA UNA LINEA DE CONSOLA DEL SUBPROCESO ALPR A LOS ESPECTADORES DE ESA CAMARA.
+        Se envia como JSON con prefijo CONSOLE para diferenciarla del frame (base64)."""
+        if camera_id in self.active_connections:
+            payload = {"__console__": True, "gate": camera_id, "line": line}
+            disconnected = []
+            for connection in self.active_connections[camera_id]:
+                try:
+                    await connection.send_text(json.dumps(payload))
+                except Exception:
+                    disconnected.append(connection)
             for conn in disconnected:
                 self.disconnect(conn, camera_id)
 

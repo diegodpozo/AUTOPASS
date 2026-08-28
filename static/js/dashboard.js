@@ -252,5 +252,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const activeItem = document.querySelector(`.nav-item[onclick*="'${lastTab}'"]`);
     ui.switchTab(lastTab, activeItem);
 
+    // BURBUJA 'SOPORTE & TICKETS': mostrar conteo real de tickets pendientes al cargar
+    if (typeof tickets.updateTicketBadge === 'function') {
+        tickets.updateTicketBadge();
+    }
+
     document.getElementById('form-add-branch')?.addEventListener('submit', window.handleCreateBranch);
 });
