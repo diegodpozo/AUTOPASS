@@ -2,6 +2,8 @@
 $ErrorActionPreference = "Continue"
 $Host.UI.RawUI.WindowTitle = "AUTOPASS - Modern Setup Engine v10.0"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONUTF8 = "1"
+$env:PYTHONIOENCODING = "utf-8"
 
 Clear-Host
 
@@ -74,11 +76,13 @@ Write-Host ""
 $depLabel = if ($isUpdate) { "Actualizando paquetes y motor ALPR / OCR..." } else { "Instalando dependencias backend e IA..." }
 Show-ProgressBar -Percent 50 -StepText "3/6" -StepName $depLabel
 Write-Host "        Procesando paquetes desde requirements.txt..." -ForegroundColor DarkYellow
-& venv\Scripts\python.exe -m pip install -r requirements.txt --quiet 2>&1 | Out-Null
+$pipOut = & venv\Scripts\python.exe -m pip install -r requirements.txt 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "        [✔] Dependencias y motor de visión instalados correctamente." -ForegroundColor Green
 } else {
-    Write-Host "        [!] Algunas dependencias secundarias se omitieron. Motor Core OK." -ForegroundColor Yellow
+    Write-Host "        [✖] Falló la instalación de dependencias core." -ForegroundColor Red
+    Write-Host ($pipOut | Select-Object -Last 25)
+    exit 1
 }
 Write-Host ""
 
@@ -103,15 +107,24 @@ Write-Host ""
 # PASO 5: BASE DE DATOS Y MIGRACIONES (83%)
 # -----------------------------------------------------------------------------
 Show-ProgressBar -Percent 83 -StepText "5/6" -StepName "Estructurando base de datos y aplicando migraciones..."
-& venv\Scripts\python.exe init_db.py 2>&1 | Out-Null
+& venv\Scripts\python.exe init_db.py 2>&1
 $initStatus = $LASTEXITCODE
-& venv\Scripts\python.exe -m alembic stamp head 2>&1 | Out-Null
-& venv\Scripts\python.exe -m alembic upgrade head 2>&1 | Out-Null
 
 if ($initStatus -eq 0) {
+    & venv\Scripts\python.exe -m alembic stamp head 2>&1
+    $stampStatus = $LASTEXITCODE
+    if ($stampStatus -eq 0) {
+        & venv\Scripts\python.exe -m alembic upgrade head 2>&1
+        $upgradeStatus = $LASTEXITCODE
+    }
+    if (($stampStatus -ne 0) -or ($upgradeStatus -ne 0)) {
+        Write-Host "        [✖] Error al aplicar migraciones Alembic." -ForegroundColor Red
+        exit 1
+    }
     Write-Host "        [✔] Base de datos y esquema de migraciones listos." -ForegroundColor Green
 } else {
     Write-Host "        [✖] Error al inicializar la base de datos." -ForegroundColor Red
+    Write-Host "        Revisá el mensaje de error de init_db.py arriba." -ForegroundColor Yellow
     exit 1
 }
 Write-Host ""
