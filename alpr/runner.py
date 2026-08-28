@@ -2,7 +2,7 @@ import cv2
 import time
 import asyncio
 import threading
-from alpr.config import VIDEO_SOURCE, GATE_TYPE, GATE_ID, OCR_INTERVAL
+from alpr.config import VIDEO_SOURCE, GATE_TYPE, GATE_ID, FORCE_OCR, OCR_INTERVAL
 from alpr.video_streamer import VideoStreamer
 from alpr.ocr_engine import ALPREngine, ReadingStatusNotifier
 from alpr.ws_client import ws_monitoring_worker
@@ -60,7 +60,7 @@ def run_alpr_service():
 
             if GATE_TYPE in ("entrada", "salida", "patente"):
                 if now - last_ocr_time > OCR_INTERVAL:
-                    has_motion = engine.detect_motion(frame)
+                    has_motion = FORCE_OCR or engine.detect_motion(frame)
                     if has_motion:
                         _reading_notifier.notify_reading()
                         try:

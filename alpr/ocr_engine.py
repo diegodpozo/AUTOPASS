@@ -47,9 +47,105 @@ from concurrent.futures import ThreadPoolExecutor
 from alpr.config import (
     GATE_ID, GATE_TYPE, BACKEND_URL, COOLDOWN_SECONDS, OCR_INTERVAL,
     CONFIDENCE_THRESHOLD, FRAME_QUEUE_MAXSIZE, CONSENSUS_REQUIRED,
-    CONSENSUS_WINDOW, LATAM_PLATE_PATTERN, MOTO_PATTERN, MOTO_MIN_CONFIDENCE
+    CONSENSUS_WINDOW, LATAM_PLATE_PATTERN, MOTO_PATTERN, MOTO_MIN_CONFIDENCE,
+    ENABLE_MOTO_RECOGNITION, AUTO_PLATE_PATTERN, MOTO_PLATE_PATTERN
 )
 from alpr.preprocessor import ImagePreprocessor
+
+MAPA_LETRAS = {'0': 'O', '1': 'I', '2': 'Z', '4': 'A', '5': 'S', '6': 'G', '8': 'B'}
+MAPA_DIGITOS = {'O': '0', 'Q': '0', 'D': '0', 'I': '1', 'L': '1', 'Z': '2', 'A': '4', 'S': '5', 'G': '6', 'B': '8'}
+
+def CorregirLetra(caracter: str) -> str:
+    """REEMPLAZA DIGITOS COMUNES POR SUS LETRAS EQUIVALENTES EN POSICIONES ALFABETICAS."""
+    return MAPA_LETRAS.get(caracter, caracter)
+
+def CorregirDigito(caracter: str) -> str:
+    """REEMPLAZA LETRAS COMUNES POR SUS DIGITOS EQUIVALENTES EN POSICIONES NUMERICAS."""
+    return MAPA_DIGITOS.get(caracter, caracter)
+
+def CorregirPatente(texto: str) -> str:
+    """APLICA DESAMBIGUACION POSICIONAL DE CARACTERES PARA FORMATOS MERCOSUR Y CLASICOS."""
+    if not texto:
+        return ""
+    t = re.sub(r'[^A-Z0-9]', '', texto.upper())
+
+    # REMOVER MARCAS DE AGUA Y TEXTOS DE ENCABEZADO NACIONALES
+    t = re.sub(r'^(ARGENTINA|REPUBLICA|MERCOSUR|BRASIL|URUGUAY|PARAGUAY|TINA|IINA)+', '', t)
+    t = re.sub(r'(ARGENTINA|MERCOSUR|AR)$', '', t)
+
+    # 1. SI YA CUMPLE CON UN FORMATO ESTRICTO DE 6 O 7 CARACTERES, SE RETORNA DIRECTAMENTE
+    patron_estricto = (
+        r'^[A-Z]{2}\d{3}[A-Z]{2}$|'
+        r'^[A-Z]{3}\d{3}$|'
+        r'^[A-Z]{3}\d[A-Z]\d{2}$' if not ENABLE_MOTO_RECOGNITION else
+        r'^[A-Z]{2}\d{3}[A-Z]{2}$|'
+        r'^[A-Z]{3}\d{3}$|'
+        r'^[A-Z]\d{3}[A-Z]{3}$|'
+        r'^\d{3}[A-Z]{3}$|'
+        r'^[A-Z]{3}\d[A-Z]\d{2}$'
+    )
+    if re.match(patron_estricto, t):
+        return t
+
+    if len(t) == 7:
+        # 1. MOTO MERCOSUR ARGENTINA: A NNN LLL (EJ: A012BCD, AO12BCD)
+        if t[0] == 'A' and (t[4:].isalpha() or (t[5].isalpha() and t[6].isalpha())) and (t[1].isdigit() or t[1] in ('O', 'Q', 'D', 'I', 'L', 'Z', 'S')):
+            cand_moto = (
+                'A' +
+                CorregirDigito(t[1]) + CorregirDigito(t[2]) + CorregirDigito(t[3]) +
+                CorregirLetra(t[4]) + CorregirLetra(t[5]) + CorregirLetra(t[6])
+            )
+            if re.match(r'^[A-Z]\d{3}[A-Z]{3}$', cand_moto):
+                return cand_moto
+
+        # 2. AUTO MERCOSUR ARGENTINA: LL NNN LL (EJ: AA123BB, AAI23BB, AA12OBB)
+        cand_auto = (
+            CorregirLetra(t[0]) + CorregirLetra(t[1]) +
+            CorregirDigito(t[2]) + CorregirDigito(t[3]) + CorregirDigito(t[4]) +
+            CorregirLetra(t[5]) + CorregirLetra(t[6])
+        )
+        if re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$', cand_auto):
+            return cand_auto
+
+        # 3. MOTO MERCOSUR ARGENTINA GENERAL
+        cand_moto = (
+            CorregirLetra(t[0]) +
+            CorregirDigito(t[1]) + CorregirDigito(t[2]) + CorregirDigito(t[3]) +
+            CorregirLetra(t[4]) + CorregirLetra(t[5]) + CorregirLetra(t[6])
+        )
+        if re.match(r'^[A-Z]\d{3}[A-Z]{3}$', cand_moto):
+            return cand_moto
+
+        # 4. AUTO BRASIL MERCOSUR: LLL N L NN (EJ: ABC1D23)
+        cand_br = (
+            CorregirLetra(t[0]) + CorregirLetra(t[1]) + CorregirLetra(t[2]) +
+            CorregirDigito(t[3]) +
+            CorregirLetra(t[4]) +
+            CorregirDigito(t[5]) + CorregirDigito(t[6])
+        )
+        if re.match(r'^[A-Z]{3}\d[A-Z]\d{2}$', cand_br):
+            return cand_br
+
+    elif len(t) == 6:
+        # 1. AUTO CLASICO ARGENTINO: LLL NNN (ULTIMOS 3 SON DIGITOS / LETRAS AL INICIO)
+        if t[4].isdigit() or t[5].isdigit() or (t[1].isalpha() and t[2].isalpha()):
+            cand_auto_old = (
+                CorregirLetra(t[0]) + CorregirLetra(t[1]) + CorregirLetra(t[2]) +
+                CorregirDigito(t[3]) + CorregirDigito(t[4]) + CorregirDigito(t[5])
+            )
+            if re.match(r'^[A-Z]{3}\d{3}$', cand_auto_old):
+                return cand_auto_old
+
+        # 2. MOTO CLASICA ARGENTINA: NNN LLL (ULTIMOS 3 SON LETRAS / DIGITOS AL INICIO)
+        if t[4].isalpha() or t[5].isalpha() or (t[1].isdigit() and t[2].isdigit()):
+            cand_moto_old = (
+                CorregirDigito(t[0]) + CorregirDigito(t[1]) + CorregirDigito(t[2]) +
+                CorregirLetra(t[3]) + CorregirLetra(t[4]) + CorregirLetra(t[5])
+            )
+            if re.match(r'^\d{3}[A-Z]{3}$', cand_moto_old):
+                return cand_moto_old
+
+    return t
 
 class ALPREngine:
     """Motor principal de vision artificial: RapidOCR / PaddleOCR, QR, consenso y despacho de eventos."""
@@ -139,7 +235,7 @@ class ALPREngine:
 
     def ocr_worker(self):
         full_7_pattern = re.compile(
-            r'[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|[A-Z]\d{3}[A-Z]{3}'
+            r'[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|\d{3}[A-Z]{4}|[A-Z]\d{3}[A-Z]{3}'
         )
         HEADER_NOISE_WORDS = re.compile(
             r'\b(REPUBLICA|ARGENTINA|MERCOSUR|BRASIL|URUGUAY|PARAGUAY|GENTINA|TINA|REPU|MERCO|SUR)\b',
@@ -204,33 +300,40 @@ class ALPREngine:
                 plate = None
                 avg_conf = 0.0
 
-                # 1. PRIORIDAD 1: SI HAY MULTIPLES DETECCIONES (EJ: "AG 536 C" Y "R"), PROBAR COMBINARLAS PARA OBTENER 7 CARACTERES
-                if len(detections) >= 2:
+                # 1. PRIORIDAD 1: BUSCAR SI ALGUNA DETECCION INDIVIDUAL CONTIENE UNA PATENTE COMPLETA
+                # (EVITA CONCATENAR INDEBIDAMENTE CON TEXTOS DE FONDO O MARCAS DE AGUA)
+                for det in detections:
+                    t = re.sub(r'[^A-Z0-9]', '', det["text"].upper())
+                    t_corr = CorregirPatente(t)
+                    if full_7_pattern.search(t_corr):
+                        plate = full_7_pattern.search(t_corr).group(0)
+                        avg_conf = det["confidence"]
+                        break
+                    match_6 = re.search(r'^[A-Z]{3}\d{3}$|^\d{3}[A-Z]{3}$', t_corr)
+                    if match_6:
+                        plate = match_6.group(0)
+                        avg_conf = det["confidence"]
+                        break
+
+                # 2. PRIORIDAD 2: SI NINGUNA DETECCION INDIVIDUAL FUE COMPLETA, PROBAR COMBINAR FRAGMENTOS
+                if not plate and len(detections) >= 2:
                     try:
                         by_x = sorted(detections, key=lambda d: d["bbox"][0][0])
                         combined_x = "".join(re.sub(r'[^A-Z0-9]', '', d["text"]) for d in by_x)
-                        match_7 = full_7_pattern.search(combined_x)
+                        corrected_x = CorregirPatente(combined_x)
+                        match_7 = full_7_pattern.search(corrected_x) or re.search(LATAM_PLATE_PATTERN, corrected_x)
                         if match_7:
                             plate = match_7.group(0)
                             avg_conf = sum(d["confidence"] for d in by_x) / max(1, len(by_x))
                     except Exception:
                         pass
 
-                # 2. PRIORIDAD 2: BUSCAR 7 CARACTERES COMPLETOS EN DETECCION UNICA
+                # 3. PRIORIDAD 3: FALLBACK PATRON GENERAL EN DETECCION UNICA
                 if not plate:
                     for det in detections:
                         t = re.sub(r'[^A-Z0-9]', '', det["text"])
-                        match_7 = full_7_pattern.search(t)
-                        if match_7:
-                            plate = match_7.group(0)
-                            avg_conf = det["confidence"]
-                            break
-
-                # 3. PRIORIDAD 3: PATRON GENERAL / 6 CARACTERES
-                if not plate:
-                    for det in detections:
-                        t = re.sub(r'[^A-Z0-9]', '', det["text"])
-                        match_gen = re.search(LATAM_PLATE_PATTERN, t)
+                        t_corr = CorregirPatente(t)
+                        match_gen = re.search(LATAM_PLATE_PATTERN, t_corr)
                         if match_gen:
                             plate = match_gen.group(0)
                             avg_conf = det["confidence"]
@@ -240,7 +343,8 @@ class ALPREngine:
                     try:
                         by_y = sorted(detections, key=lambda d: sum(p[1] for p in d["bbox"]) / max(1, len(d["bbox"])))
                         combined = "".join(re.sub(r'[^A-Z0-9]', '', d["text"]) for d in by_y)
-                        match = re.search(LATAM_PLATE_PATTERN, combined)
+                        corrected_y = CorregirPatente(combined)
+                        match = re.search(LATAM_PLATE_PATTERN, corrected_y)
                         if match:
                             plate = re.sub(r'[^A-Z0-9]', '', match.group(0))
                             avg_conf = sum(d["confidence"] for d in by_y) / max(1, len(by_y))
@@ -251,7 +355,8 @@ class ALPREngine:
                     try:
                         by_x = sorted(detections, key=lambda d: d["bbox"][0][0])
                         combined = "".join(re.sub(r'[^A-Z0-9]', '', d["text"]) for d in by_x)
-                        match = re.search(LATAM_PLATE_PATTERN, combined)
+                        corrected_x2 = CorregirPatente(combined)
+                        match = re.search(LATAM_PLATE_PATTERN, corrected_x2)
                         if match:
                             plate = re.sub(r'[^A-Z0-9]', '', match.group(0))
                             avg_conf = sum(d["confidence"] for d in by_x) / max(1, len(by_x))
@@ -271,7 +376,8 @@ class ALPREngine:
                                 continue
                             for i, text in enumerate(c_texts):
                                 t = re.sub(r'[^A-Z0-9]', '', text.strip().upper())
-                                match = re.search(LATAM_PLATE_PATTERN, t)
+                                t_corr = CorregirPatente(t)
+                                match = re.search(LATAM_PLATE_PATTERN, t_corr)
                                 c_conf = float(c_scores[i]) if i < len(c_scores) else 0.0
                                 if match and c_conf >= FALLBACK_MIN_CONFIDENCE:
                                     plate = re.sub(r'[^A-Z0-9]', '', match.group(0))
@@ -287,17 +393,8 @@ class ALPREngine:
 
                 country = ImagePreprocessor.identify_country(plate, is_mercosur)
 
-                KNOWN_PLATE_FORMATS = re.compile(
-                    r'^[A-Z]{2}\d{3}[A-Z]{2}$'   # ARG Mercosur (AA 123 AA)
-                    r'|^[A-Z]{3}\d{3}$'            # ARG Antigua (ABC 123)
-                    r'|^[A-Z]{2}\d{3}$'            # ARG Moto Antigua (AB 123)
-                    r'|^[A-Z]{2}\d{3}[A-Z]$'       # ARG Moto Mercosur (AB 123 A)
-                    r'|^[A-Z]\d{3}[A-Z]{3}$'       # ARG Moto Mercosur alternativo (A 123 AAA)
-                    r'|^[A-Z]{3}\d[A-Z]\d{2}$'     # Brasil (ABC 1D23)
-                    r'|^[A-Z]{3}\d{4}$'            # Uruguay (ABC 1234)
-                    r'|^[A-Z]{4}\d{3}$'            # Paraguay Auto Mercosur (ABCD 123)
-                )
-                if not KNOWN_PLATE_FORMATS.match(plate):
+                # EXIGIR ESTRICTAMENTE 6 O 7 CARACTERES Y COMBINACION LETRA-NUMERO
+                if len(plate) < 6 or len(plate) > 7 or not re.search(r'[A-Z]', plate) or not re.search(r'\d', plate):
                     continue
 
                 now = time.time()
@@ -306,32 +403,52 @@ class ALPREngine:
                 same_votes = [v for v in self.vote_buffer if v[0] == plate]
 
                 is_moto = bool(MOTO_PATTERN.match(plate))
-                is_valid_format = bool(re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$|^[A-Z]{3}\d{3}$|^[A-Z]{2}\d{3}[A-Z]$|^[A-Z]\d{3}[A-Z]{3}$|^[A-Z]{3}\d[A-Z]\d{2}$|^[A-Z]{4}\d{3}$', plate))
 
-                if detections:
+                # SI LA REGLA DE MOTOS ESTA DESHABILITADA, DESCARTAR DETECCIONES DE MOTOS
+                if not ENABLE_MOTO_RECOGNITION and is_moto:
+                    continue
+
+                # Filtro de aspecto: un recorte incompleto de auto que coincida con patrón de moto
+                # (ej: AC404 de AC404SD) con caja horizontal (> 2.2) es un recorte incompleto.
+                if is_moto and detections:
                     det = detections[0]
                     xs = [p[0] for p in det["bbox"]]
                     ys = [p[1] for p in det["bbox"]]
                     bbox_w = max(xs) - min(xs)
                     bbox_h = max(ys) - min(ys)
-                    if bbox_h > 0:
-                        aspect = bbox_w / bbox_h
-                        # Si coincide con patrón de moto (ej: AC404) pero la caja es rectangular horizontal de auto (> 2.2), es un recorte incompleto.
-                        if is_moto and aspect > 2.2:
-                            continue
+                    if bbox_h > 0 and (bbox_w / bbox_h) > 2.2:
+                        continue
 
-                if is_moto:
-                    high_conf = avg_conf >= MOTO_MIN_CONFIDENCE
-                else:
-                    high_conf = avg_conf >= 0.75
+                is_valid_format = bool(re.match(
+                    r'^[A-Z]{2}\d{3}[A-Z]{2}$|'
+                    r'^[A-Z]{3}\d{3}$|'
+                    r'^[A-Z]{3}\d[A-Z]\d{2}$|'
+                    r'^[A-Z]{3}\d{4}$|'
+                    r'^[A-Z]{4}\d{3}$' if not ENABLE_MOTO_RECOGNITION else
+                    r'^[A-Z]{2}\d{3}[A-Z]{2}$|'
+                    r'^[A-Z]{3}\d{3}$|'
+                    r'^[A-Z]{3}\d[A-Z]\d{2}$|'
+                    r'^[A-Z]{3}\d{4}$|'
+                    r'^[A-Z]{4}\d{3}$|'
+                    r'^[A-Z]{2}\d{3}$|'
+                    r'^[A-Z]{2}\d{3}[A-Z]$|'
+                    r'^[A-Z]\d{3}[A-Z]{3}$|'
+                    r'^\d{3}[A-Z]{3}$|'
+                    r'^\d{3}[A-Z]{4}$',
+                    plate
+                ))
 
-                if high_conf and is_valid_format:
-                    req_votes = 1
-                else:
-                    req_votes = max(2, CONSENSUS_REQUIRED)
-
-                if len(same_votes) < req_votes:
+                if not is_valid_format:
                     continue
+
+                # EXIGIR CONSENSO MINIMO PARA EVITAR QUE UN SOLO FOTOGRAMA CON RUIDO DE OCR GENERE INGRESOS
+                req_votes = CONSENSUS_REQUIRED
+                if is_moto:
+                    if avg_conf < MOTO_MIN_CONFIDENCE or len(same_votes) < req_votes:
+                        continue
+                else:
+                    if avg_conf < CONFIDENCE_THRESHOLD or len(same_votes) < req_votes:
+                        continue
 
                 try:
                     if 'ARGENTINA' in country.upper():

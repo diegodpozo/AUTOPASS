@@ -338,8 +338,6 @@ class ReportService:
         sorted_times = sorted(ocr_times)
         p90_idx = int(len(sorted_times) * 0.9)
 
-        bt_times = [l.backend_time for l in logs if l.backend_time is not None]
-
         return {
             "logs": [{
                 "id": l.id,
@@ -347,7 +345,6 @@ class ReportService:
                 "tipo_evento": l.tipo_evento,
                 "fecha_hora": l.fecha_hora,
                 "ocr_time": round(l.ocr_time, 3) if l.ocr_time else None,
-                "backend_time": round(l.backend_time, 3) if l.backend_time else None,
                 "sucursal": l.sucursal
             } for l in logs],
             "stats": {
@@ -355,7 +352,6 @@ class ReportService:
                 "avg_ocr": round(sum(ocr_times) / len(ocr_times), 3),
                 "min_ocr": round(min(ocr_times), 3),
                 "max_ocr": round(max(ocr_times), 3),
-                "p90_ocr": round(sorted_times[p90_idx], 3) if p90_idx < len(sorted_times) else round(sorted_times[-1], 3),
-                "avg_backend": round(sum(bt_times) / len(bt_times), 3) if bt_times else 0
+                "p90_ocr": round(sorted_times[p90_idx], 3) if p90_idx < len(sorted_times) else round(sorted_times[-1], 3)
             }
         }

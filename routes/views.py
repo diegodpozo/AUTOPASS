@@ -50,3 +50,7 @@ async def get_reset_password(request: Request):
 @router.get("/monitoreo", response_class=HTMLResponse)
 async def get_monitoreo(request: Request):
     return templates.TemplateResponse(request=request, name="monitoreo_live.html")
+
+@router.get("/estadisticas-ocr", response_class=HTMLResponse)
+async def get_estadisticas_ocr(request: Request):
+    return templates.TemplateResponse(request=request, name="estadisticas_ocr.html")
