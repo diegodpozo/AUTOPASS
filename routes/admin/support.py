@@ -9,6 +9,16 @@ from services.notification_service import NotificationService
 
 router = APIRouter()
 
+@router.get("/support-tickets/pending-count")
+def get_admin_support_pending_count(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_operational_user)
+):
+    """RETORNA LA CANTIDAD DE TICKETS DE SOPORTE PENDIENTES (NO RESUELTOS)
+    QUE PUEDE VER EL ADMIN ACTUAL. Alimenta la burbuja de 'Soporte & Tickets'."""
+    count = SupportService.get_admin_pending_count(db, current_user)
+    return {"count": count}
+
 @router.patch("/support-tickets/{ticket_id}/read-notifs")
 def mark_ticket_notifications_read(
     ticket_id: int,

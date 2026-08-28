@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import threading
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -10,8 +11,46 @@ from core.database import get_db
 from core.security import get_operational_user
 from core.logger import get_logger
 from routes.system.common import CAMERA_PROCESSES, CameraConfig, normalize_system_name
+from routes.system.common import manager as video_manager
 
 logger = get_logger("Cameras")
+
+try:
+    import locale
+    _console_encoding = locale.getpreferredencoding(False) or "utf-8"
+except Exception:
+    _console_encoding = "utf-8"
+
+def _schedule_async(coro):
+    """PROGRAMA UNA COROUTINA EN EL LOOP PRINCIPAL DE UVICORN DESDE UN HILO SECUNDARIO."""
+    try:
+        from services.notification_service import NotificationService
+        loop = NotificationService._loop
+        if loop and loop.is_running():
+            import asyncio
+            asyncio.run_coroutine_threadsafe(coro, loop)
+            return True
+    except Exception:
+        pass
+    return False
+
+def _stream_console_output(proc: subprocess.Popen, camera_id: str):
+    """LEE EL STDOUT DEL SUBPROCESO ALPR EN UN HILO Y REENVIA CADA LINEA AL FRONT
+    POR EL WEBSOCKET DE VIDEO DE ESA CAMARA. NO ALTERA EL FLUJO DE FRAMES NI LOS
+    MENSAJES DE EVENTO EXISTENTES (ruta paralela puramente aditiva)."""
+    try:
+        for raw in iter(proc.stdout.readline, b""):
+            line = raw.decode(_console_encoding, errors="replace").rstrip("\n").rstrip("\r")
+            if line.strip():
+                _schedule_async(video_manager.broadcast_console(camera_id, line))
+        proc.stdout.close()
+    except Exception as e:
+        logger.debug(f"Fin del stream de consola {camera_id}: {e}")
+    finally:
+        try:
+            proc.stdout = None
+        except Exception:
+            pass
 
 router = APIRouter()
 
@@ -77,17 +116,19 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
         else:
             env["GATE_TYPE"] = "entrada" if "ENTRADA" in gate_id else "salida"
         env["BACKEND_URL"] = base_url
+        env["PYTHONUNBUFFERED"] = "1"
         
         try:
             logger.info(f"Iniciando ALPR para {gate_id} con fuente: {source}")
             proc = subprocess.Popen(
                 [sys.executable, "alpr_service.py"],
                 env=env,
-                stdout=None,
-                stderr=None,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
             )
             CAMERA_PROCESSES[gate_id] = proc
+            threading.Thread(target=_stream_console_output, args=(proc, gate_id), daemon=True).start()
             return {"status": "ok", "message": "Servicio iniciado"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -241,15 +282,19 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
         else:
             env["GATE_TYPE"] = gt
         env["BACKEND_URL"] = base_url
+        env["PYTHONUNBUFFERED"] = "1"
         
         try:
             logger.info(f"Iniciando ALPR para {camera.nombre} ({proc_id}) con fuente: {camera.source}")
             proc = subprocess.Popen(
                 [sys.executable, "alpr_service.py"],
                 env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
             )
             CAMERA_PROCESSES[proc_id] = proc
+            threading.Thread(target=_stream_console_output, args=(proc, proc_id), daemon=True).start()
             return {"status": "ok", "message": f"Servicio para {camera.nombre} iniciado"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -272,3 +317,23 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
             return {"status": "error", "message": str(e)}
             
     return {"status": "error", "message": "Acción no válida"}
+
+@router.post("/camera-reading/{gate_id}")
+def notify_camera_reading(gate_id: str, db: Session = Depends(get_db)):
+    """NOTIFICA AL DASHBOARD QUE LA CAMARA ESTA LEYENDO ACTIVAMENTE UNA PATENTE."""
+    from core.normalize import normalize_user_name as normalize_name
+    from services.notification_service import NotificationService
+    sucursal = None
+    if '_' in gate_id:
+        suc_short = normalize_name(gate_id.split('_')[0])
+        try:
+            branches = db.query(models.ParkingBranch).all()
+            for b in branches:
+                if normalize_name(b.nombre) == suc_short:
+                    sucursal = b.nombre
+                    break
+        except Exception:
+            pass
+    suc_norm = normalize_name(sucursal) if sucursal else "GLOBAL"
+    NotificationService.set_last_event(suc_norm, "READING", "", "LEYENDO PATENTE...", "reading")
+    return {"status": "ok"}

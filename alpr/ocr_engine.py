@@ -5,6 +5,7 @@ import os
 import re
 import base64
 import queue
+import threading
 import numpy as np
 OCR_ENGINE_NAME = None
 try:
@@ -19,6 +20,28 @@ except ImportError:
 
 if not OCR_ENGINE_NAME:
     print("[ALPR] WARNING: Ni rapidocr-onnxruntime ni paddleocr están instalados.")
+
+class ReadingStatusNotifier:
+    """NOTIFICA AL BACKEND QUE LA CAMARA ESTA LEYENDO ACTIVAMENTE UNA PATENTE.
+    Con debounce para no spamear (max 1 cada INTERVALO s) y en hilo aparte
+    para no bloquear el bucle de captura de frames del runner."""
+
+    def __init__(self, interval: float = 1.5):
+        self.interval = interval
+        self._last_notify = 0.0
+
+    def notify_reading(self):
+        now = time.time()
+        if now - self._last_notify < self.interval:
+            return
+        self._last_notify = now
+        threading.Thread(target=self._fire, daemon=True).start()
+
+    def _fire(self):
+        try:
+            requests.post(f"{BACKEND_URL}/v1/system/camera-reading/{GATE_ID}", timeout=0.8)
+        except Exception:
+            pass
 
 from concurrent.futures import ThreadPoolExecutor
 from alpr.config import (

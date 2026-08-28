@@ -35,7 +35,25 @@ export async function loadAdminTickets() {
         renderAdminTickets(allTickets);
     }
     updateTicketStats(allTickets);
+    updateTicketBadge();
 }
+
+export async function updateTicketBadge() {
+    const badge = document.getElementById('notif-badge-sidebar');
+    if (!badge) return;
+    const res = await api.get('/admin/support-tickets/pending-count');
+    const count = res.ok ? (res.data.count || 0) : 0;
+    if (count > 0) {
+        badge.style.display = 'inline-flex';
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.add('pulse');
+    } else {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+    }
+}
+
+window.updateTicketBadge = updateTicketBadge;
 
 export function filterTicketList(query = '') {
     if (!query) {
@@ -238,6 +256,7 @@ export async function submitTicketAnswer(event) {
         }
         await updateNotifBadge();
         await loadAdminTickets();
+        updateTicketBadge();
     } else {
         showToast(res.error || 'Error al actualizar el ticket', 'error');
     }

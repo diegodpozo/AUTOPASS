@@ -197,9 +197,11 @@ export async function fetchUnreadCount() {
 
 export async function updateNotifBadge() {
     const count = await fetchUnreadCount();
-    const badgeSidebar = document.getElementById('notif-badge-sidebar');
+    // La burbuja del header/campana (perfil) y del sidebar de USUARIO/CLIENTE reflejan
+    // el conteo global de notificaciones.
+    const badgeSidebarUser = document.getElementById('notif-badge-sidebar-user');
     const badgeHeader = document.getElementById('notif-badge-header');
-    const badges = [badgeSidebar, badgeHeader].filter(Boolean);
+    const badges = [badgeSidebarUser, badgeHeader].filter(Boolean);
     for (const badge of badges) {
         if (count > 0) {
             badge.style.display = 'inline-flex';

@@ -120,9 +120,9 @@ Write-Host ""
 # PASO 6: PRUEBAS AUTOMATIZADAS (100%)
 # -----------------------------------------------------------------------------
 Show-ProgressBar -Percent 100 -StepText "6/6" -StepName "Verificando integridad del sistema con Pytest..."
-$pytestRun = & venv\Scripts\python.exe -m pytest tests/ -q 2>&1
-$testSummary = ($pytestRun | Select-String "passed") -join "`n"
-Write-Host "        [✔] Pruebas automatizadas ejecutadas con éxito." -ForegroundColor Green
+$pytestRun = & venv\Scripts\python.exe -m pytest tests/ -q --timeout=60 2>&1
+$testSummary = ($pytestRun | Select-String "passed|failed|error") -join "`n"
+Write-Host "        [✔] Pruebas automatizadas ejecutadas." -ForegroundColor Green
 Write-Host ""
 
 # Crear carpetas requeridas
