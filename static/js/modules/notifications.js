@@ -142,7 +142,8 @@ function getNotifCategoryClass(tipo) {
         case 'SUPPORT_TICKET': return 'notif-cat-support';
         case 'NEW_DEVICE_LOGIN': return 'notif-cat-warning';
         case 'REMINDER_PAID':
-        case 'PROMO_REDEEMED': return 'notif-cat-gold';
+        case 'PROMO_REDEEMED':
+        case 'POINTS_EARNED': return 'notif-cat-gold';
         default: return 'notif-cat-default';
     }
 }
