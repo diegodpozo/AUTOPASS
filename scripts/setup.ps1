@@ -136,6 +136,8 @@ Show-ProgressBar -Percent 100 -StepText "6/6" -StepName "Verificando integridad 
 $pytestRun = & venv\Scripts\python.exe -m pytest tests/ -q --timeout=60 2>&1
 $testSummary = ($pytestRun | Select-String "passed|failed|error") -join "`n"
 Write-Host "        [✔] Pruebas automatizadas ejecutadas." -ForegroundColor Green
+$ocrCheck = & venv\Scripts\python.exe -c "from alpr.ocr_engine import OCR_ENGINE_NAME; print(OCR_ENGINE_NAME or 'NINGUNO')" 2>&1
+Write-Host "        Motor OCR detectado: $(($ocrCheck | Select-Object -Last 1))" -ForegroundColor Cyan
 Write-Host ""
 
 # Crear carpetas requeridas
