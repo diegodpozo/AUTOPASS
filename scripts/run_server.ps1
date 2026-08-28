@@ -27,7 +27,19 @@ if (-not (Test-Path "venv\Scripts\python.exe")) {
 }
 Write-Host "        [OK] Entorno virtual 'venv' detectado." -ForegroundColor Green
 
-# 2. VERIFICAR .ENV
+# 2. LIMPIAR PROCESOS PREVIOS (evita doble bind en el puerto 8000 que reparte el trafico
+# entre instancias viejas y nuevas, dejando codigo obsoleto sirviendo requests)
+$autopassPy = Get-CimInstance Win32_Process -Filter "Name like 'python%'" | Where-Object {
+    $_.CommandLine -match 'AUTOPASS' -and ($_.CommandLine -match 'uvicorn main:app' -or $_.CommandLine -match 'alpr_service\.py')
+}
+foreach ($ap in $autopassPy) {
+    Write-Host "        [LIMPIEZA] Deteniendo proceso previo PID $($ap.ProcessId)..." -ForegroundColor Yellow
+    Stop-Process -Id $ap.ProcessId -Force -ErrorAction SilentlyContinue
+}
+Start-Sleep -Seconds 2
+Write-Host "        [OK] Servidores previos detenidos." -ForegroundColor Green
+
+# 3. VERIFICAR .ENV
 if (Test-Path ".env") {
     $envContent = Get-Content ".env" -Raw
     if ($envContent -notmatch "ALPR_FORCE_OCR=true") {
@@ -36,7 +48,7 @@ if (Test-Path ".env") {
     Write-Host "        [OK] Archivo de configuración .env verificado." -ForegroundColor Green
 }
 
-# 3. LANZAR APERTURA AUTOMATICA DE NAVEGADOR
+# 4. LANZAR APERTURA AUTOMATICA DE NAVEGADOR
 Write-Host "        [OK] Lanzador de navegador automático listo (http://localhost:8000)." -ForegroundColor Green
 $browserCmd = @'
 $client = New-Object Net.Sockets.TcpClient
@@ -56,12 +68,32 @@ for ($i = 0; $i -lt 90; $i++) {
 Start-Process -WindowStyle Hidden -FilePath "powershell.exe" -ArgumentList "-NoProfile -WindowStyle Hidden -Command", $browserCmd
 
 Write-Host ""
-Write-Host " ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-Write-Host " │  SERVIDOR FASTAPI EN EJECUCIÓN                                          │" -ForegroundColor Yellow
-Write-Host " │  URL Local:    http://localhost:8000                                  │" -ForegroundColor White
-Write-Host " │  Servicios:    WebSockets (Aforo), MQTT (Barreras), ALPR (IA)         │" -ForegroundColor Gray
-Write-Host " │  Para detener: Presioná [Ctrl + C] en esta consola                     │" -ForegroundColor DarkYellow
-Write-Host " └─────────────────────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+# Recuadro con ancho fijo: el borde derecho cierra siempre en la misma columna
+# y el frame se pinta con un unico color (solo el texto interior conserva su color).
+$boxBorderColor = "Cyan"
+$boxWidth = 70
+
+function Write-ServerBoxBorder {
+    param([string]$CornerL, [string]$CornerR)
+    Write-Host (" " + $CornerL + ("─" * $boxWidth) + $CornerR) -ForegroundColor $boxBorderColor
+}
+
+function Write-ServerBoxLine {
+    param([string]$Text, [string]$Color)
+    $pad = $boxWidth - 2 - $Text.Length
+    if ($pad -lt 0) { $pad = 0 }
+    Write-Host " │ " -ForegroundColor $boxBorderColor -NoNewline
+    Write-Host $Text -ForegroundColor $Color -NoNewline
+    Write-Host (" " * $pad) -NoNewline
+    Write-Host " │" -ForegroundColor $boxBorderColor
+}
+
+Write-ServerBoxBorder "┌" "┐"
+Write-ServerBoxLine "SERVIDOR FASTAPI EN EJECUCIÓN" "Yellow"
+Write-ServerBoxLine "URL Local:    http://localhost:8000" "White"
+Write-ServerBoxLine "Servicios:    WebSockets (Aforo), MQTT (Barreras), ALPR (IA)" "Gray"
+Write-ServerBoxLine "Para detener: Presioná [Ctrl + C] en esta consola" "DarkYellow"
+Write-ServerBoxBorder "└" "┘"
 Write-Host ""
 
 $env:PYTHONWARNINGS = "ignore"

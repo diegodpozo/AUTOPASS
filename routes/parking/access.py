@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-import time
 import schemas
 from core.database import get_db
 from core.limiter import limiter
@@ -14,31 +13,13 @@ router = APIRouter()
 @limiter.limit("120/minute")
 def validate_plate(request: Request, data: schemas.PlateValidation, db: Session = Depends(get_db)):
     """VALIDA UNA PATENTE DETECTADA."""
-    t0 = time.time()
-    result = AccessService.validate_plate(db, data, request)
-    backend_time = round(time.time() - t0, 3)
-    if result.get("status") == "allowed":
-        from models import AccessLog
-        last = db.query(AccessLog).order_by(AccessLog.id.desc()).first()
-        if last:
-            last.backend_time = backend_time
-            db.commit()
-    return result
+    return AccessService.validate_plate(db, data, request)
 
 @router.post("/access/exit-plate", response_model=schemas.AccessResponse)
 @limiter.limit("120/minute")
 def exit_plate(request: Request, data: schemas.PlateValidation, db: Session = Depends(get_db)):
     """VALIDA LA SALIDA DE UN VEHICULO."""
-    t0 = time.time()
-    result = AccessService.exit_plate(db, data, request)
-    backend_time = round(time.time() - t0, 3)
-    if result.get("status") == "allowed":
-        from models import AccessLog
-        last = db.query(AccessLog).order_by(AccessLog.id.desc()).first()
-        if last:
-            last.backend_time = backend_time
-            db.commit()
-    return result
+    return AccessService.exit_plate(db, data, request)
 
 @router.post("/access/validate-qr", response_model=schemas.AccessResponse)
 @limiter.limit("60/minute")

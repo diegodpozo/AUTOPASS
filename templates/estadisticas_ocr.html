@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}AUTOPASS - Estadísticas OCR & ALPR{% endblock %}
+
+{% block body_class %}bg-blur{% endblock %}
+
+{% block extra_head %}
+<style>
+    .ocr-page-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 25px 60px 25px;
+    }
+
+    .ocr-top-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .ocr-hero-card {
+        background: rgba(17, 20, 36, 0.7);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(197, 160, 89, 0.2);
+        border-radius: 16px;
+        padding: 25px 30px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .ocr-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 25px;
+    }
+
+    .ocr-kpi-card {
+        background: rgba(17, 20, 36, 0.65);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s, border-color 0.2s;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .ocr-kpi-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(197, 160, 89, 0.4);
+    }
+
+    .ocr-kpi-label {
+        font-size: 0.7rem;
+        color: #8e95a5;
+        text-transform: uppercase;
+        font-weight: 800;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+
+    .ocr-kpi-value {
+        font-size: 1.8rem;
+        font-weight: 900;
+        font-family: var(--font-mono);
+        color: var(--dorado);
+    }
+
+    .ocr-kpi-sub {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 5px;
+    }
+
+    .ocr-toolbar {
+        background: rgba(17, 20, 36, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .ocr-table-card {
+        background: rgba(17, 20, 36, 0.7);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .ocr-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .ocr-table th {
+        background: rgba(0, 0, 0, 0.4);
+        padding: 14px 18px;
+        text-align: left;
+        color: #9ca3af;
+        font-weight: 800;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ocr-table td {
+        padding: 14px 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        color: #e5e7eb;
+    }
+
+    .ocr-table tr:hover td {
+        background: rgba(197, 160, 89, 0.04);
+    }
+
+    .perf-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        font-family: var(--font-mono);
+    }
+
+    .perf-fast {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .perf-medium {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .perf-slow {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .event-badge {
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .event-entrada {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+    }
+
+    .event-salida {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .auto-refresh-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: #d1d5db;
+    }
+
+    /* --- TOOLTIPS FLOTANTES PARA ENCABEZADOS --- */
+    .ocr-header-tooltip {
+        position: relative;
+        cursor: help;
+        user-select: none;
+    }
+
+    .ocr-header-tooltip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: 130%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-4px);
+        background: #0d111a;
+        color: #f3f4f6;
+        border: 1px solid var(--dorado, #c5a059);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        text-transform: uppercase;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 10px rgba(197, 160, 89, 0.25);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+        z-index: 9999;
+    }
+
+    .ocr-header-tooltip::before {
+        content: '';
+        position: absolute;
+        top: 112%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent var(--dorado, #c5a059) transparent;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, visibility 0.2s;
+        z-index: 9999;
+    }
+
+    .ocr-header-tooltip:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .ocr-header-tooltip:hover::before {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* KPI CARDS TOOLTIPS (UBICADOS ARRIBA) */
+    .kpi-tooltip {
+        position: relative;
+        cursor: help;
+        display: inline-block;
+    }
+
+    .kpi-tooltip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 130%;
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: #0d111a;
+        color: #f3f4f6;
+        border: 1px solid var(--dorado, #c5a059);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        text-transform: uppercase;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 10px rgba(197, 160, 89, 0.25);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+        z-index: 9999;
+    }
+
+    .kpi-tooltip::before {
+        content: '';
+        position: absolute;
+        bottom: 112%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: var(--dorado, #c5a059) transparent transparent transparent;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, visibility 0.2s;
+        z-index: 9999;
+    }
+
+    .kpi-tooltip:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .kpi-tooltip:hover::before {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* AJUSTES PARA BORDES LATERALES DE LA TABLA */
+    .ocr-header-tooltip.tooltip-left::after {
+        left: 0;
+        transform: translateX(0) translateY(-4px);
+    }
+    .ocr-header-tooltip.tooltip-left::before {
+        left: 20px;
+        transform: translateX(0);
+    }
+    .ocr-header-tooltip.tooltip-left:hover::after {
+        transform: translateX(0) translateY(0);
+    }
+
+    .ocr-header-tooltip.tooltip-right::after {
+        left: auto;
+        right: 0;
+        transform: translateX(0) translateY(-4px);
+    }
+    .ocr-header-tooltip.tooltip-right::before {
+        left: auto;
+        right: 20px;
+        transform: translateX(0);
+    }
+    .ocr-header-tooltip.tooltip-right:hover::after {
+        transform: translateX(0) translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ocr-page-container">
+    <!-- NAVEGACION SUPERIOR -->
+    <div class="ocr-top-nav">
+        <a href="/dashboard" class="btn btn-outline sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-arrow-left"></i> VOLVER AL DASHBOARD
+        </a>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span id="ocr-live-clock" style="font-family: var(--font-mono); font-size: 0.85rem; color: #9ca3af;">--:--:--</span>
+            <span class="badge badge-success" style="font-size: 0.7rem;"><i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 4px;"></i> MOTOR OCR ACTIVO</span>
+        </div>
+    </div>
+
+    <!-- HERO HEADER -->
+    <div class="ocr-hero-card">
+        <div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(197, 160, 89, 0.15); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-microchip" style="color: var(--dorado); font-size: 1.2rem;"></i>
+                </div>
+                <h1 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.5px;">ESTADÍSTICAS OCR & ALPR</h1>
+            </div>
+            <p style="color: #9ca3af; font-size: 0.85rem; margin: 0;">Métricas de rendimiento, latencia de inferencia y tiempos de reconocimiento de patentes en tiempo real.</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <label class="auto-refresh-toggle">
+                <input type="checkbox" id="ocr-autorefresh" checked style="accent-color: var(--dorado); width: 16px; height: 16px;">
+                <span>Auto-refresco (5s)</span>
+            </label>
+            <button id="btn-manual-refresh" class="btn btn-primary sm" onclick="actualizarEstadisticasOcr()" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fas fa-sync-alt" id="refresh-icon"></i> ACTUALIZAR
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIS GRID -->
+    <div class="ocr-kpi-grid">
+        <div class="ocr-kpi-card">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="PROMEDIO GENERAL DE TIEMPO EN RECONOCER PATENTES"><i class="fas fa-gauge mr-6 text-dorado"></i> TIEMPO PROMEDIO</div>
+            <div class="ocr-kpi-value" id="kpi-avg">--</div>
+            <div class="ocr-kpi-sub">Promedio de reconocimiento</div>
+        </div>
+        <div class="ocr-kpi-card">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="MENOR TIEMPO REGISTRADO EN RECONOCER UNA PATENTE"><i class="fas fa-bolt mr-6" style="color: #10b981;"></i> TIEMPO MÍNIMO</div>
+            <div class="ocr-kpi-value" id="kpi-min" style="color: #10b981;">--</div>
+            <div class="ocr-kpi-sub">Lectura más rápida</div>
+        </div>
+        <div class="ocr-kpi-card">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="MAYOR TIEMPO REGISTRADO EN RECONOCER UNA PATENTE"><i class="fas fa-triangle-exclamation mr-6" style="color: #ef4444;"></i> TIEMPO MÁXIMO</div>
+            <div class="ocr-kpi-value" id="kpi-max" style="color: #ef4444;">--</div>
+            <div class="ocr-kpi-sub">Pico de latencia máximo</div>
+        </div>
+        <div class="ocr-kpi-card">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="TIEMPO MAXIMO DEL 90 POR CIENTO DE LECTURAS"><i class="fas fa-chart-line mr-6" style="color: #f59e0b;"></i> PERCENTIL 90 (P90)</div>
+            <div class="ocr-kpi-value" id="kpi-p90" style="color: #f59e0b;">--</div>
+            <div class="ocr-kpi-sub">90% de lecturas por debajo</div>
+        </div>
+        <div class="ocr-kpi-card">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="CANTIDAD TOTAL DE PATENTES PROCESADAS EN MUESTRA"><i class="fas fa-camera mr-6 text-dorado"></i> TOTAL LECTURAS</div>
+            <div class="ocr-kpi-value" id="kpi-count" style="color: #fff;">--</div>
+            <div class="ocr-kpi-sub">Muestras analizadas</div>
+        </div>
+    </div>
+
+    <!-- TOOLBAR DE FILTROS -->
+    <div class="ocr-toolbar">
+        <div style="display: flex; gap: 12px; align-items: center; flex: 1; min-width: 260px; max-width: 450px;">
+            <div class="input-with-icon" style="width: 100%;">
+                <i class="fas fa-search"></i>
+                <input type="text" id="ocr-search-input" class="input-premium" placeholder="Buscar por patente o sede..." oninput="filtrarTablaOcr()" style="font-size: 0.85rem; padding: 10px 15px 10px 42px;">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.75rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">EVENTO:</span>
+                <select id="ocr-filter-evento" class="input-premium" onchange="filtrarTablaOcr()" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
+                    <option value="">TODOS</option>
+                    <option value="ENTRADA">ENTRADA</option>
+                    <option value="SALIDA">SALIDA</option>
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.75rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">MOSTRAR:</span>
+                <select id="ocr-limit-select" class="input-premium" onchange="actualizarEstadisticasOcr()" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
+                    <option value="50">50 REGISTROS</option>
+                    <option value="100" selected>100 REGISTROS</option>
+                    <option value="250">250 REGISTROS</option>
+                    <option value="500">500 REGISTROS</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA DE DETALLE -->
+    <div class="ocr-table-card">
+        <div style="padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-list-check text-dorado"></i> HISTORIAL DE LECTURAS OCR
+            </h3>
+            <span id="ocr-table-count" style="font-size: 0.75rem; color: #9ca3af; font-family: var(--font-mono);">Cargando registros...</span>
+        </div>
+
+        <div style="overflow-x: auto; max-height: 600px;">
+            <table class="ocr-table">
+                <thead>
+                    <tr>
+                        <th class="ocr-header-tooltip tooltip-left" data-tooltip="NUMERO IDENTIFICADOR UNICO DEL REGISTRO DE ACCESO" style="width: 80px;">ID</th>
+                        <th class="ocr-header-tooltip" data-tooltip="MOMENTO EXACTO EN QUE SE DETECTO EL VEHICULO">FECHA Y HORA</th>
+                        <th class="ocr-header-tooltip" data-tooltip="DOMINIO VEHICULAR IDENTIFICADO POR EL MOTOR OCR">PATENTE</th>
+                        <th class="ocr-header-tooltip" data-tooltip="TIPO DE MOVIMIENTO REGISTRADO INGRESO O EGRESO">EVENTO</th>
+                        <th class="ocr-header-tooltip" data-tooltip="UBICACION O ESTACIONAMIENTO DONDE OCURRIO EL ACCESO">SEDE / SUCURSAL</th>
+                        <th class="ocr-header-tooltip" data-tooltip="DURACION DEL PROCESAMIENTO DE VISION ARTIFICIAL" style="text-align: right;">TIEMPO OCR</th>
+                    </tr>
+                </thead>
+                <tbody id="ocr-table-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
+                            <i class="fas fa-spinner fa-spin mr-8"></i> Cargando estadísticas del sistema ALPR...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="module">
+    import api from '/static/js/modules/api.js';
+
+    let todosLosLogs = [];
+    let intervaloAutoRefresh = null;
+
+    function formatearFecha(isoStr) {
+        if (!isoStr) return '--';
+        try {
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) {
+                return isoStr.replace('T', ' ').substring(0, 19);
+            }
+            return d.toLocaleString('es-AR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        } catch {
+            return isoStr;
+        }
+    }
+
+    function obtenerBadgeRendimiento(ocrTime) {
+        if (ocrTime === null || ocrTime === undefined) {
+            return '<span class="text-muted font-mono">--</span>';
+        }
+        const val = parseFloat(ocrTime);
+        let clase = 'perf-fast';
+        let icono = 'fa-bolt';
+        if (val > 1.5) {
+            clase = 'perf-slow';
+            icono = 'fa-triangle-exclamation';
+        } else if (val > 0.6) {
+            clase = 'perf-medium';
+            icono = 'fa-gauge';
+        }
+        return `<span class="perf-badge ${clase}"><i class="fas ${icono}"></i> ${val.toFixed(3)}s</span>`;
+    }
+
+    window.actualizarEstadisticasOcr = async function() {
+        const btnIcon = document.getElementById('refresh-icon');
+        if (btnIcon) btnIcon.classList.add('fa-spin');
+
+        const limit = document.getElementById('ocr-limit-select')?.value || 100;
+        try {
+            const res = await api.get(`/reports/ocr-stats?limit=${limit}`);
+            if (res && res.ok && res.data) {
+                const { logs, stats } = res.data;
+                todosLosLogs = logs || [];
+
+                // ACTUALIZAR KPIS
+                document.getElementById('kpi-avg').textContent = stats.count > 0 ? `${stats.avg_ocr.toFixed(3)}s` : '--';
+                document.getElementById('kpi-min').textContent = stats.count > 0 ? `${stats.min_ocr.toFixed(3)}s` : '--';
+                document.getElementById('kpi-max').textContent = stats.count > 0 ? `${stats.max_ocr.toFixed(3)}s` : '--';
+                document.getElementById('kpi-p90').textContent = stats.count > 0 ? `${stats.p90_ocr.toFixed(3)}s` : '--';
+                document.getElementById('kpi-count').textContent = stats.count ? stats.count.toLocaleString('es-AR') : '0';
+
+                filtrarTablaOcr();
+            } else {
+                document.getElementById('ocr-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #ef4444; padding: 30px;">
+                            <i class="fas fa-exclamation-circle mr-8"></i> No se pudieron obtener las estadísticas OCR. Verificá tu sesión de administrador.
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (err) {
+            console.error('Error cargando OCR stats:', err);
+        } finally {
+            if (btnIcon) {
+                setTimeout(() => btnIcon.classList.remove('fa-spin'), 400);
+            }
+        }
+    };
+
+    window.filtrarTablaOcr = function() {
+        const texto = (document.getElementById('ocr-search-input')?.value || '').trim().toUpperCase();
+        const eventoFiltro = document.getElementById('ocr-filter-evento')?.value || '';
+
+        const filtrados = todosLosLogs.filter(log => {
+            const coincideTexto = !texto || 
+                (log.patente && log.patente.toUpperCase().includes(texto)) ||
+                (log.sucursal && log.sucursal.toUpperCase().includes(texto));
+            
+            const coincideEvento = !eventoFiltro || log.tipo_evento === eventoFiltro;
+
+            return coincideTexto && coincideEvento;
+        });
+
+        const countEl = document.getElementById('ocr-table-count');
+        if (countEl) {
+            countEl.textContent = `Mostrando ${filtrados.length} de ${todosLosLogs.length} registros`;
+        }
+
+        const tbody = document.getElementById('ocr-table-body');
+        if (!tbody) return;
+
+        if (filtrados.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #6b7280; padding: 40px;">
+                        <i class="fas fa-inbox fa-2x mb-10" style="display: block; opacity: 0.5;"></i>
+                        No se encontraron registros de reconocimiento OCR para los filtros seleccionados.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = filtrados.map(l => {
+            const esEntrada = l.tipo_evento === 'ENTRADA';
+            const badgeEvento = `<span class="event-badge ${esEntrada ? 'event-entrada' : 'event-salida'}">${l.tipo_evento || '--'}</span>`;
+
+            return `
+                <tr>
+                    <td style="font-family: var(--font-mono); color: #6b7280;">#${l.id}</td>
+                    <td style="font-family: var(--font-mono); font-size: 0.8rem; color: #d1d5db;">${formatearFecha(l.fecha_hora)}</td>
+                    <td style="font-weight: 800; font-family: var(--font-mono); color: #fff; font-size: 0.95rem;">${l.patente || '--'}</td>
+                    <td>${badgeEvento}</td>
+                    <td style="color: #9ca3af;">${l.sucursal || 'Global'}</td>
+                    <td style="text-align: right;">${obtenerBadgeRendimiento(l.ocr_time)}</td>
+                </tr>
+            `;
+        }).join('');
+    };
+
+    // RELOJ EN VIVO
+    function actualizarReloj() {
+        const clockEl = document.getElementById('ocr-live-clock');
+        if (clockEl) {
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString('es-AR');
+        }
+    }
+
+    // MANEJO DE AUTO-REFRESH
+    function configurarAutoRefresh() {
+        const check = document.getElementById('ocr-autorefresh');
+        if (intervaloAutoRefresh) clearInterval(intervaloAutoRefresh);
+
+        if (check && check.checked) {
+            intervaloAutoRefresh = setInterval(actualizarEstadisticasOcr, 5000);
+        }
+    }
+
+    document.getElementById('ocr-autorefresh')?.addEventListener('change', configurarAutoRefresh);
+
+    setInterval(actualizarReloj, 1000);
+    actualizarReloj();
+    actualizarEstadisticasOcr();
+    configurarAutoRefresh();
+</script>
+{% endblock %}
