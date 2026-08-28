@@ -261,6 +261,13 @@ class ReservationService:
                 f"Se abonó con éxito tu reserva en {res.sucursal_nombre} por ${res.monto_total:,.2f}.",
                 res.id
             )
+            if puntos_ganados > 0:
+                UserNotificationService.create_notification(
+                    db, user.id, "POINTS_EARNED",
+                    "¡Puntos AutoPass!",
+                    f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente}).",
+                    res.id
+                )
         except Exception as e:
             print(f"[ERROR NOTIF] No se pudo notificar pago de reserva: {e}")
 

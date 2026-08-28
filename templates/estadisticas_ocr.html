@@ -337,7 +337,7 @@
 <div class="ocr-page-container">
     <!-- NAVEGACION SUPERIOR -->
     <div class="ocr-top-nav">
-        <a href="/dashboard" class="btn btn-outline sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        <a href="/dashboard" onclick="event.preventDefault(); window.close(); setTimeout(function(){ window.location.href = '/dashboard'; }, 120);" class="btn btn-outline sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
             <i class="fas fa-arrow-left"></i> VOLVER AL DASHBOARD
         </a>
         <div style="display: flex; align-items: center; gap: 15px;">

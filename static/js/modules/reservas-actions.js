@@ -37,7 +37,8 @@ export async function payReservation(id) {
     if (!await showConfirm('PAGAR RESERVA', '¿Deseás pagar con tu saldo AutoPass?')) return;
     const res = await api.post(`/user/reservations/${id}/pay`);
     if (res.ok) { 
-        showToast('¡Pago exitoso!', 'success'); 
+        const pts = res.puntos_ganados || 0;
+        showToast(pts > 0 ? `¡Pago exitoso! Ganaste ${pts} puntos AutoPass` : '¡Pago exitoso!', 'success'); 
         loadReservations(); 
         if (window.loadProfile) window.loadProfile(); 
         // DISPARAR EVENTO PARA EL TOUR

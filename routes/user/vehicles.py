@@ -126,11 +126,9 @@ def delete_user_vehicle(patente: str, db: Session = Depends(get_db), current_use
             )
 
     # 3. VALIDAR DEUDAS / ESTADIAS IMPAGAS PENDIENTES
-    unpaid_log = db.query(models.AccessLog).filter(
-        func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == p_clean,
-        models.AccessLog.pago_confirmado == False
-    ).first()
-    if unpaid_log:
+    # SOLO CONSTITUYE DEUDA LA SESION ACTUAL, SI SIGUE ABIERTA Y SIN PAGO CONFIRMADO.
+    # REGISTROS HISTORICOS CON SALIDA (CERRADOS O CANCELADOS) NO BLOQUEAN EL BORRADO.
+    if last_entry and not last_entry.pago_confirmado and not subsequent_exit:
         raise HTTPException(
             status_code=400, 
             detail="No se puede eliminar un vehículo con deudas o estadías impagas pendientes."
