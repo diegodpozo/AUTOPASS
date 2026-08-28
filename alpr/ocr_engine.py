@@ -8,18 +8,20 @@ import queue
 import threading
 import numpy as np
 OCR_ENGINE_NAME = None
+OCR_ENGINE_ERROR = None
 try:
     from rapidocr_onnxruntime import RapidOCR
     OCR_ENGINE_NAME = "RapidOCR"
-except ImportError:
+except Exception as _e_rapid:
+    OCR_ENGINE_ERROR = f"rapidocr-onnxruntime: {type(_e_rapid).__name__}: {_e_rapid}"
     try:
         from paddleocr import PaddleOCR
         OCR_ENGINE_NAME = "PaddleOCR"
-    except ImportError:
-        OCR_ENGINE_NAME = None
+    except Exception as _e_paddle:
+        OCR_ENGINE_ERROR = f"{OCR_ENGINE_ERROR} ; paddleocr: {type(_e_paddle).__name__}: {_e_paddle}"
 
 if not OCR_ENGINE_NAME:
-    print("[ALPR] WARNING: Ni rapidocr-onnxruntime ni paddleocr están instalados.")
+    print(f"[ALPR] WARNING: Ni rapidocr-onnxruntime ni paddleocr están disponibles. ({OCR_ENGINE_ERROR})")
 
 class ReadingStatusNotifier:
     """NOTIFICA AL BACKEND QUE LA CAMARA ESTA LEYENDO ACTIVAMENTE UNA PATENTE.
@@ -151,18 +153,27 @@ class ALPREngine:
     """Motor principal de vision artificial: RapidOCR / PaddleOCR, QR, consenso y despacho de eventos."""
 
     def __init__(self):
+        self.reader = None
+        self.engine_type = None
+        self.ocr_error = OCR_ENGINE_ERROR or "No hay un motor OCR instalado. Ejecuta: pip install rapidocr-onnxruntime"
         if OCR_ENGINE_NAME == "RapidOCR":
-            self.engine_type = "RapidOCR"
-            self.reader = RapidOCR()
+            try:
+                self.reader = RapidOCR()
+                self.engine_type = "RapidOCR"
+                self.ocr_error = None
+            except Exception as e:
+                self.ocr_error = f"RapidOCR: {type(e).__name__}: {e}"
         elif OCR_ENGINE_NAME == "PaddleOCR":
-            self.engine_type = "PaddleOCR"
-            self.reader = PaddleOCR(
-                use_doc_orientation_classify=False,
-                use_doc_unwarping=False,
-                use_textline_orientation=False
-            )
-        else:
-            raise RuntimeError("No hay un motor OCR instalado. Ejecuta: pip install rapidocr-onnxruntime")
+            try:
+                self.reader = PaddleOCR(
+                    use_doc_orientation_classify=False,
+                    use_doc_unwarping=False,
+                    use_textline_orientation=False
+                )
+                self.engine_type = "PaddleOCR"
+                self.ocr_error = None
+            except Exception as e:
+                self.ocr_error = f"PaddleOCR: {type(e).__name__}: {e}"
 
         self.qr_detector = cv2.QRCodeDetector()
         self.frame_queue = queue.Queue(maxsize=FRAME_QUEUE_MAXSIZE)
@@ -208,6 +219,8 @@ class ALPREngine:
         """Ejecuta OCR sobre una ROI recortada."""
         if roi_img is None or roi_img.size == 0:
             return [], [], []
+        if self.reader is None or self.engine_type is None:
+            return [], [], []
         try:
             h, w = roi_img.shape[:2]
             if h < 80 and h > 0:
@@ -234,6 +247,9 @@ class ALPREngine:
             return [], [], []
 
     def ocr_worker(self):
+        if self.reader is None:
+            print(f"[ALPR OCR] MOTOR NO DISPONIBLE: {self.ocr_error or 'ningún motor OCR importable'}")
+            return
         full_7_pattern = re.compile(
             r'[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d[A-Z]\d{2}|[A-Z]{3}\d{4}|[A-Z]{4}\d{3}|\d{3}[A-Z]{4}|[A-Z]\d{3}[A-Z]{3}'
         )

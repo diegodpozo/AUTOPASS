@@ -34,7 +34,8 @@ def run_alpr_service():
             threading.Thread(target=engine.ocr_worker, daemon=True).start()
             
         threading.Thread(target=asyncio.run, args=(ws_monitoring_worker(streamer, engine),), daemon=True).start()
-        print(f"[OK] Servicio de cámara activo: {GATE_ID} | Modo: {GATE_TYPE.upper()} | Motor: {getattr(engine, 'engine_type', 'OCR')}")
+        motor_txt = engine.engine_type or f"NO DISPONIBLE ({engine.ocr_error})"
+        print(f"[OK] Servicio de cámara activo: {GATE_ID} | Modo: {GATE_TYPE.upper()} | Motor: {motor_txt}")
         
         last_ocr_time = 0
         motion_skip_count = 0
