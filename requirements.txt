@@ -32,7 +32,8 @@ pillow>=10.0.0
 qrcode==8.2
 
 # === SCIENTIFIC ===
-numpy>=1.26.0,<2.3.0
+numpy>=1.26.0,<2.3.0; python_version < '3.14'
+numpy>=2.3.0,<2.5.0; python_version >= '3.14'
 scipy>=1.13.0
 scikit-image>=0.22.0
 shapely>=2.0.0
