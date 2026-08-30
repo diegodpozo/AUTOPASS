@@ -90,3 +90,10 @@ Revisión adicional contra el código: se detectaron referencias a tecnologías 
 ## Nota operativa
 
 El sitio en vivo `https://marianojac.github.io/backlogAUTOPASS/` lee los datos de **Firebase Realtime Database** (`backlog/rows`), no del `DATA` estático de los HTML. Este documento y los HTML actualizados quedan como fuente/seed; para ver los cambios en la página hay que replicarlos en la RTDB o desde la interfaz web del backlog.
+
+## Sincronización con el backlog EN VIVO (Firebase RTDB)
+
+- Se confirmó que la base **en vivo (Firebase)** estaba adelantada respecto al HTML del repo: tenía **20 ítems nuevos** que no existían en el `DATA` (`F07`, `H72`, `H73`, `T196`-`T212`, infraestructura/Neon y OCR) con estados y fechas cargados por el equipo.
+- **Corrección en vivo:** `H2`, `T5`, `T6`, `T7`, `T8`, `T15` pasaron de `PENDIENTE` → `CERRADA` (ffin 30/08/26) directamente en Firebase RTDB (PATCH a `backlog/rows/{6,7,8,9,10,19}`), respetando el resto de los ítems.
+- **Sync repo ← vivo:** se descargó el array completo de Firebase (285 ítems: 11 secciones + 274 filas) y se embebió como nuevo `DATA` en el `index.html` del repo `backlogAUTOPASS` y en `Info proyecto/backlog_editable.html` del repo `AUTOPASS`. Quedan así alineados en ambos lados.
+- **Lección:** el tablero se edita en vivo (Firebase); los HTML del repo quedan como seed/respaldo. Cuando haya ediciones nuevas en la web, repetir este flujo (GET de `backlog/rows.json` → reemplazar `DATA` → commit).
