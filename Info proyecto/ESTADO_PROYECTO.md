@@ -1,4 +1,14 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-27)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-28)
+
+### 🚀 Hitos Recientes (Agosto 2026) - Post v9.12.0 (OCR Engine Overhaul & Estadísticas OCR)
+- [x] **Motor OCR Lazy/Opcional (v9.13.0)**: `alpr/ocr_engine.py` ya no rompe el arranque si ningún motor OCR importa, loguea el motivo exacto (`RapidOCR` y/o `PaddleOCR`) y agrega diagnóstico de motor en el setup. El pipeline sigue operativo con aviso explícito.
+- [x] **numpy Marker por Versión de Python**: `numpy>=1.26.0,<2.3.0` para Python < 3.14 y `numpy>=2.3.0,<2.5.0` para Python ≥ 3.14 (numpy < 2.3.0 no tiene wheels para Python 3.14).
+- [x] **Setup Robustecido**: `setup_backend.bat`/`setup.ps1` muestran los errores reales de pip/init_db y abortan si fallan (encoding UTF-8, banner Unicode con `chcp 65001`).
+- [x] **Estadísticas OCR**: Nueva página `/estadisticas-ocr` (`templates/estadisticas_ocr.html`, ~600 líneas) y nueva migración Alembic `f1a2b3c4d5e6_add_ocr_timing_to_access_logs` para medir tiempos de lectura de patentes (campo `ocr_timing_ms`).
+- [x] **Avisos en Cámara**: Mensajes de evento de patente/QR en la vista de monitoreo en vivo vía WebSocket.
+- [x] **Unificación de Códigos & Revisión de Patentes**: Refactor del pipeline ALPR (`alpr/config.py`, `alpr/ocr_engine.py`, `alpr/runner.py`, `routes/parking/access.py`, `services/access_service.py`, `services/report_service.py`) para homogeneizar formatos y corregir lecturas.
+- [x] **Ajustes de UX**: Aviso de puntos ganados al pagar una reserva; borrado de vehículos sin bloqueo por estadías históricas; cambio del modo de lectura de patentes.
+- [x] **CI Deshabilitado**: El workflow de GitHub Actions fue renombrado a `.github/workflows/ci.yml.disabled` (pipeline deshabilitado hasta tener una suite de tests estable).
 
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.12.0 (Notificaciones de Usuario, Permisos de Sucursal & Soporte Visual Admin)
 - [x] **Visibilidad Permanente & Estados de Botones de Notificaciones**:
@@ -95,7 +105,7 @@
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.9.2 (Migración a Neon/Postgres en sa-east-1)
 - [x] **Migración de Turso/libSQL a Neon (Postgres)**: La base online pasó de Turso (`aws-us-west-2`, Oregón, ~1200 ms/query) a **Neon en São Paulo (`sa-east-1`)** con latencia medida de ~100 ms (12× más rápida). Migración realizada con `scripts/migrate_turso_to_neon.py` preservando IDs y sincronizando secuencias.
 - [x] **Driver Postgres (psycopg 3)**: `psycopg[binary]==3.3.4` agregado a `requirements.txt`. `core/database.py` normaliza `postgresql://` → `postgresql+psycopg://` automáticamente.
-- [x] **Benchmark y Verificación**: `SELECT 1` ×5 a Neon en ~100 ms cada uno; suite completa 24/24 tests pasando contra Neon; datos verificados (11 access_logs, 24 reservations, 11 users).
+- [x] **Benchmark y Verificación**: `SELECT 1` ×5 a Neon en ~100 ms cada uno; suite completa 35/35 tests pasando contra Neon (agosto 2026; la suite actual suma 35 pruebas en 15 archivos).
 - [x] **Actualización de Configuración y Documentación**: `.env` actualizado con la connection string de Neon (se quitó `TURSO_AUTH_TOKEN`); se actualizaron `DEPENDENCIAS.md`, `INICIALIZACION.md` y `Readme.md`.
 - [x] **Optimización de Carga del Dashboard**: `/parking/current-occupancy` sin N+1 (salidas y reservas en bloque + tarifas precargadas en cache; ~349 → ~269 ms). En el frontend, `loadLiveStats` y `loadOccupancy` lanzan sus llamadas en paralelo (`Promise.all`) → la pestaña "live" pasa de ~1.4 s a ~500-600 ms.
 - [x] **Arranque Rápido del Servidor**: `run_server.bat` sin `--reload` (evita proceso duplicado y reinicios al guardar archivos) y abre el navegador **solo cuando el servidor responde** (waiter TCP con `TcpClient`, bypasea el proxy de sistema que hacía fallar `Invoke-WebRequest` a localhost). Ya no hace falta recargar la página al arrancar.
@@ -133,7 +143,7 @@
 ### 🚀 Hitos Previos (Agosto 2026) - Versión 9.8.0 (Database Migrations with Alembic & Automated Testing Overhaul)
 - [x] **Framework de Migraciones de DB (`alembic/`)**: Integración completa de Alembic para control de versiones de esquema SQLite/Postgres. Creación de `alembic.ini`, `alembic/env.py` con `render_as_batch=True` para SQLite, y generación de la primera migración inicial `c833a3129266_initial_schema.py`. Estampado del esquema con `alembic stamp head`.
 - [x] **Expansión de la Suite de Pruebas (`tests/`)**: Ampliación de la cobertura de tests unitarios e integración pasando de 6 a 15 pruebas automatizadas (rutas de autenticación con `TestClient`, motor ALPR/patentes, cortesía de 10 min, duplicate entry, control de aforo).
-- [x] **Integración Continua CI/CD (`.github/workflows/ci.yml`)**: Creación de pipeline de GitHub Actions para verificación automática de dependencias, parches de entorno, migraciones de Alembic y ejecución de Pytest en cada push/PR.
+- [x] **Integración Continua CI/CD (`.github/workflows/ci.yml.disabled`)**: Creación de pipeline de GitHub Actions para verificación automática de dependencias, parches de entorno, migraciones de Alembic y ejecución de Pytest en cada push/PR. **Actualmente deshabilitado** (el workflow está renombrado como `ci.yml.disabled` hasta tener una suite estable).
 
 ### 🚀 Hitos Previos (Julio 2026) - Versión 9.7.0 (Granular Modularization Overhaul)
 - [x] **Modularización Granular de Reservas JS (`static/js/modules/reservas-*.js`)**: Descomposición del monolito `reservas.js` (903 líneas / 45 KB) en 4 submódulos ES6 especializados: `reservas-form.js` (formularios, validación, tarifas), `reservas-list.js` (renderizado de tarjetas, timeline, historial y paginación), `reservas-actions.js` (pago con saldo y simulación de reembolso) y `reservas-pass.js` (Pase Digital, QR `QRCode.js` y compartir ticket). `reservas.js` actúa como fachada re-exportando todo el API.
@@ -190,8 +200,8 @@
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
 ### 🛠️ Arquitectura Actual (v9.9.0+)
-- **Backend**: Clean Architecture con Servicios y Repositories. 13 servicios en `services/`, ~77 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
-- **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 47 templates HTML, 39 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+- **Backend**: Clean Architecture con Servicios y Repositories. 13 servicios en `services/`, ~105 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
+- **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 48 templates HTML, 39 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
@@ -204,7 +214,7 @@
 - **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago.
 - **Monitoreo**: ALPR en vivo con gestión centralizada, aforo real-time vía WebSocket y streaming de video multi-cámara.
 - **Fidelización**: Sistema de puntos (10 pts/$1000), promociones canjeables y cupones.
-- **Frontend**: Dashboard modular con 8 pestañas (Monitoreo, Reservas, Gestión de Usuarios, Reporte Financiero, Promociones, Soporte & Tickets, Sucursales, Configuración).
+- **Frontend**: Dashboard modular con 9 pestañas (Monitoreo, Ocupación, Reservas, Gestión de Usuarios, Reporte Financiero, Promociones, Soporte & Tickets, Sucursales, Configuración).
 
 ### Cambios técnicos recientes (2026-07-06)
 - ALPR: Fix en `validate_plate` y `validate_qr` — ahora buscan la última ENTRADA y verifican SALIDA posterior (mismo patrón que `manual_entry`), en lugar de solo mirar el último registro de cualquier tipo.

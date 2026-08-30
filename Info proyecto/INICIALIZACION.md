@@ -33,7 +33,7 @@ SMTP_PASSWORD=tu_password
 SMTP_FROM=noreply@autopass.com.ar
 ```
 
-> **Base online (v9.9.2+):** El sistema usa por defecto la base compartida de **Neon/Postgres** (región `sa-east-1`). Varias PC que corran el backend apuntan a la misma URL y comparten los datos (afectará a todas las PC). El sistema detecta el prefijo `postgresql://` y usa psycopg 3 automáticamente. Si preferís una base local aislada en una PC, reemplazá `DATABASE_URL` por `sqlite:///./parking.db`. La migración desde Turso/libSQL se hace con `scripts/migrate_turso_to_neon.py --to-url "<URL_NEON>"`.
+> **Base online (v9.9.2+):** El sistema usa por defecto la base compartida de **Neon/Postgres** (región `sa-east-1`). Varias PC que corran el backend apuntan a la misma URL y comparten los datos (afectará a todas las PC). El sistema detecta el prefijo `postgresql://` y usa psycopg 3 automáticamente. Si preferís una base local aislada en una PC, reemplazá `DATABASE_URL` por `sqlite:///./parking.db`.
 
 ## 3. Preparación y Migración de Base de Datos
 Este paso crea las tablas, los roles iniciales (Admin Global) y sincroniza las migraciones con Alembic:
@@ -96,12 +96,12 @@ Ejecutá los tests automáticos para asegurar que todos los módulos e integraci
 .\venv\Scripts\python.exe -m pytest tests/ --verbose
 ```
 
-### Verificación de Base Online (Turso)
-Si configuraste Turso, podés verificar la conexión ejecutando:
+### Verificación de Base Online (Neon/Postgres)
+Si usás la base online, podés verificar la conexión listando las tablas:
 ```bash
-.\venv\Scripts\python.exe -c "from core.database import engine; from sqlalchemy import text; c=engine.connect(); print(c.execute(text(\"SELECT name FROM sqlite_master WHERE type='table'\")).fetchall()); c.close()"
+.\venv\Scripts\python.exe -c "from core.database import engine; from sqlalchemy import text; c=engine.connect(); print(c.execute(text(\"SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name\")).fetchall()); c.close()"
 ```
-Debe listar las 15 tablas del sistema (users, reservations, access_logs, etc.). Si da error `308 redirect`, falta `?secure=true` en `DATABASE_URL`.
+Debe listar las tablas del sistema (users, reservations, access_logs, etc.). Si usás SQLite local, reemplazá la consulta por `SELECT name FROM sqlite_master WHERE type='table'`.
 
 ---
 ### 🚦 Flujo de Prueba Rápido (ALPR)
@@ -118,14 +118,15 @@ VIDEO_SOURCE=path/to/video.mp4
 ```
 Y ejecutá `python alpr_service.py`. Esto reproduce un video y simula detecciones. Las patentes se enviarán al backend como si fueran de una cámara real.
 
-### 🔄 Scripts de Migración y Utilidad
+### 🔄 Scripts de Utilidad
 ```bash
-# Normalizar todas las patentes en access_logs
-python scripts/backfill_normalize_all_access_logs.py
+# Generar patentes de prueba imprimibles (static/test_plates.html)
+python scripts/generate_test_plates.py
 
-# Vincular reservas pagadas a access_logs existentes
-python scripts/backfill_attach_reservations.py
+# Puente de comunicación Serie USB con Arduino Uno (barrera)
+python scripts/arduino_bridge.py
 
-# Consultar patente específica en access_logs
-python scripts/query_access_logs.py
+# Test de fuente de video para el pipeline ALPR
+python scripts/test_video.py
 ```
+> Los scripts legacy de migración/backfill (`backfill_*`, `migrate_add_normalized_patente`, `list_users`, `query_*`) fueron eliminados. La normalización de patentes se maneja vía `routes/parking/utils.py` y las migraciones de esquema con Alembic (`alembic/versions/*`).

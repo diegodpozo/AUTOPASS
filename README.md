@@ -15,7 +15,7 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 - **Reservaciones** — Creación, pago, cancelación con reembolso, anticipación configurable y auto-cancelación
 - **Fidelización** — Sistema de puntos (10 pts/$1000), catálogo de promociones canjeables y cupones
 - **Mapas Interactivos & Filtro de Localidades** — Mosaico de Google Maps con buscador autocompletado en tiempo real, desglose de direcciones exactas, aviso de disponibilidad por zona y navegación animada `flyTo`
-- **Dashboard Admin Premium** — 8 pestañas modulares: Monitoreo, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración
+- **Dashboard Admin Premium** — 9 pestañas modulares: Monitoreo, Ocupación, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración
 - **Portal de Usuario** — Perfil, reservas, vehículos, billetera virtual, pase digital QR, notificaciones
 - **Real-time** — WebSocket (aforo), MQTT (barreras), polling de notificaciones
 - **Monitoreo CCTV** — Grilla dinámica de cámaras con streaming MJPEG y controles DVR
@@ -43,7 +43,7 @@ AUTOPASS/
 ├── static/
 │   ├── js/modules/     # 36 módulos ES6
 │   └── css/            # 39 archivos CSS (Glassmorphism Premium)
-├── templates/          # Jinja2 (dashboard 9 tabs, profile 7 tabs, emails, modales)
+├── templates/          # Jinja2 (dashboard 9 tabs + estadísticas OCR, profile 7 tabs, emails, modales)
 ├── tests/              # Suite de pruebas automatizadas (pytest)
 ├── alembic/            # Migraciones de BD
 └── scripts/            # Utilidades y migraciones
@@ -57,7 +57,7 @@ AUTOPASS/
 | Base de Datos | SQLAlchemy — Neon/Postgres (sa-east-1) o SQLite local |
 | Frontend | Vanilla JS (ES6 Modules), CSS Moderno, Jinja2 |
 | Visión Artificial | PaddleOCR + OpenCV |
-| IoT | ESP32 + Paho-MQTT |
+| IoT | ESP32 + Arduino Uno (MQTT + Serie USB) |
 | Real-time | WebSockets, MQTT |
 | Migraciones | Alembic |
 | Testing | Pytest |
@@ -157,14 +157,14 @@ SMTP_FROM=noreply@autopass.com.ar
 | UserNotificationService | CRUD de notificaciones in-app |
 | WorkerService | 3 hilos: limpieza (300s), recordatorios, auto-cancelación |
 | TimeService | Tiempo virtual para testing |
-| HardwareService | Control de barreras MQTT y comunicación con ESP32 |
+| HardwareService | Control de barreras MQTT y comunicación Serie USB con Arduino Uno |
 
 ## Frontend
 
-- **32 módulos ES6** con patrón Bridge (módulos → scripts puente → window.* → HTML onclick)
+- **36 módulos ES6** con patrón Bridge (módulos → scripts puente → window.* → HTML onclick)
 - **39 archivos CSS** organizados en base/layout/components/pages
 - **Design System Premium**: Glassmorphism, dorado (#C5A059), animaciones fluidas
-- **Dashboard**: 8 pestañas admin + portal de usuario con 7 tabs
+- **Dashboard**: 9 pestañas admin + portal de usuario con 7 tabs
 - **Componentes**: Leaflet.js (mapas), Chart.js (reportes), Flatpickr (fechas), QRCode.js (pases)
 
 ## Licencia

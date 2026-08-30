@@ -114,7 +114,7 @@ Para correr las pruebas tras un cambio:
 ```bash
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-Tests disponibles en `tests/`:
+Tests disponibles en `tests/` (35 pruebas en 15 archivos):
 - `test_access_service.py`: Validación de placas, entrada/salida
 - `test_billing_service.py`: Cálculo de tarifas/estadías
 - `test_branch_service.py`: CRUD de sucursales, aforo, pisos
@@ -122,6 +122,14 @@ Tests disponibles en `tests/`:
 - `test_user_service.py`: CRUD de usuarios, roles
 - `test_support_service.py`: CRUD de tickets de soporte, permisos por rol
 - `test_notifications.py`: CRUD de notificaciones, respuestas de soporte, borrado y filtros
+- `test_alpr_utils.py`: Utilidades ALPR (normalización, formatos, país)
+- `test_alpr_aspect_ratio_filter.py`: Filtro de aspecto (área de placa)
+- `test_alpr_hallucination_prevention.py`: Prevención de alucinaciones OCR
+- `test_alpr_overlay.py`: Overlay de detecciones en frames
+- `test_alpr_queue_flush.py`: Cola de frames / drop-oldest
+- `test_new_validations.py`: Validaciones de integridad (v9.9.8: vehículos, usuarios, pisos, doble reserva)
+- `test_rate_limiting.py`: SlowAPI (login/register/recuperación)
+- `test_routes_auth.py`: Endpoints de auth con `TestClient` (login, registro, tokens)
 
 ---
 

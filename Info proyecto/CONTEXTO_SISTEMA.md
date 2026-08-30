@@ -1,10 +1,10 @@
 #  Contexto del Sistema: AUTOPASS
 
-Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v10.0.0).
+Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.12.0).
 
 ## 📐 Arquitectura del Ecosistema
 
-El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una estructura modular por capas (v9.9.0).
+El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una estructura modular por capas (v9.12.0).
 
 1.  **Capa Core (`core/`)**:
     *   `core/config.py`: Gestión centralizada de variables de entorno y constantes.
@@ -38,6 +38,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `services/time_service.py`: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
     *   `services/branch_service.py`: Lógica de gestión de sucursales (CRUD, toggle activo), aforo multi-piso (add/delete floors, update capacity) y branch isolation.
     *   `services/user_service.py`: Gestión de usuarios (CRUD, toggle-block, balance adjust, password change by admin, role change, delete), validaciones de seguridad.
+    *   `services/hardware_service.py`: Control de barreras físicas vía MQTT y comunicación Serie USB (pyserial) con Arduino Uno (auto-detección de puerto COM).
     *   `services/email_service.py`: Envío de emails transaccionales con templates HTML Jinja2 (confirmación de reserva con QR embebido en base64, recuperación de contraseña con token).
 
 4.  **Capa de Repositories (`repositories/`)**:
@@ -52,7 +53,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   **Gestión de Cámaras**: Configuración de IP por puerta (entrada/salida) en DB vía `Settings`, start/stop de procesos ALPR desde dashboard, service restart.
 
 ##  Configuración y Seguridad
-- **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`). Incluye `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*`, `ACCESS_TOKEN_EXPIRE_MINUTES` (default 1440 = 24h), `ALGORITHM` (HS256), `SECRET_KEY` y `ALLOWED_ORIGINS` para CORS.
+- **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`). Incluye `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*`, `ACCESS_TOKEN_EXPIRE_MINUTES` (default 1440 = 24h), `ALGORITHM` (HS256), `SECRET_KEY`, `ALLOWED_ORIGINS` (CORS), `VIDEO_SOURCE_ENTRADA`/`VIDEO_SOURCE_SALIDA` (cámaras ALPR), `ALPR_COOLDOWN`/`ALPR_CONFIDENCE_THRESHOLD`, y los de hardware serial `SERIAL_ENABLED` (default true), `SERIAL_PORT` (default AUTO) y `SERIAL_BAUDRATE` (9600).
 - **Token JWT**: Protección robusta de endpoints con validación de roles en tiempo real. Decodificación vía `decode_access_token` en `core/security.py`. El payload incluye `sub` (email) y `rol`. `create_access_token` firma con expiración por defecto de 15 min si no se pasa `expires_delta` (pero el login usa `ACCESS_TOKEN_EXPIRE_MINUTES`, default 24h).
 - **RBAC**: Roles `ADMIN` (global), `LOCAL_ADMIN` (por sucursal), `STAFF` (operativo), `USER` (cliente). Dependencias: `get_super_admin` (solo ADMIN), `get_local_manager` (ADMIN/LOCAL_ADMIN), `get_operational_user` (ADMIN/LOCAL_ADMIN/STAFF), `get_current_user` (todos autenticados).
 - **Bloqueo de Usuarios**: `User.is_blocked` permite bloqueo administrativo. `authenticate_user` verifica el flag y rechaza login si está bloqueado (403).
@@ -71,7 +72,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
 ```powershell
 python -m venv venv
 .\venv\Scripts\activate
-pip install -r requirements-core.txt
+pip install -r requirements.txt
 ```
 
 ### 2. Inicialización de Base de Datos
@@ -89,18 +90,15 @@ uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir ser
 ```
 
 ##  Scripts de Utilidad (`scripts/`)
-- `backfill_attach_reservations.py`: Vincula reservas pagadas a access_logs existentes.
-- `backfill_normalize_all_access_logs.py`: Normaliza todas las patentes en access_logs.
-- `migrate_add_normalized_patente.py`: Migración para agregar columna `normalized_patente`.
-- `normalize_plate_in_access_logs.py`: Normaliza una patente específica.
-- `list_users.py`: Lista usuarios de la DB.
-- `query_access_logs.py`: Consulta access_logs por patente.
-- `query_fg112.py`: Consulta específica para patente FG 112 LO.
-- `query_res.py`: Consulta reservas por patente.
-- `test_video.py`: Test de fuente de video.
-- `patch_bidi.py`: (Legacy) Parche post-instalación de python-bidi para EasyOCR. Ya no se necesita con PaddleOCR.
+- `arduino_bridge.py`: Puente de comunicación Serie USB con Arduino Uno (barrera).
+- `generate_test_plates.py`: Genera `static/test_plates.html` con patentes de prueba A4 imprimibles.
+- `test_video.py`: Test de fuente de video para el pipeline ALPR.
+- `setup.ps1` / `run_server.ps1`: Instalación automatizada y arranque rápido (usados por `setup_backend.bat` / `run_server.bat`).
+
+> Nota: los scripts legacy de backfill/migración (`backfill_*`, `migrate_add_normalized_patente`, `list_users`, `query_*`, `patch_bidi.py`) fueron eliminados del repositorio. Las normalizaciones de patentes se gestionan vía `routes/parking/utils.py` y las migraciones de esquema vía Alembic.
 
 ##  Frontend Features No Documentadas Anteriormente
+- **Estadísticas OCR**: Página `/estadisticas-ocr` (`templates/estadisticas_ocr.html`) con métricas de rendimiento del motor de lectura de patentes (`ocr_timing_ms` en `AccessLog`).
 - **Sistema de Tour**: `tour.js` y `onboarding_helpers.js` para guiar nuevos usuarios.
 - **Sidebar Toggle**: Sidebar colapsable con persistencia en localStorage.
 - **Mapa Interactivo**: Selector de coordenadas con Leaflet.js para sucursales.
@@ -175,6 +173,12 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `dashboard.js` | Dashboard Admin | Importa módulos `dashboard-*` y expone `window.*` |
 | `perfil.js` | Portal de Usuario | Importa `profile`, `vehicles`, `reservas`, `notifications` |
 | `main.js` | Todas las páginas | Utilidades globales (modal, sidebar, auth) |
+| `api_client.js` | Todas las páginas | Cliente HTTP centralizado |
+| `auth.js` | Login/Registro | Validación de forms y autenticación |
+| `landing.js` | Landing + Nuestra Red | Mapa Leaflet, carrusel, navegación |
+| `reservas.js` | Portal de Usuario | Fachada de reservas (form/list/actions/pass) |
+| `vehicles.js` | Portal de Usuario | CRUD de vehículos del cliente |
+| `contacto.js` | Contacto | Formulario de contacto |
 
 ### CSS (39 archivos)
 Organizado en `static/css/`:
