@@ -11,11 +11,11 @@ Este documento detalla las librerías y herramientas necesarias para el funciona
 
 ## Archivos de Dependencias
 
-Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paquetes), organizado por secciones. Las dependencias de IA (PaddleOCR, Gemini) están incluidas pero pueden fallar en Python 3.14+ sin afectar el sistema core.
+Las dependencias se encuentran en un único archivo `requirements.txt` (~54 dependencias directas), organizado por secciones (`CORE`, `DATABASE`, `AUTH & SECURITY`, `CV/IMAGING`, `SCIENTIFIC`, `HARDWARE`, `AI/OCR`, `TESTING`). Las dependencias de IA (PaddleOCR, Gemini) están incluidas pero pueden fallar en Python 3.14+ sin afectar el sistema core.
 
 ---
 
-## Librerías Core (`requirements-core.txt`)
+## Librerías Core (secciones `CORE`/`DATABASE`/`AUTH`/`CV`/`HARDWARE`/`TESTING` de `requirements.txt`)
 
 ### Backend y Servidor
 - **`fastapi`** (0.135.1): Framework ASGI para la API REST.
@@ -43,12 +43,12 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paqu
 ### Visión Artificial (CV)
 - **`opencv-python`** (4.13.0.92): Procesamiento de imágenes y manejo de streams de video.
 - **`opencv-python-headless`** (4.13.0.92): Versión headless para servidores sin GUI.
-- **`numpy`**: Operaciones numéricas para arrays de imagen.
-- **`scipy`** (1.15.0): Procesamiento científico de imágenes.
-- **`scikit-image`** (0.26.0): Procesamiento de imágenes para preprocesamiento ALPR.
-- **`shapely`** (2.10.0): Geometría para detección de regiones de placa.
-- **`pyclipper`** (1.3.0.6): Clippath para contornos de patentes.
-- **`Pillow`** (12.2.0): Manipulación de imágenes.
+- **`numpy`**: Operaciones numéricas para arrays de imagen. Marcado por versión de Python: `>=1.26.0,<2.3.0` para Python < 3.14 y `>=2.3.0,<2.5.0` para Python ≥ 3.14 (numpy < 2.3.0 no tiene wheels para Python 3.14).
+- **`scipy`** (>=1.13.0): Procesamiento científico de imágenes.
+- **`scikit-image`** (>=0.22.0): Procesamiento de imágenes para preprocesamiento ALPR.
+- **`shapely`** (>=2.0.0): Geometría para detección de regiones de placa.
+- **`pyclipper`** (>=1.3.0): Clippath para contornos de patentes.
+- **`Pillow`** (>=10.0.0): Manipulación de imágenes.
 - **`qrcode`** (8.2): Generación de códigos QR para pases digitales.
 
 ### Hardware e IoT
@@ -58,7 +58,7 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paqu
 ### Utilidades
 - **`pydantic`** (2.12.5): Validación y serialización de datos (schemas).
 - **`requests`** (2.32.5): HTTP client para servicios externos.
-- **`httpx`** (0.28.0): HTTP client async.
+- **`httpx`** (0.28.1): HTTP client async.
 - **`email-validator`** (2.3.0): Validación de direcciones de email.
 - **`protobuf`** (4.25.0): Serialización (dependencia de submódulos Google).
 - **`pyyaml`**: parsing de YAML.
@@ -68,7 +68,8 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paqu
 - **`setuptools`**: Build tools.
 
 ### Testing
-- **`pytest`** (9.1.1): Framework de pruebas.
+- **`pytest`** (>=8.0.0): Framework de pruebas.
+- **`pytest-timeout`** (>=2.3.0): Timeout por test (evita bloqueos de la suite).
 
 ---
 
@@ -81,8 +82,8 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paqu
 - **`paddleocr`** (3.7.0): Motor de OCR fallback (solo `python_version < '3.14'`).
 - **`paddlepaddle`** (3.2.2): Backend de Deep Learning para PaddleOCR (solo `python_version < '3.14'`).
 
-### Google Gemini
-- **`google-generativeai`** (0.8.6): Integración con Gemini para funcionalidades AI.
+### Google Gemini (AI SDK - incluidas en `requirements.txt`, aún sin uso en el core)
+- **`google-generativeai`** (0.8.6): SDK de la API de Google Gemini (prevista para funcionalidades AI; actualmente sin referencias de importación en el código fuente).
 - **`google-api-python-client`**, **`google-auth`**, **`google-auth-httplib2`**, **`google-ai-generativelanguage`**, **`googleapis-common-protos`**: SDK de Google.
 
 ---
@@ -102,7 +103,7 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~65 paqu
 ```powershell
 .\setup_backend.bat
 ```
-El instalador crea el entorno virtual, instala dependencias core, intenta instalar IA (opcional), configura `.env`, inicializa la BD y ejecuta los tests.
+El instalador crea el entorno virtual, instala las dependencias de `requirements.txt`, configura `.env`, inicializa la BD y ejecuta los tests.
 
 ### Instalación Manual
 ```powershell

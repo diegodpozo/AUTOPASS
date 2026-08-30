@@ -1,5 +1,14 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **AGOSTO 28, 2026 - OCR ENGINE OVERHAUL, ESTADÍSTICAS OCR & UNIFICACIÓN DE PATENTES**:
+    *   **Motor OCR Lazy/Opcional**: `alpr/ocr_engine.py` ya no aborta el arranque si ningún motor OCR importa; loguea el motivo (RapidOCR/PaddleOCR) y agrega diagnóstico del motor en el setup.
+    *   **numpy por Versión de Python**: `numpy>=1.26.0,<2.3.0` para Python < 3.14 y `numpy>=2.3.0,<2.5.0` para Python ≥ 3.14 (numpy < 2.3.0 no tiene wheels para Python 3.14).
+    *   **Setup Robustecido**: `setup_backend.bat`/`setup.ps1` muestran los errores reales de pip/init_db y abortan si fallan (encoding UTF-8).
+    *   **Estadísticas OCR**: Nueva página `/estadisticas-ocr` (`templates/estadisticas_ocr.html`, ~600 líneas) con tiempos de lectura en BD (`ocr_timing_ms` en `AccessLog`, migración Alembic `f1a2b3c4d5e6_add_ocr_timing_to_access_logs`).
+    *   **Avisos en Cámara**: Mensajes de evento de patente/QR en la vista de monitoreo en vivo vía WebSocket (`live.html`).
+    *   **Unificación de Códigos y Revisión de Patentes**: Refactor del pipeline ALPR (`alpr/config.py`, `alpr/ocr_engine.py`, `alpr/runner.py`, `routes/parking/access.py`, `services/access_service.py`, `services/report_service.py`).
+    *   **CI Deshabilitado**: Workflow de GitHub Actions renombrado a `.github/workflows/ci.yml.disabled` hasta tener la suite estable.
+
 - **AGOSTO 27, 2026 - NOTIFICACIONES, PERMISOS SUCURSAL & SOPORTE VISUAL ADMIN (V9.12.0)**:
     *   **Visibilidad Permanente de Botones de Notificación de Usuario**:
         *   Los botones **"Marcar como leídas"** (`#btn-mark-all-read`) y **"Borrar notificaciones"** (`#btn-clear-read-notifs`) en `notificaciones.html` permanecen siempre visibles (`display: inline-flex`).
@@ -25,7 +34,7 @@
         *   Se removió completamente el banner/panel gigante e invasivo (`#notif-alert-banner`) al recibir notificaciones.
         *   Las alertas en tiempo real utilizan únicamente el sistema de toasts flotantes compactos en la esquina superior derecha (`showToast` en `utils.js`).
         *   Se eliminó el cierre automático por clic arbitrario en la pantalla; las notificaciones permanecen en pantalla durante exactamente 5 segundos (`5000ms`) y luego se desvanecen suavemente.
-    *   **Verificación Automática**: Suite completa de Pytest (24/24 pruebas pasando exitosamente en `tests/`).
+    *   **Verificación Automática**: Suite completa de Pytest (35/35 pruebas en `tests/`, 15 archivos) pasando exitosamente.
 
 - **AGOSTO 15, 2026 - SMART TOUR SYSTEM OVERHAUL & UI REFINEMENTS (V9.9.5)**:
     *   **Posicionamiento Fijo & Abrazamiento al Viewport (`tour.js`)**: Coordenadas de tooltip y flecha migradas a `position: fixed` relativo a `(0, 0)` del viewport. Clampeo con margen de 12px a los bordes de la ventana y fallback automático para móviles (`vw < 680px`). Manejo seguro de recorte SVG (`Math.max(0, ...)`) y navegación por teclado.

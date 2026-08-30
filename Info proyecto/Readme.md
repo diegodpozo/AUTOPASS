@@ -2,8 +2,8 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.9.0+ - Agosto 2026)
-- **Setup Modernizado**: Instalador etapeado (`setup_backend.bat`) con dependencias divididas en `requirements-core.txt` (obligatorio) y `requirements-ai.txt` (opcional). Output limpio sin spameo de pip.
+## Últimas Actualizaciones (v9.12.0+ - Agosto 2026)
+- **Setup Modernizado**: Instalador (`setup_backend.bat`) con dependencias organizadas por secciones (Core / DB / Seguridad / CV / IA-OCR) dentro de un único `requirements.txt`, con markers por versión de Python para numpy y para `paddleocr`/`paddlepaddle` (solo Python < 3.14). Output limpio sin spameo de pip y aborta mostrando el error real si algo falla.
 - **Migración a Neon/Postgres (sa-east-1)**: La base online pasó de Turso/Oregón (~1200 ms/query) a **Neon en São Paulo** con latencia medida de ~100 ms (12× más rápida). Configurable vía `DATABASE_URL=postgresql://...` en `.env` (fallback a SQLite local).
 - **OCR Dual (v9.10.0)**: Motor OCR **RapidOCR ONNX** como primario (compatible con Python 3.14+) con fallback a **PaddleOCR** para Python < 3.14. Reemplaza por completo a EasyOCR.
 
@@ -39,8 +39,8 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 
 ## Tecnologías
 
-- **Backend:** FastAPI (Python 3.13)
+- **Backend:** FastAPI (Python 3.14)
 - **Base de Datos:** SQLAlchemy — SQLite local o **Neon/Postgres en la nube** (compartida entre varias PC, región `sa-east-1`)
 - **Frontend:** Vanilla JS (ES6 Modules), CSS Moderno, Jinja2, Chart.js.
-- **IoT:** Paho-MQTT.
+- **IoT:** Paho-MQTT (ESP32) + Serie USB / pyserial (Arduino Uno).
 - **IA:** OpenCV + RapidOCR ONNX / PaddleOCR (lectura de patentes) + detección QR y consenso de votos.

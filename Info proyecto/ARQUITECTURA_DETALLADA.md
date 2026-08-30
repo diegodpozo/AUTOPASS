@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.9.0).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.12.0).
 
 ---
 
@@ -21,7 +21,7 @@ AUTOPASS/
 │   └── system/         # System management (health, cameras, video, common)
 ├── services/           # Inteligencia de Negocio (13 servicios)
 ├── repositories/       # Data Access (user, reservation)
-├── scripts/            # Utilidades (migraciones, backfill, test, patch)
+├── scripts/            # Utilidades (arduino_bridge, generate_test_plates, test_video, setup/run_server)
 ├── tests/              # Pruebas unitarias (pytest)
 ├── static/
 │   ├── js/
@@ -45,7 +45,7 @@ AUTOPASS/
 
 ---
 
-## Capas y Responsabilidades (v10.0.0)
+## Capas y Responsabilidades (v9.12.0)
 
 ### 1. Capa de Servicios (Service Layer)
 Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
@@ -55,6 +55,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **`BillingService`**: Motor de tarifas y cálculo de puntos por fidelización.
 - **`UserService`**: Gestión administrativa de usuarios y validaciones de seguridad.
 - **`BranchService`**: Lógica de gestión de sucursales y aforos.
+- **`HardwareService`**: Control de barreras físicas vía MQTT (ESP32) y comunicación Serie USB (pyserial) con Arduino Uno (auto-detección de puerto COM).
 - **`EmailService`**: Envío de emails transaccionales con templates Jinja2 (confirmación de reserva con QR embebido, recuperación de contraseña, logo en base64).
 - **`NotificationService`**: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal para actualización en tiempo real del aforo. Usa un `OccupancyManager` con `broadcast_update` para distribuir cambios.
 - **`UserNotificationService`**: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
@@ -171,9 +172,9 @@ Servicio independiente de visión artificial modularizado en el paquete `alpr/` 
 - **Des-duplicación:** Cooldown por patente para no re-enviar la misma.
 - **Modos de Operación:** Configurado via `GATE_TYPE`: `entrada`, `salida`, `patente`, `qr`, `predio`. Fuente de video via `VIDEO_SOURCE` (webcam, RTSP, HTTP MJPEG).
 
-### 5. Capa de Hardware (ESP32)
-- **Firmware:** `firmware_esp32/firmware_esp32.ino`
-- **Comunicación:** MQTT con CallbackAPIVersion.VERSION2.
+### 5. Capa de Hardware (ESP32 / Arduino Uno)
+- **Firmware:** `Info proyecto/Hardware/firmware_esp32.ino` y `Info proyecto/Hardware/firmware_arduino_uno.ino`.
+- **Comunicación:** MQTT con CallbackAPIVersion.VERSION2 (ESP32) y Serie USB vía pyserial (Arduino Uno, auto-detección de puerto con `arduino_bridge.py`).
 - **Tópicos configurables vía .env:** `MQTT_TOPIC_ENTRADA`, `MQTT_TOPIC_SALIDA`.
 - **Componentes:** Servomotor (barrera), sensor ultrasónico (detección de paso), pantalla LCD (mensajes al conductor).
 
