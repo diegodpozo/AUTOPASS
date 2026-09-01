@@ -96,17 +96,19 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente, models.Vehicle.user_id == current_user.id).first()
     if not vehicle: raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
 
-    # VALIDAR SUPERPOSICION PARA LA MISMA PATENTE (DOUBLE BOOKING POR VEHICULO)
+    # VALIDAR SUPERPOSICION PARA LA MISMA PATENTE EN LA MISMA SUCURSAL (DOUBLE BOOKING POR VEHICULO)
+    # Se permite la misma patente en diferentes sucursales, incluso en el mismo período.
     p_clean = res.patente.upper().replace(' ', '')
     existing_overlap = db.query(models.Reservation).filter(
         func.replace(func.upper(models.Reservation.patente), ' ', '') == p_clean,
+        models.Reservation.sucursal_nombre == res.sucursal_nombre,
         models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
         models.Reservation.estado_pago.in_(["Pendiente", "Pagado"]),
         models.Reservation.fecha_inicio < res.fecha_fin,
         models.Reservation.fecha_fin > res.fecha_inicio
     ).first()
     if existing_overlap:
-        raise HTTPException(status_code=400, detail=f"El vehículo patente {res.patente} ya posee otra reserva en el período solicitado.")
+        raise HTTPException(status_code=400, detail=f"El vehículo patente {res.patente} ya posee otra reserva en la sucursal {res.sucursal_nombre} en el período solicitado.")
     
     rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
     start = datetime.datetime.fromisoformat(res.fecha_inicio)
