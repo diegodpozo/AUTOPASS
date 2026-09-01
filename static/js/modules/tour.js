@@ -54,7 +54,7 @@ const noVehiclesTourSteps = [
     {
         selector: '#section-puntos .points-main-card',
         title: 'Puntos AutoPass & Beneficios',
-        text: 'En cada estadía que realices acumulás puntos que podés canjear por cupones de descuento o estacionamientos gratis.',
+        text: 'En cada estadía que realicés acumulás puntos que podés canjear por cupones de descuento o estacionamientos gratis.',
         align: 'bottom',
         interactive: false,
         beforeShow: () => {
@@ -67,7 +67,7 @@ const noVehiclesTourSteps = [
     {
         selector: '#section-puntos',
         title: '¡Listo para Empezar!',
-        text: 'Una vez que registres tu primer vehículo, el formulario de reservas quedará activo inmediatamente.',
+        text: 'Una vez que registrés tu primer vehículo, el formulario de reservas quedará activo inmediatamente.',
         align: 'top',
         interactive: false,
         center: true,
@@ -881,7 +881,7 @@ const noVehiclesHelpTourSteps = [
     {
         selector: '#portal-map',
         title: 'Mapa Interactivo & Disponibilidad',
-        text: 'Ubicá nuestras sucursales en el mapa interactivo y verificá la disponibilidad de plazas en tiempo real con los indicadores luminosos de estado.',
+        text: 'Ubicá nuestras sucursales en el mapa y fijate si tienen lugar disponible mirando el color de cada sede.',
         align: 'left',
         interactive: false,
         beforeShow: () => {
@@ -907,7 +907,7 @@ const noVehiclesHelpTourSteps = [
     {
         selector: '#section-reservas',
         title: '3. Mis Reservas & Pase Digital QR',
-        text: 'Consultá tus reservas activas e historial. Cada reserva generará un Pase Digital con Código QR para escanear si la cámara ALPR no detecta tu patente.',
+        text: 'Consultá tus reservas activas e historial. Cada reserva genera un Pase Digital con Código QR para mostrar en la entrada si la cámara no lee bien tu patente.',
         align: 'top',
         interactive: true,
         beforeShow: () => {
@@ -1046,7 +1046,7 @@ const existingVehiclesHelpTourSteps = [
     {
         selector: '#portal-map',
         title: 'Mapa Interactivo & Disponibilidad',
-        text: 'Ubicá nuestras sucursales en el mapa interactivo y verificá la disponibilidad de plazas con los indicadores luminosos de estado.',
+        text: 'Ubicá nuestras sucursales en el mapa y fijate si tienen lugar disponible mirando el color de cada sede.',
         align: 'left',
         interactive: false,
         beforeShow: () => {
@@ -1059,7 +1059,7 @@ const existingVehiclesHelpTourSteps = [
     {
         selector: '#section-reservas',
         title: '3. Mis Reservas & Pase Digital QR',
-        text: 'Consultá tus reservas activas e historial. Cada reserva te proporciona un Pase Digital con Código QR para escanear en los tótems si falla la lectura ALPR.',
+        text: 'Consultá tus reservas activas e historial. Cada reserva te da un Pase Digital con Código QR para mostrar en la entrada si la cámara no reconoce tu patente.',
         align: 'top',
         interactive: true,
         beforeShow: () => {
@@ -1167,7 +1167,7 @@ const addVehicleTourSteps = [
     {
         selector: '#add-vehicle-form select[name="tipo"], #quick-add-vehicle-form select[name="tipo"], select[name="tipo"]',
         title: '2. Categoría de Vehículo',
-        text: 'Elegí la categoría de tu vehículo: Auto, Moto o Camioneta. Esto define las tarifas y validaciones.',
+        text: 'Elegí la categoría de tu vehículo: Auto, Moto o Camioneta. Así se calcula la tarifa correcta.',
         align: 'right',
         interactive: true,
         beforeShow: ensureVehicleFormOpen
@@ -1268,7 +1268,7 @@ const rechargeBalanceTourSteps = [
     {
         selector: '.balance-badge',
         title: '¡Billetera Virtual & Saldo!',
-        text: 'Tu saldo te permite ingresar a las sucursales por ALPR sin demoras ni tarjetas. Te mostramos cómo cargar saldo en vivo.',
+        text: 'Tu saldo te permite ingresar a las sucursales rápido y sin usar tarjetas. Te mostramos cómo cargar saldo.',
         align: 'bottom',
         interactive: true
     },
@@ -1283,7 +1283,7 @@ const rechargeBalanceTourSteps = [
     {
         selector: '#recharge-amount, #rechargeModal .recharge-preset-btn',
         title: '2. Seleccioná o Ingresá el Monto',
-        text: 'Hacé click en un monto sugerido (ej: $5.000) o escribí la cifra que desees cargar.',
+        text: 'Hacé click en un monto sugerido (ej: $5.000) o escribí la cifra que querés cargar.',
         align: 'bottom',
         interactive: true,
         beforeShow: ensureRechargeModalOpen
@@ -1291,7 +1291,7 @@ const rechargeBalanceTourSteps = [
     {
         selector: '#rechargeModal button[type="submit"]',
         title: '3. Confirmá la Carga',
-        text: 'Hacé click en "INGRESAR SALDO". La carga se simulará en tiempo real y se acreditará inmediatamente.',
+        text: 'Hacé click en "INGRESAR SALDO" y el dinero se acreditará en tu billetera al instante.',
         align: 'top',
         interactive: true,
         beforeShow: ensureRechargeModalOpen
@@ -1405,7 +1405,7 @@ const qrPassTourSteps = [
     {
         selector: '#modal-pase-digital .ticket-qr-section, #ticket-qr, #modal-pase-digital',
         title: '1. Código QR para Tótems',
-        text: 'Este recuadro contiene tu código QR oficial. Presentalo frente a la cámara del tótem en la barrera si falla la lectura ALPR.',
+        text: 'Este recuadro contiene tu código QR. Mostralo en la entrada si la cámara no reconoce tu patente.',
         align: 'right',
         interactive: true,
         beforeShow: ensureDigitalPassModalOpen
@@ -1616,7 +1616,7 @@ window.startReservationTour = startReservationTour;
 
 // QUICK-ADD TOUR: steps to guide through add-vehicle form
 const quickAddSteps = [
-    { selector: '#quick-add-form-container .select-wrapper-premium select[name="tipo"]', title: 'Tipo de vehículo', text: 'Seleccioná si es Auto, Moto o Camioneta. Esto define iconos y validaciones.', align: 'right', interactive: true },
+    { selector: '#quick-add-form-container .select-wrapper-premium select[name="tipo"]', title: 'Tipo de vehículo', text: 'Seleccioná si es Auto, Moto o Camioneta. Así se calcula la tarifa correcta.', align: 'right', interactive: true },
     { selector: '#quick-add-vehicle-form input[name="patente"]', title: 'Patente', text: 'Ingresá la patente de tu vehículo. Usá el formato correcto (ej: ABC 123).', align: 'bottom', interactive: true },
     { selector: '#quick-add-vehicle-form input[name="marca_modelo"]', title: 'Marca / Modelo', text: 'Escribí la marca y modelo para identificar tu vehículo fácilmente.', align: 'bottom', interactive: true },
     { selector: '#quick-add-vehicle-form button[type="submit"]', title: 'Continuar', text: 'Cuando completes los datos, pulsá CONTINUAR para registrar el vehículo.', align: 'top', interactive: true }
