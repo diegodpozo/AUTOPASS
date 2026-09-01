@@ -6,7 +6,7 @@
                 <i class="fas fa-life-ring"></i> CENTRO DE AYUDA Y SOPORTE
             </div>
             <h2 class="help-hero-title">¿En qué podemos ayudarte hoy?</h2>
-            <p class="help-hero-subtitle">Buscá respuestas rápidas sobre reservas, lectura de patentes ALPR, pases QR, aforo y pagos.</p>
+            <p class="help-hero-subtitle">Buscá respuestas rápidas sobre reservas, ingreso con reconocimiento de patentes, pases QR, aforo y pagos.</p>
             
             <div class="help-category-pills" id="help-category-pills">
                 <button class="help-pill active" onclick="filterHelpCategory('all', this)">
@@ -16,7 +16,7 @@
                     <i class="fas fa-calendar-check"></i> Reservas & Aforo
                 </button>
                 <button class="help-pill" onclick="filterHelpCategory('alpr', this)">
-                    <i class="fas fa-camera"></i> ALPR & Pase QR
+                    <i class="fas fa-camera"></i> Ingreso & Pase QR
                 </button>
                 <button class="help-pill" onclick="filterHelpCategory('vehiculos', this)">
                     <i class="fas fa-car"></i> Vehículos & Tarifas
@@ -107,7 +107,7 @@
             </div>
             <div class="help-quick-body">
                 <h3>Pase Digital QR</h3>
-                <p>Obtené tu código QR desde "Mis Reservas" para escanear en los tótems si falla ALPR.</p>
+                <p>Obtené tu código QR desde "Mis Reservas" para mostrarlo en la entrada si la cámara no reconoce tu patente.</p>
                 <button class="btn-help-action" onclick="startQrPassTour()">
                     <i class="fas fa-ticket-alt"></i> Probar Pase Digital
                 </button>
@@ -144,7 +144,7 @@
                     <i class="fas fa-chevron-down faq-icon"></i>
                 </button>
                 <div class="faq-answer">
-                    <p>Las reservas por hora requieren un mínimo de <strong>1 hora de anticipación</strong>. Si necesitas ingresar de forma inmediata, podés dirigirte a la sucursal y la cámara ALPR registrará tu entrada como estadía directa por hora utilizando tu saldo disponible.</p>
+                    <p>Las reservas por hora requieren un mínimo de <strong>1 hora de anticipación</strong>. Si necesitás ingresar de forma inmediata, podés dirigirte a la sucursal y la cámara registrará tu entrada como estadía directa por hora utilizando tu saldo disponible.</p>
                 </div>
             </div>
 
@@ -172,7 +172,7 @@
         <!-- CATEGORIA: ALPR & QR -->
         <div class="faq-category-group" data-category="alpr">
             <div class="faq-category-header">
-                <i class="fas fa-camera"></i> Visión Artificial ALPR y Pase QR
+                <i class="fas fa-camera"></i> Ingreso Automático y Pase QR
             </div>
 
             <div class="faq-item">
@@ -181,7 +181,7 @@
                     <i class="fas fa-chevron-down faq-icon"></i>
                 </button>
                 <div class="faq-answer">
-                    <p>Utilizamos un motor de visión artificial de alta precisión con inteligencia artificial (EasyOCR + OpenCV). Cuando tu vehículo se aproxima a la barrera, la cámara procesa la imagen, valida tu patente en milisegundos y abre el acceso automáticamente.</p>
+                    <p>Al acercarte a la barrera, una cámara lee la patente de tu vehículo y abre el acceso automáticamente, siempre que tengas saldo disponible o una reserva activa.</p>
                 </div>
             </div>
 
@@ -191,7 +191,7 @@
                     <i class="fas fa-chevron-down faq-icon"></i>
                 </button>
                 <div class="faq-answer">
-                    <p>Podés mostrar el <strong>Código QR de tu Pase Digital</strong> (disponible en la sección Mis Reservas) frente al tótem de lectura QR. Si persiste el inconveniente, presioná el botón de asistencia en el tótem para comunicarte con el operador de turno.</p>
+                    <p>Podés mostrar el <strong>Código QR de tu Pase Digital</strong> (disponible en la sección Mis Reservas) en el lector de la entrada. Si el problema continúa, presioná el botón de asistencia para comunicarte con el operador de turno.</p>
                 </div>
             </div>
 
@@ -233,7 +233,7 @@
                     <i class="fas fa-chevron-down faq-icon"></i>
                 </button>
                 <div class="faq-answer">
-                    <p>¡Sí! En la pestaña <strong>Mis Vehículos</strong> podés agregar la cantidad de patentes que desees y designar una como <em>Vehículo Favorito</em> para agilizar tus reservas rápidas.</p>
+                    <p>¡Sí! En la pestaña <strong>Mis Vehículos</strong> podés agregar la cantidad de patentes que querés y designar una como <em>Vehículo Favorito</em> para agilizar tus reservas rápidas.</p>
                 </div>
             </div>
         </div>
@@ -270,7 +270,7 @@
     <div id="help-empty-search" class="help-empty-search" style="display: none;">
         <i class="fas fa-search-minus"></i>
         <h3>No encontramos resultados para tu búsqueda</h3>
-        <p>Intentá con términos como "reserva", "ALPR", "patente", "QR", "cancelar" o "saldo".</p>
+        <p>Intentá con términos como "reserva", "patente", "QR", "cancelar" o "saldo".</p>
         <button class="btn-help-action" onclick="clearHelpSearch()">
             <i class="fas fa-redo"></i> Ver todas las preguntas
         </button>
@@ -316,7 +316,7 @@
                 </div>
                 <div class="contact-info">
                     <h4>Atención Presencial</h4>
-                    <p>Consultá en el tótem central</p>
+                    <p>Consultá en la entrada de cualquier sucursal</p>
                     <button class="contact-link-btn" onclick="openFullMap()">
                         Ver Sucursales en Mapa <i class="fas fa-map-marked-alt"></i>
                     </button>
@@ -338,7 +338,7 @@
                         <select id="ticket-category" class="form-control-custom" required>
                             <option value="">Seleccionar categoría...</option>
                             <option value="reserva">Inconveniente con Reserva</option>
-                            <option value="alpr">Problema de Lectura de Patente / Barrera</option>
+                            <option value="alpr">Problema con la leída de mi patente / Barrera</option>
                             <option value="pago">Duda sobre Cobro o Saldo</option>
                             <option value="puntos">Consulta sobre Puntos y Promociones</option>
                             <option value="otro">Consulta General</option>

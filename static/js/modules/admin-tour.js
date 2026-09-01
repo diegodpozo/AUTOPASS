@@ -91,7 +91,7 @@ const adminReservationsTourSteps = [
     {
         selector: '#tab-admin-reservations table, #tab-admin-reservations',
         title: 'Consola de Comprobantes & Fechas',
-        text: 'Consulá el desglose de estadías (Hora, Día, Semana, Quincena, Mes), fechas de inicio/fin, importe total y estado del pago.',
+        text: 'Consultá el desglose de estadías (Hora, Día, Semana, Quincena, Mes), fechas de inicio/fin, importe total y estado del pago.',
         align: 'top',
         interactive: true,
         beforeShow: () => { if (window.switchTab) window.switchTab('admin-reservations'); }
