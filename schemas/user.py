@@ -90,6 +90,8 @@ class PromotionCreate(BaseModel):
     icono: Optional[str] = "fas fa-gift"
     categoria: Optional[str] = "Beneficio"
     sucursal: Optional[str] = None
+    tipo_canje: Optional[str] = "voucher"          # 'descuento_reserva' o 'voucher'
+    valor_descuento: Optional[int] = None          # porcentaje si tipo_canje == 'descuento_reserva'
 
 class PromotionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -102,3 +104,25 @@ class PromotionResponse(BaseModel):
     categoria: str
     activa: bool
     sucursal: Optional[str] = None
+    tipo_canje: Optional[str] = "voucher"
+    valor_descuento: Optional[int] = None
+
+class RedemptionTicketResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    promotion_id: Optional[int] = None
+    codigo: str
+    titulo: str
+    descripcion: Optional[str] = None
+    tipo_canje: Optional[str] = "voucher"
+    valor_descuento: Optional[int] = None
+    icono: Optional[str] = "fas fa-gift"
+    sucursal: Optional[str] = None
+    estado: Optional[str] = "VIGENTE"
+    qr_data: Optional[str] = None
+    observacion: Optional[str] = None
+    created_at: Optional[str] = None
+    fecha_uso: Optional[str] = None
+    reserva_id: Optional[int] = None

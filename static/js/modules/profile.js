@@ -117,9 +117,14 @@ export async function loadPromotions() {
     grid.innerHTML = promos.map(p => {
         const branchName = p.sucursal ? p.sucursal.replace('AUTOPASS ', '').toUpperCase() : 'GLOBAL';
         const isGlobal = !p.sucursal;
+        const isDiscount = p.tipo_canje === 'descuento_reserva';
+        const badge = isDiscount
+            ? `<div class="promo-type-badge discount"><i class="fas fa-percent"></i> ${p.valor_descuento || 0}% DESC</div>`
+            : `<div class="promo-type-badge voucher"><i class="fas fa-ticket"></i> VOUCHER</div>`;
 
         return `
         <div class="promo-card">
+            ${badge}
             <div class="branch-badge ${isGlobal ? 'global' : ''}">
                 <i class="fas ${isGlobal ? 'fa-globe' : 'fa-location-dot'}"></i> ${branchName}
             </div>
@@ -132,7 +137,7 @@ export async function loadPromotions() {
                 <div class="promo-cost">${formatNum(p.costo_puntos)} <span>puntos</span></div>
             </div>
             <div class="promo-footer">
-                <button class="btn-redeem" onclick="redeemPoints(${p.id}, ${p.costo_puntos})" 
+                <button class="btn-redeem" onclick="redeemPoints(${p.id}, ${p.costo_puntos}, '${p.tipo_canje || 'voucher'}')" 
                     ${currentPts < p.costo_puntos ? 'disabled' : ''}>CANJEAR</button>
             </div>
         </div>`;
@@ -188,11 +193,86 @@ export function changePtsPage(delta) {
     loadPointsHistory(currentPtsPage + delta);
 }
 
-export async function redeemPoints(promoId, cost) {
-    if (!await showConfirm('Confirmar Canje', `¿Canjear ${cost} puntos?`)) return;
+export async function redeemPoints(promoId, cost, tipoCanje) {
+    if (!await showConfirm('Confirmar Canje', `¿Canjear ${formatNum(cost)} puntos?`)) return;
     const res = await api.post(`/user/redeem/${promoId}`);
-    if (res.ok) { showToast(res.data.message, 'success'); await loadPointsData(); }
-    else showToast(res.error, 'error');
+    if (res.ok) {
+        showToast(res.data.message, 'success');
+        await loadPointsData();
+
+        const ticket = res.data.ticket;
+        if (ticket) {
+            if (tipoCanje === 'descuento_reserva') {
+                showToast('Descuento canjeado. Se aplicará al abonar tu próxima reserva en la sucursal correspondiente.', 'info');
+            } else {
+                showCanjeTicket(ticket);
+            }
+        }
+    } else {
+        showToast(res.error, 'error');
+    }
+}
+
+// AJUSTE MANUAL DE PUNTOS (PRUEBAS): +10 / -10
+export async function adjustPoints(delta) {
+    const res = await api.post(`/user/points-adjust?delta=${delta}`);
+    if (res.ok) {
+        showToast(delta > 0 ? `+${delta} puntos` : `${delta} puntos`, 'success');
+        await loadPointsData();
+    } else {
+        showToast(res.error || 'Error al ajustar puntos', 'error');
+    }
+}
+
+// MODAL DE TICKET DE CANJE (VOUCHER)
+export function showCanjeTicket(t) {
+    const modal = document.getElementById('modal-canje');
+    if (!modal) return;
+    document.getElementById('canje-codigo-display').innerText = `#${String(t.codigo || '').replace('#', '').padStart(6, '0')}`;
+    document.getElementById('canje-titulo').innerText = t.titulo || 'Beneficio AutoPass';
+    document.getElementById('canje-descripcion').innerText = t.descripcion || '';
+    document.getElementById('canje-fecha').innerText = t.created_at ? formatDate(t.created_at) : 'Hoy';
+    document.getElementById('canje-sucursal').innerText = t.sucursal || 'GLOBAL';
+    document.getElementById('canje-observacion').innerText = t.observacion || 'Será válido por 30 días desde la fecha de canje.';
+
+    const qrContainer = document.getElementById('canje-qr');
+    if (qrContainer) {
+        qrContainer.innerHTML = '';
+        if (window.QRCode) {
+            new QRCode(qrContainer, { text: t.qr_data || `AUTOPASS|ID:${t.id}|CODE:${t.codigo}`, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.H });
+        }
+    }
+    modal.style.display = 'flex';
+}
+
+export function closeCanjeModal() {
+    const modal = document.getElementById('modal-canje');
+    if (modal) modal.style.display = 'none';
+}
+
+export async function shareCanjeTicket() {
+    const ticket = document.getElementById('canje-to-capture');
+    if (!ticket || !window.html2canvas) return;
+    ticket.querySelectorAll('.no-print').forEach(el => el.style.opacity = '0');
+    try {
+        const canvas = await html2canvas(ticket, { backgroundColor: '#0a0a0a', scale: 3, useCORS: true });
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], `AutoPass_Canje_${Date.now()}.png`, { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'Mi Canje AutoPass' });
+            } else {
+                const link = document.createElement('a');
+                link.download = `AutoPass_Canje_${Date.now()}.png`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            }
+        });
+    } catch (err) {
+        showToast('Error al generar imagen', 'error');
+        console.error(err);
+    } finally {
+        ticket.querySelectorAll('.no-print').forEach(el => el.style.opacity = '1');
+    }
 }
 
 export async function saveField(field, newValue) {

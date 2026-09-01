@@ -1,6 +1,7 @@
 from .user import (
     UserBase, UserUpdate, UserAdminUpdate, UserCreate, ChangePassword, UserLogin, 
-    RechargeBalance, UserPasswordChange, PromotionResponse, PromotionCreate
+    RechargeBalance, UserPasswordChange, PromotionResponse, PromotionCreate,
+    RedemptionTicketResponse
 )
 from .parking import (
     PlateValidation, QRValidation, AccessResponse, ParkingStatus, 

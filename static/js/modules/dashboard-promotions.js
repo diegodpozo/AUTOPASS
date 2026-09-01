@@ -42,6 +42,10 @@ export async function loadPromotionsAdmin() {
                         </button>
                    </div>`;
 
+            const typeBadge = p.tipo_canje === 'descuento_reserva'
+                ? `<span class="badge" style="font-size:0.55rem;background:rgba(46,204,113,.15);color:#2ecc71;border:1px solid rgba(46,204,113,.3);padding:2px 7px;border-radius:5px;margin-top:4px;"><i class="fas fa-percent"></i> ${p.valor_descuento || 0}% DESC</span>`
+                : `<span class="badge" style="font-size:0.55rem;background:rgba(52,152,219,.15);color:#3498db;border:1px solid rgba(52,152,219,.3);padding:2px 7px;border-radius:5px;margin-top:4px;"><i class="fas fa-ticket"></i> VOUCHER</span>`;
+
             const branchTd = isAdmin ? `
                 <td data-label="Sucursal" class="text-center">
                     <span class="text-xs font-bold ${branchClass}">${branchLabel.toUpperCase()}</span>
@@ -57,6 +61,7 @@ export async function loadPromotionsAdmin() {
                         <div class="flex-col">
                             <b class="text-white text-small">${p.titulo}</b>
                             <span class="text-xs text-muted" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.descripcion}</span>
+                            ${typeBadge}
                         </div>
                     </div>
                 </td>
@@ -115,7 +120,20 @@ export async function showCreatePromotionModal() {
     if (defaultOpt) defaultOpt.classList.add('active');
     document.getElementById('promo-icono').value = 'fas fa-gift';
 
+    // RESET TIPO DE CANJE
+    const tipoCanje = document.getElementById('promo-tipo-canje');
+    if (tipoCanje) tipoCanje.value = 'voucher';
+    const descField = document.getElementById('promo-descuento-field');
+    if (descField) descField.style.display = 'none';
+    const descInput = document.getElementById('promo-valor-descuento');
+    if (descInput) descInput.value = '';
+
     if (window.openModal) window.openModal('modal-create-promotion');
+}
+
+export function togglePromoTipoCanje(select) {
+    const field = document.getElementById('promo-descuento-field');
+    if (field) field.style.display = select && select.value === 'descuento_reserva' ? 'block' : 'none';
 }
 
 export function selectPromoIcon(element) {
@@ -131,7 +149,11 @@ export async function handleCreatePromotion() {
         descripcion: document.getElementById('promo-descripcion').value,
         costo_puntos: parseInt(document.getElementById('promo-costo').value),
         icono: document.getElementById('promo-icono').value,
-        sucursal: document.getElementById('promo-sucursal').value || null
+        sucursal: document.getElementById('promo-sucursal').value || null,
+        tipo_canje: (document.getElementById('promo-tipo-canje') || {}).value || 'voucher',
+        valor_descuento: document.getElementById('promo-valor-descuento').value
+            ? parseInt(document.getElementById('promo-valor-descuento').value)
+            : null
     };
 
     const res = await api.post('/admin/promotions', payload);
@@ -141,7 +163,7 @@ export async function handleCreatePromotion() {
         document.getElementById('form-create-promotion').reset();
         loadPromotionsAdmin();
     } else {
-        showToast(res.error, 'error');
+        showToast(res.error || 'Error al eliminar la promoción', 'error');
     }
 }
 

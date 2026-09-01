@@ -199,8 +199,11 @@ class ReservationService:
         return 0
 
     @staticmethod
-    def pay_reservation(db: Session, user: models.User, res_id: int):
-        """ABONA UNA RESERVA UTILIZANDO EL SALDO DISPONIBLE DEL USUARIO."""
+    def pay_reservation(db: Session, user: models.User, res_id: int, redemption_ticket_id: int = None):
+        """ABONA UNA RESERVA UTILIZANDO EL SALDO DISPONIBLE DEL USUARIO.
+        Si se indica un redemption_ticket_id (descuento % de reserva) vigente del usuario
+        y de la misma sucursal (o global), se aplica el descuento sobre el monto total
+        y el resto se paga con saldo."""
         res = ReservationRepository.get_by_user_and_id(db, user.id, res_id)
         
         if not res: 
@@ -211,18 +214,43 @@ class ReservationService:
 
         if res.estado_pago == PaymentStatus.PAGADO:
             return {"status": "ok", "message": "La reserva ya ha sido abonada"}
-        
-        if user.saldo < res.monto_total:
-            raise HTTPException(status_code=400, detail="Saldo insuficiente en su cuenta AutoPass")
+
+        # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
+        descuento = 0.0
+        ticket_redencion = None
+        monto_a_cobrar = res.monto_total
+
+        if redemption_ticket_id:
+            from sqlalchemy import or_
+            ticket_redencion = db.query(models.RedemptionTicket).filter(
+                models.RedemptionTicket.id == redemption_ticket_id,
+                models.RedemptionTicket.user_id == user.id,
+                models.RedemptionTicket.tipo_canje == "descuento_reserva",
+                models.RedemptionTicket.estado == "VIGENTE",
+                or_(models.RedemptionTicket.sucursal == res.sucursal_nombre, models.RedemptionTicket.sucursal == None)
+            ).first()
+            if not ticket_redencion:
+                raise HTTPException(status_code=400, detail="El descuento seleccionado no es válido para esta reserva o sucursal")
+
+            porc = ticket_redencion.valor_descuento or 0
+            descuento = round(res.monto_total * porc / 100.0, 2)
+            monto_a_cobrar = round(res.monto_total - descuento, 2)
+
+        if user.saldo < monto_a_cobrar:
+            raise HTTPException(status_code=400, detail=f"Saldo insuficiente en su cuenta AutoPass (necesita ${monto_a_cobrar:,.2f})")
         
         # DEDUCCION DE SALDO Y ACTUALIZACION DE ESTADO
-        user.saldo -= res.monto_total
+        user.saldo -= monto_a_cobrar
         res.estado_pago = PaymentStatus.PAGADO
         res.estado_reserva = ReservationStatus.ACTIVA
         res.fecha_pago = datetime.datetime.now().isoformat()
-        
-        # ACREDITACION DE PUNTOS POR LEALTAD
-        puntos_ganados = BillingService.calculate_points(res.monto_total)
+        # SI SE APLICO DESCUENTO, LA RESERVA QUEDA CON SU VALOR FINAL
+        if ticket_redencion:
+            res.monto_total = monto_a_cobrar
+            res.monto_reembolsado = 0.0
+
+        # ACREDITACION DE PUNTOS POR LEALTAD (SOBRE LO EFECTIVAMENTE ABONADO)
+        puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
         user.puntos_acumulados += puntos_ganados
         
         db.add(models.PointsLog(
@@ -231,6 +259,12 @@ class ReservationService:
             motivo=f"Reserva: {res.patente}",
             fecha=datetime.datetime.now().isoformat()
         ))
+
+        # MARCAR EL TICKET DE DESCUENTO COMO USADO (si aplico descuento)
+        if ticket_redencion:
+            ticket_redencion.estado = "USADO"
+            ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
+            ticket_redencion.reserva_id = res.id
         
         db.commit()
 

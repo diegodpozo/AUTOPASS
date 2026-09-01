@@ -552,6 +552,25 @@
     line-height: 1.4;
 }
 
+/* TITULO DEL BENEFICIO EN EL TICKET: se ajusta al ancho del ticket y es responsive */
+.ticket-title-span {
+    color: var(--dorado);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    width: 100%;
+    max-width: 100%;
+}
+
+@media (max-width: 480px) {
+    .ticket-title-span {
+        font-size: 1rem;
+    }
+}
+
 .ticket-footer {
     margin-top: 40px;
     padding-top: 25px;

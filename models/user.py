@@ -1,6 +1,12 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from core.database import Base
+import datetime
+
+
+def datetime_now_iso():
+    return datetime.datetime.now().isoformat()
+
 
 class User(Base):
     """MODELO PARA LA GESTION DE USUARIOS Y ADMINISTRADORES."""
@@ -25,6 +31,7 @@ class User(Base):
     vehicles = relationship("Vehicle", back_populates="owner")
     reservations = relationship("Reservation", back_populates="user")
     points_logs = relationship("PointsLog", back_populates="user")
+    redemption_tickets = relationship("RedemptionTicket", back_populates="user")
 
 class Vehicle(Base):
     """ENTIDAD PARA LA GESTION DE FLOTA POR USUARIO."""
@@ -60,3 +67,30 @@ class Promotion(Base):
     categoria = Column(String, default="Beneficio")
     activa = Column(Boolean, default=True, server_default="1")
     sucursal = Column(String, nullable=True) # NONE PARA GLOBAL, O NOMBRE DE LA SEDE
+    # TIPO DE CANJE: 'descuento_reserva' (% de descuento en estacionamiento, impacta en pago)
+    #                o 'voucher' (genera un ticket con QR, sin validación automática)
+    tipo_canje = Column(String, default="voucher")
+    # PORCENTAJE DE DESCUENTO (solo aplica a tipo_canje == 'descuento_reserva')
+    valor_descuento = Column(Integer, nullable=True)
+
+class RedemptionTicket(Base):
+    """VOUCHER/TICKET PERSISTENTE GENERADO AL CANJEAR PUNTOS POR UN BENEFICIO."""
+    __tablename__ = "redemption_tickets"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    promotion_id = Column(Integer, ForeignKey("promotions.id"), nullable=True)
+    codigo = Column(String, unique=True, index=True)  # TOKEN UNICO PARA EL QR
+    titulo = Column(String)                            # SNAPSHOT DEL BENEFICIO
+    descripcion = Column(String)
+    tipo_canje = Column(String, default="voucher")     # SNAPSHOT DEL TIPO DE CANJE
+    valor_descuento = Column(Integer, nullable=True)   # SNAPSHOT DEL % SI APLICA
+    icono = Column(String, default="fas fa-gift")
+    sucursal = Column(String, nullable=True)           # SEDE (global o especifica)
+    estado = Column(String, default="VIGENTE")         # VIGENTE / USADO / CANCELADO
+    qr_data = Column(String)                           # CONTENIDO DEL QR (AUTOPASS_REDEMPTION|...)
+    observacion = Column(String, nullable=True)        # 'Válido por 30 días' etc.
+    created_at = Column(String, default=datetime_now_iso)
+    fecha_uso = Column(String, nullable=True)
+    reserva_id = Column(Integer, nullable=True)        # RESERVA A LA QUE SE APLICO (si aplica)
+
+    user = relationship("User", back_populates="redemption_tickets")

@@ -1,5 +1,5 @@
 from core.database import Base
-from .user import User, Vehicle, PointsLog, Promotion
+from .user import User, Vehicle, PointsLog, Promotion, RedemptionTicket
 from .reservation import Reservation, Coupon
 from .parking import ParkingAforo, Settings, AccessLog, ParkingBranch, ParkingFloor, ParkingCamera
 from .notification import UserNotification
