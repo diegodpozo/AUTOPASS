@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from core.database import Base
-from core.time import utcnow
+from core.time import localnow
 
 class UserNotification(Base):
     __tablename__ = "user_notifications"
@@ -14,7 +14,7 @@ class UserNotification(Base):
     leido          = Column(Boolean, default=False)
     reserva_id     = Column(Integer, ForeignKey("reservations.id"), nullable=True)
     ticket_id      = Column(Integer, ForeignKey("support_tickets.id"), nullable=True)
-    created_at     = Column(DateTime, default=utcnow)
+    created_at     = Column(DateTime, default=localnow)
 
     user           = relationship("User", backref="notifications")
     reserva        = relationship("Reservation", backref="notifications")

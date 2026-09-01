@@ -178,18 +178,25 @@ function renderAdminTicketMessages(messages) {
         return;
     }
     container.innerHTML = messages.map(m => {
-        const isAdmin = m.is_admin;
-        const bgColor = isAdmin ? 'rgba(197, 160, 89, 0.1)' : 'rgba(255,255,255,0.03)';
-        const borderColor = isAdmin ? '#4caf50' : 'var(--dorado)';
-        const label = isAdmin ? 'Soporte' : 'Cliente';
-        const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+        // ESTILO CHAT TIPO WHATSAPP (primera persona):
+        // - el ADMIN que mira: sus mensajes (is_admin) van a la DERECHA
+        // - los mensajes del CLIENTE van a la IZQUIERDA
+        const isMine = m.is_admin;
+        const align = isMine ? 'flex-end' : 'flex-start';
+        const bgColor = isMine ? 'rgba(76, 175, 80, 0.12)' : 'rgba(197, 160, 89, 0.10)';
+        const borderColor = isMine ? '#4caf50' : 'var(--dorado)';
+        const borderSide = isMine ? 'border-left' : 'border-right';
+        const label = isMine ? 'Soporte' : 'Cliente';
+        const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : '';
         return `
-            <div style="background:${bgColor};border-radius:10px;padding:12px;border-left:3px solid ${borderColor};">
-                <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;">
-                    <span>${label} — ${m.autor}</span>
-                    <span>${time}</span>
+            <div style="display:flex;align-self:${align};flex-direction:column;max-width:75%;margin-left:${isMine?'8px':'0'};margin-right:${isMine?'0':'8px'};">
+                <div style="background:${bgColor};border-radius:12px;padding:10px 12px;${borderSide}:3px solid ${borderColor};">
+                    <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;">
+                        <span>${label} — ${m.autor}</span>
+                        <span>${time}</span>
+                    </div>
+                    <div style="font-size:0.88rem;color:#eee;line-height:1.5;white-space:pre-wrap;text-align:left;">${m.mensaje}</div>
                 </div>
-                <div style="font-size:0.88rem;color:#ddd;line-height:1.5;white-space:pre-wrap;">${m.mensaje}</div>
             </div>`;
     }).join('');
     container.scrollTop = container.scrollHeight;

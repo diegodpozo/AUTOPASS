@@ -1,4 +1,4 @@
-from core.time import utcnow
+from core.time import localnow
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -24,7 +24,7 @@ class UserNotificationService:
             reserva_id=reserva_id,
             ticket_id=ticket_id,
             leido=False,
-            created_at=utcnow()
+            created_at=localnow()
         )
         db.add(notif)
         db.commit()

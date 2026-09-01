@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from typing import List, Optional
 import models, schemas
-from core.time import utcnow
+from core.time import localnow
 from core.normalize import normalize_branch_name
 
 class SupportService:
@@ -55,7 +55,7 @@ class SupportService:
             ticket_id=ticket.id,
             user_id=user.id,
             mensaje=ticket_data.mensaje,
-            created_at=utcnow()
+            created_at=localnow()
         )
         db.add(msg)
         db.commit()
@@ -171,7 +171,7 @@ class SupportService:
                 ticket_id=ticket.id,
                 user_id=current_user.id,
                 mensaje=respuesta,
-                created_at=utcnow()
+                created_at=localnow()
             )
             db.add(msg)
 
@@ -238,7 +238,7 @@ class SupportService:
             ticket_id=ticket.id,
             user_id=user_id,
             mensaje=mensaje,
-            created_at=utcnow()
+            created_at=localnow()
         )
         db.add(msg)
         ticket.user_response = mensaje
