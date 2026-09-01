@@ -180,7 +180,7 @@ export function renderLogsTable() {
     const paginatedData = filteredLogsData.slice(start, end);
 
     tbody.innerHTML = paginatedData.map(log => {
-        const time = new Date(log.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        const time = new Date(log.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12:false });
         const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-danger';
         const statusBadge = log.pago_confirmado ? 
             `<span class="badge badge-success-light">PAGADO</span>` : 
@@ -377,7 +377,7 @@ function buildOccupancyRows() {
                     ${floorInfo}
                 </div>
             </td>
-            <td data-label="Ingreso" class="text-center">${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
+            <td data-label="Ingreso" class="text-center">${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12:false })}</td>
             <td data-label="Permanencia" class="text-bold text-light text-center">${duration}</td>
             <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">

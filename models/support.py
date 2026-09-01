@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from core.database import Base
-from core.time import utcnow
+from core.time import localnow
 
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
@@ -15,8 +15,8 @@ class SupportTicket(Base):
     estado      = Column(String, default="Pendiente", index=True)
     respuesta      = Column(Text, nullable=True)
     user_response  = Column(Text, nullable=True)
-    created_at     = Column(DateTime, default=utcnow)
-    updated_at  = Column(DateTime, default=utcnow, onupdate=utcnow)
+    created_at     = Column(DateTime, default=localnow)
+    updated_at  = Column(DateTime, default=localnow, onupdate=localnow)
 
     user        = relationship("User", backref="tickets")
 
@@ -28,7 +28,7 @@ class SupportTicketMessage(Base):
     ticket_id   = Column(Integer, ForeignKey("support_tickets.id"), nullable=False, index=True)
     user_id     = Column(Integer, ForeignKey("users.id"), nullable=False)
     mensaje     = Column(Text, nullable=False)
-    created_at  = Column(DateTime, default=utcnow)
+    created_at  = Column(DateTime, default=localnow)
 
     ticket      = relationship("SupportTicket", backref="messages")
     user        = relationship("User")

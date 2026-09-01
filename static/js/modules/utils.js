@@ -56,6 +56,8 @@ export function showToast(msg, type = 'default', duration = 5000) {
     // CREAR ELEMENTO
     const t = document.createElement('div');
     t.className = `toast ${type}`;
+    // LOS TOASTS NO SE CIERRAN SOLOS: quedan visibles hasta que el usuario hace click
+    // en cualquier parte de la pantalla (ver handler global "click" abajo).
 
     // ASIGNAR ICONO SEGUN TIPO
     let icon = 'fa-bell';
@@ -70,16 +72,22 @@ export function showToast(msg, type = 'default', duration = 5000) {
     `;
 
     container.appendChild(t);
+}
 
-    // FUNCION PARA CERRAR CON ANIMACION
-    const closeToast = () => {
-        if (t.classList.contains('hiding')) return;
+// CERRAR TODOS LOS TOASTS AL HACER CLICK EN CUALQUIER LUGAR DE LA PANTALLA
+function _closeAllToasts() {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toasts = Array.from(container.querySelectorAll('.toast:not(.hiding)'));
+    toasts.forEach(t => {
         t.classList.add('hiding');
         setTimeout(() => { if (t.parentNode) t.remove(); }, 400);
-    };
+    });
+}
 
-    // TEMPORIZADOR DE 5 SEGUNDOS PARA DESAPARECER AUTOMATICAMENTE
-    setTimeout(closeToast, duration);
+if (!window.__toastsClickBound) {
+    window.__toastsClickBound = true;
+    document.addEventListener('click', _closeAllToasts, true);
 }
 
 /**
