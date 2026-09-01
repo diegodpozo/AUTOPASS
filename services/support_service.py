@@ -144,6 +144,8 @@ class SupportService:
                         "id": m.id,
                         "user_id": m.user_id,
                         "mensaje": m.mensaje,
+                        "adjunto_url": m.adjunto_url,
+                        "adjunto_nombre": m.adjunto_nombre,
                         "is_admin": m.user.rol in ("admin", "local_admin") if m.user else False,
                         "autor": f"{m.user.nombre} {m.user.apellido}" if m.user else "Desconocido",
                         "created_at": m.created_at.isoformat() if m.created_at else None,
@@ -218,6 +220,8 @@ class SupportService:
                 "id": m.id,
                 "user_id": m.user_id,
                 "mensaje": m.mensaje,
+                "adjunto_url": m.adjunto_url,
+                "adjunto_nombre": m.adjunto_nombre,
                 "is_admin": m.user.rol in ("admin", "local_admin") if m.user else False,
                 "autor": f"{m.user.nombre} {m.user.apellido}" if m.user else "Desconocido",
                 "created_at": m.created_at.isoformat() if m.created_at else None,
@@ -226,7 +230,7 @@ class SupportService:
         ]
 
     @staticmethod
-    def reply_to_ticket(db: Session, ticket_id: int, user_id: int, mensaje: str) -> Optional[models.SupportTicket]:
+    def reply_to_ticket(db: Session, ticket_id: int, user_id: int, mensaje: str, adjunto_url: str = None, adjunto_nombre: str = None) -> Optional[models.SupportTicket]:
         ticket = db.query(models.SupportTicket).filter(
             models.SupportTicket.id == ticket_id,
             models.SupportTicket.user_id == user_id
@@ -238,6 +242,8 @@ class SupportService:
             ticket_id=ticket.id,
             user_id=user_id,
             mensaje=mensaje,
+            adjunto_url=adjunto_url,
+            adjunto_nombre=adjunto_nombre,
             created_at=localnow()
         )
         db.add(msg)

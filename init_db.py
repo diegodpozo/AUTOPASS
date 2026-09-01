@@ -27,7 +27,8 @@ def migrate_db():
         "parking_floors": [("branch_id", "INTEGER"), ("nombre", "VARCHAR"), ("capacidad_total", "INTEGER"), ("ocupacion_actual", "INTEGER"), ("capacidad_motos", "INTEGER"), ("ocupacion_motos", "INTEGER")],
         "vehicles": [("tipo", "VARCHAR DEFAULT 'Auto'"), ("is_favorite", "BOOLEAN DEFAULT 0")],
         "reservations": [("sucursal_nombre", "VARCHAR"), ("sucursal_info", "VARCHAR"), ("dias_semana", "VARCHAR"), ("cliente_nombre", "VARCHAR"), ("monto_reembolsado", "FLOAT DEFAULT 0.0"), ("fecha_pago", "VARCHAR")],
-        "parking_branches": [("latitude", "FLOAT"), ("longitude", "FLOAT"), ("logo_url", "VARCHAR"), ("activa", "BOOLEAN DEFAULT 1")]
+        "parking_branches": [("latitude", "FLOAT"), ("longitude", "FLOAT"), ("logo_url", "VARCHAR"), ("activa", "BOOLEAN DEFAULT 1")],
+        "support_ticket_messages": [("adjunto_url", "VARCHAR"), ("adjunto_nombre", "VARCHAR")]
     }
 
     for table, columns in tables_to_check.items():

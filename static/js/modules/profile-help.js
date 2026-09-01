@@ -191,6 +191,10 @@ export async function submitSupportTicket(event) {
 }
 
 let currentTicketId = null;
+let currentAttachFile = null;
+
+const ALLOWED_ATTACH_EXT = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf'];
+const MAX_ATTACH_SIZE = 1 * 1024 * 1024; // 1 MB
 
 function renderTicketMessages(messages) {
     const container = document.getElementById('modal-ticket-messages');
@@ -210,6 +214,13 @@ function renderTicketMessages(messages) {
         const borderSide = isMine ? 'border-left' : 'border-right';
         const label = isMine ? 'Vos' : 'Soporte';
         const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : '';
+        let attachHtml = '';
+        if (m.adjunto_url) {
+            const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);
+            attachHtml = isImage
+                ? `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-image"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`
+                : `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-file-pdf"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
+        }
         return `
             <div style="display:flex;align-self:${align};flex-direction:column;max-width:75%;margin-left:${isMine?'8px':'0'};margin-right:${isMine?'0':'8px'};">
                 <div style="background:${bgColor};border-radius:12px;padding:10px 12px;${borderSide}:3px solid ${borderColor};">
@@ -218,11 +229,39 @@ function renderTicketMessages(messages) {
                         <span>${time}</span>
                     </div>
                     <div style="font-size:0.88rem;color:#eee;line-height:1.5;white-space:pre-wrap;text-align:left;">${m.mensaje}</div>
+                    ${attachHtml}
                 </div>
             </div>`;
     }).join('');
     container.scrollTop = container.scrollHeight;
 }
+
+window.handleTicketAttach = function(input) {
+    const file = input && input.files && input.files[0];
+    const nameEl = document.getElementById('modal-ticket-attach-name');
+    if (!file) {
+        currentAttachFile = null;
+        if (nameEl) nameEl.textContent = '';
+        return;
+    }
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!ALLOWED_ATTACH_EXT.includes(ext)) {
+        showToast('Formato no permitido. Adjuntá imágenes (PNG, JPG, GIF, WEBP) o PDF.', 'error');
+        input.value = '';
+        currentAttachFile = null;
+        if (nameEl) nameEl.textContent = '';
+        return;
+    }
+    if (file.size > MAX_ATTACH_SIZE) {
+        showToast('El archivo supera el tamaño máximo de 1 MB.', 'error');
+        input.value = '';
+        currentAttachFile = null;
+        if (nameEl) nameEl.textContent = '';
+        return;
+    }
+    currentAttachFile = file;
+    if (nameEl) nameEl.textContent = `📎 ${file.name}`;
+};
 
 window.openSupportTicketModal = async function(ticketId) {
     if (!ticketId) {
@@ -242,6 +281,11 @@ window.openSupportTicketModal = async function(ticketId) {
     const msgContainer = document.getElementById('modal-ticket-messages');
     if (msgContainer) msgContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
     document.getElementById('modal-ticket-reply-input').value = '';
+    currentAttachFile = null;
+    const attachInput = document.getElementById('modal-ticket-attach');
+    if (attachInput) attachInput.value = '';
+    const attachNameEl = document.getElementById('modal-ticket-attach-name');
+    if (attachNameEl) attachNameEl.textContent = '';
 
     try {
         const res = await api.get(`/user/support-tickets/${ticketId}`);
@@ -283,17 +327,26 @@ window.submitTicketReply = async function() {
     if (!currentTicketId) return;
     const input = document.getElementById('modal-ticket-reply-input');
     const btn = document.getElementById('modal-ticket-reply-btn');
+    const attachInput = document.getElementById('modal-ticket-attach');
     const msg = input?.value?.trim();
-    if (!msg) {
-        showToast('Escribí tu respuesta antes de enviar', 'info');
+    if (!msg && !currentAttachFile) {
+        showToast('Escribí tu respuesta o adjuntá un archivo', 'info');
         return;
     }
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
     try {
-        const res = await api.patch(`/user/support-tickets/${currentTicketId}/reply`, { mensaje: msg });
+        const formData = new FormData();
+        if (msg) formData.append('mensaje', msg);
+        else formData.append('mensaje', '');
+        if (currentAttachFile) formData.append('adjunto', currentAttachFile, currentAttachFile.name);
+        const res = await api.patch(`/user/support-tickets/${currentTicketId}/reply`, formData);
         if (res.ok) {
             showToast('Respuesta enviada', 'success');
             input.value = '';
+            currentAttachFile = null;
+            if (attachInput) attachInput.value = '';
+            const nameEl = document.getElementById('modal-ticket-attach-name');
+            if (nameEl) nameEl.textContent = '';
             if (res.data.messages) {
                 renderTicketMessages(res.data.messages);
             } else {
