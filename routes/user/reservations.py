@@ -252,11 +252,12 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
     return {"status": "ok", "monto_total": monto_nuevo, "estado_pago": res.estado_pago}
 
 @router.post("/reservations/{res_id}/pay")
-def pay_reservation(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """ABONA UNA RESERVA PENDIENTE CON EL SALDO DE LA CUENTA."""
+def pay_reservation(res_id: int, redemption_ticket_id: int = None, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """ABONA UNA RESERVA PENDIENTE CON EL SALDO DE LA CUENTA.
+    Opcionalmente aplica un descuento (%) de un canje previo (redemption_ticket_id)."""
     if current_user.is_blocked:
         raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
-    return ReservationService.pay_reservation(db, current_user, res_id)
+    return ReservationService.pay_reservation(db, current_user, res_id, redemption_ticket_id)
 
 @router.post("/reservations/{res_id}/confirm-reminder")
 def confirm_reservation_reminder(res_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

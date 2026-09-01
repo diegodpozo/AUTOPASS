@@ -39,9 +39,13 @@ window.deleteNotif = notif.deleteNotif;
 window.loadProfile = prof.loadProfile;
 window.loadPointsData = prof.loadPointsData;
 window.redeemPoints = prof.redeemPoints;
+window.adjustPoints = prof.adjustPoints;
 window.loadPointsHistory = prof.loadPointsHistory;
 window.changePtsPage = prof.changePtsPage;
 window.loadPromotions = prof.loadPromotions;
+window.showCanjeTicket = prof.showCanjeTicket;
+window.closeCanjeModal = prof.closeCanjeModal;
+window.shareCanjeTicket = prof.shareCanjeTicket;
 
 // RESERVAS
 window.loadReservations = res.loadReservations;

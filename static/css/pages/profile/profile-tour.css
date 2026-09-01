@@ -15,6 +15,62 @@
     box-shadow: 0 15px 35px rgba(0,0,0,0.5);
 }
 
+.points-adjust-row {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.points-adjust-hint {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+}
+
+.points-adjust-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-points-adjust {
+    border: none;
+    border-radius: 12px;
+    padding: 8px 22px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s ease;
+}
+
+.btn-points-adjust.plus {
+    background: rgba(46, 204, 113, 0.12);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.btn-points-adjust.plus:hover {
+    background: rgba(46, 204, 113, 0.25);
+}
+
+.btn-points-adjust.minus {
+    background: rgba(231, 76, 60, 0.12);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.btn-points-adjust.minus:hover {
+    background: rgba(231, 76, 60, 0.25);
+}
+
 .points-count {
     font-family: 'Montserrat', sans-serif;
     font-size: 4rem;
@@ -71,6 +127,33 @@
     background: rgba(46, 204, 113, 0.1);
     color: #2ecc71;
     border-color: rgba(46, 204, 113, 0.2);
+}
+
+.promo-type-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+}
+
+.promo-type-badge.voucher {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.promo-type-badge.discount {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.2);
 }
 
 .promo-header {

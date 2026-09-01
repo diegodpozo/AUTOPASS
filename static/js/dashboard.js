@@ -144,6 +144,7 @@ window.handleCreatePromotion = promos.handleCreatePromotion;
 window.togglePromotion = promos.togglePromotion;
 window.deletePromotion = promos.deletePromotion;
 window.selectPromoIcon = promos.selectPromoIcon;
+window.togglePromoTipoCanje = promos.togglePromoTipoCanje;
 
 // 11. CAMARAS IP
 window.loadCameraSettings = ui.loadCameraSettings;

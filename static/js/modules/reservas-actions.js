@@ -34,11 +34,39 @@ export async function cancelReservation(id) {
 }
 
 export async function payReservation(id) {
-    if (!await showConfirm('PAGAR RESERVA', '¿Deseás pagar con tu saldo AutoPass?')) return;
-    const res = await api.post(`/user/reservations/${id}/pay`);
+    // 1. BUSCAR DESCUENTOS DE RESERVA DISPONIBLES DEL USUARIO PARA ESTA RESERVA
+    let redemptionTicketId = null;
+    let montoMsg = '';
+
+    const resRes = await api.get('/user/reservations');
+    if (resRes.ok) {
+        const r = resRes.data.find(item => item.id === id);
+        if (r && r.sucursal_nombre) {
+            try {
+                const resAvail = await api.get(`/user/redemptions/available?sucursal=${encodeURIComponent(r.sucursal_nombre)}`);
+                if (resAvail.ok && resAvail.data.length > 0) {
+                    const t = resAvail.data[0];
+                    redemptionTicketId = t.id;
+                    const porc = t.valor_descuento || 0;
+                    montoMsg = `<br><br>¡Aplicás tu <b style="color:var(--dorado);">descuento de ${porc}%</b> en estacionamiento (${t.titulo})!`;
+                }
+            } catch (e) {}
+        }
+    }
+
+    if (!await showConfirm('PAGAR RESERVA', `¿Deseás pagar con tu saldo AutoPass?${montoMsg}`)) return;
+
+    const payUrl = redemptionTicketId
+        ? `/user/reservations/${id}/pay?redemption_ticket_id=${redemptionTicketId}`
+        : `/user/reservations/${id}/pay`;
+    const res = await api.post(payUrl);
     if (res.ok) { 
         const pts = res.puntos_ganados || 0;
-        showToast(pts > 0 ? `¡Pago exitoso! Ganaste ${pts} puntos AutoPass` : '¡Pago exitoso!', 'success'); 
+        if (redemptionTicketId) {
+            showToast(`¡Pago exitoso! Descuento aplicado. Ganaste ${pts} puntos AutoPass`, 'success');
+        } else {
+            showToast(pts > 0 ? `¡Pago exitoso! Ganaste ${pts} puntos AutoPass` : '¡Pago exitoso!', 'success'); 
+        }
         loadReservations(); 
         if (window.loadProfile) window.loadProfile(); 
         // DISPARAR EVENTO PARA EL TOUR

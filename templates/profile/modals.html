@@ -51,6 +51,31 @@
     </div>
 </div>
 
+<!-- MODAL: TICKET DE CANJE (VOUCHER POR PUNTOS) -->
+<div id="modal-canje" class="modal-premium">
+    <div class="modal-content-premium ticket-container" id="canje-to-capture">
+        <button class="modal-close-top no-print" onclick="closeCanjeModal()"><i class="fas fa-times"></i></button>
+        <div class="ticket-header">
+            <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo">
+            <div class="ticket-title-wrap"><span class="ticket-brand">AUTOPASS</span><span class="ticket-tagline">TICKET DE CANJE</span></div>
+        </div>
+        <div class="ticket-body">
+            <div class="ticket-qr-section"><div id="canje-qr" class="qr-canvas"></div><div class="ticket-id" id="canje-codigo-display">#000000</div></div>
+            <div class="ticket-info-grid">
+                <div class="ticket-info-item full-width"><label>BENEFICIO</label><span id="canje-titulo" class="ticket-title-span">---</span></div>
+                <div class="ticket-info-item full-width"><label>DESCRIPCIÓN</label><span id="canje-descripcion" class="text-small">---</span></div>
+                <div class="ticket-info-item"><label>FECHA DE CANJE</label><span id="canje-fecha">---</span></div>
+                <div class="ticket-info-item"><label>SUCURSAL</label><span id="canje-sucursal">---</span></div>
+            </div>
+        </div>
+        <div class="ticket-footer">
+            <div class="ticket-instructions" id="canje-observacion">Presentá este código para efectivizar tu beneficio.</div>
+            <div class="ticket-actions no-print"><button class="btn-ticket btn-download" onclick="shareCanjeTicket()"><i class="fas fa-share-nodes"></i> COMPARTIR TICKET</button></div>
+        </div>
+        <div class="ticket-cutout left"></div><div class="ticket-cutout right"></div><div class="ticket-perf"></div>
+    </div>
+</div>
+
 <div id="rechargeModal" class="modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('rechargeModal')"><i class="fas fa-xmark"></i></span>
