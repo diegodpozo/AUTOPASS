@@ -17,6 +17,16 @@
             <div class="form-group-premium" style="margin-bottom: 10px;">
                 <textarea id="modal-ticket-reply-input" class="form-control-custom" rows="2" placeholder="Escribí tu respuesta..."></textarea>
             </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <label for="modal-ticket-attach" class="btn btn-outline" style="margin:0;padding:8px 12px;cursor:pointer;">
+                    <i class="fas fa-paperclip"></i> Adjuntar archivo
+                </label>
+                <input type="file" id="modal-ticket-attach" style="display:none;" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" onchange="handleTicketAttach(this)">
+                <span id="modal-ticket-attach-name" style="font-size:0.8rem;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+            </div>
+            <div style="font-size:0.72rem;color:#888;margin-bottom:12px;">
+                Permitidos: imágenes (PNG, JPG, GIF, WEBP) o PDF · Tamaño máximo: <b>1 MB</b>
+            </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn btn-outline" onclick="closeSupportTicketModal()">Cerrar</button>
                 <button id="modal-ticket-reply-btn" class="btn btn-primary" onclick="submitTicketReply()">

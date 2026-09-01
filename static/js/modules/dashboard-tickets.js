@@ -188,6 +188,13 @@ function renderAdminTicketMessages(messages) {
         const borderSide = isMine ? 'border-left' : 'border-right';
         const label = isMine ? 'Soporte' : 'Cliente';
         const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : '';
+        let attachHtml = '';
+        if (m.adjunto_url) {
+            const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);
+            attachHtml = isImage
+                ? `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'#8bc34a':'var(--dorado)'};text-decoration:none;"><i class="fas fa-image"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`
+                : `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'#8bc34a':'var(--dorado)'};text-decoration:none;"><i class="fas fa-file-pdf"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
+        }
         return `
             <div style="display:flex;align-self:${align};flex-direction:column;max-width:75%;margin-left:${isMine?'8px':'0'};margin-right:${isMine?'0':'8px'};">
                 <div style="background:${bgColor};border-radius:12px;padding:10px 12px;${borderSide}:3px solid ${borderColor};">
@@ -196,6 +203,7 @@ function renderAdminTicketMessages(messages) {
                         <span>${time}</span>
                     </div>
                     <div style="font-size:0.88rem;color:#eee;line-height:1.5;white-space:pre-wrap;text-align:left;">${m.mensaje}</div>
+                    ${attachHtml}
                 </div>
             </div>`;
     }).join('');

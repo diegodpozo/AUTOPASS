@@ -28,6 +28,8 @@ class SupportTicketMessage(Base):
     ticket_id   = Column(Integer, ForeignKey("support_tickets.id"), nullable=False, index=True)
     user_id     = Column(Integer, ForeignKey("users.id"), nullable=False)
     mensaje     = Column(Text, nullable=False)
+    adjunto_url     = Column(String, nullable=True)    # URL DEL ARCHIVO ADJUNTADO (imagen o PDF)
+    adjunto_nombre  = Column(String, nullable=True)    # NOMBRE ORIGINAL DEL ARCHIVO
     created_at  = Column(DateTime, default=localnow)
 
     ticket      = relationship("SupportTicket", backref="messages")
