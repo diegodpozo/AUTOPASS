@@ -32,7 +32,8 @@ export {
 
 export {
     cancelReservation,
-    payReservation
+    payReservation,
+    payReservationWithMp
 } from './reservas-actions.js';
 
 export {

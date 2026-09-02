@@ -5,7 +5,7 @@ load_dotenv()
 
 class Settings:
     PROJECT_NAME: str = "AUTOPASS Professional"
-    VERSION: str = "9.13.0"
+    VERSION: str = "9.14.0"
     
     # CONTACTO
     CONTACT_SUPPORT: str = "soporte@autopass.com.ar"
@@ -60,5 +60,19 @@ class Settings:
     # MANTENIMIENTO Y SALUD
     MAINTENANCE_INTERVAL_SECONDS: int = int(os.getenv("MAINTENANCE_INTERVAL_SECONDS", 300))
     HEARTBEAT_TIMEOUT_SECONDS: int = int(os.getenv("HEARTBEAT_TIMEOUT_SECONDS", 90))
+
+    # MERCADO PAGO (CHECKOUT PRO)
+    # Credenciales de prueba (sandbox): https://www.mercadopago.com.ar/developers/panel/apps
+    # MP_ACCESS_TOKEN: Access Token de la cuenta de prueba (test seller).
+    # MP_PUBLIC_KEY:        Public Key de la cuenta de prueba (no necesaria para Checkout Pro backend).
+    # MP_WEBHOOK_URL:       URL de notificaciones (opcional; para pruebas con localhost usar redirect-back).
+    MP_ACCESS_TOKEN: str = os.getenv("MP_ACCESS_TOKEN", "")
+    MP_PUBLIC_KEY: str = os.getenv("MP_PUBLIC_KEY", "")
+    MP_WEBHOOK_URL: str = os.getenv("MP_WEBHOOK_URL", "")
+    MP_PREFERENCE_EXPIRE_MINUTES: int = int(os.getenv("MP_PREFERENCE_EXPIRE_MINUTES", 45))
+
+    @property
+    def MP_ENABLED(self) -> bool:
+        return bool(self.MP_ACCESS_TOKEN.strip())
 
 settings = Settings()

@@ -13,6 +13,7 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 - **Multi-Piso** — Soporte para N niveles por sucursal con capacidad trimodal configurable (Autos/Motos/Camionetas)
 - **Facturación Trimodal** — Motor de precios diferenciados por tipo de vehículo y período (Hora/Día/Semana/Quincena/Mes)
 - **Reservaciones** — Creación, pago, cancelación con reembolso, anticipación configurable y auto-cancelación
+- **Pagos con Mercado Pago (v9.14.0)** — Checkout Pro por redirección para abonar reservas y estadías en curso de forma **directa** (no toca el saldo de la billetera); confirmación por retorno (`/success|pending|failure`) y webhook
 - **Fidelización** — Sistema de puntos (10 pts/$1000), catálogo de promociones canjeables y cupones
 - **Mapas Interactivos & Filtro de Localidades** — Mosaico de Google Maps con buscador autocompletado en tiempo real, desglose de direcciones exactas, aviso de disponibilidad por zona y navegación animada `flyTo`
 - **Dashboard Admin Premium** — 9 pestañas modulares: Monitoreo, Ocupación, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración
@@ -37,7 +38,7 @@ AUTOPASS/
 │   ├── user/           # Portal usuario (profile, vehicles, reservations, balance, fidelization, notifications, support)
 │   ├── parking/        # Control de acceso (ALPR/QR, status, utils)
 │   └── system/         # Sistema (health, cameras, video, common)
-├── services/           # Lógica de negocio (13 servicios)
+├── services/           # Lógica de negocio (14 servicios)
 ├── repositories/       # Data Access Layer
 ├── alpr/               # Paquete modular de visión artificial
 ├── static/
@@ -100,6 +101,13 @@ IMAGE_DIR=captured_images
 RESERVA_HORA_MIN_SEGUNDOS=1800
 MAINTENANCE_INTERVAL_SECONDS=300
 
+# Mercado Pago (Checkout Pro) - ver "Pagos con Mercado Pago" más abajo
+BASE_URL=https://tu-dominio-o-tunel-ngrok.ngrok-free.dev  # OBLIGATORIO con https (MP lo exige en back_urls)
+MP_ACCESS_TOKEN=APP_USR-...   # Access Token de prueba (sandbox) desde el panel de desarrolladores
+MP_PUBLIC_KEY=APP_USR-...     # Public Key de prueba
+MP_WEBHOOK_URL=https://tu-dominio-o-tunel-ngrok.ngrok-free.dev/v1/user/mercadopago/webhook
+MP_PREFERENCE_EXPIRE_MINUTES=45
+
 # Email (opcional)
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
@@ -158,6 +166,23 @@ SMTP_FROM=noreply@autopass.com.ar
 | WorkerService | 3 hilos: limpieza (300s), recordatorios, auto-cancelación |
 | TimeService | Tiempo virtual para testing |
 | HardwareService | Control de barreras MQTT y comunicación Serie USB con Arduino Uno |
+| MercadoPagoService | Preferencias Checkout Pro, confirmación (retorno/webhook) y aplicación de pagos MP en reservas y estadías |
+
+## Pagos con Mercado Pago (v9.14.0)
+
+Integración **Checkout Pro** (redirección) para pagar **reservas** y **estadías en curso** directamente desde el portal de usuario, **sin descontar el saldo** de la billetera.
+
+### Cómo funciona
+1. `POST /v1/user/mercadopago/checkout` crea la preferencia en MP (`MercadoPagoPayment`, tabla `mercadopago_payments`) y devuelve el `init_point` (sandbox en pruebas).
+2. El usuario paga en el sitio de Mercado Pago.
+3. Confirma por **retorno** (`GET /v1/user/mercadopago/success|pending|failure`) y/o **webhook** (`POST /v1/user/mercadopago/webhook`). `confirm_payment` consulta MP, valida estado `approved` + monto y aplica (idempotente).
+4. Aplicar una **reserva**: marca `PAGADO`/`ACTIVA`, suma puntos y envía el pase digital; una **estadía**: marca `pago_confirmado` con `metodo_pago = MERCADOPAGO`. Ambos casos **no tocan `users.saldo`**.
+
+### Credenciales y modo pruebas
+- Credenciales **de prueba** desde https://www.mercadopago.com.ar/developers/panel (Desarrollo propio → Pagos online → API → Checkout Pro/Orders). Hoy el panel usa prefijo `APP_USR-` también en modo prueba.
+- **Obligatorio**: `BASE_URL` con `https://` (MP rechaza `http://` en `back_urls`). Para pruebas locales usá un túnel: `ngrok http 8000` y poné la URL pública en `BASE_URL` y `MP_WEBHOOK_URL`.
+- Tarjeta test (aprobada): `5031 7557 3453 0604` (Mastercard), CVV y vencimiento cualquiera.
+- Probá **dentro del mismo origen** del túnel (logueate en la URL ngrok) para no perder la sesión al volver de MP.
 
 ## Frontend
 

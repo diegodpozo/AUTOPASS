@@ -47,6 +47,10 @@ window.showCanjeTicket = prof.showCanjeTicket;
 window.closeCanjeModal = prof.closeCanjeModal;
 window.shareCanjeTicket = prof.shareCanjeTicket;
 
+// MERCADO PAGO (PAGO DIRECTO DE ESTADIAS)
+window.loadActiveStays = prof.loadActiveStays;
+window.payStayWithMp = prof.payStayWithMp;
+
 // RESERVAS
 window.loadReservations = res.loadReservations;
 window.initReservationForm = res.initReservationForm;
@@ -55,6 +59,7 @@ window.createReservation = res.createReservation;
 window.prepareEditReservation = res.prepareEditReservation;
 window.cancelReservation = res.cancelReservation;
 window.payReservation = res.payReservation;
+window.payReservationWithMp = res.payReservationWithMp;
 window.showDigitalPass = res.showDigitalPass;
 window.closeDigitalPass = res.closeDigitalPass;
 window.shareTicket = res.shareTicket;
@@ -93,7 +98,7 @@ window.showSection = function(sectionId, el) {
             window.refreshReservationFormState();
         }
     }
-    if (sectionId === 'perfil') prof.loadProfile();
+    if (sectionId === 'perfil') { prof.loadProfile(); if (window.loadActiveStays) loadActiveStays(); }
     if (sectionId === 'vehiculos') v.loadVehicles();
     if (sectionId === 'notificaciones') loadNotifications();
     if (sectionId === 'ayuda') help.loadHelpBranches();
@@ -342,6 +347,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             'new-password', 'confirm-new-password', 'password-strength', 
             'req-len', 'req-up', 'req-spec', 'req-match'
         );
+
+        // 4.1 CARGAR ESTADIAS EN CURSO (PAGO CON MERCADO PAGO)
+        if (window.loadActiveStays) {
+            try { await loadActiveStays(); } catch (e) { console.error('[ACTIVE STAYS ERROR]', e); }
+        }
+
+        // 4.2 RETORNO DE MERCADO PAGO (CHECKOUT PRO)
+        const mpStatus = urlParams.get('mp_status');
+        const mpTipo = urlParams.get('mp_tipo');
+        if (mpStatus) {
+            const msgs = {
+                approved: ['¡Pago aprobado con Mercado Pago!', 'success'],
+                pending: ['El pago quedó pendiente de confirmación', 'info'],
+                failed: ['El pago no se completó', 'error'],
+            };
+            const [msg, type] = msgs[mpStatus] || ['Resultado del pago', 'info'];
+            setTimeout(() => showToast(msg, type), 600);
+            history.replaceState({}, '', '/perfil');
+            if (mpTipo === 'reserva') { if (window.loadReservations) loadReservations(); }
+            else { if (window.loadActiveStays) loadActiveStays(); }
+        }
     }
     } catch (e) { console.error('[DOMREADY ERROR]', e); try { alert('Error al inicializar perfil: ' + (e && e.message ? e.message : e)); } catch(_){} }
 });

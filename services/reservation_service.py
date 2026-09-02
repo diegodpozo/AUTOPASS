@@ -308,6 +308,92 @@ class ReservationService:
         return {"status": "ok", "message": "Reserva abonada con éxito", "puntos_ganados": puntos_ganados}
 
     @staticmethod
+    def pay_reservation_mp(db: Session, user: models.User, res: models.Reservation, monto_a_cobrar: float, redemption_ticket_id: int = None):
+        """MARCA UNA RESERVA COMO PAGADA POR MERCADO PAGO (CHECKOUT PRO) SIN DESCONTAR SALDO.
+        El monto confirmado por Mercado Pago ya incluye el descuento por canje si correspondía."""
+        if res.estado_reserva in [ReservationStatus.CANCELADA, ReservationStatus.COMPLETADA]:
+            raise HTTPException(status_code=400, detail=f"No se puede abonar una reserva en estado '{res.estado_reserva}'")
+
+        if res.estado_pago == PaymentStatus.PAGADO:
+            return {"status": "ok", "message": "La reserva ya ha sido abonada", "aplicado": False}
+
+        # VALIDAR Y CONSUMIR DESCUENTO POR CANJE (si aplicó)
+        ticket_redencion = None
+        if redemption_ticket_id:
+            from sqlalchemy import or_
+            ticket_redencion = db.query(models.RedemptionTicket).filter(
+                models.RedemptionTicket.id == redemption_ticket_id,
+                models.RedemptionTicket.user_id == user.id,
+                models.RedemptionTicket.tipo_canje == "descuento_reserva",
+                models.RedemptionTicket.estado == "VIGENTE",
+                or_(models.RedemptionTicket.sucursal == res.sucursal_nombre, models.RedemptionTicket.sucursal == None)
+            ).first()
+            if not ticket_redencion:
+                raise HTTPException(status_code=400, detail="El descuento seleccionado no es válido para esta reserva o sucursal")
+
+        # ACTUALIZACION DE ESTADO
+        res.estado_pago = PaymentStatus.PAGADO
+        res.estado_reserva = ReservationStatus.ACTIVA
+        res.fecha_pago = datetime.datetime.now().isoformat()
+        if ticket_redencion:
+            res.monto_total = monto_a_cobrar
+            res.monto_reembolsado = 0.0
+            ticket_redencion.estado = "USADO"
+            ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
+            ticket_redencion.reserva_id = res.id
+
+        # ACREDITACION DE PUNTOS POR LEALTAD (SOBRE LO EFECTIVAMENTE ABONADO)
+        puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
+        user.puntos_acumulados += puntos_ganados
+
+        db.add(models.PointsLog(
+            user_id=user.id,
+            cantidad=puntos_ganados,
+            motivo=f"Reserva (Mercado Pago): {res.patente}",
+            fecha=datetime.datetime.now().isoformat()
+        ))
+
+        db.commit()
+
+        # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS YA INICIADAS (NO-OP desde v9.5)
+        if res.tipo_estadia != "hora" and res.sucursal_nombre:
+            now_str = TimeService.now_str()
+            if res.fecha_inicio <= now_str:
+                _reservar_plaza_en_aforo(db, res)
+
+        # ENVIAR MAIL DE CONFIRMACION
+        res_info = {
+            "id": res.id,
+            "sucursal": res.sucursal_nombre,
+            "direccion": res.sucursal_info,
+            "patente": res.patente,
+            "fecha_inicio": res.fecha_inicio,
+            "fecha_fin": res.fecha_fin,
+            "costo": res.monto_total
+        }
+        EmailService.send_reservation_confirmation(user.email, user.nombre, res_info)
+
+        try:
+            from services.user_notification_service import UserNotificationService
+            UserNotificationService.create_notification(
+                db, user.id, "RESERVATION_CONFIRMED",
+                f"Reserva #{res.id} confirmada",
+                f"Se abonó con Mercado Pago tu reserva en {res.sucursal_nombre} por ${res.monto_total:,.2f}.",
+                res.id
+            )
+            if puntos_ganados > 0:
+                UserNotificationService.create_notification(
+                    db, user.id, "POINTS_EARNED",
+                    "¡Puntos AutoPass!",
+                    f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente}).",
+                    res.id
+                )
+        except Exception as e:
+            print(f"[ERROR NOTIF] No se pudo notificar pago de reserva MP: {e}")
+
+        return {"status": "ok", "message": "Reserva abonada con éxito", "puntos_ganados": puntos_ganados, "aplicado": True}
+
+    @staticmethod
     def simulate_refund(db: Session, res: models.Reservation):
         """CALCULA EL REEMBOLSO POTENCIAL SIN EJECUTAR LA CANCELACION."""
         # 1. VERIFICACION DE PRESENCIA FISICA

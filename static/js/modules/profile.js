@@ -1,5 +1,5 @@
 import api from './api.js';
-import { toTitle, formatDate, formatNum, showToast, showConfirm } from './utils.js';
+import { toTitle, formatDate, formatNum, formatPlate, showToast, showConfirm } from './utils.js';
 import { closeModal } from './ui.js';
 
 /**
@@ -291,4 +291,46 @@ export async function processRecharge(amount) {
     const res = await api.post('/user/recharge-balance', { monto: amount });
     if (res.ok) { showToast(`¡Carga de $${formatNum(amount)} exitosa!`, 'success'); await loadProfile(); return true; }
     else { showToast(res.error, 'error'); return false; }
+}
+
+export async function loadActiveStays() {
+    const container = document.getElementById('active-stays-list');
+    const wrap = document.getElementById('container-active-stays');
+    if (!container) return;
+
+    const res = await api.get('/user/balance/active-stays');
+    if (!res.ok) {
+        if (wrap) wrap.style.display = 'none';
+        return;
+    }
+    const stays = (res.data || []).filter(s => !s.pago_confirmado);
+    if (stays.length === 0) {
+        if (wrap) wrap.style.display = 'none';
+        return;
+    }
+    if (wrap) wrap.style.display = 'block';
+    container.innerHTML = stays.map(s => `
+        <div class="stay-item-premium">
+            <div class="stay-plate">${formatPlate(s.patente)}</div>
+            <div class="stay-info">
+                <span class="stay-label">INGRESO</span>
+                <span class="stay-value">${formatDate(s.ingreso || '')}</span>
+            </div>
+            <div class="stay-info">
+                <span class="stay-label">DEUDA</span>
+                <span class="stay-value" style="color:var(--dorado);">$${formatNum(s.deuda || 0)}</span>
+            </div>
+            <button class="btn-ultra btn-ultra-mp" onclick="payStayWithMp('${s.id}','${s.patente}')"><i class="fab fa-google-pay"></i> PAGAR CON MP</button>
+        </div>`).join('');
+}
+
+export async function payStayWithMp(id, patente) {
+    if (!await showConfirm('PAGAR ESTADÍA CON MERCADO PAGO', `Vas a abonar la estadía de la patente <b>${formatPlate(patente)}</b> con Mercado Pago.`)) return;
+    const res = await api.post('/user/mercadopago/checkout', { tipo: 'estadia', access_log_id: id });
+    if (res.ok && res.data && res.data.init_point) {
+        showToast('Redirigiendo a Mercado Pago...', 'info');
+        window.location.href = res.data.init_point;
+    } else {
+        showToast(res.error || 'Error al crear el pago', 'error');
+    }
 }

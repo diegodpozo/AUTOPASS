@@ -21,9 +21,13 @@ Servo servoSalida;
 const int PIN_SERVO_ENTRADA = 9;
 const int PIN_SERVO_SALIDA  = 10;
 
-// Ángulos de Servomotor
-const int ANGLO_CERRADO = 0;   // Posición barrera horizontal (Cerrada)
-const int ANGLO_ABIERTO = 90;  // Posición barrera vertical (Abierta)
+// Ángulos de Servomotor Entrada (invertidos)
+const int ANGLO_CERRADO_ENTRADA = 180;   // Posición barrera horizontal (Cerrada)
+const int ANGLO_ABIERTO_ENTRADA = 90;    // Posición barrera vertical (Abierta)
+
+// Ángulos de Servomotor Salida (invertidos)
+const int ANGLO_CERRADO_SALIDA = 180;    // Posición barrera horizontal (Cerrada)
+const int ANGLO_ABIERTO_SALIDA = 90;     // Posición barrera vertical (Abierta)
 
 // Tiempo de Auto-Cierre tras apertura (en milisegundos)
 const unsigned long TIEMPO_AUTOCIERRE = 5000; 
@@ -43,8 +47,8 @@ void setup() {
   servoSalida.attach(PIN_SERVO_SALIDA);
   
   // Posición inicial: Barreras cerradas
-  servoEntrada.write(ANGLO_CERRADO);
-  servoSalida.write(ANGLO_CERRADO);
+  servoEntrada.write(ANGLO_CERRADO_ENTRADA);
+  servoSalida.write(ANGLO_CERRADO_SALIDA);
   
   Serial.println("==========================================");
   Serial.println("   AUTOPASS HARDWARE READY - ARDUINO UNO  ");
@@ -53,27 +57,27 @@ void setup() {
 }
 
 void abrirBarreraEntrada() {
-  servoEntrada.write(ANGLO_ABIERTO);
+  servoEntrada.write(ANGLO_ABIERTO_ENTRADA);
   entradaAbierta = true;
   timerEntrada = millis();
   Serial.println("OK: OPEN_ENTRADA");
 }
 
 void cerrarBarreraEntrada() {
-  servoEntrada.write(ANGLO_CERRADO);
+  servoEntrada.write(ANGLO_CERRADO_ENTRADA);
   entradaAbierta = false;
   Serial.println("OK: CLOSE_ENTRADA");
 }
 
 void abrirBarreraSalida() {
-  servoSalida.write(ANGLO_ABIERTO);
+  servoSalida.write(ANGLO_ABIERTO_SALIDA);
   salidaAbierta = true;
   timerSalida = millis();
   Serial.println("OK: OPEN_SALIDA");
 }
 
 void cerrarBarreraSalida() {
-  servoSalida.write(ANGLO_CERRADO);
+  servoSalida.write(ANGLO_CERRADO_SALIDA);
   salidaAbierta = false;
   Serial.println("OK: CLOSE_SALIDA");
 }
@@ -108,3 +112,4 @@ void loop() {
     cerrarBarreraSalida();
   }
 }
+

@@ -104,7 +104,9 @@ export function renderReservaCard(r, isFeatured) {
             <div class="detail-item-ultra"><i class="fas fa-hourglass-end"></i><div class="detail-info-ultra"><span class="detail-label-ultra">Hasta</span><span class="detail-value-ultra">${formatDate(r.fecha_fin)}</span></div></div>
         </div>
         <div class="reserva-actions-ultra">
-            ${r.estado_pago === 'Pagado' ? `<button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> MI PASE DIGITAL</button>` : `<button class="btn-ultra btn-ultra-primary" onclick="payReservation(${r.id})"><i class="fas fa-credit-card"></i> PAGAR AHORA</button>`}
+            ${r.estado_pago === 'Pagado' ? `<button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> MI PASE DIGITAL</button>` : `
+            <button class="btn-ultra btn-ultra-primary" onclick="payReservation(${r.id})"><i class="fas fa-wallet"></i> PAGAR CON SALDO</button>
+            <button class="btn-ultra btn-ultra-mp" onclick="payReservationWithMp(${r.id})"><i class="fab fa-google-pay"></i> PAGAR CON MP</button>`}
             <button class="btn-ultra btn-ultra-secondary" onclick="prepareEditReservation(${r.id})" ${isStarted || r.estado_reserva === 'Activa' ? 'disabled' : ''}><i class="fas fa-pen"></i></button>
             <button class="btn-ultra btn-ultra-danger" onclick="cancelReservation(${r.id})"><i class="fas fa-trash"></i></button>
         </div>

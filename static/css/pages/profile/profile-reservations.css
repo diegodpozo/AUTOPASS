@@ -397,6 +397,17 @@
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+.btn-ultra-mp {
+    background: rgba(0, 158, 227, 0.12);
+    color: #57c8ff;
+    border: 1px solid rgba(0, 158, 227, 0.35);
+}
+
+.btn-ultra-mp:hover:not(:disabled) {
+    background: rgba(0, 158, 227, 0.25);
+    transform: translateY(-2px);
+}
+
 .btn-ultra:disabled {
     opacity: 0.3;
     cursor: not-allowed;

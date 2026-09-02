@@ -111,6 +111,40 @@ class BillingService:
         return max(1, puntos) if amount > 0 else 0
 
     @staticmethod
+    def apply_stay_mp_payment(db: Session, user, log: "models.AccessLog", monto: float) -> dict:
+        """MARCA UNA ESTADIA COMO PAGADA POR MERCADO PAGO (CHECKOUT PRO) SIN DESCONTAR SALDO."""
+        if log.pago_confirmado:
+            return {"status": "ok", "message": "La estadía ya ha sido abonada", "aplicado": False}
+
+        log.pago_confirmado = True
+        log.metodo_pago = "MERCADOPAGO"
+        log.costo_estadia = monto
+        log.fecha_pago = datetime.datetime.now().isoformat()
+
+        # ACREDITACION DE BENEFICIOS POR FIDELIZACION
+        vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == log.patente_detectada).first()
+        puntos_ganados = BillingService.calculate_points(monto)
+        if vehiculo and vehiculo.owner:
+            vehiculo.owner.puntos_acumulados += puntos_ganados
+            db.add(models.PointsLog(
+                user_id=vehiculo.owner.id,
+                cantidad=puntos_ganados,
+                motivo=f"Estadía abonada (Mercado Pago): {log.patente_detectada}",
+                fecha=datetime.datetime.now().isoformat()
+            ))
+        elif user:
+            user.puntos_acumulados += puntos_ganados
+            db.add(models.PointsLog(
+                user_id=user.id,
+                cantidad=puntos_ganados,
+                motivo=f"Estadía abonada (Mercado Pago): {log.patente_detectada}",
+                fecha=datetime.datetime.now().isoformat()
+            ))
+
+        db.commit()
+        return {"status": "ok", "monto_cobrado": monto, "puntos_ganados": puntos_ganados, "aplicado": True}
+
+    @staticmethod
     def process_payment(db: Session, plate: str) -> dict:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
         from services.time_service import TimeService

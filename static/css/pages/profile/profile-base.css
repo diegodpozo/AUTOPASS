@@ -605,6 +605,81 @@
     margin: 0 auto 40px;
 }
 
+/* --- MERCADO PAGO: ESTADÍAS EN CURSO (v9.14.0) --- */
+.active-stays-card {
+    max-width: 1100px;
+    margin: 0 auto 40px;
+    background: linear-gradient(145deg, #111 0%, #050505 100%);
+    border: 1px solid rgba(0, 158, 227, 0.18) !important;
+    border-radius: 24px;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.active-stays-card .card-header-premium {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    letter-spacing: 1.2px;
+    font-weight: 800;
+    color: var(--dorado);
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.12);
+}
+
+.active-stays-body {
+    padding: 12px 24px 18px;
+}
+
+.stay-item-premium {
+    display: grid;
+    grid-template-columns: 160px 1fr 1fr auto;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stay-item-premium:last-child {
+    border-bottom: none;
+}
+
+.stay-item-premium .stay-plate {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #fff;
+    font-size: 1.05rem;
+}
+
+.stay-item-premium .stay-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stay-item-premium .stay-label {
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 700;
+}
+
+.stay-item-premium .stay-value {
+    font-size: 0.85rem;
+    color: #fff;
+}
+
+@media (max-width: 680px) {
+    .stay-item-premium {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .stay-item-premium .stay-plate { grid-column: 1 / -1; }
+    .stay-item-premium .btn-ultra { grid-column: 1 / -1; width: 100%; justify-content: center; }
+}
+
 /* --- UNIFIED ACCOUNT SURFACE (v8.1.0) --- */
 .account-hub-card {
     background: linear-gradient(145deg, #111 0%, #050505 100%) !important;
