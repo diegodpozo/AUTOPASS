@@ -1,5 +1,13 @@
 # Estado del Proyecto: AUTOPASS (Actualizado 2026-08-28)
 
+### 🚀 Hitos Recientes - Versión 9.14.0 (Mercado Pago · Checkout Pro)
+- [x] **Pagos con Mercado Pago (modo pruebas)**: Nuevo módulo `services/mercadopago_service.py`, modelo `MercadoPagoPayment` y migración `c9d8e7f6a5b4_add_mercadopago_payments`. Integración de **Checkout Pro** (redirección) para pagar **reservas** y **estadías en curso** a través de `POST /v1/user/mercadopago/checkout` con confirmación por retorno (`/success|pending|failure`) y webhook (`/webhook`).
+- [x] **Estadías en Curso en Perfil**: Sección "ESTADÍAS EN CURSO" en la pestaña Cuenta (`templates/profile/tabs/cuenta.html`, `loadActiveStays`) con botón directo "PAGAR CON MP"; el endpoint `active-stays` ahora expone el `id` del `AccessLog`.
+- [x] **Pago de Reserva directo con MP**: Botón "PAGAR CON MP" en las tarjetas de reservas no pagadas (`reservas-list.js`), con descuento aplicado automáticamente si el usuario posee un canje `descuento_reserva` vigente.
+- [x] **Configuración & Tests**: Variables `MP_ACCESS_TOKEN`, `MP_PUBLIC_KEY`, `MP_WEBHOOK_URL` y `MP_PREFERENCE_EXPIRE_MINUTES` en `.env`/`.env.example` (placeholder hasta validar sandbox). Nueva suite `tests/test_mercadopago.py` (7 casos: checkout estadía, BASE_URL https obligatorio, confirmación reserva sin descuento de saldo, idempotencia, estadía aprobada, rechazo, y 503 sin credenciales). Suite total: **42 tests en verde**.
+- [x] **Validación End-to-End (sandbox real)**: Credenciales de prueba verificadas contra la API (`users/me` → `test_user`, site MLA) y preferencia real creada en MP con `init_point` sandbox.
+- [x] **Aprendizajes de la integración**: (1) MP **rechaza** `http://` en `back_urls` → `BASE_URL` obligatorio en `https` (se agregó validación explícita en `create_payment`); (2) ngrok como túnel de pruebas (Defender lo marca PUA: requiere exclusión + authtoken; la primera visita muestra interstitial "Visit Site"); (3) la sesión de AUTOPASS es por **origen** → hay que loguearse en el dominio del túnel (no en `localhost`) para no quedar deslogueado al volver de MP; (4) el pago test se aplicó correctamente en BD (intención `APROBADO`, reserva `Pagado`).
+
 ### 🚀 Hitos Recientes (Agosto 2026) - Post v9.12.0 (OCR Engine Overhaul & Estadísticas OCR)
 - [x] **Motor OCR Lazy/Opcional (v9.13.0)**: `alpr/ocr_engine.py` ya no rompe el arranque si ningún motor OCR importa, loguea el motivo exacto (`RapidOCR` y/o `PaddleOCR`) y agrega diagnóstico de motor en el setup. El pipeline sigue operativo con aviso explícito.
 - [x] **numpy Marker por Versión de Python**: `numpy>=1.26.0,<2.3.0` para Python < 3.14 y `numpy>=2.3.0,<2.5.0` para Python ≥ 3.14 (numpy < 2.3.0 no tiene wheels para Python 3.14).

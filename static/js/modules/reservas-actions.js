@@ -74,3 +74,36 @@ export async function payReservation(id) {
     }
     else { showToast(res.error || 'Error en el pago', 'error'); }
 }
+
+export async function payReservationWithMp(id) {
+    // 1. REUTILIZAR DESCUENTO DE RESERVA DISPONIBLE (si aplica)
+    let redemptionTicketId = null;
+
+    const resRes = await api.get('/user/reservations');
+    if (resRes.ok) {
+        const r = resRes.data.find(item => item.id === id);
+        if (r && r.sucursal_nombre) {
+            try {
+                const resAvail = await api.get(`/user/redemptions/available?sucursal=${encodeURIComponent(r.sucursal_nombre)}`);
+                if (resAvail.ok && resAvail.data.length > 0) {
+                    const t = resAvail.data[0];
+                    redemptionTicketId = t.id;
+                }
+            } catch (e) {}
+        }
+    }
+
+    if (!await showConfirm('PAGAR CON MERCADO PAGO', 'Serás redirigido a Mercado Pago para abonar esta reserva de forma segura.')) return;
+
+    const res = await api.post('/user/mercadopago/checkout', {
+        tipo: 'reserva',
+        reserva_id: id,
+        redemption_ticket_id: redemptionTicketId,
+    });
+    if (res.ok && res.data && res.data.init_point) {
+        showToast('Redirigiendo a Mercado Pago...', 'info');
+        window.location.href = res.data.init_point;
+    } else {
+        showToast(res.error || 'Error al crear el pago', 'error');
+    }
+}

@@ -19,3 +19,6 @@ from .notification import (
 from .support import (
     SupportTicketCreate, SupportTicketUpdate, SupportTicketResponse, SupportTicketReply
 )
+from .mercadopago import (
+    MercadoPagoCheckout, MercadoPagoCheckoutResponse
+)

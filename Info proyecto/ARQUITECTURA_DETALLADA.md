@@ -19,7 +19,7 @@ AUTOPASS/
 │   ├── user/           # User portal (profile, vehicles, reservations, balance, fidelization, notifications, support)
 │   ├── parking/        # Access control (access, status, utils)
 │   └── system/         # System management (health, cameras, video, common)
-├── services/           # Inteligencia de Negocio (13 servicios)
+├── services/           # Inteligencia de Negocio (14 servicios)
 ├── repositories/       # Data Access (user, reservation)
 ├── scripts/            # Utilidades (arduino_bridge, generate_test_plates, test_video, setup/run_server)
 ├── tests/              # Pruebas unitarias (pytest)
@@ -62,6 +62,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **`SupportService`**: CRUD de tickets de soporte (`SupportTicket`) con aislamiento por sucursal según rol: los clientes crean/consultan sus tickets (`/v1/user/support-tickets`) y los operadores/admin los gestionan y responden (`/v1/admin/support-tickets`).
 - **`WorkerService`**: 3 hilos de fondo: (1) limpieza de reservas cada 300s (`auto_finalize_all_reservations`), (2) recordatorios 31 min antes del inicio, (3) auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio.
 - **`TimeService`**: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
+- **`MercadoPagoService`** (v9.14.0): Integración Checkout Pro por redirección. `create_payment` crea la preferencia (`MercadoPagoPayment`) y `confirm_payment` consulta MP (por `payment_id` o `external_reference`), valida `approved` + monto e **aplica de forma idempotente** (véase §6). No usa SDK: se llama a la API vía `requests` (`MP_API_BASE = https://api.mercadopago.com`).
 
 ### 2. Capa de Datos (Modelos y Enums)
 - **Seguridad de Tipos:** Se han implementado Enums en `models/enums.py` para eliminar "strings mágicos" (ej: `UserRole`, `VehicleType`, `ReservationStatus`).
@@ -76,6 +77,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **Reservas:** `Reservation` incluye `monto_reembolsado`, `sucursal_info` (JSON), `cliente_nombre`, `tipo_estadia`.
 - **Usuarios:** `User` incluye `apellido`, `dni`, `telefono`, `direccion`, `saldo`, `is_blocked` (bloqueo administrativo, impide login) e `is_deleted` (borrado lógico/soft delete). `delete_user` marca `is_deleted = True` y todas las consultas filtran `is_deleted == False`.
 - **Sesiones:** `UserSession` (`user_sessions`) registra cada login con `device_id`, `user_agent` e `ip_address`, habilitando la detección de inicios de sesión desde otros dispositivos (`NEW_DEVICE_LOGIN`).
+- **Pagos MP (v9.14.0):** Modelo `MercadoPagoPayment` (`mercadopago_payments`): `tipo` (`reserva`/`estadia`), `reserva_id`, `access_log_id`, `redemption_ticket_id` (descuento), `patente`, `monto`, `moneda` (ARS), `external_reference` único, `preference_id`, `payment_id`, `estado` (PENDIENTE/APROBADO/FALLIDO/CANCELADO), `mp_status`, fechas. El autoincremental `id` se usa en la referencia `AP-{TIPO}-{id}-{uuid8}`.
 
 ---
 
@@ -177,6 +179,26 @@ Servicio independiente de visión artificial modularizado en el paquete `alpr/` 
 - **Comunicación:** MQTT con CallbackAPIVersion.VERSION2 (ESP32) y Serie USB vía pyserial (Arduino Uno, auto-detección de puerto con `arduino_bridge.py`).
 - **Tópicos configurables vía .env:** `MQTT_TOPIC_ENTRADA`, `MQTT_TOPIC_SALIDA`.
 - **Componentes:** Servomotor (barrera), sensor ultrasónico (detección de paso), pantalla LCD (mensajes al conductor).
+
+---
+
+### 6. Capa Mercado Pago (Checkout Pro - v9.14.0)
+
+**Flujo de pago (reserva o estadía):**
+1. `create_payment` (`POST /v1/user/mercadopago/checkout`, autenticado): valida propiedad y estados, calcula el monto (reserva: con descuento por canje `descuento_reserva` vigente; estadía: `BillingService.calculate_debt`), registra la intención `MercadoPagoPayment` (estado `PENDIENTE`, `external_reference` `AP-{TIPO}-{id}-{uuid8}`) y crea la preferencia en MP con `back_urls`, `auto_return=approved`, `expires=True`, devolviendo el `init_point` (sandbox en pruebas).
+2. El usuario paga en el sitio de Mercado Pago.
+3. **Confirmación** por **retorno** (`GET /v1/user/mercadopago/success|pending|failure`, sin auth → redirigen a `/perfil?mp_status=...&mp_tipo=...`) y/o **webhook** (`POST /v1/user/mercadopago/webhook`). `confirm_payment` consulta MP (por `payment_id` o `external_reference`) y:
+   - `approved` + monto coincidente → `_aplicar_pago` (idempotente: si `estado == APROBADO` no re-aplica).
+     - Reserva: `ReservationService.pay_reservation_mp` → `PAGADO`/`ACTIVA` + puntos + notificaciones (y consume el ticket de descuento si se usó).
+     - Estadía: `BillingService.apply_stay_mp_payment` → `pago_confirmado=True`, `metodo_pago="MERCADOPAGO"`, `costo_estadia` = monto MP, acreditando puntos.
+     - **En ningún caso se descuenta `users.saldo`.**
+   - Otro estado (`rejected`/`pending`) → no aplica; marca `estado` (`FALLIDO` o pendiente) según corresponda.
+
+**Reglas de extensión:**
+- MP rechaza `http://` en los `back_urls` → `BASE_URL` debe ser `https://` (validación explícita en `create_payment`).
+- `notification_url` solo se envía si `MP_WEBHOOK_URL` está definido (evita rechazos con URLs locales).
+- Callbacks **públicos** (sin auth) + confirmación **idempotente** contra MP (nunca confiar solo en el payload del webhook).
+- Tabla `mercadopago_payments` (migración Alembic `c9d8e7f6a5b4`). `external_reference` es nullable (el `id` se asigna al insertar).
 
 ---
 1. **Rutas Delgadas:** Los controladores en `routes/` no deben contener lógica de negocio. Solo delegan a los servicios correspondientes.
