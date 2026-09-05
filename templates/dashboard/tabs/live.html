@@ -9,54 +9,81 @@
         </a>
     </div>
 
-    <!-- ESTADÍSTICAS DE CAPACIDAD EN FILA -->
-    <div class="stats-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
-        <div class="stat-card-premium" style="flex: 1;" title="Disponibilidad de cocheras para autos">
-            <div class="stat-icon"><i class="fas fa-car"></i></div>
-            <div class="stat-info">
-                <span class="label">Autos</span>
-                <span class="value" id="stat-free-total">-- / --</span>
+    <!-- ESTADÍSTICAS DE CAPACIDAD POR VEHÍCULO (GENERAL + RESERVAS) -->
+    <div class="vehicle-stats-grid">
+        <!-- TARJETA AUTOS -->
+        <div class="vehicle-stat-card" title="Disponibilidad de cocheras y reservas para autos">
+            <div class="vehicle-stat-header">
+                <div class="vehicle-stat-icon"><i class="fas fa-car"></i></div>
+                <span class="vehicle-stat-title">AUTOS</span>
             </div>
-            <div class="stat-progress">
-                <div class="progress-bar"><div id="bar-free" class="progress-fill" style="width: 0%"></div></div>
+            
+            <div class="vehicle-stat-metrics">
+                <div class="metric-row metric-general">
+                    <span class="metric-label">General:</span>
+                    <span class="metric-value" id="stat-free-total">-- / --</span>
+                </div>
+                <div class="metric-row metric-reservas">
+                    <span class="metric-label"><i class="fas fa-bookmark"></i> Reservas:</span>
+                    <span class="metric-value" id="stat-res-autos-val">-- / --</span>
+                </div>
             </div>
-            <div class="stat-sub-labels">
-                <span class="text-xs text-muted">Libres</span>
-                <span id="stat-free" class="text-xs" style="display:none"></span>
-                <span id="stat-total" class="text-xs" style="display:none"></span>
+            
+            <div class="vehicle-stat-progress">
+                <div class="progress-bar"><div id="bar-free" class="progress-fill"></div></div>
             </div>
+            <span id="stat-free" style="display:none"></span>
+            <span id="stat-total" style="display:none"></span>
         </div>
 
-        <div class="stat-card-premium" style="flex: 1;" title="Disponibilidad de lugares para motos">
-            <div class="stat-icon"><i class="fas fa-motorcycle"></i></div>
-            <div class="stat-info">
-                <span class="label">Motos</span>
-                <span class="value" id="stat-free-total-motos">-- / --</span>
+        <!-- TARJETA MOTOS -->
+        <div class="vehicle-stat-card" title="Disponibilidad de lugares y reservas para motos">
+            <div class="vehicle-stat-header">
+                <div class="vehicle-stat-icon"><i class="fas fa-motorcycle"></i></div>
+                <span class="vehicle-stat-title">MOTOS</span>
             </div>
-            <div class="stat-progress">
-                <div class="progress-bar"><div id="bar-free-motos" class="progress-fill" style="width: 0%"></div></div>
+            
+            <div class="vehicle-stat-metrics">
+                <div class="metric-row metric-general">
+                    <span class="metric-label">General:</span>
+                    <span class="metric-value" id="stat-free-total-motos">-- / --</span>
+                </div>
+                <div class="metric-row metric-reservas">
+                    <span class="metric-label"><i class="fas fa-bookmark"></i> Reservas:</span>
+                    <span class="metric-value" id="stat-res-motos-val">-- / --</span>
+                </div>
             </div>
-            <div class="stat-sub-labels">
-                <span class="text-xs text-muted">Libres</span>
-                <span id="stat-free-motos" class="text-xs" style="display:none"></span>
-                <span id="stat-total-motos" class="text-xs" style="display:none"></span>
+            
+            <div class="vehicle-stat-progress">
+                <div class="progress-bar"><div id="bar-free-motos" class="progress-fill"></div></div>
             </div>
+            <span id="stat-free-motos" style="display:none"></span>
+            <span id="stat-total-motos" style="display:none"></span>
         </div>
 
-        <div class="stat-card-premium" style="flex: 1;" title="Disponibilidad de lugares para camionetas">
-            <div class="stat-icon"><i class="fas fa-truck-pickup"></i></div>
-            <div class="stat-info">
-                <span class="label">Camionetas</span>
-                <span class="value" id="stat-free-total-camionetas">-- / --</span>
+        <!-- TARJETA CAMIONETAS -->
+        <div class="vehicle-stat-card" title="Disponibilidad de lugares y reservas para camionetas">
+            <div class="vehicle-stat-header">
+                <div class="vehicle-stat-icon"><i class="fas fa-truck-pickup"></i></div>
+                <span class="vehicle-stat-title">CAMIONETAS</span>
             </div>
-            <div class="stat-progress">
-                <div class="progress-bar"><div id="bar-free-camionetas" class="progress-fill" style="width: 0%"></div></div>
+            
+            <div class="vehicle-stat-metrics">
+                <div class="metric-row metric-general">
+                    <span class="metric-label">General:</span>
+                    <span class="metric-value" id="stat-free-total-camionetas">-- / --</span>
+                </div>
+                <div class="metric-row metric-reservas">
+                    <span class="metric-label"><i class="fas fa-bookmark"></i> Reservas:</span>
+                    <span class="metric-value" id="stat-res-camionetas-val">-- / --</span>
+                </div>
             </div>
-            <div class="stat-sub-labels">
-                <span class="text-xs text-muted">Libres</span>
-                <span id="stat-free-camionetas" class="text-xs" style="display:none"></span>
-                <span id="stat-total-camionetas" class="text-xs" style="display:none"></span>
+            
+            <div class="vehicle-stat-progress">
+                <div class="progress-bar"><div id="bar-free-camionetas" class="progress-fill"></div></div>
             </div>
+            <span id="stat-free-camionetas" style="display:none"></span>
+            <span id="stat-total-camionetas" style="display:none"></span>
         </div>
     </div>
 
