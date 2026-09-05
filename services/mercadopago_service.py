@@ -77,18 +77,11 @@ def _monto_reserva_con_descuento(db: Session, user: "models.User", res: "models.
     Devuelve (monto_a_cobrar, ticket_redencion)."""
     if not redemption_ticket_id:
         return res.monto_total, None
-    from sqlalchemy import or_
-    ticket = db.query(models.RedemptionTicket).filter(
-        models.RedemptionTicket.id == redemption_ticket_id,
-        models.RedemptionTicket.user_id == user.id,
-        models.RedemptionTicket.tipo_canje == "descuento_reserva",
-        models.RedemptionTicket.estado == "VIGENTE",
-        or_(models.RedemptionTicket.sucursal == res.sucursal_nombre, models.RedemptionTicket.sucursal == None)
-    ).first()
-    if not ticket:
-        raise HTTPException(status_code=400, detail="El descuento seleccionado no es válido para esta reserva o sucursal")
+    from services.reservation_service import ReservationService
+    ticket = ReservationService.validate_redemption_ticket(db, user.id, redemption_ticket_id, res.sucursal_nombre)
     porc = ticket.valor_descuento or 0
     return round(res.monto_total * (1 - porc / 100.0), 2), ticket
+
 
 
 def create_payment(db: Session, user: "models.User", data) -> dict:

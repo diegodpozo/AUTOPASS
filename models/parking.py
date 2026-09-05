@@ -12,6 +12,14 @@ class ParkingAforo(Base):
     ocupacion_motos = Column(Integer, default=0)
     capacidad_camionetas = Column(Integer, default=5)
     ocupacion_camionetas = Column(Integer, default=0)
+    capacidad_reservas_autos = Column(Integer, default=5)
+    ocupacion_reservas_autos = Column(Integer, default=0)
+    capacidad_reservas_motos = Column(Integer, default=3)
+    ocupacion_reservas_motos = Column(Integer, default=0)
+    capacidad_reservas_camionetas = Column(Integer, default=2)
+    ocupacion_reservas_camionetas = Column(Integer, default=0)
+    capacidad_reservas = Column(Integer, default=10)
+    ocupacion_reservas = Column(Integer, default=0)
     ultima_actualizacion = Column(String)
     sucursal = Column(String, unique=True, nullable=True)
 
@@ -41,7 +49,7 @@ class AccessLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     patente_detectada = Column(String)
     normalized_patente = Column(String, index=True, nullable=True)
-    tipo_evento = Column(String) # 'ENTRADA' O 'SALIDA'
+    tipo_evento = Column(String, index=True) # 'ENTRADA' O 'SALIDA'
     tipo_vehiculo = Column(String, default="Auto") # 'AUTO' O 'MOTO'
     reserva_id = Column(Integer, ForeignKey("reservations.id"), nullable=True)
     floor_id = Column(Integer, ForeignKey("parking_floors.id"), nullable=True)
@@ -51,7 +59,7 @@ class AccessLog(Base):
     pago_confirmado = Column(Boolean, default=False)
     metodo_pago = Column(String, nullable=True) # 'DIGITAL' O 'CAJA'
     costo_estadia = Column(Float, default=0.0)
-    sucursal = Column(String, nullable=True)
+    sucursal = Column(String, nullable=True, index=True)
     ocr_time = Column(Float, nullable=True)
 
     reservation = relationship("Reservation", back_populates="access_logs")
@@ -85,5 +93,13 @@ class ParkingFloor(Base):
     ocupacion_motos = Column(Integer, default=0)
     capacidad_camionetas = Column(Integer, default=5)
     ocupacion_camionetas = Column(Integer, default=0)
+    capacidad_reservas_autos = Column(Integer, default=5)
+    ocupacion_reservas_autos = Column(Integer, default=0)
+    capacidad_reservas_motos = Column(Integer, default=3)
+    ocupacion_reservas_motos = Column(Integer, default=0)
+    capacidad_reservas_camionetas = Column(Integer, default=2)
+    ocupacion_reservas_camionetas = Column(Integer, default=0)
+    capacidad_reservas = Column(Integer, default=10)
+    ocupacion_reservas = Column(Integer, default=0)
 
     branch = relationship("ParkingBranch", back_populates="floors")

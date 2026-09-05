@@ -122,3 +122,102 @@ def test_delete_read_notifications_route(db_session: Session):
     delete_notification(notif_id=n2.id, db=db_session, current_user=user)
     assert UserNotificationService.get_total_count(db_session, user.id) == 0
 
+
+def test_worker_reminders_no_duplicate_on_delete(db_session: Session):
+    from services.time_service import TimeService
+    import datetime
+
+    user = models.User(
+        email="worker_rem@example.com",
+        password_hash="hash",
+        nombre="Worker",
+        apellido="Rem",
+        dni="12312312",
+        rol="user"
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    now = TimeService.now()
+    inicio = (now + datetime.timedelta(minutes=20)).strftime("%Y-%m-%d %H:%M")
+    fin = (now + datetime.timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
+
+    res = models.Reservation(
+        user_id=user.id,
+        patente="AA123AA",
+        fecha_inicio=inicio,
+        fecha_fin=fin,
+        monto_total=1000.0,
+        estado_pago="Pendiente",
+        estado_reserva="Pendiente",
+        sucursal_nombre="AUTOPASS Morón",
+        recordatorio_confirmado=False
+    )
+    db_session.add(res)
+    db_session.commit()
+
+    # 1. Correr _process_reminders la primera vez
+    WorkerService._process_reminders(db_session)
+    notifs = UserNotificationService.get_user_notifications(db_session, user.id)
+    assert len(notifs) == 1
+    notif_id = notifs[0].id
+
+    # 2. El usuario elimina la notificacion recibida
+    UserNotificationService.delete_notification(db_session, notif_id, user.id)
+    assert UserNotificationService.get_total_count(db_session, user.id) == 0
+
+    # 3. Correr _process_reminders nuevamente (proximo loop del worker)
+    WorkerService._process_reminders(db_session)
+    # Debe seguir en 0 porque recordatorio_confirmado quedo en True en la BD
+    assert UserNotificationService.get_total_count(db_session, user.id) == 0
+
+
+def test_worker_started_reservations_no_duplicate_on_delete(db_session: Session):
+    from services.time_service import TimeService
+    import datetime
+
+    user = models.User(
+        email="worker_start@example.com",
+        password_hash="hash",
+        nombre="Worker",
+        apellido="Start",
+        dni="32132132",
+        rol="user"
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    now = TimeService.now()
+    inicio = (now - datetime.timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M")
+    fin = (now + datetime.timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
+
+    res = models.Reservation(
+        user_id=user.id,
+        patente="BB456BB",
+        fecha_inicio=inicio,
+        fecha_fin=fin,
+        monto_total=1500.0,
+        estado_pago="Pagado",
+        estado_reserva="Pendiente",
+        sucursal_nombre="AUTOPASS Morón"
+    )
+    db_session.add(res)
+    db_session.commit()
+
+    # 1. Correr _process_started_reservations la primera vez
+    WorkerService._process_started_reservations(db_session)
+    notifs = UserNotificationService.get_user_notifications(db_session, user.id)
+    assert len(notifs) == 1
+    notif_id = notifs[0].id
+    assert res.estado_reserva == "Activa"
+
+    # 2. El usuario borra la notificacion
+    UserNotificationService.delete_notification(db_session, notif_id, user.id)
+    assert UserNotificationService.get_total_count(db_session, user.id) == 0
+
+    # 3. Correr _process_started_reservations en el siguiente loop (30s despues)
+    WorkerService._process_started_reservations(db_session)
+    # Debe seguir en 0 porque la reserva ya paso a "Activa"
+    assert UserNotificationService.get_total_count(db_session, user.id) == 0
+
+

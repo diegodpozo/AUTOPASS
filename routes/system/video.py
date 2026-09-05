@@ -9,7 +9,7 @@ from core.database import get_db
 from core.security import get_operational_user, decode_access_token
 from core.config import settings
 from core.logger import get_logger
-from routes.system.common import manager
+from routes.system.common import manager, normalize_system_name
 
 logger = get_logger("VideoWS")
 
@@ -62,7 +62,8 @@ async def video_feed_legacy(camera_id: str, staff: models.User = Depends(get_ope
     """Streaming de video MJPEG fallback."""
     if staff.rol != "admin" and staff.sucursal:
         branch_prefix = camera_id.split('_')[0]
-        if branch_prefix.upper() != staff.sucursal.upper():
+        # Comparar contra la sucursal normalizada (misma lógica que el WebSocket)
+        if branch_prefix.upper() != normalize_system_name(staff.sucursal):
             raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
 
     def gen_frames():

@@ -112,8 +112,15 @@ Usuario (Browser)     User Routes         ReservationService    BillingService  
     │                      │────────────────────►│                   │                  │              │
     │                      │                     │                   │                  │              │
     │                      │                     │ 3. Validar:       │                  │              │
+    │                      │                     │    - vehículo     │                  │              │
+    │                      │                     │      propio       │                  │              │
+    │                      │                     │    - anti-doble   │                  │              │
+    │                      │                     │      reserva      │                  │              │
+    │                      │                     │    - máx 3 meses  │                  │              │
     │                      │                     │    - anticipación │                  │              │
     │                      │                     │      (solo hora)  │                  │              │
+    │                      │                     │    - horario de   │                  │              │
+    │                      │                     │      atención     │                  │              │
     │                      │                     │    - capacidad    │                  │              │
     │                      │                     │────────────────────────────────────►                │
     │                      │                     │◄────────────────────────────────────                │
@@ -127,9 +134,11 @@ Usuario (Browser)     User Routes         ReservationService    BillingService  
     │                      │                     │    (PENDIENTE)   │                  │              │
     │                      │                     │──────────────────────────────────────►              │
     │                      │                     │                   │                  │              │
-    │                      │                     │ 6. Enviar email   │                  │              │
+    │                      │                     │ 6. (Sin email al  │                  │              │
+    │                      │                     │    crear: el      │                  │              │
     │                      │                     │    confirmación   │                  │              │
-    │                      │                     │    con QR         │                  │              │
+    │                      │                     │    se envía al    │                  │              │
+    │                      │                     │    pagar, paso 14)│                  │              │
     │                      │                     │                   │                  │              │
     │  7. Reserva creada  │                     │                   │                  │              │
     │◄────────────────────│                     │                   │                  │              │
@@ -154,13 +163,17 @@ Usuario (Browser)     User Routes         ReservationService    BillingService  
     │                      │                     │     NO pre-ocupa  │                  │              │
     │                      │                     │     plaza (v9.5) │                  │              │
     │                      │                     │                   │                  │              │
-    │ 13. Pago confirmado  │                     │                   │                  │              │
+    │                      │                     │ 13. Enviar email  │                  │              │
+    │                      │                     │     y QR (pase   │                  │              │
+    │                      │                     │     digital)      │                  │              │
+    │                      │                     │                   │                  │              │
+    │ 14. Pago confirmado  │                     │                   │                  │              │
     │◄────────────────────│                     │                   │                  │              │
 ```
 
 ## 4. Flujo de Worker de Mantenimiento
 
-WorkerService ejecuta **3 hilos** en background:
+WorkerService ejecuta **2 hilos** en background (limpieza de reservas + notificaciones):
 
 ### 4a. Limpieza de Reservas (cada 300 segundos)
 

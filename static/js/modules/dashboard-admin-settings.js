@@ -117,15 +117,15 @@ export function switchRatesTab(type, btn) {
 
 export async function saveAllRates() {
     const keys = [
-        'precio_hora', 'precio_dia', 'precio_semana', 'precio_mes',
-        'precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto',
-        'precio_hora_camioneta', 'precio_dia_camioneta', 'precio_semana_camioneta', 'precio_mes_camioneta'
+        'precio_30min', 'precio_hora', 'precio_dia', 'precio_semana', 'precio_mes',
+        'precio_30min_moto', 'precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto',
+        'precio_30min_camioneta', 'precio_hora_camioneta', 'precio_dia_camioneta', 'precio_semana_camioneta', 'precio_mes_camioneta'
     ];
     
     const labels = {
-        'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
-        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes',
-        'precio_hora_camioneta': 'Hora', 'precio_dia_camioneta': 'Día', 'precio_semana_camioneta': 'Semana', 'precio_mes_camioneta': 'Mes'
+        'precio_30min': '30 min', 'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
+        'precio_30min_moto': '30 min', 'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes',
+        'precio_30min_camioneta': '30 min', 'precio_hora_camioneta': 'Hora', 'precio_dia_camioneta': 'Día', 'precio_semana_camioneta': 'Semana', 'precio_mes_camioneta': 'Mes'
     };
 
     let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
@@ -144,6 +144,8 @@ export async function saveAllRates() {
     for (const key of keys) {
         const input = document.getElementById(`cfg-${key}`);
         if (!input) continue;
+        //SI LA FRACCION 30 MIN QUEDA VACIA, NO SE PERSISTE Y VALE AUTOMATICAMENTE LA MITAD DE LA HORA
+        if (key.startsWith('precio_30min') && input.value.trim() === '') continue;
         const val = parseFloat(input.value) || 0;
         const res = await api.post(`/admin/settings/prices?clave=${key}&valor=${val}`);
         if (!res.ok) success = false;
@@ -191,15 +193,15 @@ export async function saveRateGroup(type) {
     const isAutos = type === 'autos';
     const isMotos = type === 'motos';
     const keys = isAutos ? 
-        ['precio_hora', 'precio_dia', 'precio_semana', 'precio_mes'] :
+        ['precio_30min', 'precio_hora', 'precio_dia', 'precio_semana', 'precio_mes'] :
         (isMotos ? 
-            ['precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto'] :
-            ['precio_hora_camioneta', 'precio_dia_camioneta', 'precio_semana_camioneta', 'precio_mes_camioneta']);
+            ['precio_30min_moto', 'precio_hora_moto', 'precio_dia_moto', 'precio_semana_moto', 'precio_mes_moto'] :
+            ['precio_30min_camioneta', 'precio_hora_camioneta', 'precio_dia_camioneta', 'precio_semana_camioneta', 'precio_mes_camioneta']);
 
     const labels = {
-        'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
-        'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes',
-        'precio_hora_camioneta': 'Hora', 'precio_dia_camioneta': 'Día', 'precio_semana_camioneta': 'Semana', 'precio_mes_camioneta': 'Mes'
+        'precio_30min': '30 min', 'precio_hora': 'Hora', 'precio_dia': 'Día', 'precio_semana': 'Semana', 'precio_mes': 'Mes',
+        'precio_30min_moto': '30 min', 'precio_hora_moto': 'Hora', 'precio_dia_moto': 'Día', 'precio_semana_moto': 'Semana', 'precio_mes_moto': 'Mes',
+        'precio_30min_camioneta': '30 min', 'precio_hora_camioneta': 'Hora', 'precio_dia_camioneta': 'Día', 'precio_semana_camioneta': 'Semana', 'precio_mes_camioneta': 'Mes'
     };
 
     let summary = '<div style="text-align: left; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
@@ -229,6 +231,8 @@ export async function saveRateGroup(type) {
     for (const key of keys) {
         const input = document.getElementById(`cfg-${key}`);
         if (!input) continue;
+        //SI LA FRACCION 30 MIN QUEDA VACIA, NO SE PERSISTE Y VALE AUTOMATICAMENTE LA MITAD DE LA HORA
+        if (key.startsWith('precio_30min') && input.value.trim() === '') continue;
         const val = parseFloat(input.value) || 0;
         const res = await api.post(`/admin/settings/prices?clave=${key}&valor=${val}`);
         if (!res.ok) success = false;

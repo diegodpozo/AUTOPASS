@@ -25,5 +25,6 @@ def test_calculate_total_amount_hora(db):
         db, "hora", "2026-06-12T10:00:00", "2026-06-12T12:00:00", 
         tipo_vehiculo=VehicleType.AUTO
     )
-    #LA TARIFA BASE POR DEFECTO ES 1000, 2 HORAS = 2000
-    assert monto == 2000.0
+    #LA FRACCION 30 MIN FALLA BACK A LA MITAD DE LA TARIFA HORA DEFAULT (1500/2=750)
+    #2 HORAS = 4 BLOQUES DE 30 MIN = 3000
+    assert monto == 3000.0

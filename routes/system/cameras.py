@@ -106,7 +106,9 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
             
         setting = db.query(models.Settings).filter(models.Settings.clave == f"CAMERA_SOURCE_{gate_id}").first()
         source = setting.valor_str if setting else "0"
-        base_url = str(request.base_url).rstrip("/")
+        # El ALPR corre en la misma máquina que el backend: conectar por localhost
+        # (no a través de ngrok) para evitar el doble-hop de los frames de video.
+        base_url = f"http://127.0.0.1:{request.url.port or 8000}"
         
         env = os.environ.copy()
         env["GATE_ID"] = gate_id
@@ -268,7 +270,9 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
         if proc_id in CAMERA_PROCESSES and CAMERA_PROCESSES[proc_id].poll() is None:
             return {"status": "error", "message": "Ya está en ejecución"}
             
-        base_url = str(request.base_url).rstrip("/")
+        # El ALPR corre en la misma máquina que el backend: conectar por localhost
+        # (no a través de ngrok) para evitar el doble-hop de los frames de video.
+        base_url = f"http://127.0.0.1:{request.url.port or 8000}"
         env = os.environ.copy()
         env["GATE_ID"] = proc_id
         env["VIDEO_SOURCE"] = camera.source

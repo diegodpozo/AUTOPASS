@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTOPASS · Monitoreo — Mockup 2: Glance Dashboard</title>
+<style>
+:root{
+  --dorado:#dfba6b; --dorado-hover:#edd193; --dorado-dark:#b89047; --dorado-glow:rgba(223,186,107,.15);
+  --violet-brand:#8b5cf6; --violet-dark:#4c1d95; --violet-glow:rgba(139,92,246,.15);
+  --bg-main:#08090c; --bg-sidebar:#0b0d10; --bg-card:#11141b; --bg-input:#1a1e26;
+  --text-primary:#f5f6f8; --text-secondary:#9ca3af; --text-muted:#6b7280;
+  --border:rgba(223,186,107,.22); --border-light:rgba(223,186,107,.10); --border-card:rgba(255,255,255,.05);
+  --success:#10b981; --danger:#f43f5e; --warning:#f59e0b; --info:#3b82f6;
+  --grad-gold:linear-gradient(135deg,var(--dorado),var(--dorado-dark));
+  --font-mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg-main);color:var(--text-primary);font-family:'Segoe UI',system-ui,sans-serif;padding:24px}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.head h1{font-size:1.15rem;letter-spacing:2px;font-weight:800;color:var(--dorado)}
+.head h1 i{margin-right:10px;color:var(--dorado-dark)}
+.sub{font-size:.66rem;color:var(--text-muted);letter-spacing:1px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:700;letter-spacing:.6px;padding:9px 15px;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--dorado);text-transform:uppercase;transition:.25s}
+.btn:hover{background:var(--dorado-glow);border-color:var(--dorado)}
+.btn.solid{background:var(--grad-gold);color:#000;border:none;box-shadow:0 6px 18px rgba(223,186,107,.25)}
+.btn.solid:hover{filter:brightness(1.08);color:#000}
+
+/* SUMMARY BAR */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:1000px){.summary{grid-template-columns:repeat(2,1fr)}}
+.sum-item{background:var(--bg-card);border:1px solid var(--border-card);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+.sum-item .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0}
+.sum-item .ic.g{background:var(--dorado-glow);border:1px solid var(--border-light);color:var(--dorado)}
+.sum-item .ic.v{background:var(--violet-glow);border:1px solid rgba(139,92,246,.25);color:var(--violet-brand)}
+.sum-item .ic.s{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--success)}
+.sum-item .ic.w{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--warning)}
+.sum-item .lbl{font-size:.6rem;letter-spacing:1.2px;color:var(--text-muted);font-weight:800}
+.sum-item .val{font-family:var(--font-mono);font-size:1.45rem;font-weight:800}
+.sum-item .val small{font-size:.75rem;color:var(--text-muted);font-weight:600}
+.sum-item small.sub2{font-size:.6rem;color:var(--success)}
+
+/* MAIN DASH */
+.dash{display:grid;grid-template-columns:1fr 330px;gap:20px;align-items:start}
+@media(max-width:1100px){.dash{grid-template-columns:1fr}}
+.card{background:linear-gradient(135deg,rgba(17,20,27,.85),rgba(8,9,12,.95));border:1px solid var(--border-card);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border-card)}
+.card-head h3{font-size:.72rem;letter-spacing:1.5px;color:var(--dorado);font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:9px}
+.card-body{padding:16px}
+
+/* HERO FEED */
+.hero-wrap{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+@media(max-width:760px){.hero-wrap{grid-template-columns:1fr}}
+.hero{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:21/9;background:#050505;border:1px solid var(--border-card);box-shadow:inset 0 0 60px rgba(0,0,0,.85)}
+.hero .feed{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dorado-dark);font-size:2.4rem;opacity:.3}
+.hero .top{position:absolute;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center}
+.bg{background:rgba(0,0,0,.6);backdrop-filter:blur(6px);border:1px solid var(--border);color:var(--dorado);font-size:.6rem;font-weight:800;letter-spacing:1px;padding:5px 10px;border-radius:99px}
+.rec{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.6);color:#fff;font-family:var(--font-mono);font-size:.55rem;padding:5px 8px;border-radius:6px}
+.rec i{color:var(--danger);font-size:.45rem;animation:pulse 1.3s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.3}100%{opacity:1}}
+.scanline{position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--dorado),transparent);box-shadow:0 0 16px var(--dorado);animation:sweep 3.5s infinite linear}
+@keyframes sweep{from{transform:translateY(0)}to{transform:translateY(600px)}}
+.big-plate{position:absolute;bottom:14px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.82);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:12px;padding:12px 16px}
+.big-plate .plate{font-family:var(--font-mono);font-size:2rem;font-weight:900;letter-spacing:4px;background:linear-gradient(180deg,#fff,#aaa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.big-plate .meta{text-align:right;font-size:.62rem;color:var(--text-muted);line-height:1.5}
+.big-plate .meta b{color:var(--success);font-family:var(--font-mono);font-size:.9rem}
+/* side video stack */
+.side-cams{display:flex;flex-direction:column;gap:12px}
+.scam{position:relative;border-radius:12px;overflow:hidden;flex:1;min-height:90px;background:#050505;border:1px solid var(--border-card)}
+.scam .feed{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dorado-dark);font-size:1rem;opacity:.3}
+.scam .lab{position:absolute;top:6px;left:8px;background:rgba(0,0,0,.6);color:var(--dorado);font-size:.55rem;font-weight:800;letter-spacing:1px;padding:3px 7px;border-radius:6px}
+.scam .dot{position:absolute;top:6px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success)}
+
+/* FLOOR OCCUPANCY */
+.floors{display:flex;flex-direction:column;gap:12px}
+.floor{background:var(--bg-input);border:1px solid var(--border-card);border-radius:12px;padding:12px 14px}
+.floor .f-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.floor .f-name{font-size:.68rem;font-weight:800;letter-spacing:1px;color:var(--text-primary);display:flex;align-items:center;gap:8px}
+.floor .f-name i{color:var(--dorado);font-size:.75rem}
+.floor .f-pct{font-family:var(--font-mono);font-size:.8rem;font-weight:800;color:var(--dorado)}
+.floor .bars{display:flex;gap:10px}
+.floor .bars .cap{flex:1}
+.floor .bars .cap .cl{font-size:.55rem;color:var(--text-muted);letter-spacing:.5px;display:flex;justify-content:space-between;margin-bottom:3px}
+.meter{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.meter>span{display:block;height:100%;border-radius:99px}
+.meter .a{background:var(--dorado)}
+.meter .m{background:var(--violet-brand)}
+.meter .c{background:var(--info)}
+
+/* FLOW OPERATIONS */
+.op-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.op{background:var(--bg-input);border:1px solid var(--border-card);border-radius:10px;padding:10px}
+.op .op-lbl{font-size:.58rem;letter-spacing:1px;color:var(--text-muted);font-weight:800;margin-bottom:6px;display:block}
+.op input{width:100%;background:transparent;border:none;outline:none;color:var(--text-primary);font-family:var(--font-mono);letter-spacing:1px;font-size:.9rem;text-transform:uppercase}
+.op input::placeholder{color:var(--text-muted);font-family:inherit}
+.barrier-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg-input);border:1px solid var(--border-card);border-radius:10px;padding:9px 11px;margin-top:9px}
+.barrier-row .b-name{font-size:.68rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.barrier-row .b-name i{color:var(--dorado)}
+.barrier-row .b-state{font-size:.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.mini{font-size:.6rem;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid transparent;cursor:pointer;text-transform:uppercase}
+.mini.open{background:rgba(16,185,129,.12);color:var(--success);border-color:rgba(16,185,129,.3)}
+.mini.close{background:rgba(244,63,94,.12);color:var(--danger);border-color:rgba(244,63,94,.3)}
+
+/* TABS + TABLE */
+.tabbar{display:flex;gap:8px}
+.tabbar .tb{background:rgba(255,255,255,.03);border:1px solid var(--border-card);color:var(--text-secondary);padding:8px 14px;border-radius:9px;font-size:.68rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;display:inline-flex;align-items:center;gap:7px}
+.tabbar .tb.active{background:var(--dorado);color:#000;border-color:var(--dorado);box-shadow:0 0 14px var(--dorado-glow)}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{text-align:left;color:var(--text-muted);font-size:.6rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;padding:9px 12px;border-bottom:1px solid var(--border-card)}
+tbody td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text-secondary)}
+tbody tr:hover{background:rgba(223,186,107,.04)}
+.mono{font-family:var(--font-mono);letter-spacing:1px;color:var(--text-primary);font-weight:700}
+.pill{font-size:.58rem;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.5px;text-transform:uppercase}
+.pill.g{background:var(--dorado-glow);color:var(--dorado);border:1px solid var(--border-light)}
+.pill.ok{background:rgba(16,185,129,.12);color:var(--success);border:1px solid rgba(16,185,129,.25)}
+.pill.warn{background:rgba(245,158,11,.12);color:var(--warning);border:1px solid rgba(245,158,11,.25)}
+.mini-table-note{font-size:.58rem;color:var(--text-muted);text-align:center;padding:10px}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div>
+    <h1><i class="fa-solid fa-gauge-high"></i> Glance Dashboard</h1>
+    <div class="sub">VISIÓN GENERAL DE OCUPACIÓN Y OPERACIÓN · MOCKUP 2</div>
+  </div>
+  <div class="actions">
+    <span style="display:flex;align-items:center;gap:7px;font-size:.64rem;color:var(--success);letter-spacing:1px;font-weight:700"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 10px var(--success);animation:pulse 1.4s infinite"></span>EN VIVO</span>
+    <button class="btn"><i class="fa-solid fa-microchip"></i> OCR</button>
+    <button class="btn solid"><i class="fa-solid fa-tower-broadcast"></i> Multi-Cámara</button>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary">
+  <div class="sum-item"><div class="ic g"><i class="fa-solid fa-car"></i></div><div><div class="lbl">AUTOS</div><div class="val">31<small>/50</small></div><small class="sub2"><i class="fa-solid fa-bookmark"></i> 4 reservas</small></div></div>
+  <div class="sum-item"><div class="ic v"><i class="fa-solid fa-motorcycle"></i></div><div><div class="lbl">MOTOS</div><div class="val">12<small>/30</small></div><small class="sub2"><i class="fa-solid fa-bookmark"></i> 1 reserva</small></div></div>
+  <div class="sum-item"><div class="ic w"><i class="fa-solid fa-truck-pickup"></i></div><div><div class="lbl">CAMIONETAS</div><div class="val">17<small>/20</small></div><small class="sub2" style="color:var(--warning)"><i class="fa-solid fa-triangle-exclamation"></i> Casi lleno</small></div></div>
+  <div class="sum-item"><div class="ic s"><i class="fa-solid fa-arrow-right-to-bracket"></i></div><div><div class="lbl">INGRESOS HOY</div><div class="val">142</div><small class="sub2"><i class="fa-solid fa-arrow-up"></i> +12%</small></div></div>
+</div>
+
+<div class="dash">
+  <!-- MAIN -->
+  <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+    <!-- HERO + side cams -->
+    <div class="card">
+      <div class="card-head"><h3><i class="fa-solid fa-video"></i> Acceso principal · Entrada</h3><span class="bg" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--success)"><i class="fa-solid fa-check"></i> Cámara OK</span></div>
+      <div class="card-body">
+        <div class="hero-wrap">
+          <div class="hero">
+            <div class="feed"><i class="fa-solid fa-video"></i></div>
+            <div class="scanline"></div>
+            <div class="top"><span class="bg">PATENTE · ENTRADA</span><span class="rec"><i class="fa-solid fa-circle"></i> REC 00:12:34</span></div>
+            <div class="big-plate"><span class="plate">AE 123 CD</span><div class="meta">AUTO · PB<br><b>98%</b> confianza</div></div>
+          </div>
+          <div class="side-cams">
+            <div class="scam"><div class="feed"><i class="fa-solid fa-qrcode"></i></div><span class="lab">QR ENTRADA</span><span class="dot"></span></div>
+            <div class="scam"><div class="feed"><i class="fa-solid fa-video"></i></div><span class="lab">PATENTE SALIDA</span><span class="dot"></span></div>
+            <div class="scam"><div class="feed"><i class="fa-solid fa-qrcode"></i></div><span class="lab">QR SALIDA</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ocupación por piso -->
+    <div class="card">
+      <div class="card-head"><h3><i class="fa-solid fa-building"></i> Ocupación por piso — Morón</h3><span class="bg" style="background:transparent;border-color:transparent;color:var(--text-muted)"><i class="fa-solid fa-rotate"></i> act. hace 5s</span></div>
+      <div class="card-body">
+        <div class="floors">
+          <div class="floor">
+            <div class="f-top"><span class="f-name"><i class="fa-solid fa-layer-group"></i> PLANTA BAJA</span><span class="f-pct">30/50 · 60%</span></div>
+            <div class="bars">
+              <div class="cap"><div class="cl"><span>AUTOS</span><span>24/30</span></div><div class="meter"><span class="a" style="width:80%"></span></div></div>
+              <div class="cap"><div class="cl"><span>MOTOS</span><span>4/12</span></div><div class="meter"><span class="m" style="width:33%"></span></div></div>
+              <div class="cap"><div class="cl"><span>CAMION</span><span>2/8</span></div><div class="meter"><span class="c" style="width:25%"></span></div></div>
+            </div>
+          </div>
+          <div class="floor">
+            <div class="f-top"><span class="f-name"><i class="fa-solid fa-layer-group"></i> PISO 1</span><span class="f-pct">18/40 · 45%</span></div>
+            <div class="bars">
+              <div class="cap"><div class="cl"><span>AUTOS</span><span>12/25</span></div><div class="meter"><span class="a" style="width:48%"></span></div></div>
+              <div class="cap"><div class="cl"><span>MOTOS</span><span>4/10</span></div><div class="meter"><span class="m" style="width:40%"></span></div></div>
+              <div class="cap"><div class="cl"><span>CAMION</span><span>2/5</span></div><div class="meter"><span class="c" style="width:40%"></span></div></div>
+            </div>
+          </div>
+          <div class="floor">
+            <div class="f-top"><span class="f-name"><i class="fa-solid fa-layer-group"></i> PISO 2</span><span class="f-pct" style="color:var(--warning)">10/50 · 20%</span></div>
+            <div class="bars">
+              <div class="cap"><div class="cl"><span>AUTOS</span><span>6/20</span></div><div class="meter"><span class="a" style="width:30%"></span></div></div>
+              <div class="cap"><div class="cl"><span>MOTOS</span><span>3/20</span></div><div class="meter"><span class="m" style="width:15%"></span></div></div>
+              <div class="cap"><div class="cl"><span>CAMION</span><span>1/10</span></div><div class="meter"><span class="c" style="width:10%"></span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Movimientos -->
+    <div class="card">
+      <div class="card-head">
+        <div class="tabbar"><span class="tb active"><i class="fa-solid fa-list-ul"></i> Movimientos</span><span class="tb"><i class="fa-solid fa-car-side"></i> Estacionados</span></div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table>
+          <thead><tr><th>Hora</th><th>Patente</th><th>Tipo</th><th>Evento</th><th>Abono</th></tr></thead>
+          <tbody>
+            <tr><td class="mono" style="color:var(--text-muted)">14:02</td><td class="mono">AE 123 CD</td><td><span class="pill g">AUTO</span></td><td><span class="pill ok">INGRESO</span></td><td>Digital</td></tr>
+            <tr><td class="mono" style="color:var(--text-muted)">13:45</td><td class="mono">AB 456 FG</td><td><span class="pill g">MOTO</span></td><td><span class="pill ok">INGRESO</span></td><td>Manual</td></tr>
+            <tr><td class="mono" style="color:var(--text-muted)">13:31</td><td class="mono">AZ 000 ZZ</td><td><span class="pill g">AUTO</span></td><td><span class="pill warn">SALIDA</span></td><td>Cortesía</td></tr>
+            <tr><td class="mono" style="color:var(--text-muted)">13:58</td><td class="mono">AC 789 HI</td><td><span class="pill g">CAMIONETA</span></td><td><span class="pill">RESERVA</span></td><td>MP</td></tr>
+          </tbody>
+        </table>
+        <div class="mini-table-note"><i class="fa-solid fa-chevron-left"></i> 1 · 2 · 3 <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDE -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <!-- OPERATION DOCK -->
+    <div class="card">
+      <div class="card-head"><h3><i class="fa-solid fa-sliders"></i> Operación</h3></div>
+      <div class="card-body">
+        <div class="section" style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-size:.58rem;letter-spacing:1.2px;color:var(--dorado);font-weight:800"><i class="fa-solid fa-sign-in-alt"></i> INGRESO MANUAL</span>
+          <div class="op-grid">
+            <div class="op"><label class="op-lbl">PATENTE</label><input placeholder="ABC-123"></div>
+            <div class="op"><label class="op-lbl">PISO</label><select style="width:100%;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:.82rem"><option>PB · Planta Baja</option><option>Piso 1</option><option>Piso 2</option></select></div>
+          </div>
+          <button class="btn solid" style="justify-content:center"><i class="fa-solid fa-arrow-right-to-bracket"></i> Registrar Ingreso</button>
+          <div style="height:1px;background:rgba(255,255,255,.05);margin:6px 0"></div>
+          <span style="font-size:.58rem;letter-spacing:1.2px;color:var(--dorado);font-weight:800"><i class="fa-solid fa-traffic-light"></i> BARRERAS</span>
+          <div class="barrier-row"><div class="b-name"><i class="fa-solid fa-arrow-right-to-bracket"></i> ENTRADA <span class="b-state">· cerrada</span></div><div style="display:flex;gap:6px"><button class="mini open">Abrir</button><button class="mini close">Cerrar</button></div></div>
+          <div class="barrier-row"><div class="b-name"><i class="fa-solid fa-arrow-right-from-bracket"></i> SALIDA <span class="b-state">· cerrada</span></div><div style="display:flex;gap:6px"><button class="mini open">Abrir</button><button class="mini close">Cerrar</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="card">
+      <div class="card-head"><h3><i class="fa-solid fa-bell"></i> Alertas</h3><span class="bg" style="background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.3);color:var(--danger)">1</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:9px;border-radius:10px;background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.15)">
+          <i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);padding-top:3px"></i>
+          <div><div style="font-size:.72rem;font-weight:700;color:var(--text-primary)">PISO 2 casi agotado</div><div style="font-size:.62rem;color:var(--text-muted)">10/50 · recomendado derivar a PB</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:9px;border-radius:10px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.12)">
+          <i class="fa-solid fa-clock" style="color:var(--warning);padding-top:3px"></i>
+          <div><div style="font-size:.72rem;font-weight:700">4 reservas por iniciar</div><div style="font-size:.62rem;color:var(--text-muted)">Próxima en 18 min (AE 123 CD)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+</body>
+</html>

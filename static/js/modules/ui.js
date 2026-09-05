@@ -83,17 +83,20 @@ export function toggleSidebar() {
 }
 
 export function toggleMobileNav() {
-    const sidebar = document.getElementById('main-sidebar');
+    const sidebar = document.getElementById('main-sidebar') || document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.toggle('mobile-open');
-    if (overlay) overlay.classList.toggle('active');
+    if (!sidebar) return;
+    const isOpen = sidebar.classList.toggle('mobile-open');
+    if (overlay) overlay.classList.toggle('active', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 
 export function closeMobileNav() {
-    const sidebar = document.getElementById('main-sidebar');
+    const sidebar = document.getElementById('main-sidebar') || document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebar-overlay');
     if (sidebar) sidebar.classList.remove('mobile-open');
     if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 export function toggleNuevoVinculo() {
@@ -129,7 +132,7 @@ export function toggleHistorial() {
 export function logout() {
     // Preservar flags de tour y device_id antes de limpiar localStorage
     const savedKeys = {};
-    const keepPrefixes = ['autopass_tour_seen_', 'seen_reservation_onboarding'];
+    const keepPrefixes = ['autopass_tour_seen_'];
     const keepExact = ['autopass_device_id'];
 
     for (let i = 0; i < localStorage.length; i++) {

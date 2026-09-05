@@ -22,8 +22,8 @@
 
 | Worker | Intervalo | Función |
 |--------|-----------|---------|
-| **Reservation Cleanup** | 300s (configurable) | `auto_finalize_all_reservations()` - Libera plazas de reservas vencidas, limpia no pagadas |
-| **Notification Worker** | Continuo | Procesa colas de WebSocket para broadcasts de ocupación |
+| **Reservation Cleanup** | 300s (configurable) | `auto_finalize_all_reservations()` - Marca COMPLETADA reservas vencidas (aforo solo físico desde v9.5: no libera plazas), cancela impagas por hora (`cleanup_overdue_reservations`) y purga imágenes ALPR |
+| **Notification Worker** | Continuo | Recordatorios (31 min antes del inicio), auto-activación de reservas iniciadas, auto-cancelación de PENDIENTES no pagadas (30 min después del inicio) y broadcasts WebSocket de ocupación |
 
 ## Logs y Debugging
 

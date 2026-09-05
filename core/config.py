@@ -53,6 +53,7 @@ class Settings:
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     LOGO_PATH: str = os.path.join(BASE_DIR, "static", "images", "logo.png")
     IMAGE_DIR: str = os.getenv("IMAGE_DIR", "captured_images")
+    ALPR_IMAGE_RETENTION_DAYS: int = int(os.getenv("ALPR_IMAGE_RETENTION_DAYS", "30"))
 
     # RESERVAS
     RESERVA_HORA_MIN_SEGUNDOS: int = int(os.getenv("RESERVA_HORA_MIN_SEGUNDOS", 1800))

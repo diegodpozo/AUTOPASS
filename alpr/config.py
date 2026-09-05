@@ -19,10 +19,8 @@ GATE_TYPE = os.getenv("GATE_TYPE", "entrada").lower()
 RAW_GATE_ID = os.getenv("GATE_ID", "ENTRADA_PRINCIPAL" if GATE_TYPE == "entrada" else "SALIDA_PRINCIPAL")
 FORCE_OCR = os.getenv("ALPR_FORCE_OCR", "true").lower() in ("1", "true", "yes")
 
-def normalize_id(text: str) -> str:
-    """Normaliza un GATE_ID eliminando prefijo, acentos y espacios."""
-    text = text.upper().replace("AUTOPASS ", "").strip()
-    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+from core.normalize import normalize_name as normalize_id
+
 
 GATE_ID = normalize_id(RAW_GATE_ID)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")

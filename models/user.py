@@ -37,7 +37,7 @@ class Vehicle(Base):
     """ENTIDAD PARA LA GESTION DE FLOTA POR USUARIO."""
     __tablename__ = "vehicles"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     patente = Column(String, unique=True, index=True)
     marca_modelo = Column(String)
     tipo = Column(String, default="Auto") # 'AUTO' O 'MOTO'

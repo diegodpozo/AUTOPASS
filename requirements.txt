@@ -16,7 +16,6 @@ httptools==0.7.1
 sqlalchemy==2.0.48
 alembic==1.19.0
 psycopg[binary]==3.3.4
-psycopg-binary==3.3.4
 
 # === AUTH & SECURITY ===
 python-jose==3.5.0
@@ -27,7 +26,6 @@ slowapi==0.1.9
 
 # === CV / IMAGING ===
 opencv-python==4.13.0.92
-opencv-python-headless==4.13.0.92
 pillow>=10.0.0
 qrcode==8.2
 
@@ -47,12 +45,6 @@ pyserial==3.5
 rapidocr-onnxruntime>=1.2.0
 paddleocr==3.7.0; python_version < '3.14'
 paddlepaddle==3.2.2; python_version < '3.14'
-google-generativeai==0.8.6
-google-api-python-client==2.192.0
-google-auth==2.49.1
-google-auth-httplib2==0.3.0
-google-ai-generativelanguage==0.6.15
-googleapis-common-protos==1.73.0
 
 # === TESTING ===
 pytest>=8.0.0
@@ -60,12 +52,9 @@ pytest-timeout>=2.3.0
 
 # === MISC ===
 requests==2.32.5
-tqdm>=4.66.0
 pydantic>=2.10.0
 pydantic_core>=2.27.0
-pyyaml>=6.0
 protobuf>=4.25.0
-annotated-doc==0.0.4
 httpx==0.28.1
 colorama==0.4.6
 click==8.3.1

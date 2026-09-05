@@ -36,18 +36,21 @@ INITIAL_USERS = [
 
 # --- TARIFAS POR DEFECTO ---
 DEFAULT_PRICES = {
+    "precio_30min": 750.0,
     "precio_hora": 1500.0,
     "precio_dia": 15000.0,
     "precio_semana": 70000.0,
     "precio_quincena": 120000.0,
     "precio_mes": 200000.0,
     
+    "precio_30min_moto": 400.0,
     "precio_hora_moto": 800.0,
     "precio_dia_moto": 8000.0,
     "precio_semana_moto": 35000.0,
     "precio_quincena_moto": 60000.0,
     "precio_mes_moto": 100000.0,
 
+    "precio_30min_camioneta": 1000.0,
     "precio_hora_camioneta": 2000.0,
     "precio_dia_camioneta": 20000.0,
     "precio_semana_camioneta": 90000.0,
@@ -97,14 +100,24 @@ def seed_initial_data(db: Session):
             ocupacion_actual=0,
             capacidad_motos=10,
             ocupacion_motos=0,
+            capacidad_camionetas=5,
+            ocupacion_camionetas=0,
+            capacidad_reservas=5,
+            ocupacion_reservas=0,
             ultima_actualizacion=datetime.datetime.now().isoformat(),
             sucursal=None
         ))
     else:
-        # PARCHE PARA BASES EXISTENTES SIN COLUMNAS DE MOTOS
-        if aforo.capacidad_motos is None:
+        # PARCHE PARA BASES EXISTENTES SIN COLUMNAS
+        if getattr(aforo, 'capacidad_motos', None) is None:
             aforo.capacidad_motos = 10
             aforo.ocupacion_motos = 0
+        if getattr(aforo, 'capacidad_camionetas', None) is None:
+            aforo.capacidad_camionetas = 5
+            aforo.ocupacion_camionetas = 0
+        if getattr(aforo, 'capacidad_reservas', None) is None:
+            aforo.capacidad_reservas = 5
+            aforo.ocupacion_reservas = 0
 
     # 3. TARIFAS GLOBALES
     for clave, valor in DEFAULT_PRICES.items():

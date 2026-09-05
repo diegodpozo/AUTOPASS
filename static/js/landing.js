@@ -87,12 +87,25 @@ window.fillReservationForm = async function(branchName) {
     fillFields();
 };
 
-window.toggleMobileMenu = function() {
+window.toggleMobileMenu = function(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
     const nav = document.getElementById('nav-menu');
     const btn = document.querySelector('.mobile-menu-btn');
     if (!nav) return;
+    
     const isActive = nav.classList.toggle('active');
-    if (btn) btn.classList.toggle('hidden', isActive);
+    
+    if (isActive) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+    
+    if (btn) {
+        btn.classList.toggle('active-menu', isActive);
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'fas fa-bars';
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -111,7 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         nav.querySelectorAll('a, button.btn-nav').forEach(link => {
             link.addEventListener('click', () => {
                 nav.classList.remove('active');
-                if (btn) btn.classList.remove('hidden');
+                document.body.style.overflow = '';
+                if (btn) {
+                    btn.classList.remove('active-menu');
+                }
             });
         });
     }
@@ -120,13 +136,16 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('click', (e) => {
     const nav = document.getElementById('nav-menu');
     const btn = document.querySelector('.mobile-menu-btn');
+    const closeBtn = document.querySelector('.mobile-menu-close-btn');
     if (nav && nav.classList.contains('active')) {
-        const isOverlayClick = e.clientX > 260;
-        const isOutsideClick = !nav.contains(e.target);
-        const isNotButton = btn && !btn.contains(e.target);
-        if ((isOverlayClick || isOutsideClick) && isNotButton) {
+        const isInsideNav = nav.contains(e.target);
+        const isButton = (btn && btn.contains(e.target)) || (closeBtn && closeBtn.contains(e.target));
+        if (!isInsideNav && !isButton) {
             nav.classList.remove('active');
-            if (btn) btn.classList.remove('hidden');
+            document.body.style.overflow = '';
+            if (btn) {
+                btn.classList.remove('active-menu');
+            }
         }
     }
 });

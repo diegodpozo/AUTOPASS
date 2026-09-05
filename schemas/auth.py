@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-import re
+from schemas.validators import validate_password_strength
 
 class Token(BaseModel):
     access_token: str
@@ -17,10 +17,4 @@ class ResetPasswordRequest(BaseModel):
     @field_validator('new_password')
     @classmethod
     def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('La contraseña debe tener al menos 8 caracteres')
-        if not re.search(r"[A-Z]", v):
-            raise ValueError('La contraseña debe tener al menos una mayúscula')
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError('La contraseña debe tener al menos un carácter especial')
-        return v
+        return validate_password_strength(cls, v)

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTOPASS · Monitoreo — Mockup 1: Command Center</title>
+<style>
+:root{
+  --dorado:#dfba6b; --dorado-hover:#edd193; --dorado-dark:#b89047; --dorado-glow:rgba(223,186,107,.15);
+  --violet-brand:#8b5cf6; --violet-dark:#4c1d95; --violet-glow:rgba(139,92,246,.15);
+  --bg-main:#08090c; --bg-sidebar:#0b0d10; --bg-card:#11141b; --bg-input:#1a1e26;
+  --text-primary:#f5f6f8; --text-secondary:#9ca3af; --text-muted:#6b7280;
+  --border:rgba(223,186,107,.22); --border-light:rgba(223,186,107,.10); --border-card:rgba(255,255,255,.05);
+  --success:#10b981; --danger:#f43f5e; --warning:#f59e0b; --info:#3b82f6;
+  --grad-gold:linear-gradient(135deg,var(--dorado),var(--dorado-dark));
+  --grad-glass:linear-gradient(135deg,rgba(17,20,27,.85),rgba(8,9,12,.95));
+  --font-mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg-main);color:var(--text-primary);font-family:'Segoe UI',system-ui,sans-serif;padding:24px;min-height:100vh}
+.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:1.15rem;letter-spacing:2px;font-weight:800;color:var(--dorado);text-transform:uppercase}
+.page-head h1 i{color:var(--dorado-dark);margin-right:10px}
+.tag{font-size:.68rem;color:var(--text-muted);letter-spacing:1px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---- Botones ---- */
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;font-weight:700;letter-spacing:.6px;
+  padding:9px 16px;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--dorado);text-transform:uppercase;transition:.25s}
+.btn:hover{background:var(--dorado-glow);border-color:var(--dorado);color:var(--dorado-hover)}
+.btn.solid{background:var(--grad-gold);color:#000;border:none;box-shadow:0 6px 18px rgba(223,186,107,.25)}
+.btn.solid:hover{background:linear-gradient(135deg,var(--dorado-hover),var(--dorado));color:#000}
+.btn.ghost{border-color:rgba(255,255,255,.12);color:var(--text-secondary)}
+.btn.ghost:hover{color:#fff;border-color:var(--dorado)}
+
+/* ---- Container principal ---- */
+.console{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+@media(max-width:1100px){.console{grid-template-columns:1fr}}
+
+/* ---- Tarjeta ---- */
+.card{background:var(--grad-glass);border:1px solid var(--border-card);border-radius:16px;overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);backdrop-filter:blur(10px)}
+.card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border-card)}
+.card-head h3{font-size:.72rem;letter-spacing:1.5px;color:var(--dorado);display:flex;align-items:center;gap:9px;font-weight:800}
+.card-head .hint{font-size:.62rem;color:var(--text-muted);letter-spacing:.5px}
+.card-body{padding:16px}
+
+/* ---- KPIs de ocupación ---- */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.kpi-row{grid-template-columns:1fr}}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border-card);border-radius:14px;padding:16px;position:relative;overflow:hidden;transition:.25s}
+.kpi-card:hover{border-color:var(--border);transform:translateY(-2px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad-gold)}
+.kpi-card .k-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.kpi-card .icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;background:var(--dorado-glow);color:var(--dorado);border:1px solid var(--border-light)}
+.kpi-card .k-label{font-size:.62rem;letter-spacing:1.5px;color:var(--text-muted);font-weight:800}
+.kpi-card .k-value{font-family:var(--font-mono);font-size:1.7rem;font-weight:800;color:var(--text-primary);line-height:1}
+.kpi-card .k-value small{font-size:.85rem;color:var(--text-muted);font-weight:600}
+.kpi-card .g-res{font-size:.66rem;color:var(--dorado);display:flex;justify-content:space-between;margin-top:8px}
+.progress{height:6px;background:var(--bg-input);border-radius:99px;overflow:hidden;margin-top:10px}
+.progress>span{display:block;height:100%;border-radius:99px;background:var(--grad-gold);transition:width .5s}
+.kpi-card.violet::before{background:var(--grad-gradient-violet)}
+.dual-donut{display:flex;align-items:center;gap:12px}
+.donut{width:52px;height:52px;border-radius:50%;flex-shrink:0;background:conic-gradient(var(--dorado) 0% 62%, var(--bg-input) 62% 100%);position:relative;display:flex;align-items:center;justify-content:center}
+.donut::after{content:'';position:absolute;width:34px;height:34px;border-radius:50%;background:var(--bg-card)}
+.donut span{position:relative;z-index:1;font-family:var(--font-mono);font-size:.72rem;font-weight:800;color:var(--dorado)}
+.donut.purple{background:conic-gradient(var(--violet-brand) 0% 40%, var(--bg-input) 40% 100%)}
+.donut.purple span{color:var(--violet-brand)}
+
+/* ---- Video wall ---- */
+.video-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.video-status{display:flex;align-items:center;gap:8px;font-size:.66rem;color:var(--success);letter-spacing:1px;font-weight:700}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 10px var(--success);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
+.videowall{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:640px){.videowall{grid-template-columns:1fr}}
+.cam{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#050505;border:1px solid var(--border-card);box-shadow:inset 0 0 40px rgba(0,0,0,.8)}
+.cam .feed{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dorado-dark);font-size:1.6rem;opacity:.35}
+.cam .hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.cam .hud .name{background:rgba(0,0,0,.6);backdrop-filter:blur(6px);border:1px solid var(--border);color:var(--dorado);font-size:.6rem;font-weight:800;letter-spacing:1px;padding:4px 9px;border-radius:99px}
+.cam .hud .rec{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.6);color:#fff;font-family:var(--font-mono);font-size:.56rem;padding:4px 8px;border-radius:6px}
+.cam .hud .rec i{color:var(--danger);font-size:.5rem}
+.scan{position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--dorado),transparent);box-shadow:0 0 12px var(--dorado);animation:sweep 3s infinite linear;pointer-events:none}
+@keyframes sweep{from{transform:translateY(-10px)}to{transform:translateY(400px)}}
+.detected{position:absolute;bottom:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;padding:7px 10px}
+.detected .plate{font-family:var(--font-mono);font-size:1.05rem;font-weight:900;letter-spacing:2px;background:linear-gradient(180deg,#fff,#aaa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.detected .conf{font-size:.62rem;color:var(--success);font-weight:700;text-align:right;line-height:1.2}
+
+/* ---- Tabs tabla ---- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs .tab{background:rgba(255,255,255,.03);border:1px solid var(--border-card);color:var(--text-secondary);padding:8px 15px;border-radius:9px;font-size:.7rem;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase;display:inline-flex;align-items:center;gap:7px}
+.tabs .tab.active{background:var(--dorado);color:#000;border-color:var(--dorado);box-shadow:0 0 15px var(--dorado-glow)}
+.search{display:flex;align-items:center;gap:8px;background:var(--bg-input);border:1px solid var(--border-card);border-radius:9px;padding:8px 12px}
+.search input{background:transparent;border:none;outline:none;color:var(--text-primary);font-size:.75rem;width:120px}
+.search i{color:var(--dorado);font-size:.7rem}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{text-align:left;color:var(--text-muted);font-size:.62rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;padding:10px 12px;border-bottom:1px solid var(--border-card)}
+tbody td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text-secondary)}
+tbody tr:hover{background:rgba(223,186,107,.04)}
+.mono{font-family:var(--font-mono);letter-spacing:1px;color:var(--text-primary);font-weight:700}
+.badge{font-size:.6rem;font-weight:800;padding:4px 9px;border-radius:99px;letter-spacing:.5px;text-transform:uppercase}
+.badge.ok{background:rgba(16,185,129,.12);color:var(--success);border:1px solid rgba(16,185,129,.25)}
+.badge.warn{background:rgba(245,158,11,.12);color:var(--warning);border:1px solid rgba(245,158,11,.25)}
+.badge.danger{background:rgba(244,63,94,.12);color:var(--danger);border:1px solid rgba(244,63,94,.25)}
+.badge.gold{background:var(--dorado-glow);color:var(--dorado);border:1px solid var(--border)}
+
+/* ---- Panel lateral ---- */
+.side{display:flex;flex-direction:column;gap:20px}
+.section-label{font-size:.62rem;letter-spacing:1.5px;color:var(--dorado);font-weight:800;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.section-label i{font-size:.7rem}
+.manual-input{display:flex;gap:8px}
+.manual-input input{flex:1;background:var(--bg-input);border:1px solid var(--border-card);color:var(--text-primary);font-family:var(--font-mono);letter-spacing:2px;text-align:center;height:42px;border-radius:10px;font-size:.95rem;text-transform:uppercase;outline:none}
+.manual-input input:focus{border-color:var(--dorado)}
+.manual-input button{height:42px;padding:0 16px}
+.divider{height:1px;background:rgba(255,255,255,.05);margin:14px 0}
+.barrier{display:flex;align-items:center;justify-content:space-between;background:var(--bg-input);border:1px solid var(--border-card);padding:9px 12px;border-radius:12px;margin-bottom:9px}
+.barrier .name{display:flex;align-items:center;gap:9px;font-size:.72rem;font-weight:800}
+.barrier .name i{font-size:1rem;color:var(--dorado)}
+.barrier .state{font-size:.6rem;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase}
+.barrier-cta{display:flex;gap:7px}
+.mini{font-size:.62rem;font-weight:700;padding:6px 14px;border-radius:8px;border:1px solid transparent;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s}
+.mini.open{background:rgba(16,185,129,.12);color:var(--success);border-color:rgba(16,185,129,.3)}
+.mini.open:hover{background:var(--success);color:#000}
+.mini.close{background:rgba(244,63,94,.12);color:var(--danger);border-color:rgba(244,63,94,.3)}
+.mini.close:hover{background:var(--danger);color:#000}
+.activity{display:flex;flex-direction:column;gap:10px}
+.act{display:flex;align-items:flex-start;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,.02)}
+.act .t{font-family:var(--font-mono);font-size:.62rem;color:var(--text-muted);white-space:nowrap;padding-top:3px}
+.act .ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
+.act .ic.in{background:rgba(16,185,129,.12);color:var(--success)}
+.act .ic.out{background:rgba(59,130,246,.12);color:var(--info)}
+.act .ic.res{background:var(--violet-glow);color:var(--violet-brand)}
+.act .txt{flex:1}
+.act .txt .p{font-family:var(--font-mono);font-size:.75rem;font-weight:700;letter-spacing:1px;color:var(--text-primary)}
+.act .txt .d{font-size:.63rem;color:var(--text-muted)}
+.note{font-size:.6rem;color:var(--text-muted);text-align:center;margin-top:14px;letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div class="page-head">
+  <div>
+    <h1><i class="fa-solid fa-tower-broadcast"></i> Command Center</h1>
+    <div class="tag">MONITOREO EN VIVO · SUCURSAL AUTOPASS MORÓN · MOCKUP 1</div>
+  </div>
+  <div class="actions">
+    <span class="video-status"><span class="live-dot"></span> TRANSMISIÓN EN VIVO</span>
+    <button class="btn ghost"><i class="fa-solid fa-microchip"></i> Estadísticas OCR</button>
+    <button class="btn solid"><i class="fa-solid fa-expand"></i> Abrir Multi-Cámara</button>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="dual-donut">
+      <div class="donut"><span>62%</span></div>
+      <div style="flex:1">
+        <div class="k-label">AUTOS</div>
+        <div class="k-value">31 <small>/ 50</small></div>
+        <div class="g-res"><span>Libres: 19</span><span style="color:var(--violet-brand)"><i class="fa-solid fa-bookmark"></i> Res: 4</span></div>
+      </div>
+    </div>
+    <div class="progress"><span style="width:62%"></span></div>
+  </div>
+  <div class="kpi-card">
+    <div class="dual-donut">
+      <div class="donut purple"><span>40%</span></div>
+      <div style="flex:1">
+        <div class="k-label">MOTOS</div>
+        <div class="k-value">12 <small>/ 30</small></div>
+        <div class="g-res"><span>Libres: 18</span><span style="color:var(--violet-brand)"><i class="fa-solid fa-bookmark"></i> Res: 1</span></div>
+      </div>
+    </div>
+    <div style="height:6px;background:var(--bg-input);border-radius:99px;overflow:hidden;margin-top:10px"><span style="display:block;height:100%;width:40%;background:var(--violet-brand);border-radius:99px"></span></div>
+  </div>
+  <div class="kpi-card">
+    <div class="dual-donut">
+      <div class="donut"><span>85%</span></div>
+      <div style="flex:1">
+        <div class="k-label">CAMIONETAS</div>
+        <div class="k-value">17 <small>/ 20</small></div>
+        <div class="g-res"><span>Libres: 3</span><span style="color:var(--violet-brand)"><i class="fa-solid fa-bookmark"></i> Res: 2</span></div>
+      </div>
+    </div>
+    <div class="progress"><span style="width:85%"></span></div>
+  </div>
+</div>
+
+<div class="console">
+  <!-- MAIN -->
+  <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+    <!-- VIDEO WALL -->
+    <div class="card">
+      <div class="card-head">
+        <h3><i class="fa-solid fa-closed-captioning"></i> VIDEO WALL · ACCESOS</h3>
+        <span class="hint"><i class="fa-solid fa-circle text-warn"></i> 4 cámaras activas</span>
+      </div>
+      <div class="card-body">
+        <div class="videowall">
+          <div class="cam">
+            <div class="feed"><i class="fa-solid fa-video"></i></div>
+            <div class="scan"></div>
+            <div class="hud"><span class="name">PATENTE ENTRADA</span><span class="rec"><i class="fa-solid fa-circle"></i> REC 00:12:34</span></div>
+            <div class="detected"><span class="plate">AE 123 CD</span><span class="conf">AUTO<br>98%</span></div>
+          </div>
+          <div class="cam">
+            <div class="feed"><i class="fa-solid fa-video"></i></div>
+            <div class="hud"><span class="name">PATENTE SALIDA</span><span class="rec"><i class="fa-solid fa-circle"></i> REC 00:12:34</span></div>
+            <div class="detected"><span class="plate">AB 456 FG</span><span class="conf">MOTO<br>91%</span></div>
+          </div>
+          <div class="cam">
+            <div class="feed"><i class="fa-solid fa-qrcode"></i></div>
+            <div class="hud"><span class="name">QR ENTRADA</span><span class="rec"><i class="fa-solid fa-circle"></i> STAND BY</span></div>
+          </div>
+          <div class="cam">
+            <div class="feed"><i class="fa-solid fa-qrcode"></i></div>
+            <div class="hud"><span class="name">QR SALIDA</span><span class="rec"><i class="fa-solid fa-circle"></i> STAND BY</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA DE REGISTROS -->
+    <div class="card">
+      <div class="card-head">
+        <div class="tabs">
+          <span class="tab active"><i class="fa-solid fa-car-side"></i> Estacionados</span>
+          <span class="tab"><i class="fa-solid fa-list-ul"></i> Movimientos</span>
+        </div>
+        <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar patente..."></div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table>
+          <thead><tr><th>Vehículo</th><th>Tipo</th><th>Ingreso</th><th>Permanencia</th><th>Deuda</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td><span class="mono">AE 123 CD</span></td><td><span class="badge gold">AUTO</span></td><td>14:02:11</td><td>1h 22m</td><td>$2.500</td><td><span class="badge ok">EN PREDIO</span></td></tr>
+            <tr><td><span class="mono">AB 456 FG</span></td><td><span class="badge gold">MOTO</span></td><td>13:45:00</td><td>1h 39m</td><td>$1.100</td><td><span class="badge ok">EN PREDIO</span></td></tr>
+            <tr><td><span class="mono">AC 789 HI</span></td><td><span class="badge gold">CAMIONETA</span></td><td>12:30:44</td><td>2h 54m</td><td>$4.200</td><td><span class="badge warn">POR VENCER</span></td></tr>
+            <tr><td><span class="mono">AD 321 JK</span></td><td><span class="badge gold">AUTO</span></td><td>11:58:30</td><td>3h 26m</td><td>$6.100</td><td><span class="badge danger">EN DEUDA</span></td></tr>
+          </tbody>
+        </table>
+        <div class="note">Mostrando 4 de 60 vehículos en el predio · <i class="fa-solid fa-chevron-left"></i> 1 <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="side">
+    <!-- CONTROL MANUAL -->
+    <div class="card">
+      <div class="card-head"><h3><i class="fa-solid fa-keyboard"></i> CONTROL RÁPIDO</h3></div>
+      <div class="card-body">
+        <div class="section-label"><i class="fa-solid fa-sign-in-alt"></i> INGRESO MANUAL</div>
+        <div class="manual-input">
+          <input placeholder="ABC-123">
+          <button class="btn solid"><i class="fa-solid fa-sign-in-alt"></i></button>
+        </div>
+        <div class="divider"></div>
+        <div class="section-label"><i class="fa-solid fa-traffic-light"></i> BARRERAS FÍSICAS</div>
+        <div class="barrier">
+          <div class="name"><i class="fa-solid fa-arrow-right-to-bracket"></i> ENTRADA <span class="state">· cerrada</span></div>
+          <div class="barrier-cta"><button class="mini open">Abrir</button><button class="mini close">Cerrar</button></div>
+        </div>
+        <div class="barrier">
+          <div class="name"><i class="fa-solid fa-arrow-right-from-bracket"></i> SALIDA <span class="state">· cerrada</span></div>
+          <div class="barrier-cta"><button class="mini open">Abrir</button><button class="mini close">Cerrar</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVIDAD RECIENTE -->
+    <div class="card">
+      <div class="card-head"><h3><i class="fa-solid fa-bolt"></i> ACTIVIDAD EN VIVO</h3></div>
+      <div class="card-body">
+        <div class="activity">
+          <div class="act"><span class="t">14:02</span><span class="ic in"><i class="fa-solid fa-arrow-right-to-bracket"></i></span><div class="txt"><div class="p">AE 123 CD</div><div class="d">Ingreso ALPR · Auto · piso PB</div></div></div>
+          <div class="act"><span class="t">13:58</span><span class="ic res"><i class="fa-solid fa-bookmark"></i></span><div class="txt"><div class="p">AC 789 HI</div><div class="d">Reserva confirmada · Camioneta</div></div></div>
+          <div class="act"><span class="t">13:45</span><span class="ic in"><i class="fa-solid fa-arrow-right-to-bracket"></i></span><div class="txt"><div class="p">AB 456 FG</div><div class="d">Ingreso manual · Moto · piso 1</div></div></div>
+          <div class="act"><span class="t">13:31</span><span class="ic out"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><div class="txt"><div class="p">AZ 000 ZZ</div><div class="d">Salida · digital · $0 (cortesía)</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+</body>
+</html>

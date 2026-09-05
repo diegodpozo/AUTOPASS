@@ -117,6 +117,8 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
             if session:
                 session.device_id = device_id
 
+        is_new_device = (session is None)
+
         if session:
             session.last_login_at = now
             if user_agent:
@@ -145,14 +147,14 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
             other_q = other_q.filter(models.UserSession.user_agent != user_agent)
         other_active = other_q.distinct().count()
 
-        if other_active > 0:
+        if is_new_device and other_active > 0:
             nuevo_dispositivo = True
             UserNotificationService.create_notification(
                 db,
                 user.id,
                 tipo="NEW_DEVICE_LOGIN",
                 titulo="Nuevo inicio de sesión",
-                mensaje="Detectamos un inicio de sesión desde otro dispositivo. Si no fuiste vos, te recomendamos cambiar tu contraseña.",
+                mensaje="Detectamos un inicio de sesión desde un nuevo dispositivo. Si no fuiste vos, te recomendamos cambiar tu contraseña.",
             )
 
     access_token_expires = datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

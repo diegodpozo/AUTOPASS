@@ -3,15 +3,25 @@ from fastapi import HTTPException
 import models
 import schemas
 from core.security import get_password_hash
+from core.normalize import normalize_user_name as normalize_name, normalize_dni
 from models.enums import UserRole
+from repositories.user_repository import UserRepository
 
 class UserService:
     @staticmethod
+    def get_by_email(db: Session, email: str) -> models.User:
+        """BUSCA UN USUARIO POR CORREO USANDO EL REPOSITORIO."""
+        return UserRepository.get_by_email(db, email)
+
+    @staticmethod
+    def get_by_id(db: Session, user_id: int) -> models.User:
+        """OBTIENE UN USUARIO POR SU ID USANDO EL REPOSITORIO."""
+        return UserRepository.get_by_id(db, user_id)
+
+    @staticmethod
     def create_user(db: Session, user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, sucursal: str = None) -> models.User:
         """CREA UN NUEVO USUARIO EN EL SISTEMA."""
-        from routes.parking.utils import normalize_name, normalize_dni
-        
-        existing = db.query(models.User).filter(models.User.email == user_data.email.lower().strip()).first()
+        existing = UserRepository.get_by_email(db, user_data.email)
         if existing:
             raise HTTPException(status_code=400, detail="El correo ya está registrado")
         
@@ -34,8 +44,6 @@ class UserService:
     @staticmethod
     def update_user(db: Session, user_id: int, user_data: schemas.UserAdminUpdate) -> models.User:
         """ACTUALIZA LOS DATOS DE UN USUARIO VALIDANDO UNICIDAD DE EMAIL Y DNI."""
-        from routes.parking.utils import normalize_name, normalize_dni
-        
         user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
         if not user:
             return None

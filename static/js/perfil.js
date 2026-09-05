@@ -1,5 +1,5 @@
 import * as prof from './modules/profile.js?v=9.3.0';
-import * as res from './modules/reservas.js?v=9.3.0';
+import * as res from './modules/reservas.js?v=9.10.1';
 import * as v from './modules/vehicles.js?v=9.3.0';
 import * as ui from './modules/ui.js?v=9.3.0';
 import { initPasswordValidation } from './modules/auth.js?v=9.3.0';
@@ -371,3 +371,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     } catch (e) { console.error('[DOMREADY ERROR]', e); try { alert('Error al inicializar perfil: ' + (e && e.message ? e.message : e)); } catch(_){} }
 });
+
+
+
+
+
+
+
+
+
+
+
+

@@ -79,7 +79,7 @@ Mapa completo de **rutas API** (~99 endpoints HTTP + 2 WebSocket), **arquitectur
 | EmailService | Envio de emails transaccionales (confirmacion, recordatorio, recuperacion) |
 | NotificationService | Notificaciones en tiempo real via WebSocket (OccupancyManager) |
 | UserNotificationService | CRUD de notificaciones in-app (create, read, mark) |
-| WorkerService | 3 hilos: limpieza de reservas (300s), recordatorios, auto-cancelacion |
+| WorkerService | 2 hilos: limpieza de reservas (300s) + notificaciones (recordatorios, auto-cancelacion) |
 | TimeService | Tiempo virtual para testing (offset persistido en JSON) |
 
 ## Version del Sistema
