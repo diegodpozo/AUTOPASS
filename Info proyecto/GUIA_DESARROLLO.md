@@ -12,6 +12,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 - **Config**: Si añadís una API Key o variable al `.env`, definila en `core/config.py`. Variables existentes: `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*` (server, port, user, password), `MQTT_*` (broker, topics), `DATABASE_URL`, `MP_*` (access_token, public_key, webhook_url, preference_expire_minutes). **MP Checkout Pro exige `BASE_URL` con `https://`** (rechaza `http://` en `back_urls`); para pruebas locales us� un t�nel ngrok y prob� logueado en el dominio del t�nel (la sesi�n de AUTOPASS es por origen).
 - **MQTT**: Usa `CallbackAPIVersion.VERSION2` de Paho. El cliente se crea sin callbacks globales en `core/mqtt.py`.
 - **Seed**: `core/seed.py` incluye `INITIAL_USERS` (admin con DNI, admins de sucursal), `DEFAULT_PRICES` (tarifas trimodales incluyendo `camioneta`), `INITIAL_PROMOS` (3 promos iniciales con icono y categoría). La función `seed()` parchea datos existentes sin duplicar.
+- **Caché**: `core/cache.py` provee `SimpleTTLCache` (TTL 5s). `BillingService.get_rate` ya usa `ttl_cache` para no recalcular tarifas en picos de carga.
 
 ### 2. `models/` y `schemas/` (Datos)
 - **Regla**: Siempre que crees una tabla nueva, hacelo en un archivo dentro de `models/` y exportalo en `models/__init__.py`.
@@ -86,6 +87,51 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
    - Identificadores de función visibles en la cabecera de cada slot (ej: `[LECTURA PATENTE (ENTRADA)]`).
 7. **Monitoreo de Salud**: Puntos de indicador (verde/rojo) para servicios del sistema en dashboard.
 
+### Tarjetas de Monitoreo (Vehicle Stats Cards - v9.14.1)
+Refactorización completa de las tarjetas de ocupación Autos/Motos/Camionetas. Ubicación: `templates/dashboard/tabs/live.html` (estructura) y `static/css/pages/dashboard/dashboard-live.css` (estilos).
+
+**Estructura HTML:**
+```html
+<div class="vehicle-stats-grid">
+  <div class="vehicle-stat-card">
+    <div class="vehicle-stat-header">
+      <div class="vehicle-stat-icon"><i class="fas fa-car"></i></div>
+      <span class="vehicle-stat-title">AUTOS</span>
+    </div>
+    <div class="vehicle-stat-metrics">
+      <div class="metric-row metric-general">
+        <span class="metric-label">General:</span>
+        <span class="metric-value" id="stat-free-total">-- / --</span>
+      </div>
+      <div class="metric-row metric-reservas">
+        <span class="metric-label"><i class="fas fa-bookmark"></i> Reservas:</span>
+        <span class="metric-value" id="stat-res-autos-val">-- / --</span>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+**Características:**
+- Grilla responsiva: 3 cols (desktop) → 2 cols (tablet 1200px) → 1 col (mobile 768px)
+- Proporcionamiento uniforme con gap consistente (16px)
+- Dos filas de métricas: "General" (gris) y "Reservas" (dorado)
+- Hover effects suave con transiciones cubic-bezier
+- Iconos dinámicos con fondo glassmorphic
+- Valores en monospace (`var(--font-mono)`) para mejor legibilidad
+
+**Clases CSS principales:**
+- `.vehicle-stats-grid`: Contenedor grid responsivo
+- `.vehicle-stat-card`: Tarjeta individual con gradiente 135deg
+- `.vehicle-stat-header`: Header con icono + título centrado
+- `.vehicle-stat-icon`: Icono 42x42 con fondo dorado suave
+- `.metric-row`: Fila de métrica con padding 8px
+- `.metric-general` / `.metric-reservas`: Variantes de color (gris/dorado)
+- `.metric-label` / `.metric-value`: Etiqueta y valor
+
+**Remoción de Progreso (v9.14.1):**
+Las barras de progreso fueron removidas completamente (`progress-bar`, `progress-fill`) en favor de un diseño más limpio enfocado en métricas numéricas.
+
 ---
 
 ## Convenciones Multi-Sucursal (Aislamiento)
@@ -114,7 +160,7 @@ Para correr las pruebas tras un cambio:
 ```bash
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-Tests disponibles en `tests/` (35 pruebas en 15 archivos):
+Tests disponibles en `tests/` (46 pruebas en 17 archivos):
 - `test_access_service.py`: Validación de placas, entrada/salida
 - `test_billing_service.py`: Cálculo de tarifas/estadías
 - `test_branch_service.py`: CRUD de sucursales, aforo, pisos
@@ -130,6 +176,8 @@ Tests disponibles en `tests/` (35 pruebas en 15 archivos):
 - `test_new_validations.py`: Validaciones de integridad (v9.9.8: vehículos, usuarios, pisos, doble reserva)
 - `test_rate_limiting.py`: SlowAPI (login/register/recuperación)
 - `test_routes_auth.py`: Endpoints de auth con `TestClient` (login, registro, tokens)
+- `test_mercadopago.py`: Checkout MP (estadía/reserva, BASE_URL https obligatorio, confirmación idempotente, 503 sin credenciales)
+- `test_virtual_time.py`: Tiempo virtual (avance/set/reset con offset)
 
 ---
 
