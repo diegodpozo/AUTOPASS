@@ -8,11 +8,19 @@
 - [x] **Validación End-to-End (sandbox real)**: Credenciales de prueba verificadas contra la API (`users/me` → `test_user`, site MLA) y preferencia real creada en MP con `init_point` sandbox.
 - [x] **Aprendizajes de la integración**: (1) MP **rechaza** `http://` en `back_urls` → `BASE_URL` obligatorio en `https` (se agregó validación explícita en `create_payment`); (2) ngrok como túnel de pruebas (Defender lo marca PUA: requiere exclusión + authtoken; la primera visita muestra interstitial "Visit Site"); (3) la sesión de AUTOPASS es por **origen** → hay que loguearse en el dominio del túnel (no en `localhost`) para no quedar deslogueado al volver de MP; (4) el pago test se aplicó correctamente en BD (intención `APROBADO`, reserva `Pagado`).
 
+### 🚀 Estado actual (2026-09-05) - Post v9.14.0 (Performance & Caché + Refactorización UI)
+- [x] **Índices de performance** (migración Alembic `49a240f0fc25_add_performance_indexes`): índices en `access_logs` (sucursal, tipo_evento), `reservations` (patente, sucursal_nombre, user_id), `support_ticket_messages`, `vehicles` y `redemption_tickets`; se **dropea `backend_time`** de `access_logs` y `redemption_tickets.codigo` pasa a `nullable`.
+- [x] **Caché TTL en memoria** (`core/cache.py`): `SimpleTTLCache` con TTL de 5s usado por `BillingService.get_rate` para no recalcular tarifas en picos de carga.
+- [x] **Purga automática de imágenes ALPR**: `WorkerService._cleanup_old_alpr_images` elimina imágenes más antiguas que `ALPR_IMAGE_RETENTION_DAYS` (default 30) dentro del hilo de mantenimiento.
+- [x] **Suite de tests ampliada**: nueva `tests/test_virtual_time.py` (2 casos: avance/set/reset). Total actual: **46 pruebas en 17 archivos**.
+- [x] **Acceso remoto**: scripts `scripts/start_remote.ps1`/`scripts/stop_remote.ps1` y accesos directos `acceso_remoto.bat`/`detener_acceso_remoto.bat`.
+- [x] **Refactorización de Cards de Monitoreo (v9.14.1)**: Rediseño de tarjetas Autos/Motos/Camionetas con grilla responsiva (3→2→1 cols), eliminación de código inline, nuevas clases CSS semánticas (`.vehicle-stat-*`, `.metric-row`), y remoción de barras de progreso. Mejora de proporciones y hover effects en `dashboard-live.css` (+160 líneas, -35 líneas HTML).
+
 ### 🚀 Hitos Recientes (Agosto 2026) - Post v9.12.0 (OCR Engine Overhaul & Estadísticas OCR)
 - [x] **Motor OCR Lazy/Opcional (v9.13.0)**: `alpr/ocr_engine.py` ya no rompe el arranque si ningún motor OCR importa, loguea el motivo exacto (`RapidOCR` y/o `PaddleOCR`) y agrega diagnóstico de motor en el setup. El pipeline sigue operativo con aviso explícito.
 - [x] **numpy Marker por Versión de Python**: `numpy>=1.26.0,<2.3.0` para Python < 3.14 y `numpy>=2.3.0,<2.5.0` para Python ≥ 3.14 (numpy < 2.3.0 no tiene wheels para Python 3.14).
 - [x] **Setup Robustecido**: `setup_backend.bat`/`setup.ps1` muestran los errores reales de pip/init_db y abortan si fallan (encoding UTF-8, banner Unicode con `chcp 65001`).
-- [x] **Estadísticas OCR**: Nueva página `/estadisticas-ocr` (`templates/estadisticas_ocr.html`, ~600 líneas) y nueva migración Alembic `f1a2b3c4d5e6_add_ocr_timing_to_access_logs` para medir tiempos de lectura de patentes (campo `ocr_timing_ms`).
+- [x] **Estadísticas OCR**: Nueva página `/estadisticas-ocr` (`templates/estadisticas_ocr.html`, ~600 líneas) y nueva migración Alembic `f1a2b3c4d5e6_add_ocr_timing_to_access_logs` para medir tiempos de lectura de patentes (campos `ocr_time` y `backend_time`; este último se dropea en la migración `49a240f0fc25`).
 - [x] **Avisos en Cámara**: Mensajes de evento de patente/QR en la vista de monitoreo en vivo vía WebSocket.
 - [x] **Unificación de Códigos & Revisión de Patentes**: Refactor del pipeline ALPR (`alpr/config.py`, `alpr/ocr_engine.py`, `alpr/runner.py`, `routes/parking/access.py`, `services/access_service.py`, `services/report_service.py`) para homogeneizar formatos y corregir lecturas.
 - [x] **Ajustes de UX**: Aviso de puntos ganados al pagar una reserva; borrado de vehículos sin bloqueo por estadías históricas; cambio del modo de lectura de patentes.
@@ -208,7 +216,7 @@
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
 ### 🛠️ Arquitectura Actual (v9.9.0+)
-- **Backend**: Clean Architecture con Servicios y Repositories. 13 servicios en `services/`, ~105 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
+- **Backend**: Clean Architecture con Servicios y Repositories. 14 servicios en `services/`, ~105 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
 - **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 48 templates HTML, 39 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).

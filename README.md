@@ -16,7 +16,7 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 - **Pagos con Mercado Pago (v9.14.0)** — Checkout Pro por redirección para abonar reservas y estadías en curso de forma **directa** (no toca el saldo de la billetera); confirmación por retorno (`/success|pending|failure`) y webhook
 - **Fidelización** — Sistema de puntos (10 pts/$1000), catálogo de promociones canjeables y cupones
 - **Mapas Interactivos & Filtro de Localidades** — Mosaico de Google Maps con buscador autocompletado en tiempo real, desglose de direcciones exactas, aviso de disponibilidad por zona y navegación animada `flyTo`
-- **Dashboard Admin Premium** — 9 pestañas modulares: Monitoreo, Ocupación, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración
+- **Dashboard Admin Premium** — 9 pestañas modulares (Monitoreo, Ocupación, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración) + página de Estadísticas OCR
 - **Portal de Usuario** — Perfil, reservas, vehículos, billetera virtual, pase digital QR, notificaciones
 - **Real-time** — WebSocket (aforo), MQTT (barreras), polling de notificaciones
 - **Monitoreo CCTV** — Grilla dinámica de cámaras con streaming MJPEG y controles DVR
@@ -44,7 +44,7 @@ AUTOPASS/
 ├── static/
 │   ├── js/modules/     # 36 módulos ES6
 │   └── css/            # 39 archivos CSS (Glassmorphism Premium)
-├── templates/          # Jinja2 (dashboard 9 tabs + estadísticas OCR, profile 7 tabs, emails, modales)
+├── templates/          # Jinja2 (dashboard 9 tabs + página OCR, profile 7 tabs, emails, modales)
 ├── tests/              # Suite de pruebas automatizadas (pytest)
 ├── alembic/            # Migraciones de BD
 └── scripts/            # Utilidades y migraciones

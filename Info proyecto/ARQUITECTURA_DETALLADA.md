@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.12.0).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.0).
 
 ---
 
@@ -11,12 +11,12 @@ El proyecto sigue una organización basada en la separación de responsabilidade
 ```text
 AUTOPASS/
 ├── alpr/               # Paquete modular ALPR (Vision, Preprocessing, Consensus, WS Streamer)
-├── core/               # Infraestructura (Configuración, Seguridad/RBAC/JWT, Rate Limit, DB, MQTT, Logger, Time, Normalize, Seed)
+├── core/               # Infraestructura (Configuración, Seguridad/RBAC/JWT, Rate Limit, DB, MQTT, Logger, Time, Normalize, Seed, Caché TTL)
 ├── models/             # Entidades SQLAlchemy + Enums (Domain Layer)
 ├── schemas/            # Validación Pydantic
 ├── routes/             # Endpoints (Transport Layer - Delgados, organizados por submódulos)
 │   ├── admin/          # Admin CRUD (users, branches, reservations, promotions, operations, settings, virtual_time, support)
-│   ├── user/           # User portal (profile, vehicles, reservations, balance, fidelization, notifications, support)
+│   ├── user/           # User portal (profile, vehicles, reservations, balance, fidelization, notifications, support, mercadopago)
 │   ├── parking/        # Access control (access, status, utils)
 │   └── system/         # System management (health, cameras, video, common)
 ├── services/           # Inteligencia de Negocio (14 servicios)
@@ -45,7 +45,7 @@ AUTOPASS/
 
 ---
 
-## Capas y Responsabilidades (v9.12.0)
+## Capas y Responsabilidades (v9.14.0)
 
 ### 1. Capa de Servicios (Service Layer)
 Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
@@ -59,15 +59,15 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **`EmailService`**: Envío de emails transaccionales con templates Jinja2 (confirmación de reserva con QR embebido, recuperación de contraseña, logo en base64).
 - **`NotificationService`**: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal para actualización en tiempo real del aforo. Usa un `OccupancyManager` con `broadcast_update` para distribuir cambios.
 - **`UserNotificationService`**: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
-- **`SupportService`**: CRUD de tickets de soporte (`SupportTicket`) con aislamiento por sucursal según rol: los clientes crean/consultan sus tickets (`/v1/user/support-tickets`) y los operadores/admin los gestionan y responden (`/v1/admin/support-tickets`).
-- **`WorkerService`**: 3 hilos de fondo: (1) limpieza de reservas cada 300s (`auto_finalize_all_reservations`), (2) recordatorios 31 min antes del inicio, (3) auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio.
+- **`SupportService`**: CRUD de tickets de soporte (`SupportTicket`) con aislamiento por sucursal según rol: los clientes crean/consultan/responden sus tickets (`/v1/user/support-tickets`, con adjuntos jpg/jpeg/png/gif/webp/pdf hasta 1 MB) y los operadores/admin los gestionan y responden (`/v1/admin/support-tickets`, incl. `pending-count` y `read-notifs`).
+- **`WorkerService`**: 2 hilos de fondo: (1) limpieza/mantenimiento cada `MAINTENANCE_INTERVAL_SECONDS` (`cleanup_overdue_reservations`, `auto_finalize_all_reservations` y purga de imágenes ALPR antiguas `_cleanup_old_alpr_images`); (2) notificaciones cada 30s (recordatorios 31 min antes del inicio, paso a ACTIVA de reservas iniciadas y auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio).
 - **`TimeService`**: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
 - **`MercadoPagoService`** (v9.14.0): Integración Checkout Pro por redirección. `create_payment` crea la preferencia (`MercadoPagoPayment`) y `confirm_payment` consulta MP (por `payment_id` o `external_reference`), valida `approved` + monto e **aplica de forma idempotente** (véase §6). No usa SDK: se llama a la API vía `requests` (`MP_API_BASE = https://api.mercadopago.com`).
 
 ### 2. Capa de Datos (Modelos y Enums)
 - **Seguridad de Tipos:** Se han implementado Enums en `models/enums.py` para eliminar "strings mágicos" (ej: `UserRole`, `VehicleType`, `ReservationStatus`).
 - **Gestión Vertical:** Soporte para sucursales con múltiples pisos (`ParkingFloor`), cada uno con capacidad independiente y trimodal para autos, motos y camionetas (`capacidad_total`, `ocupacion_actual`, `capacidad_motos`, `ocupacion_motos`, `capacidad_camionetas`, `ocupacion_camionetas`).
-- **Fidelización:** Modelos `Promotion` (catálogo de beneficios con icono, categoría, sucursal, activa) y `Coupon` (cupones generados por canje de puntos).
+- **Fidelización:** Modelos `Promotion` (catálogo de beneficios con icono, categoría, sucursal, activa; incluye `tipo_canje` y `valor_descuento`), `Coupon` (cupones generados por canje de puntos) y `RedemptionTicket` (`redemption_tickets`: voucher con `codigo` de 16 caracteres, `qr_data = "AUTOPASS_REDEMPTION|ID:{codigo}"`, válido 30 días, o `descuento_reserva` que se aplica al pagar la próxima reserva).
 - **Configuración Dinámica:** Modelo `Settings` (key-value store con `valor_str` para configuraciones de texto como IPs de cámaras, y aislamiento por sucursal).
 - **Cámaras:** Modelo `ParkingCamera` (nombre, tipo: `PATENTE_INGRESO`, `PATENTE_EGRESO`, `QR_INGRESO`, `QR_EGRESO`, `PREDIO`, source/URL, sucursal, activa) para gestión dinámica de cámaras de seguridad.
 - **Normalización de Patentes:** Campo `normalized_patente` en `AccessLog` para búsquedas eficientes, con funciones `normalize_plate`/`format_plate` en `routes/parking/utils.py` que soportan formatos MERCOSUR (Argentina, Brasil, Uruguay, Paraguay).
@@ -148,7 +148,7 @@ Organización en 4 capas bajo `static/css/` (39 archivos totales):
 - `base/`: Variables CSS, reset, tipografía, utilidades (4 archivos)
 - `layout/`: Sidebar, header, grid (3 archivos)
 - `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
-- `pages/`: landing, profile, dashboard, contacto, legal (5 archivos + 17 sub-archivos)
+- `pages/`: landing, profile, dashboard, contacto, legal (5 archivos + 18 sub-archivos)
   - `pages/dashboard/`: `dashboard-base.css`, `dashboard-cards.css`, `dashboard-live.css`, `dashboard-settings.css`, `dashboard-tables.css`, `dashboard-admin-tour.css`
   - `pages/landing/`: `landing-features.css`, `landing-hero.css`, `landing-map.css`, `landing-modals.css`, `landing-nav.css`
   - `pages/profile/`: `profile-base.css`, `profile-help.css`, `profile-notifications.css`, `profile-points.css`, `profile-reservations.css`, `profile-tour.css`, `profile-vehicles.css`
@@ -199,6 +199,11 @@ Servicio independiente de visión artificial modularizado en el paquete `alpr/` 
 - `notification_url` solo se envía si `MP_WEBHOOK_URL` está definido (evita rechazos con URLs locales).
 - Callbacks **públicos** (sin auth) + confirmación **idempotente** contra MP (nunca confiar solo en el payload del webhook).
 - Tabla `mercadopago_payments` (migración Alembic `c9d8e7f6a5b4`). `external_reference` es nullable (el `id` se asigna al insertar).
+
+**Endpoints Mercado Pago (v9.14.0):**
+- `POST /v1/user/mercadopago/checkout` (autenticado): Crear preferencia Checkout Pro (pagar reserva o estadía). Retorna `init_point`.
+- `GET /v1/user/mercadopago/success|pending|failure` (público, callback MP): Confirmación de retorno. Redirigen a `/perfil?mp_status=...&mp_tipo=...`.
+- `POST /v1/user/mercadopago/webhook` (público, callback asíncrono): Webhook de MP para confirmación asíncrona. Ambos confirman el pago vía `confirm_payment` (idempotente).
 
 ---
 1. **Rutas Delgadas:** Los controladores en `routes/` no deben contener lógica de negocio. Solo delegan a los servicios correspondientes.

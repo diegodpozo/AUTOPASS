@@ -92,19 +92,37 @@
 │ created_at (DateTime)          │
 └────────────────────────────────┘
 
-┌────────────────────────────────┐
-│       SupportTicket            │
-├────────────────────────────────┤
-│ PK id                          │
-│ FK user_id (not null)          │
-│ categoria                      │
-│ sucursal (default "General")   │
-│ asunto                         │
-│ mensaje (Text)                 │
-│ estado (default "Pendiente")   │
-│ respuesta (nullable)           │
-│ created_at (DateTime)          │
-│ updated_at (DateTime)          │
+┌────────────────────────────────┐     ┌────────────────────────────────┐
+│       SupportTicket            │     │   MercadoPagoPayment (v9.14.0) │
+├────────────────────────────────┤     ├────────────────────────────────┤
+│ PK id                          │     │ PK id                          │
+│ FK user_id (not null)          │     │ tipo (reserva|estadia)         │
+│ categoria                      │     │ FK reserva_id (nullable)       │
+│ sucursal (default "General")   │     │ FK access_log_id (nullable)    │
+│ asunto                         │     │ FK redemption_ticket_id (null) │
+│ mensaje (Text)                 │     │ patente                        │
+│ estado (default "Pendiente")   │     │ monto                          │
+│ respuesta (nullable)           │     │ moneda (default "ARS")         │
+│ created_at (DateTime)          │     │ external_reference (unique)    │
+│ updated_at (DateTime)          │     │ preference_id                  │
+└────────────────────────────────┘     │ payment_id                     │
+                                       │ estado (PENDIENTE/APROBADO...)  │
+                                       │ mp_status                      │
+                                       │ created_at (DateTime)          │
+                                       │ updated_at (DateTime)          │
+                                       └────────────────────────────────┘
+                                       
+┌────────────────────────────────┐     ┌────────────────────────────────┐
+│   RedemptionTicket (v9.13.0)   │     │       UserSession (v9.11.0)    │
+├────────────────────────────────┤     ├────────────────────────────────┤
+│ PK id                          │     │ PK id                          │
+│ codigo (16 chars, unique)      │     │ FK user_id (indexed)           │
+│ qr_data                        │     │ device_id (indexed)            │
+│ tipo_canje (default "desc_res")│     │ user_agent                     │
+│ valor_descuento                │     │ ip_address                     │
+│ fecha_expiracion (default +30d)│     │ created_at (DateTime)          │
+│ usado                          │     │ last_login_at (indexed)        │
+│ created_at (DateTime)          │     └────────────────────────────────┘
 └────────────────────────────────┘
 ```
 
@@ -292,6 +310,41 @@
 | created_at | DateTime (default utcnow) | Fecha de creación |
 | updated_at | DateTime (default utcnow, onupdate) | Fecha de última actualización |
 
+### MercadoPagoPayment (models/mercadopago.py - v9.14.0)
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| id | Integer PK | Identificador único (autoincremental) |
+| tipo | String (indexed) | Tipo de pago: 'reserva' o 'estadia' |
+| reserva_id | Integer FK→reservations.id (nullable, indexed) | Reserva si tipo='reserva' |
+| access_log_id | Integer FK→access_logs.id (nullable, indexed) | Estadía si tipo='estadia' |
+| redemption_ticket_id | Integer FK→redemption_tickets.id (nullable) | Ticket de descuento aplicado |
+| patente | String (nullable, indexed) | Patente del vehículo |
+| monto | Float (not null) | Monto a pagar en MP |
+| moneda | String (default "ARS") | Moneda ISO |
+| external_reference | String (unique, indexed, nullable) | `AP-{TIPO}-{id}-{uuid8}` generada por MP |
+| preference_id | String (nullable) | ID de preferencia devuelto por MP |
+| payment_id | String (nullable, indexed) | ID de pago asignado por MP |
+| estado | String (default "PENDIENTE") | PENDIENTE, APROBADO, FALLIDO, CANCELADO |
+| mp_status | String (nullable) | Status HTTP devuelto por MP |
+| created_at | DateTime (default utcnow, indexed) | Fecha de creación |
+| updated_at | DateTime (default utcnow) | Fecha de última actualización |
+
+> Nota: `external_reference` genera una referencia única para evitar duplicados. Migración Alembic: `c9d8e7f6a5b4_add_mercadopago_payments.py`.
+
+### RedemptionTicket (models/reservation.py - v9.13.0)
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| id | Integer PK | Identificador único |
+| codigo | String (16 chars, unique, indexed, nullable) | Código QR legible por ALPR (ej: `APRD-XXXX-XXXX`) |
+| qr_data | String (unique, indexed) | Datos QR codificados: `"AUTOPASS_REDEMPTION\|ID:{codigo}"` |
+| tipo_canje | String (default "descuento_reserva") | Tipo de beneficio: descuento_reserva, etc. |
+| valor_descuento | Float (not null) | Monto o porcentaje de descuento |
+| fecha_expiracion | DateTime (indexed) | Fecha de expiración (default +30 días) |
+| usado | Boolean (default False, indexed) | Si fue canjeado |
+| created_at | DateTime (default utcnow) | Fecha de emisión |
+
+> Nota: `RedemptionTicket` se genera al canjear puntos en una promoción de descuento. Puede ser leído por ALPR al ingreso o aplicado manualmente al pagar una reserva con MP.
+
 ## Enumeraciones (models/enums.py)
 
 ```python
@@ -313,5 +366,8 @@ User 1──* PointsLog          (usuario tiene historial de puntos)
 User 1──* UserNotification   (usuario tiene notificaciones in-app)
 Reservation 1──* AccessLog   (reserva puede tener múltiples accesos)
 Reservation 1──* UserNotification (reserva puede generar notificaciones)
+Reservation 1──* MercadoPagoPayment (reserva puede tener pago MP)
+AccessLog 1──* MercadoPagoPayment (estadía puede tener pago MP)
+MercadoPagoPayment * ──0/1 RedemptionTicket (pago puede aplicar descuento)
 ParkingBranch 1──* ParkingFloor (sucursal tiene múltiples pisos)
 ```
