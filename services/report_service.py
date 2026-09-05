@@ -186,11 +186,11 @@ class ReportService:
         for e in entradas:
             key = (e.sucursal, e.tipo_vehiculo)
             if key not in rate_cache:
-                rate_cache[key] = BillingService.get_hourly_rate(db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
-            precio_hora = rate_cache[key]
+                rate_cache[key] = BillingService.get_30min_rate(db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
+            tarifa_30min = rate_cache[key]
             delta = TimeService.now() - datetime.datetime.fromisoformat(e.fecha_hora)
-            bloques_a_cobrar = max(1, math.ceil(delta.total_seconds() / 3600))
-            deuda_proyectada += bloques_a_cobrar * precio_hora
+            bloques_a_cobrar = max(1, math.ceil(delta.total_seconds() / 1800))
+            deuda_proyectada += bloques_a_cobrar * tarifa_30min
 
         return {
             "total_recaudado": total_final,

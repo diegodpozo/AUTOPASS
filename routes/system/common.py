@@ -32,12 +32,8 @@ def stop_all_cameras():
             pass
     CAMERA_PROCESSES.clear()
 
-def normalize_system_name(text: str) -> str:
-    """Normalización idéntica a la del frontend y ALPR service."""
-    if not text:
-        return ""
-    text = text.upper().replace("AUTOPASS ", "").strip()
-    return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+from core.normalize import normalize_name as normalize_system_name
+
 
 class ConnectionManager:
     """Gestión de WebSockets para espectadores de streaming de video por sucursal."""

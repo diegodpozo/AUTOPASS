@@ -6,8 +6,8 @@ class Reservation(Base):
     """REGISTRO DE ESTADIAS PROGRAMADAS O RECURRENTES."""
     __tablename__ = "reservations"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    patente = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    patente = Column(String, index=True)
     fecha_inicio = Column(String)
     fecha_fin = Column(String)
     dias_semana = Column(String, nullable=True) # ALMACENAMIENTO SERIALIZADO: "0,1,2" (0=LUNES...)
@@ -17,7 +17,7 @@ class Reservation(Base):
     mp_preference_id = Column(String, nullable=True) # ID DE INTEGRACION CON MERCADO PAGO
     estado_pago = Column(String, default="Pendiente")
     estado_reserva = Column(String, default="Pendiente")
-    sucursal_nombre = Column(String, nullable=True)
+    sucursal_nombre = Column(String, nullable=True, index=True)
     sucursal_info = Column(String, nullable=True)
     tipo_estadia = Column(String, default="hora")
     cliente_nombre = Column(String, nullable=True)

@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import datetime
@@ -32,7 +33,7 @@ class WorkerService:
 
     @staticmethod
     def _reservation_cleanup_worker():
-        """HILO DE FONDO QUE LIMPIA Y FINALIZA RESERVAS PERIODICAMENTE."""
+        """HILO DE FONDO QUE LIMPIA Y FINALIZA RESERVAS Y PURGA IMAGENES ALPR PERIODICAMENTE."""
         logger.info("Hilo de mantenimiento de reservas iniciado.")
         while True:
             db = None
@@ -40,6 +41,7 @@ class WorkerService:
                 db = SessionLocal()
                 ReservationService.cleanup_overdue_reservations(db)
                 ReservationService.auto_finalize_all_reservations(db)
+                WorkerService._cleanup_old_alpr_images()
             except Exception as e:
                 logger.error(f"En el trabajador de reservas: {e}")
             finally:
@@ -49,6 +51,33 @@ class WorkerService:
                     except Exception:
                         pass
             time.sleep(settings.MAINTENANCE_INTERVAL_SECONDS)
+
+    @staticmethod
+    def _cleanup_old_alpr_images():
+        """PURGA IMAGENES DE ALPR MAS ANTIGUAS QUE ALPR_IMAGE_RETENTION_DAYS."""
+        try:
+            image_dir = settings.IMAGE_DIR
+            retention_days = getattr(settings, 'ALPR_IMAGE_RETENTION_DAYS', 30)
+            if not os.path.exists(image_dir) or retention_days <= 0:
+                return
+
+            cutoff_seconds = time.time() - (retention_days * 86400)
+            purged_count = 0
+            for filename in os.listdir(image_dir):
+                file_path = os.path.join(image_dir, filename)
+                if os.path.isfile(file_path):
+                    mtime = os.path.getmtime(file_path)
+                    if mtime < cutoff_seconds:
+                        try:
+                            os.unlink(file_path)
+                            purged_count += 1
+                        except Exception as err:
+                            logger.warn(f"No se pudo eliminar imagen antigua {filename}: {err}")
+
+            if purged_count > 0:
+                logger.info(f"Purga ALPR: Se eliminaron {purged_count} imágenes más antiguas a {retention_days} días.")
+        except Exception as e:
+            logger.error(f"Error purgando imágenes ALPR antiguas: {e}")
 
     @staticmethod
     def _notification_worker():
@@ -88,6 +117,10 @@ class WorkerService:
 
         for res in candidatas:
             try:
+                # Marcar recordatorio_confirmado como True para evitar re-procesamiento en loops subsecuentes
+                res.recordatorio_confirmado = True
+                db.commit()
+
                 user = res.user
                 if not user or not user.email:
                     continue
@@ -132,38 +165,38 @@ class WorkerService:
 
     @staticmethod
     def _process_started_reservations(db):
-        """PASA A ACTIVA LAS RESERVAS PAGADAS CUYO HORARIO INICIO, NOTIFICA EN AMBOS CASOS."""
+        """PASA A ACTIVA LAS RESERVAS PENDIENTES CUYO HORARIO INICIO Y NOTIFICA EL INICIO (UNA SOLA VEZ)."""
         now_str = TimeService.now_str()
         iniciadas = db.query(models.Reservation).filter(
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
             models.Reservation.fecha_inicio <= now_str,
             models.Reservation.fecha_fin >= now_str
         ).all()
 
         for res in iniciadas:
             try:
+                user = res.user
+                if not user:
+                    continue
+
+                # PASAR A ACTIVA Y MARCAR RECORDATORIO COMO PROCESADO
+                res.estado_reserva = ReservationStatus.ACTIVA
+                res.recordatorio_confirmado = True
+                db.commit()
+
+                pagada = res.estado_pago == PaymentStatus.PAGADO
+
+                # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS PAGADAS QUE INICIAN AHORA
+                if pagada and res.tipo_estadia != "hora" and res.sucursal_nombre:
+                    from services.reservation_service import _reservar_plaza_en_aforo
+                    _reservar_plaza_en_aforo(db, res)
+
                 notif_existente = db.query(models.UserNotification).filter(
                     models.UserNotification.reserva_id == res.id,
                     models.UserNotification.tipo == "RESERVATION_STARTED"
                 ).first()
                 if notif_existente:
                     continue
-
-                user = res.user
-                if not user:
-                    continue
-
-                pagada = res.estado_pago == PaymentStatus.PAGADO
-
-                # PASAR A ACTIVA SI SIGUE PENDIENTE (ESTE PAGA O NO)
-                if res.estado_reserva == ReservationStatus.PENDIENTE:
-                    res.estado_reserva = ReservationStatus.ACTIVA
-                    db.commit()
-
-                # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS PAGADAS QUE INICIAN AHORA
-                if pagada and res.tipo_estadia != "hora" and res.sucursal_nombre:
-                    from services.reservation_service import _reservar_plaza_en_aforo
-                    _reservar_plaza_en_aforo(db, res)
 
                 titulo = "Tu reserva ya comenzó!"
                 mensaje = f"Reserva #{res.id} en {res.sucursal_nombre} - Patente {res.patente}. "

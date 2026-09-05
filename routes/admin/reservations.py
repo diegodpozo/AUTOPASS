@@ -60,7 +60,8 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
             raise HTTPException(status_code=400, detail="La patente no está vinculada a ese usuario")
 
     # VERIFICAR DISPONIBILIDAD
-    disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
+    tipo_v = vehicle.tipo if vehicle else "Auto"
+    disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, tipo_vehiculo=tipo_v)
     if not disp["disponible"]:
         raise HTTPException(status_code=400, detail=disp["mensaje"])
 
@@ -155,7 +156,10 @@ def update_reservation_admin(res_id: int, data: schemas.ReservationUpdate, db: S
     fec_ini = data.fecha_inicio if data.fecha_inicio else reserva.fecha_inicio
     fec_fin = data.fecha_fin if data.fecha_fin else reserva.fecha_fin
     suc_efect = data.sucursal_nombre if data.sucursal_nombre else reserva.sucursal_nombre
-    disp = verificar_disponibilidad(db, suc_efect, fec_ini, fec_fin, exclude_id=res_id)
+    pat = data.patente if data.patente else reserva.patente
+    v_obj = db.query(models.Vehicle).filter(models.Vehicle.patente == pat).first()
+    t_veh = v_obj.tipo if v_obj else "Auto"
+    disp = verificar_disponibilidad(db, suc_efect, fec_ini, fec_fin, exclude_id=res_id, tipo_vehiculo=t_veh)
     if not disp["disponible"]:
         raise HTTPException(status_code=400, detail=disp["mensaje"])
 

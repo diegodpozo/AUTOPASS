@@ -6,12 +6,16 @@ from core.logger import get_logger
 
 logger = get_logger("Database")
 
-# --- CONFIGURACION DE BASE DE DATOS ---
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+def normalize_database_url(url: str) -> str:
+    """NORMALIZA LA URL DE BASE DE DATOS PARA POSTGRESQL (PSYCOPG 3)."""
+    if not url:
+        return "sqlite:///./parking.db"
+    if url.startswith("postgresql://") and "+" not in url.split("://", 1)[0]:
+        return "postgresql+psycopg://" + url.split("://", 1)[1]
+    return url
 
-# POSTGRES: si la URL viene sin driver (postgresql://...), usar psycopg 3
-if SQLALCHEMY_DATABASE_URL.startswith("postgresql://") and "+" not in SQLALCHEMY_DATABASE_URL.split("://", 1)[0]:
-    SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://" + SQLALCHEMY_DATABASE_URL.split("://", 1)[1]
+# --- CONFIGURACION DE BASE DE DATOS ---
+SQLALCHEMY_DATABASE_URL = normalize_database_url(settings.DATABASE_URL)
 
 # LIBSQL/TURSO: el driver real es `libsql`; el dialecto se registra como sqlite+libsql
 IS_LIBSQL = SQLALCHEMY_DATABASE_URL.startswith(("libsql://", "sqlite+libsql://"))
@@ -21,11 +25,11 @@ if IS_LIBSQL:
         SQLALCHEMY_DATABASE_URL = "sqlite+" + SQLALCHEMY_DATABASE_URL
     from sqlalchemy.pool import QueuePool
     connect_args = {"auth_token": settings.TURSO_AUTH_TOKEN}
-    pool_args = {"pool_size": 10, "max_overflow": 20, "pool_timeout": 60, "poolclass": QueuePool}
+    pool_args = {"pool_size": 20, "max_overflow": 40, "pool_timeout": 60, "pool_pre_ping": True, "pool_recycle": 1800, "poolclass": QueuePool}
     engine_args = {}
 else:
     engine_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
-    pool_args = {"pool_size": 10, "max_overflow": 20, "pool_timeout": 60} if not SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+    pool_args = {"pool_size": 20, "max_overflow": 40, "pool_timeout": 60, "pool_pre_ping": True, "pool_recycle": 1800} if not SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
     connect_args = {}
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={**connect_args, **engine_args}, **pool_args)

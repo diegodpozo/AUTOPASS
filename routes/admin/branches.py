@@ -21,22 +21,34 @@ def list_branches(db: Session = Depends(get_db)):
 @router.post("/{branch_id}/floors", response_model=schemas.FloorResponse)
 def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """AGREGA UN NUEVO PISO A LA SUCURSAL."""
-    if not nombre.strip().upper().startswith("AUTOPASS"):
-        raise HTTPException(status_code=400, detail="El nombre de la sucursal debe comenzar con 'AUTOPASS'")
-
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
+    
+    cap_res_autos = getattr(data, 'capacidad_reservas_autos', 0) or 0
+    cap_res_motos = getattr(data, 'capacidad_reservas_motos', 0) or 0
+    cap_res_camionetas = getattr(data, 'capacidad_reservas_camionetas', 0) or 0
+    cap_res_total = getattr(data, 'capacidad_reservas', 0) or (cap_res_autos + cap_res_motos + cap_res_camionetas)
+
     new_floor = models.ParkingFloor(
         branch_id=branch_id,
         nombre=data.nombre,
         capacidad_total=data.capacidad_total,
         capacidad_motos=data.capacidad_motos,
-        capacidad_camionetas=data.capacidad_camionetas
+        capacidad_camionetas=data.capacidad_camionetas,
+        capacidad_reservas=cap_res_total,
+        capacidad_reservas_autos=cap_res_autos,
+        capacidad_reservas_motos=cap_res_motos,
+        capacidad_reservas_camionetas=cap_res_camionetas
     )
     db.add(new_floor)
     db.commit()
     db.refresh(new_floor)
+    try:
+        from services.notification_service import NotificationService
+        NotificationService.notify_occupancy_change(db, branch.nombre)
+    except Exception:
+        pass
     return new_floor
 
 @router.delete("/floors/{floor_id}")
@@ -45,15 +57,35 @@ def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.Use
     floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
-    if (floor.ocupacion_actual or 0) > 0 or (floor.ocupacion_motos or 0) > 0 or (floor.ocupacion_camionetas or 0) > 0:
+    if (floor.ocupacion_actual or 0) > 0 or (floor.ocupacion_motos or 0) > 0 or (floor.ocupacion_camionetas or 0) > 0 or (getattr(floor, 'ocupacion_reservas', 0) or 0) > 0:
         raise HTTPException(status_code=400, detail="No se puede eliminar un piso que posee vehículos actualmente estacionados en él.")
+
+    branch_id = floor.branch_id
+    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
 
     db.delete(floor)
     db.commit()
+    if branch:
+        try:
+            from services.notification_service import NotificationService
+            NotificationService.notify_occupancy_change(db, branch.nombre)
+        except Exception:
+            pass
     return {"status": "ok"}
 
 @router.patch("/floors/{floor_id}", response_model=schemas.FloorResponse)
-def update_floor_capacity(floor_id: int, cap_autos: int, cap_motos: int, cap_camionetas: int = 5, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+def update_floor_capacity(
+    floor_id: int, 
+    cap_autos: int, 
+    cap_motos: int, 
+    cap_camionetas: int = 5, 
+    cap_reservas: int = 0, 
+    cap_reservas_autos: Optional[int] = None,
+    cap_reservas_motos: Optional[int] = None,
+    cap_reservas_camionetas: Optional[int] = None,
+    db: Session = Depends(get_db), 
+    admin: models.User = Depends(get_local_manager)
+):
     """ACTUALIZA LA CAPACIDAD DE UN PISO VALIDANDO QUE SEA MAYOR O IGUAL A LA OCUPACION ACTUAL."""
     floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
@@ -65,11 +97,37 @@ def update_floor_capacity(floor_id: int, cap_autos: int, cap_motos: int, cap_cam
     if cap_camionetas < (floor.ocupacion_camionetas or 0):
         raise HTTPException(status_code=400, detail=f"La capacidad de camionetas ({cap_camionetas}) no puede ser menor a la ocupación actual ({floor.ocupacion_camionetas}).")
 
+    if cap_reservas_autos is not None and cap_reservas_autos < (getattr(floor, 'ocupacion_reservas_autos', 0) or 0):
+        raise HTTPException(status_code=400, detail=f"La capacidad de reservas autos ({cap_reservas_autos}) no puede ser menor a la ocupación actual ({floor.ocupacion_reservas_autos}).")
+    if cap_reservas_motos is not None and cap_reservas_motos < (getattr(floor, 'ocupacion_reservas_motos', 0) or 0):
+        raise HTTPException(status_code=400, detail=f"La capacidad de reservas motos ({cap_reservas_motos}) no puede ser menor a la ocupación actual ({floor.ocupacion_reservas_motos}).")
+    if cap_reservas_camionetas is not None and cap_reservas_camionetas < (getattr(floor, 'ocupacion_reservas_camionetas', 0) or 0):
+        raise HTTPException(status_code=400, detail=f"La capacidad de reservas camionetas ({cap_reservas_camionetas}) no puede ser menor a la ocupación actual ({floor.ocupacion_reservas_camionetas}).")
+
     floor.capacidad_total = cap_autos
     floor.capacidad_motos = cap_motos
     floor.capacidad_camionetas = cap_camionetas
+
+    if cap_reservas_autos is not None:
+        floor.capacidad_reservas_autos = cap_reservas_autos
+    if cap_reservas_motos is not None:
+        floor.capacidad_reservas_motos = cap_reservas_motos
+    if cap_reservas_camionetas is not None:
+        floor.capacidad_reservas_camionetas = cap_reservas_camionetas
+
+    if cap_reservas_autos is not None or cap_reservas_motos is not None or cap_reservas_camionetas is not None:
+        floor.capacidad_reservas = (floor.capacidad_reservas_autos or 0) + (floor.capacidad_reservas_motos or 0) + (floor.capacidad_reservas_camionetas or 0)
+    else:
+        floor.capacidad_reservas = cap_reservas
+
     db.commit()
     db.refresh(floor)
+    if floor.branch:
+        try:
+            from services.notification_service import NotificationService
+            NotificationService.notify_occupancy_change(db, floor.branch.nombre)
+        except Exception:
+            pass
     return floor
 
 @router.post("/branches")
@@ -121,6 +179,21 @@ async def create_branch(
 @router.delete("/branches/{branch_id}")
 def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS."""
+def _check_physical_occupancy(db: Session, branch: models.ParkingBranch) -> bool:
+    """RETORNA TRUE SI HAY VEHICULOS ESTACIONADOS FISICAMENTE EN LA SUCURSAL."""
+    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+    if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0 or (getattr(aforo, 'ocupacion_reservas', 0) or 0) > 0):
+        return True
+    if branch.floors:
+        total_occ = sum((f.ocupacion_actual or 0) + (f.ocupacion_motos or 0) + (f.ocupacion_camionetas or 0) + (getattr(f, 'ocupacion_reservas', 0) or 0) for f in branch.floors)
+        if total_occ > 0:
+            return True
+    return False
+
+
+@router.delete("/branches/{branch_id}")
+def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
+    """ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS."""
     import datetime
 
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
@@ -128,14 +201,8 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.U
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
     # 1. VALIDAR OCUPACION FISICA
-    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
-    if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0):
+    if _check_physical_occupancy(db, branch):
         raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con vehículos físicamente en su interior.")
-    
-    if branch.floors:
-        total_occ = sum((f.ocupacion_actual or 0) + (f.ocupacion_motos or 0) + (f.ocupacion_camionetas or 0) for f in branch.floors)
-        if total_occ > 0:
-            raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con vehículos físicamente en su interior.")
 
     # 2. VALIDAR RESERVAS ACTIVAS O PENDIENTES
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -146,6 +213,15 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.U
     ).first()
     if active_res:
         raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con reservas activas o pendientes.")
+
+    # 3. ELIMINAR LOGO ASOCIADO SI NO ES EL LOGO POR DEFECTO
+    if branch.logo_url and branch.logo_url != '/static/images/logo.png':
+        old_path = branch.logo_url.lstrip('/')
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except Exception:
+                pass
 
     db.delete(branch)
     db.commit()
@@ -211,16 +287,10 @@ def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: m
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
-    if branch.activa:
-        # AL DESACTIVAR, VALIDAR SI HAY VEHICULOS ADENTRO
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
-        if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0):
-            raise HTTPException(status_code=400, detail="No se puede desactivar una sucursal con vehículos en su interior.")
-        if branch.floors:
-            total_occ = sum((f.ocupacion_actual or 0) + (f.ocupacion_motos or 0) + (f.ocupacion_camionetas or 0) for f in branch.floors)
-            if total_occ > 0:
-                raise HTTPException(status_code=400, detail="No se puede desactivar una sucursal con vehículos en su interior.")
+    if branch.activa and _check_physical_occupancy(db, branch):
+        raise HTTPException(status_code=400, detail="No se puede desactivar una sucursal con vehículos en su interior.")
 
     branch.activa = not branch.activa
     db.commit()
     return {"status": "ok", "activa": branch.activa}
+

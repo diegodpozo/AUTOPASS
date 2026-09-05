@@ -142,7 +142,7 @@ export async function updateEditReservationPrice() {
             }
 
             let total = 0;
-            if (type === 'hora') total = Math.ceil(durationHours) * rates.hora;
+            if (type === 'hora') total = Math.max(1, Math.ceil(durationHours * 2)) * (rates.hora / 2);
             else if (type === 'dia') total = Math.max(1, Math.ceil(durationHours / 24)) * rates.dia;
             else if (type === 'semana') total = Math.ceil(durationHours / (24 * 7)) * rates.semana;
             else if (type === 'quincena') total = Math.ceil(durationHours / (24 * 15)) * rates.quincena;

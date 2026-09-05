@@ -30,12 +30,17 @@
 |----|--------|-------------|-----------|
 | RF-13 | Crear reserva | El usuario debe poder reservar por hora, día, semana, quincena o mes | Alta |
 | RF-14 | Verificar disponibilidad | El sistema debe chequear capacidad antes de confirmar reserva | Alta |
-| RF-15 | Pagar reserva | El usuario debe pagar la reserva desde su saldo | Alta |
+| RF-15 | Pagar reserva | El usuario debe pagar la reserva desde su saldo o por Mercado Pago (Checkout Pro); puede aplicar un canje `descuento_reserva` vigente | Alta |
 | RF-16 | Cancelar reserva | El usuario debe poder cancelar y recibir reembolso proporcional | Alta |
 | RF-17 | Simular cancelación | El sistema debe mostrar el monto de reembolso estimado antes de cancelar | Media |
-| RF-18 | Modificar reserva | El usuario debe poder modificar fechas/patente de una reserva pendiente | Media |
-| RF-19 | Restricción de anticipación | Las reservas por hora requieren mínimo 1 hora de anticipación (configurable) | Alta |
-| RF-20 | Liberación automática | El worker debe liberar plazas de reservas vencidas cada 5 min | Alta |
+| RF-18 | Modificar reserva | El usuario debe poder modificar fechas/patente de una reserva pendiente (antes del inicio; no se permite sobre Completada/Cancelada) | Media |
+| RF-19 | Restricción de anticipación | Las reservas por hora requieren mínimo 30 minutos de anticipación (configurable vía `RESERVA_HORA_MIN_SEGUNDOS`, default 1800) | Alta |
+| RF-20 | Finalización automática | El worker debe marcar como COMPLETADAS las reservas vencidas cada `MAINTENANCE_INTERVAL_SECONDS` (default 300s). Desde v9.5 el aforo es solo físico: no se reservan ni liberan plazas por el ciclo de vida de las reservas | Alta |
+| RF-47 | Anticipación máxima | El sistema debe rechazar reservas con más de 3 meses (90 días) de anticipación, tanto al crear como al modificar | Alta |
+| RF-48 | Horario de atención | El sistema debe validar que las reservas por hora estén dentro del horario de atención de la sucursal y no se extiendan más allá del cierre | Alta |
+| RF-49 | Anti-doble reserva | El sistema debe impedir dos reservas superpuestas del mismo vehículo en la misma sucursal; se permite el mismo vehículo en sucursales distintas | Alta |
+| RF-50 | Patente vinculada | El usuario solo debe poder reservar con patentes registradas (vinculadas) a su cuenta | Alta |
+| RF-51 | Notificación de pago | Al pagar una reserva, el sistema debe acreditar puntos de fidelización, crear notificación in-app y enviar email de confirmación con el QR del pase digital (el email no se envía al crear, solo al pagar) | Media |
 
 ## Módulo de Aforo
 

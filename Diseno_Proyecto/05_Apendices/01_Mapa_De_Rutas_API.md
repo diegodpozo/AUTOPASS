@@ -67,6 +67,8 @@
 | POST | `/recharge-balance` | Recargar saldo | USER+ |
 | GET | `/reservations` | Mis reservas | USER+ |
 | GET | `/reservations/check-availability` | Disponibilidad | USER+ |
+| GET | `/reservations/disabled-dates` | Fechas sin disponibilidad | USER+ |
+| GET | `/reservations/disabled-hours` | Slots horarios sin disponibilidad | USER+ |
 | POST | `/reservations` | Crear reserva | USER+ |
 | PATCH | `/reservations/{id}` | Modificar reserva | USER+ |
 | POST | `/reservations/{id}/pay` | Pagar reserva | USER+ |
@@ -84,6 +86,15 @@
 | DELETE | `/profile/notifications/clear-read` | Eliminar notificaciones leídas | USER+ |
 | POST | `/support-tickets` | Crear ticket de soporte | USER+ |
 | GET | `/support-tickets` | Ver mis tickets de soporte | USER+ |
+
+## Prefijo: `/v1/user/mercadopago` (pagos Checkout Pro)
+| Método | Ruta | Función | Rol Requerido |
+|--------|------|---------|---------------|
+| POST | `/mercadopago/checkout` | Crear preferencia Checkout Pro (pagar reserva/estadía) | USER+ |
+| GET | `/mercadopago/success` | Retorno: pago aprobado | Público (MP) |
+| GET | `/mercadopago/pending` | Retorno: pago pendiente | Público (MP) |
+| GET | `/mercadopago/failure` | Retorno: pago fallido | Público (MP) |
+| POST | `/mercadopago/webhook` | Webhook de confirmación de pago | Público (MP) |
 
 ## Prefijo: `/v1/parking`
 | Método | Ruta | Función | Rol Requerido |

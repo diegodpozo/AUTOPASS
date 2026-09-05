@@ -54,7 +54,10 @@ export function checkFirstLoginOnboarding(user, vehicles = [], reservations = []
     const userId = user && user.id ? user.id : (user && user.email ? user.email : null);
     const userTourKey = userId ? `autopass_tour_seen_${userId}` : 'autopass_tour_seen_guest';
 
-    const hasSeen = localStorage.getItem(userTourKey) === '1' || localStorage.getItem('seen_reservation_onboarding') === '1';
+    const hasSeen = userId
+        ? localStorage.getItem(userTourKey) === '1'
+        : (localStorage.getItem(userTourKey) === '1' || localStorage.getItem('seen_reservation_onboarding') === '1');
+
     const hasExistingData = (Array.isArray(vehicles) && vehicles.length > 0) || (Array.isArray(reservations) && reservations.length > 0);
 
     if (hasSeen || hasExistingData) {

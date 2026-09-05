@@ -127,21 +127,11 @@
                                 <!-- CAMPOS DINÁMICOS SEGÚN TIPO DE RESERVA -->
                                 <div id="dynamic-fields-premium" style="width: 100%; display: flex; justify-content: center;">
                                     <div id="hourly-fields" class="dynamic-row-premium" data-display="flex" style="display:none; gap: 20px; justify-content: center; width: 100%;">
-                                        <div class="form-group-premium" style="max-width: 120px; align-items: center;">
-                                            <label style="text-align: center; width: 100%; display: block;">Día</label>
+                                        <div class="form-group-premium" style="max-width: 170px; align-items: center;">
+                                            <label style="text-align: center; width: 100%; display: block;">Día y Horario</label>
                                             <input type="text" class="res-date-only input-premium" placeholder="Fecha...">
-                                        </div>
-                                        <div class="form-group-premium" style="max-width: 100px; align-items: center;">
-                                            <label style="text-align: center; width: 100%; display: block;">Hora Inicio</label>
-                                            <input type="text" class="res-time-only input-premium" placeholder="12:00">
-                                        </div>
-                                        <div class="form-group-premium" style="max-width: 120px; align-items: center;">
-                                            <label style="text-align: center; width: 100%; display: block;">Cantidad</label>
-                                            <div class="num-input-wrapper">
-                                                <input type="number" class="res-hours-qty input-premium" min="1" max="24" value="1">
-                                                <button type="button" class="num-btn up" tabindex="-1" aria-label="Incrementar"></button>
-                                                <button type="button" class="num-btn down" tabindex="-1" aria-label="Decrementar"></button>
-                                            </div>
+                                            <input type="hidden" class="res-time-only">
+                                            <input type="hidden" class="res-hours-qty" value="1">
                                         </div>
                                     </div>
                                     
@@ -194,12 +184,19 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- CONTENEDOR DE DISPONIBILIDAD DE FECHAS / HORAS -->
+                                <div id="availability-status-container" style="width: 100%; margin-top: 15px; display: none; flex-direction: column; align-items: center; gap: 10px;">
+                                    <div id="availability-badge" class="availability-badge-premium" style="display: none; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;"></div>
+                                    <div id="hourly-slots-grid" class="hourly-slots-grid-premium" style="display: none; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 520px;"></div>
+                                </div>
                             </div>
 
                             <div class="reservation-footer-premium" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; flex-direction: column; gap: 20px; align-items: center;">
                                 <div class="price-summary-premium" style="text-align: center;">
-                                    <span class="total-label" style="display: block; margin-bottom: 5px;">Total Estimado:</span>
+                                    <span class="total-label" style="display: block; margin-bottom: 5px;">Total:</span>
                                     <span class="total-amount" id="reserva-total-est" style="font-size: 2rem;">$ ---</span>
+                                    <div id="reserva-rates-detail" class="reserva-rates-detail" style="display: none; margin-top: 8px; font-size: 0.72rem; color: var(--text-secondary, #9ca3af); line-height: 1.5;"></div>
                                 </div>
                                 <button type="submit" class="btn-confirm-premium" style="width: 100%; max-width: 350px; justify-content: center; height: 55px; font-size: 1.1rem;">
                                     <span>CONTINUAR</span>

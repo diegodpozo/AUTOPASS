@@ -57,8 +57,8 @@
 2. El ALPR envía la patente a `POST /v1/access/validate-plate`
 3. El backend verifica si el vehículo ya está dentro (`AccessService.validate_plate`)
 4. El backend busca una reserva activa para la patente
-5. Si hay reserva no horaria pagada: permite entrada SIN incrementar aforo
-6. Si hay reserva por hora pagada: permite entrada e incrementa aforo
+5. Si hay reserva pagada y vigente (por hora o por período): permite la entrada
+6. El ALPR incrementa `ocupacion_actual` en TODA entrada (aforo solo físico desde v9.5, tenga o no reserva)
 7. Si no hay reserva: verifica capacidad disponible
 8. Si hay capacidad: registra entrada (ENTRADA), incrementa aforo, envía comando MQTT "OPEN" a la barrera
 9. El backend notifica cambio de ocupación vía WebSocket
@@ -102,17 +102,22 @@
 
 **Flujo Principal:**
 1. El usuario selecciona tipo de estadía (hora/día/semana/quincena/mes)
-2. El usuario ingresa patente, sucursal, piso y fecha/hora
-3. El sistema verifica disponibilidad de capacidad
-4. Para reservas por hora: valida anticipación mínima (1 hora configurable)
+2. El usuario selecciona su vehículo (patente registrada), la sucursal y fecha/hora (para hora: franja dentro del horario de atención)
+3. El sistema verifica disponibilidad de capacidad y que no exista otra reserva superpuesta del mismo vehículo en la misma sucursal
+4. Para reservas por hora: valida anticipación mínima (30 min, configurable vía `RESERVA_HORA_MIN_SEGUNDOS`) y horario de atención de la sucursal
 5. El sistema muestra el costo total estimado
 6. El usuario confirma la reserva
-7. El sistema crea la reserva con estado PENDIENTE
-8. El sistema envía email de confirmación con QR embebido
+7. El sistema crea la reserva con estado PENDIENTE (el sistema no envía email aún)
 
 **Flujo Alternativo (pago inmediato):**
-- En paso 6, el usuario puede pagar directamente desde su saldo
-- Si paga: reserva pasa a PAGADA, se descuenta del saldo
+- En paso 6, el usuario puede pagar directamente con saldo o por Mercado Pago (Checkout Pro)
+- Si paga: reserva pasa a PAGADA, se descuenta del saldo (o se cobra por MP), se acreditan puntos y se envía email de confirmación con el QR del pase digital
+
+**Flujo Alternativo (pago diferido):**
+- Si queda PENDIENTE, el usuario puede pagar más tarde desde el portal:
+  - Con saldo: `POST /v1/user/reservations/{id}/pay` (opcional: aplicar canje `descuento_reserva` vigente)
+  - Con Mercado Pago: pago por Checkout Pro
+- Al pagar: reserva pasa a PAGADA, se acreditan puntos, se crea notificación in-app y se envía email con el pase QR
 
 **Postcondiciones:** Reserva creada en estado PENDIENTE o PAGADA
 

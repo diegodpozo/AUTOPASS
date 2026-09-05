@@ -141,19 +141,19 @@ export function switchTab(tabId, element) {
 export function toggleMobileNav() {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar && overlay) {
-        sidebar.classList.toggle('mobile-open');
-        overlay.classList.toggle('active');
+    if (sidebar) {
+        const isOpen = sidebar.classList.toggle('mobile-open');
+        if (overlay) overlay.classList.toggle('active', isOpen);
+        document.body.style.overflow = isOpen ? 'hidden' : '';
     }
 }
 
 export function closeMobileNav() {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar && overlay) {
-        sidebar.classList.remove('mobile-open');
-        overlay.classList.remove('active');
-    }
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 export function toggleSidebar() {

@@ -10,42 +10,7 @@
 {% endblock %}
 
 {% block content %}
-    <header id="main-header" class="header-landing">
-        <div class="header-container">
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <a href="/" class="header-logo-link">
-                <img src="/static/images/logo.png" alt="Logo" class="header-logo-img">
-                <div class="logo-text">AUTOPASS</div>
-            </a>
-
-            <nav id="nav-menu">
-                <div class="sidebar-header-mobile">
-                    <img src="/static/images/logo.png" alt="Logo">
-                    <span>AUTOPASS</span>
-                </div>
-
-                <div class="nav-links">
-                    <a href="/" class="nav-link">Inicio</a>
-                    <a href="/nuestra-red" class="nav-link">Nuestra Red</a>
-                    <a href="/contacto" class="nav-link">Contacto</a>
-                </div>
-                
-                <div class="nav-actions">
-                    <div id="auth-guest-actions">
-                        <button class="btn-nav btn-login" onclick="openModal('loginModal')">INICIÁ SESIÓN</button>
-                        <button class="btn-nav btn-register" onclick="openModal('registerModal')">CREÁ TU CUENTA</button>
-                    </div>
-                    <div id="auth-user-actions" style="display:none;">
-                        <a href="/perfil" class="btn-nav btn-profile"><i class="fas fa-user-circle"></i> Mi Perfil</a>
-                        <button class="btn-nav btn-logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Cerrar Sesión</button>
-                    </div>
-                </div>
-            </nav>
-        </div>
-    </header>
+    {% include "components/navbar.html" %}
 
     <section class="page-hero">
         <h1>TÉRMINOS Y CONDICIONES</h1>

@@ -33,16 +33,29 @@
 
             <div class="vt-divider"></div>
 
-            <div class="vt-actions-label">ADELANTAR TIEMPO</div>
+            <div class="vt-actions-label" style="font-size:0.75rem; color:var(--dorado); font-weight:700; margin-bottom:6px;">ADELANTAR TIEMPO</div>
             <div class="vt-actions" id="vt-panel-controls">
-                <button class="vt-btn" onclick="advanceVirtualTime(1)">+1 min</button>
                 <button class="vt-btn" onclick="advanceVirtualTime(5)">+5 min</button>
                 <button class="vt-btn" onclick="advanceVirtualTime(15)">+15 min</button>
-                <button class="vt-btn" onclick="advanceVirtualTime(30)">+30 min</button>
                 <button class="vt-btn" onclick="advanceVirtualTime(60)">+1 hora</button>
-                <button class="vt-btn" onclick="advanceVirtualTime(180)">+3 horas</button>
                 <button class="vt-btn" onclick="advanceVirtualTime(1440)">+1 día</button>
-                <button class="vt-btn" onclick="advanceVirtualTime(10080)">+1 semana</button>
+            </div>
+
+            <div class="vt-actions-label" style="font-size:0.75rem; color:#f59e0b; font-weight:700; margin-top:12px; margin-bottom:6px;">RETRASAR TIEMPO</div>
+            <div class="vt-actions">
+                <button class="vt-btn" onclick="rewindVirtualTime(5)">-5 min</button>
+                <button class="vt-btn" onclick="rewindVirtualTime(15)">-15 min</button>
+                <button class="vt-btn" onclick="rewindVirtualTime(60)">-1 hora</button>
+                <button class="vt-btn" onclick="rewindVirtualTime(1440)">-1 día</button>
+            </div>
+
+            <div class="vt-actions-label" style="font-size:0.75rem; color:#3b82f6; font-weight:700; margin-top:12px; margin-bottom:6px;">FIJAR FECHA Y HORA EXACTA</div>
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <input type="datetime-local" id="vt-target-dt" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:6px 10px; border-radius:6px; font-size:0.85rem;" />
+                <button class="vt-btn" onclick="setTargetVirtualTime()" style="background:var(--dorado); color:#000; font-weight:600;">FIJAR</button>
+            </div>
+
+            <div style="margin-top:12px;">
                 <button class="vt-btn vt-btn-full vt-btn-danger" onclick="resetVirtualTime()"><i class="fas fa-undo"></i> RESTAURAR TIEMPO REAL</button>
             </div>
 
@@ -157,6 +170,42 @@ async function advanceVirtualTime(minutes) {
         if (typeof updateNotifBadge === 'function') updateNotifBadge();
         if (typeof window.loadReservations === 'function') window.loadReservations();
         if (typeof window.loadTransactions === 'function') window.loadTransactions();
+    }
+}
+
+async function rewindVirtualTime(minutes) {
+    const r = await fetch('/v1/admin/virtual-time/rewind', {
+        method: 'POST', headers: vtHeaders(),
+        body: JSON.stringify({minutes})
+    });
+    if (r.ok) {
+        const label = minutes >= 1440 ? `${minutes/1440} día(s)` : minutes >= 60 ? `${minutes/60} hora(s)` : `${minutes} min`;
+        showVTFeedback(`⏱ Tiempo retrasado -${label}`, true);
+        await updateVT();
+        if (typeof updateNotifBadge === 'function') updateNotifBadge();
+        if (typeof window.loadReservations === 'function') window.loadReservations();
+        if (typeof window.loadTransactions === 'function') window.loadTransactions();
+    }
+}
+
+async function setTargetVirtualTime() {
+    const input = document.getElementById('vt-target-dt');
+    if (!input || !input.value) {
+        showVTFeedback('Seleccioná fecha y hora', false);
+        return;
+    }
+    const r = await fetch('/v1/admin/virtual-time/set-target', {
+        method: 'POST', headers: vtHeaders(),
+        body: JSON.stringify({target_datetime: input.value})
+    });
+    if (r.ok) {
+        showVTFeedback(`⏱ Fecha y hora virtual fijada`, true);
+        await updateVT();
+        if (typeof updateNotifBadge === 'function') updateNotifBadge();
+        if (typeof window.loadReservations === 'function') window.loadReservations();
+        if (typeof window.loadTransactions === 'function') window.loadTransactions();
+    } else {
+        showVTFeedback('Error al fijar fecha/hora', false);
     }
 }
 

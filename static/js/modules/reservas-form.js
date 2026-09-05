@@ -11,7 +11,29 @@ import { loadReservations } from './reservas-list.js';
 const RESERVA_MIN_MS = (window.RESERVA_HORA_MIN_SEGUNDOS || 1800) * 1000;
 const RESERVA_MIN_MIN = (window.RESERVA_HORA_MIN_SEGUNDOS || 1800) / 60;
 
-let currentRates = { hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
+// CACHE CORTO PARA CONSULTAS DE DISPONIBILIDAD (EVITA RE-QUERYS EN CADA focus/click/change)
+const availabilityCache = new Map();
+const AVAILABILITY_CACHE_TTL_MS = 30000;
+
+async function cachedAvailabilityGet(url, params) {
+    const key = `${url}?${new URLSearchParams(params).toString()}`;
+    const now = Date.now();
+    const hit = availabilityCache.get(key);
+    if (hit && (now - hit.t) < AVAILABILITY_CACHE_TTL_MS) {
+        return hit.res;
+    }
+    const res = await api.get(url, { params });
+    if (res && res.ok) {
+        availabilityCache.set(key, { t: now, res });
+        if (availabilityCache.size > 50) {
+            const firstKey = availabilityCache.keys().next().value;
+            availabilityCache.delete(firstKey);
+        }
+    }
+    return res;
+}
+
+let currentRates = { '30min': 750, hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
 let editingReservaId = null;
 let userVehicles = [];
 let branchesData = [];
@@ -26,6 +48,377 @@ export function setEditingReservaId(val) {
 
 export function getUserVehicles() {
     return userVehicles;
+}
+
+let fpInstances = {};
+
+export async function updateDisabledDatesInPicker() {
+    const sucursalSelect = document.querySelector('.res-sucursal');
+    const vehicleSelect = document.querySelector('.res-vehicle');
+    const typeSelect = document.querySelector('.res-type');
+
+    if (!sucursalSelect || !vehicleSelect || !typeSelect) return;
+
+    const sucursal = sucursalSelect.value;
+    const patente = vehicleSelect.value;
+    const tipoEstadia = typeSelect.value;
+
+    if (!sucursal || !patente || !tipoEstadia) return;
+
+    const veh = userVehicles.find(v => v.patente === patente);
+    const tipoVehiculo = veh ? veh.tipo : 'Auto';
+
+    try {
+        const res = await cachedAvailabilityGet('/user/reservations/disabled-dates', {
+            sucursal_nombre: sucursal,
+            tipo_vehiculo: tipoVehiculo,
+            tipo_estadia: tipoEstadia
+        });
+
+        if (res.ok && res.data && Array.isArray(res.data.disabled_dates)) {
+            const disabledDates = res.data.disabled_dates;
+            const fpMap = {
+                'hora': fpInstances.hourlyDate,
+                'dia': fpInstances.day,
+                'semana': fpInstances.week,
+                'quincena': fpInstances.fortnight,
+                'mes': fpInstances.month
+            };
+
+            Object.values(fpMap).forEach(fpRef => {
+                if (fpRef) {
+                    const fpObj = Array.isArray(fpRef) ? fpRef[0] : fpRef;
+                    if (fpObj && typeof fpObj.set === 'function') {
+                        fpObj.set('disable', disabledDates);
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.warn('[RESERVAS] Error cargando fechas deshabilitadas:', err);
+    }
+}
+
+let slotRangeStart = null;
+let slotRangeEnd = null;
+let slotRangeDate = null;
+
+export async function updateHourlySlotsUI() {
+    const sucursalSelect = document.querySelector('.res-sucursal');
+    const vehicleSelect = document.querySelector('.res-vehicle');
+    const typeSelect = document.querySelector('.res-type');
+    const dateInput = document.querySelector('.res-date-only');
+    const timeInput = document.querySelector('.res-time-only');
+    const hoursQtyInput = document.querySelector('.res-hours-qty');
+
+    const container = document.getElementById('availability-status-container');
+    const badge = document.getElementById('availability-badge');
+    const grid = document.getElementById('hourly-slots-grid');
+
+    if (!container || !badge || !grid) return;
+
+    if (!typeSelect || typeSelect.value !== 'hora') {
+        grid.style.display = 'none';
+        grid.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'flex';
+
+    if (!sucursalSelect || !sucursalSelect.value) {
+        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--dorado); padding:8px;"><i class="fas fa-info-circle" style="margin-right:6px;"></i> Seleccioná tu sucursal para ver la disponibilidad horaria en vivo</div>';
+        grid.style.display = 'flex';
+        badge.style.display = 'none';
+        return;
+    }
+
+    if (!vehicleSelect || !vehicleSelect.value) {
+        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--dorado); padding:8px;"><i class="fas fa-info-circle" style="margin-right:6px;"></i> Seleccioná tu vehículo para consultar la disponibilidad de plazas</div>';
+        grid.style.display = 'flex';
+        badge.style.display = 'none';
+        return;
+    }
+
+    const sucursal = sucursalSelect.value;
+    const patente = vehicleSelect.value;
+    const fecha = dateInput ? dateInput.value : '';
+
+    if (slotRangeDate && slotRangeDate !== fecha) {
+        slotRangeStart = null;
+        slotRangeEnd = null;
+        slotRangeDate = null;
+        if (timeInput) timeInput.value = '';
+        if (hoursQtyInput) hoursQtyInput.value = '1';
+    }
+
+    if (!fecha) {
+        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--dorado); padding:8px;"><i class="fas fa-calendar-day" style="margin-right:6px;"></i> Seleccioná la fecha en el calendario para consultar los horarios libres</div>';
+        grid.style.display = 'flex';
+        badge.style.display = 'none';
+        return;
+    }
+
+    const veh = userVehicles.find(v => v.patente === patente);
+    const tipoVehiculo = veh ? veh.tipo : 'Auto';
+    const duracionHoras = 1;
+
+    try {
+        const res = await cachedAvailabilityGet('/user/reservations/disabled-hours', {
+            sucursal_nombre: sucursal,
+            fecha: fecha,
+            tipo_vehiculo: tipoVehiculo,
+            duracion_horas: duracionHoras,
+            paso_minutos: 30
+        });
+
+        if (res.ok && res.data && Array.isArray(res.data.disabled_hours)) {
+            const disabledHours = res.data.disabled_hours;
+
+            // HOY: BLOQUEAR ADEMAS LOS SLOTS QUE YA PASARON O NO RESPETAN LA ANTICIPACION MINIMA
+            // (EL SERVER TAMBIEN LOS FILTRA, PERO EL CACHE DE 30s PUEDE ESTAR DESACTUALIZADO)
+            const now = getVirtualNow();
+            const fechaHoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            if (fecha === fechaHoy) {
+                const minInicioMs = now.getTime() + RESERVA_MIN_MS;
+                for (let min = 7 * 60; min <= 23 * 60 + 30; min += 30) {
+                    const hh = Math.floor(min / 60);
+                    const mm = min % 60;
+                    const hStr = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+                    if (new Date(`${fecha}T${hStr}`).getTime() < minInicioMs && !disabledHours.includes(hStr)) {
+                        disabledHours.push(hStr);
+                    }
+                }
+            }
+
+            let html = `
+                <div style="width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div style="font-size:0.75rem; color:#aaa; text-align:center;">
+                        <i class="fas fa-clock" style="color:var(--dorado); margin-right:4px;"></i> Tocá la hora de <b>inicio</b> y luego la de <b>fin</b>, o <b>arrastrá</b> sobre las casillas:
+                    </div>
+                </div>
+                <div class="chips-container-premium" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:4px; width:100%;">
+            `;
+
+            let countTotal = 0;
+            let countLibres = 0;
+
+            for (let min = 7 * 60; min <= 23 * 60 + 30; min += 30) {
+                const h = Math.floor(min / 60);
+                const m = min % 60;
+                const hourStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+                const isDisabled = disabledHours.includes(hourStr);
+                if (!isDisabled) countLibres++;
+                countTotal++;
+
+                const inRange = slotRangeStart && slotRangeEnd
+                    && hourStr >= slotRangeStart && hourStr <= slotRangeEnd;
+                const isStart = slotRangeStart === hourStr;
+
+                if (isDisabled) {
+                    html += `<span class="hourly-chip-premium full" title="Hora no disponible por capacidad completa">${hourStr}</span>`;
+                } else if (inRange) {
+                    const cls = (isStart || hourStr === slotRangeEnd)
+                        ? 'hourly-chip-premium available selected'
+                        : 'hourly-chip-premium available in-range';
+                    html += `<span class="${cls}" data-hora="${hourStr}">${hourStr}</span>`;
+                } else if (isStart) {
+                    html += `<span class="hourly-chip-premium available selected" data-hora="${hourStr}">${hourStr}</span>`;
+                } else {
+                    html += `<span class="hourly-chip-premium available" data-hora="${hourStr}">${hourStr}</span>`;
+                }
+            }
+
+            // COMPLETAR LA ULTIMA FILA CON CELDAS VACIAS PARA MANTENER LA GRILLA ALINEADA (6 COLUMNAS)
+            const resto = countTotal % 6;
+            if (resto > 0) {
+                for (let i = 0; i < 6 - resto; i++) {
+                    html += `<span class="hourly-chip-premium placeholder"></span>`;
+                }
+            }
+
+            html += `</div>`;
+
+            grid.innerHTML = html;
+            grid.style.display = 'flex';
+            badge.style.display = 'none';
+        }
+    } catch (e) {
+        console.warn('[RESERVAS] Error cargando disponibilidad horaria:', e);
+    }
+}
+
+let slotDragActive = false;
+
+const _slotToMin = (t) => {
+    const [hh, mm] = (t || '00:00').split(':').map(Number);
+    return hh * 60 + mm;
+};
+
+const _slotCommitRange = function() {
+    const timeInput = document.querySelector('.res-time-only');
+    const hoursQtyInput = document.querySelector('.res-hours-qty');
+    const dateInput = document.querySelector('.res-date-only');
+    if (!timeInput || !hoursQtyInput) return;
+
+    if (dateInput && dateInput.value) slotRangeDate = dateInput.value;
+
+    if (slotRangeStart && slotRangeEnd && _slotToMin(slotRangeEnd) > _slotToMin(slotRangeStart)) {
+        timeInput.value = slotRangeStart;
+        hoursQtyInput.value = Math.round((_slotToMin(slotRangeEnd) - _slotToMin(slotRangeStart)) / 60 * 10) / 10;
+    } else {
+        timeInput.value = '';
+        hoursQtyInput.value = '1';
+    }
+    updateReservationPrice();
+    updateHourlySlotsUI();
+};
+
+window.selectHourRange = function(hourStr) {
+    if (!slotDragActive) {
+        if (!slotRangeStart || _slotToMin(hourStr) < _slotToMin(slotRangeStart)) {
+            slotRangeStart = hourStr;
+            slotRangeEnd = null;
+        } else if (!slotRangeEnd) {
+            slotRangeEnd = hourStr;
+        } else {
+            slotRangeStart = hourStr;
+            slotRangeEnd = null;
+        }
+        _slotCommitRange();
+    }
+};
+
+export function initHourlySlotDrag() {
+    const grid = document.getElementById('hourly-slots-grid');
+    if (!grid) return;
+
+    grid.addEventListener('pointerdown', (ev) => {
+        if (ev.button !== undefined && ev.button !== 0 && ev.type === 'pointerdown') return;
+        const chip = ev.target.closest('.hourly-chip-premium');
+        if (!chip || chip.classList.contains('full')) return;
+        const hourStr = chip.dataset.hora;
+        if (!hourStr) return;
+
+        ev.preventDefault();
+        slotDragActive = true;
+
+        try { grid.setPointerCapture(ev.pointerId); } catch (e) { /* noop */ }
+
+        if (!slotRangeStart || _slotToMin(hourStr) < _slotToMin(slotRangeStart)) {
+            slotRangeStart = hourStr;
+            slotRangeEnd = null;
+        } else if (!slotRangeEnd) {
+            if (hourStr === slotRangeStart) {
+                slotRangeEnd = null;
+            } else {
+                slotRangeEnd = hourStr;
+            }
+        } else {
+            slotRangeStart = hourStr;
+            slotRangeEnd = null;
+        }
+        _slotCommitRange();
+    });
+
+    grid.addEventListener('pointermove', (ev) => {
+        if (!slotDragActive) return;
+        const el = document.elementFromPoint(ev.clientX, ev.clientY);
+        const chip = el && el.closest('.hourly-chip-premium');
+        if (!chip || chip.classList.contains('full')) return;
+        const hourStr = chip.dataset.hora;
+        if (!hourStr) return;
+
+        if (_slotToMin(hourStr) > _slotToMin(slotRangeStart)) {
+            if (!slotRangeEnd || slotRangeEnd !== hourStr) {
+                slotRangeEnd = hourStr;
+                _slotCommitRange();
+            }
+        } else if (_slotToMin(hourStr) < _slotToMin(slotRangeStart)) {
+            slotRangeStart = hourStr;
+            slotRangeEnd = null;
+            _slotCommitRange();
+        }
+    });
+
+    const finishDrag = () => {
+        if (!slotDragActive) return;
+        slotDragActive = false;
+        _slotCommitRange();
+    };
+    grid.addEventListener('pointerup', finishDrag);
+    grid.addEventListener('pointercancel', finishDrag);
+}
+
+export async function updatePeriodAvailabilityBadge() {
+    const sucursalSelect = document.querySelector('.res-sucursal');
+    const vehicleSelect = document.querySelector('.res-vehicle');
+    const typeSelect = document.querySelector('.res-type');
+    const container = document.getElementById('availability-status-container');
+    const badge = document.getElementById('availability-badge');
+    const grid = document.getElementById('hourly-slots-grid');
+
+    if (!container || !badge || !grid) return;
+
+    if (!typeSelect || typeSelect.value === 'hora' || !sucursalSelect || !sucursalSelect.value || !vehicleSelect || !vehicleSelect.value) {
+        if (typeSelect && typeSelect.value !== 'hora') {
+            container.style.display = 'none';
+            badge.style.display = 'none';
+        }
+        return;
+    }
+
+    const type = typeSelect.value;
+    let inicio, fin;
+
+    if (type === 'dia') {
+        const fecha = document.querySelector('.res-day-only')?.value;
+        if (fecha) { inicio = `${fecha} 00:00`; fin = `${fecha} 23:59`; }
+    } else {
+        const selectorMap = { 'semana': '.res-week-start', 'quincena': '.res-fortnight-start', 'mes': '.res-month-start' };
+        const fecha = document.querySelector(selectorMap[type])?.value;
+        const periodDays = { 'semana': 7, 'quincena': 15, 'mes': 30 }[type];
+        if (fecha && periodDays) {
+            inicio = `${fecha} 00:00`;
+            const startDt = new Date(fecha.replace(/-/g, "/"));
+            const endDt = new Date(startDt.getTime() + (periodDays - 1) * 24 * 60 * 60 * 1000);
+            fin = `${endDt.getFullYear()}-${String(endDt.getMonth()+1).padStart(2,'0')}-${String(endDt.getDate()).padStart(2,'0')} 23:59`;
+        }
+    }
+
+    if (!inicio || !fin) return;
+
+    container.style.display = 'flex';
+    grid.style.display = 'none';
+
+    const sucursal = sucursalSelect.value;
+    const patente = vehicleSelect.value;
+    const veh = userVehicles.find(v => v.patente === patente);
+    const tipoVehiculo = veh ? veh.tipo : 'Auto';
+
+    try {
+        const av = await api.get('/user/reservations/check-availability', {
+            params: {
+                sucursal_nombre: sucursal,
+                fecha_inicio: inicio,
+                fecha_fin: fin,
+                tipo_vehiculo: tipoVehiculo
+            }
+        });
+
+        if (av.ok && av.data) {
+            if (av.data.disponible) {
+                badge.className = 'availability-badge-premium success';
+                badge.innerHTML = `<i class="fas fa-check-circle"></i> Disponibilidad confirmada en ${sucursal} (${av.data.restan} de ${av.data.capacidad_total} plazas libres para ${tipoVehiculo}s)`;
+            } else {
+                badge.className = 'availability-badge-premium danger';
+                badge.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Sin disponibilidad de plazas de ${tipoVehiculo} en ${sucursal} para este período`;
+            }
+            badge.style.display = 'inline-flex';
+        }
+    } catch (e) {
+        console.warn('[RESERVAS] Error verificando disponibilidad de período:', e);
+    }
 }
 
 export function initReservationForm() {
@@ -46,24 +439,38 @@ export function initReservationForm() {
         altFormat: "d-m-y",
         dateFormat: "Y-m-d",
         defaultDate: now,
-        onChange: () => updateReservationPrice()
+        onChange: () => {
+            updateReservationPrice();
+            updateHourlySlotsUI();
+            updatePeriodAvailabilityBadge();
+        }
     };
 
-    flatpickr(".res-date-only", { ...commonConfig });
-    flatpickr(".res-day-only", { ...commonConfig });
-    flatpickr(".res-time-only", { 
-        enableTime: true, 
-        noCalendar: true, 
-        dateFormat: "H:i",
-        defaultDate: now,
-        disableMobile: "true",
-        onChange: () => updateReservationPrice()
+    fpInstances.hourlyDate = flatpickr(".res-date-only", { ...commonConfig });
+    fpInstances.day = flatpickr(".res-day-only", { ...commonConfig });
+    fpInstances.week = flatpickr(".res-week-start", { 
+        ...commonConfig, 
+        onChange: (sd, ds) => {
+            updatePeriodEnd(ds, 7, '.res-week-end');
+            updatePeriodAvailabilityBadge();
+        } 
     });
-    flatpickr(".res-week-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 7, '.res-week-end') });
-    flatpickr(".res-fortnight-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 15, '.res-fortnight-end') });
-    flatpickr(".res-month-start", { ...commonConfig, onChange: (sd, ds) => updatePeriodEnd(ds, 30, '.res-month-end') });
-    flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
-    flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
+    fpInstances.fortnight = flatpickr(".res-fortnight-start", { 
+        ...commonConfig, 
+        onChange: (sd, ds) => {
+            updatePeriodEnd(ds, 15, '.res-fortnight-end');
+            updatePeriodAvailabilityBadge();
+        } 
+    });
+    fpInstances.month = flatpickr(".res-month-start", { 
+        ...commonConfig, 
+        onChange: (sd, ds) => {
+            updatePeriodEnd(ds, 30, '.res-month-end');
+            updatePeriodAvailabilityBadge();
+        } 
+    });
+    fpInstances.start = flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
+    fpInstances.end = flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
 
     // CALCULAR FECHAS DE FIN PARA PERÍODOS CON LA FECHA POR DEFECTO
     const todayYmd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -73,19 +480,38 @@ export function initReservationForm() {
 
     const typeSelect = document.querySelector('.res-type');
     if (typeSelect) {
-        typeSelect.addEventListener('change', (e) => updateFormGroups(e.target.value));
+        typeSelect.addEventListener('change', (e) => {
+            slotRangeStart = null;
+            slotRangeEnd = null;
+            updateFormGroups(e.target.value);
+            updateDisabledDatesInPicker();
+            updateHourlySlotsUI();
+            updatePeriodAvailabilityBadge();
+        });
     }
 
     const vehicleSelect = document.querySelector('.res-vehicle');
     if (vehicleSelect) {
-        vehicleSelect.addEventListener('change', () => updateReservationPrice());
+        vehicleSelect.addEventListener('change', () => {
+            slotRangeStart = null;
+            slotRangeEnd = null;
+            updateReservationPrice();
+            updateDisabledDatesInPicker();
+            updateHourlySlotsUI();
+            updatePeriodAvailabilityBadge();
+        });
     }
 
     const sucursalSelect = document.querySelector('.res-sucursal');
     if (sucursalSelect) {
         sucursalSelect.addEventListener('change', (e) => {
+            slotRangeStart = null;
+            slotRangeEnd = null;
             const sucursalId = e.target.value;
             fetchRates(sucursalId);
+            updateDisabledDatesInPicker();
+            updateHourlySlotsUI();
+            updatePeriodAvailabilityBadge();
         });
     }
 
@@ -96,25 +522,21 @@ export function initReservationForm() {
 
     const timeInput = document.querySelector('.res-time-only');
     if (timeInput) {
-        timeInput.addEventListener('change', () => updateReservationPrice());
+        timeInput.addEventListener('change', () => {
+            updateReservationPrice();
+            updateHourlySlotsUI();
+        });
+        timeInput.addEventListener('focus', () => updateHourlySlotsUI());
+        timeInput.addEventListener('click', () => updateHourlySlotsUI());
     }
 
-    // FLECHAS CUSTOM PARA CANTIDAD DE HORAS
-    document.querySelectorAll('.num-input-wrapper').forEach(wrapper => {
-        const input = wrapper.querySelector('.res-hours-qty');
-        const up = wrapper.querySelector('.num-btn.up');
-        const down = wrapper.querySelector('.num-btn.down');
-        if (input && up) up.addEventListener('click', () => {
-            const max = parseInt(input.max) || 24;
-            const val = parseInt(input.value) || 0;
-            if (val < max) { input.value = val + 1; input.dispatchEvent(new Event('input', { bubbles: true })); }
-        });
-        if (input && down) down.addEventListener('click', () => {
-            const min = parseInt(input.min) || 1;
-            const val = parseInt(input.value) || 0;
-            if (val > min) { input.value = val - 1; input.dispatchEvent(new Event('input', { bubbles: true })); }
-        });
-    });
+    const dateInput = document.querySelector('.res-date-only');
+    if (dateInput) {
+        dateInput.addEventListener('focus', () => updateHourlySlotsUI());
+        dateInput.addEventListener('click', () => updateHourlySlotsUI());
+    }
+
+    initHourlySlotDrag();
 }
 
 export function updatePeriodEnd(startDateStr, days, targetSelector) {
@@ -247,6 +669,9 @@ export async function refreshReservationFormState() {
 
 export function resetReservaForm() {
     editingReservaId = null;
+    slotRangeStart = null;
+    slotRangeEnd = null;
+    slotRangeDate = null;
     const form = document.querySelector('.reservation-form-modern');
     if (form) {
         form.reset();
@@ -300,12 +725,18 @@ export async function prepareEditReservation(id) {
         
         if (r.tipo_estadia === 'hora') {
             const dtParts = r.fecha_inicio.split(' ');
+            const endParts = r.fecha_fin.split(' ');
             document.querySelector('.res-date-only').value = dtParts[0];
             document.querySelector('.res-time-only').value = dtParts[1];
+            slotRangeStart = dtParts[1];
+            slotRangeEnd = endParts[1] || null;
+            slotRangeDate = dtParts[0];
             const startDt = new Date(r.fecha_inicio.replace(/-/g, "/"));
             const endDt = new Date(r.fecha_fin.replace(/-/g, "/"));
-            const hours = Math.round((endDt - startDt) / (1000 * 60 * 60));
-            document.querySelector('.res-hours-qty').value = hours || 1;
+            const minutes = Math.round((endDt - startDt) / 60000);
+            const hours = minutes / 60;
+            document.querySelector('.res-hours-qty').value = hours > 0 ? hours : 1;
+            updateHourlySlotsUI();
         } else if (r.tipo_estadia === 'dia') {
             document.querySelector('.res-day-only').value = r.fecha_inicio.split(' ')[0];
         } else {
@@ -340,10 +771,25 @@ export function updateReservationPrice() {
     const type = typeSelect.value;
     const patente = vehicleSelect?.value;
     const totalEl = document.getElementById('reserva-total-est');
+    const ratesDetailEl = document.getElementById('reserva-rates-detail');
     let total = 0;
 
     const vehiculo = userVehicles.find(v => v.patente === patente);
     const isMoto = vehiculo && vehiculo.tipo === 'Moto';
+
+    const key = isMoto ? `${type}_moto` : type;
+    const rate = currentRates[key] || currentRates[type] || 0;
+    const rate30 = currentRates[isMoto ? '30min_moto' : '30min'] || rate / 2;
+
+    if (ratesDetailEl) {
+        if (type === 'hora' && rate > 0) {
+            ratesDetailEl.style.display = 'block';
+            ratesDetailEl.innerHTML = `1 hora = <b style="color:#dfba6b;">$${formatNum(rate)}</b> &nbsp;·&nbsp; 30 min = <b style="color:#dfba6b;">$${formatNum(rate30)}</b>`;
+        } else {
+            ratesDetailEl.style.display = 'none';
+            ratesDetailEl.innerHTML = '';
+        }
+    }
 
     let inicio, fin;
     try {
@@ -351,7 +797,7 @@ export function updateReservationPrice() {
             const fecha = document.querySelector('.res-date-only')?.value;
             const hora = document.querySelector('.res-time-only')?.value;
             const hoursQtyInput = document.querySelector('.res-hours-qty');
-            const hoursQty = parseInt(hoursQtyInput?.value);
+            const hoursQty = parseFloat(hoursQtyInput?.value);
             
             if (fecha && hora && !isNaN(hoursQty) && hoursQty > 0) {
                 inicio = new Date(`${fecha}T${hora}`);
@@ -380,8 +826,9 @@ export function updateReservationPrice() {
             const durationHours = (fin - inicio) / 3600000;
             const key = isMoto ? `${type}_moto` : type;
             const rate = currentRates[key] || currentRates[type] || 0;
+            const rate30 = currentRates[isMoto ? '30min_moto' : '30min'] || rate / 2;
             
-            if (type === 'hora') total = Math.ceil(durationHours) * rate;
+            if (type === 'hora') total = Math.max(1, Math.ceil(durationHours * 2)) * rate30;
             else if (type === 'dia') total = Math.max(1, Math.ceil(durationHours / 24)) * rate;
             else if (type === 'semana') total = Math.ceil(durationHours / (24 * 7)) * rate;
             else if (type === 'quincena') total = Math.ceil(durationHours / (24 * 15)) * rate;
@@ -457,7 +904,7 @@ export async function createReservation(e) {
         if (tipo === 'hora') {
             const fecha = document.querySelector('.res-date-only').value;
             const hora = document.querySelector('.res-time-only').value;
-            const hoursQty = parseInt(document.querySelector('.res-hours-qty').value) || 1;
+            const hoursQty = parseFloat(document.querySelector('.res-hours-qty').value) || 1;
             if (!fecha || !hora) { console.groupEnd(); return showToast('Seleccioná fecha y hora', 'info'); }
             inicio = `${fecha} ${hora}`;
             const now = getVirtualNow();
@@ -576,7 +1023,7 @@ export async function createReservation(e) {
                 </div>
             </div>
             <div style="padding-top: 25px; border-top: 2px solid rgba(197,160,89,0.2); display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL ESTIMADO</span>
+                <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
                 <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(197,160,89,0.3); font-family: 'Montserrat'; white-space: nowrap;">${document.getElementById('reserva-total-est').innerText}</b>
             </div>
         </div>`;

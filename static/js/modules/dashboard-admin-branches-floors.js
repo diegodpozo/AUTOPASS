@@ -19,17 +19,21 @@ export function showBranchFloors(id) {
     const floorsSumAutos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_actual, 0);
     const floorsSumMotos = (b.floors || []).reduce((acc, f) => acc + f.ocupacion_motos, 0);
     const floorsSumCamionetas = (b.floors || []).reduce((acc, f) => acc + (f.ocupacion_camionetas || 0), 0);
+    const floorsSumReservas = (b.floors || []).reduce((acc, f) => acc + (f.ocupacion_reservas || 0), 0);
     
     const pbOccAutos = Math.max(0, b.ocupacion_autos_total - floorsSumAutos);
     const pbOccMotos = Math.max(0, b.ocupacion_motos_total - floorsSumMotos);
     const pbOccCamionetas = Math.max(0, (b.ocupacion_camionetas_total || 0) - floorsSumCamionetas);
+    const pbOccReservas = Math.max(0, (b.ocupacion_reservas_total || 0) - floorsSumReservas);
     
     const floorsCapAutos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_total, 0);
     const floorsCapMotos = (b.floors || []).reduce((acc, f) => acc + f.capacidad_motos, 0);
     const floorsCapCamionetas = (b.floors || []).reduce((acc, f) => acc + (f.capacidad_camionetas || 0), 0);
+    const floorsCapReservas = (b.floors || []).reduce((acc, f) => acc + (f.capacidad_reservas || 0), 0);
     const pbCapAutos = b.capacidad_autos_total - floorsCapAutos;
     const pbCapMotos = b.capacidad_motos_total - floorsCapMotos;
     const pbCapCamionetas = (b.capacidad_camionetas_total || 0) - floorsCapCamionetas;
+    const pbCapReservas = (b.capacidad_reservas_total || 0) - floorsCapReservas;
 
     let rows = `
         <tr class="row-premium" style="background: rgba(197,160,89,0.05);">
@@ -54,6 +58,11 @@ export function showBranchFloors(id) {
                     ${pbOccCamionetas} / ${pbCapCamionetas}
                 </span>
             </td>
+            <td class="text-center">
+                <span class="text-xs ${pbOccReservas >= pbCapReservas ? 'text-danger' : 'text-success'} font-bold">
+                    ${pbOccReservas} / ${pbCapReservas}
+                </span>
+            </td>
         </tr>
     `;
 
@@ -74,6 +83,11 @@ export function showBranchFloors(id) {
                 <td class="text-center">
                     <span class="text-xs ${(f.ocupacion_camionetas || 0) >= (f.capacidad_camionetas || 5) ? 'text-danger' : ''}">
                         ${formatNum(f.ocupacion_camionetas || 0)} / ${formatNum(f.capacidad_camionetas || 5)}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <span class="text-xs ${(f.ocupacion_reservas || 0) >= (f.capacidad_reservas || 0) ? 'text-danger' : ''}">
+                        ${formatNum(f.ocupacion_reservas || 0)} / ${formatNum(f.capacidad_reservas || 0)}
                     </span>
                 </td>
             </tr>
@@ -118,29 +132,53 @@ export async function loadFloors() {
     const pbCapAutos = resSettings.ok ? (resSettings.data.capacidad_total || 20) : 20;
     const pbCapMotos = resSettings.ok ? (resSettings.data.capacidad_motos || 10) : 10;
     const pbCapCamionetas = resSettings.ok ? (resSettings.data.capacidad_camionetas ?? 5) : 5;
+    const pbCapResAutos = resSettings.ok ? (resSettings.data.capacidad_reservas_autos ?? 0) : 0;
+    const pbCapResMotos = resSettings.ok ? (resSettings.data.capacidad_reservas_motos ?? 0) : 0;
+    const pbCapResCamionetas = resSettings.ok ? (resSettings.data.capacidad_reservas_camionetas ?? 0) : 0;
     
     let cardsHtml = `
         <div class="level-block pb" id="level-block-pb">
             <div class="level-main-content" style="width: 100%; padding: 18px 25px;">
-                <div class="level-stats-grid" style="width: 100%; justify-content: space-around; gap: 20px; align-items: center;">
+                <div class="level-stats-grid" style="width: 100%; justify-content: space-around; gap: 15px; align-items: center; flex-wrap: wrap;">
                     <div class="stat-item items-center text-center">
                         <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-car mr-6 text-dorado"></i> Autos</span>
                         <div class="stat-val-box justify-center">
-                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled style="width: 80px; font-size: 1.25rem; text-align: center;">
+                            <input type="number" id="pb-cap-autos" class="stat-val-input" value="${pbCapAutos}" min="0" disabled style="width: 70px; font-size: 1.1rem; text-align: center;">
                             <span class="stat-unit">u.</span>
                         </div>
                     </div>
                     <div class="stat-item items-center text-center">
                         <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-motorcycle mr-6 text-dorado"></i> Motos</span>
                         <div class="stat-val-box justify-center">
-                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled style="width: 80px; font-size: 1.25rem; text-align: center;">
+                            <input type="number" id="pb-cap-motos" class="stat-val-input" value="${pbCapMotos}" min="0" disabled style="width: 70px; font-size: 1.1rem; text-align: center;">
                             <span class="stat-unit">u.</span>
                         </div>
                     </div>
                     <div class="stat-item items-center text-center">
                         <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-truck-pickup mr-6 text-dorado"></i> Camionetas</span>
                         <div class="stat-val-box justify-center">
-                            <input type="number" id="pb-cap-camionetas" class="stat-val-input" value="${pbCapCamionetas}" min="0" disabled style="width: 80px; font-size: 1.25rem; text-align: center;">
+                            <input type="number" id="pb-cap-camionetas" class="stat-val-input" value="${pbCapCamionetas}" min="0" disabled style="width: 70px; font-size: 1.1rem; text-align: center;">
+                            <span class="stat-unit">u.</span>
+                        </div>
+                    </div>
+                    <div class="stat-item items-center text-center">
+                        <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-bookmark mr-6 text-dorado"></i> Res. Autos</span>
+                        <div class="stat-val-box justify-center">
+                            <input type="number" id="pb-cap-res-autos" class="stat-val-input" value="${pbCapResAutos}" min="0" disabled style="width: 70px; font-size: 1.1rem; text-align: center;">
+                            <span class="stat-unit">u.</span>
+                        </div>
+                    </div>
+                    <div class="stat-item items-center text-center">
+                        <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-bookmark mr-6 text-dorado"></i> Res. Motos</span>
+                        <div class="stat-val-box justify-center">
+                            <input type="number" id="pb-cap-res-motos" class="stat-val-input" value="${pbCapResMotos}" min="0" disabled style="width: 70px; font-size: 1.1rem; text-align: center;">
+                            <span class="stat-unit">u.</span>
+                        </div>
+                    </div>
+                    <div class="stat-item items-center text-center">
+                        <span class="text-xs text-white uppercase fw-800 mb-5"><i class="fas fa-bookmark mr-6 text-dorado"></i> Res. Camionetas</span>
+                        <div class="stat-val-box justify-center">
+                            <input type="number" id="pb-cap-res-camionetas" class="stat-val-input" value="${pbCapResCamionetas}" min="0" disabled style="width: 70px; font-size: 1.1rem; text-align: center;">
                             <span class="stat-unit">u.</span>
                         </div>
                     </div>
@@ -191,6 +229,27 @@ export async function loadFloors() {
                             <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-truck-pickup mr-5"></i> Camionetas</span>
                             <div class="stat-val-box">
                                 <input type="number" id="cap-camionetas-${f.id}" class="stat-val-input" value="${f.capacidad_camionetas ?? 5}" min="0" disabled>
+                                <span class="stat-unit">u.</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-bookmark mr-5"></i> Res. Autos</span>
+                            <div class="stat-val-box">
+                                <input type="number" id="cap-res-autos-${f.id}" class="stat-val-input" value="${f.capacidad_reservas_autos ?? 0}" min="0" disabled>
+                                <span class="stat-unit">u.</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-bookmark mr-5"></i> Res. Motos</span>
+                            <div class="stat-val-box">
+                                <input type="number" id="cap-res-motos-${f.id}" class="stat-val-input" value="${f.capacidad_reservas_motos ?? 0}" min="0" disabled>
+                                <span class="stat-unit">u.</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="text-xxs text-muted uppercase fw-700"><i class="fas fa-bookmark mr-5"></i> Res. Camionetas</span>
+                            <div class="stat-val-box">
+                                <input type="number" id="cap-res-camionetas-${f.id}" class="stat-val-input" value="${f.capacidad_reservas_camionetas ?? 0}" min="0" disabled>
                                 <span class="stat-unit">u.</span>
                             </div>
                         </div>
@@ -245,14 +304,20 @@ export async function savePBCapacity() {
     const capAutos = document.getElementById('pb-cap-autos').value;
     const capMotos = document.getElementById('pb-cap-motos').value;
     const capCamionetas = document.getElementById('pb-cap-camionetas').value;
+    const capResAutos = document.getElementById('pb-cap-res-autos')?.value || '0';
+    const capResMotos = document.getElementById('pb-cap-res-motos')?.value || '0';
+    const capResCamionetas = document.getElementById('pb-cap-res-camionetas')?.value || '0';
 
-    if (!capAutos || !capMotos || !capCamionetas) return showToast('Completá las plazas de PB');
+    if (capAutos === '' || capMotos === '' || capCamionetas === '') return showToast('Completá las plazas de PB');
 
     const resAutos = await api.post(`/admin/settings/prices?clave=capacidad_total&valor=${capAutos}`);
     const resMotos = await api.post(`/admin/settings/prices?clave=capacidad_motos&valor=${capMotos}`);
     const resCamionetas = await api.post(`/admin/settings/prices?clave=capacidad_camionetas&valor=${capCamionetas}`);
+    const resResAutos = await api.post(`/admin/settings/prices?clave=capacidad_reservas_autos&valor=${capResAutos}`);
+    const resResMotos = await api.post(`/admin/settings/prices?clave=capacidad_reservas_motos&valor=${capResMotos}`);
+    const resResCamionetas = await api.post(`/admin/settings/prices?clave=capacidad_reservas_camionetas&valor=${capResCamionetas}`);
 
-    if (resAutos.ok && resMotos.ok && resCamionetas.ok) {
+    if (resAutos.ok && resMotos.ok && resCamionetas.ok && resResAutos.ok && resResMotos.ok && resResCamionetas.ok) {
         showToast('Capacidad de Planta Baja actualizada', 'success');
         loadFloors();
     } else {
@@ -264,8 +329,11 @@ export async function updateFloorCapacity(id) {
     const capAutos = document.getElementById(`cap-autos-${id}`).value;
     const capMotos = document.getElementById(`cap-motos-${id}`).value;
     const capCamionetas = document.getElementById(`cap-camionetas-${id}`).value;
+    const capResAutos = document.getElementById(`cap-res-autos-${id}`)?.value || '0';
+    const capResMotos = document.getElementById(`cap-res-motos-${id}`)?.value || '0';
+    const capResCamionetas = document.getElementById(`cap-res-camionetas-${id}`)?.value || '0';
 
-    const res = await api.patch(`/admin/floors/${id}?cap_autos=${capAutos}&cap_motos=${capMotos}&cap_camionetas=${capCamionetas}`);
+    const res = await api.patch(`/admin/floors/${id}?cap_autos=${capAutos}&cap_motos=${capMotos}&cap_camionetas=${capCamionetas}&cap_reservas_autos=${capResAutos}&cap_reservas_motos=${capResMotos}&cap_reservas_camionetas=${capResCamionetas}`);
     if (res.ok) {
         showToast('Capacidad de nivel actualizada', 'success');
         loadFloors();
@@ -280,6 +348,9 @@ export function openAddFloorModal() {
     document.getElementById('floor-cap-autos').value = '20';
     document.getElementById('floor-cap-motos').value = '10';
     if (document.getElementById('floor-cap-camionetas')) document.getElementById('floor-cap-camionetas').value = '5';
+    if (document.getElementById('floor-cap-res-autos')) document.getElementById('floor-cap-res-autos').value = '0';
+    if (document.getElementById('floor-cap-res-motos')) document.getElementById('floor-cap-res-motos').value = '0';
+    if (document.getElementById('floor-cap-res-camionetas')) document.getElementById('floor-cap-res-camionetas').value = '0';
     document.getElementById('floor-modal-title').innerText = 'NUEVO NIVEL';
     document.getElementById('btn-floor-submit').innerText = 'CREAR NIVEL';
     if (window.openModal) window.openModal('modal-add-floor');
@@ -303,6 +374,9 @@ export async function openEditFloorModal(id) {
     document.getElementById('floor-cap-autos').value = floor.capacidad_total;
     document.getElementById('floor-cap-motos').value = floor.capacidad_motos;
     if (document.getElementById('floor-cap-camionetas')) document.getElementById('floor-cap-camionetas').value = floor.capacidad_camionetas ?? 5;
+    if (document.getElementById('floor-cap-res-autos')) document.getElementById('floor-cap-res-autos').value = floor.capacidad_reservas_autos ?? 0;
+    if (document.getElementById('floor-cap-res-motos')) document.getElementById('floor-cap-res-motos').value = floor.capacidad_reservas_motos ?? 0;
+    if (document.getElementById('floor-cap-res-camionetas')) document.getElementById('floor-cap-res-camionetas').value = floor.capacidad_reservas_camionetas ?? 0;
     
     document.getElementById('floor-modal-title').innerText = 'EDITAR NIVEL';
     document.getElementById('btn-floor-submit').innerText = 'GUARDAR CAMBIOS';
@@ -329,13 +403,16 @@ export async function handleCreateFloor(event) {
         nombre: document.getElementById('floor-nombre').value,
         capacidad_total: parseInt(document.getElementById('floor-cap-autos').value),
         capacidad_motos: parseInt(document.getElementById('floor-cap-motos').value),
-        capacidad_camionetas: parseInt(document.getElementById('floor-cap-camionetas')?.value || '5')
+        capacidad_camionetas: parseInt(document.getElementById('floor-cap-camionetas')?.value || '5'),
+        capacidad_reservas_autos: parseInt(document.getElementById('floor-cap-res-autos')?.value || '0'),
+        capacidad_reservas_motos: parseInt(document.getElementById('floor-cap-res-motos')?.value || '0'),
+        capacidad_reservas_camionetas: parseInt(document.getElementById('floor-cap-res-camionetas')?.value || '0')
     };
 
     btn.disabled = true;
     let res;
     if (editId) {
-        res = await api.patch(`/admin/floors/${editId}?cap_autos=${payload.capacidad_total}&cap_motos=${payload.capacidad_motos}&cap_camionetas=${payload.capacidad_camionetas}`);
+        res = await api.patch(`/admin/floors/${editId}?cap_autos=${payload.capacidad_total}&cap_motos=${payload.capacidad_motos}&cap_camionetas=${payload.capacidad_camionetas}&cap_reservas_autos=${payload.capacidad_reservas_autos}&cap_reservas_motos=${payload.capacidad_reservas_motos}&cap_reservas_camionetas=${payload.capacidad_reservas_camionetas}`);
     } else {
         res = await api.post(`/admin/${branch.id}/floors`, payload);
     }

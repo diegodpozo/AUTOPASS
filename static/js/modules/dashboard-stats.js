@@ -46,7 +46,15 @@ export async function loadLiveStats() {
     ]);
 
     if (resStatus && resStatus.ok) {
-        const { disponibilidad: free, ocupacion_actual: occupied, capacidad_total: total, ocupacion_motos: occMotos, capacidad_motos: capMotos, disponibilidad_motos: freeMotos, disponibilidad_camionetas: freeCamionetas, capacidad_camionetas: capCamionetas, ocupacion_camionetas: occCamionetas } = resStatus.data;
+        const { 
+            disponibilidad: free, ocupacion_actual: occupied, capacidad_total: total, 
+            ocupacion_motos: occMotos, capacidad_motos: capMotos, disponibilidad_motos: freeMotos, 
+            disponibilidad_camionetas: freeCamionetas, capacidad_camionetas: capCamionetas, ocupacion_camionetas: occCamionetas, 
+            disponibilidad_reservas: freeReservas, capacidad_reservas: capReservas, ocupacion_reservas: occReservas,
+            disponibilidad_reservas_autos: freeResAutos, capacidad_reservas_autos: capResAutos, ocupacion_reservas_autos: occResAutos,
+            disponibilidad_reservas_motos: freeResMotos, capacidad_reservas_motos: capResMotos, ocupacion_reservas_motos: occResMotos,
+            disponibilidad_reservas_camionetas: freeResCamionetas, capacidad_reservas_camionetas: capResCamionetas, ocupacion_reservas_camionetas: occResCamionetas
+        } = resStatus.data;
 
         // HELPER PARA COLOR DE BARRA SEGUN DISPONIBILIDAD
         function setBarFill(bar, pct) {
@@ -64,8 +72,10 @@ export async function loadLiveStats() {
         if (totalEl) totalEl.innerText = formatNum(total);
         const freeTotalEl = document.getElementById('stat-free-total');
         if (freeTotalEl) freeTotalEl.innerText = `${formatNum(free)} / ${formatNum(total)}`;
+        const resAutosValEl = document.getElementById('stat-res-autos-val');
+        if (resAutosValEl) resAutosValEl.innerText = `${formatNum(freeResAutos ?? 0)} / ${formatNum(capResAutos ?? 0)}`;
         const barFree = document.getElementById('bar-free');
-        if (barFree) setBarFill(barFree, (free / total) * 100);
+        if (barFree) setBarFill(barFree, total > 0 ? (free / total) * 100 : 0);
 
         // MOTOS
         const freeMotosEl = document.getElementById('stat-free-motos');
@@ -74,8 +84,10 @@ export async function loadLiveStats() {
         if (totalMotosEl) totalMotosEl.innerText = formatNum(capMotos);
         const freeTotalMotosEl = document.getElementById('stat-free-total-motos');
         if (freeTotalMotosEl) freeTotalMotosEl.innerText = `${formatNum(freeMotos)} / ${formatNum(capMotos)}`;
+        const resMotosValEl = document.getElementById('stat-res-motos-val');
+        if (resMotosValEl) resMotosValEl.innerText = `${formatNum(freeResMotos ?? 0)} / ${formatNum(capResMotos ?? 0)}`;
         const barFreeMotos = document.getElementById('bar-free-motos');
-        if (barFreeMotos) setBarFill(barFreeMotos, (freeMotos / capMotos) * 100);
+        if (barFreeMotos) setBarFill(barFreeMotos, capMotos > 0 ? (freeMotos / capMotos) * 100 : 0);
 
         // CAMIONETAS
         const freeCamionetasEl = document.getElementById('stat-free-camionetas');
@@ -84,8 +96,29 @@ export async function loadLiveStats() {
         if (totalCamionetasEl) totalCamionetasEl.innerText = formatNum(capCamionetas);
         const freeTotalCamionetasEl = document.getElementById('stat-free-total-camionetas');
         if (freeTotalCamionetasEl) freeTotalCamionetasEl.innerText = `${formatNum(freeCamionetas)} / ${formatNum(capCamionetas)}`;
+        const resCamionetasValEl = document.getElementById('stat-res-camionetas-val');
+        if (resCamionetasValEl) resCamionetasValEl.innerText = `${formatNum(freeResCamionetas ?? 0)} / ${formatNum(capResCamionetas ?? 0)}`;
         const barFreeCamionetas = document.getElementById('bar-free-camionetas');
-        if (barFreeCamionetas) setBarFill(barFreeCamionetas, (freeCamionetas / capCamionetas) * 100);
+        if (barFreeCamionetas) setBarFill(barFreeCamionetas, capCamionetas > 0 ? (freeCamionetas / capCamionetas) * 100 : 0);
+
+        // RESERVAS EXCLUSIVAS (SI EXISTE VISTA LEGACY)
+        const fReservas = freeReservas ?? Math.max(0, (capReservas || 0) - (occReservas || 0));
+        const cReservas = capReservas ?? 0;
+        const freeReservasEl = document.getElementById('stat-free-reservas');
+        const totalReservasEl = document.getElementById('stat-total-reservas');
+        if (freeReservasEl) freeReservasEl.innerText = formatNum(fReservas);
+        if (totalReservasEl) totalReservasEl.innerText = formatNum(cReservas);
+        const freeTotalReservasEl = document.getElementById('stat-free-total-reservas');
+        if (freeTotalReservasEl) freeTotalReservasEl.innerText = `${formatNum(fReservas)} / ${formatNum(cReservas)}`;
+        const barFreeReservas = document.getElementById('bar-free-reservas');
+        if (barFreeReservas) setBarFill(barFreeReservas, cReservas > 0 ? (fReservas / cReservas) * 100 : 0);
+
+        const subResAutosEl = document.getElementById('stat-sub-res-autos');
+        if (subResAutosEl) subResAutosEl.innerText = `A: ${freeResAutos ?? 0}/${capResAutos ?? 0}`;
+        const subResMotosEl = document.getElementById('stat-sub-res-motos');
+        if (subResMotosEl) subResMotosEl.innerText = `M: ${freeResMotos ?? 0}/${capResMotos ?? 0}`;
+        const subResCamionetasEl = document.getElementById('stat-sub-res-camionetas');
+        if (subResCamionetasEl) subResCamionetasEl.innerText = `C: ${freeResCamionetas ?? 0}/${capResCamionetas ?? 0}`;
 
         // OCUPACION TOTAL Y KPI MOTO
         const occMotosEl = document.getElementById('occ-stat-motos');

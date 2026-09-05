@@ -1,4 +1,4 @@
-import * as res from './modules/reservas.js?v=9.3.0';
+import * as res from './modules/reservas.js?v=9.10.1';
 
 /**
  * PUENTE: RESERVAS.JS
@@ -33,3 +33,15 @@ setInterval(() => {
         res.loadReservations();
     }
 }, 60000);
+
+
+
+
+
+
+
+
+
+
+
+

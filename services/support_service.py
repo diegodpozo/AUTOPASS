@@ -122,11 +122,21 @@ class SupportService:
             ).all()
         )
 
+        # Precargar todos los mensajes de los tickets y sus autores en 1 sola consulta agrupada (elimina N+1 y M*N+1)
+        ticket_ids = [t.id for t in tickets]
+        messages_by_ticket = {}
+        if ticket_ids:
+            msgs = db.query(models.SupportTicketMessage).options(
+                joinedload(models.SupportTicketMessage.user)
+            ).filter(
+                models.SupportTicketMessage.ticket_id.in_(ticket_ids)
+            ).order_by(models.SupportTicketMessage.created_at).all()
+            for m in msgs:
+                messages_by_ticket.setdefault(m.ticket_id, []).append(m)
+
         result = []
         for t in tickets:
-            messages = db.query(models.SupportTicketMessage).filter(
-                models.SupportTicketMessage.ticket_id == t.id
-            ).order_by(models.SupportTicketMessage.created_at).all()
+            t_msgs = messages_by_ticket.get(t.id, [])
             result.append({
                 "id": t.id,
                 "user_id": t.user_id,
@@ -150,7 +160,7 @@ class SupportService:
                         "autor": f"{m.user.nombre} {m.user.apellido}" if m.user else "Desconocido",
                         "created_at": m.created_at.isoformat() if m.created_at else None,
                     }
-                    for m in messages
+                    for m in t_msgs
                 ],
                 "created_at": t.created_at.isoformat() if t.created_at else None,
                 "updated_at": t.updated_at.isoformat() if t.updated_at else None,

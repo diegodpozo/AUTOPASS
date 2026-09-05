@@ -18,7 +18,7 @@ export {
     getEditingReservaId,
     setEditingReservaId,
     getUserVehicles
-} from './reservas-form.js';
+} from './reservas-form.js?v=9.10.1';
 
 export {
     loadReservations,
@@ -41,3 +41,15 @@ export {
     closeDigitalPass,
     shareTicket
 } from './reservas-pass.js';
+
+
+
+
+
+
+
+
+
+
+
+

@@ -11,7 +11,7 @@ Este documento detalla las librerías y herramientas necesarias para el funciona
 
 ## Archivos de Dependencias
 
-Las dependencias se encuentran en un único archivo `requirements.txt` (~54 dependencias directas), organizado por secciones (`CORE`, `DATABASE`, `AUTH & SECURITY`, `CV/IMAGING`, `SCIENTIFIC`, `HARDWARE`, `AI/OCR`, `TESTING`). Las dependencias de IA (PaddleOCR, Gemini) están incluidas pero pueden fallar en Python 3.14+ sin afectar el sistema core.
+Las dependencias se encuentran en un único archivo `requirements.txt` (~42 dependencias directas), organizado por secciones (`CORE`, `DATABASE`, `AUTH & SECURITY`, `CV/IMAGING`, `SCIENTIFIC`, `HARDWARE`, `AI/OCR`, `TESTING`). Las dependencias de IA (PaddleOCR/paddlepaddle) solo se instalan en Python < 3.14 y pueden fallar sin afectar el sistema core.
 
 ---
 
@@ -42,7 +42,6 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~54 depe
 
 ### Visión Artificial (CV)
 - **`opencv-python`** (4.13.0.92): Procesamiento de imágenes y manejo de streams de video.
-- **`opencv-python-headless`** (4.13.0.92): Versión headless para servidores sin GUI.
 - **`numpy`**: Operaciones numéricas para arrays de imagen. Marcado por versión de Python: `>=1.26.0,<2.3.0` para Python < 3.14 y `>=2.3.0,<2.5.0` para Python ≥ 3.14 (numpy < 2.3.0 no tiene wheels para Python 3.14).
 - **`scipy`** (>=1.13.0): Procesamiento científico de imágenes.
 - **`scikit-image`** (>=0.22.0): Procesamiento de imágenes para preprocesamiento ALPR.
@@ -56,16 +55,15 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~54 depe
 - **`pyserial`** (3.5): Comunicación serial con Arduino/ESP32.
 
 ### Utilidades
-- **`pydantic`** (2.12.5): Validación y serialización de datos (schemas).
+- **`pydantic`** (>=2.10.0): Validación y serialización de datos (schemas).
+- **`pydantic_core`** (>=2.27.0): Core en Rust de Pydantic v2.
 - **`requests`** (2.32.5): HTTP client para servicios externos.
 - **`httpx`** (0.28.1): HTTP client async.
 - **`email-validator`** (2.3.0): Validación de direcciones de email.
-- **`protobuf`** (4.25.0): Serialización (dependencia de submódulos Google).
-- **`pyyaml`**: parsing de YAML.
-- **`colorama`**: Colores en terminal.
-- **`click`**: CLI utilities.
-- **`tqdm`**: Barras de progreso.
-- **`setuptools`**: Build tools.
+- **`protobuf`** (>=4.25.0): Serialización (dependencia de PaddleOCR).
+- **`colorama`** (0.4.6): Colores en terminal.
+- **`click`** (8.3.1): Utilidades CLI.
+- **`setuptools`** (>=70.0.0): Build tools.
 
 ### Testing
 - **`pytest`** (>=8.0.0): Framework de pruebas.
@@ -82,9 +80,7 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~54 depe
 - **`paddleocr`** (3.7.0): Motor de OCR fallback (solo `python_version < '3.14'`).
 - **`paddlepaddle`** (3.2.2): Backend de Deep Learning para PaddleOCR (solo `python_version < '3.14'`).
 
-### Google Gemini (AI SDK - incluidas en `requirements.txt`, aún sin uso en el core)
-- **`google-generativeai`** (0.8.6): SDK de la API de Google Gemini (prevista para funcionalidades AI; actualmente sin referencias de importación en el código fuente).
-- **`google-api-python-client`**, **`google-auth`**, **`google-auth-httplib2`**, **`google-ai-generativelanguage`**, **`googleapis-common-protos`**: SDK de Google.
+> Nota: Las dependencias sin uso (Google Gemini AI SDK suite: `google-generativeai`, `google-api-python-client`, `google-auth`, etc., `tqdm`, `pyyaml`, `annotated-doc`) y las declaraciones redundantes (`opencv-python-headless` junto a `opencv-python`, `psycopg-binary` junto a `psycopg[binary]`) fueron depuradas de `requirements.txt`.
 
 ---
 

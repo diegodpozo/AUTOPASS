@@ -10,8 +10,12 @@ from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
 from services.billing_service import BillingService
-from services.reservation_service import ReservationService, verificar_disponibilidad
-from services.user_notification_service import UserNotificationService
+from services.reservation_service import (
+    ReservationService,
+    verificar_disponibilidad,
+    obtener_fechas_deshabilitadas,
+    obtener_horas_deshabilitadas
+)
 
 logger = get_logger("UserReservations")
 
@@ -68,9 +72,54 @@ def _validar_horario_sucursal(db: Session, sucursal_nombre: str, start: datetime
 router = APIRouter()
 
 @router.get("/reservations/check-availability")
-def check_availability(sucursal_nombre: str, fecha_inicio: str, fecha_fin: str, exclude_id: int = None, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def check_availability(sucursal_nombre: str, fecha_inicio: str, fecha_fin: str, exclude_id: int = None, tipo_vehiculo: str = "Auto", db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """VERIFICA SI HAY LUGARES DISPONIBLES EN LA SUCURSAL PARA EL RANGO SOLICITADO."""
-    return verificar_disponibilidad(db, sucursal_nombre, fecha_inicio, fecha_fin, exclude_id)
+    return verificar_disponibilidad(db, sucursal_nombre, fecha_inicio, fecha_fin, exclude_id, tipo_vehiculo)
+
+@router.get("/reservations/disabled-dates")
+def get_disabled_dates(
+    sucursal_nombre: str,
+    tipo_vehiculo: str = "Auto",
+    tipo_estadia: str = "dia",
+    fecha_desde: str = None,
+    dias: int = 90,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """DEVUELVE LA LISTA DE FECHAS (YYYY-MM-DD) DESHABILITADAS POR CAPACIDAD COMPLETA."""
+    fechas = obtener_fechas_deshabilitadas(
+        db, sucursal_nombre=sucursal_nombre, tipo_vehiculo=tipo_vehiculo,
+        tipo_estadia=tipo_estadia, fecha_desde_str=fecha_desde, dias_evaluar=dias
+    )
+    return {
+        "sucursal_nombre": sucursal_nombre,
+        "tipo_vehiculo": tipo_vehiculo,
+        "tipo_estadia": tipo_estadia,
+        "disabled_dates": fechas
+    }
+
+@router.get("/reservations/disabled-hours")
+def get_disabled_hours(
+    sucursal_nombre: str,
+    fecha: str,
+    tipo_vehiculo: str = "Auto",
+    duracion_horas: float = 1.0,
+    paso_minutos: int = 30,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """DEVUELVE LA LISTA DE SLOTS HORARIOS (HH:MM) DESHABILITADOS PARA UN DÍA ESPECÍFICO."""
+    horas = obtener_horas_deshabilitadas(
+        db, sucursal_nombre=sucursal_nombre, fecha_str=fecha,
+        tipo_vehiculo=tipo_vehiculo, duracion_horas=duracion_horas,
+        paso_minutos=paso_minutos
+    )
+    return {
+        "sucursal_nombre": sucursal_nombre,
+        "fecha": fecha,
+        "tipo_vehiculo": tipo_vehiculo,
+        "disabled_hours": horas
+    }
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
 def get_user_reservations(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -126,7 +175,7 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
         _validar_horario_sucursal(db, res.sucursal_nombre, start, end)
 
     # VERIFICAR DISPONIBILIDAD
-    disp = verificar_disponibilidad(db, res.sucursal_nombre, res.fecha_inicio, res.fecha_fin)
+    disp = verificar_disponibilidad(db, res.sucursal_nombre, res.fecha_inicio, res.fecha_fin, tipo_vehiculo=vehicle.tipo)
     if not disp["disponible"]:
         raise HTTPException(status_code=400, detail=disp["mensaje"])
 
@@ -144,7 +193,9 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
         if count == 0: raise HTTPException(status_code=400, detail="No hay días seleccionados dentro del rango")
         monto = count * rate
     elif res.tipo_estadia == "hora":
-        monto = math.ceil(duration_hours) * rate
+        v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
+        tarifa_30min = BillingService.get_30min_rate(db, sucursal=res.sucursal_nombre, tipo_vehiculo=v_str)
+        monto = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
     elif res.tipo_estadia == "dia":
         monto = max(1, math.ceil(duration_hours / 24)) * rate
     elif res.tipo_estadia == "semana":
@@ -231,7 +282,10 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
     if duration_hours <= 0: raise HTTPException(status_code=400, detail="Fechas inválidas")
 
     monto_nuevo = math.ceil(duration_hours) * rate
-    if res.tipo_estadia == "dia": monto_nuevo = max(1, math.ceil(duration_hours / 24)) * rate
+    if res.tipo_estadia == "hora":
+        tarifa_30min = BillingService.get_30min_rate(db, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+        monto_nuevo = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
+    elif res.tipo_estadia == "dia": monto_nuevo = max(1, math.ceil(duration_hours / 24)) * rate
     elif res.tipo_estadia == "semana": monto_nuevo = math.ceil(duration_hours / (24 * 7)) * rate
     elif res.tipo_estadia == "quincena": monto_nuevo = math.ceil(duration_hours / (24 * 15)) * rate
     elif res.tipo_estadia == "mes": monto_nuevo = math.ceil(duration_hours / (24 * 30)) * rate

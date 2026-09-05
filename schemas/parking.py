@@ -23,15 +23,31 @@ class ParkingStatus(BaseModel):
     ocupacion_motos: int
     capacidad_camionetas: int = 0
     ocupacion_camionetas: int = 0
+    capacidad_reservas_autos: int = 5
+    ocupacion_reservas_autos: int = 0
+    capacidad_reservas_motos: int = 3
+    ocupacion_reservas_motos: int = 0
+    capacidad_reservas_camionetas: int = 2
+    ocupacion_reservas_camionetas: int = 0
+    capacidad_reservas: int = 10
+    ocupacion_reservas: int = 0
     disponibilidad: int
     disponibilidad_motos: int
     disponibilidad_camionetas: int = 0
+    disponibilidad_reservas_autos: int = 5
+    disponibilidad_reservas_motos: int = 3
+    disponibilidad_reservas_camionetas: int = 2
+    disponibilidad_reservas: int = 10
 
 class FloorBase(BaseModel):
     nombre: str
     capacidad_total: int = 20
     capacidad_motos: int = 10
     capacidad_camionetas: int = 5
+    capacidad_reservas_autos: int = 5
+    capacidad_reservas_motos: int = 3
+    capacidad_reservas_camionetas: int = 2
+    capacidad_reservas: int = 10
 
 class FloorCreate(FloorBase):
     pass
@@ -45,6 +61,14 @@ class FloorResponse(FloorBase):
     ocupacion_motos: int = 0
     capacidad_camionetas: int = 5
     ocupacion_camionetas: int = 0
+    capacidad_reservas_autos: int = 5
+    ocupacion_reservas_autos: int = 0
+    capacidad_reservas_motos: int = 3
+    ocupacion_reservas_motos: int = 0
+    capacidad_reservas_camionetas: int = 2
+    ocupacion_reservas_camionetas: int = 0
+    capacidad_reservas: int = 10
+    ocupacion_reservas: int = 0
 
 class BranchBase(BaseModel):
     nombre: str
@@ -70,9 +94,17 @@ class BranchResponse(BranchBase):
     capacidad_autos_total: int = 0
     capacidad_motos_total: int = 0
     capacidad_camionetas_total: int = 0
+    capacidad_reservas_autos_total: int = 0
+    capacidad_reservas_motos_total: int = 0
+    capacidad_reservas_camionetas_total: int = 0
+    capacidad_reservas_total: int = 0
     ocupacion_autos_total: int = 0
     ocupacion_motos_total: int = 0
     ocupacion_camionetas_total: int = 0
+    ocupacion_reservas_autos_total: int = 0
+    ocupacion_reservas_motos_total: int = 0
+    ocupacion_reservas_camionetas_total: int = 0
+    ocupacion_reservas_total: int = 0
 
 class BranchPublicResponse(BranchBase):
     model_config = ConfigDict(from_attributes=True)
@@ -84,6 +116,14 @@ class BranchPublicResponse(BranchBase):
     capacidad_motos: int = 10
     ocupacion_camionetas: int = 0
     capacidad_camionetas: int = 5
+    ocupacion_reservas_autos: int = 0
+    capacidad_reservas_autos: int = 5
+    ocupacion_reservas_motos: int = 0
+    capacidad_reservas_motos: int = 3
+    ocupacion_reservas_camionetas: int = 0
+    capacidad_reservas_camionetas: int = 2
+    ocupacion_reservas: int = 0
+    capacidad_reservas: int = 10
     floors: List[FloorResponse] = []
 
 class CameraBase(BaseModel):

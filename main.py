@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from core.config import settings
@@ -39,6 +40,7 @@ app.mount("/images", StaticFiles(directory=settings.IMAGE_DIR), name="images")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # MIDDLEWARES
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,

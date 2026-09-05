@@ -14,6 +14,13 @@ class BillingService:
     @staticmethod
     def get_rate(db: Session, tipo: str = "hora", sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> float:
         """OBTIENE LA TARIFA CONFIGURADA SEGUN LA MODALIDAD DE ESTADIA, SEDE Y TIPO DE VEHICULO."""
+        from core.cache import ttl_cache
+        v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
+        cache_key = f"rate_get_{tipo}_{sucursal}_{v_str}"
+        cached = ttl_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         setting_map = {
             "hora": "precio_hora",
             "dia": "precio_dia",
@@ -42,11 +49,19 @@ class BillingService:
                 models.Settings.sucursal == None
             ).first()
             
-        return float(setting.valor) if setting else settings.DEFAULT_BASE_RATE
+        val = float(setting.valor) if setting else settings.DEFAULT_BASE_RATE
+        ttl_cache.set(cache_key, val, ttl=300.0)
+        return val
 
     @staticmethod
     def get_hourly_rate(db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> float:
         """ACCESO RAPIDO A LA TARIFA POR HORA BASE."""
+        from core.cache import ttl_cache
+        cache_key = f"rate_hourly_{sucursal}_{tipo_vehiculo}"
+        cached = ttl_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         clave = "precio_hora"
         if tipo_vehiculo == "Moto":
             clave = "precio_hora_moto"
@@ -64,20 +79,53 @@ class BillingService:
                 models.Settings.sucursal == None
             ).first()
             
-        return float(setting.valor) if setting else settings.DEFAULT_HOURLY_RATE
+        val = float(setting.valor) if setting else settings.DEFAULT_HOURLY_RATE
+        ttl_cache.set(cache_key, val, ttl=300.0)
+        return val
+
+    @staticmethod
+    def get_30min_rate(db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> float:
+        """TARIFA DE LA FRACCION DE 30 MIN. SI NO ESTA CONFIGURADA, USA LA MITAD DE LA TARIFA HORA."""
+        from core.cache import ttl_cache
+        cache_key = f"rate_30min_{sucursal}_{tipo_vehiculo}"
+        cached = ttl_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        clave = "precio_30min"
+        if tipo_vehiculo == "Moto":
+            clave = "precio_30min_moto"
+        elif tipo_vehiculo == "Camioneta":
+            clave = "precio_30min_camioneta"
+
+        setting = db.query(models.Settings).filter(
+            models.Settings.clave == clave,
+            models.Settings.sucursal == sucursal
+        ).first()
+
+        if not setting and sucursal:
+            setting = db.query(models.Settings).filter(
+                models.Settings.clave == clave,
+                models.Settings.sucursal == None
+            ).first()
+
+        # FALLBACK: MITAD DE LA TARIFA POR HORA
+        val = float(setting.valor) if setting else (BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo) / 2)
+        ttl_cache.set(cache_key, val, ttl=300.0)
+        return val
 
     @staticmethod
     def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> float:
-        """CALCULA LA DEUDA ACUMULADA BASADA EN BLOQUES DE HORAS, SEDE Y TIPO DE VEHICULO."""
-        precio_hora = BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
+        """CALCULA LA DEUDA ACUMULADA BASADA EN BLOQUES DE 30 MIN, SEDE Y TIPO DE VEHICULO."""
+        tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
         entrada_dt = datetime.datetime.fromisoformat(entry_time_str)
         
         delta = TimeService.now() - entrada_dt
         horas_transcurridas = delta.total_seconds() / 3600
         
-        # COBRO POR BLOQUES DE HORA (REDONDEO HACIA ARRIBA, MINIMO 1 HORA)
-        bloques_a_cobrar = max(1, math.ceil(horas_transcurridas))
-        return float(bloques_a_cobrar * precio_hora)
+        # COBRO POR BLOQUES DE 30 MIN (REDONDEO HACIA ARRIBA, MINIMO 1 BLOQUE)
+        bloques_a_cobrar = max(1, math.ceil(horas_transcurridas * 2))
+        return float(bloques_a_cobrar * tarifa_30min)
 
     @staticmethod
     def calculate_total_amount(db: Session, tipo_estadia: str, fecha_inicio: str, fecha_fin: str, sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> float:
@@ -90,9 +138,11 @@ class BillingService:
             return 0.0
             
         rate = BillingService.get_rate(db, tipo_estadia, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
+        v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
+        tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=v_str)
         
         if tipo_estadia == "hora":
-            return float(math.ceil(duration_hours) * rate)
+            return float(max(1, math.ceil(duration_hours * 2)) * tarifa_30min)
         elif tipo_estadia == "dia":
             return float(max(1, math.ceil(duration_hours / 24)) * rate)
         elif tipo_estadia == "semana":
@@ -147,7 +197,6 @@ class BillingService:
     @staticmethod
     def process_payment(db: Session, plate: str) -> dict:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
-        from services.time_service import TimeService
         from models.enums import ReservationStatus
 
         log = db.query(models.AccessLog).filter(

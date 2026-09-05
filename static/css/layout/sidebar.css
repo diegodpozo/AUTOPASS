@@ -47,9 +47,9 @@
 
 /* --- SIDEBAR FOOTER --- */
 .sidebar-footer { 
-    padding: 12px 16px; border-top: 1px solid var(--border-light); font-size: 0.75rem; color: var(--danger); 
+    padding: 12px 16px; border-top: 1px solid var(--border-light); font-size: 0.85rem; color: var(--danger); 
     font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;
-    margin: 5px 12px 20px; border-radius: 10px; transition: 0.3s;
+    margin: 15px 12px 20px; border-radius: 10px; transition: 0.3s;
 }
 .sidebar-footer:hover { background: rgba(239, 68, 68, 0.08); }
 .sidebar-footer i { width: 20px; text-align: center; }
@@ -78,17 +78,50 @@
 }
 
 /* RESPONSIVE SIDEBAR */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .sidebar {
         position: fixed;
-        left: -240px;
-        width: 240px;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        max-width: 85vw;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
         z-index: 2000;
-        box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+        box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+        overflow-x: hidden !important;
+        overflow-y: auto;
+        box-sizing: border-box !important;
+        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        justify-content: flex-start !important;
+        padding-bottom: 40px !important;
     }
 
     .sidebar.mobile-open {
         left: 0;
+    }
+
+    .sidebar .nav-group {
+        flex: 0 0 auto !important;
+        padding: 0 10px;
+        gap: 4px;
+        margin-top: 5px;
+        box-sizing: border-box !important;
+    }
+
+    /* Ubicar Cerrar Sesión directamente debajo de las opciones del menú, en la parte superior-media */
+    .sidebar .sidebar-footer {
+        margin: 15px 10px 30px !important;
+        border-top: 1px solid rgba(239, 68, 68, 0.2) !important;
+        background: rgba(239, 68, 68, 0.08) !important;
+        border: 1px solid rgba(239, 68, 68, 0.2) !important;
+        color: #ef4444 !important;
+        padding: 12px 16px !important;
+        font-size: 0.9rem !important;
+        font-weight: 700 !important;
+        box-sizing: border-box !important;
+        border-radius: 10px !important;
     }
 
     .mobile-nav-toggle {

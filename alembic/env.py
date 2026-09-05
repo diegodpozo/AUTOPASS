@@ -11,6 +11,7 @@ from alembic import context
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.config import settings
+from core.database import normalize_database_url
 from models import Base
 
 # this is the Alembic Config object, which provides
@@ -18,10 +19,7 @@ from models import Base
 config = context.config
 
 # Set DB URL from settings (.env)
-db_url = settings.DATABASE_URL
-# Use psycopg3 instead of psycopg2 (psycopg2 not installed in venv)
-if db_url.startswith("postgresql://") and "+" not in db_url.split("://", 1)[0]:
-    db_url = "postgresql+psycopg://" + db_url.split("://", 1)[1]
+db_url = normalize_database_url(settings.DATABASE_URL)
 config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging.
