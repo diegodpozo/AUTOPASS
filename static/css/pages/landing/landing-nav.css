@@ -216,15 +216,13 @@ nav#nav-menu {
 
 @media (max-width: 1024px) {
     .mobile-menu-btn {
+        position: fixed;
+        top: 8px;
+        left: 5%;
+        z-index: 2100;
         display: flex !important;
         align-items: center;
         justify-content: center;
-        z-index: 2100;
-        position: absolute;
-        left: 5%;
-        top: 50%;
-        transform: translateY(-50%);
-        transition: opacity 0.3s ease, transform 0.3s ease;
         width: 40px;
         height: 40px;
         border-radius: 10px;
@@ -235,6 +233,7 @@ nav#nav-menu {
         cursor: pointer;
         padding: 0;
         outline: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .mobile-menu-btn:hover, .mobile-menu-btn:active {

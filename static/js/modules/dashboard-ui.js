@@ -2,6 +2,7 @@ import api from './api.js';
 import { normalizeSystemName } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService } from './dashboard-cameras.js';
+import { toggleMobileNav, closeMobileNav } from './ui.js';
 
 export { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService };
 
@@ -136,24 +137,6 @@ export function switchTab(tabId, element) {
     if (window.innerWidth <= 768) {
         closeMobileNav();
     }
-}
-
-export function toggleMobileNav() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) {
-        const isOpen = sidebar.classList.toggle('mobile-open');
-        if (overlay) overlay.classList.toggle('active', isOpen);
-        document.body.style.overflow = isOpen ? 'hidden' : '';
-    }
-}
-
-export function closeMobileNav() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('mobile-open');
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
 }
 
 export function toggleSidebar() {

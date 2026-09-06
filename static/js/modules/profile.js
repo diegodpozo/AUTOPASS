@@ -96,7 +96,45 @@ export function updatePointsProgress(currentPts) {
 export async function loadPointsData() {
     await loadProfile(); 
     loadPromotions();
+    loadVouchers();
     loadPointsHistory();
+}
+
+// LISTA DE VOUCHERS/TICKETS DE CANJE DEL USUARIO (TODOS, SIN FILTRO DE ESTADO)
+export async function loadVouchers() {
+    const list = document.getElementById('vouchers-list');
+    if (!list) return;
+    const res = await api.get('/user/redemption-tickets');
+    if (!res.ok) { list.innerHTML = '<p class="text-danger" style="padding: 30px; text-align: center;">Error al cargar tus vouchers.</p>'; return; }
+
+    const tickets = res.data;
+    if (tickets.length === 0) {
+        const c = document.getElementById('vouchers-container');
+        if (c) c.style.display = 'none';
+        return;
+    }
+    const c = document.getElementById('vouchers-container');
+    if (c) c.style.display = '';
+
+    list.innerHTML = tickets.map(t => `
+        <div class="pts-item">
+            <div class="pts-item-info">
+                <span class="pts-item-reason">${t.titulo || 'Beneficio AutoPass'}</span>
+                <span class="pts-item-date">Canjeado: ${formatDate(t.created_at)} · Suc. ${(t.sucursal || 'GLOBAL').replace('AUTOPASS ', '')}</span>
+            </div>
+            <div class="pts-voucher-actions">
+                <button class="btn-redeem" style="min-width: auto; padding: 6px 12px;" onclick="showCanjeTicketById(${t.id})">VER QR</button>
+            </div>
+        </div>`).join('');
+}
+
+// REABRE EL MODAL DE UN VOUCHER PREVIAMENTE CANJEADO BUSCANDOLO EN LA BD
+export async function showCanjeTicketById(id) {
+    const res = await api.get('/user/redemption-tickets');
+    if (!res.ok) return;
+    const t = res.data.find(x => x.id === id);
+    if (!t) { showToast('No se encontró el voucher', 'error'); return; }
+    showCanjeTicket(t);
 }
 
 export async function loadPromotions() {

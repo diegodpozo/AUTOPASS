@@ -31,7 +31,7 @@ window.switchMonitorTab = (tabId, element) => {
     if (targetTable) targetTable.classList.add('active');
     if (targetSearch) targetSearch.classList.add('active');
 };
-window.toggleMobileNav = ui.toggleMobileNav;
+window.toggleMobileNav = baseUi.toggleMobileNav;
 
 // 2. MODALES Y UTILIDADES GLOBALES
 window.openModal = baseUi.openModal;

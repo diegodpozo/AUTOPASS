@@ -44,6 +44,7 @@ window.loadPointsHistory = prof.loadPointsHistory;
 window.changePtsPage = prof.changePtsPage;
 window.loadPromotions = prof.loadPromotions;
 window.showCanjeTicket = prof.showCanjeTicket;
+window.showCanjeTicketById = prof.showCanjeTicketById;
 window.closeCanjeModal = prof.closeCanjeModal;
 window.shareCanjeTicket = prof.shareCanjeTicket;
 
