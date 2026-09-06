@@ -126,7 +126,7 @@
 
     .mobile-nav-toggle {
         display: block;
-        position: absolute;
+        position: fixed;
         left: 20px;
         top: 22px;
         margin: 0;
