@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#dfba6b">
+    <title>Instalar AUTOPASS</title>
+    <link rel="icon" type="image/png" href="/static/images/logo.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px;
+            background: radial-gradient(1200px 600px at 50% -10%, #1c1a16 0%, #08090c 60%);
+            color: #f5f1e8;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        }
+        .logo { width: 72px; height: 72px; object-fit: contain; margin-bottom: 12px; }
+        h1 { font-size: 1.5rem; letter-spacing: 0.14em; color: #dfba6b; text-transform: uppercase; text-align: center; margin-bottom: 4px; }
+        .sub { color: #b8b2a7; text-align: center; margin-bottom: 24px; line-height: 1.5; }
+        .card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(223, 186, 107, 0.25);
+            border-radius: 14px;
+            padding: 24px;
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #qrcode {
+            padding: 12px;
+            background: #ffffff;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        #qrcode img { display: block; }
+        .url {
+            font-size: 0.82rem;
+            color: #dfba6b;
+            word-break: break-all;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #dfba6b;
+            color: #0a0a0a;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .btn:hover { filter: brightness(1.08); }
+        .btn.ghost { background: transparent; border: 1px solid rgba(223, 186, 107, 0.5); color: #dfba6b; }
+        .steps { width: 100%; margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+        .step { display: flex; gap: 10px; align-items: flex-start; font-size: 0.88rem; color: #c9c3b6; line-height: 1.45; }
+        .step b { color: #f5f1e8; }
+        .num {
+            flex: 0 0 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(223, 186, 107, 0.15);
+            color: #dfba6b;
+            font-weight: 700;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .note { margin-top: 16px; font-size: 0.76rem; color: #6f6a60; text-align: center; }
+    </style>
+</head>
+<body>
+    <img class="logo" src="/static/images/logo.png" alt="AUTOPASS">
+    <h1>AUTOPASS</h1>
+    <p class="sub">Instalá la app en tu celular</p>
+
+    <div class="card">
+        <div id="qrcode"></div>
+        <p class="url" id="installUrl">{{ settings.BASE_URL }}</p>
+        <button class="btn" onclick="downloadQR()">Descargar QR (PNG)</button>
+        <button class="btn ghost" onclick="location.href='/'">Abrir la app</button>
+
+        <div class="steps">
+            <div class="step"><span class="num">1</span>
+                <span>Escaneá el código con la <b>cámara de tu celular</b> (Android: cámara o Google Lens; iPhone: cámara).</span></div>
+            <div class="step"><span class="num">2</span>
+                <span><b>Android (Chrome):</b> tocá el menú ⋮ y elegí <b>"Instalar app"</b> (o aceptá el aviso).</span></div>
+            <div class="step"><span class="num">3</span>
+                <span><b>iPhone/iPad (Safari):</b> tocá <b>Compartir</b> <span style="font-size:0.9em">(icono ↑)</span> y luego <b>"Añadir a pantalla de inicio"</b>.</span></div>
+            <div class="step"><span class="num">4</span>
+                <span>Listo: la app abre <b>a pantalla completa</b> como una app nativa.</span></div>
+        </div>
+    </div>
+
+    <p class="note">La instalación es por cada celular. El servidor debe estar encendido el primer día; después la app queda guardada en tu dispositivo.</p>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        var url = document.getElementById('installUrl').textContent.trim();
+        var qr = new QRCode(document.getElementById('qrcode'), {
+            text: url,
+            width: 260,
+            height: 260,
+            colorDark: "#08090c",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+
+        function qrDataUrl() {
+            var el = document.getElementById('qrcode');
+            var img = el.querySelector('img');
+            if (img && img.src) return img.src;
+            var canvas = el.querySelector('canvas');
+            if (canvas) return canvas.toDataURL('image/png');
+            return null;
+        }
+
+        function downloadQR() {
+            var data = qrDataUrl();
+            if (!data) { alert('No se pudo generar el QR'); return; }
+            var a = document.createElement('a');
+            a.href = data;
+            a.download = 'autopass-instalar.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
