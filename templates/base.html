@@ -44,6 +44,15 @@
     <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link rel="stylesheet" href="/static/css/components/footer.css">
     <link rel="stylesheet" href="/static/css/components/virtual_time.css">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#dfba6b">
+    <link rel="apple-touch-icon" href="/static/images/icons/icon-180.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AUTOPASS">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -59,5 +68,16 @@
     <script type="module" src="/static/js/api_client.js"></script>
     <script type="module" src="/static/js/main.js"></script>
     {% block extra_scripts %}{% endblock %}
+
+    <!-- REGISTRO SERVICE WORKER (PWA) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').catch(function (err) {
+                    console.warn('Service Worker no registrado:', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>

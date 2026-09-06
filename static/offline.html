@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#dfba6b">
+  <title>AUTOPASS - Sin conexión</title>
+  <link rel="icon" type="image/png" href="/static/images/logo.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px;
+      background: radial-gradient(1200px 600px at 50% -10%, #1c1a16 0%, #08090c 60%);
+      color: #f5f1e8;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      text-align: center;
+    }
+    .logo { width: 84px; height: 84px; object-fit: contain; }
+    h1 {
+      font-size: 1.6rem;
+      letter-spacing: 0.14em;
+      color: #dfba6b;
+      text-transform: uppercase;
+    }
+    p { max-width: 460px; color: #b8b2a7; line-height: 1.6; }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border: 1px solid rgba(223, 186, 107, 0.4);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      color: #dfba6b;
+      text-transform: uppercase;
+    }
+    button {
+      margin-top: 8px;
+      padding: 12px 32px;
+      border: none;
+      border-radius: 8px;
+      background: #dfba6b;
+      color: #0a0a0a;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(223, 186, 107, 0.25);
+    }
+    button:hover { filter: brightness(1.08); }
+    .meta { font-size: 0.8rem; color: #6f6a60; }
+  </style>
+</head>
+<body>
+  <img class="logo" src="/static/images/logo.png" alt="AUTOPASS">
+  <span class="badge">Sin conexión</span>
+  <h1>AUTOPASS</h1>
+  <p>
+    El servidor de estacionamiento no está accesible en este momento.
+    Cuando tengas conexión, podrás reservar, estacionar y consultar tu saldo.
+  </p>
+  <button onclick="location.reload()">Reintentar</button>
+  <p class="meta">La interfaz está guardada en tu dispositivo.<br>Los datos se sincronizarán cuando el servidor esté disponible.</p>
+</body>
+</html>

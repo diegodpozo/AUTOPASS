@@ -14,6 +14,10 @@ templates = Jinja2Templates(directory="templates")
 templates.env.globals["settings"] = settings
 templates.env.globals["cache_buster"] = int(time.time())
 
+@router.get("/instalar", response_class=HTMLResponse)
+async def get_instalar(request: Request):
+    return templates.TemplateResponse(request=request, name="instalar.html")
+
 @router.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")

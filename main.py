@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from core.config import settings
 from core.logger import setup_logging, get_logger
@@ -38,6 +39,19 @@ for path in [settings.IMAGE_DIR, os.path.join("static", "uploads", "branches")]:
 # MONTAJE DE ARCHIVOS ESTATICOS
 app.mount("/images", StaticFiles(directory=settings.IMAGE_DIR), name="images")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# PWA: service worker en el scope raiz (controla TODO el sitio) y manifest
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse(
+        "static/sw.js",
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"},
+    )
+
+@app.get("/manifest.webmanifest")
+async def manifest():
+    return FileResponse("static/manifest.json", media_type="application/manifest+json")
 
 # MIDDLEWARES
 app.add_middleware(GZipMiddleware, minimum_size=1000)
