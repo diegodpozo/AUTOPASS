@@ -33,10 +33,10 @@ SMTP_PASSWORD=tu_password
 SMTP_FROM=noreply@autopass.com.ar
 
 # Mercado Pago (Checkout Pro) - ver Sección 7
-BASE_URL=https://xxxx.ngrok-free.app          # OBLIGATORIO https:// (MP lo exige en los back_urls)
+BASE_URL=https://xxxx.trycloudflare.com      # OBLIGATORIO https:// (MP lo exige en los back_urls)
 MP_ACCESS_TOKEN=APP_USR-...                   # Access Token de prueba (sandbox)
 MP_PUBLIC_KEY=APP_USR-...                     # Public Key de prueba
-MP_WEBHOOK_URL=https://xxxx.ngrok-free.app/v1/user/mercadopago/webhook
+MP_WEBHOOK_URL=https://xxxx.trycloudflare.com/v1/user/mercadopago/webhook
 MP_PREFERENCE_EXPIRE_MINUTES=45               # Vigencia de la preferencia de pago
 ```
 
@@ -125,20 +125,20 @@ Debe listar las tablas del sistema (users, reservations, access_logs, etc.). Si 
 - **`BASE_URL` debe ser `https://`**: Mercado Pago **rechaza** las URLs `http://` en los `back_urls`. Para pruebas locales usá un túnel público HTTPS:
 
 ```bash
-# Levantar el túnel (ngrok → server local en el puerto 8000)
-C:\Users\Mariano\AppData\Local\ngrok\ngrok.exe http 8000     # o: ngrok http 8000
-# → te da algo como https://xxxx.ngrok-free.app
+# Levantar el túnel (cloudflared → server local en el puerto 8000)
+.\acceso_remoto.bat     # o: cloudflared tunnel --url http://localhost:8000
+# → te da algo como https://xxxx.trycloudflare.com
 ```
 Luego en `.env`:
 ```
-BASE_URL=https://xxxx.ngrok-free.app
-MP_WEBHOOK_URL=https://xxxx.ngrok-free.app/v1/user/mercadopago/webhook
+BASE_URL=https://xxxx.trycloudflare.com
+MP_WEBHOOK_URL=https://xxxx.trycloudflare.com/v1/user/mercadopago/webhook
 ```
-> ⚠️ Windows Defender puede marcar `ngrok.exe` como PUA (falso positivo). Agregá la carpeta del binario en **Exclusiones** de Windows Security y **autenticá** ngrok con: `ngrok config add-authtoken TU_TOKEN` (cuenta gratuita en dashboard.ngrok.com).
+> ⚠️ El script `acceso_remoto.bat` actualiza `BASE_URL`/`MP_WEBHOOK_URL` automáticamente. Cloudflare es un quick tunnel gratuito, sin cuenta y sin interstitial (la PWA es instalable directamente).
 
 ### 7.3 Probar el flujo (sandbox)
 1. Reiniciá el server para que tome el `.env` (la config se lee al arrancar): detené uvicorn y volvé a arrancarlo.
-2. Ingresá **por el dominio del túnel** (aceptá la advertencia de ngrok "Visit Site" la primera vez) y **logueate ahí** — el retorno de MP vuelve al mismo origen; si iniciaste en `localhost`, al volver vas a quedar deslogueado (cada origen guarda su propia sesión).
+2. Ingresá **por el dominio del túnel** y **logueate ahí** — el retorno de MP vuelve al mismo origen; si iniciaste en `localhost`, al volver vas a quedar deslogueado (cada origen guarda su propia sesión).
 3. En Reservas → **"PAGAR CON MP"** (o en Cuenta → **ESTADÍAS EN CURSO** → **"PAGAR CON MP"**).
 4. En `sandbox.mercadopago.com.ar` pagá como **invitado** (o con usuario de prueba comprador) usando:
    - Tarjeta: `5031 7557 3453 0604` (Mastercard aprobada) · CVV cualquiera · Vencimiento futuro.

@@ -2,10 +2,13 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.14.0+ - Septiembre 2026)
+## Últimas Actualizaciones (v9.14.1+ - Septiembre 2026)
+- **Pagos manuales en efectivo (`CAJA`)**: El operador puede registrar el pago de una estadía en efectivo desde el monitoreo (`metodo=CAJA` en `POST /v1/access/pay-stay`); los reportes financieros desglosan la recaudación por método (`recaudado_efectivo` / `recaudado_digital`) con KPIs dedicados en el dashboard.
+- **Re-impresión de vouchers**: Los tickets de canje de puntos pueden reimprimirse desde el portal de usuario.
+- **PWA instalable**: Manifest + Service Worker en scope raíz (`autopass-v2`) con página `/instalar`; el botón de instalación está oculto en el monitor multicámara (fuera del alcance de la PWA).
 - **Pagos con Mercado Pago (v9.14.0)**: Checkout Pro por redirección para abonar **reservas** y **estadías en curso** sin tocar el saldo de la billetera; confirmación por retorno (`/success|pending|failure`) y webhook, con aplicación idempotente (`services/mercadopago_service.py`, tabla `mercadopago_payments`).
 - **Canje de puntos por descuentos**: `RedemptionTicket` con voucher (código de 16 caracteres + QR, válido 30 días) o `descuento_reserva` aplicado automáticamente al pagar la próxima reserva.
-- **Soporte con adjuntos**: Los tickets de soporte aceptan archivos jpg/jpeg/png/gif/webp/pdf (máx. 1 MB) en mensajes del hilo.
+- **Soporte con adjuntos**: Los tickets de soporte aceptan archivos jpg/jpeg/png/gif/webp/pdf (máx. 1 MB) en mensajes del hilo, con notificaciones de lectura para el admin.
 - **Performance & Caché**: Índices de base de datos (migración `49a240f0fc25`) y caché TTL en memoria (`core/cache.py`) para tarifas.
 - **Setup Modernizado**: Instalador (`setup_backend.bat`) con dependencias organizadas por secciones (Core / DB / Seguridad / CV / IA-OCR) dentro de un único `requirements.txt`, con markers por versión de Python para numpy y para `paddleocr`/`paddlepaddle` (solo Python < 3.14). Output limpio sin spameo de pip y aborta mostrando el error real si algo falla.
 - **Migración a Neon/Postgres (sa-east-1)**: La base online pasó de Turso/Oregón (~1200 ms/query) a **Neon en São Paulo** con latencia medida de ~100 ms (12× más rápida). Configurable vía `DATABASE_URL=postgresql://...` en `.env` (fallback a SQLite local).
