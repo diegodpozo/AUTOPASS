@@ -1,6 +1,7 @@
-# AUTOPASS - Acceso Remoto (ngrok + uvicorn + .env actualizado)
-# Levanta el servidor en 0.0.0.0:8000, crea un túnel https de ngrok,
-# actualiza BASE_URL / MP_WEBHOOK_URL en .env y muestra la URL pública.
+# AUTOPASS - Acceso Remoto (cloudflared + uvicorn + .env actualizado)
+# Levanta el servidor en 0.0.0.0:8000, crea un túnel https de Cloudflare
+# (trycloudflare.com, sin interstitial), actualiza BASE_URL / MP_WEBHOOK_URL
+# en .env y muestra la URL pública.
 # Uso:  .\scripts\start_remote.ps1
 $ErrorActionPreference = "Continue"
 $Host.UI.RawUI.WindowTitle = "AUTOPASS - Acceso Remoto"
@@ -9,11 +10,19 @@ $Host.UI.RawUI.WindowTitle = "AUTOPASS - Acceso Remoto"
 $root = "C:\Users\usuario.DESKTOP-P7MEQGK\Desktop\AUTOPASS"
 $venvPy = "$root\venv\Scripts\python.exe"
 $uvicornPort = 8000
-$ngrokBin = (Get-Command ngrok -ErrorAction SilentlyContinue).Source
+
+# Ruta de cloudflared (winget lo instala en Program Files (x86))
+$cfBin = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source
+if (-not $cfBin) {
+    foreach ($candidate in @("$env:ProgramFiles(x86)\cloudflared\cloudflared.exe",
+                             "$env:ProgramFiles\cloudflared\cloudflared.exe")) {
+        if (Test-Path $candidate) { $cfBin = $candidate; break }
+    }
+}
 
 Write-Host ""
 Write-Host " ============================================================" -ForegroundColor Yellow
-Write-Host "   AUTOPASS - ACCESO REMOTO DESDE INTERNET (ngrok)" -ForegroundColor Cyan
+Write-Host "   AUTOPASS - ACCESO REMOTO DESDE INTERNET (Cloudflare)" -ForegroundColor Cyan
 Write-Host " ============================================================" -ForegroundColor Yellow
 Write-Host ""
 
@@ -24,12 +33,12 @@ if (-not (Test-Path $venvPy)) {
 }
 Write-Host "   [OK] Entorno virtual detectado." -ForegroundColor Green
 
-if (-not $ngrokBin) {
-    Write-Host "   [ERROR] No se encontró 'ngrok' en el PATH." -ForegroundColor Red
-    Write-Host "           Instalalo desde https://ngrok.com/download y agregalo al PATH." -ForegroundColor Yellow
+if (-not $cfBin) {
+    Write-Host "   [ERROR] No se encontró 'cloudflared'." -ForegroundColor Red
+    Write-Host "           Instalalo con: winget install --id Cloudflare.cloudflared" -ForegroundColor Yellow
     exit 1
 }
-Write-Host "   [OK] ngrok detectado: $ngrokBin" -ForegroundColor Green
+Write-Host "   [OK] cloudflared detectado: $cfBin" -ForegroundColor Green
 
 # 2. DETENER SERVIDORES PREVIOS (evita doble bind en el puerto 8000)
 $prev = Get-CimInstance Win32_Process -Filter "Name like 'python%'" | Where-Object {
@@ -39,25 +48,16 @@ foreach ($p in $prev) {
     Write-Host "   [LIMPIEZA] Deteniendo servidor previo PID $($p.ProcessId)..." -ForegroundColor Yellow
     Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
 }
-# Detener túnel ngrok previo
-$prevNgrok = Get-CimInstance Win32_Process -Filter "Name like 'ngrok%'"
-foreach ($n in $prevNgrok) {
-    Write-Host "   [LIMPIEZA] Deteniendo túnel ngrok previo PID $($n.ProcessId)..." -ForegroundColor Yellow
-    Stop-Process -Id $n.ProcessId -Force -ErrorAction SilentlyContinue
+# Detener túnel cloudflared previo
+$prevCf = Get-CimInstance Win32_Process -Filter "Name like 'cloudflared%'"
+foreach ($c in $prevCf) {
+    Write-Host "   [LIMPIEZA] Deteniendo túnel cloudflared previo PID $($c.ProcessId)..." -ForegroundColor Yellow
+    Stop-Process -Id $c.ProcessId -Force -ErrorAction SilentlyContinue
 }
 Start-Sleep -Seconds 2
 Write-Host "   [OK] Procesos previos detenidos." -ForegroundColor Green
 
-# 3. VERIFICAR AUTHTOCKEN DE NGROK
-ngrok config check *> $null
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "   [ERROR] ngrok no tiene authtoken configurado." -ForegroundColor Red
-    Write-Host "           Ejecutá: ngrok config add-authtoken TU_TOKEN" -ForegroundColor Yellow
-    exit 1
-}
-Write-Host "   [OK] ngrok authtoken configurado." -ForegroundColor Green
-
-# 4. INICIAR SERVIDOR Uvicorn en 0.0.0.0
+# 3. INICIAR SERVIDOR Uvicorn en 0.0.0.0
 $uvLog = "$env:TEMP\opencode\uvicorn_remote.log"
 $uvErr = "$env:TEMP\opencode\uvicorn_remote.err.log"
 $uv = Start-Process -FilePath $venvPy `
@@ -88,32 +88,30 @@ if (-not $ready) {
 }
 Write-Host "   [OK] Servidor respondiendo en 127.0.0.1:$uvicornPort" -ForegroundColor Green
 
-# 5. INICIAR TÚNEL NGROK
-$ngLog = "$env:TEMP\opencode\ngrok_remote.log"
-$ng = Start-Process -FilePath $ngrokBin -ArgumentList "http","$uvicornPort","--log=stdout" `
-    -RedirectStandardOutput $ngLog -PassThru -WindowStyle Hidden
-Write-Host "   [OK] Túnel ngrok iniciado (PID $($ng.Id))" -ForegroundColor Green
+# 4. INICIAR TÚNEL CLOUDFLARED (quick tunnel, sin cuenta)
+$cfLog = "$env:TEMP\opencode\cloudflared_remote.log"
+$cfErr = "$env:TEMP\opencode\cloudflared_remote.err.log"
+$cf = Start-Process -FilePath $cfBin -ArgumentList "tunnel","--url","http://localhost:$uvicornPort","--no-autoupdate" `
+    -RedirectStandardOutput $cfLog -RedirectStandardError $cfErr -PassThru -WindowStyle Hidden
+Write-Host "   [OK] Túnel Cloudflare iniciado (PID $($cf.Id))" -ForegroundColor Green
 
-# Esperar a que ngrok genere un túnel
+# Esperar a que cloudflared genere el túnel (parsear la URL del log)
 $publicUrl = $null
-for ($i = 0; $i -lt 40; $i++) {
+for ($i = 0; $i -lt 60; $i++) {
     Start-Sleep -Milliseconds 500
-    try {
-        $t = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -TimeoutSec 3
-        if ($t.tunnels -and $t.tunnels.Count -gt 0) {
-            $publicUrl = $t.tunnels[0].public_url
-            break
-        }
-    } catch {}
+    $logContent = (Get-Content $cfLog -ErrorAction SilentlyContinue | Out-String) + "`n" + (Get-Content $cfErr -ErrorAction SilentlyContinue | Out-String)
+    $m = [regex]::Match($logContent, 'https://[a-z0-9\-]+\.trycloudflare\.com')
+    if ($m.Success) { $publicUrl = $m.Value; break }
 }
 if (-not $publicUrl) {
-    Write-Host "   [ERROR] No se pudo obtener la URL del túnel ngrok." -ForegroundColor Red
-    Get-Content $ngLog -ErrorAction SilentlyContinue
+    Write-Host "   [ERROR] No se pudo obtener la URL del túnel Cloudflare." -ForegroundColor Red
+    Get-Content $cfLog -ErrorAction SilentlyContinue
+    Get-Content $cfErr -ErrorAction SilentlyContinue
     exit 1
 }
 Write-Host "   [OK] Túnel público: $publicUrl" -ForegroundColor Green
 
-# 6. ACTUALIZAR .ENV (BASE_URL y MP_WEBHOOK_URL)
+# 5. ACTUALIZAR .ENV (BASE_URL y MP_WEBHOOK_URL)
 $envFile = "$root\.env"
 if (Test-Path $envFile) {
     Copy-Item $envFile "$envFile.bak" -Force
@@ -138,10 +136,10 @@ Write-Host "   URL pública (desde Internet):" -ForegroundColor White
 Write-Host "     $publicUrl" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "   Logs:" -ForegroundColor White
-Write-Host "     uvicorn: $uvLog" -ForegroundColor Gray
-Write-Host "     ngrok:   $ngLog" -ForegroundColor Gray
+Write-Host "     uvicorn:    $uvLog" -ForegroundColor Gray
+Write-Host "     cloudflared: $cfLog" -ForegroundColor Gray
 Write-Host " ============================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "   NOTA: La URL cambia al reiniciar ngrok (plan gratuito)." -ForegroundColor DarkYellow
-Write-Host "         Para la sesión de AUTOPASS logueate en la URL ngrok (es un origen distinto a localhost)." -ForegroundColor DarkYellow
+Write-Host "   NOTA: La URL cambia al reiniciar el túnel (quick tunnel)." -ForegroundColor DarkYellow
+Write-Host "         Cloudflare NO muestra interstitial: la PWA es instalable directamente." -ForegroundColor DarkYellow
 Write-Host ""

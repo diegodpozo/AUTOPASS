@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSo
 from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
 import models
+from models.enums import UserRole
 from core.database import get_db
 from core.security import get_operational_user, decode_access_token
 from core.config import settings
@@ -78,12 +79,37 @@ async def video_feed_legacy(camera_id: str, staff: models.User = Depends(get_ope
             time.sleep(0.1)
     return StreamingResponse(gen_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
+def _user_from_token(token: str, db: Session):
+    """Resuelve el usuario autenticado desde un JWT (query o header)."""
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    user = db.query(models.User).filter(
+        models.User.email == payload.get("sub"),
+        models.User.is_deleted == False
+    ).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
+    if str(user.rol) not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
+        raise HTTPException(status_code=403, detail="Acceso restringido a personal autorizado")
+    return user
+
 @router.get("/capture/{log_id}")
-def get_capture(log_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+def get_capture(log_id: int, request: Request, token: str = Query(None), db: Session = Depends(get_db)):
+    """Imagen capturada de un log. Acepta el token por query (para <img>) o por header Bearer."""
+    staff = None
+    auth_header = request.headers.get("Authorization", "")
+    if token:
+        staff = _user_from_token(token, db)
+    elif auth_header.lower().startswith("bearer "):
+        staff = _user_from_token(auth_header[7:], db)
+    else:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
     log = db.query(models.AccessLog).filter(models.AccessLog.id == log_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="Log no encontrado")
-    if staff.rol != "admin" and log.sucursal != staff.sucursal:
+    if str(staff.rol) != UserRole.ADMIN.value and log.sucursal != staff.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos")
     if log.imagen_path:
         full_path = os.path.abspath(os.path.join(settings.IMAGE_DIR, log.imagen_path))

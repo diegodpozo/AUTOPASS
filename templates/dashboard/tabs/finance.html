@@ -9,12 +9,26 @@
             </button>
             <div class="user-stats-content" id="finance-stats-collapsible-content">
                 <!-- SECCIÓN SUPERIOR: KPIS RÁPIDOS -->
-                <div class="kpi-grid kpi-grid-4">
+                <div class="kpi-grid kpi-grid-6">
                     <div class="kpi-card">
                         <div class="kpi-icon"><i class="fas fa-money-bill-trend-up"></i></div>
                         <div class="kpi-data">
                             <span class="label">Recaudación Neta</span>
                             <span class="value" id="fin-total">$0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><i class="fas fa-money-bill"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Recaudación en Efectivo</span>
+                            <span class="value" id="fin-cash" style="color: #34c77b;">$0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><i class="fas fa-credit-card"></i></div>
+                        <div class="kpi-data">
+                            <span class="label">Recaudación Digital</span>
+                            <span class="value" id="fin-digital" style="color: #C5A059;">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card danger-light">
@@ -184,7 +198,7 @@
                             <th>Patente</th>
                             <th>Monto</th>
                             <th>Método</th>
-                            <th>Estado</th>
+                            <th>Tipo</th>
                         </tr>
                     </thead>
                     <tbody id="payment-list">

@@ -283,9 +283,17 @@ export async function resetSys() {
 
 export async function exportFinanceData() {
     const period = document.getElementById('fin-period')?.value || 'month';
+    const specificDate = document.getElementById('fin-date')?.value;
+    const vehicleType = document.getElementById('fin-vehicle-type')?.value || 'all';
+    const paymentMethod = document.getElementById('fin-payment-method')?.value || 'all';
     showToast('Generando reporte...', 'info');
-    
-    const res = await api.get(`/reports/payment-history?period=${period}&limit=0`);
+
+    let urlParams = `period=${period}&vehicle_type=${vehicleType}&payment_method=${paymentMethod}`;
+    if (period === 'specific' && specificDate) {
+        urlParams = `period=day&start=${specificDate}T00:00:00&end=${specificDate}T23:59:59&vehicle_type=${vehicleType}&payment_method=${paymentMethod}`;
+    }
+
+    const res = await api.get(`/reports/payment-history?${urlParams}&limit=0`);
     if (!res || !res.ok) {
         showToast('Error al obtener datos para exportar', 'error');
         return;
@@ -297,11 +305,11 @@ export async function exportFinanceData() {
         return;
     }
     
-    const headers = ['Fecha y Hora', 'Vehículo / Patente', 'Monto Abonado', 'Método de Pago', 'Estado/Tipo'];
+    const headers = ['Fecha y Hora', 'Vehículo / Patente', 'Monto Abonado', 'Método de Pago', 'Tipo'];
     const rows = data.map(p => {
         const dateStr = formatDate(p.fecha_pago);
         const amount = p.costo_estadia;
-        const method = (p.tipo === 'Reserva' || p.tipo === 'Reembolso') ? 'MERCADO PAGO / ABONO' : 'SISTEMA DIGITAL';
+        const method = (p.tipo === 'Reserva' || p.tipo === 'Reembolso') ? 'MERCADO PAGO / ABONO' : (p.metodo === 'CAJA' ? 'PAGO EN CAJA (EFECTIVO)' : 'PAGO DIGITAL');
         const type = p.tipo;
         return [
             `"${dateStr}"`,
@@ -321,7 +329,8 @@ export async function exportFinanceData() {
     
     const branchName = localStorage.getItem('sucursal') || 'global';
     const cleanBranch = branchName.replace('AUTOPASS ', '').toLowerCase().replace(/\s+/g, '_');
-    link.setAttribute("download", `reporte_financiero_${cleanBranch}_${period}_${getVirtualNow().toISOString().split('T')[0]}.csv`);
+    const label = period === 'specific' && specificDate ? specificDate : period;
+    link.setAttribute("download", `reporte_financiero_${cleanBranch}_${label}_${getVirtualNow().toISOString().split('T')[0]}.csv`);
     
     link.style.visibility = 'hidden';
     document.body.appendChild(link);

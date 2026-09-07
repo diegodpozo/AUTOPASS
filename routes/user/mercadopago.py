@@ -68,7 +68,7 @@ def mp_failure(external_reference: str = None, payment_id: str = None, collectio
 
 @router.post("/mercadopago/webhook")
 async def mp_webhook(request: Request, db: Session = Depends(get_db)):
-    """WEBHOOK DE NOTIFICACIONES DE MERCADO PAGO (para producción / ngrok / tunel)."""
+    """WEBHOOK DE NOTIFICACIONES DE MERCADO PAGO (para producción / túnel / acceso remoto)."""
     try:
         body = await request.json()
     except Exception:

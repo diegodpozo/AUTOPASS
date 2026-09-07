@@ -19,6 +19,24 @@ export function toggleFinanceStatsCollapsible(button) {
     }
 }
 
+export function fitKpiValue(el) {
+    if (!el) return;
+    const baseSize = parseFloat(getComputedStyle(el).fontSize) || 18;
+    el.style.fontSize = '';
+    let size = baseSize;
+    while (size > 10 && el.scrollWidth > el.clientWidth) {
+        size -= 1;
+        el.style.fontSize = size + 'px';
+    }
+}
+
+function setKpi(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerText = text;
+    fitKpiValue(el);
+}
+
 export function toggleFinanceDateFilter() {
     const period = document.getElementById('fin-period')?.value;
     const dateGroup = document.getElementById('fin-date-group');
@@ -53,24 +71,26 @@ export async function loadFinanceData(resetPage = true) {
     const resSum = await api.get(`/reports/financial-summary?${urlParams}`);
     if (resSum.ok) {
         const data = resSum.data;
-        const elTotal = document.getElementById('fin-total');
-        const elRefund = document.getElementById('fin-refunded');
-        const elCount = document.getElementById('fin-count');
-        const elAvg = document.getElementById('fin-avg');
 
-        if (elTotal) elTotal.innerText = `$${utils.formatNum(data.total_recaudado)}`;
-        if (elRefund) elRefund.innerText = `$${utils.formatNum(data.total_reembolsado)}`;
-        if (elCount) elCount.innerText = utils.formatNum(data.cantidad_pagos);
-        if (elAvg) elAvg.innerText = `$${utils.formatNum(data.ticket_promedio)}`;
+        if (document.getElementById('fin-total')) setKpi('fin-total', `$${utils.formatNum(data.total_recaudado)}`);
+        if (document.getElementById('fin-refunded')) setKpi('fin-refunded', `$${utils.formatNum(data.total_reembolsado)}`);
+        if (document.getElementById('fin-count')) setKpi('fin-count', utils.formatNum(data.cantidad_pagos));
+        if (document.getElementById('fin-avg')) setKpi('fin-avg', `$${utils.formatNum(data.ticket_promedio)}`);
+
+        const elCash = document.getElementById('fin-cash');
+        if (elCash) setKpi('fin-cash', `$${utils.formatNum(data.recaudado_efectivo || 0)}`);
+
+        const elDigital = document.getElementById('fin-digital');
+        if (elDigital) setKpi('fin-digital', `$${utils.formatNum(data.recaudado_digital || 0)}`);
 
         const elProy = document.getElementById('fin-proyectado');
-        if (elProy) elProy.innerText = `$${utils.formatNum(data.ingresos_proyectados)}`;
+        if (elProy) setKpi('fin-proyectado', `$${utils.formatNum(data.ingresos_proyectados)}`);
 
         const elCancel = document.getElementById('fin-cancel-rate');
         if (elCancel) elCancel.innerText = `${data.tasa_cancelacion || 0}%`;
 
         const elNoShow = document.getElementById('fin-noshow');
-        if (elNoShow) elNoShow.innerText = `$${utils.formatNum(data.ingresos_incumplimiento || 0)}`;
+        if (elNoShow) setKpi('fin-noshow', `$${utils.formatNum(data.ingresos_incumplimiento || 0)}`);
 
         // DESGLOSE POR CANAL
         const d = data.desglose;
@@ -115,7 +135,7 @@ export async function loadFinanceData(resetPage = true) {
                     <td data-label="Patente"><span class="plate-style">${p.patente_detectada}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
                     <td data-label="Monto" class="text-bold ${amountClass}">$${utils.formatNum(p.costo_estadia)}</td>
                     <td data-label="Método"><span class="text-small">${metodoPago}</span></td>
-                    <td data-label="Estado"><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
+                    <td data-label="Tipo"><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
                 </tr>
             `}).join('') || '<tr><td colspan="5" class="text-center py-20">No hay transacciones en este período.</td></tr>';
         }

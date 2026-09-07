@@ -1,5 +1,5 @@
 import api from './api.js';
-import { formatDate, formatPlate, formatNum } from './utils.js';
+import { formatDate, formatPlate, formatNum, toTitle } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**
@@ -213,19 +213,28 @@ export function renderLogsTable() {
     const paginatedData = filteredLogsData.slice(start, end);
 
     tbody.innerHTML = paginatedData.map(log => {
-        const time = new Date(log.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12:false });
+        const fecha = new Date(log.fecha_hora);
+        const time = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12:false });
+        const day = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
         const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-danger';
-        const statusBadge = log.pago_confirmado ? 
-            `<span class="badge badge-success-light">PAGADO</span>` : 
-            `<span class="badge badge-danger-light">PENDIENTE</span>`;
+        const statusBadge = log.pago_confirmado 
+            ? `<span class="badge badge-success-light">PAGADO</span>` 
+            : log.tipo_evento === 'SALIDA'
+                ? `<span class="badge" style="background: rgba(197,160,89,0.15); color: var(--dorado); border: 1px solid rgba(197,160,89,0.3); font-size:0.65rem; font-weight:800; padding:4px 10px; border-radius:8px; letter-spacing:0.5px;">CORTESÍA</span>`
+                : `<span class="badge badge-danger-light">PENDIENTE</span>`;
 
         return `
             <tr class="row-animate">
-                <td data-label="Hora" class="text-center">${time}</td>
+                <td data-label="Hora" class="text-center">
+                    <div class="flex-col items-center" style="gap: 2px;">
+                        <span class="text-bold text-light">${time}</span>
+                        <span class="text-xs text-muted">${day}</span>
+                    </div>
+                </td>
                 <td data-label="Patente" class="text-center"><span class="plate-style">${formatPlate(log.patente_detectada)}</span></td>
                 <td data-label="Evento" class="${badgeClass} text-bold text-center">${log.tipo_evento}</td>
                 <td data-label="Abono" class="text-center">${statusBadge}</td>
-                <td data-label="Info" class="text-center"><button class="btn-edit" onclick="showLogDetail(${log.id})" title="Ver detalle y captura del evento"><i class="fas fa-eye"></i></button></td>
+                <td data-label="Info" class="text-center"><div style="display: flex; justify-content: center;"><button class="btn-edit" style="cursor: pointer;" onclick="showLogDetail(${log.id})" title="Ver detalle y captura del evento"><i class="fas fa-eye"></i></button></div></td>
             </tr>`;
     }).join('') || '<tr><td colspan="5" class="text-center py-20">No hay movimientos.</td></tr>';
 
@@ -402,6 +411,16 @@ function buildOccupancyRows() {
 
         const floorInfo = occ.floor_nombre ? `<div class="text-xs text-muted mt-2">${occ.floor_nombre}</div>` : '';
 
+        const vehicleTypeIcon = {
+            'Auto': 'fa-car',
+            'Moto': 'fa-motorcycle',
+            'Camioneta': 'fa-truck-pickup'
+        }[occ.tipo_vehiculo] || 'fa-car';
+
+        const reservaBadge = occ.es_reserva && occ.reserva && occ.reserva.tipo_estadia
+            ? `<span class="badge-status badge-activa"><i class="fas fa-calendar-check"></i> ${toTitle(occ.reserva.tipo_estadia)}</span>`
+            : `<span class="text-secondary text-bold text-xs">SIN RESERVA</span>`;
+
         return `
         <tr class="row-animate">
             <td data-label="Vehículo" class="text-center">
@@ -410,18 +429,25 @@ function buildOccupancyRows() {
                     ${floorInfo}
                 </div>
             </td>
+            <td data-label="Tipo" class="text-center">
+                <span class="text-bold text-light text-xs" style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                    <i class="fas ${vehicleTypeIcon}" style="color: var(--dorado);"></i>
+                    ${toTitle(occ.tipo_vehiculo)}
+                </span>
+            </td>
+            <td data-label="Reserva" class="text-center">${reservaBadge}</td>
             <td data-label="Ingreso" class="text-center">${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12:false })}</td>
             <td data-label="Permanencia" class="text-bold text-light text-center">${duration}</td>
             <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">
                 <div class="flex-row gap-5 justify-center">
-                    ${(!occ.ya_pago && !occ.en_cortesia) ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-cash-register"></i></button>` : ''}
-                    <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-door-open"></i></button>
+                    ${(!occ.ya_pago && !occ.en_cortesia) ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-dollar-sign"></i></button>` : ''}
+                    <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-arrow-right-from-bracket"></i></button>
                     ${(!(occ.reserva && occ.reserva.tipo_estadia && occ.reserva.estado_pago) || !(occ.reserva.tipo_estadia !== 'hora' && occ.reserva.estado_pago === 'Pagado')) ? `<button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${formatNum(occ.deuda)}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>` : ''}
                 </div>
             </td>
         </tr>`;
-    }).join('') || '<tr><td colspan="5" class="text-center py-20">Sin vehículos.</td></tr>';
+    }).join('') || '<tr><td colspan="7" class="text-center py-20">Sin vehículos.</td></tr>';
 }
 
 function renderOccupancyPagination() {

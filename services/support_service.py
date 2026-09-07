@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from typing import List, Optional
@@ -6,6 +7,12 @@ from core.time import localnow
 from core.normalize import normalize_branch_name
 
 class SupportService:
+
+    @staticmethod
+    def _branch_prefix(sucursal: Optional[str]) -> str:
+        """PREFIJO CORTO DE LA SUCURSAL PARA NUMERACION CORRELATIVA (ej. CASTELAR -> CAST)."""
+        norm = normalize_branch_name(sucursal or "") or "GENERAL"
+        return (norm.replace(" ", "")[:4] or "GEN")
 
     @staticmethod
     def _notify_admins(db: Session, ticket: models.SupportTicket, titulo: str, mensaje: str):
@@ -135,10 +142,17 @@ class SupportService:
                 messages_by_ticket.setdefault(m.ticket_id, []).append(m)
 
         result = []
+        seq_counter = {}
+        nro_by_ticket = {}
+        for t in sorted(tickets, key=lambda x: int(x.id)):
+            seq_key = normalize_branch_name(t.sucursal or "") or "GENERAL"
+            seq_counter[seq_key] = seq_counter.get(seq_key, 0) + 1
+            nro_by_ticket[t.id] = seq_counter[seq_key]
         for t in tickets:
             t_msgs = messages_by_ticket.get(t.id, [])
             result.append({
                 "id": t.id,
+                "nro_sucursal": f"{SupportService._branch_prefix(t.sucursal)}-{nro_by_ticket[t.id]:02d}",
                 "user_id": t.user_id,
                 "cliente_nombre": f"{t.user.nombre} {t.user.apellido}".strip() if t.user else "Cliente Eliminado",
                 "cliente_email": t.user.email if t.user else "N/A",
@@ -173,6 +187,9 @@ class SupportService:
         ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
         if not ticket:
             return None
+
+        if (ticket.estado or "").strip().lower() == "resuelto":
+            raise HTTPException(status_code=400, detail="Este ticket ya fue resuelto y quedó bloqueado. No se puede cambiar el estado ni responder.")
 
         ticket.estado = estado
         if respuesta:
@@ -247,6 +264,9 @@ class SupportService:
         ).first()
         if not ticket:
             return None
+
+        if (ticket.estado or "").strip().lower() == "resuelto":
+            raise HTTPException(status_code=400, detail="Este ticket ya fue resuelto y quedó bloqueado. No se pueden enviar más mensajes.")
 
         msg = models.SupportTicketMessage(
             ticket_id=ticket.id,

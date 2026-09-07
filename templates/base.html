@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="/static/css/layout/grid.css">
     <link rel="stylesheet" href="/static/css/layout/sidebar.css?v=9.15.1">
     <link rel="stylesheet" href="/static/css/layout/header.css?v=9.15.1">
+    <link rel="stylesheet" href="/static/css/layout/standalone.css?v=9.15.2">
     
     <!-- LEGACY (Se irá vaciando) -->
     <link rel="stylesheet" href="/static/css/style.css">
@@ -69,13 +70,67 @@
     <script type="module" src="/static/js/main.js"></script>
     {% block extra_scripts %}{% endblock %}
 
-    <!-- REGISTRO SERVICE WORKER (PWA) -->
+    <!-- REGISTRO SERVICE WORKER + BOTON INSTALAR PWA -->
+    <style>
+        #pwa-install-btn {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #dfba6b 0%, #c5a059 100%);
+            color: #0a0a0a;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(223,186,107,0.35);
+            transition: opacity 0.3s, transform 0.3s;
+            align-items: center;
+            gap: 8px;
+        }
+        #pwa-install-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+        #pwa-install-btn i { font-size: 1rem; }
+    </style>
+    <button id="pwa-install-btn" onclick="installPWA()">
+        <i class="fas fa-download"></i> INSTALAR APP
+    </button>
     <script>
+        (function () {
+            var deferredPrompt = null;
+            var btn = document.getElementById('pwa-install-btn');
+
+            window.addEventListener('beforeinstallprompt', function (e) {
+                const allowInstall = !document.body.classList.contains('layout-with-sidebar');
+                if (!allowInstall) return;
+                e.preventDefault();
+                deferredPrompt = e;
+                btn.style.display = 'flex';
+            });
+
+            window.installPWA = function () {
+                if (!deferredPrompt) {
+                    showToast('Tu navegador no detecta la app. Recargá 2 veces o usá el menú ⋮ → "Instalar app".', 'info');
+                    return;
+                }
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function (result) {
+                    deferredPrompt = null;
+                    btn.style.display = 'none';
+                });
+            };
+
+            window.addEventListener('appinstalled', function () {
+                deferredPrompt = null;
+                btn.style.display = 'none';
+            });
+        })();
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register('/sw.js').catch(function (err) {
-                    console.warn('Service Worker no registrado:', err);
-                });
+                navigator.serviceWorker.register('/sw.js').catch(function () {});
             });
         }
     </script>

@@ -28,8 +28,8 @@ def validate_qr(request: Request, data: schemas.QRValidation, db: Session = Depe
     return AccessService.validate_qr(db, data, request)
 
 @router.post("/access/pay-stay")
-def pay_stay(plate: str, db: Session = Depends(get_db)):
+def pay_stay(plate: str, metodo: str = "DIGITAL", db: Session = Depends(get_db)):
     """PROCESA EL PAGO DE UNA ESTADIA EN CURSO."""
-    result = BillingService.process_payment(db, normalize_plate(plate))
+    result = BillingService.process_payment(db, normalize_plate(plate), metodo=metodo.upper())
     if result["status"] == "ok": return result
     raise HTTPException(status_code=400, detail=result["message"])
