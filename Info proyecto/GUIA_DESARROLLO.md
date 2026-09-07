@@ -9,7 +9,7 @@ Este documento sirve como mapa técnico tras la gran refactorización. Explica l
 ### 1. `core/` (Infraestructura)
 Cualquier configuración que afecte a todo el sistema debe ir aquí.
 - **Seguridad**: Si añadís un nuevo rol, registralo en `core/security.py`. Las dependencias disponibles son: `get_current_user` (todos autenticados), `get_super_admin` (solo ADMIN), `get_local_manager` (ADMIN/LOCAL_ADMIN), `get_operational_user` (ADMIN/LOCAL_ADMIN/STAFF).
-- **Config**: Si añadís una API Key o variable al `.env`, definila en `core/config.py`. Variables existentes: `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*` (server, port, user, password), `MQTT_*` (broker, topics), `DATABASE_URL`, `MP_*` (access_token, public_key, webhook_url, preference_expire_minutes). **MP Checkout Pro exige `BASE_URL` con `https://`** (rechaza `http://` en `back_urls`); para pruebas locales us� un t�nel ngrok y prob� logueado en el dominio del t�nel (la sesi�n de AUTOPASS es por origen).
+- **Config**: Si añadís una API Key o variable al `.env`, definila en `core/config.py`. Variables existentes: `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*` (server, port, user, password), `MQTT_*` (broker, topics), `DATABASE_URL`, `MP_*` (access_token, public_key, webhook_url, preference_expire_minutes). **MP Checkout Pro exige `BASE_URL` con `https://`** (rechaza `http://` en `back_urls`); para pruebas locales usá un túnel (cloudflared vía `acceso_remoto.bat`) y probá logueado en el dominio del túnel (la sesión de AUTOPASS es por origen).
 - **MQTT**: Usa `CallbackAPIVersion.VERSION2` de Paho. El cliente se crea sin callbacks globales en `core/mqtt.py`.
 - **Seed**: `core/seed.py` incluye `INITIAL_USERS` (admin con DNI, admins de sucursal), `DEFAULT_PRICES` (tarifas trimodales incluyendo `camioneta`), `INITIAL_PROMOS` (3 promos iniciales con icono y categoría). La función `seed()` parchea datos existentes sin duplicar.
 - **Caché**: `core/cache.py` provee `SimpleTTLCache` (TTL 5s). `BillingService.get_rate` ya usa `ttl_cache` para no recalcular tarifas en picos de carga.
@@ -29,11 +29,11 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 | Prefijo | Paquete/Archivo | Responsabilidad |
 | :--- | :--- | :--- |
 | `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password. |
-| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay, manual-entry), Settings (prices, capacity), Virtual Time (status, advance, set, reset), Support (listar/responder tickets de soporte). |
-| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel), Fidelization (promotions, redeem, points-history), Notifications (CRUD in-app, unread count, mark read), Support (crear/consultar tickets), Mercado Pago (checkout, callbacks success/pending/failure, webhook). |
-| `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay, exit-plate, validate-qr), Status (current-occupancy, branches, ws), Utils (normalize_plate, format_plate). |
-| `/v1/reports`| `routes/reports.py` | Resúmenes financieros y logs de acceso. Controlador delgado delegando a `ReportService`. Filtros: `vehicle_type`, `payment_method`, `date_range`. |
-| `/v1/system` | `routes/system/` | **Modular:** `common.py` (ConnectionManager, stop_all_cameras), `health.py` (/health, /heartbeat, /reset, /virtual-time), `cameras.py` (CRUD y control dinámico), `video.py` (WebSockets, streaming, capturas). |
+| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay), Settings (prices, capacity), Virtual Time (status, advance, rewind, set-target, set, reset — LOCAL_ADMIN+), Support (listar/detalle/pending-count/responder tickets, marcar notifs leídas). |
+| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel, confirm-reminder), Fidelization (promotions, redeem, redemption-tickets, redemptions available/cancel, points-adjust, points-history), Notifications (CRUD in-app, unread count, mark read, read-all, clear-read), Support (crear/consultar/detalle propio/responder), Mercado Pago (checkout, callbacks success/pending/failure, webhook). |
+| `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay con `metodo=DIGITAL\|CAJA`, exit-plate, validate-qr), Status (current-occupancy, branches, ws), Utils (normalize_plate, format_plate). |
+| `/v1/reports`| `routes/reports.py` | Resúmenes financieros, logs de acceso y estadísticas OCR. Controlador delgado delegando a `ReportService`. Filtros: `vehicle_type`, `payment_method`, `date_range`. |
+| `/v1/system` | `routes/system/` | **Modular:** `common.py` (ConnectionManager, stop_all_cameras), `health.py` (/health, /heartbeat, /reset, /virtual-time), `cameras.py` (CRUD y control dinámico, camera-reading), `video.py` (WebSockets, streaming, capturas). |
 | `/` (Vistas) | `routes/views.py` | Renderizado Jinja2 con **Inyección Global de Settings**. |
 
 ---
@@ -78,7 +78,7 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
    - Los campos de configuración (ej: tarifas) deben estar deshabilitados por defecto (`disabled`).
    - Usar un botón único "EDITAR" que habilita los campos y cambia la etiqueta a "APLICAR".
    - Al aplicar, disparar `showConfirm` con resumen. El sistema guarda y vuelve a bloquear los campos automáticamente.
-5. **Reportes Financieros**: Al agregar nuevos reportes o filtros, asegurar la integración de `vehicle_type` y `payment_method` ('all', 'DIGITAL', 'CAJA').
+5. **Reportes Financieros**: Al agregar nuevos reportes o filtros, asegurar la integración de `vehicle_type` y `payment_method` ('all', 'DIGITAL', 'CAJA'). El resumen financiero expone `recaudado_efectivo` y `recaudado_digital` (ver `_logs_agg` en `services/report_service.py`); el desglose respeta los filtros aplicados (si el filtro es solo `CAJA`, lo digital va en 0 y viceversa).
 6. **Gestión de Cámaras**: UI con botones Play/Stop por cámara, input de IP, indicador de estado (conectado/desconectado).
 7. **Centro de Monitoreo Dinámico**:
    - Fondo `#000000` y bordes finos `#ffffff` (cambian a `#00bcd4` al hacer hover).
@@ -160,7 +160,7 @@ Para correr las pruebas tras un cambio:
 ```bash
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-Tests disponibles en `tests/` (46 pruebas en 17 archivos):
+Tests disponibles en `tests/` (50 pruebas en 19 archivos):
 - `test_access_service.py`: Validación de placas, entrada/salida
 - `test_billing_service.py`: Cálculo de tarifas/estadías
 - `test_branch_service.py`: CRUD de sucursales, aforo, pisos
@@ -178,6 +178,8 @@ Tests disponibles en `tests/` (46 pruebas en 17 archivos):
 - `test_routes_auth.py`: Endpoints de auth con `TestClient` (login, registro, tokens)
 - `test_mercadopago.py`: Checkout MP (estadía/reserva, BASE_URL https obligatorio, confirmación idempotente, 503 sin credenciales)
 - `test_virtual_time.py`: Tiempo virtual (avance/set/reset con offset)
+- `test_reservation_availability_logic.py`: Lógica de disponibilidad de reservas
+- `test_reservation_spots.py`: Cupos/ocupación de reservas
 
 ---
 

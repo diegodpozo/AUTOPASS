@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.0).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.1).
 
 ---
 
@@ -27,7 +27,7 @@ AUTOPASS/
 │   ├── js/
 │   │   ├── modules/    # 36 módulos ES6 (lógica de negocio frontend)
 │   │   └── *.js        # 9 scripts puente (bridge: módulos → window.*)
-│   ├── css/            # 39 archivos CSS organizados en base/layout/components/pages
+│   ├── css/            # 40 archivos CSS organizados en base/layout/components/pages
 │   └── images/
 ├── templates/
 │   ├── dashboard/
@@ -45,14 +45,14 @@ AUTOPASS/
 
 ---
 
-## Capas y Responsabilidades (v9.14.0)
+## Capas y Responsabilidades (v9.14.1)
 
 ### 1. Capa de Servicios (Service Layer)
 Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
-- **`ReportService`**: Encapsula toda la analítica financiera por sucursal/medio de pago/tipo de vehículo, agregaciones de ingresos proyectados, historial unificado de transacciones (UNION ALL) y auditoría de accesos.
+- **`ReportService`**: Encapsula toda la analítica financiera por sucursal/medio de pago/tipo de vehículo, agregaciones de ingresos proyectados, historial unificado de transacciones (UNION ALL) y auditoría de accesos. Desde v9.14.1 expone el desglose `recaudado_efectivo` / `recaudado_digital` (helper `_logs_agg` que respeta los filtros aplicados: con filtro `CAJA` lo digital va en 0 y viceversa).
 - **`AccessService`**: Gestiona toda la lógica de validación de patentes, salidas y QR. Desde v9.5 la ocupación es **solo física**: el ALPR de entrada incrementa `ocupacion_actual` para todos los vehículos (con o sin reserva) y el de salida la decrementa. Incluye verificación de duplicados (evita registrar dos entradas seguidas) y cortesía de 10 minutos en salida.
 - **`ReservationService`**: Gestiona el ciclo de vida de las reservas (creación, edición, cancelación con reembolsos proporcionales, simulación de refund, auto-activación y auto-cancelación). Desde v9.5 las reservas no horarias **no pre-ocupan plaza**: `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como no-ops y el aforo refleja solo autos físicamente presentes.
-- **`BillingService`**: Motor de tarifas y cálculo de puntos por fidelización.
+- **`BillingService`**: Motor de tarifas y cálculo de puntos por fidelización. `process_payment(db, plate, metodo="DIGITAL")` persiste el método de pago en `AccessLog.metodo_pago` — `CAJA` cuando el operador cobra estadías en efectivo desde el monitoreo (pago manual), `DIGITAL`/`MERCADOPAGO` en los demás casos.
 - **`UserService`**: Gestión administrativa de usuarios y validaciones de seguridad.
 - **`BranchService`**: Lógica de gestión de sucursales y aforos.
 - **`HardwareService`**: Control de barreras físicas vía MQTT (ESP32) y comunicación Serie USB (pyserial) con Arduino Uno (auto-detección de puerto COM).
@@ -72,7 +72,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **Cámaras:** Modelo `ParkingCamera` (nombre, tipo: `PATENTE_INGRESO`, `PATENTE_EGRESO`, `QR_INGRESO`, `QR_EGRESO`, `PREDIO`, source/URL, sucursal, activa) para gestión dinámica de cámaras de seguridad.
 - **Normalización de Patentes:** Campo `normalized_patente` en `AccessLog` para búsquedas eficientes, con funciones `normalize_plate`/`format_plate` en `routes/parking/utils.py` que soportan formatos MERCOSUR (Argentina, Brasil, Uruguay, Paraguay).
 - **Soporte Trimodal:** `VehicleType` incluye `CAMIONETA` además de `AUTO` y `MOTO`. `ParkingAforo` y `ParkingFloor` tienen `capacidad_motos`/`ocupacion_motos` y `capacidad_camionetas`/`ocupacion_camionetas`.
-- **Pago y Liquidación:** `AccessLog` incluye `costo_estadia`, `metodo_pago` ('DIGITAL'/'CAJA'), `fecha_pago`, `pago_confirmado`, `floor_id`.
+- **Pago y Liquidación:** `AccessLog` incluye `costo_estadia`, `metodo_pago` ('DIGITAL'/'CAJA'/'MERCADOPAGO'), `fecha_pago`, `pago_confirmado`, `floor_id`.
 - **Sucursales Geo-localizadas:** `ParkingBranch` incluye `logo_url`, `activa`, `latitude`, `longitude` para mapa interactivo y toggle de activación.
 - **Reservas:** `Reservation` incluye `monto_reembolsado`, `sucursal_info` (JSON), `cliente_nombre`, `tipo_estadia`.
 - **Usuarios:** `User` incluye `apellido`, `dni`, `telefono`, `direccion`, `saldo`, `is_blocked` (bloqueo administrativo, impide login) e `is_deleted` (borrado lógico/soft delete). `delete_user` marca `is_deleted = True` y todas las consultas filtran `is_deleted == False`.
@@ -144,9 +144,9 @@ El orquestador centraliza todas las asignaciones `window.*`:
 - Reservas: `window.openEditReservationModal`, `window.cancelReservationAdmin`
 
 #### Estilo CSS
-Organización en 4 capas bajo `static/css/` (39 archivos totales):
+Organización en 4 capas bajo `static/css/` (40 archivos totales):
 - `base/`: Variables CSS, reset, tipografía, utilidades (4 archivos)
-- `layout/`: Sidebar, header, grid (3 archivos)
+- `layout/`: Sidebar, header, grid (4 archivos)
 - `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
 - `pages/`: landing, profile, dashboard, contacto, legal (5 archivos + 18 sub-archivos)
   - `pages/dashboard/`: `dashboard-base.css`, `dashboard-cards.css`, `dashboard-live.css`, `dashboard-settings.css`, `dashboard-tables.css`, `dashboard-admin-tour.css`

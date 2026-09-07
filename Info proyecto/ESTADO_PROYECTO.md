@@ -1,4 +1,4 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-08-28)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-09-06)
 
 ### 🚀 Hitos Recientes - Versión 9.14.0 (Mercado Pago · Checkout Pro)
 - [x] **Pagos con Mercado Pago (modo pruebas)**: Nuevo módulo `services/mercadopago_service.py`, modelo `MercadoPagoPayment` y migración `c9d8e7f6a5b4_add_mercadopago_payments`. Integración de **Checkout Pro** (redirección) para pagar **reservas** y **estadías en curso** a través de `POST /v1/user/mercadopago/checkout` con confirmación por retorno (`/success|pending|failure`) y webhook (`/webhook`).
@@ -6,14 +6,21 @@
 - [x] **Pago de Reserva directo con MP**: Botón "PAGAR CON MP" en las tarjetas de reservas no pagadas (`reservas-list.js`), con descuento aplicado automáticamente si el usuario posee un canje `descuento_reserva` vigente.
 - [x] **Configuración & Tests**: Variables `MP_ACCESS_TOKEN`, `MP_PUBLIC_KEY`, `MP_WEBHOOK_URL` y `MP_PREFERENCE_EXPIRE_MINUTES` en `.env`/`.env.example` (placeholder hasta validar sandbox). Nueva suite `tests/test_mercadopago.py` (7 casos: checkout estadía, BASE_URL https obligatorio, confirmación reserva sin descuento de saldo, idempotencia, estadía aprobada, rechazo, y 503 sin credenciales). Suite total: **42 tests en verde**.
 - [x] **Validación End-to-End (sandbox real)**: Credenciales de prueba verificadas contra la API (`users/me` → `test_user`, site MLA) y preferencia real creada en MP con `init_point` sandbox.
-- [x] **Aprendizajes de la integración**: (1) MP **rechaza** `http://` en `back_urls` → `BASE_URL` obligatorio en `https` (se agregó validación explícita en `create_payment`); (2) ngrok como túnel de pruebas (Defender lo marca PUA: requiere exclusión + authtoken; la primera visita muestra interstitial "Visit Site"); (3) la sesión de AUTOPASS es por **origen** → hay que loguearse en el dominio del túnel (no en `localhost`) para no quedar deslogueado al volver de MP; (4) el pago test se aplicó correctamente en BD (intención `APROBADO`, reserva `Pagado`).
+- [x] **Aprendizajes de la integración**: (1) MP **rechaza** `http://` en `back_urls` → `BASE_URL` obligatorio en `https` (se agregó validación explícita en `create_payment`); (2) cloudflared como túnel de pruebas (`acceso_remoto.bat` — quick tunnel `*.trycloudflare.com`, sin interstitial, PWA instalable); (3) la sesión de AUTOPASS es por **origen** → hay que loguearse en el dominio del túnel (no en `localhost`) para no quedar deslogueado al volver de MP; (4) el pago test se aplicó correctamente en BD (intención `APROBADO`, reserva `Pagado`).
+
+### 🚀 Estado actual (2026-09-06) - Post v9.14.1 (Pagos en efectivo, Reportes por método & PWA)
+- [x] **Pagos manuales en efectivo (`CAJA`)**: El operador puede registrar el pago de una estadía en efectivo desde el monitoreo (`metodo=CAJA` en `POST /v1/access/pay-stay`). `BillingService.process_payment` persiste `metodo_pago = CAJA`; los reportes financieros y el historial lo distinguen de los pagos digitales (billetera/Mercado Pago).
+- [x] **Reporte financiero con desglose por método**: `ReportService` expone `recaudado_efectivo` y `recaudado_digital` en `/financial-summary` (helper `_logs_agg` respeta filtros de vehículo/sucursal/fechas; si el filtro es solo `CAJA` lo digital va en 0 y viceversa). El dashboard agregó 2 KPIs dedicados (`fin-cash` / `fin-digital`) pasando a 6 cards en grilla de 3 columnas con auto-ajuste de fuente.
+- [x] **Columna "Tipo" en historial de pagos**: La columna que antes decía "Estado" ahora muestra el método de pago (`PAGO EN CAJA (EFECTIVO)` / `PAGO DIGITAL` / `MERCADO PAGO / ABONO`), tanto en el dashboard como en el export CSV.
+- [x] **Re-impresión de vouchers**: Los tickets de canje de puntos pueden reimprimirse desde el portal de usuario.
+- [x] **PWA instalable**: Manifest + Service Worker en scope raíz (`/sw.js`, cache `autopass-v2`), botón de instalación y página `/instalar`. El botón está oculto en el monitor multicámara (fuera del alcance de la PWA); se limpiaron los logs de consola PWA.
 
 ### 🚀 Estado actual (2026-09-05) - Post v9.14.0 (Performance & Caché + Refactorización UI)
 - [x] **Índices de performance** (migración Alembic `49a240f0fc25_add_performance_indexes`): índices en `access_logs` (sucursal, tipo_evento), `reservations` (patente, sucursal_nombre, user_id), `support_ticket_messages`, `vehicles` y `redemption_tickets`; se **dropea `backend_time`** de `access_logs` y `redemption_tickets.codigo` pasa a `nullable`.
 - [x] **Caché TTL en memoria** (`core/cache.py`): `SimpleTTLCache` con TTL de 5s usado por `BillingService.get_rate` para no recalcular tarifas en picos de carga.
 - [x] **Purga automática de imágenes ALPR**: `WorkerService._cleanup_old_alpr_images` elimina imágenes más antiguas que `ALPR_IMAGE_RETENTION_DAYS` (default 30) dentro del hilo de mantenimiento.
-- [x] **Suite de tests ampliada**: nueva `tests/test_virtual_time.py` (2 casos: avance/set/reset). Total actual: **46 pruebas en 17 archivos**.
-- [x] **Acceso remoto**: scripts `scripts/start_remote.ps1`/`scripts/stop_remote.ps1` y accesos directos `acceso_remoto.bat`/`detener_acceso_remoto.bat`.
+- [x] **Suite de tests ampliada**: nueva `tests/test_virtual_time.py` (2 casos: avance/set/reset). Total actual: **50 pruebas en 19 archivos**.
+- [x] **Acceso remoto**: scripts `scripts/start_remote.ps1`/`scripts/stop_remote.ps1` y accesos directos `acceso_remoto.bat`/`detener_acceso_remoto.bat` (túnel con **cloudflared**).
 - [x] **Refactorización de Cards de Monitoreo (v9.14.1)**: Rediseño de tarjetas Autos/Motos/Camionetas con grilla responsiva (3→2→1 cols), eliminación de código inline, nuevas clases CSS semánticas (`.vehicle-stat-*`, `.metric-row`), y remoción de barras de progreso. Mejora de proporciones y hover effects en `dashboard-live.css` (+160 líneas, -35 líneas HTML).
 
 ### 🚀 Hitos Recientes (Agosto 2026) - Post v9.12.0 (OCR Engine Overhaul & Estadísticas OCR)
@@ -215,19 +222,20 @@
 - [x] **Unified Visual Style**: Sincronización estética total entre el formulario de inicio ("Quick Add") y la gestión de flota.
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
-### 🛠️ Arquitectura Actual (v9.9.0+)
+### 🛠️ Arquitectura Actual (v9.14.1+)
 - **Backend**: Clean Architecture con Servicios y Repositories. 14 servicios en `services/`, ~105 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
-- **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 48 templates HTML, 39 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
-- **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user).
+- **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 49 templates HTML, 40 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+- **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user) + Rate limiting (SlowAPI).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
 - **Multi-sucursal**: Full isolation por sucursal con gestión de pisos, aforos y configuración independiente.
-- **ALPR**: Pipeline completo de visión artificial (PaddleOCR + OpenCV) con consenso de votos y streaming de video.
+- **Pagos**: Billetera virtual (saldo), Mercado Pago Checkout Pro (redirección) y efectivo (CAJA) con desglose por método en reportes.
+- **ALPR**: Pipeline completo de visión artificial (**RapidOCR ONNX** primario + fallback **PaddleOCR** + OpenCV) con consenso de votos, lectura QR y streaming de video.
 - **Base de Datos**: **Neon/Postgres online** (`postgresql://...@ep-silent-math-acirnekl.sa-east-1.aws.neon.tech/neondb`) en región `sa-east-1` (São Paulo), compartida entre varias PC, con fallback a SQLite local (`parking.db`). Migraciones versionadas con **Alembic** (`alembic/`, primera migración `c833a3129266_initial_schema`).
 
 ### 📊 Cobertura de Funcionalidades
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.
-- **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago.
+- **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago (all/DIGITAL/CAJA) y KPIs de recaudación por método (efectivo/digital).
 - **Monitoreo**: ALPR en vivo con gestión centralizada, aforo real-time vía WebSocket y streaming de video multi-cámara.
 - **Fidelización**: Sistema de puntos (10 pts/$1000), promociones canjeables y cupones.
 - **Frontend**: Dashboard modular con 9 pestañas (Monitoreo, Ocupación, Reservas, Gestión de Usuarios, Reporte Financiero, Promociones, Soporte & Tickets, Sucursales, Configuración).

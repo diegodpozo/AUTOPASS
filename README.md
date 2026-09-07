@@ -2,26 +2,28 @@
 
 **Sistema inteligente de gestión de estacionamientos** con Visión Artificial (ALPR), Arquitectura Limpia y Frontend Premium.
 
-Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones · Fidelización por puntos
+Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones · Fidelización por puntos · PWA instalable
 
 ---
 
 ## Características Principales
 
-- **Visión Artificial (ALPR)** — Reconocimiento de patentes y códigos QR en tiempo real con PaddleOCR + OpenCV, sistema de consenso de votos y detección de movimiento
+- **Visión Artificial (ALPR)** — Reconocimiento de patentes y códigos QR en tiempo real con RapidOCR (motor ONNX, rápido y liviano) con fallback automático a PaddleOCR + OpenCV, sistema de consenso de votos y detección de movimiento
 - **Multi-Sucursal** — Gestión independiente de tarifas, aforo, pisos y personal por sucursal
 - **Multi-Piso** — Soporte para N niveles por sucursal con capacidad trimodal configurable (Autos/Motos/Camionetas)
 - **Facturación Trimodal** — Motor de precios diferenciados por tipo de vehículo y período (Hora/Día/Semana/Quincena/Mes)
 - **Reservaciones** — Creación, pago, cancelación con reembolso, anticipación configurable y auto-cancelación
 - **Pagos con Mercado Pago (v9.14.0)** — Checkout Pro por redirección para abonar reservas y estadías en curso de forma **directa** (no toca el saldo de la billetera); confirmación por retorno (`/success|pending|failure`) y webhook
-- **Fidelización** — Sistema de puntos (10 pts/$1000), catálogo de promociones canjeables y cupones
+- **Pagos en efectivo y digital** — El pago de estadías soporta método `DIGITAL` (billetera/MP) o `CAJA` (efectivo, registrado por el operador desde monitoreo); los reportes financieros desglosan la recaudación por método (`recaudado_efectivo` / `recaudado_digital`)
+- **Fidelización** — Sistema de puntos (10 pts/$1000), catálogo de promociones canjeables, cupones y descuentos con voucher
 - **Mapas Interactivos & Filtro de Localidades** — Mosaico de Google Maps con buscador autocompletado en tiempo real, desglose de direcciones exactas, aviso de disponibilidad por zona y navegación animada `flyTo`
 - **Dashboard Admin Premium** — 9 pestañas modulares (Monitoreo, Ocupación, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración) + página de Estadísticas OCR
 - **Portal de Usuario** — Perfil, reservas, vehículos, billetera virtual, pase digital QR, notificaciones
 - **Real-time** — WebSocket (aforo), MQTT (barreras), polling de notificaciones
 - **Monitoreo CCTV** — Grilla dinámica de cámaras con streaming MJPEG y controles DVR
-- **Soporte** — Sistema de tickets con aislamiento por sucursal y respuesta en tiempo real
+- **Soporte** — Sistema de tickets con aislamiento por sucursal, adjuntos y respuesta en tiempo real
 - **Tiempo Virtual** — Servicio de testing que permite simular el paso del tiempo sin afectar el reloj real
+- **PWA instalable** — Manifest + Service Worker en scope raíz con cache offline de assets
 - **RBAC** — Control de acceso por roles: Admin Global, Local Admin, Staff, User
 - **Base de Datos Online** — Neon/Postgres (sa-east-1) compartido entre múltiples PC, con fallback a SQLite local
 - **Migraciones** — Alembic para control de versiones del esquema
@@ -35,7 +37,7 @@ AUTOPASS/
 ├── schemas/            # Validación Pydantic
 ├── routes/             # Endpoints FastAPI (Transport Layer - delgados)
 │   ├── admin/          # CRUD admin (users, branches, reservations, promotions, operations, settings, virtual_time, support)
-│   ├── user/           # Portal usuario (profile, vehicles, reservations, balance, fidelization, notifications, support)
+│   ├── user/           # Portal usuario (profile, vehicles, reservations, balance, fidelization, notifications, support, mercadopago)
 │   ├── parking/        # Control de acceso (ALPR/QR, status, utils)
 │   └── system/         # Sistema (health, cameras, video, common)
 ├── services/           # Lógica de negocio (14 servicios)
@@ -43,7 +45,7 @@ AUTOPASS/
 ├── alpr/               # Paquete modular de visión artificial
 ├── static/
 │   ├── js/modules/     # 36 módulos ES6
-│   └── css/            # 39 archivos CSS (Glassmorphism Premium)
+│   └── css/            # 40 archivos CSS (Glassmorphism Premium)
 ├── templates/          # Jinja2 (dashboard 9 tabs + página OCR, profile 7 tabs, emails, modales)
 ├── tests/              # Suite de pruebas automatizadas (pytest)
 ├── alembic/            # Migraciones de BD
@@ -102,10 +104,10 @@ RESERVA_HORA_MIN_SEGUNDOS=1800
 MAINTENANCE_INTERVAL_SECONDS=300
 
 # Mercado Pago (Checkout Pro) - ver "Pagos con Mercado Pago" más abajo
-BASE_URL=https://tu-dominio-o-tunel-ngrok.ngrok-free.dev  # OBLIGATORIO con https (MP lo exige en back_urls)
+BASE_URL=https://tu-dominio.trycloudflare.com  # OBLIGATORIO con https (MP lo exige en back_urls)
 MP_ACCESS_TOKEN=APP_USR-...   # Access Token de prueba (sandbox) desde el panel de desarrolladores
 MP_PUBLIC_KEY=APP_USR-...     # Public Key de prueba
-MP_WEBHOOK_URL=https://tu-dominio-o-tunel-ngrok.ngrok-free.dev/v1/user/mercadopago/webhook
+MP_WEBHOOK_URL=https://tu-dominio.trycloudflare.com/v1/user/mercadopago/webhook
 MP_PREFERENCE_EXPIRE_MINUTES=45
 
 # Email (opcional)
@@ -158,12 +160,12 @@ SMTP_FROM=noreply@autopass.com.ar
 | ReservationService | CRUD reservas, pago, cancelación, simulación, auto-finalización |
 | BranchService | CRUD sucursales, capacidad trimodal, gestión de pisos |
 | UserService | CRUD usuarios, validaciones de seguridad |
-| ReportService | Analítica financiera y transacciones (UNION ALL) |
+| ReportService | Analítica financiera y transacciones (UNION ALL), desglose de recaudación por método (efectivo/digital) |
 | SupportService | Tickets de soporte con aislamiento por sucursal |
 | EmailService | Emails transaccionales con templates Jinja2 (QR, recuperación) |
 | NotificationService | Notificaciones en tiempo real via WebSocket |
 | UserNotificationService | CRUD de notificaciones in-app |
-| WorkerService | 3 hilos: limpieza (300s), recordatorios, auto-cancelación |
+| WorkerService | 2 hilos: limpieza/mantenimiento (300s) y notificaciones/recordatorios (30s) |
 | TimeService | Tiempo virtual para testing |
 | HardwareService | Control de barreras MQTT y comunicación Serie USB con Arduino Uno |
 | MercadoPagoService | Preferencias Checkout Pro, confirmación (retorno/webhook) y aplicación de pagos MP en reservas y estadías |
@@ -180,17 +182,23 @@ Integración **Checkout Pro** (redirección) para pagar **reservas** y **estadí
 
 ### Credenciales y modo pruebas
 - Credenciales **de prueba** desde https://www.mercadopago.com.ar/developers/panel (Desarrollo propio → Pagos online → API → Checkout Pro/Orders). Hoy el panel usa prefijo `APP_USR-` también en modo prueba.
-- **Obligatorio**: `BASE_URL` con `https://` (MP rechaza `http://` en `back_urls`). Para pruebas locales usá un túnel: `ngrok http 8000` y poné la URL pública en `BASE_URL` y `MP_WEBHOOK_URL`.
+- **Obligatorio**: `BASE_URL` con `https://` (MP rechaza `http://` en `back_urls`). Para pruebas locales usá un túnel: `.\acceso_remoto.bat` (cloudflared) y poné la URL pública en `BASE_URL` y `MP_WEBHOOK_URL`.
 - Tarjeta test (aprobada): `5031 7557 3453 0604` (Mastercard), CVV y vencimiento cualquiera.
-- Probá **dentro del mismo origen** del túnel (logueate en la URL ngrok) para no perder la sesión al volver de MP.
+- Probá **dentro del mismo origen** del túnel (logueate en la URL del túnel) para no perder la sesión al volver de MP.
 
 ## Frontend
 
 - **36 módulos ES6** con patrón Bridge (módulos → scripts puente → window.* → HTML onclick)
-- **39 archivos CSS** organizados en base/layout/components/pages
+- **40 archivos CSS** organizados en base/layout/components/pages
 - **Design System Premium**: Glassmorphism, dorado (#C5A059), animaciones fluidas
 - **Dashboard**: 9 pestañas admin + portal de usuario con 7 tabs
 - **Componentes**: Leaflet.js (mapas), Chart.js (reportes), Flatpickr (fechas), QRCode.js (pases)
+
+## PWA
+
+- Service Worker en scope raíz (`/sw.js`, `Service-Worker-Allowed: /`) con cache de assets por versionado (`autopass-v2`)
+- Manifest en `/manifest.webmanifest`; página de guía de instalación en `/instalar`
+- Botón de instalación visible solo donde corresponde (oculto en el monitor de cámaras multicámara, que además no forma parte de la app instalable)
 
 ## Licencia
 

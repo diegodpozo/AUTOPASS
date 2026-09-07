@@ -1,5 +1,8 @@
 # Mapa Completo de Rutas API — AUTOPASS
 
+> **Nota de roles:** `STAFF+` = ADMIN, LOCAL_ADMIN, STAFF (usa `get_operational_user`). `LOCAL_ADMIN+` = ADMIN, LOCAL_ADMIN (usa `get_local_manager`). `ADMIN` = solo Administrador Global (usa `get_super_admin`).
+> `Público` = sin autenticación (endpoint accesible desde cualquier cliente). La mayoría de rutas `Público` de ALPR/MP están pensadas para ser llamadas por los sistemas externos de cámaras/Mercado Pago.
+
 ## Prefijo: `/v1/auth`
 | Método | Ruta | Función | Rol Requerido | Rate Limit |
 |--------|------|---------|---------------|------------|
@@ -20,12 +23,12 @@
 | POST | `/users/{id}/password` | Cambiar contraseña | LOCAL_ADMIN+ |
 | DELETE | `/users/{id}` | Eliminar usuario | ADMIN |
 | POST | `/users/{id}/delete` | Eliminar usuario (alias POST) | ADMIN |
-| GET | `/branches` | Listar sucursales | Público |
+| GET | `/branches` | Listar sucursales (solo activas si es público) | Público |
 | POST | `/branches` | Crear sucursal | ADMIN |
 | PATCH | `/branches/{id}` | Editar sucursal | ADMIN |
 | DELETE | `/branches/{id}` | Eliminar sucursal | ADMIN |
 | POST | `/branches/{id}/toggle` | Activar/suspender | ADMIN |
-| POST | `/{id}/floors` | Agregar piso | LOCAL_ADMIN+ |
+| POST | `/{branch_id}/floors` | Agregar piso | LOCAL_ADMIN+ |
 | PATCH | `/floors/{id}` | Editar piso | LOCAL_ADMIN+ |
 | DELETE | `/floors/{id}` | Eliminar piso | LOCAL_ADMIN+ |
 | GET | `/reservations` | Listar reservas | STAFF+ |
@@ -43,13 +46,19 @@
 | POST | `/cancel-stay` | Cancelar estadía | STAFF+ |
 | GET | `/settings` | Ver config | LOCAL_ADMIN+ |
 | POST | `/settings/prices` | Actualizar tarifas | LOCAL_ADMIN+ |
-| GET | `/virtual-time` | Ver tiempo virtual | USER+ |
-| GET | `/virtual-time/status` | Estado del tiempo virtual | USER+ |
-| POST | `/virtual-time/advance` | Adelantar tiempo (testing, minutos/horas/días) | USER+ |
-| POST | `/virtual-time/set` | Establecer offset de tiempo (offset_seconds) | USER+ |
-| POST | `/virtual-time/reset` | Resetear tiempo virtual | USER+ |
+| GET | `/virtual-time` (y `/virtual-time/status`) | Ver tiempo virtual | LOCAL_ADMIN+ |
+| POST | `/virtual-time/advance` | Adelantar tiempo (testing, minutos/horas/días) | LOCAL_ADMIN+ |
+| POST | `/virtual-time/rewind` | Retroceder tiempo (testing) | LOCAL_ADMIN+ |
+| POST | `/virtual-time/set-target` | Fijar fecha/hora exacta (ISO, ej: `2026-10-15T14:30:00`) | LOCAL_ADMIN+ |
+| POST | `/virtual-time/set` | Establecer offset de tiempo (`offset_seconds`) | LOCAL_ADMIN+ |
+| POST | `/virtual-time/reset` | Resetear tiempo virtual | LOCAL_ADMIN+ |
 | GET | `/support-tickets` | Listar tickets de soporte (filtro sucursal/estado) | STAFF+ |
+| GET | `/support-tickets/{ticket_id}` | Ver ticket con todos sus mensajes | STAFF+ |
+| GET | `/support-tickets/pending-count` | Cantidad de tickets no leídos por el admin actual | STAFF+ |
 | PATCH | `/support-tickets/{ticket_id}` | Actualizar estado/responder ticket | STAFF+ |
+| PATCH | `/support-tickets/{ticket_id}/read-notifs` | Marcar notificaciones del ticket como leídas | STAFF+ |
+
+> Nota virtual-time: además de `/virtual-time`, hay un endpoint de solo lectura bajo `/v1/system/virtual-time`.
 
 ## Prefijo: `/v1/user`
 | Método | Ruta | Función | Rol Requerido |
@@ -77,6 +86,10 @@
 | POST | `/reservations/{id}/cancel` | Cancelar reserva | USER+ |
 | GET | `/promotions` | Ver promos | USER+ |
 | POST | `/redeem/{promo_id}` | Canjear puntos | USER+ |
+| POST | `/points-adjust` | Ajustar puntos (admin) | USER+ (validado por rol) |
+| GET | `/redemption-tickets` | Tickets de canje | USER+ |
+| GET | `/redemptions/available` | Canjes disponibles | USER+ |
+| POST | `/redemptions/{ticket_id}/cancel` | Cancelar canje | USER+ |
 | GET | `/points-history` | Historial puntos | USER+ |
 | GET | `/profile/notifications` | Notificaciones | USER+ |
 | GET | `/profile/notifications/unread` | No leídas | USER+ |
@@ -86,6 +99,8 @@
 | DELETE | `/profile/notifications/clear-read` | Eliminar notificaciones leídas | USER+ |
 | POST | `/support-tickets` | Crear ticket de soporte | USER+ |
 | GET | `/support-tickets` | Ver mis tickets de soporte | USER+ |
+| GET | `/support-tickets/{ticket_id}` | Ver detalle de ticket propio | USER+ |
+| PATCH | `/support-tickets/{ticket_id}/reply` | Responder en ticket propio | USER+ |
 
 ## Prefijo: `/v1/user/mercadopago` (pagos Checkout Pro)
 | Método | Ruta | Función | Rol Requerido |
@@ -97,12 +112,12 @@
 | POST | `/mercadopago/webhook` | Webhook de confirmación de pago | Público (MP) |
 
 ## Prefijo: `/v1/parking`
-| Método | Ruta | Función | Rol Requerido |
-|--------|------|---------|---------------|
-| POST | `/access/validate-plate` | Validar patente ALPR | Público (ALPR) |
-| POST | `/access/exit-plate` | Validar salida ALPR | Público (ALPR) |
-| POST | `/access/validate-qr` | Validar QR | Público (ALPR) |
-| POST | `/access/pay-stay` | Pagar estadía | Público |
+| Método | Ruta | Función | Rol Requerido | Rate Limit |
+|--------|------|---------|---------------|------------|
+| POST | `/access/validate-plate` | Validar patente ALPR | Público (ALPR) | 120/min |
+| POST | `/access/exit-plate` | Validar salida ALPR | Público (ALPR) | 120/min |
+| POST | `/access/validate-qr` | Validar QR | Público (ALPR) | 60/min |
+| POST | `/access/pay-stay` | Pagar estadía (`plate`, `metodo=DIGITAL\|CAJA`) | Público | — |
 | GET | `/parking/status` | Estado aforo | STAFF+ |
 | GET | `/parking/current-occupancy` | Ocupación actual | STAFF+ |
 | GET | `/parking/branches` | Sucursales activas | Público |
@@ -111,9 +126,10 @@
 ## Prefijo: `/v1/reports`
 | Método | Ruta | Función | Rol Requerido |
 |--------|------|---------|---------------|
-| GET | `/financial-summary` | Resumen financiero | STAFF+ |
+| GET | `/financial-summary` | Resumen financiero (incluye recaudado efectivo y digital) | STAFF+ |
 | GET | `/payment-history` | Historial transacciones | LOCAL_ADMIN+ |
 | GET | `/access` | Historial accesos | STAFF+ |
+| GET | `/ocr-stats` | Estadísticas de OCR | STAFF+ |
 
 ## Prefijo: `/v1/system`
 | Método | Ruta | Función | Rol Requerido |
@@ -121,6 +137,7 @@
 | GET | `/health` | Health check | STAFF+ |
 | POST | `/heartbeat` | Heartbeat ALPR | Público (ALPR) |
 | POST | `/reset` | Reset sistema | ADMIN |
+| GET | `/virtual-time` | Ver tiempo virtual (solo lectura) | LOCAL_ADMIN+ |
 | GET | `/cameras` | Listar cámaras | STAFF+ |
 | POST | `/cameras` | Crear cámara | STAFF+ |
 | PUT | `/cameras/{id}` | Editar cámara | STAFF+ |
@@ -129,6 +146,7 @@
 | GET | `/camera-config/{gate}` | Ver config cámara | STAFF+ |
 | POST | `/camera-config` | Configurar cámara | STAFF+ |
 | POST | `/camera-service/{gate}/{action}` | Start/stop servicio | STAFF+ |
+| POST | `/camera-reading/{gate_id}` | Leer patente del frame actual | Público (ALPR) |
 | POST | `/update-frame/{camera_id}` | Actualizar frame | Público (ALPR) |
 | GET | `/video-feed/{camera_id}` | Feed MJPEG | STAFF+ |
 | WS | `/ws/video/{camera_id}` | WebSocket video | STAFF+ |
@@ -138,6 +156,7 @@
 | Método | Ruta | Template | Rol Requerido |
 |--------|------|----------|---------------|
 | GET | `/` | index.html | Público |
+| GET | `/instalar` | instalar.html (guía instalación PWA) | Público |
 | GET | `/dashboard` | dashboard.html | Público |
 | GET | `/perfil` | perfil.html | Público |
 | GET | `/nuestra-red` | nuestra-red.html | Público |
@@ -146,3 +165,6 @@
 | GET | `/privacidad` | privacidad.html | Público |
 | GET | `/reset-password` | reset_password.html | Público |
 | GET | `/monitoreo` | monitoreo_live.html | Público |
+| GET | `/estadisticas-ocr` | estadisticas_ocr.html | Público |
+| GET | `/sw.js` | Service worker PWA (scope raíz) | Público |
+| GET | `/manifest.webmanifest` | Manifest PWA | Público |

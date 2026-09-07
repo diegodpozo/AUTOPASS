@@ -1,10 +1,10 @@
 #  Contexto del Sistema: AUTOPASS
 
-Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.12.0).
+Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.1).
 
 ## 📐 Arquitectura del Ecosistema
 
-El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una estructura modular por capas (v9.12.0).
+El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una estructura modular por capas (v9.14.1).
 
 1.  **Capa Core (`core/`)**:
     *   `core/config.py`: Gestión centralizada de variables de entorno y constantes.
@@ -29,9 +29,9 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
 
 3.  **Lógica de Negocio (`services/`)**:
     *   `services/access_service.py`: Validación de patentes, gestión de entrada/salida e integración con aforo. Soporta entrada con QR, verificación de deuda antes de salir (`exit_plate`), y validación de duplicados (evita registrar dos entradas seguidas).
-    *   `services/report_service.py`: **Nuevo** — Inteligencia de negocio para analítica financiera, historial unificado de transacciones (UNION ALL) y auditoría de accesos.
+    *   `services/report_service.py`: Inteligencia de negocio para analítica financiera, historial unificado de transacciones (UNION ALL) y auditoría de accesos. Incluye desglose de recaudación por método (`recaudado_efectivo`/`recaudado_digital`) vía helper `_logs_agg`, que respeta los filtros de vehículo/sucursal/fechas aplicados (con filtro `CAJA` lo digital va en 0 y viceversa).
+    *   `services/billing_service.py`: Motor de tarifas y cálculo de puntos por fidelización. `process_payment(db, plate, metodo="DIGITAL")` persiste `metodo_pago = CAJA` cuando el operador cobra en efectivo (pago manual desde monitoreo).
     *   `services/reservation_service.py`: Ciclo de vida de reservas (creación, edición, pago, cancelación con reembolsos proporcionales, simulación de cancelación, cleanup). Desde v9.5 las reservas no horarias ya no pre-ocupan plaza: `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como no-ops y el aforo refleja solo vehículos físicamente presentes.
-    *   `services/billing_service.py`: Motor de tarifas y cálculo de puntos por fidelización. Tarifas por sucursal, tipo de vehículo (Auto/Moto/Camioneta) y tipo de reserva (Hora/Día/Semana/Quincena/Mes).
     *   `services/notification_service.py`: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal. Usa `OccupancyManager` con `broadcast_update` para distribuir cambios de ocupación.
     *   `services/user_notification_service.py`: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
     *   `services/support_service.py`: CRUD de tickets de soporte (`SupportTicket`) con aislamiento por sucursal según rol del usuario.
@@ -112,9 +112,15 @@ uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir ser
 - **Gestión de Pisos**: Grid de arquitectura de building para admins locales.
 - **Edición de Tarifas**: Grupos de tarifas por tipo de vehículo con modo edición.
 - **Logo de Sucursal**: Upload de logo personalizado por sucursal.
-- **Exportación CSV**: Exportar datos financieros a CSV.
+- **Exportación CSV**: Exportar datos financieros a CSV (incluye columna "Tipo" con el método de pago).
 - **Flujo de Registro Rápido de Vehículo**: Integración directa con flujo de reserva.
 - **Dashboard Modular (v9.6.0+)**: Lógica JS del dashboard dividida en módulos ES6 especializados con scripts puente que orquestan la exposición global. Esto mejora mantenibilidad, permite tree-shaking futuro y separa responsabilidades claramente.
+- **KPIs de Recaudación por Método (v9.14.1)**: 6 cards de reporte financiero (Recaudación Efectivo / Recaudación Digital incluidos) con auto-ajuste de fuente según el monto.
+- **PWA (v9.14.1+)**:
+  - Service Worker en scope raíz: servido en `/sw.js` con `Service-Worker-Allowed: /` y `Cache-Control: no-cache`; manifiesto en `/manifest.webmanifest` (desde `static/manifest.json`).
+  - Cache de assets por versión (`CACHE_NAME = "autopass-v2"` en `static/sw.js`); subir el número de versión al desplegar.
+  - Botón "INSTALAR APP" (`#pwa-install-btn`) visible donde corresponde; `beforeinstallprompt` evita el `preventDefault()` cuando el botón no se muestra (no genera warnings de consola).
+  - Página `/instalar` con guía de instalación; el monitor multicámara (`/monitoreo`) queda fuera del alcance instalable (botón oculto).
 
 ---
 
@@ -182,10 +188,10 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `vehicles.js` | Portal de Usuario | CRUD de vehículos del cliente |
 | `contacto.js` | Contacto | Formulario de contacto |
 
-### CSS (39 archivos)
+### CSS (40 archivos)
 Organizado en `static/css/`:
 - `base/`: Variables, reset, tipografía, utilidades (4 archivos)
-- `layout/`: Sidebar, header, grid (3 archivos)
+- `layout/`: Sidebar, header, grid (4 archivos)
 - `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
 - `pages/`: landing, profile, dashboard, contacto, legal (5 + 18 sub-archivos)
   - `pages/dashboard/`: dashboard-base, dashboard-cards, dashboard-live, dashboard-settings, dashboard-tables, dashboard-admin-tour

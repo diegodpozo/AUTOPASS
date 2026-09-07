@@ -41,7 +41,7 @@ Diseno_Proyecto/
 ### 1. Inception (Inicio)
 Define la **vision del sistema**: un gestor de estacionamientos inteligente con ALPR,
 multi-sucursal, multi-piso, facturacion trimodal y reservas. Identifica 4 roles de usuario
-(ADMIN, LOCAL_ADMIN, STAFF, USER) y establece el alcance de la version v10.0.0.
+(ADMIN, LOCAL_ADMIN, STAFF, USER) y establece el alcance del sistema.
 
 ### 2. Elaboration (Elaboracion)
 Especifica **44 requisitos funcionales** y **29 no funcionales**, detalla **20 casos de uso**
@@ -53,8 +53,9 @@ Documenta el **modelo de datos** con 14 entidades (User, Vehicle, AccessLog, Res
 ParkingFloor, ParkingAforo, Settings, ParkingCamera, PointsLog, Coupon, Promotion,
 UserNotification, SupportTicket) y sus relaciones, **5 diagramas de secuencia** (ingreso ALPR, egreso con
 pago, reserva, worker de limpieza, worker de notificaciones, operacion manual),
-**diagrama de clases** completo por capa (12 servicios), y el **diseno del frontend** con
+**diagrama de clases** completo por capa (14 servicios), y el **diseno del frontend** con
 design system (Glassmorphism, dorado #C5A059, FAB).
+> **Nota:** el modelo incluye además entidades posteriores al diseño base: `RedemptionTicket` (canje de puntos), `UserSession` (sesiones multi-dispositivo) y `MercadoPagoPayment` (pagos Checkout Pro).
 
 ### 4. Transition (Transicion)
 Cubre el **plan de despliegue** (SQLite dev / PostgreSQL prod), **estrategia de pruebas**
@@ -62,7 +63,7 @@ con 8 casos criticos, **virtual time service** para testing, y **operaciones y m
 (health checks, logs, workers, recovery).
 
 ### 5. Apendices
-Mapa completo de **rutas API** (~99 endpoints HTTP + 2 WebSocket), **arquitectura del sistema ALPR**
+Mapa completo de **rutas API** (129 endpoints HTTP + 2 WebSocket), **arquitectura del sistema ALPR**
 (motor OCR dual RapidOCR/PaddleOCR + OpenCV con consenso y cooldown), e **integracion con hardware** ESP32 via MQTT.
 
 ## Servicios del Sistema
@@ -70,17 +71,19 @@ Mapa completo de **rutas API** (~99 endpoints HTTP + 2 WebSocket), **arquitectur
 | Servicio | Responsabilidad |
 |----------|----------------|
 | AccessService | Validacion ALPR/QR, entrada/salida, pago de estadia |
-| BillingService | Calculo de tarifas, deuda, puntos, proceso de pago |
+| BillingService | Calculo de tarifas, deuda, puntos, proceso de pago (metodo DIGITAL/CAJA) |
 | ReservationService | CRUD reservas, pago, cancelacion, simulacion, auto-finalizacion |
 | BranchService | CRUD sucursales, resumen de capacidad trimodal |
 | UserService | CRUD usuarios, soft delete con anonimizacion |
-| ReportService | Analitica financiera y transacciones (resumen, historial UNION ALL, accesos) |
-| SupportService | Tickets de soporte (crear, consultar, gestionar y responder) |
+| ReportService | Analitica financiera desglosada por metodo (recaudado efectivo/digital), historial UNION ALL, accesos |
+| SupportService | Tickets de soporte (crear, consultar, gestionar y responder, con adjuntos) |
 | EmailService | Envio de emails transaccionales (confirmacion, recordatorio, recuperacion) |
 | NotificationService | Notificaciones en tiempo real via WebSocket (OccupancyManager) |
 | UserNotificationService | CRUD de notificaciones in-app (create, read, mark) |
 | WorkerService | 2 hilos: limpieza de reservas (300s) + notificaciones (recordatorios, auto-cancelacion) |
 | TimeService | Tiempo virtual para testing (offset persistido en JSON) |
+| HardwareService | Control de barreras MQTT (ESP32) y comunicacion Serie USB con Arduino Uno |
+| MercadoPagoService | Checkout Pro por redireccion (preferencia, confirmacion idempotente por retorno/webhook) |
 
 ## Version del Sistema
-**AUTOPASS v10.0.0** — Agosto 2026
+**AUTOPASS v9.14.1** — Septiembre 2026
