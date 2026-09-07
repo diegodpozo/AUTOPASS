@@ -76,7 +76,9 @@ window.getVirtualNow = function() {
 
 (async function() {
     const fab = document.getElementById('vt-fab');
-    if (fab) fab.style.display = vtToken ? 'flex' : 'none';
+    // SOLO DASHBOARD Y PERFIL (páginas con sidebar); oculto en landing y demás.
+    const allowVT = document.body.classList.contains('layout-with-sidebar');
+    if (fab) fab.style.display = (vtToken && allowVT) ? 'flex' : 'none';
     const controls = document.getElementById('vt-panel-controls');
     if (controls) controls.style.display = vtToken ? '' : 'none';
     await updateVT();

@@ -29,6 +29,16 @@
     max-width: 550px; 
 }
 
+.modal-content-large {
+    width: 94%;
+    max-width: 680px;
+}
+
+.modal-content-large .modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
 .close-btn { 
     position: absolute; 
     top: 15px; 

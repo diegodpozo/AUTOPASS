@@ -4,7 +4,7 @@
    - Estáticos y CDN: stale-while-revalidate.
    - API (/v1) y mutaciones: SOLO red (nunca se cachean).
    - Al desplegar una versión nueva, subir CACHE_NAME (ej. autopass-v2). */
-const CACHE_NAME = "autopass-v1";
+const CACHE_NAME = "autopass-v2";
 const SHELL_CACHE = "autopass-shell-v1";
 const RUNTIME_CACHE = "autopass-runtime-v1";
 const PRECACHE = [
@@ -25,6 +25,7 @@ const PRECACHE = [
   "/static/css/layout/grid.css",
   "/static/css/layout/sidebar.css",
   "/static/css/layout/header.css",
+  "/static/css/layout/standalone.css",
   "/static/css/style.css",
   "/static/css/pages/landing.css",
   "/static/css/pages/landing/landing-features.css",
@@ -153,7 +154,7 @@ self.addEventListener("fetch", event => {
   if (isAPI(req)) return;  // API de negocio: solo red
 
   if (isStatic(req)) {
-    event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE));
+    event.respondWith(networkFirst(req));
     return;
   }
   if (isCDN(req)) {

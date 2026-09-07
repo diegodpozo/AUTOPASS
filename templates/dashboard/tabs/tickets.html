@@ -46,7 +46,7 @@
                     <select id="ticket-admin-status-filter" class="select-premium-sm" onchange="loadAdminTickets()">
                         <option value="TODOS">Todos</option>
                         <option value="PENDIENTE">Pendientes</option>
-                        <option value="EN_PROCESO">En Proceso</option>
+                        <option value="EN PROCESO">En Proceso</option>
                         <option value="RESUELTO">Resueltos</option>
                     </select>
                 </div>
@@ -61,9 +61,8 @@
             <table class="table-centered">
                 <thead>
                     <tr>
-                        <th>#ID</th>
+                        <th>Ticket</th>
                         <th>Cliente</th>
-                        <th>Sucursal</th>
                         <th>Categoría</th>
                         <th>Asunto</th>
                         <th>Estado</th>
@@ -73,7 +72,7 @@
                 </thead>
                 <tbody id="tickets-admin-table-body">
                     <tr>
-                        <td colspan="8" class="text-center p-30 text-muted">
+                        <td colspan="7" class="text-center p-30 text-muted">
                             <i class="fas fa-spinner fa-spin"></i> Cargando tickets...
                         </td>
                     </tr>
@@ -85,56 +84,82 @@
 
 <!-- MODAL: ATENDER / RESPONDER TICKET -->
 <div id="modal-ticket-answer" class="modal" style="display: none;">
-    <div class="modal-content glass-premium" style="max-width: 600px;">
-        <div class="modal-header">
-            <div class="flex-row items-center gap-10">
-                <div class="header-icon-box sm">
-                    <i class="fas fa-headset"></i>
+    <div class="modal-content modal-content-large glass-premium" style="padding: 0; overflow: hidden;">
+        <div class="modal-header card-header-premium" style="padding: 16px 25px;">
+            <div class="header-info-group">
+                <div class="header-icon"><i class="fas fa-headset"></i></div>
+                <div class="header-text">
+                    <h3 id="ticket-modal-title">ATENDER TICKET</h3>
+                    <p id="ticket-modal-nro" style="margin: 4px 0 0;">---</p>
                 </div>
-                <h3 style="color: var(--dorado);" id="ticket-modal-title">ATENDER TICKET #---</h3>
             </div>
-            <span class="close-btn" onclick="closeModal('modal-ticket-answer')"><i class="fas fa-xmark"></i></span>
+            <div class="header-actions">
+                <span class="close-btn" onclick="closeModal('modal-ticket-answer')"><i class="fas fa-xmark"></i></span>
+            </div>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 14px 22px 16px;">
             <input type="hidden" id="ticket-modal-id">
 
-            <div class="info-card-premium mb-15">
-                <div class="flex-row justify-between items-center mb-5">
-                    <span id="ticket-modal-client" class="text-bold" style="color: #f8fafc;">---</span>
-                    <span id="ticket-modal-email" class="text-muted text-small ticket-email-text">---</span>
+            <div class="info-grid-compact mb-5">
+                <div class="info-item">
+                    <i class="fas fa-user"></i>
+                    <div>
+                        <label>CLIENTE</label>
+                        <span id="ticket-modal-client" class="text-bold">---</span>
+                    </div>
                 </div>
-                <div class="flex-row gap-10 text-small">
-                    <span class="badge badge-info" id="ticket-modal-branch">---</span>
-                    <span class="badge badge-warning" id="ticket-modal-category">---</span>
+                <div class="info-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <label>EMAIL</label>
+                        <span id="ticket-modal-email" class="ticket-email-text">---</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-tag"></i>
+                    <div>
+                        <label>CATEGORÍA</label>
+                        <span id="ticket-modal-category" class="text-bold">---</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="mb-15 p-15" style="background: rgba(15, 23, 42, 0.8); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-                <label class="text-muted text-small text-bold block mb-5">ASUNTO</label>
-                <h4 id="ticket-modal-subject" style="margin: 0; color: #f1f5f9;">---</h4>
+            <div class="info-item mb-5" style="padding-top: 0;">
+                <i class="fas fa-heading"></i>
+                <div>
+                    <label>ASUNTO</label>
+                    <span id="ticket-modal-subject" class="text-bold" style="white-space: normal;">---</span>
+                </div>
             </div>
 
-            <div id="ticket-admin-messages" style="max-height: 35vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 0 4px;">
-            </div>
+            <div id="ticket-admin-messages" class="ticket-chat"></div>
 
             <form onsubmit="submitTicketAnswer(event)">
-                <div class="form-group mb-15">
-                    <label for="ticket-answer-status" class="text-muted text-small text-bold block mb-5">NUEVO ESTADO</label>
-                    <select id="ticket-answer-status" class="form-control-custom" required>
-                        <option value="En Proceso">En Proceso</option>
-                        <option value="Resuelto">Resuelto</option>
-                        <option value="Pendiente">Pendiente</option>
-                    </select>
+                <div id="ticket-answer-locked" class="ticket-answer-locked" style="display: none;">
+                    <i class="fas fa-lock"></i> Ticket resuelto y bloqueado. Solo visualización.
+                </div>
+                <div class="form-group mb-10">
+                    <label for="ticket-answer-text" class="text-muted text-small text-bold block mb-5">RESPUESTA</label>
+                    <textarea id="ticket-answer-text" class="textarea-premium" rows="3" placeholder="Escribí aquí la respuesta o resolución enviada al cliente..."></textarea>
                 </div>
 
-                <div class="form-group mb-20">
-                    <label for="ticket-answer-text" class="text-muted text-small text-bold block mb-5">RESPUESTA AL CLIENTE</label>
-                    <textarea id="ticket-answer-text" class="form-control-custom" rows="3" placeholder="Escribí aquí la respuesta o resolución enviada al cliente..."></textarea>
-                </div>
+                <div class="flex-row items-end justify-between gap-10">
+                    <div class="form-group" style="max-width: 150px; flex-shrink: 0;">
+                        <label for="ticket-answer-status" class="text-muted text-small text-bold block mb-5">ESTADO</label>
+                        <div class="select-premium-box">
+                            <select id="ticket-answer-status" class="select-premium" required>
+                                <option value="En Proceso">En Proceso</option>
+                                <option value="Resuelto">Resuelto</option>
+                                <option value="Pendiente">Pendiente</option>
+                            </select>
+                            <i class="fas fa-chevron-down select-premium-chevron"></i>
+                        </div>
+                    </div>
 
-                <div class="flex-row justify-end gap-10 modal-footer-buttons">
-                    <button type="button" class="btn btn-outline" onclick="closeModal('modal-ticket-answer')">CANCELAR</button>
-                    <button type="submit" id="btn-save-ticket-answer" class="btn btn-primary">ENVIAR RESPUESTA</button>
+                    <div class="flex-row items-end gap-10 modal-footer-buttons" style="flex-shrink: 0; padding-bottom: 12px;">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('modal-ticket-answer')">CANCELAR</button>
+                        <button type="submit" id="btn-save-ticket-answer" class="btn btn-primary">ENVIAR</button>
+                    </div>
                 </div>
             </form>
         </div>

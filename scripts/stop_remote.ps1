@@ -1,4 +1,4 @@
-# AUTOPASS - Detener Acceso Remoto (server uvicorn + túnel ngrok)
+# AUTOPASS - Detener Acceso Remoto (server uvicorn + túnel cloudflared)
 # Uso:  .\scripts\stop_remote.ps1
 $ErrorActionPreference = "Continue"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -9,11 +9,11 @@ Write-Host "   AUTOPASS - DETENER ACCESO REMOTO" -ForegroundColor Cyan
 Write-Host " ============================================================" -ForegroundColor Yellow
 Write-Host ""
 
-# Detener túneles ngrok
-$ngrokList = Get-CimInstance Win32_Process -Filter "Name like 'ngrok%'"
-foreach ($n in $ngrokList) {
-    Write-Host "   [STOP] Deteniendo túnel ngrok (PID $($n.ProcessId))..." -ForegroundColor Yellow
-    Stop-Process -Id $n.ProcessId -Force -ErrorAction SilentlyContinue
+# Detener túneles cloudflared
+$cfList = Get-CimInstance Win32_Process -Filter "Name like 'cloudflared%'"
+foreach ($c in $cfList) {
+    Write-Host "   [STOP] Deteniendo túnel cloudflared (PID $($c.ProcessId))..." -ForegroundColor Yellow
+    Stop-Process -Id $c.ProcessId -Force -ErrorAction SilentlyContinue
 }
 
 # Detener servidor uvicorn AUTOPASS

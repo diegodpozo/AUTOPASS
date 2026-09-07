@@ -41,9 +41,6 @@
         </div>
         <nav class="nav-group">
             <div class="nav-item active hide-super-admin" onclick="switchTab('live', this)" title="Ver monitoreo en tiempo real"><i class="fas fa-video"></i> <span class="nav-text">Monitoreo</span></div>
-            <a href="/monitoreo" target="_blank" class="nav-item hide-super-admin" title="Abrir centro de monitoreo multi-cámara en otra ventana">
-                <i class="fas fa-tower-observation"></i> <span class="nav-text">Monitor Externo</span>
-            </a>
             <div class="nav-item hide-super-admin" onclick="switchTab('admin-reservations', this)" title="Gestionar reservas del sistema"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span></div>
             
             <!-- SECCIONES EXCLUSIVAS ADMIN -->
@@ -111,15 +108,15 @@
 
     <!-- MODAL: VISUALIZADOR DE CAPTURAS -->
     <div id="modal-log-detail" class="modal" style="display: none;">
-        <div class="modal-content modal-large glass-premium">
-            <div class="modal-header">
-                <div class="flex-row items-center gap-10">
-                    <div class="header-icon-box sm">
-                        <i class="fas fa-camera"></i>
-                    </div>
-                    <h3 style="color: var(--dorado);">DETALLE DE CAPTURA</h3>
+        <div class="modal-content modal-content-large glass-premium">
+            <div class="modal-header card-header-premium">
+                <div class="header-info-group">
+                    <i class="fas fa-camera"></i>
+                    <h3>DETALLE</h3>
                 </div>
-                <span class="close-btn" onclick="closeModal('modal-log-detail')"><i class="fas fa-xmark"></i></span>
+                <div class="header-actions">
+                    <span class="close-btn" onclick="closeModal('modal-log-detail')"><i class="fas fa-xmark"></i></span>
+                </div>
             </div>
             <div class="modal-body">
                 <div class="capture-audit-grid">
@@ -129,16 +126,9 @@
                             <i class="fas fa-camera-slash"></i>
                             <span>IMAGEN NO DISPONIBLE</span>
                         </div>
-                        <div class="capture-overlay" id="audit-overlay-container" style="display: none;">
-                            <span id="audit-plate-overlay" class="plate-style lg">ABC 123</span>
-                        </div>
                     </div>
                     <div class="capture-info-panel">
-                        <div class="info-card-premium">
-                            <label>PATENTE</label>
-                            <h2 id="audit-plate" class="text-dorado">---</h2>
-                        </div>
-                        <div class="info-grid-compact mt-20">
+                        <div class="info-grid-compact">
                             <div class="info-item">
                                 <i class="fas fa-clock"></i>
                                 <div>
@@ -165,6 +155,13 @@
                                 <div>
                                     <label>ID RESERVA</label>
                                     <span id="audit-res-id">---</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-user"></i>
+                                <div>
+                                    <label>USUARIO</label>
+                                    <span id="audit-usuario" class="text-dorado">---</span>
                                 </div>
                             </div>
                         </div>

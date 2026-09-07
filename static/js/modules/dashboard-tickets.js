@@ -23,7 +23,7 @@ export async function loadAdminTickets() {
 
     const res = await api.get(url);
     if (!res.ok) {
-        tableBody.innerHTML = `<tr><td colspan="8" class="text-center p-20 text-danger">Error al cargar tickets: ${res.error}</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-20 text-danger">Error al cargar tickets: ${res.error}</td></tr>`;
         return;
     }
 
@@ -106,7 +106,7 @@ function renderAdminTickets(tickets) {
     if (!tableBody) return;
 
     if (tickets.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" class="text-center p-30 text-muted"><i class="fas fa-inbox font-24 mb-10 block"></i>No hay tickets registrados con los filtros seleccionados.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-30 text-muted"><i class="fas fa-inbox font-24 mb-10 block"></i>No hay tickets registrados con los filtros seleccionados.</td></tr>`;
         return;
     }
 
@@ -117,9 +117,6 @@ function renderAdminTickets(tickets) {
         const isResolved = t.estado.toLowerCase() === 'resuelto';
 
         let rowClass = 'row-premium';
-        if (isUnread || isPending) {
-            rowClass += ' ticket-row-attention';
-        }
 
         let badgeClass = 'badge-warning';
         let badgeIcon = 'fa-clock';
@@ -130,28 +127,24 @@ function renderAdminTickets(tickets) {
             ? `<span class="ticket-unread-tag" title="Tenés notificaciones sin leer de este ticket"><i class="fas fa-bell pulse"></i> SIN LEER</span>` 
             : (isPending ? `<span class="ticket-unread-tag" style="border-color: rgba(245,158,11,0.5); color: #f59e0b; background: rgba(245,158,11,0.15);"><i class="fas fa-exclamation-circle"></i> PENDIENTE</span>` : '');
 
-        const actionBtnClass = (isPending || isUnread) ? 'btn-gold-glow sm' : 'btn-outline sm';
-        const actionBtnText = isResolved ? 'Ver Historia' : 'Atender';
-
         return `
             <tr class="${rowClass}">
-                <td data-label="#ID" class="text-bold text-dorado">
+                <td data-label="Ticket" class="text-bold text-dorado">
                     <div class="flex-row items-center gap-5">
-                        #${t.id}
+                        ${t.nro_sucursal || ('#' + t.id)}
                         ${unreadTag}
                     </div>
                 </td>
                 <td data-label="Cliente">
                     <div class="flex-col">
-                        <span class="text-bold">${t.cliente_nombre || 'S/D'}</span>
+                        <span class="text-bold">${toTitle(t.cliente_nombre) !== '---' ? toTitle(t.cliente_nombre) : 'S/D'}</span>
                         <span class="text-muted text-small ticket-email-text" title="${t.cliente_email || ''}">${t.cliente_email || ''}</span>
                     </div>
                 </td>
-                <td data-label="Sucursal"><span class="badge badge-outline">${toTitle(t.sucursal)}</span></td>
                 <td data-label="Categoría"><span class="text-bold">${toTitle(t.categoria)}</span></td>
                 <td data-label="Asunto">
-                    <div class="text-truncate" style="max-width: 200px;" title="${t.asunto}">
-                        ${t.asunto}
+                    <div class="text-truncate" style="max-width: 200px;" title="${toTitle(t.asunto)}">
+                        ${toTitle(t.asunto)}
                     </div>
                 </td>
                 <td data-label="Estado">
@@ -160,11 +153,7 @@ function renderAdminTickets(tickets) {
                     </span>
                 </td>
                 <td data-label="Fecha" class="text-small text-muted">${formatDate(t.created_at)}</td>
-                <td data-label="Acciones">
-                    <button class="btn ${actionBtnClass}" onclick="openTicketAnswerModal(${t.id})">
-                        <i class="fas ${isResolved ? 'fa-eye' : 'fa-edit'}"></i> ${actionBtnText}
-                    </button>
-                </td>
+                <td data-label="Acciones" class="text-center"><div style="display: flex; justify-content: center;"><button class="btn-edit actions-reveal" style="cursor: pointer;" onclick="openTicketAnswerModal(${t.id})" title="Ver detalle del ticket"><i class="fas fa-eye"></i></button></div></td>
             </tr>
         `;
     }).join('');
@@ -174,35 +163,36 @@ function renderAdminTicketMessages(messages) {
     const container = document.getElementById('ticket-admin-messages');
     if (!container) return;
     if (!messages || messages.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:#888;padding:15px;font-size:0.85rem;">Sin mensajes aún</div>';
+        container.innerHTML = '<div class="ticket-msg-empty">Sin mensajes aún</div>';
         return;
     }
+    let lastDay = '';
     container.innerHTML = messages.map(m => {
-        // ESTILO CHAT TIPO WHATSAPP (primera persona):
-        // - el ADMIN que mira: sus mensajes (is_admin) van a la DERECHA
-        // - los mensajes del CLIENTE van a la IZQUIERDA
         const isMine = m.is_admin;
-        const align = isMine ? 'flex-end' : 'flex-start';
-        const bgColor = isMine ? 'rgba(76, 175, 80, 0.12)' : 'rgba(197, 160, 89, 0.10)';
-        const borderColor = isMine ? '#4caf50' : 'var(--dorado)';
-        const borderSide = isMine ? 'border-left' : 'border-right';
-        const label = isMine ? 'Soporte' : 'Cliente';
-        const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : '';
+        const autor = toTitle(m.autor || (isMine ? 'Soporte' : 'Usuario'));
+        const label = isMine ? `Soporte — ${autor}` : autor;
+        const dt = m.created_at ? new Date(m.created_at) : null;
+        const time = dt ? dt.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' }) : '';
+        const dayKey = dt ? `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}` : '';
+        let datePill = '';
+        if (dt && dayKey !== lastDay) {
+            lastDay = dayKey;
+            datePill = `<div class="ticket-msg-date">${dt.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' })}</div>`;
+        }
         let attachHtml = '';
         if (m.adjunto_url) {
             const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);
-            attachHtml = isImage
-                ? `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'#8bc34a':'var(--dorado)'};text-decoration:none;"><i class="fas fa-image"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`
-                : `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'#8bc34a':'var(--dorado)'};text-decoration:none;"><i class="fas fa-file-pdf"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
+            attachHtml = `<div class="ticket-msg-attach"><a href="${m.adjunto_url}" target="_blank" rel="noopener"><i class="fas ${isImage ? 'fa-image' : 'fa-file-pdf'}"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
         }
         return `
-            <div style="display:flex;align-self:${align};flex-direction:column;max-width:75%;margin-left:${isMine?'8px':'0'};margin-right:${isMine?'0':'8px'};">
-                <div style="background:${bgColor};border-radius:12px;padding:10px 12px;${borderSide}:3px solid ${borderColor};">
-                    <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;">
-                        <span>${label} — ${m.autor}</span>
+            ${datePill}
+            <div class="ticket-msg ${isMine ? 'mine' : ''}">
+                <div class="ticket-msg-bubble">
+                    <div class="ticket-msg-meta">
+                        <span><i class="fas ${isMine ? 'fa-headset' : 'fa-user'}"></i> ${label}</span>
                         <span>${time}</span>
                     </div>
-                    <div style="font-size:0.88rem;color:#eee;line-height:1.5;white-space:pre-wrap;text-align:left;">${m.mensaje}</div>
+                    <div class="ticket-msg-text">${m.mensaje}</div>
                     ${attachHtml}
                 </div>
             </div>`;
@@ -210,20 +200,40 @@ function renderAdminTicketMessages(messages) {
     container.scrollTop = container.scrollHeight;
 }
 
+function setTicketAnswerLocked(locked) {
+    const statusSel = document.getElementById('ticket-answer-status');
+    const textArea = document.getElementById('ticket-answer-text');
+    const footerBtns = document.querySelector('#modal-ticket-answer .modal-footer-buttons');
+    const lockMsg = document.getElementById('ticket-answer-locked');
+    const formGroups = document.querySelectorAll('#modal-ticket-answer form .form-group');
+
+    if (statusSel) statusSel.disabled = locked;
+    if (textArea) { textArea.disabled = locked; textArea.placeholder = locked ? 'Ticket resuelto y bloqueado. No se pueden enviar más mensajes.' : 'Escribí aquí la respuesta o resolución enviada al cliente...'; }
+    if (footerBtns) footerBtns.style.display = locked ? 'none' : 'flex';
+    if (lockMsg) lockMsg.style.display = locked ? 'flex' : 'none';
+    formGroups.forEach(g => { g.style.display = locked ? 'none' : ''; });
+}
+
 export async function openTicketAnswerModal(ticketId) {
     const ticket = allTickets.find(t => t.id === ticketId);
     if (!ticket) return;
 
     document.getElementById('ticket-modal-id').value = ticket.id;
-    document.getElementById('ticket-modal-title').innerText = `ATENDER TICKET #${ticket.id}`;
-    document.getElementById('ticket-modal-client').innerText = ticket.cliente_nombre || 'Cliente';
+    const nroTicket = ticket.nro_sucursal || ('#' + ticket.id);
+    document.getElementById('ticket-modal-title').innerText = 'ATENDER TICKET';
+    const nroEl = document.getElementById('ticket-modal-nro');
+    if (nroEl) nroEl.innerText = nroTicket;
+    const clienteNombre = toTitle(ticket.cliente_nombre);
+    document.getElementById('ticket-modal-client').innerText = (clienteNombre && clienteNombre !== '---') ? clienteNombre : 'Cliente';
     document.getElementById('ticket-modal-email').innerText = ticket.cliente_email || '';
-    document.getElementById('ticket-modal-branch').innerText = toTitle(ticket.sucursal);
     document.getElementById('ticket-modal-category').innerText = toTitle(ticket.categoria);
-    document.getElementById('ticket-modal-subject').innerText = ticket.asunto;
+    document.getElementById('ticket-modal-subject').innerText = toTitle(ticket.asunto);
     
     document.getElementById('ticket-answer-status').value = ticket.estado;
     document.getElementById('ticket-answer-text').value = '';
+
+    const isResolved = (ticket.estado || '').toLowerCase() === 'resuelto';
+    setTicketAnswerLocked(isResolved);
 
     openModal('modal-ticket-answer');
 

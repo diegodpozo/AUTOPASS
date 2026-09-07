@@ -72,7 +72,7 @@ export async function payOccupancy(plate, amount, onPaidCallback) {
 
     if (!confirmed) return;
 
-    const res = await api.post(`/access/pay-stay?plate=${plate}`);
+    const res = await api.post(`/access/pay-stay?plate=${plate}&metodo=CAJA`);
     if (res.ok) { 
         utils.showToast('Pago procesado', 'success'); 
         stats.loadOccupancy(); 
@@ -120,18 +120,20 @@ export async function showLogDetail(logId) {
     const log = res.data.find(l => l.id === logId);
     if (!log) return;
 
-    document.getElementById('audit-plate').innerText = log.patente_detectada;
-    document.getElementById('audit-plate-overlay').innerText = log.patente_detectada;
+    const plateEl = document.getElementById('audit-plate');
+    if (plateEl) plateEl.innerText = log.patente_detectada;
     const d = new Date(log.fecha_hora);
     document.getElementById('audit-time').innerText = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     document.getElementById('audit-type').innerText = log.tipo_evento;
     document.getElementById('audit-payment').innerText = log.pago_confirmado ? 'PAGADO' : 'PENDIENTE';
     document.getElementById('audit-res-id').innerText = log.reserva_id ? `#${log.reserva_id}` : 'SIN RESERVA';
+    const usuarioEl = document.getElementById('audit-usuario');
+    if (usuarioEl) usuarioEl.innerText = log.es_registrado ? log.usuario : 'INVITADO';
 
     const imgEl = document.getElementById('audit-image');
     if (imgEl) {
-        imgEl.src = `/v1/system/capture/${logId}?t=${Date.now()}`;
-        document.getElementById('audit-overlay-container').style.display = 'block';
+        const token = localStorage.getItem('token');
+        imgEl.src = `/v1/system/capture/${logId}?token=${encodeURIComponent(token || '')}&t=${Date.now()}`;
     }
     
     if (baseUi.openModal) baseUi.openModal('modal-log-detail');

@@ -195,7 +195,7 @@ class BillingService:
         return {"status": "ok", "monto_cobrado": monto, "puntos_ganados": puntos_ganados, "aplicado": True}
 
     @staticmethod
-    def process_payment(db: Session, plate: str) -> dict:
+    def process_payment(db: Session, plate: str, metodo: str = "DIGITAL") -> dict:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
         from models.enums import ReservationStatus
 
@@ -220,6 +220,7 @@ class BillingService:
                     log.costo_estadia = (log.costo_estadia or 0) + monto_real
                     log.fecha_pago = datetime.datetime.now().isoformat()
                     log.pago_confirmado = True
+                    log.metodo_pago = metodo
                     
                     puntos_ganados = 0
                     vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == plate).first()
@@ -240,7 +241,7 @@ class BillingService:
         
         # CONFIRMACION DE PAGO EN EL LOG
         log.pago_confirmado = True
-        log.metodo_pago = "DIGITAL"
+        log.metodo_pago = metodo
         log.costo_estadia = monto_real
         log.fecha_pago = datetime.datetime.now().isoformat()
         

@@ -42,31 +42,48 @@ class ReportService:
         sucursal = user.sucursal if str(user.rol) != UserRole.ADMIN.value else None
 
         # 1. Recaudación de AccessLogs (Estadías ALPR)
-        q_logs = db.query(
-            func.sum(models.AccessLog.costo_estadia),
-            func.count(models.AccessLog.id)
-        ).filter(models.AccessLog.pago_confirmado == True, models.AccessLog.costo_estadia > 0)
-        
-        if vehicle_type != "all":
-            q_logs = q_logs.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
-        
+        def _logs_agg(metodo_eq: str = None, metodo_ne: str = None):
+            q = db.query(
+                func.sum(models.AccessLog.costo_estadia),
+                func.count(models.AccessLog.id)
+            ).filter(models.AccessLog.pago_confirmado == True, models.AccessLog.costo_estadia > 0)
+
+            if metodo_eq:
+                q = q.filter(models.AccessLog.metodo_pago == metodo_eq)
+            elif metodo_ne:
+                q = q.filter(models.AccessLog.metodo_pago != metodo_ne)
+
+            if vehicle_type != "all":
+                q = q.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+
+            if sucursal:
+                target_name = sucursal.replace('AUTOPASS ', '').strip()
+                q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+
+            if start_date:
+                q = q.filter((models.AccessLog.fecha_pago >= start_date) |
+                               ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
+            if end_date:
+                q = q.filter((models.AccessLog.fecha_pago <= end_date) |
+                               ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora <= end_date)))
+            return q.first()
+
         if payment_method != "all":
-            q_logs = q_logs.filter(models.AccessLog.metodo_pago == payment_method)
-        
-        if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_logs = q_logs.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
-        
-        if start_date:
-            q_logs = q_logs.filter((models.AccessLog.fecha_pago >= start_date) | 
-                                   ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
-        if end_date:
-            q_logs = q_logs.filter((models.AccessLog.fecha_pago <= end_date) | 
-                                   ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora <= end_date)))
-        
-        total_logs, count_logs = q_logs.first()
+            total_logs, count_logs = _logs_agg(metodo_eq=payment_method)
+        else:
+            total_logs, count_logs = _logs_agg()
         total_logs = float(total_logs or 0.0)
         count_logs = count_logs or 0
+
+        if payment_method == "CAJA":
+            total_efectivo = float(_logs_agg(metodo_eq="CAJA")[0] or 0.0)
+            total_digital_logs = 0.0
+        elif payment_method == "DIGITAL":
+            total_efectivo = 0.0
+            total_digital_logs = float(_logs_agg(metodo_eq="DIGITAL")[0] or 0.0)
+        else:
+            total_efectivo = float(_logs_agg(metodo_eq="CAJA")[0] or 0.0)
+            total_digital_logs = float(_logs_agg(metodo_ne="CAJA")[0] or 0.0)
 
         # 2. Recaudación de Reservations (Siempre DIGITAL)
         q_res_pagos = db.query(
@@ -200,6 +217,8 @@ class ReportService:
             "ingresos_proyectados": round(deuda_proyectada, 2),
             "tasa_cancelacion": tasa_cancelacion,
             "ingresos_incumplimiento": round(ingresos_incumplimiento, 2),
+            "recaudado_efectivo": round(total_efectivo, 2),
+            "recaudado_digital": round(total_digital_logs + total_res_neto, 2),
             "desglose": {
                 "estadias": {"monto": total_logs, "cantidad": count_logs, "promedio": round(total_logs / count_logs, 2) if count_logs > 0 else 0},
                 "reservas": {"monto": total_res_neto, "cantidad": count_res, "promedio": round(total_res_neto / count_res, 2) if count_res > 0 else 0}
@@ -318,7 +337,34 @@ class ReportService:
             q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
         if patente:
             q = q.filter(models.AccessLog.patente_detectada.like(f"%{patente.upper()}%"))
-        return q.order_by(models.AccessLog.id.desc()).all()
+        logs = q.order_by(models.AccessLog.id.desc()).all()
+
+        # RESOLVER USUARIO (REGISTRADO O INVITADO) POR PATENTE
+        patentes = [l.patente_detectada for l in logs if l.patente_detectada]
+        user_by_plate = {}
+        if patentes:
+            vehicles = db.query(models.Vehicle).filter(
+                models.Vehicle.patente.in_(patentes)
+            ).all()
+            user_ids = [v.user_id for v in vehicles if v.user_id]
+            users_map = {}
+            if user_ids:
+                users = db.query(models.User).filter(
+                    models.User.id.in_(user_ids)
+                ).all()
+                users_map = {u.id: u for u in users}
+            for v in vehicles:
+                u = users_map.get(v.user_id)
+                if u:
+                    user_by_plate[v.patente] = " ".join(filter(None, [u.nombre, u.apellido])).strip() or u.email
+
+        result = []
+        for l in logs:
+            d = {c.name: getattr(l, c.name) for c in l.__table__.columns}
+            d["usuario"] = user_by_plate.get(l.patente_detectada)
+            d["es_registrado"] = bool(d["usuario"])
+            result.append(d)
+        return result
 
     @classmethod
     def get_ocr_stats(cls, db: Session, staff: models.User, limit: int = 100) -> dict:

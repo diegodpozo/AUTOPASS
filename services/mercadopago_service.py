@@ -159,7 +159,7 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
         raise HTTPException(
             status_code=400,
             detail="Mercado Pago exige que BASE_URL use https:// para los back_urls. "
-                   "Configurá BASE_URL=https://... en el .env (p.ej. un túnel ngrok: https://xxx.ngrok-free.app).",
+                   "Configurá BASE_URL=https://... en el .env (p.ej. un túnel cloudflared: https://xxx.trycloudflare.com).",
         )
     now = datetime.datetime.now(datetime.timezone.utc)
     exp_from = now.isoformat(timespec="milliseconds")

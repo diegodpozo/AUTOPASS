@@ -1,5 +1,5 @@
 import api from './api.js';
-import { formatPlate, normalizeSystemName } from './utils.js';
+import { normalizeSystemName } from './utils.js';
 
 /**
  * Módulo de Monitoreo CCTV DVR Live (Surveillance Pro)
@@ -8,7 +8,6 @@ import { formatPlate, normalizeSystemName } from './utils.js';
 let camerasList = [];
 let activeWebSockets = {};
 let wsGeneral = null;
-let okTimers = {};
 let lastEventData = null;
 
 export function initMonitoreoLive() {
@@ -136,8 +135,6 @@ function arrangeCctvGrid() {
         renderActiveSlot(box, slotId, cam);
         grid.appendChild(box);
     });
-
-    loadLatestDetections();
 }
 
 function renderActiveSlot(box, slotId, cam) {
@@ -152,7 +149,6 @@ function renderActiveSlot(box, slotId, cam) {
                 <span>${cameraLabel}</span>
             </div>
             <img id="img-${cam.id}" class="cctv-video-feed" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
-            <div class="cctv-status idle" id="status-${cam.id}">ÚLTIMA DETECCIÓN</div>
             <div class="cctv-console-log" id="console-${cam.id}"></div>
             <div class="cctv-scanlines"></div>
             <div class="cctv-hover-actions">
@@ -218,11 +214,6 @@ function connectCameraWebSocket(cam) {
                 img.classList.add('loaded');
             }
         }
-        const statusEl = document.getElementById(`status-${cam.id}`);
-        if (statusEl && !statusEl.classList.contains('ok') && !statusEl.classList.contains('error') && !statusEl.classList.contains('warning')) {
-            statusEl.className = 'cctv-status idle';
-            statusEl.innerText = 'ÚLTIMA DETECCIÓN';
-        }
     };
     
     socket.onclose = () => {
@@ -263,52 +254,6 @@ export async function openGate(slotId) {
     }
 }
 
-async function loadLatestDetections() {
-    const res = await api.get('/reports/access');
-    if (!res || !res.ok) return;
-
-    const logs = res.data;
-    const lastEntry = logs.find(l => l.tipo_evento === 'ENTRADA');
-    const lastExit = logs.find(l => l.tipo_evento === 'SALIDA');
-    const lastQR = logs.find(l => l.reserva_id !== null);
-
-    camerasList.forEach((cam, idx) => {
-        const slotId = idx + 1;
-        const box = document.getElementById(`cctv-slot-${slotId}`);
-        if (!box) return;
-
-        let plateOverlay = box.querySelector('.cctv-plate-hud');
-        if (plateOverlay) plateOverlay.remove();
-
-        let text = '';
-        const tipoUpper = (cam.tipo || '').toUpperCase();
-        if (tipoUpper.includes('EGRESO') || tipoUpper.includes('SALIDA')) {
-            if (lastExit) text = formatPlate(lastExit.patente_detectada);
-        } else if (tipoUpper.includes('INGRESO') || tipoUpper.includes('ENTRADA') || tipoUpper.includes('PATENTE')) {
-            if (lastEntry) text = formatPlate(lastEntry.patente_detectada);
-        } else if (tipoUpper.includes('QR')) {
-            if (lastQR) text = `QR: ${formatPlate(lastQR.patente_detectada)}`;
-        }
-
-        const statusEl = document.getElementById(`status-${cam.id}`);
-        if (!statusEl) return;
-
-        if (text) {
-            statusEl.className = 'cctv-status ok';
-            statusEl.innerText = `LECTURA OK..! ${text}`;
-
-            if (okTimers[cam.id]) clearTimeout(okTimers[cam.id]);
-            okTimers[cam.id] = setTimeout(() => {
-                const el = document.getElementById(`status-${cam.id}`);
-                if (el && el.classList.contains('ok')) {
-                    el.className = 'cctv-status idle';
-                    el.innerText = `ÚLTIMA DETECCIÓN: ${text}`;
-                }
-            }, 8000);
-        }
-    });
-}
-
 function connectGeneralWS() {
     const token = localStorage.getItem('token');
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -322,7 +267,6 @@ function connectGeneralWS() {
             if (msg.type === 'LAST_EVENT' && msg.last_event) {
                 lastEventData = msg.last_event;
                 showLastEventOnCameras();
-                debouncedReloadDetections();
                 return;
             }
             if (msg.data && msg.data.last_event) {
@@ -330,7 +274,6 @@ function connectGeneralWS() {
                 showLastEventOnCameras();
             }
         } catch (e) {}
-        debouncedReloadDetections();
     };
 
     wsGeneral.onclose = () => {
@@ -341,7 +284,7 @@ function connectGeneralWS() {
 function showLastEventOnCameras() {
     if (!lastEventData) return;
 
-    const { type, plate, message, status } = lastEventData;
+    const { message, status } = lastEventData;
     const isOk = status === 'ok';
     const isWarning = status === 'warning';
     const isReading = status === 'reading';
@@ -352,17 +295,28 @@ function showLastEventOnCameras() {
         const box = document.getElementById(`cctv-slot-${slotId}`);
         if (!box) return;
 
-        // 1. LINEA DE EVENTO CENTRAL (HUD SOBRE EL VIDEO)
+        // LINEA DE EVENTO CENTRAL (HUD SOBRE EL VIDEO)
+        // Solo se muestra para estados que NO son OK. Los OK (franja verde al
+        // detectar) se suprimen para no tapar el video con la franja superior.
         let eventLine = box.querySelector('.cctv-event-line');
+        if (isOk) {
+            if (eventLine) {
+                if (eventLine._hideTimer) clearTimeout(eventLine._hideTimer);
+                eventLine.style.opacity = '0';
+            }
+            return;
+        }
+
         if (!eventLine) {
             eventLine = document.createElement('div');
             eventLine.className = 'cctv-event-line';
             box.appendChild(eventLine);
         }
 
-        const stateClass = isOk ? 'event-ok' : (isWarning ? 'event-warning' : (isReading ? 'event-reading' : 'event-error'));
+        const stateClass = isWarning ? 'event-warning' : (isReading ? 'event-reading' : 'event-error');
         eventLine.className = `cctv-event-line ${stateClass}`;
-        const icon = isOk ? '&#10003;' : (isWarning ? '&#9888;' : (isReading ? '&#9203;' : '&#10007;'));
+        const icon = isWarning ? '&#9888;' : (isReading ? '&#9203;' : '&#10007;');
+
         eventLine.innerHTML = `<span class="event-icon">${icon}</span> ${msgUpper}`;
 
         if (eventLine._hideTimer) clearTimeout(eventLine._hideTimer);
@@ -370,32 +324,7 @@ function showLastEventOnCameras() {
         eventLine._hideTimer = setTimeout(() => {
             eventLine.style.opacity = '0';
         }, isReading ? 3000 : 7000);
-
-        // 2. BADGE DE ESTADO INFERIOR (ESPEJO DE LA CONSOLA DEL SERVIDOR)
-        const statusEl = document.getElementById(`status-${cam.id}`);
-        if (statusEl) {
-            statusEl.className = `cctv-status ${isOk ? 'ok' : (isWarning ? 'warning' : (isReading ? 'reading' : 'error'))}`;
-            statusEl.innerText = msgUpper;
-
-            if (okTimers[cam.id]) clearTimeout(okTimers[cam.id]);
-            okTimers[cam.id] = setTimeout(() => {
-                const el = document.getElementById(`status-${cam.id}`);
-                if (el) {
-                    el.className = 'cctv-status idle';
-                    el.innerText = 'ÚLTIMA DETECCIÓN';
-                }
-            }, isReading ? 3500 : 8000);
-        }
     });
-}
-
-// DEBOUNCE: evita recargar el reporte de accesos (DB) ante cada frame de evento del WS.
-let _reloadDebounceTimer = null;
-function debouncedReloadDetections() {
-    if (_reloadDebounceTimer) clearTimeout(_reloadDebounceTimer);
-    _reloadDebounceTimer = setTimeout(() => {
-        loadLatestDetections();
-    }, 800);
 }
 
 // --- LOG EN VIVO DE LA CONSOLA DEL SUBPROCESO ALPR (ruta paralela a los mensajes actuales) ---
