@@ -112,7 +112,6 @@ function renderAdminTickets(tickets) {
 
     tableBody.innerHTML = tickets.map(t => {
         const isUnread = !!t.has_unread;
-        const isPending = t.estado.toLowerCase() === 'pendiente';
         const isProcess = t.estado.toLowerCase() === 'en proceso';
         const isResolved = t.estado.toLowerCase() === 'resuelto';
 
@@ -125,7 +124,7 @@ function renderAdminTickets(tickets) {
 
         const unreadTag = isUnread 
             ? `<span class="ticket-unread-tag" title="Tenés notificaciones sin leer de este ticket"><i class="fas fa-bell pulse"></i> SIN LEER</span>` 
-            : (isPending ? `<span class="ticket-unread-tag" style="border-color: rgba(245,158,11,0.5); color: #f59e0b; background: rgba(245,158,11,0.15);"><i class="fas fa-exclamation-circle"></i> PENDIENTE</span>` : '');
+            : '';
 
         return `
             <tr class="${rowClass}">

@@ -279,6 +279,67 @@
         margin-right: 4px;
     }
 
+    /* --- SALUDO GRANDE DE BIENVENIDA / HASTA LUEGO SOBRE EL VIDEO --- */
+    .cctv-greeting {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 14;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px 34px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.65);
+        border: 1px solid rgba(16, 185, 129, 0.8);
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        font-family: 'Share Tech Mono', monospace;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .cctv-greeting.show {
+        opacity: 1;
+    }
+
+    .cctv-greeting .greeting-word {
+        font-size: clamp(1rem, 3vw, 1.8rem);
+        font-weight: 700;
+        letter-spacing: 4px;
+        color: #10b981;
+        text-shadow: 0 0 14px rgba(16, 185, 129, 0.7);
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .cctv-greeting .greeting-plate {
+        font-size: clamp(1.5rem, 4.5vw, 3rem);
+        font-weight: 700;
+        letter-spacing: 6px;
+        color: #34d399;
+        text-shadow: 0 0 20px rgba(16, 185, 129, 0.9);
+        white-space: nowrap;
+    }
+
+    .cctv-greeting.exit {
+        border-color: rgba(34, 211, 238, 0.8);
+    }
+
+    .cctv-greeting.exit .greeting-word {
+        color: #22d3ee;
+        text-shadow: 0 0 14px rgba(34, 211, 238, 0.7);
+    }
+
+    .cctv-greeting.exit .greeting-plate {
+        color: #67e8f9;
+        text-shadow: 0 0 20px rgba(34, 211, 238, 0.9);
+    }
+
     @keyframes status-blink {
         from { opacity: 1; }
         to   { opacity: 0.3; }

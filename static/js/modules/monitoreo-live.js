@@ -284,7 +284,7 @@ function connectGeneralWS() {
 function showLastEventOnCameras() {
     if (!lastEventData) return;
 
-    const { message, status } = lastEventData;
+    const { message, status, type, plate } = lastEventData;
     const isOk = status === 'ok';
     const isWarning = status === 'warning';
     const isReading = status === 'reading';
@@ -294,6 +294,19 @@ function showLastEventOnCameras() {
         const slotId = idx + 1;
         const box = document.getElementById(`cctv-slot-${slotId}`);
         if (!box) return;
+
+        // SALUDO GRANDE DE BIENVENIDA (INGRESO) / HASTA LUEGO (SALIDA) sobre el video
+        if (isOk && (type === 'INGRESO' || type === 'SALIDA')) {
+            showCameraGreeting(box, type, plate || '');
+            let eventLine = box.querySelector('.cctv-event-line');
+            if (eventLine) {
+                if (eventLine._hideTimer) clearTimeout(eventLine._hideTimer);
+                eventLine.style.opacity = '0';
+            }
+            return;
+        }
+
+        hideCameraGreeting(box);
 
         // LINEA DE EVENTO CENTRAL (HUD SOBRE EL VIDEO)
         // Solo se muestra para estados que NO son OK. Los OK (franja verde al
@@ -325,6 +338,39 @@ function showLastEventOnCameras() {
             eventLine.style.opacity = '0';
         }, isReading ? 3000 : 7000);
     });
+}
+
+// --- SALUDO GRANDE SOBRE EL VIDEO (BIENVENIDA / HASTA LUEGO) ---
+const CAMERA_GREETINGS = { INGRESO: 'BIENVENIDO', SALIDA: 'HASTA LUEGO' };
+const GREETING_MS = 4000;
+
+function showCameraGreeting(box, type, plate) {
+    let greeting = box.querySelector('.cctv-greeting');
+    if (!greeting) {
+        greeting = document.createElement('div');
+        greeting.className = 'cctv-greeting';
+        box.appendChild(greeting);
+    }
+    greeting.classList.toggle('exit', type === 'SALIDA');
+    greeting.innerHTML = `
+        <span class="greeting-word">${CAMERA_GREETINGS[type] || 'OK'}</span>
+        ${plate ? `<span class="greeting-plate">${escapeHtml(plate)}</span>` : ''}
+    `;
+    greeting.offsetHeight;
+    greeting.classList.add('show');
+    if (greeting._hideTimer) clearTimeout(greeting._hideTimer);
+    greeting._hideTimer = setTimeout(() => {
+        greeting.classList.remove('show');
+    }, GREETING_MS);
+}
+
+function hideCameraGreeting(box) {
+    const greeting = box.querySelector('.cctv-greeting');
+    if (greeting) greeting.remove();
+}
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // --- LOG EN VIVO DE LA CONSOLA DEL SUBPROCESO ALPR (ruta paralela a los mensajes actuales) ---
