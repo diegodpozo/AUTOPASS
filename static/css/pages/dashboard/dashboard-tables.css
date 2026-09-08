@@ -385,7 +385,8 @@ tr:hover .btn-delete-promo {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 14px 22px 16px;
 }
 
@@ -436,9 +437,10 @@ tr:hover .btn-delete-promo {
 }
 
 #modal-ticket-answer .ticket-chat {
-    flex: 1;
+    flex: 1 1 auto;
+    flex-basis: 40vh;
+    max-height: 40vh;
     min-height: 150px;
-    max-height: none;
     margin: 10px 0 14px;
 }
 
@@ -545,4 +547,83 @@ tr:hover .btn-delete-promo {
     color: #888;
     padding: 15px;
     font-size: 0.85rem;
+}
+
+/* ACCIONES DEL MODAL DE TICKET: evita overflow a la derecha en pantallas angostas */
+.ticket-answer-actions {
+    flex-wrap: wrap;
+    row-gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .ticket-answer-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .ticket-answer-actions > .form-group {
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    .ticket-answer-actions .modal-footer-buttons {
+        width: 100% !important;
+        padding-bottom: 12px !important;
+    }
+
+    .ticket-answer-actions .modal-footer-buttons .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* HEADER DEL MODAL DE TICKET EN MÓVIL: mantiene la "X" arriba a la derecha */
+@media (max-width: 768px) {
+    #modal-ticket-answer .modal-header {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 14px 18px !important;
+        text-align: left !important;
+    }
+
+    #modal-ticket-answer .modal-header .header-info-group {
+        width: auto !important;
+        flex: 1 !important;
+        justify-content: flex-start !important;
+        margin-left: 0 !important;
+        text-align: left !important;
+        min-width: 0;
+    }
+
+    #modal-ticket-answer .modal-header .header-text {
+        text-align: left !important;
+        min-width: 0;
+    }
+
+    #modal-ticket-answer .modal-header .header-text h3 {
+        font-size: 0.9rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #modal-ticket-answer .modal-header .header-actions {
+        width: auto !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 8px !important;
+        flex: none !important;
+    }
+
+    #modal-ticket-answer .modal-header .close-btn {
+        width: 38px;
+        height: 38px;
+        margin-right: 0;
+        justify-content: center;
+    }
 }
