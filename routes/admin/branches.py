@@ -1,11 +1,13 @@
 import os
 import shutil
+import subprocess
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
 from core.database import get_db
+from core.normalize import normalize_name as normalize_system_name
 from core.security import get_super_admin, get_local_manager
 from services.branch_service import BranchService
 
@@ -143,11 +145,8 @@ async def create_branch(
     db: Session = Depends(get_db), 
     admin: models.User = Depends(get_super_admin)
 ):
-    """CREA UNA NUEVA SUCURSAL CON CARGA DE LOGO LOCAL."""
-    if not nombre.strip().upper().startswith("AUTOPASS"):
-        raise HTTPException(status_code=400, detail="El nombre de la sucursal debe comenzar con 'AUTOPASS'")
-
-    existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre).first()
+    nombre_clean = nombre.strip()
+    existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre_clean).first()
     if existing:
         raise HTTPException(status_code=400, detail="La sucursal ya existe")
     
@@ -247,7 +246,51 @@ async def update_branch(
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
-    branch.nombre = nombre
+    new_nombre = nombre.strip()
+    old_nombre = branch.nombre
+
+    if old_nombre != new_nombre:
+        existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == new_nombre, models.ParkingBranch.id != branch_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Ya existe una sucursal con ese nombre")
+
+        old_prefix = normalize_system_name(old_nombre)
+        new_prefix = normalize_system_name(new_nombre)
+
+        # Propagar el cambio de nombre a tablas dependientes
+        db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == old_nombre).update({models.ParkingAforo.sucursal: new_nombre})
+        db.query(models.Settings).filter(models.Settings.sucursal == old_nombre).update({models.Settings.sucursal: new_nombre})
+        db.query(models.User).filter(models.User.sucursal == old_nombre).update({models.User.sucursal: new_nombre})
+        db.query(models.Reservation).filter(models.Reservation.sucursal_nombre == old_nombre).update({models.Reservation.sucursal_nombre: new_nombre})
+        db.query(models.AccessLog).filter(models.AccessLog.sucursal == old_nombre).update({models.AccessLog.sucursal: new_nombre})
+        db.query(models.SupportTicket).filter(models.SupportTicket.sucursal == old_nombre).update({models.SupportTicket.sucursal: new_nombre})
+        db.query(models.ParkingCamera).filter(models.ParkingCamera.sucursal == old_nombre).update({models.ParkingCamera.sucursal: new_nombre})
+        db.query(models.Promotion).filter(models.Promotion.sucursal == old_nombre).update({models.Promotion.sucursal: new_nombre})
+
+        # El gate_id/WS de cada camara se compone con el prefijo normalizado del nombre
+        # de sucursal. Si el prefijo cambia, remapear las claves legacy CAMERA_SOURCE_* y
+        # detener los subprocesos ALPR del prefijo viejo para que espectador y proceso
+        # converjan al mismo canal (si no, la camara queda en negro).
+        if old_prefix and old_prefix != new_prefix:
+            source_rows = db.query(models.Settings).filter(models.Settings.clave.like(f"CAMERA_SOURCE_{old_prefix}_%")).all()
+            for row in source_rows:
+                row.clave = row.clave.replace(f"CAMERA_SOURCE_{old_prefix}", f"CAMERA_SOURCE_{new_prefix}", 1)
+
+            from routes.system.common import CAMERA_PROCESSES
+            stale_gates = [g for g in list(CAMERA_PROCESSES.keys()) if g.startswith(f"{old_prefix}_")]
+            for gate_id in stale_gates:
+                proc = CAMERA_PROCESSES.get(gate_id)
+                if proc and proc.poll() is None:
+                    try:
+                        if os.name == 'nt':
+                            subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        else:
+                            proc.terminate()
+                    except Exception:
+                        pass
+                CAMERA_PROCESSES.pop(gate_id, None)
+
+    branch.nombre = new_nombre
     branch.direccion = direccion
     branch.telefono = telefono
     branch.horario = horario

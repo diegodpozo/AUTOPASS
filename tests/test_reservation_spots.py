@@ -51,6 +51,14 @@ def test_exclusive_reservation_spots_logic(db):
     assert aforo.ocupacion_reservas_autos == 0
 
     # 2. Crear vehículos y reservas vigentes y pagadas para Auto y Moto
+    from services.time_service import TimeService
+    from datetime import timedelta
+    now = TimeService.now()
+    fecha_ini = (now - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")
+    fecha_fin = (now + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M")
+    check_ini = (now + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M")
+    check_fin = (now + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
+
     v_auto = Vehicle(patente="RES789", tipo=VehicleType.AUTO)
     v_moto = Vehicle(patente="MOTO99", tipo=VehicleType.MOTO)
     db.add_all([v_auto, v_moto])
@@ -60,8 +68,8 @@ def test_exclusive_reservation_spots_logic(db):
         sucursal_nombre=branch_name,
         estado_pago=PaymentStatus.PAGADO,
         estado_reserva=ReservationStatus.PENDIENTE,
-        fecha_inicio="2026-09-05 00:00",
-        fecha_fin="2026-09-05 23:59",
+        fecha_inicio=fecha_ini,
+        fecha_fin=fecha_fin,
         monto_total=1500.0,
         tipo_estadia="hora"
     )
@@ -70,8 +78,8 @@ def test_exclusive_reservation_spots_logic(db):
         sucursal_nombre=branch_name,
         estado_pago=PaymentStatus.PAGADO,
         estado_reserva=ReservationStatus.PENDIENTE,
-        fecha_inicio="2026-09-05 00:00",
-        fecha_fin="2026-09-05 23:59",
+        fecha_inicio=fecha_ini,
+        fecha_fin=fecha_fin,
         monto_total=800.0,
         tipo_estadia="hora"
     )
@@ -79,12 +87,12 @@ def test_exclusive_reservation_spots_logic(db):
     db.commit()
 
     # 3. Verificar disponibilidad por tipo de vehículo
-    disp_auto = verificar_disponibilidad(db, branch_name, "2026-09-05 10:00", "2026-09-05 14:00", tipo_vehiculo="Auto")
+    disp_auto = verificar_disponibilidad(db, branch_name, check_ini, check_fin, tipo_vehiculo="Auto")
     assert disp_auto["disponible"] is True
     assert disp_auto["capacidad_total"] == 2
     assert disp_auto["ocupada"] == 1
 
-    disp_moto = verificar_disponibilidad(db, branch_name, "2026-09-05 10:00", "2026-09-05 14:00", tipo_vehiculo="Moto")
+    disp_moto = verificar_disponibilidad(db, branch_name, check_ini, check_fin, tipo_vehiculo="Moto")
     assert disp_moto["disponible"] is True
     assert disp_moto["capacidad_total"] == 2
     assert disp_moto["ocupada"] == 1

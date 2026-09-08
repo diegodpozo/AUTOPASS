@@ -122,22 +122,10 @@ const reservationsTourSteps = [
             }
         }
     },
-    { selector: '.reserva-actions-ultra .btn-ultra.btn-ultra-primary, .reserva-card-ultra .btn-ultra.btn-ultra-primary', title: 'Acciones principales', text: 'Aquí podés ver el pase digital o pagar la reserva. Probá pulsar el botón principal para ver más opciones.', align: 'left', interactive: true, waitForEnabled: true },
+    { selector: '.reserva-actions-ultra .btn-ultra.btn-ultra-primary, .reserva-card-ultra .btn-ultra.btn-ultra-primary', title: 'Acciones principales', text: 'Aquí podés ver tu Pase Digital QR o abonar la reserva con el saldo de tu billetera.', align: 'left', interactive: true, waitForEnabled: true },
+    { selector: '.reserva-actions-ultra .btn-ultra-mp, .reserva-card-ultra .btn-ultra-mp', title: 'Pago con Mercado Pago', text: 'También podés abonar tu reserva o estadía directamente con Mercado Pago (Checkout Pro) sin consumir tu saldo.', align: 'left', interactive: true },
     { selector: '.reserva-actions-ultra .btn-ultra.btn-ultra-secondary, .reserva-card-ultra .btn-ultra.btn-ultra-secondary', title: 'Editar reserva', text: 'Usá este botón para editar la reserva si necesitás cambiar fecha o sucursal.', align: 'left', interactive: true },
     { selector: '.reserva-actions-ultra .btn-ultra.btn-ultra-danger, .reserva-card-ultra .btn-ultra.btn-ultra-danger', title: 'Eliminar / Cancelar', text: 'Si querés cancelar la reserva, usá este botón. Te mostraremos la confirmación y posibles reembolsos.', align: 'left', interactive: true },
-    { 
-        selector: '.nav-item[onclick*="puntos"]', 
-        title: 'Puntos AutoPass', 
-        text: 'Al realizar reservas y estacionar, sumás puntos. Hacé click en "Mis Puntos" en el menú para ver tus beneficios.', 
-        align: 'right', 
-        interactive: true,
-        beforeShow: () => {
-            if (window.showSection) {
-                const navItem = document.querySelector('.nav-item[onclick*="reservas"]');
-                window.showSection('reservas', navItem);
-            }
-        }
-    },
     { 
         selector: '#section-puntos .points-main-card', 
         title: 'Tus Puntos', 
@@ -802,7 +790,7 @@ function handleTypeChange() {
 // Auto-advance click handler para nav item de puntos
 function handlePuntosNavClick() {
     const step = tourSteps[currentTourIndex];
-    if (step && step.selector.includes('puntos')) {
+    if (step && step.selector && step.selector.includes('.nav-item[onclick*="puntos"]')) {
         setTimeout(nextTourStep, 250);
     }
 }
