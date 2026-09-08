@@ -35,12 +35,15 @@ def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehicu
 
     branch = db.query(models.ParkingBranch).options(joinedload(models.ParkingBranch.floors)).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
     if branch and branch.floors:
-        return sum(getattr(f, attr_cap, 5) for f in branch.floors)
+        cap_floors = sum(getattr(f, attr_cap, 5) or 0 for f in branch.floors)
+        if cap_floors > 0:
+            return cap_floors
 
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
     if aforo:
-        return getattr(aforo, attr_cap, 5)
-    return 0
+        val = getattr(aforo, attr_cap, 5)
+        return val if (val is not None and val > 0) else 5
+    return 5
 
 
 def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, tipo_vehiculo: str) -> list:
