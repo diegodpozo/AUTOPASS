@@ -21,6 +21,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 ### 3. `services/` (Cerebro)
 - **IMPORTANTE**: No pongas lógica de cálculo de precios o validación de stock en los routers. Creá un método estático en un servicio dentro de `services/`.
 - **Aforo Solo Físico (v9.5+)**: Las reservas no horarias (Día/Semana/Quincena/Mes) **no** descuentan plaza del aforo ni al pagar ni al iniciar el período. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como **no-ops**. El conteo de ocupación lo maneja exclusivamente el ALPR/ingreso manual (incrementa en ENTRADA, decrementa en SALIDA) reflejando solo vehículos físicamente presentes. No modificar este comportamiento sin revisar el refactor v9.5.0.
+- **Disponibilidad de Reserva (v9.14.1+)**: La disponibilidad del selector de reservas se valida contra los **cupos exclusivos de reserva** (`capacidad_reservas_*`/`ocupacion_reservas_*` en `ParkingAforo` y `ParkingFloor`, migración `e6f7a8b9c0d1`), NO contra el aforo físico. Usá `verificar_disponibilidad`, `obtener_fechas_deshabilitadas` y `obtener_horas_deshabilitadas` de `services/reservation_service.py` (sweep-line + cache TTL) y los endpoints `/reservations/check-availability`, `/reservations/disabled-dates` y `/reservations/disabled-hours`. Todos comparten la lógica por tipo de vehículo y solapamiento en el rango.
 
 ---
 
@@ -29,9 +30,9 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 | Prefijo | Paquete/Archivo | Responsabilidad |
 | :--- | :--- | :--- |
 | `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password. |
-| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors), Reservations CRUD (confirm-payment, cancel, update), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay), Settings (prices, capacity), Virtual Time (status, advance, rewind, set-target, set, reset — LOCAL_ADMIN+), Support (listar/detalle/pending-count/responder tickets, marcar notifs leídas). |
-| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel, confirm-reminder), Fidelization (promotions, redeem, redemption-tickets, redemptions available/cancel, points-adjust, points-history), Notifications (CRUD in-app, unread count, mark read, read-all, clear-read), Support (crear/consultar/detalle propio/responder), Mercado Pago (checkout, callbacks success/pending/failure, webhook). |
-| `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay con `metodo=DIGITAL\|CAJA`, exit-plate, validate-qr), Status (current-occupancy, branches, ws), Utils (normalize_plate, format_plate). |
+| `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors; **renombre con propagación** a Aforo/Settings/User/Reservations/AccessLog/SupportTickets/Cámaras/Promociones + remapeo `CAMERA_SOURCE_*` y detención de subprocesos ALPR si el prefijo cambia), Reservations CRUD (confirm-payment, cancel, update, validación de disponibilidad exclusiva), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay), Settings (prices, capacity, cupos de reserva), Virtual Time (status, advance, rewind, set-target, set, reset — LOCAL_ADMIN+), Support (listar/detalle/pending-count/responder tickets, marcar notifs leídas). |
+| `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel, confirm-reminder, **check-availability, disabled-dates, disabled-hours**), Fidelization (promotions, redeem, redemption-tickets, redemptions available/cancel, points-adjust, points-history), Notifications (CRUD in-app, unread count, mark read, read-all, clear-read), Support (crear/consultar/detalle propio/responder), Mercado Pago (checkout, callbacks success/pending/failure, webhook). |
+| `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay con `metodo=DIGITAL\|CAJA`, exit-plate, validate-qr), Status (current-occupancy con `capacidad_reservas_*`/`disponibilidad_reservas_*`, branches, ws), Utils (normalize_plate, format_plate). |
 | `/v1/reports`| `routes/reports.py` | Resúmenes financieros, logs de acceso y estadísticas OCR. Controlador delgado delegando a `ReportService`. Filtros: `vehicle_type`, `payment_method`, `date_range`. |
 | `/v1/system` | `routes/system/` | **Modular:** `common.py` (ConnectionManager, stop_all_cameras), `health.py` (/health, /heartbeat, /reset, /virtual-time), `cameras.py` (CRUD y control dinámico, camera-reading), `video.py` (WebSockets, streaming, capturas). |
 | `/` (Vistas) | `routes/views.py` | Renderizado Jinja2 con **Inyección Global de Settings**. |
@@ -139,6 +140,7 @@ Las barras de progreso fueron removidas completamente (`progress-bar`, `progress
 2. **Seguridad en Rutas**: Usá siempre las dependencias `get_local_manager` o `get_operational_user`.
 3. **Settings por Sucursal**: El modelo `Settings` tiene campo `sucursal` para aislar configuraciones por sucursal. Usar `valor_str` para valores de texto (ej: IP de cámara).
 4. **Aforo por Sucursal**: `ParkingAforo` y `ParkingFloor` tienen campo `sucursal` para aislamiento de capacidad.
+5. **Renombre de Sucursal**: La edición del nombre (`PATCH /v1/admin/branches/{id}`) valida unicidad y **propaga** el cambio a `ParkingAforo`, `Settings`, `User`, `Reservation.sucursal_nombre`, `AccessLog.sucursal`, `SupportTicket.sucursal`, `ParkingCamera.sucursal` y `Promotion.sucursal`. El gate_id de cada cámara usa el prefijo normalizado del nombre de sucursal (`{normalize_name(sucursal)}_{TIPO}_{id}`): si ese prefijo cambia, el renovar remapea las claves legacy `Settings.CAMERA_SOURCE_*` y detiene los subprocesos ALPR con el prefijo viejo (los espectadores no recibirían frames). Si agregás una tabla nueva con referencia por nombre de sucursal, incluirla en esa propagación. Ya no se exige el prefijo "AUTOPASS" en el nombre.
 
 ## Convenciones de Email
 1. **Templates**: Ubicados en `templates/emails/`, templates Jinja2 autocontenidos (no existe `base_email.html`): `reservation_confirmation.html`, `reservation_reminder.html`, `reservation_auto_cancelled.html` y `recovery.html`.
@@ -208,6 +210,12 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
    - La ocupación se gestiona **exclusivamente** con los eventos de acceso (ALPR/ingreso manual): ENTRADA incrementa `ocupacion_actual`, SALIDA la decrementa. Refleja solo vehículos físicamente presentes.
    - Las reservas no horarias (Día/Semana/Quincena/Mes) **no** pre-ocupan plaza. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` en `reservation_service.py` son **no-ops** conservados por compatibilidad; no reintroducir la pre-ocupación sin autorización.
    - Usar los helpers solo si se revierte el comportamiento v9.5.0.
+
+6b. **Cupos Exclusivos de Reserva (v9.14.1+):**
+   - La **disponibilidad de reserva** se calcula contra los cupos dedicados `capacidad_reservas_*`/`ocupacion_reservas_*` (PB en `ParkingAforo` + pisos en `ParkingFloor`), no contra el aforo físico. Migración: `e6f7a8b9c0d1`.
+   - Centralizar toda validación en `verificar_disponibilidad` (sweep-line, `exclude_id` para ediciones), `obtener_fechas_deshabilitadas` (ventana 90 días) y `obtener_horas_deshabilitadas` (paso 30 min, respeta `RESERVA_HORA_MIN_SEGUNDOS`).
+   - No confundir `ocupacion_reservas_*` (cupos de reserva) con `ocupacion_actual` (aforo físico): son independientes.
+   - Al validar en rutas admin/user, delegar siempre al servicio; nunca hardcodear los defaults 5/3/2/10.
 
 7. **Consistencia JS:**
    - No modificar `window.*` desde módulos ES6. Solo los scripts puente asignan al scope global.

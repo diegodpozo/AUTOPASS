@@ -5,6 +5,8 @@
 **Métricas globales:** 243 archivos, ~39.000 líneas de código (9.045 Python, 10.798 JS, 9.227 HTML, 9.828 CSS), 48 dependencias, 101 endpoints, 17 tablas, 14 módulos de servicio, 15 archivos de test.
 **Fecha de auditoría:** Septiembre 2026
 
+> **Actualización (2026-09-07):** Auditoría histórica (snapshot). Varios hallazgos fueron abordados desde entonces: caché TTL en memoria (`core/cache.py`, `SimpleTTLCache`, v9.14.0), índices de performance en `access_logs`/`reservations`/`support_ticket_messages`/`vehicles`/`redemption_tickets` (migración `49a240f0fc25`), purga automática de imágenes ALPR (`ALPR_IMAGE_RETENTION_DAYS`, default 30 días), suite de tests ampliada a **50 pruebas en 19 archivos**, rate limiting SlowAPI (v9.12.0+) y limpieza de dependencias muertas en `requirements.txt`. Los hallazgos de seguridad críticos pendientes deben tratarse según el plan original.
+
 ---
 
 ## Tabla de contenidos

@@ -1,6 +1,6 @@
 # Arquitectura del Sistema: AUTOPASS
 
-Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.1).
+Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.1+).
 
 ---
 
@@ -45,13 +45,13 @@ AUTOPASS/
 
 ---
 
-## Capas y Responsabilidades (v9.14.1)
+## Capas y Responsabilidades (v9.14.1+)
 
 ### 1. Capa de Servicios (Service Layer)
 Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **`ReportService`**: Encapsula toda la analítica financiera por sucursal/medio de pago/tipo de vehículo, agregaciones de ingresos proyectados, historial unificado de transacciones (UNION ALL) y auditoría de accesos. Desde v9.14.1 expone el desglose `recaudado_efectivo` / `recaudado_digital` (helper `_logs_agg` que respeta los filtros aplicados: con filtro `CAJA` lo digital va en 0 y viceversa).
 - **`AccessService`**: Gestiona toda la lógica de validación de patentes, salidas y QR. Desde v9.5 la ocupación es **solo física**: el ALPR de entrada incrementa `ocupacion_actual` para todos los vehículos (con o sin reserva) y el de salida la decrementa. Incluye verificación de duplicados (evita registrar dos entradas seguidas) y cortesía de 10 minutos en salida.
-- **`ReservationService`**: Gestiona el ciclo de vida de las reservas (creación, edición, cancelación con reembolsos proporcionales, simulación de refund, auto-activación y auto-cancelación). Desde v9.5 las reservas no horarias **no pre-ocupan plaza**: `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como no-ops y el aforo refleja solo autos físicamente presentes.
+- **`ReservationService`**: Gestiona el ciclo de vida de las reservas (creación, edición, cancelación con reembolsos proporcionales, simulación de refund, auto-activación y auto-cancelación). Desde v9.5 las reservas no horarias **no pre-ocupan plaza** en el aforo físico: `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como no-ops y el aforo refleja solo autos físicamente presentes. Desde v9.14.1 la **disponibilidad de reserva** se valida contra cupos **exclusivos de reserva** (`capacidad_reservas_*` en PB/pisos) mediante `verificar_disponibilidad` (sweep-line), y el portal deshabilita fechas/horas sin cupo con `obtener_fechas_deshabilitadas`/`obtener_horas_deshabilitadas`.
 - **`BillingService`**: Motor de tarifas y cálculo de puntos por fidelización. `process_payment(db, plate, metodo="DIGITAL")` persiste el método de pago en `AccessLog.metodo_pago` — `CAJA` cuando el operador cobra estadías en efectivo desde el monitoreo (pago manual), `DIGITAL`/`MERCADOPAGO` en los demás casos.
 - **`UserService`**: Gestión administrativa de usuarios y validaciones de seguridad.
 - **`BranchService`**: Lógica de gestión de sucursales y aforos.
@@ -67,6 +67,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 ### 2. Capa de Datos (Modelos y Enums)
 - **Seguridad de Tipos:** Se han implementado Enums en `models/enums.py` para eliminar "strings mágicos" (ej: `UserRole`, `VehicleType`, `ReservationStatus`).
 - **Gestión Vertical:** Soporte para sucursales con múltiples pisos (`ParkingFloor`), cada uno con capacidad independiente y trimodal para autos, motos y camionetas (`capacidad_total`, `ocupacion_actual`, `capacidad_motos`, `ocupacion_motos`, `capacidad_camionetas`, `ocupacion_camionetas`).
+- **Cupos Exclusivos de Reserva (v9.14.1+):** `ParkingAforo` (planta baja) y `ParkingFloor` (pisos) incluyen `capacidad_reservas_autos/motos/camionetas` (defaults 5/3/2) y `capacidad_reservas` (default 10) con sus contadores `ocupacion_reservas_*`. Estos cupos **no** afectan el aforo físico; alimentan la disponibilidad de reserva (sweep-line) y el bloqueo de fechas/horas en el picker. Migración Alembic `e6f7a8b9c0d1`.
 - **Fidelización:** Modelos `Promotion` (catálogo de beneficios con icono, categoría, sucursal, activa; incluye `tipo_canje` y `valor_descuento`), `Coupon` (cupones generados por canje de puntos) y `RedemptionTicket` (`redemption_tickets`: voucher con `codigo` de 16 caracteres, `qr_data = "AUTOPASS_REDEMPTION|ID:{codigo}"`, válido 30 días, o `descuento_reserva` que se aplica al pagar la próxima reserva).
 - **Configuración Dinámica:** Modelo `Settings` (key-value store con `valor_str` para configuraciones de texto como IPs de cámaras, y aislamiento por sucursal).
 - **Cámaras:** Modelo `ParkingCamera` (nombre, tipo: `PATENTE_INGRESO`, `PATENTE_EGRESO`, `QR_INGRESO`, `QR_EGRESO`, `PREDIO`, source/URL, sucursal, activa) para gestión dinámica de cámaras de seguridad.
@@ -210,6 +211,7 @@ Servicio independiente de visión artificial modularizado en el paquete `alpr/` 
 2. **Independencia:** Los servicios deben importar modelos y esquemas, pero no routers.
 3. **Tipo Seguro:** Usar siempre los Enums definidos en `models/enums.py` para cualquier estado o rol del sistema.
 4. **Configuración Centralizada:** Cualquier parámetro, constante o URL externa debe ser configurada en `core/config.py` y, si es necesario, provista vía `.env`.
-5. **Aforo Solo Físico (v9.5+):** Las reservas no horarias (Día/Semana/Quincena/Mes) **no** pre-ocupan plaza en el aforo. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` son no-ops. El conteo de ocupación lo maneja exclusivamente el ALPR/manual de entrada y salida, reflejando solo vehículos físicamente presentes.
+5. **Aforo Solo Físico (v9.5+):** Las reservas no horarias (Día/Semana/Quincena/Mes) **no** pre-ocupan plaza en el aforo físico. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` son no-ops. El conteo de ocupación lo maneja exclusivamente el ALPR/manual de entrada y salida, reflejando solo vehículos físicamente presentes.
 6. **Sin Liberación por Salida Física:** Para reservas no horarias, la salida física nunca libera plaza — no se pre-ocupa ninguna plaza, por lo que la liberación no aplica; el aforo se gestiona únicamente con los eventos de acceso.
-7. **Modularización Frontend:** Toda lógica de negocio JS debe ir en `static/js/modules/` como módulo ES6 exportado. Los scripts puente en `static/js/` solo deben contener asignaciones `window.*` y event wiring. Nunca poner lógica de negocio en scripts puente.
+7. **Disponibilidad de Reserva por Cupos Exclusivos (v9.14.1+):** La disponibilidad de nuevas reservas se valida contra los **cupos exclusivos de reserva** (`capacidad_reservas_*`/`ocupacion_reservas_*` en PB y pisos, migración `e6f7a8b9c0d1`) con `verificar_disponibilidad` (sweep-line por solapamiento en el rango y tipo de vehículo), no contra el aforo físico. El portal bloquea fechas (90 días) y horas (slot 30 min) sin cupo disponible. No confundir estos cupos con la ocupación física del establecimiento.
+8. **Modularización Frontend:** Toda lógica de negocio JS debe ir en `static/js/modules/` como módulo ES6 exportado. Los scripts puente en `static/js/` solo deben contener asignaciones `window.*` y event wiring. Nunca poner lógica de negocio en scripts puente.

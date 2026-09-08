@@ -215,24 +215,34 @@
 | id | Integer PK | Identificador único |
 | branch_id | Integer FK→parking_branches.id | Sucursal a la que pertenece |
 | nombre | String | Nombre del piso (PB, P1, etc.) |
-| capacidad_total | Integer (default 20) | Cupo para autos |
-| ocupacion_actual | Integer (default 0) | Autos estacionados actualmente |
-| capacidad_motos | Integer (default 10) | Cupo para motos |
-| ocupacion_motos | Integer (default 0) | Motos estacionadas actualmente |
-| capacidad_camionetas | Integer (default 5) | Cupo para camionetas |
-| ocupacion_camionetas | Integer (default 0) | Camionetas estacionadas actualmente |
+| capacidad_total | Integer (default 20) | Cupo para autos (aforo físico) |
+| ocupacion_actual | Integer (default 0) | Autos estacionados actualmente (físico) |
+| capacidad_motos | Integer (default 10) | Cupo para motos (físico) |
+| ocupacion_motos | Integer (default 0) | Motos estacionadas actualmente (físico) |
+| capacidad_camionetas | Integer (default 5) | Cupo para camionetas (físico) |
+| ocupacion_camionetas | Integer (default 0) | Camionetas estacionadas actualmente (físico) |
+| capacidad_reservas_autos/motos/camionetas | Integer (defaults 5/3/2) | Cupos **exclusivos de reserva** por tipo (v9.14.1+) |
+| ocupacion_reservas_autos/motos/camionetas | Integer (default 0) | Ocupación de cupos de reserva por tipo (v9.14.1+) |
+| capacidad_reservas | Integer (default 10) | Cupo total de reservas del piso (v9.14.1+) |
+| ocupacion_reservas | Integer (default 0) | Ocupación total de reservas del piso (v9.14.1+) |
+
+> Cupos de reserva (v9.14.1+): alimentan `verificar_disponibilidad`/fechas-horas deshabilitadas. Son **independientes** del aforo físico — NO se descuentan del estacionamiento en sí. Migración Alembic: `e6f7a8b9c0d1_add_reservation_spots_to_aforo_and_floors.py`.
 
 ### ParkingAforo (models/parking.py)
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | Integer PK | Identificador único |
 | sucursal | String (unique, nullable) | Sucursal |
-| capacidad_total | Integer (default 20) | Cupo total de autos |
-| ocupacion_actual | Integer (default 0) | Autos presentes |
-| capacidad_motos | Integer (default 10) | Cupo total de motos |
-| ocupacion_motos | Integer (default 0) | Motos presentes |
-| capacidad_camionetas | Integer (default 5) | Cupo total de camionetas |
-| ocupacion_camionetas | Integer (default 0) | Camionetas presentes |
+| capacidad_total | Integer (default 20) | Cupo total de autos (físico) |
+| ocupacion_actual | Integer (default 0) | Autos presentes (físico) |
+| capacidad_motos | Integer (default 10) | Cupo total de motos (físico) |
+| ocupacion_motos | Integer (default 0) | Motos presentes (físico) |
+| capacidad_camionetas | Integer (default 5) | Cupo total de camionetas (físico) |
+| ocupacion_camionetas | Integer (default 0) | Camionetas presentes (físico) |
+| capacidad_reservas_autos/motos/camionetas | Integer (defaults 5/3/2) | Cupos **exclusivos de reserva** por tipo (v9.14.1+) |
+| ocupacion_reservas_autos/motos/camionetas | Integer (default 0) | Ocupación de cupos de reserva por tipo (v9.14.1+) |
+| capacidad_reservas | Integer (default 10) | Cupo total de reservas planta baja (v9.14.1+) |
+| ocupacion_reservas | Integer (default 0) | Ocupación total de reservas PB (v9.14.1+) |
 | ultima_actualizacion | String | Timestamp de última actualización |
 
 ### Settings (models/parking.py)

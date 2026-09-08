@@ -1,4 +1,11 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-09-06)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-09-07)
+
+### 🚀 Hitos Recientes - Plazas Exclusivas de Reserva & Renombre de Sucursales
+- [x] **Plazas Exclusivas de Reserva (`capacidad_reservas_*`)**: Nuevo subsistema de **cupos dedicados para reservas**, independiente del aforo físico. Se agregan columnas `capacidad_reservas_autos/motos/camionetas/reservas` y `ocupacion_reservas_*` en `ParkingAforo` (planta baja) y `ParkingFloor` (pisos). Migración Alembic `e6f7a8b9c0d1`. El aforo **físico sigue siendo "solo físico"** (los no-ops v9.5 se conservan), pero la **disponibilidad de reserva** ahora se valida sobre estos cupos exclusivos.
+- [x] **Disponibilidad de Reserva (sweep-line)**: `verificar_disponibilidad` (`services/reservation_service.py`) calcula la capacidad exclusiva de reserva por tipo de vehículo (PB + pisos) y la ocupación máxima simultánea en el intervalo con algoritmo **sweep-line**, retornando `{disponible, capacidad_total, ocupada, restan, mensaje}`. `exclude_id` descarta la reserva en edición.
+- [x] **Selector con Fechas/Horas Deshabilitadas**: `obtener_fechas_deshabilitadas` (90 días) y `obtener_horas_deshabilitadas` (slot de 30 min) calculan qué días/horas no admiten reservas por no quedar cupos exclusivos, bloqueando en el picker del portal. Cache TTL de disponibilidad (`_get_cached_availability`). Los slots pasados del día de hoy se bloquean según `RESERVA_HORA_MIN_SEGUNDOS` (default 30 min).
+- [x] **Renombre de Sucursal con Propagación**: Al renombrar una sucursal (`PATCH /v1/admin/branches/{id}`, `routes/admin/branches.py`) el cambio se propaga a `ParkingAforo`, `Settings`, `User`, `Reservation.sucursal_nombre`, `AccessLog.sucursal`, `SupportTicket.sucursal`, `ParkingCamera.sucursal` y `Promotion.sucursal`, validando duplicados (400). Si el prefijo normalizado del gate_id de cámara cambia, remapea las claves `Settings.CAMERA_SOURCE_*` y detiene los subprocesos ALPR del prefijo viejo para evitar cámaras en negro. Se **eliminó la restricción** de que el nombre deba comenzar con "AUTOPASS" (el nombre se trimea y se valida unicidad). Al crear sucursal solo se valida unicidad.
+- [x] **Tests actualizados**: `tests/test_reservation_spots.py` ahora usa fechas relativas a `TimeService.now()` en lugar de fechas fijas.
 
 ### 🚀 Hitos Recientes - Versión 9.14.0 (Mercado Pago · Checkout Pro)
 - [x] **Pagos con Mercado Pago (modo pruebas)**: Nuevo módulo `services/mercadopago_service.py`, modelo `MercadoPagoPayment` y migración `c9d8e7f6a5b4_add_mercadopago_payments`. Integración de **Checkout Pro** (redirección) para pagar **reservas** y **estadías en curso** a través de `POST /v1/user/mercadopago/checkout` con confirmación por retorno (`/success|pending|failure`) y webhook (`/webhook`).
@@ -223,12 +230,13 @@
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
 ### 🛠️ Arquitectura Actual (v9.14.1+)
-- **Backend**: Clean Architecture con Servicios y Repositories. 14 servicios en `services/`, ~105 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
+- **Backend**: Clean Architecture con Servicios y Repositories. 14 servicios en `services/`, 83 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
 - **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 49 templates HTML, 40 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user) + Rate limiting (SlowAPI).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
-- **Multi-sucursal**: Full isolation por sucursal con gestión de pisos, aforos y configuración independiente.
+- **Multi-sucursal**: Full isolation por sucursal con gestión de pisos, aforos y configuración independiente. El **renombre de sucursal** propaga el cambio a tablas dependientes.
+- **Reservas**: Cupos **exclusivos para reservas** (`capacidad_reservas_*` en PB y pisos) validados por sweep-line en `verificar_disponibilidad`, con fechas/horas deshabilitadas en el picker. El aforo físico sigue siendo "solo físico" (no-ops v9.5 conservados).
 - **Pagos**: Billetera virtual (saldo), Mercado Pago Checkout Pro (redirección) y efectivo (CAJA) con desglose por método en reportes.
 - **ALPR**: Pipeline completo de visión artificial (**RapidOCR ONNX** primario + fallback **PaddleOCR** + OpenCV) con consenso de votos, lectura QR y streaming de video.
 - **Base de Datos**: **Neon/Postgres online** (`postgresql://...@ep-silent-math-acirnekl.sa-east-1.aws.neon.tech/neondb`) en región `sa-east-1` (São Paulo), compartida entre varias PC, con fallback a SQLite local (`parking.db`). Migraciones versionadas con **Alembic** (`alembic/`, primera migración `c833a3129266_initial_schema`).
@@ -239,6 +247,11 @@
 - **Monitoreo**: ALPR en vivo con gestión centralizada, aforo real-time vía WebSocket y streaming de video multi-cámara.
 - **Fidelización**: Sistema de puntos (10 pts/$1000), promociones canjeables y cupones.
 - **Frontend**: Dashboard modular con 9 pestañas (Monitoreo, Ocupación, Reservas, Gestión de Usuarios, Reporte Financiero, Promociones, Soporte & Tickets, Sucursales, Configuración).
+
+### Cambios técnicos recientes (2026-09-07)
+- Reservas: Se agregó un **subsistema de plazas exclusivas de reserva** (`capacidad_reservas_*` / `ocupacion_reservas_*` en `ParkingAforo` y `ParkingFloor`, migración `e6f7a8b9c0d1`). La disponibilidad de reserva se valida con `verificar_disponibilidad` (sweep-line, por tipo de vehículo y solapamiento en el rango), y el portal bloquea fechas/horas sin cupo vía `obtener_fechas_deshabilitadas` (90 días) y `obtener_horas_deshabilitadas` (slot 30 min). El aforo **físico** sigue siendo solo físico: `_reservar_plaza_en_aforo`/`_liberar_plaza_en_aforo` permanecen como no-ops y la ocupación la maneja únicamente el ALPR/manual.
+- Sucursales: El renombre (`PATCH /v1/admin/branches/{id}`) propaga el nuevo nombre a `ParkingAforo`, `Settings`, `User`, `Reservation`, `AccessLog`, `SupportTicket`, `ParkingCamera` y `Promotion`, remapea `CAMERA_SOURCE_*`/detiene subprocesos ALPR huérfanos si el prefijo de gate cambia, valida duplicados y **ya no exige** que el nombre comience con "AUTOPASS".
+- Reservas: Fix en `_capacidad_reservas_para_tipo` — tolera capacidades nulas (`0`, `None`) y evita devolver 0 por un piso sin configurar (default 5 ante ausencia de aforo).
 
 ### Cambios técnicos recientes (2026-07-06)
 - ALPR: Fix en `validate_plate` y `validate_qr` — ahora buscan la última ENTRADA y verifican SALIDA posterior (mismo patrón que `manual_entry`), en lugar de solo mirar el último registro de cualquier tipo.

@@ -24,8 +24,8 @@
 | DELETE | `/users/{id}` | Eliminar usuario | ADMIN |
 | POST | `/users/{id}/delete` | Eliminar usuario (alias POST) | ADMIN |
 | GET | `/branches` | Listar sucursales (solo activas si es público) | Público |
-| POST | `/branches` | Crear sucursal | ADMIN |
-| PATCH | `/branches/{id}` | Editar sucursal | ADMIN |
+| POST | `/branches` | Crear sucursal (valida unicidad de nombre) | ADMIN |
+| PATCH | `/branches/{id}` | Editar sucursal — el **renombre propaga** a `ParkingAforo`, `Settings`, `User`, `Reservation`, `AccessLog`, `SupportTicket`, `ParkingCamera` y `Promotion` (remapeando `CAMERA_SOURCE_*` y deteniendo subprocesos ALPR si el prefijo cambia) | ADMIN |
 | DELETE | `/branches/{id}` | Eliminar sucursal | ADMIN |
 | POST | `/branches/{id}/toggle` | Activar/suspender | ADMIN |
 | POST | `/{branch_id}/floors` | Agregar piso | LOCAL_ADMIN+ |
