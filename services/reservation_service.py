@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 import models
 import schemas
 from services.billing_service import BillingService
+from services.branch_service import BranchService
 from core.config import settings
 from services.email_service import EmailService
 from services.notification_service import NotificationService
@@ -409,8 +410,7 @@ class ReservationService:
             sucursal=data.sucursal_nombre, tipo_vehiculo=tipo_vehiculo
         )
 
-        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == data.sucursal_nombre).first()
-        info_sede = f"{branch.direccion}. {'Abierto 24hs' if branch.is_24h else branch.horario}." if branch else "Sede no especificada."
+        info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
 
         new_res = models.Reservation(
             user_id=data.user_id,
@@ -632,10 +632,13 @@ class ReservationService:
                 _reservar_plaza_en_aforo(db, res)
 
         # ENVIAR MAIL DE CONFIRMACION
+        dir_info = res.sucursal_info
+        if not dir_info or dir_info == "Sede no especificada." or dir_info.startswith("Sede no especificada"):
+            dir_info = BranchService.get_branch_info_str(db, res.sucursal_nombre)
         res_info = {
             "id": res.id,
             "sucursal": res.sucursal_nombre,
-            "direccion": res.sucursal_info,
+            "direccion": dir_info,
             "patente": res.patente,
             "fecha_inicio": res.fecha_inicio,
             "fecha_fin": res.fecha_fin,
@@ -710,10 +713,13 @@ class ReservationService:
                 _reservar_plaza_en_aforo(db, res)
 
         # ENVIAR MAIL DE CONFIRMACION
+        dir_info = res.sucursal_info
+        if not dir_info or dir_info == "Sede no especificada." or dir_info.startswith("Sede no especificada"):
+            dir_info = BranchService.get_branch_info_str(db, res.sucursal_nombre)
         res_info = {
             "id": res.id,
             "sucursal": res.sucursal_nombre,
-            "direccion": res.sucursal_info,
+            "direccion": dir_info,
             "patente": res.patente,
             "fecha_inicio": res.fecha_inicio,
             "fecha_fin": res.fecha_fin,

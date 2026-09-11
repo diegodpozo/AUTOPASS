@@ -10,6 +10,7 @@ from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
 from services.billing_service import BillingService
+from services.branch_service import BranchService
 from services.reservation_service import (
     ReservationService,
     verificar_disponibilidad,
@@ -130,8 +131,21 @@ def get_user_reservations(db: Session = Depends(get_db), current_user: models.Us
     ReservationService.auto_finalize_reservations(db, current_user.id)
     reservations = db.query(models.Reservation).filter(models.Reservation.user_id == current_user.id).order_by(models.Reservation.id.desc()).all()
     en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in reservations])
+    branches = {b.nombre: b for b in db.query(models.ParkingBranch).all()}
     for r in reservations:
         r.en_predio = r.id in en_predio
+        if not r.sucursal_info or r.sucursal_info == "Sede no especificada." or r.sucursal_info.startswith("Sede no especificada"):
+            b = branches.get(r.sucursal_nombre)
+            if not b and r.sucursal_nombre:
+                b = next((br for br in branches.values() if r.sucursal_nombre.lower() in br.nombre.lower() or br.nombre.lower() in r.sucursal_nombre.lower()), None)
+            if b:
+                horario_str = "Abierto 24hs" if b.is_24h else (b.horario or "Horario no especificado")
+                if b.direccion and b.direccion.strip():
+                    r.sucursal_info = f"{b.direccion.strip()}. {horario_str}."
+                else:
+                    r.sucursal_info = f"{b.nombre}. {horario_str}."
+            elif r.sucursal_nombre:
+                r.sucursal_info = f"Sucursal {r.sucursal_nombre}."
     return reservations
 
 @router.post("/reservations")
@@ -214,18 +228,12 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
         monto = math.ceil(duration_hours) * rate
 
     estado_pago = "Pendiente"
-    
-    sucursales_info = {
-        "AUTOPASS Central": "Av. del Libertador 1200, CABA. Abierto 24hs.",
-        "AUTOPASS Ituzaingó": "Punto de Acceso Estación Ituzaingó. Abierto 24hs.",
-        "AUTOPASS Castelar": "Centro Comercial Castelar. Abierto 24hs.",
-        "AUTOPASS Morón": "Plaza Oeste Shopping - Morón. Abierto 24hs."
-    }
+    info_sede = BranchService.get_branch_info_str(db, res.sucursal_nombre)
     
     new_res = models.Reservation(
         user_id=current_user.id, patente=res.patente, fecha_inicio=res.fecha_inicio, fecha_fin=res.fecha_fin, 
         tipo_estadia=res.tipo_estadia, monto_total=monto, estado_pago=estado_pago, estado_reserva="Pendiente",
-        sucursal_nombre=res.sucursal_nombre, sucursal_info=sucursales_info.get(res.sucursal_nombre, "Sede no especificada."),
+        sucursal_nombre=res.sucursal_nombre, sucursal_info=info_sede,
         dias_semana=res.dias_semana
     )
     db.add(new_res)

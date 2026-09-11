@@ -125,7 +125,11 @@ export async function showDigitalPass(id) {
     document.getElementById('ticket-patente').innerText = formatPlate(r.patente);
     document.getElementById('ticket-tipo-vehiculo').innerText = r.tipo_vehiculo || 'Auto';
     document.getElementById('ticket-sucursal').innerText = r.sucursal_nombre || '---';
-    document.getElementById('ticket-direccion').innerText = r.sucursal_info || 'Dirección no disponible';
+    let dirText = r.sucursal_info;
+    if (!dirText || dirText === 'Sede no especificada.' || dirText.startsWith('Sede no especificada')) {
+        dirText = r.sucursal_nombre ? `Sucursal ${r.sucursal_nombre}` : 'Dirección no disponible';
+    }
+    document.getElementById('ticket-direccion').innerText = dirText;
     document.getElementById('ticket-inicio').innerText = formatDate(r.fecha_inicio);
     document.getElementById('ticket-vence').innerText = formatDate(r.fecha_fin).split(',')[0];
     document.getElementById('ticket-tipo-estadia').innerText = tipoEstadiaLabel(r.tipo_estadia);

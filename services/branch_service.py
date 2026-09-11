@@ -5,6 +5,24 @@ from models.enums import VehicleType
 
 class BranchService:
     @staticmethod
+    def get_branch_info_str(db: Session, sucursal_nombre: str) -> str:
+        """OBTIENE EL TEXTO CON LA DIRECCIÓN Y HORARIO DE LA SUCURSAL."""
+        if not sucursal_nombre:
+            return "Sede no especificada."
+
+        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+        if not branch:
+            branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal_nombre}%")).first()
+
+        if branch:
+            horario_str = "Abierto 24hs" if branch.is_24h else (branch.horario or "Horario no especificado")
+            if branch.direccion and branch.direccion.strip():
+                return f"{branch.direccion.strip()}. {horario_str}."
+            return f"{branch.nombre}. {horario_str}."
+
+        return f"Sucursal {sucursal_nombre}." if sucursal_nombre else "Sede no especificada."
+
+    @staticmethod
     def get_branch_tariffs(db: Session, branch_name: str) -> dict:
         """TARIFAS DE LA SUCURSAL POR MODALIDAD Y TIPO DE VEHICULO."""
         buckets = {
