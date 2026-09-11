@@ -1,5 +1,6 @@
 import datetime
 import time
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 import models
 import schemas
@@ -62,7 +63,7 @@ def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, ha
 
     patentes = [r.patente for r in all_res]
     v_map = {v.patente: v.tipo for v in db.query(models.Vehicle).filter(models.Vehicle.patente.in_(patentes)).all()}
-    return [r for r in all_res if v_map.get(r.patente, "Auto").strip().title() == tipo_vehiculo]
+    return [r for r in all_res if v_map.get(r.patente, r.tipo_vehiculo or "Auto").strip().title() == tipo_vehiculo]
 
 
 def _get_cached_availability(key: tuple, generator):
@@ -165,7 +166,7 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
         patentes = [r.patente for r in all_res]
         v_map = {v.patente: v.tipo for v in db.query(models.Vehicle).filter(models.Vehicle.patente.in_(patentes)).all()}
         for r in all_res:
-            v_tipo = v_map.get(r.patente, "Auto")
+            v_tipo = v_map.get(r.patente, r.tipo_vehiculo or "Auto")
             if v_tipo.strip().title() == tipo_vehiculo:
                 reservas_filtradas.append(r)
 
@@ -281,6 +282,55 @@ def obtener_horas_deshabilitadas(
     ))
 
 
+def obtener_horas_deshabilitadas_con_reservas(
+    db: Session,
+    sucursal_nombre: str,
+    fecha_str: str,
+    tipo_vehiculo: str = "Auto",
+    duracion_horas: float = 1.0,
+    paso_minutos: int = 30
+) -> dict:
+    """SLOTS DESHABILITADOS + RANGOS REALMENTE RESERVADOS DEL DÍA.
+    PERMITE A LA GRILLA DISTINGUIR LO QUE ESTÁ OCUPADO POR UNA RESERVA (RANGO EXACTO)
+    DE LAS HORAS DE MARGEN QUE SOLO SE DESHABILITAN POR SOLAPAMIENTO."""
+    if not sucursal_nombre or not fecha_str:
+        return {"disabled_hours": [], "reserved_ranges": []}
+    fecha_clean = fecha_str.split("T")[0].split(" ")[0]
+    disabled_hours = obtener_horas_deshabilitadas(
+        db, sucursal_nombre, fecha_clean, tipo_vehiculo, duracion_horas, paso_minutos
+    )
+    reserved_ranges = _obtener_rangos_reservados_dia(db, sucursal_nombre, fecha_clean, tipo_vehiculo)
+    return {
+        "disabled_hours": disabled_hours,
+        "reserved_ranges": reserved_ranges
+    }
+
+
+def _obtener_rangos_reservados_dia(db: Session, sucursal_nombre: str, fecha_clean: str, tipo_vehiculo: str) -> list[dict]:
+    """RANGOS [inicio, fin) EN HH:MM DE LAS RESERVAS ACTIVAS QUE TOCAN EL DÍA, RECORTADOS AL DÍA."""
+    dia_ini = f"{fecha_clean} 00:00"
+    dia_fin = f"{fecha_clean} 23:59"
+    reservas = _reservas_activas_tipo(db, sucursal_nombre, dia_ini, dia_fin, tipo_vehiculo)
+    if not reservas:
+        return []
+    dia_ini_dt = datetime.datetime.fromisoformat(dia_ini)
+    dia_fin_dt = datetime.datetime.fromisoformat(dia_fin)
+    rangos = []
+    for r in reservas:
+        try:
+            r_ini_dt = datetime.datetime.fromisoformat(r.fecha_inicio.replace("/", "-"))
+            r_fin_dt = datetime.datetime.fromisoformat(r.fecha_fin.replace("/", "-"))
+        except (ValueError, TypeError):
+            continue
+        if r_fin_dt <= r_ini_dt:
+            continue
+        ini_dt = max(r_ini_dt, dia_ini_dt)
+        fin_dt = min(r_fin_dt, dia_fin_dt)
+        if fin_dt > ini_dt:
+            rangos.append({"inicio": ini_dt.strftime("%H:%M"), "fin": fin_dt.strftime("%H:%M")})
+    return rangos
+
+
 def _calcular_horas_deshabilitadas(
     db: Session,
     sucursal_nombre: str,
@@ -351,7 +401,8 @@ class ReservationService:
     def create_reservation(db: Session, data: schemas.AdminReservationCreate) -> models.Reservation:
         """CREA UNA NUEVA RESERVA MANUAL DESDE EL PANEL ADMINISTRATIVO."""
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente).first()
-        tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
+        tipo_vehiculo = getattr(data, "tipo_vehiculo", None) or (vehiculo.tipo if vehiculo else VehicleType.AUTO)
+        tipo_v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
 
         monto = BillingService.calculate_total_amount(
             db, data.tipo_estadia, data.fecha_inicio, data.fecha_fin, 
@@ -372,7 +423,8 @@ class ReservationService:
             tipo_estadia=data.tipo_estadia,
             sucursal_nombre=data.sucursal_nombre,
             sucursal_info=info_sede,
-            cliente_nombre=data.cliente_nombre
+            cliente_nombre=data.cliente_nombre,
+            tipo_vehiculo=tipo_v_str
         )
         db.add(new_res)
         db.commit()
@@ -380,48 +432,34 @@ class ReservationService:
         return new_res
 
     @staticmethod
-    def update_reservation(db: Session, res_id: int, data: schemas.ReservationUpdate) -> models.Reservation:
-        """ACTUALIZA LOS DATOS DE UNA RESERVA Y RECALCULA MONTOS SI ES NECESARIO."""
-        res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
-        if not res:
-            return None
+    def pay_reservation_manual(db: Session, res: "models.Reservation", metodo_pago: str = None):
+        """MARCA UNA RESERVA COMO PAGADA (PAGO MANUAL ADMIN) SIN DESCONTAR SALDO NI USAR MERCADO PAGO."""
+        if res.estado_pago == PaymentStatus.PAGADO:
+            return {"status": "ok", "message": "La reserva ya se encuentra pagada"}
 
-        old_pago = res.estado_pago
-        if data.patente: res.patente = data.patente.upper()
-        if data.tipo_estadia: res.tipo_estadia = data.tipo_estadia
-        if data.fecha_inicio: res.fecha_inicio = data.fecha_inicio
-        if data.fecha_fin: res.fecha_fin = data.fecha_fin
-        
-        if hasattr(data, 'estado_pago') and data.estado_pago: res.estado_pago = data.estado_pago
-        if hasattr(data, 'estado_reserva') and data.estado_reserva: res.estado_reserva = data.estado_reserva
+        res.estado_pago = PaymentStatus.PAGADO
+        res.estado_reserva = ReservationStatus.ACTIVA
+        res.fecha_pago = datetime.datetime.now().isoformat()
+        res.metodo_pago = metodo_pago
 
-        #RECALCULAR PUNTOS SI CAMBIA UN PAGADO
-        if old_pago != PaymentStatus.PAGADO and res.estado_pago == PaymentStatus.PAGADO and res.user:
+        if res.user:
             puntos_ganados = BillingService.calculate_points(res.monto_total)
             res.user.puntos_acumulados += puntos_ganados
             db.add(models.PointsLog(
                 user_id=res.user.id,
                 cantidad=puntos_ganados,
-                motivo=f"Edición Admin - Pago Reserva: {res.patente}",
+                motivo=f"Abono Manual Reserva: {res.patente}",
                 fecha=datetime.datetime.now().isoformat()
             ))
 
-        # RECALCULAR MONTO
-        vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
-        tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
-        
-        res.monto_total = BillingService.calculate_total_amount(
-            db, res.tipo_estadia, res.fecha_inicio, res.fecha_fin, 
-            sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo
-        )
-        
         db.commit()
         db.refresh(res)
-        return res
+        return {"status": "ok", "message": "Pago registrado", "monto": res.monto_total, "metodo_pago": res.metodo_pago}
 
     @staticmethod
     def cleanup_overdue_reservations(db: Session):
-        """CANCELA AUTOMATICAMENTE RESERVAS IMPAGAS CUYO TIEMPO DE INICIO YA PASO CON UN MARGEN DE GRACIA."""
+        """CANCELA AUTOMATICAMENTE RESERVAS IMPAGAS CUYO TIEMPO DE INICIO YA PASO CON UN MARGEN DE GRACIA.
+        NO CANCELA RESERVAS CUYO VEHICULO YA INGRESO AL PREDIO."""
         now = TimeService.now()
         grace_cutoff = now - datetime.timedelta(hours=2)
         cutoff_str = grace_cutoff.strftime("%Y-%m-%d %H:%M")
@@ -436,6 +474,13 @@ class ReservationService:
         if overdue:
             logger.info(f"Cancelando {len(overdue)} reservas impagas vencidas. Cutoff: {cutoff_str}")
             for r in overdue:
+                # SI EL VEHICULO YA INGRESO AL PREDIO CON SU RESERVA, NO CANCELAR
+                entry = db.query(models.AccessLog).filter(
+                    models.AccessLog.reserva_id == r.id,
+                    models.AccessLog.tipo_evento == AccessEventType.ENTRADA
+                ).first()
+                if entry:
+                    continue
                 r.estado_reserva = ReservationStatus.CANCELADA
                 r.estado_pago = PaymentStatus.FALLIDO
             db.commit()
@@ -470,8 +515,35 @@ class ReservationService:
                 if r.tipo_estadia != "hora" and r.sucursal_nombre:
                     _liberar_plaza_en_aforo(db, r)
             db.commit()
+            # NOTIFICAR A LOS DASHBOARDS PARA QUE REFLEJEN LA DEUDA ACUMULADA TRAS EL VENCIMIENTO
+            try:
+                from services.notification_service import NotificationService
+                sucursales = {_normalizar_sucursal(r.sucursal_nombre) for r in vencidas if r.sucursal_nombre}
+                for s in sucursales:
+                    NotificationService.notify_occupancy_change(db=db, sucursal_norm=s)
+            except Exception as e:
+                logger.error(f"Error notificando vencimiento de reservas: {e}")
             return len(vencidas)
         return 0
+
+    @staticmethod
+    def get_en_predio_ids(db: Session, reserva_ids) -> set:
+        """DEVUELVE LOS IDS DE RESERVAS CUYO ULTIMO EVENTO FISICO FUE UN INGRESO (VEHICULO DENTRO DEL PREDIO)."""
+        if not reserva_ids:
+            return set()
+        latest = (
+            db.query(models.AccessLog.reserva_id, func.max(models.AccessLog.id).label('max_id'))
+            .filter(models.AccessLog.reserva_id.in_(list(reserva_ids)))
+            .group_by(models.AccessLog.reserva_id)
+            .subquery()
+        )
+        rows = (
+            db.query(latest.c.reserva_id)
+            .join(models.AccessLog, models.AccessLog.id == latest.c.max_id)
+            .filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
+            .all()
+        )
+        return {row[0] for row in rows}
 
     @classmethod
     def validate_redemption_ticket(cls, db: Session, user_id: int, redemption_ticket_id: int, sucursal: str = None) -> models.RedemptionTicket:
@@ -527,6 +599,7 @@ class ReservationService:
         res.estado_pago = PaymentStatus.PAGADO
         res.estado_reserva = ReservationStatus.ACTIVA
         res.fecha_pago = datetime.datetime.now().isoformat()
+        res.metodo_pago = "SALDO"
         # SI SE APLICO DESCUENTO, LA RESERVA QUEDA CON SU VALOR FINAL
         if ticket_redencion:
             res.monto_total = monto_a_cobrar
@@ -609,6 +682,7 @@ class ReservationService:
         res.estado_pago = PaymentStatus.PAGADO
         res.estado_reserva = ReservationStatus.ACTIVA
         res.fecha_pago = datetime.datetime.now().isoformat()
+        res.metodo_pago = "MERCADOPAGO"
         if ticket_redencion:
             res.monto_total = monto_a_cobrar
             res.monto_reembolsado = 0.0

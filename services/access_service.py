@@ -112,11 +112,10 @@ class AccessService:
         now = TimeService.now()
         img_name = cls._save_image(p, data.image_base64)
                 
-        # BUSCAMOS RESERVA PAGADA QUE ESTE EN EL RANGO DE TIEMPO ACTUAL
+        # BUSCAMOS RESERVA VIGENTE (PAGADA O IMPAGA) QUE ESTE EN EL RANGO DE TIEMPO ACTUAL
         now_str = now.strftime("%Y-%m-%d %H:%M")
         reserva = db.query(models.Reservation).filter(
             func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
-            models.Reservation.estado_pago == PaymentStatus.PAGADO,
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_inicio <= now_str,
             models.Reservation.fecha_fin >= now_str
@@ -277,8 +276,7 @@ class AccessService:
             if reserva.sucursal_nombre and sucursal and reserva.sucursal_nombre != sucursal:
                 return {"status": "denied", "message": f"Esta reserva es válida únicamente para la sede {reserva.sucursal_nombre}"}
 
-            if reserva.estado_pago != PaymentStatus.PAGADO:
-                return {"status": "denied", "message": "La reserva no ha sido abonada"}
+            pagada = reserva.estado_pago == PaymentStatus.PAGADO
 
             vehiculo = db.query(models.Vehicle).filter(
                 func.replace(func.upper(models.Vehicle.patente), ' ', '') == patente_qr
@@ -298,8 +296,8 @@ class AccessService:
                 if ultimo and ultimo.tipo_evento == AccessEventType.ENTRADA:
                     return {"status": "denied", "message": "El vehículo ya se encuentra dentro de esta sede"}
                 
-                if reserva.estado_reserva == ReservationStatus.COMPLETADA:
-                     return {"status": "denied", "message": "Esta reserva ya expiró"}
+                if reserva.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
+                     return {"status": "denied", "message": "Esta reserva ya expiró o fue cancelada"}
                 
                 now_str = now.strftime("%Y-%m-%d %H:%M")
                 if reserva.fecha_inicio > now_str or reserva.fecha_fin < now_str:
@@ -342,7 +340,7 @@ class AccessService:
                     tipo_vehiculo=tipo_vehiculo,
                     fecha_hora=now.isoformat(), 
                     reserva_id=reserva.id, 
-                    pago_confirmado=True, 
+                    pago_confirmado=pagada, 
                     sucursal=sucursal
                 ))
                 db.commit()
@@ -357,7 +355,15 @@ class AccessService:
             else:
                 if not ultimo or ultimo.tipo_evento != AccessEventType.ENTRADA:
                     return {"status": "error", "message": "No se registra un ingreso activo para esta patente"}
-                    
+
+                if not (ultimo.pago_confirmado or reserva.estado_pago == PaymentStatus.PAGADO):
+                    fecha_str = ultimo.fecha_hora.replace(' ', 'T')
+                    entrada_dt = datetime.datetime.fromisoformat(fecha_str)
+                    minutos_transcurridos = (now - entrada_dt).total_seconds() / 60
+                    if minutos_transcurridos > 10:
+                        NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", patente_qr, f"Deuda pendiente de reserva impaga ({int(minutos_transcurridos)} min)", "error")
+                        return {"status": "denied", "message": f"Deuda pendiente de pago en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min"}
+
                 aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
                 if aforo:
                     if ultimo.reserva_id or getattr(reserva, 'id', None):
@@ -376,7 +382,7 @@ class AccessService:
                     tipo_vehiculo=ultimo.tipo_vehiculo,
                     fecha_hora=now.isoformat(), 
                     reserva_id=reserva.id, 
-                    pago_confirmado=True, 
+                    pago_confirmado=ultimo.pago_confirmado, 
                     sucursal=sucursal
                 ))
                 db.commit()
@@ -415,11 +421,10 @@ class AccessService:
             if not tiene_salida:
                 return {"status": "ok", "message": "El vehículo ya figura como ingresado en esta sede; se reutilizó el registro", "access_log_id": ultima_entrada.id}
         
-        # Buscar reserva activa y pagada
+        # Buscar reserva vigente (pagada o impaga)
         now_str = now.strftime("%Y-%m-%d %H:%M")
         reserva = db.query(models.Reservation).filter(
             func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
-            models.Reservation.estado_pago == PaymentStatus.PAGADO,
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_inicio <= now_str,
             models.Reservation.fecha_fin >= now_str

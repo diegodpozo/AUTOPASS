@@ -55,6 +55,13 @@ export function toggleFinanceDateFilter() {
     loadFinanceData();
 }
 
+export function switchMethodTab(method) {
+    const container = document.getElementById('metodos-breakdown');
+    if (!container) return;
+    container.querySelectorAll('.method-tab').forEach(t => t.classList.toggle('active', t.dataset.method === method));
+    container.querySelectorAll('.method-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === method));
+}
+
 export async function loadFinanceData(resetPage = true) {
     if (resetPage) currentFinancePage = 1;
     const period = document.getElementById('fin-period')?.value || 'month';
@@ -111,6 +118,16 @@ export async function loadFinanceData(resetPage = true) {
             if (elResCount) elResCount.innerText = utils.formatNum(d.reservas?.cantidad || 0);
             if (elResAvg) elResAvg.innerText = `$${utils.formatNum(d.reservas?.promedio || 0)}`;
         }
+
+        // DESGLOSE POR MÉTODO DE PAGO
+        if (Array.isArray(data.desglose_metodos)) {
+            data.desglose_metodos.forEach(m => {
+                const elMount = document.getElementById(`fin-metodo-${m.metodo}`);
+                if (elMount) elMount.innerText = `$${utils.formatNum(m.monto || 0)}`;
+                const elCnt = document.getElementById(`fin-metodo-${m.metodo}-cnt`);
+                if (elCnt) elCnt.innerText = utils.formatNum(m.cantidad || 0);
+            });
+        }
     }
 
     // 2. CARGAR HISTORIAL DE PAGOS (PAGINADO)
@@ -124,10 +141,7 @@ export async function loadFinanceData(resetPage = true) {
                 const amountClass = isRefund ? 'text-danger' : 'text-secondary';
                 const badgeClass = isRefund ? 'badge-danger-light' : 'badge-success-light';
                 
-                let metodoPago = 'PAGO DIGITAL';
-                if (p.metodo === 'CAJA') {
-                    metodoPago = 'PAGO EN CAJA';
-                }
+                let metodoPago = utils.metodoPagoReport(p.metodo, p.tipo);
 
                 return `
                 <tr class="${rowClass}">

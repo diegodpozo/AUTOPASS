@@ -1,5 +1,14 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 11, 2026 - GESTIÓN DE RESERVAS ADMIN, OAUTH 2.0, METODO DE PAGO & TIPO VEHÍCULO EN RESERVAS (V9.14.2+)**:
+    *   **Gestión Integral de Reservas para Administradores**: Rediseño completo de la pestaña de Reservas del Dashboard (`routes/admin/reservations.py`, `dashboard-reservations.js`). Búsqueda multi-criterio por cliente, email, DNI, patente, ID de reserva y sucursal. Filtros por estado (`PENDIENTE_PAGO`, `PAGADA`, `EN_USO`, `FINALIZADA`, `CANCELADA`), tipo de vehículo, rango de fechas y sucursal.
+    *   **Creación y Edición de Reservas a Nombre del Usuario**: El Administrador puede emitir reservas directamente seleccionando cliente, sucursal, fechas, patente y tipo de vehículo, con cálculo dinámico de precio y comprobación de cupos de reserva en tiempo real.
+    *   **Confirmación de Pagos Manuales & Reembolsos**: Endpoint `POST /v1/admin/reservations/{id}/confirm-payment` para registrar pagos con método elegible (`DIGITAL`, `CAJA` / Efectivo, `MERCADOPAGO`, `SALDO`). Cancelación administrativa con simulación y acreditación al saldo del usuario.
+    *   **Columnas `tipo_vehiculo` y `metodo_pago` en Reservas**: Migraciones Alembic `a4c8d2e3f5b6_add_tipo_vehiculo_to_reservations.py` y `d3b7e1a9c2f0_add_metodo_pago_to_reservations.py`.
+    *   **Login Social OAuth 2.0 (Google & Facebook)**: Servicio completo en `services/oauth_service.py` con state HMAC stateless, intercambio de token, modal de compleción de registro (DNI/Teléfono) y suite de pruebas `tests/test_oauth.py`.
+    *   **Suite de 82 Tests Automáticos**: Expansión de la suite a **82 pruebas passing en 21 archivos** (`pytest`), logrando 100% de ejecución limpia.
+    *   **Mejoras de UI / UX**: Modal de tickets scrolleable y responsive (header X fija, acciones apiladas), saludos personalizados en monitor ALPR ("¡BIENVENIDO!" / "¡HASTA LUEGO!") y CSS PWA `standalone.css`.
+
 - **SEPTIEMBRE 5, 2026 - TARIFA FRACCIÓN 30 MIN & SELECTOR POR RANGO (V9.10.0)**:
     *   **Casillas de Horarios Más Compactas**: Se redujo la altura de la grilla de horarios: padding de las casillas de `6px 12px` a `3px 8px`, fuente de `0.78rem` a `0.68rem` y gap de la grilla de 6px a 4px. Resultado: la grilla de 34 horarios ocupa ~40% menos de alto en pantalla.
     *   **Mensaje de Selección de Horario Eliminado**: Se quitó por completo el texto "Inicio: X — ahora tocá la hora de fin" y el resumen "X → Y (Nh)" que aparecía/desaparecía entre el picker de día y la grilla al seleccionar horarios. La página ya no se mueve; el estado de selección se refleja solo en las casillas resaltadas.

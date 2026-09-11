@@ -29,7 +29,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 
 | Prefijo | Paquete/Archivo | Responsabilidad |
 | :--- | :--- | :--- |
-| `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password. |
+| `/v1/auth` | `routes/auth.py` | Login, Register, Forgot/Reset Password, **Login social OAuth** (providers/authorize/callback/complete vía `services/oauth_service.py`). |
 | `/v1/admin` | `routes/admin/` | **Modular:** Users CRUD (toggle-block, balance, password, role, delete), Branches CRUD (logo, toggle, floors; **renombre con propagación** a Aforo/Settings/User/Reservations/AccessLog/SupportTickets/Cámaras/Promociones + remapeo `CAMERA_SOURCE_*` y detención de subprocesos ALPR si el prefijo cambia), Reservations CRUD (confirm-payment, cancel, update, validación de disponibilidad exclusiva), Promotions CRUD (toggle), Operations (manual entry/exit, open-barrier, cancel-stay), Settings (prices, capacity, cupos de reserva), Virtual Time (status, advance, rewind, set-target, set, reset — LOCAL_ADMIN+), Support (listar/detalle/pending-count/responder tickets, marcar notifs leídas). |
 | `/v1/user` | `routes/user/` | **Modular:** Profile (get/update, change-password), Vehicles CRUD, Balance (recharge, payment-history, active-stays, rates), Reservations (modify, pay, cancel-simulation, cancel, confirm-reminder, **check-availability, disabled-dates, disabled-hours**), Fidelization (promotions, redeem, redemption-tickets, redemptions available/cancel, points-adjust, points-history), Notifications (CRUD in-app, unread count, mark read, read-all, clear-read), Support (crear/consultar/detalle propio/responder), Mercado Pago (checkout, callbacks success/pending/failure, webhook). |
 | `/v1/parking`| `routes/parking/`| **Modular:** Access (validate-plate, pay-stay con `metodo=DIGITAL\|CAJA`, exit-plate, validate-qr), Status (current-occupancy con `capacidad_reservas_*`/`disponibilidad_reservas_*`, branches, ws), Utils (normalize_plate, format_plate). |
@@ -142,6 +142,12 @@ Las barras de progreso fueron removidas completamente (`progress-bar`, `progress
 4. **Aforo por Sucursal**: `ParkingAforo` y `ParkingFloor` tienen campo `sucursal` para aislamiento de capacidad.
 5. **Renombre de Sucursal**: La edición del nombre (`PATCH /v1/admin/branches/{id}`) valida unicidad y **propaga** el cambio a `ParkingAforo`, `Settings`, `User`, `Reservation.sucursal_nombre`, `AccessLog.sucursal`, `SupportTicket.sucursal`, `ParkingCamera.sucursal` y `Promotion.sucursal`. El gate_id de cada cámara usa el prefijo normalizado del nombre de sucursal (`{normalize_name(sucursal)}_{TIPO}_{id}`): si ese prefijo cambia, el renovar remapea las claves legacy `Settings.CAMERA_SOURCE_*` y detiene los subprocesos ALPR con el prefijo viejo (los espectadores no recibirían frames). Si agregás una tabla nueva con referencia por nombre de sucursal, incluirla en esa propagación. Ya no se exige el prefijo "AUTOPASS" en el nombre.
 
+## Convenciones OAuth (Login Social)
+1. **Proveedores**: Registrar cada proveedor en `_PROVIDERS` (`services/oauth_service.py`). El estado (CSRF) se firma con HMAC sobre `SECRET_KEY` (stateless, sin cookies); no cambiar el formato `<provider>.<nonce>.<exp>.<sig>` sin actualizar `sign_state`/`verify_state`.
+2. **Credenciales**: `GOOGLE_OAUTH_*` y `FACEBOOK_OAUTH_*` en `.env`. La `redirect_uri` debe ser exactamente `{BASE_URL}/v1/auth/oauth/{provider}/callback`. Con túnel cloudflared, `BASE_URL` debe ser el dominio público del túnel. Sin credenciales el proveedor queda oculto (el frontend consulta `/v1/auth/oauth/providers`).
+3. **Usuarios nuevos**: No crear el usuario en el callback. Emitir `code` JWT con `purpose="oauth_signup"` y delegar el alta a `complete_oauth_signup` (valida DNI/teléfono y unicidad de email/dni). El password se genera aleatorio (acceso solo por red social; la recuperación queda disponible).
+4. **Redirección al frontend**: Usar SIEMPRE el fragmento `#oauth_*` (nunca query string) para evitar exponer tokens en logs; limpiar el hash en el cliente tras procesarlo.
+
 ## Convenciones de Email
 1. **Templates**: Ubicados en `templates/emails/`, templates Jinja2 autocontenidos (no existe `base_email.html`): `reservation_confirmation.html`, `reservation_reminder.html`, `reservation_auto_cancelled.html` y `recovery.html`.
 2. **QR en Base64**: Para emails de confirmación, generar QR como imagen base64 embebida.
@@ -162,26 +168,28 @@ Para correr las pruebas tras un cambio:
 ```bash
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-Tests disponibles en `tests/` (50 pruebas en 19 archivos):
+Tests disponibles en `tests/` (**82 pruebas en 21 archivos**):
 - `test_access_service.py`: Validación de placas, entrada/salida
-- `test_billing_service.py`: Cálculo de tarifas/estadías
-- `test_branch_service.py`: CRUD de sucursales, aforo, pisos
-- `test_reservation_service.py`: Creación, estados de reservas
-- `test_user_service.py`: CRUD de usuarios, roles
-- `test_support_service.py`: CRUD de tickets de soporte, permisos por rol
-- `test_notifications.py`: CRUD de notificaciones, respuestas de soporte, borrado y filtros
-- `test_alpr_utils.py`: Utilidades ALPR (normalización, formatos, país)
+- `test_admin_reservations.py`: CRUD de reservas admin (búsqueda, creación, edición, confirmación de pago con método, simulación y reembolso de cancelación)
 - `test_alpr_aspect_ratio_filter.py`: Filtro de aspecto (área de placa)
 - `test_alpr_hallucination_prevention.py`: Prevención de alucinaciones OCR
 - `test_alpr_overlay.py`: Overlay de detecciones en frames
 - `test_alpr_queue_flush.py`: Cola de frames / drop-oldest
-- `test_new_validations.py`: Validaciones de integridad (v9.9.8: vehículos, usuarios, pisos, doble reserva)
-- `test_rate_limiting.py`: SlowAPI (login/register/recuperación)
-- `test_routes_auth.py`: Endpoints de auth con `TestClient` (login, registro, tokens)
+- `test_alpr_utils.py`: Utilidades ALPR (normalización, formatos, país)
+- `test_billing_service.py`: Cálculo de tarifas/estadías
+- `test_branch_service.py`: CRUD de sucursales, aforo, pisos
 - `test_mercadopago.py`: Checkout MP (estadía/reserva, BASE_URL https obligatorio, confirmación idempotente, 503 sin credenciales)
-- `test_virtual_time.py`: Tiempo virtual (avance/set/reset con offset)
+- `test_new_validations.py`: Validaciones de integridad (v9.9.8: vehículos, usuarios, pisos, doble reserva)
+- `test_notifications.py`: CRUD de notificaciones, respuestas de soporte, borrado y filtros
+- `test_oauth.py`: Ciclo de OAuth 2.0 social login (Google/Facebook, state HMAC, registro DNI/teléfono)
+- `test_rate_limiting.py`: SlowAPI (login/register/recuperación)
 - `test_reservation_availability_logic.py`: Lógica de disponibilidad de reservas
+- `test_reservation_service.py`: Creación, estados de reservas
 - `test_reservation_spots.py`: Cupos/ocupación de reservas
+- `test_routes_auth.py`: Endpoints de auth con `TestClient` (login, registro, tokens)
+- `test_support_service.py`: CRUD de tickets de soporte, permisos por rol, adjuntos
+- `test_user_service.py`: CRUD de usuarios, roles, soft delete
+- `test_virtual_time.py`: Tiempo virtual (avance/set/reset con offset)
 
 ---
 

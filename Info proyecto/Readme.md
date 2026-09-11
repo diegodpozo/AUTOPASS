@@ -2,22 +2,25 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.14.1+ - Septiembre 2026)
+## Últimas Actualizaciones (v9.14.2+ - Septiembre 2026)
+- **Gestión Integral de Reservas para Admins**: Módulo completo en Dashboard (`routes/admin/reservations.py`, `dashboard-reservations.js`) con búsqueda multi-criterio (cliente, email, DNI, patente, ID, sucursal), filtros por estado (`PENDIENTE_PAGO`, `PAGADA`, `EN_USO`, `FINALIZADA`, `CANCELADA`), tipo de vehículo, rango de fechas y sucursal. Permite crear reservas a nombre de usuarios, editar fechas/patente/tipo, confirmar pagos con método configurable (`DIGITAL`, `CAJA`, `MERCADOPAGO`, `SALDO`) y cancelar con reembolso simular/aplicar.
+- **Soporte de `tipo_vehiculo` y `metodo_pago` en Reservas**: Nuevos campos en `Reservation` y migraciones Alembic (`a4c8d2e3f5b6` y `d3b7e1a9c2f0`). Validación de disponibilidad respetando cupos por tipo de vehículo (`capacidad_reservas_autos/motos/camionetas`).
+- **Suite de 82 Tests Automáticos**: **82 pruebas passing en 21 archivos de test** (`pytest`), cubriendo OAuth, Checkout Mercado Pago, Admin Reservations, ALPR, Notificaciones, Rate Limiting, Tiempo Virtual, Soporte y Lógica de Aforo.
+- **Login social (OAuth 2.0 - Google + Facebook)**: Botones "Continuar con..." en login y registro. Usuarios nuevos completan DNI y teléfono en una modal (nombre/email precargados) y quedan logueados sin contraseña; usuarios existentes entran directo por su correo. Config vía `GOOGLE_OAUTH_CLIENT_ID/SECRET` y `FACEBOOK_OAUTH_CLIENT_ID/SECRET` (`services/oauth_service.py`).
 - **Pagos manuales en efectivo (`CAJA`)**: El operador puede registrar el pago de una estadía en efectivo desde el monitoreo (`metodo=CAJA` en `POST /v1/access/pay-stay`); los reportes financieros desglosan la recaudación por método (`recaudado_efectivo` / `recaudado_digital`) con KPIs dedicados en el dashboard.
 - **Re-impresión de vouchers**: Los tickets de canje de puntos pueden reimprimirse desde el portal de usuario.
-- **PWA instalable**: Manifest + Service Worker en scope raíz (`autopass-v2`) con página `/instalar`; el botón de instalación está oculto en el monitor multicámara (fuera del alcance de la PWA).
-- **Pagos con Mercado Pago (v9.14.0)**: Checkout Pro por redirección para abonar **reservas** y **estadías en curso** sin tocar el saldo de la billetera; confirmación por retorno (`/success|pending|failure`) y webhook, con aplicación idempotente (`services/mercadopago_service.py`, tabla `mercadopago_payments`).
-- **Canje de puntos por descuentos**: `RedemptionTicket` con voucher (código de 16 caracteres + QR, válido 30 días) o `descuento_reserva` aplicado automáticamente al pagar la próxima reserva.
-- **Soporte con adjuntos**: Los tickets de soporte aceptan archivos jpg/jpeg/png/gif/webp/pdf (máx. 1 MB) en mensajes del hilo, con notificaciones de lectura para el admin.
+- **PWA instalable & Standalone Layout**: Manifest + Service Worker en scope raíz (`autopass-v2`) con página `/instalar` y forzado de layout desktop en PWA instalada (`standalone.css`).
+- **Pagos con Mercado Pago (v9.14.0)**: Checkout Pro por redirección para abonar **reservas** y **estadías en curso** sin tocar el saldo de la billetera; confirmación por retorno (`/success|pending|failure`) y webhook (`services/mercadopago_service.py`, tabla `mercadopago_payments`).
+- **Soporte con adjuntos**: Los tickets de soporte aceptan archivos jpg/jpeg/png/gif/webp/pdf (máx. 1 MB) en mensajes del hilo, con modal responsive y scrolleable.
 - **Performance & Caché**: Índices de base de datos (migración `49a240f0fc25`) y caché TTL en memoria (`core/cache.py`) para tarifas.
-- **Setup Modernizado**: Instalador (`setup_backend.bat`) con dependencias organizadas por secciones (Core / DB / Seguridad / CV / IA-OCR) dentro de un único `requirements.txt`, con markers por versión de Python para numpy y para `paddleocr`/`paddlepaddle` (solo Python < 3.14). Output limpio sin spameo de pip y aborta mostrando el error real si algo falla.
-- **Migración a Neon/Postgres (sa-east-1)**: La base online pasó de Turso/Oregón (~1200 ms/query) a **Neon en São Paulo** con latencia medida de ~100 ms (12× más rápida). Configurable vía `DATABASE_URL=postgresql://...` en `.env` (fallback a SQLite local).
-- **OCR Dual (v9.10.0)**: Motor OCR **RapidOCR ONNX** como primario (compatible con Python 3.14+) con fallback a **PaddleOCR** para Python < 3.14. Reemplaza por completo a EasyOCR.
+- **Setup Modernizado & Neon/Postgres**: Instalador (`setup_backend.bat`) con `requirements.txt` modularizado. Base online en Neon São Paulo (`sa-east-1`, ~100 ms).
+- **OCR Dual (v9.10.0)**: Motor OCR **RapidOCR ONNX** como primario (compatible con Python 3.14+) con fallback a **PaddleOCR**. Saludo personalizado en monitor ALPR ("¡BIENVENIDO!" / "¡HASTA LUEGO!").
 
 ## Versiones Previas
+- **v9.14.0-v9.14.1**: Mercado Pago Checkout Pro, Pagos en efectivo CAJA, KPIs financieros, PWA instalable.
 - **v9.13.0**: Motor OCR lazy/opcional (RapidOCR/PaddleOCR) y estadísticas OCR (`/estadisticas-ocr`).
 - **v9.12.0**: Notificaciones de usuario, permisos de sucursal para `local_admin`, soporte visual del admin.
-- **v9.8.x**: Migraciones con Alembic, suite de tests expandida (24 pruebas).
+- **v9.8.x**: Migraciones con Alembic, suite de tests expandida.
 - **v9.6.0**: Modularización ALPR (`alpr/`), Servicio de Reportes (`ReportService`), Rutas de Sistema (`routes/system/`).
 - **v9.5.0**: Ocupación solo física, cortesía 10 min, multi-piso, trimodal.
 - **v9.0.0**: Real-time WebSocket, Settings Monitoring, Video Stream.

@@ -10,7 +10,7 @@ from .parking import (
 )
 from .reservation import (
     ReservationCreate, UserReservationCreate, AdminReservationCreate, 
-    ReservationUpdate, UserReservationResponse
+    ReservationUpdate, ConfirmPaymentRequest, UserReservationResponse
 )
 from .auth import Token
 from .notification import (

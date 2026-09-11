@@ -86,6 +86,7 @@ export function renderReservaCard(r, isFeatured) {
                 <div class="reserva-plate-container">
                     <div class="plate-badge-premium">${formatPlate(r.patente)}</div>
                     ${isStarted && progress < 100 ? '<span class="status-badge-ultra active-pulse" style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid #10b981;">EN CURSO</span>' : ''}
+                    ${r.en_predio ? '<span class="status-badge-ultra" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;"><i class="fas fa-circle-dot"></i> EN PREDIO</span>' : ''}
                 </div>
             </div>
             <div class="reserva-status-ultra">
@@ -104,11 +105,11 @@ export function renderReservaCard(r, isFeatured) {
             <div class="detail-item-ultra"><i class="fas fa-hourglass-end"></i><div class="detail-info-ultra"><span class="detail-label-ultra">Hasta</span><span class="detail-value-ultra">${formatDate(r.fecha_fin)}</span></div></div>
         </div>
         <div class="reserva-actions-ultra">
-            ${r.estado_pago === 'Pagado' ? `<button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> MI PASE DIGITAL</button>` : `
-            <button class="btn-ultra btn-ultra-primary" onclick="payReservation(${r.id})"><i class="fas fa-wallet"></i> PAGAR CON SALDO</button>
-            <button class="btn-ultra btn-ultra-mp" onclick="payReservationWithMp(${r.id})"><i class="fab fa-google-pay"></i> PAGAR CON MP</button>`}
+            <button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> VER COMPROBANTE</button>
+            ${r.estado_pago === 'Pendiente' && r.estado_reserva !== 'Cancelada' ? `
+            <button class="btn-ultra btn-ultra-mp" onclick="payReservationWithMp(${r.id})"><i class="fab fa-google-pay"></i> PAGAR CON MP</button>` : ''}
             <button class="btn-ultra btn-ultra-secondary" onclick="prepareEditReservation(${r.id})" ${isStarted || r.estado_reserva === 'Activa' ? 'disabled' : ''}><i class="fas fa-pen"></i></button>
-            <button class="btn-ultra btn-ultra-danger" onclick="cancelReservation(${r.id})"><i class="fas fa-trash"></i></button>
+            <button class="btn-ultra btn-ultra-danger" onclick="cancelReservation(${r.id})" ${r.estado_reserva === 'Cancelada' || r.estado_reserva === 'Fallido' ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
         </div>
     </div>`;
 }

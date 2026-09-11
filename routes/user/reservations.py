@@ -14,7 +14,7 @@ from services.reservation_service import (
     ReservationService,
     verificar_disponibilidad,
     obtener_fechas_deshabilitadas,
-    obtener_horas_deshabilitadas
+    obtener_horas_deshabilitadas_con_reservas
 )
 
 logger = get_logger("UserReservations")
@@ -108,8 +108,9 @@ def get_disabled_hours(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """DEVUELVE LA LISTA DE SLOTS HORARIOS (HH:MM) DESHABILITADOS PARA UN DÍA ESPECÍFICO."""
-    horas = obtener_horas_deshabilitadas(
+    """DEVUELVE LA LISTA DE SLOTS HORARIOS (HH:MM) DESHABILITADOS PARA UN DÍA ESPECÍFICO
+    Y LOS RANGOS REALMENTE RESERVADOS PARA DISTINGUIR OCUPACIÓN DE MARGEN DE SOLAPAMIENTO."""
+    detalle = obtener_horas_deshabilitadas_con_reservas(
         db, sucursal_nombre=sucursal_nombre, fecha_str=fecha,
         tipo_vehiculo=tipo_vehiculo, duracion_horas=duracion_horas,
         paso_minutos=paso_minutos
@@ -118,7 +119,8 @@ def get_disabled_hours(
         "sucursal_nombre": sucursal_nombre,
         "fecha": fecha,
         "tipo_vehiculo": tipo_vehiculo,
-        "disabled_hours": horas
+        "disabled_hours": detalle["disabled_hours"],
+        "reserved_ranges": detalle["reserved_ranges"]
     }
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
@@ -126,7 +128,11 @@ def get_user_reservations(db: Session = Depends(get_db), current_user: models.Us
     """LISTA TODAS LAS RESERVAS DEL USUARIO, ACTUALIZANDO ESTADOS AUTOMATICAMENTE."""
     ReservationService.cleanup_overdue_reservations(db)
     ReservationService.auto_finalize_reservations(db, current_user.id)
-    return db.query(models.Reservation).filter(models.Reservation.user_id == current_user.id).order_by(models.Reservation.id.desc()).all()
+    reservations = db.query(models.Reservation).filter(models.Reservation.user_id == current_user.id).order_by(models.Reservation.id.desc()).all()
+    en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in reservations])
+    for r in reservations:
+        r.en_predio = r.id in en_predio
+    return reservations
 
 @router.post("/reservations")
 def create_user_reservation(res: schemas.UserReservationCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

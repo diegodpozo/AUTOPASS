@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm, formatDate, formatPlate, formatNum } from './utils.js';
+import { showToast, showConfirm, formatDate, formatPlate, formatNum, metodoPagoReport } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadFloors } from './dashboard-admin-branches.js';
 
@@ -309,7 +309,7 @@ export async function exportFinanceData() {
     const rows = data.map(p => {
         const dateStr = formatDate(p.fecha_pago);
         const amount = p.costo_estadia;
-        const method = (p.tipo === 'Reserva' || p.tipo === 'Reembolso') ? 'MERCADO PAGO / ABONO' : (p.metodo === 'CAJA' ? 'PAGO EN CAJA (EFECTIVO)' : 'PAGO DIGITAL');
+        const method = metodoPagoReport(p.metodo, p.tipo);
         const type = p.tipo;
         return [
             `"${dateStr}"`,

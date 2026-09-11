@@ -40,24 +40,69 @@
 <div id="modal-pase-digital" class="modal-premium">
     <div class="modal-content-premium ticket-container" id="ticket-to-capture">
         <button class="modal-close-top no-print" onclick="closeDigitalPass()"><i class="fas fa-times"></i></button>
-        <div class="ticket-header">
-            <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo">
-            <div class="ticket-title-wrap"><span class="ticket-brand">AUTOPASS</span><span class="ticket-tagline">PASE DIGITAL</span></div>
+
+        <!-- COLUMNA IZQUIERDA: QR + ID -->
+        <div class="ticket-left-col">
+            <div class="ticket-brand-row">
+                <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo">
+                <span class="ticket-brand">AUTOPASS</span>
+            </div>
+            <div id="ticket-status-banner" class="ticket-status-banner" style="display:none;"></div>
+            <div id="ticket-qr-section" class="ticket-qr-section" style="display:none;">
+                <div id="ticket-qr" class="qr-canvas"></div>
+            </div>
+            <div id="ticket-no-qr-section" class="ticket-no-qr-section" style="display:none;">
+                <div class="ticket-no-qr-icon"><i class="fas fa-lock"></i></div>
+            </div>
+            <div class="ticket-id" id="ticket-id-display">#000000</div>
+            <div class="ticket-id" id="ticket-id-display-alt" style="display:none;">#000000</div>
+            <span class="ticket-patente-label" id="ticket-patente">---</span>
         </div>
-        <div class="ticket-body">
-            <div class="ticket-qr-section"><div id="ticket-qr" class="qr-canvas"></div><div class="ticket-id" id="ticket-id-display">#000000</div></div>
+
+        <!-- SEPARADOR VERTICAL -->
+        <div class="ticket-sep-v"></div>
+
+        <!-- COLUMNA DERECHA: INFO + FINANCIERO + ACCIONES -->
+        <div class="ticket-right-col">
+            <!-- INFO -->
             <div class="ticket-info-grid">
-                <div class="ticket-info-item"><label>PATENTE</label><span id="ticket-patente" class="plate-style">---</span></div>
-                <div class="ticket-info-item"><label>VENCE</label><span id="ticket-vence">---</span></div>
+                <div class="ticket-info-item"><label>TIPO</label><span id="ticket-tipo-vehiculo">---</span></div>
+                <div class="ticket-info-item"><label>ESTADÍA</label><span id="ticket-tipo-estadia">---</span></div>
                 <div class="ticket-info-item full-width"><label>SUCURSAL</label><span id="ticket-sucursal">---</span></div>
                 <div class="ticket-info-item full-width"><label>DIRECCIÓN</label><span id="ticket-direccion" class="text-small">---</span></div>
+                <div class="ticket-info-item"><label>INICIO</label><span id="ticket-inicio">---</span></div>
+                <div class="ticket-info-item"><label>FIN</label><span id="ticket-vence">---</span></div>
+                <div class="ticket-info-item"><label>DURACIÓN</label><span id="ticket-duracion">---</span></div>
+                <div class="ticket-info-item"><label>TARIFA</label><span id="ticket-tarifa">---</span></div>
+                <div class="ticket-info-item full-width"><label>CÁLCULO</label><span id="ticket-calculo" class="text-small">---</span></div>
+            </div>
+
+            <!-- FINANCIERO -->
+            <div class="ticket-financial-section">
+                <div class="ticket-total-row">
+                    <span class="ticket-total-label">TOTAL</span>
+                    <span class="ticket-total-value" id="ticket-total">$0</span>
+                </div>
+                <div class="ticket-info-grid ticket-financial-grid">
+                    <div class="ticket-info-item"><label>MÉTODO</label><span id="ticket-metodo-pago">---</span></div>
+                    <div class="ticket-info-item"><label>PUNTOS</label><span id="ticket-puntos">---</span></div>
+                </div>
+            </div>
+
+            <!-- ACCIONES -->
+            <div class="ticket-footer">
+                <div class="ticket-instructions" id="ticket-instructions">Presentá este código en el lector de la entrada.</div>
+                <div id="ticket-payment-actions" class="ticket-actions ticket-payment-actions no-print" style="display:none;">
+                    <button class="btn-ticket btn-pay-wallet" onclick="payReservationFromPass()"><i class="fas fa-wallet"></i> SALDO</button>
+                    <button class="btn-ticket btn-pay-mp" onclick="payReservationMpFromPass()"><i class="fab fa-google-pay"></i> MERCADO PAGO</button>
+                </div>
+                <div id="ticket-share-actions" class="ticket-actions no-print" style="display:none;">
+                    <button class="btn-ticket btn-download" onclick="shareTicket()"><i class="fas fa-share-nodes"></i> COMPARTIR</button>
+                </div>
             </div>
         </div>
-        <div class="ticket-footer">
-            <div class="ticket-instructions">Presentá este código en el lector de la entrada si el reconocimiento de patente falla.</div>
-            <div class="ticket-actions no-print"><button class="btn-ticket btn-download" onclick="shareTicket()"><i class="fas fa-share-nodes"></i> COMPARTIR PASE</button></div>
-        </div>
-        <div class="ticket-cutout left"></div><div class="ticket-cutout right"></div><div class="ticket-perf"></div>
+
+        <div class="ticket-cutout left"></div><div class="ticket-cutout right"></div>
     </div>
 </div>
 

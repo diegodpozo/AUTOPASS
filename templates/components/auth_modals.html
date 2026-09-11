@@ -3,6 +3,17 @@
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('loginModal')"><i class="fas fa-xmark"></i></span>
         <h2>INICIÁ SESIÓN</h2>
+        <div class="oauth-block">
+            <div class="oauth-buttons">
+                <button type="button" class="btn-oauth btn-oauth-google" data-oauth-provider="google" onclick="startOAuth('google')">
+                    <i class="fab fa-google"></i><span>Continuar con Google</span>
+                </button>
+                <button type="button" class="btn-oauth btn-oauth-facebook" data-oauth-provider="facebook" onclick="startOAuth('facebook')">
+                    <i class="fab fa-facebook-f"></i><span>Continuar con Facebook</span>
+                </button>
+            </div>
+            <div class="oauth-divider"><span>o usá tu correo</span></div>
+        </div>
         <div id="login-error" class="error-msg"></div>
         <form id="loginForm">
             <div class="form-group">
@@ -62,6 +73,18 @@
     <div class="modal-content modal-content-wide">
         <span class="close-btn" onclick="closeModal('registerModal')"><i class="fas fa-xmark"></i></span>
         <h2>CREÁ TU CUENTA</h2>
+        
+        <div class="oauth-block">
+            <div class="oauth-buttons">
+                <button type="button" class="btn-oauth btn-oauth-google" data-oauth-provider="google" onclick="startOAuth('google')">
+                    <i class="fab fa-google"></i><span>Registrate con Google</span>
+                </button>
+                <button type="button" class="btn-oauth btn-oauth-facebook" data-oauth-provider="facebook" onclick="startOAuth('facebook')">
+                    <i class="fab fa-facebook-f"></i><span>Registrate con Facebook</span>
+                </button>
+            </div>
+            <div class="oauth-divider"><span>o registrate con tu correo</span></div>
+        </div>
         
         <div id="register-error" class="error-msg"></div>
         
@@ -142,5 +165,61 @@
         <div class="modal-text">
             ¿Ya tenés una cuenta? <a href="javascript:void(0)" onclick="switchModal('registerModal', 'loginModal')" class="modal-link">Iniciá sesión acá</a>
         </div>
+    </div>
+</div>
+
+<!-- MODAL: COMPLETAR REGISTRO SOCIAL (OAUTH) -->
+<div id="oauthSignupModal" class="modal">
+    <div class="modal-content modal-content-wide">
+        <span class="close-btn" onclick="closeModal('oauthSignupModal')"><i class="fas fa-xmark"></i></span>
+        <h2>COMPLETÁ TU REGISTRO</h2>
+        <p class="modal-subtitle" id="oauth-signup-subtitle">Casi listo. Solo nos faltan un par de datos para terminar tu cuenta con <strong id="oauth-signup-provider">tu red social</strong>.</p>
+
+        <div id="oauth-signup-error" class="error-msg"></div>
+
+        <form id="oauthSignupForm">
+            <div class="form-group">
+                <label>Correo Electrónico</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="oauth-signup-email" readonly>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre/s</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="oauth-signup-nombre" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Apellido</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user-tag"></i>
+                        <input type="text" id="oauth-signup-apellido" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>DNI</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" id="oauth-signup-dni" placeholder="12345678" maxlength="8" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="oauth-signup-tel" placeholder="11 2233 4455" required>
+                    </div>
+                </div>
+            </div>
+            <p class="oauth-note"><i class="fas fa-shield-halved"></i> No necesitás contraseña: vas a ingresar siempre con tu red social.</p>
+
+            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-user-check"></i> Finalizá tu Registro</button>
+        </form>
     </div>
 </div>

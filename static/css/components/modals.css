@@ -197,6 +197,79 @@
     font-size: 0.75rem;
 }
 
+/* ESTILOS DEL MODAL DE ELECCIÓN */
+.choice-modal-content {
+    max-width: 420px;
+}
+
+.choice-modal-content #choice-msg {
+    color: #999;
+    margin-bottom: 20px;
+}
+
+.choice-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.choice-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 13px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-family: 'Montserrat';
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.choice-option i {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--dorado);
+    font-size: 0.95rem;
+}
+
+.choice-option span {
+    flex: 1;
+    text-align: left;
+}
+
+.choice-option:hover {
+    background: rgba(212, 175, 55, 0.12);
+    border-color: var(--dorado);
+    transform: translateY(-1px);
+}
+
+.choice-option:active {
+    transform: translateY(0);
+}
+
+.choice-modal-content .confirm-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.choice-modal-content .confirm-actions .btn {
+    min-width: 180px;
+}
+
 /* DISEÑO RESPONSIVO */
 @media (max-width: 480px) {
     .modal-content { 

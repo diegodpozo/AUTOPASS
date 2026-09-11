@@ -55,6 +55,20 @@ export async function manualEntry() {
 }
 
 export async function payOccupancy(plate, amount, onPaidCallback) {
+    const metodo = await utils.showChoice(
+        'Pago de Estadía',
+        `${utils.formatPlate(plate)} — MONTO: $${utils.formatNum(amount || 0)} — ¿Con qué método abonó el cliente?`,
+        [
+            { label: 'Efectivo', icon: 'fa-money-bill-wave' },
+            { label: 'Mercado Pago', icon: 'fa-wallet' },
+            { label: 'Transferencia', icon: 'fa-building-columns' },
+            { label: 'Tarjeta', icon: 'fa-credit-card' },
+            { label: 'Otro', icon: 'fa-circle-question' },
+        ]
+    );
+
+    if (!metodo) return;
+
     const confirmed = await utils.showConfirm(
         '', 
         `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
@@ -65,16 +79,16 @@ export async function payOccupancy(plate, amount, onPaidCallback) {
                 MONTO: $${utils.formatNum(amount || 0)}
             </div>
             <div style="opacity: 0.9; margin-top: 5px;">
-                ¿Confirmar el pago?
+                ¿Confirmar el pago con ${metodo}?
             </div>
         </div>`
     );
 
     if (!confirmed) return;
 
-    const res = await api.post(`/access/pay-stay?plate=${plate}&metodo=CAJA`);
+    const res = await api.post(`/access/pay-stay?plate=${plate}&metodo=${encodeURIComponent(metodo)}`);
     if (res.ok) { 
-        utils.showToast('Pago procesado', 'success'); 
+        utils.showToast(`Pago procesado (${metodo})`, 'success'); 
         stats.loadOccupancy(); 
         stats.loadLiveStats();
         if (typeof onPaidCallback === 'function') {

@@ -105,6 +105,22 @@ class BranchResponse(BranchBase):
     ocupacion_reservas_motos_total: int = 0
     ocupacion_reservas_camionetas_total: int = 0
     ocupacion_reservas_total: int = 0
+    # TARIFAS POR TIPO DE VEHICULO
+    tarifa_hora: float = 0
+    tarifa_dia: float = 0
+    tarifa_semana: float = 0
+    tarifa_quincena: float = 0
+    tarifa_mes: float = 0
+    tarifa_hora_moto: float = 0
+    tarifa_dia_moto: float = 0
+    tarifa_semana_moto: float = 0
+    tarifa_quincena_moto: float = 0
+    tarifa_mes_moto: float = 0
+    tarifa_hora_camioneta: float = 0
+    tarifa_dia_camioneta: float = 0
+    tarifa_semana_camioneta: float = 0
+    tarifa_quincena_camioneta: float = 0
+    tarifa_mes_camioneta: float = 0
 
 class BranchPublicResponse(BranchBase):
     model_config = ConfigDict(from_attributes=True)

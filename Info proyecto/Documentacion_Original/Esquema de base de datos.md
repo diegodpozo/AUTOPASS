@@ -142,55 +142,107 @@ graph TD
 | `id` | INTEGER (PK) | ID de la reserva |
 | `user_id` | INTEGER (FK) | Usuario que reserva |
 | `patente` | TEXT | Patente autorizada para esta reserva |
-| `fecha_inicio` | TEXT | ISO8601 |
-| `fecha_fin` | TEXT | ISO8601 |
-| `dias_semana` | TEXT (Null) | Días permitidos (ej: "0,1,2") |
-| `monto_total` | REAL | Valor de la reserva |
-| `mp_preference_id` | TEXT | ID de pago de Mercado Pago |
-| `estado_pago` | TEXT | 'Pendiente', 'Aprobado', 'Rechazado' |
-| `estado_reserva` | TEXT | 'Pendiente', 'Activa', 'Finalizada', 'Cancelada' |
+| `tipo_vehiculo` | VARCHAR | Tipo de vehículo (`auto`, `moto`, `camioneta` — migración `a4c8d2e3f5b6`) |
+| `sucursal_nombre` | VARCHAR | Nombre de la sucursal asignada |
+| `sucursal_info` | JSON | Metadata de la sucursal al momento de reservar |
+| `fecha_inicio` | DATETIME | Timestamp de inicio (UTC) |
+| `fecha_fin` | DATETIME | Timestamp de fin (UTC) |
+| `dias_semana` | VARCHAR (Null) | Días permitidos para pases periódicos |
+| `monto_total` | FLOAT | Valor cobrado de la reserva |
+| `monto_reembolsado` | FLOAT | Monto devuelto en caso de cancelación parcial/total |
+| `metodo_pago` | VARCHAR | Método utilizado (`SALDO`, `MERCADOPAGO`, `CAJA`, `DIGITAL` — migración `d3b7e1a9c2f0`) |
+| `mp_preference_id` | VARCHAR | ID de preferencia de Mercado Pago |
+| `estado_pago` | VARCHAR | Status de pago (`Pendiente`, `Pagado`, `Reembolsado`, `Fallido`) |
+| `estado_reserva` | VARCHAR | Status de reserva (`PENDIENTE_PAGO`, `PAGADA`, `EN_USO`, `FINALIZADA`, `CANCELADA`) |
+| `cliente_nombre` | VARCHAR | Nombre completo del cliente precargado |
+| `created_at` / `updated_at` | DATETIME | Timestamps de auditoría |
 
 ### 4. Inventario de Aforo (`parking_aforo`)
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
 | `id` | INTEGER (PK) | ID único |
-| `capacidad_total` | INTEGER | Cantidad total de plazas (ej: 20) |
-| `ocupacion_actual` | INTEGER | Vehículos actualmente dentro |
-| `ultima_actualizacion`| TEXT | Timestamp del último evento de barrera |
+| `sucursal` | VARCHAR | Nombre de la sucursal |
+| `capacidad_total` | INTEGER | Capacidad física total PB |
+| `ocupacion_actual` | INTEGER | Ocupación física actual PB |
+| `capacidad_motos` / `ocupacion_motos` | INTEGER | Plazas físicas y ocupación para motos |
+| `capacidad_camionetas` / `ocupacion_camionetas` | INTEGER | Plazas físicas y ocupación para camionetas |
+| `capacidad_reservas_autos/motos/camionetas/reservas` | INTEGER | Cupos exclusivos para reservas (PB) |
+| `ocupacion_reservas_autos/motos/camionetas/reservas` | INTEGER | Contadores de cupos ocupados por reservas (PB) |
 
-### 5. Historial de Puntos (`points_log`)
+### 5. Pisos de Estacionamiento (`parking_floors`)
+| Campo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id` | INTEGER (PK) | ID del piso |
+| `branch_id` | INTEGER (FK) | Sucursal a la que pertenece |
+| `nombre` / `numero_piso` | VARCHAR / INT | Nombre del piso (ej: "Piso 1") |
+| `capacidad_total` / `ocupacion_actual` | INTEGER | Capacidad física y ocupación por piso |
+| `capacidad_motos` / `ocupacion_motos` | INTEGER | Plazas y ocupación motos |
+| `capacidad_camionetas` / `ocupacion_camionetas` | INTEGER | Plazas y ocupación camionetas |
+| `capacidad_reservas_*` / `ocupacion_reservas_*` | INTEGER | Cupos exclusivos de reserva del piso |
+
+### 6. Registros de Acceso ALPR (`access_logs`)
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
 | `id` | INTEGER (PK) | ID único |
-| `user_id` | INTEGER (FK) | Usuario afectado |
-| `cantidad` | INTEGER | Puntos ganados (+) o canjeados (-) |
-| `motivo` | TEXT | 'Reserva', 'Canje 1h gratis', 'Promo' |
-| `fecha` | TEXT | ISO8601 |
+| `patente_detectada` | VARCHAR | Patente leída por la cámara |
+| `normalized_patente` | VARCHAR | Patente normalizada para búsquedas eficientes |
+| `tipo_evento` | VARCHAR | `ENTRADA` o `SALIDA` |
+| `sucursal` | VARCHAR | Nombre de la sucursal |
+| `floor_id` | INTEGER (FK, Null) | Piso asignado |
+| `reserva_id` | INTEGER (FK, Null) | Vinculado si existe reserva previa |
+| `fecha_hora` | DATETIME | Timestamp del evento (UTC) |
+| `imagen_path` | VARCHAR | Ruta de la captura capturada |
+| `pago_confirmado` | BOOLEAN | Indica si el pago de estadía fue procesado |
+| `costo_estadia` | FLOAT | Costo calculado |
+| `metodo_pago` | VARCHAR | `DIGITAL`, `CAJA` (efectivo), `MERCADOPAGO` |
+| `fecha_pago` | DATETIME | Timestamp de liquidación |
+| `ocr_time` | FLOAT | Tiempo de ejecución OCR (ms) |
 
-### 6. Cupones de Descuento (`coupons`)
+### 7. Pagos con Mercado Pago (`mercadopago_payments`)
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | ID único |
-| `codigo` | TEXT (Unique) | Ej: 'PARKING10' |
-| `descuento_porcentaje`| INTEGER | Valor del 0 al 100 |
-| `fecha_expiracion` | TEXT | ISO8601 |
-| `activo` | BOOLEAN | Estado del cupón |
+| `id` | INTEGER (PK) | ID autoincremental de la intención |
+| `tipo` | VARCHAR | `reserva` o `estadia` |
+| `reserva_id` / `access_log_id` | INTEGER (FK) | Entidad abonada |
+| `redemption_ticket_id` | INTEGER (FK) | Ticket de descuento aplicado |
+| `patente` | VARCHAR | Patente asociada |
+| `monto` / `moneda` | FLOAT / VARCHAR | Importe cobrado (ARS) |
+| `external_reference` | VARCHAR (Unique) | Código de referencia `AP-{TIPO}-{id}-{uuid8}` |
+| `preference_id` / `payment_id` | VARCHAR | Identificadores devueltos por la API MP |
+| `estado` / `mp_status` | VARCHAR | `PENDIENTE`, `APROBADO`, `FALLIDO`, `CANCELADO` |
 
-### 7. Registros de Acceso (ALPR) (`access_logs`)
+### 8. Sesiones Multi-Dispositivo (`user_sessions`)
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | ID único |
-| `patente_detectada` | TEXT | Patente leída por la cámara |
-| `tipo_evento` | TEXT | 'ENTRADA' o 'SALIDA' |
-| `reserva_id` | INTEGER (FK, Null)| Vinculado si existe reserva previa |
-| `fecha_hora` | TEXT | ISO8601 |
-| `imagen_path` | TEXT | Ruta temporal de la captura (si aplica) |
-| `pago_confirmado` | BOOLEAN | Indica si el pago fue procesado al salir |
-| `costo_estadia` | REAL | Costo calculado para esta estancia específica |
+| `id` | INTEGER (PK) | ID único de sesión |
+| `user_id` | INTEGER (FK) | Usuario asociado |
+| `device_id` | VARCHAR | Hash identificador del dispositivo |
+| `user_agent` | VARCHAR | User-Agent del navegador |
+| `ip_address` | VARCHAR | Dirección IP remota |
+| `created_at` / `last_active` | DATETIME | Timestamps de auditoría de sesión |
 
-### 8. Configuraciones Globales (`settings`)
+### 9. Tickets de Soporte y Mensajes (`support_tickets` & `support_ticket_messages`)
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | ID único |
-| `clave` | TEXT (Unique) | Ej: 'precio_hora', 'multa_reserva' |
-| `valor` | REAL | Valor numérico de la configuración |
+| `support_tickets.id` | INTEGER (PK) | ID del ticket |
+| `user_id` | INTEGER (FK) | Cliente emisor |
+| `sucursal` | VARCHAR | Sucursal de destino |
+| `asunto` / `categoria` | VARCHAR | Título y categoría del ticket |
+| `estado` | VARCHAR | `ABIERTO`, `EN_PROCESO`, `RESUELTO`, `CERRADO` |
+| `support_ticket_messages.id` | INTEGER (PK) | Mensaje dentro del hilo |
+| `ticket_id` | INTEGER (FK) | Ticket asociado |
+| `sender_type` | VARCHAR | `USER` o `ADMIN` |
+| `mensaje` | TEXT | Texto del mensaje |
+| `adjunto_url` / `adjunto_nombre` / `adjunto_size` | VARCHAR / INT | Archivos adjuntos (jpg/png/pdf max 1 MB) |
+
+### 10. Canjes y Vouchers (`redemption_tickets`)
+| Campo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id` | INTEGER (PK) | ID del ticket de canje |
+| `user_id` | INTEGER (FK) | Usuario beneficiario |
+| `promotion_id` | INTEGER (FK) | Promoción canjeada |
+| `codigo` | VARCHAR (Unique) | Código único de 16 caracteres |
+| `qr_data` | VARCHAR | Data para QR `AUTOPASS_REDEMPTION|ID:{codigo}` |
+| `tipo_canje` | VARCHAR | `voucher` o `descuento_reserva` |
+| `estado` | VARCHAR | `ACTIVO`, `USADO`, `CANCELADO`, `EXPIRADO` |
+| `fecha_expiracion` | DATETIME | Fecha límite de validez (30 días) |

@@ -197,7 +197,7 @@ class BillingService:
     @staticmethod
     def process_payment(db: Session, plate: str, metodo: str = "DIGITAL") -> dict:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
-        from models.enums import ReservationStatus
+        from models.enums import ReservationStatus, PaymentStatus
 
         log = db.query(models.AccessLog).filter(
             models.AccessLog.patente_detectada == plate,
@@ -237,12 +237,33 @@ class BillingService:
                     return {"status": "ok", "monto_cobrado": monto_real, "puntos_ganados": puntos_ganados}
             return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}
 
-        monto_real = BillingService.calculate_debt(log.fecha_hora, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+        monto_real = 0.0
+        motivo_puntos = f"Estadía abonada: {plate}"
+        now_str = TimeService.now_str()
+        if log.reserva_id:
+            r = db.query(models.Reservation).filter(models.Reservation.id == log.reserva_id).first()
+            if r and r.estado_pago != PaymentStatus.PAGADO:
+                # RESERVA IMPAGA QUE YA INGRESÓ: COBRAR MONTO DE LA RESERVA + EXTRA ACUMULADO SI VENCIÓ
+                monto_real = (r.monto_total or 0)
+                if r.fecha_fin < now_str:
+                    monto_real += BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+                # MARCAR LA RESERVA COMO PAGADA (SE ABONÓ EN EL PREDIO)
+                r.estado_pago = PaymentStatus.PAGADO
+                if r.estado_reserva == ReservationStatus.PENDIENTE:
+                    r.estado_reserva = ReservationStatus.ACTIVA
+                r.fecha_pago = datetime.datetime.now().isoformat()
+                r.metodo_pago = metodo
+                motivo_puntos = f"Reserva abonada en predio: {plate}"
+            elif r and r.fecha_fin < now_str:
+                # RESERVA YA PAGADA (ONLINE) PERO EL LOG NO: COBRAR SOLO EL EXTRA ACUMULADO
+                monto_real = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+        else:
+            monto_real = BillingService.calculate_debt(log.fecha_hora, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
         
         # CONFIRMACION DE PAGO EN EL LOG
         log.pago_confirmado = True
         log.metodo_pago = metodo
-        log.costo_estadia = monto_real
+        log.costo_estadia = (log.costo_estadia or 0) + monto_real
         log.fecha_pago = datetime.datetime.now().isoformat()
         
         # ACREDITACION DE BENEFICIOS POR FIDELIZACION
@@ -255,7 +276,7 @@ class BillingService:
             db.add(models.PointsLog(
                 user_id=vehiculo.owner.id,
                 cantidad=puntos_ganados,
-                motivo=f"Estadía abonada: {plate}",
+                motivo=motivo_puntos,
                 fecha=datetime.datetime.now().isoformat()
             ))
         
