@@ -39,7 +39,9 @@ export {
 export {
     showDigitalPass,
     closeDigitalPass,
-    shareTicket
+    shareTicket,
+    payReservationFromPass,
+    payReservationMpFromPass
 } from './reservas-pass.js';
 
 

@@ -1,5 +1,7 @@
 import datetime
+import urllib.parse
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 import models, schemas
@@ -9,10 +11,34 @@ from core.config import settings
 from services.email_service import EmailService
 from services.user_service import UserService
 from services.user_notification_service import UserNotificationService
+from services import oauth_service
 from core.limiter import limiter
 from models.enums import UserRole
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
+
+def _oauth_redirect(**params):
+    """REDIRIGE AL FRONTEND CON PARAMETROS EN EL FRAGMENTO (#...) PARA NO EXPONERLOS EN LOGS."""
+    fragment = "&".join(
+        f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items() if v is not None
+    )
+    return RedirectResponse(url=f"/#{fragment}", status_code=303)
+
+def _login_payload(user: models.User, nuevo_dispositivo: bool = False) -> dict:
+    access_token_expires = datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email, "rol": user.rol},
+        expires_delta=access_token_expires
+    )
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "rol": user.rol,
+        "nombre": user.nombre,
+        "apellido": user.apellido,
+        "sucursal": user.sucursal,
+        "nuevo_dispositivo": nuevo_dispositivo
+    }
 
 @router.post("/register")
 @limiter.limit("10/minute")
@@ -172,3 +198,79 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
         "sucursal": user.sucursal,
         "nuevo_dispositivo": nuevo_dispositivo
     }
+
+@router.get("/oauth/providers")
+@limiter.limit("30/minute")
+def oauth_providers(request: Request):
+    """LISTA LOS PROVEEDORES DE LOGIN SOCIAL HABILITADOS (CON CREDENCIALES)."""
+    return {"providers": oauth_service.enabled_providers()}
+
+@router.get("/oauth/{provider}/authorize")
+@limiter.limit("10/minute")
+def oauth_authorize(request: Request, provider: str, redirect: str = None):
+    """INICIA EL FLUJO OAUTH: REDIRIGE AL NAVEGADOR HACIA EL PROVEEDOR."""
+    if not oauth_service.is_provider_configured(provider):
+        raise HTTPException(status_code=503, detail="El login con este proveedor no está configurado.")
+    state = oauth_service.sign_state(provider)
+    auth_url = oauth_service.get_authorize_url(provider, state)
+    return RedirectResponse(url=auth_url, status_code=302)
+
+@router.get("/oauth/{provider}/callback")
+@limiter.limit("10/minute")
+def oauth_callback(
+    request: Request,
+    provider: str,
+    db: Session = Depends(get_db),
+    code: str = None,
+    state: str = None,
+    error: str = None,
+):
+    """RECIBE EL RETORNO DEL PROVEEDOR Y RESUELVE LOGIN O REGISTRO SOCIAL."""
+    if error:
+        return _oauth_redirect(oauth_error="denegado")
+
+    if not oauth_service.verify_state(provider, state):
+        return _oauth_redirect(oauth_error="state_invalido")
+
+    if not code:
+        return _oauth_redirect(oauth_error="sin_codigo")
+
+    try:
+        access_token = oauth_service.exchange_code(provider, code)
+        info = oauth_service.fetch_user_info(provider, access_token)
+    except HTTPException as e:
+        return _oauth_redirect(oauth_error=e.detail)
+
+    email = info["email"]
+    user = db.query(models.User).filter(
+        models.User.email == email, models.User.is_deleted == False
+    ).first()
+
+    if user:
+        if user.is_blocked:
+            return _oauth_redirect(oauth_error="bloqueado")
+        payload = _login_payload(user)
+        return _oauth_redirect(
+            oauth_token=payload["access_token"],
+            oauth_rol=payload["rol"],
+            oauth_nombre=user.nombre,
+            oauth_apellido=user.apellido,
+        )
+
+    signup_code = oauth_service.issue_oauth_signup_code(
+        email, provider, info["nombre"], info["apellido"]
+    )
+    return _oauth_redirect(
+        oauth_signup=signup_code,
+        oauth_email=email,
+        oauth_provider=provider,
+        oauth_nombre=info["nombre"],
+        oauth_apellido=info["apellido"],
+    )
+
+@router.post("/oauth/complete")
+@limiter.limit("10/minute")
+def oauth_complete(request: Request, body: schemas.auth.OAuthComplete, db: Session = Depends(get_db)):
+    """COMPLETA EL REGISTRO SOCIAL: VALIDA DNI/TELEFONO Y LOGUEA AL USUARIO."""
+    user = oauth_service.complete_oauth_signup(db, body.code, body.dni, body.telefono)
+    return _login_payload(user)

@@ -1,7 +1,26 @@
 from sqlalchemy.orm import Session
 import models
+from services.billing_service import BillingService
+from models.enums import VehicleType
 
 class BranchService:
+    @staticmethod
+    def get_branch_tariffs(db: Session, branch_name: str) -> dict:
+        """TARIFAS DE LA SUCURSAL POR MODALIDAD Y TIPO DE VEHICULO."""
+        buckets = {
+            "": VehicleType.AUTO,
+            "_moto": VehicleType.MOTO,
+            "_camioneta": VehicleType.CAMIONETA,
+        }
+        tipos = {"hora": "hora", "dia": "dia", "semana": "semana", "quincena": "quincena", "mes": "mes"}
+        out = {}
+        for tipo_key, estadia in tipos.items():
+            for suffix, vtype in buckets.items():
+                out[f"tarifa_{tipo_key}{suffix}"] = BillingService.get_rate(
+                    db, estadia, sucursal=branch_name, tipo_vehiculo=vtype
+                )
+        return out
+
     @staticmethod
     def get_branch_capacity_summary(db: Session, branch: models.ParkingBranch) -> dict:
         """CALCULA LOS TOTALES DE CAPACIDAD Y OCUPACION (PB + PISOS)."""
@@ -72,5 +91,10 @@ class BranchService:
             # RESUMEN
             summary = BranchService.get_branch_capacity_summary(db, b)
             for key, val in summary.items():
+                setattr(b, key, val)
+
+            # TARIFAS
+            tariffs = BranchService.get_branch_tariffs(db, b.nombre)
+            for key, val in tariffs.items():
                 setattr(b, key, val)
         return branches

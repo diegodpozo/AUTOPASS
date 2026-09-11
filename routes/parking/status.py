@@ -12,7 +12,7 @@ from core.logger import get_logger
 from services.billing_service import BillingService
 from services.notification_service import NotificationService
 from services.time_service import TimeService
-from models.enums import ReservationStatus
+from models.enums import ReservationStatus, PaymentStatus
 from core.normalize import normalize_name
 
 logger = get_logger("WS")
@@ -586,16 +586,28 @@ def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends
         if e.reserva_id:
             r = reservas.get(e.reserva_id)
             if r:
+                pagada = r.estado_pago == PaymentStatus.PAGADO
                 reserva_info = {"id": r.id, "tipo_estadia": r.tipo_estadia, "estado_pago": r.estado_pago}
                 now_str = TimeService.now_str()
-                # SI LA RESERVA EXPIRÓ (COMPLETADA/CANCELADA O FECHA_FIN YA PASÓ), CALCULAR DEUDA DESDE ESE MOMENTO
+                # SI LA RESERVA EXPIRÓ (COMPLETADA/CANCELADA O FECHA_FIN YA PASÓ), ACUMULAR DEUDA DESDE ESE MOMENTO
                 if r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str:
-                    deuda = calc_debt(r.fecha_fin, e.sucursal, e.tipo_vehiculo)
-                    deuda = max(0, deuda - (e.costo_estadia or 0))
-                    ya_pago = deuda == 0
+                    extra = calc_debt(r.fecha_fin, e.sucursal, e.tipo_vehiculo)
+                    if pagada:
+                        deuda = max(0, extra - (e.costo_estadia or 0))
+                        ya_pago = deuda == 0
+                    else:
+                        # NUNCA ABONÓ LA RESERVA: ADEUDA EL MONTO DE LA RESERVA + EL TIEMPO EXTRA ACUMULADO
+                        deuda = (r.monto_total or 0) + max(0, extra - (e.costo_estadia or 0))
+                        ya_pago = deuda == 0
                 else:
-                    deuda = 0.0
-                    ya_pago = True
+                    # RESERVA VIGENTE DENTRO DE SU RANGO HORARIO
+                    if pagada:
+                        deuda = 0.0
+                        ya_pago = True
+                    else:
+                        # INGRESÓ CON RESERVA SIN PAGAR: DEBE EL MONTO DE LA RESERVA
+                        deuda = (r.monto_total or 0)
+                        ya_pago = deuda == 0
         elif not e.pago_confirmado:
             deuda = calc_debt(e.fecha_hora, e.sucursal, e.tipo_vehiculo)
             entrada_dt = datetime.datetime.fromisoformat(e.fecha_hora)

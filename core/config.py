@@ -72,6 +72,17 @@ class Settings:
     MP_WEBHOOK_URL: str = os.getenv("MP_WEBHOOK_URL", "")
     MP_PREFERENCE_EXPIRE_MINUTES: int = int(os.getenv("MP_PREFERENCE_EXPIRE_MINUTES", 45))
 
+    # LOGIN SOCIAL (OAUTH 2.0 - GOOGLE + FACEBOOK)
+    # Credenciales: Google Cloud Console (OAuth 2.0 Client ID) y Facebook Developers (App).
+    # Redirect URI permitida en cada proveedor: {BASE_URL}/v1/auth/oauth/{google|facebook}/callback
+    # Si un proveedor queda sin credenciales, sus botones se ocultan en el frontend.
+    GOOGLE_OAUTH_CLIENT_ID: str = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
+    GOOGLE_OAUTH_CLIENT_SECRET: str = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+    FACEBOOK_OAUTH_CLIENT_ID: str = os.getenv("FACEBOOK_OAUTH_CLIENT_ID", "")
+    FACEBOOK_OAUTH_CLIENT_SECRET: str = os.getenv("FACEBOOK_OAUTH_CLIENT_SECRET", "")
+    OAUTH_STATE_TTL_SECONDS: int = int(os.getenv("OAUTH_STATE_TTL_SECONDS", "600"))
+    OAUTH_SIGNUP_EXPIRE_MINUTES: int = int(os.getenv("OAUTH_SIGNUP_EXPIRE_MINUTES", "15"))
+
     @property
     def MP_ENABLED(self) -> bool:
         return bool(self.MP_ACCESS_TOKEN.strip())

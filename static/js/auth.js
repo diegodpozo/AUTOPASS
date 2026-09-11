@@ -6,6 +6,7 @@ import * as auth from './modules/auth.js';
  */
 
 window.initPasswordValidation = auth.initPasswordValidation;
+window.startOAuth = auth.startOAuth;
 
 document.addEventListener('DOMContentLoaded', () => {
     auth.initPasswordValidation('reg-password', 'reg-password-confirm', 'reg-password-strength', 'reg-req-len', 'reg-req-up', 'reg-req-spec', 'reg-req-match');
@@ -24,12 +25,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (recoveryForm) {
         recoveryForm.onsubmit = auth.handleRecovery;
     }
+
+    const oauthForm = document.getElementById('oauthSignupForm');
+    if (oauthForm) {
+        oauthForm.onsubmit = auth.handleOAuthComplete;
+    }
+
+    auth.loadOAuthProviders();
+    auth.processOAuthCallback();
 });
 
 const authBtnDefaults = {
     'loginForm': 'Ingresar',
     'registerForm': '<i class="fas fa-user-plus"></i> Finalizá tu Registro',
-    'recoveryForm': '<i class="fas fa-paper-plane"></i> Enviar Enlace'
+    'recoveryForm': '<i class="fas fa-paper-plane"></i> Enviar Enlace',
+    'oauthSignupForm': '<i class="fas fa-user-check"></i> Finalizá tu Registro'
 };
 
 window.addEventListener('pageshow', () => {

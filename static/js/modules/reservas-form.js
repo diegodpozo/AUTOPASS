@@ -172,20 +172,21 @@ export async function updateHourlySlotsUI() {
         });
 
         if (res.ok && res.data && Array.isArray(res.data.disabled_hours)) {
-            const disabledHours = res.data.disabled_hours;
+            const reservedRanges = Array.isArray(res.data.reserved_ranges) ? res.data.reserved_ranges : [];
 
-            // HOY: BLOQUEAR ADEMAS LOS SLOTS QUE YA PASARON O NO RESPETAN LA ANTICIPACION MINIMA
+            // HOY: BLOQUEAR LOS SLOTS QUE YA PASARON O NO RESPETAN LA ANTICIPACION MINIMA
             // (EL SERVER TAMBIEN LOS FILTRA, PERO EL CACHE DE 30s PUEDE ESTAR DESACTUALIZADO)
             const now = getVirtualNow();
             const fechaHoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const blockedToday = [];
             if (fecha === fechaHoy) {
                 const minInicioMs = now.getTime() + RESERVA_MIN_MS;
                 for (let min = 7 * 60; min <= 23 * 60 + 30; min += 30) {
                     const hh = Math.floor(min / 60);
                     const mm = min % 60;
                     const hStr = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-                    if (new Date(`${fecha}T${hStr}`).getTime() < minInicioMs && !disabledHours.includes(hStr)) {
-                        disabledHours.push(hStr);
+                    if (new Date(`${fecha}T${hStr}`).getTime() < minInicioMs) {
+                        blockedToday.push(hStr);
                     }
                 }
             }
@@ -207,16 +208,24 @@ export async function updateHourlySlotsUI() {
                 const m = min % 60;
                 const hourStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
-                const isDisabled = disabledHours.includes(hourStr);
-                if (!isDisabled) countLibres++;
+                let isReserved = false;
+                let isBoundaryEnd = false;
+                for (const rg of reservedRanges) {
+                    if (hourStr >= rg.inicio && hourStr < rg.fin) isReserved = true;
+                    if (hourStr === rg.inicio) isBoundaryEnd = true;
+                }
+                const isBlockedToday = fecha === fechaHoy && blockedToday.includes(hourStr);
+                if (!isReserved && !isBlockedToday) countLibres++;
                 countTotal++;
 
                 const inRange = slotRangeStart && slotRangeEnd
                     && hourStr >= slotRangeStart && hourStr <= slotRangeEnd;
                 const isStart = slotRangeStart === hourStr;
 
-                if (isDisabled) {
-                    html += `<span class="hourly-chip-premium full" title="Hora no disponible por capacidad completa">${hourStr}</span>`;
+                if (isReserved && !isBoundaryEnd) {
+                    html += `<span class="hourly-chip-premium full" title="Horario reservado">${hourStr}</span>`;
+                } else if (isBlockedToday) {
+                    html += `<span class="hourly-chip-premium full" title="Horario ya pasado o con anticipación mínima">${hourStr}</span>`;
                 } else if (inRange) {
                     const cls = (isStart || hourStr === slotRangeEnd)
                         ? 'hourly-chip-premium available selected'
@@ -225,7 +234,8 @@ export async function updateHourlySlotsUI() {
                 } else if (isStart) {
                     html += `<span class="hourly-chip-premium available selected" data-hora="${hourStr}">${hourStr}</span>`;
                 } else {
-                    html += `<span class="hourly-chip-premium available" data-hora="${hourStr}">${hourStr}</span>`;
+                    const title = isBoundaryEnd ? 'Inicio de otra reserva. Elegilo como FIN para terminar tu estadía acá' : '';
+                    html += `<span class="hourly-chip-premium available" title="${title}" data-hora="${hourStr}">${hourStr}</span>`;
                 }
             }
 

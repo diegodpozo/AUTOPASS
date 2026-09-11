@@ -1,3 +1,4 @@
+import re
 from pydantic import BaseModel, field_validator
 from schemas.validators import validate_password_strength
 
@@ -6,6 +7,26 @@ class Token(BaseModel):
     token_type: str
     rol: str
     nombre: str
+
+class OAuthComplete(BaseModel):
+    code: str
+    dni: str
+    telefono: str
+
+    @field_validator('dni')
+    @classmethod
+    def validate_dni(cls, v):
+        if not re.fullmatch(r'\d{7,8}', (v or '').strip()):
+            raise ValueError('El DNI debe tener 7 u 8 números')
+        return v.strip()
+
+    @field_validator('telefono')
+    @classmethod
+    def validate_telefono(cls, v):
+        clean = re.sub(r'[^0-9]', '', v or '')
+        if len(clean) < 10:
+            raise ValueError('El teléfono debe contener al menos 10 dígitos (característica + número)')
+        return v.strip()
 
 class ForgotPasswordRequest(BaseModel):
     email: str

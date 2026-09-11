@@ -494,6 +494,18 @@
     margin-top: -2px;
 }
 
+/* ==========================================================================
+   5b. PASE DIGITAL - LAYOUT HORIZONTAL COMPACTO (scoped a #ticket-to-capture)
+   ========================================================================== */
+#ticket-to-capture.ticket-container {
+    width: 620px;
+    border-radius: 24px;
+    padding: 28px 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
 .ticket-body {
     display: flex;
     flex-direction: column;
@@ -563,7 +575,6 @@
     line-height: 1.4;
 }
 
-/* TITULO DEL BENEFICIO EN EL TICKET: se ajusta al ancho del ticket y es responsive */
 .ticket-title-span {
     color: var(--dorado);
     font-family: 'Montserrat', sans-serif;
@@ -652,6 +663,363 @@
 }
 
 /* ==========================================================================
+   5b. PASE DIGITAL - LAYOUT HORIZONTAL COMPACTO (scoped a #ticket-to-capture)
+   ========================================================================== */
+#ticket-to-capture .ticket-left-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 165px;
+    width: 165px;
+    flex-shrink: 0;
+    padding-right: 24px;
+}
+
+#ticket-to-capture .ticket-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#ticket-to-capture .ticket-brand {
+    font-size: 1rem;
+    letter-spacing: 3px;
+}
+
+#ticket-to-capture .ticket-logo {
+    height: 26px;
+}
+
+#ticket-to-capture .ticket-qr-section {
+    gap: 0;
+}
+
+#ticket-to-capture .qr-canvas {
+    padding: 10px;
+    border-radius: 14px;
+}
+
+#ticket-to-capture .qr-canvas canvas,
+#ticket-to-capture .qr-canvas img {
+    width: 120px !important;
+    height: 120px !important;
+}
+
+#ticket-to-capture .ticket-id {
+    font-size: 0.7rem;
+    color: #555;
+}
+
+#ticket-to-capture .ticket-patente-label {
+    background: #000;
+    color: var(--dorado);
+    padding: 4px 14px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-weight: 900;
+    letter-spacing: 2px;
+    font-size: 0.9rem;
+    border: 1.5px solid rgba(197, 160, 89, 0.4);
+    margin-top: 4px;
+}
+
+#ticket-to-capture .ticket-no-qr-section {
+    gap: 0;
+}
+
+#ticket-to-capture .ticket-no-qr-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px dashed rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: #444;
+}
+
+#ticket-to-capture .ticket-sep-v {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    margin: 0 4px;
+}
+
+#ticket-to-capture .ticket-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+#ticket-to-capture .ticket-info-grid {
+    gap: 10px 16px;
+}
+
+#ticket-to-capture .ticket-info-item {
+    gap: 2px;
+}
+
+#ticket-to-capture .ticket-info-item label {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    opacity: 0.65;
+}
+
+#ticket-to-capture .ticket-info-item span {
+    font-size: 0.82rem;
+}
+
+#ticket-to-capture .ticket-info-item .text-small {
+    font-size: 0.7rem;
+    line-height: 1.3;
+}
+
+#ticket-to-capture .ticket-financial-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+#ticket-to-capture .ticket-financial-grid {
+    gap: 8px 16px !important;
+}
+
+#ticket-to-capture .ticket-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#ticket-to-capture .ticket-total-label {
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+}
+
+#ticket-to-capture .ticket-total-value {
+    font-size: 1.15rem;
+}
+
+#ticket-to-capture .ticket-footer {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    gap: 8px;
+}
+
+#ticket-to-capture .ticket-instructions {
+    font-size: 0.55rem;
+    line-height: 1.4;
+}
+
+#ticket-to-capture .ticket-actions {
+    gap: 8px;
+}
+
+#ticket-to-capture .btn-ticket {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+#ticket-to-capture .btn-ticket:hover {
+    transform: scale(1.03);
+}
+
+#ticket-to-capture .ticket-payment-actions {
+    flex-direction: row;
+}
+
+#ticket-to-capture .btn-pay-wallet {
+    background: var(--dorado);
+    color: #000;
+}
+#ticket-to-capture .btn-pay-wallet:hover { background: #fff; }
+
+#ticket-to-capture .btn-pay-mp {
+    background: #009ee3;
+    color: #fff;
+}
+#ticket-to-capture .btn-pay-mp:hover { background: #007eb5; }
+
+#ticket-to-capture .ticket-cutout {
+    width: 24px;
+    height: 24px;
+}
+
+#ticket-to-capture .ticket-cutout.left { left: -12px; }
+#ticket-to-capture .ticket-cutout.right { right: -12px; }
+
+@media (max-width: 640px) {
+    #ticket-to-capture.ticket-container {
+        flex-direction: column;
+        padding: 24px 22px;
+        border-radius: 22px;
+        width: 360px;
+    }
+    #ticket-to-capture .ticket-left-col {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        min-width: 0;
+        gap: 6px 14px;
+        padding-right: 0;
+        padding-bottom: 16px;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+    #ticket-to-capture .ticket-brand-row { display: none; }
+    #ticket-to-capture .ticket-sep-v { display: none; }
+    #ticket-to-capture .ticket-right-col { padding-top: 16px; }
+    #ticket-to-capture .ticket-patente-label { order: -1; }
+    #ticket-to-capture .ticket-qr-section,
+    #ticket-to-capture .ticket-no-qr-section { order: 3; }
+    #ticket-to-capture .ticket-payment-actions { flex-direction: column; }
+}
+
+/* --- ESTADOS DEL TICKET --- */
+.ticket-container.ticket-unpaid {
+    border-color: rgba(255, 165, 0, 0.25);
+}
+.ticket-container.ticket-cancelled {
+    border-color: rgba(220, 50, 50, 0.25);
+    opacity: 0.85;
+}
+.ticket-container.ticket-paid {
+    border-color: rgba(197, 160, 89, 0.15);
+}
+
+/* BADGE DE ESTADO */
+.ticket-status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 20px;
+}
+.ticket-badge-pendiente {
+    background: rgba(255, 165, 0, 0.12);
+    color: #ffa500;
+    border: 1px solid rgba(255, 165, 0, 0.25);
+}
+.ticket-badge-cancelado {
+    background: rgba(220, 50, 50, 0.12);
+    color: #dc3232;
+    border: 1px solid rgba(220, 50, 50, 0.25);
+}
+.ticket-badge-pagado {
+    background: rgba(76, 175, 80, 0.12);
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.25);
+}
+.ticket-badge-reembolsado {
+    background: rgba(100, 100, 255, 0.12);
+    color: #6464ff;
+    border: 1px solid rgba(100, 100, 255, 0.25);
+}
+
+/* SIN QR */
+.ticket-no-qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.ticket-no-qr-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px dashed rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #444;
+}
+
+/* DIVIDER FINANCIERO */
+.ticket-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 4px 0 16px;
+}
+.ticket-financial-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.ticket-financial-grid {
+    gap: 12px !important;
+}
+.ticket-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 0;
+    margin-top: 8px;
+    border-top: 1px solid rgba(197, 160, 89, 0.2);
+}
+.ticket-total-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--dorado);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.6;
+}
+.ticket-total-value {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--dorado);
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* BOTONES DE PAGO DENTRO DEL TICKET */
+.ticket-payment-actions {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+.btn-pay-wallet {
+    background: var(--dorado);
+    color: #000;
+    width: 100%;
+    justify-content: center;
+}
+.btn-pay-wallet:hover {
+    background: #fff;
+}
+.btn-pay-mp {
+    background: #009ee3;
+    color: #fff;
+    width: 100%;
+    justify-content: center;
+}
+.btn-pay-mp:hover {
+    background: #007eb5;
+}
+
+/* ==========================================================================
    6. RESPONSIVE ADJUSTMENTS
    ========================================================================== */
 @media (max-width: 1200px) {
@@ -672,40 +1040,37 @@
     .reserva-grid-modern { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
     .ticket-container {
-        padding: 24px 18px;
+        flex-direction: column;
+        padding: 24px 22px;
         border-radius: 22px;
+        width: 360px;
     }
-    .ticket-header {
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        gap: 10px;
+    .ticket-left-col {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        min-width: 0;
+        gap: 6px 14px;
+        padding-right: 0;
+        padding-bottom: 16px;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
     }
-    .ticket-brand {
-        font-size: 1.2rem;
-        letter-spacing: 3px;
+    .ticket-brand-row { display: none; }
+    .ticket-sep-v { display: none; }
+    .ticket-right-col {
+        padding-top: 16px;
     }
-    .ticket-body {
-        gap: 18px;
+    .ticket-patente-label {
+        order: -1;
     }
-    .qr-canvas {
-        padding: 10px;
-        border-radius: 16px;
+    .ticket-qr-section, .ticket-no-qr-section {
+        order: 3;
     }
-    .ticket-info-grid {
-        gap: 10px;
-    }
-    .ticket-info-item span {
-        font-size: 0.85rem;
-    }
-    .plate-style {
-        padding: 4px 12px;
-        font-size: 0.95rem;
-    }
-    .ticket-footer {
-        margin-top: 25px;
-        padding-top: 15px;
+    .ticket-payment-actions {
+        flex-direction: column;
     }
 }
 

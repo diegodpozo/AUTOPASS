@@ -24,6 +24,9 @@ class AdminReservationCreate(BaseModel):
     fecha_fin: str
     sucursal_nombre: Optional[str] = "AUTOPASS Ituzaingó"
     tipo_estadia: Optional[str] = "hora"
+    metodo_pago: Optional[str] = None
+    pagar: Optional[bool] = False
+    tipo_vehiculo: Optional[str] = "Auto"
 
 class ReservationUpdate(BaseModel):
     fecha_inicio: Optional[str] = None
@@ -33,6 +36,11 @@ class ReservationUpdate(BaseModel):
     sucursal_nombre: Optional[str] = None
     estado_pago: Optional[str] = None
     estado_reserva: Optional[str] = None
+    metodo_pago: Optional[str] = None
+    tipo_vehiculo: Optional[str] = None
+
+class ConfirmPaymentRequest(BaseModel):
+    metodo_pago: Optional[str] = "Caja"
 
 class UserReservationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -48,7 +56,10 @@ class UserReservationResponse(BaseModel):
     monto_total: float
     sucursal_nombre: Optional[str] = None
     sucursal_info: Optional[str] = None
+    metodo_pago: Optional[str] = None
+    tipo_vehiculo: Optional[str] = None
     user_name: Optional[str] = None
     user_email: Optional[str] = None
     usuario_nombre: Optional[str] = None
     usuario_apellido: Optional[str] = None
+    en_predio: bool = False

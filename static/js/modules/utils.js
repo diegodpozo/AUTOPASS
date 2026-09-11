@@ -133,6 +133,49 @@ export function showConfirm(title, msg) {
     });
 }
 
+export function showChoice(title, msg, options) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modal-choice');
+        const titleEl = document.getElementById('choice-title');
+        const msgEl = document.getElementById('choice-msg');
+        const optsEl = document.getElementById('choice-options');
+        const btnCancel = document.getElementById('choice-btn-cancel');
+
+        if (!modal || !optsEl || !btnCancel) return resolve(null);
+
+        titleEl.innerText = title || 'Seleccioná una opción';
+        msgEl.innerText = msg || '';
+
+        optsEl.innerHTML = (options || []).map((o) => {
+            const label = typeof o === 'object' ? (o.label || '') : o;
+            const icon = typeof o === 'object' ? (o.icon || 'fa-circle') : 'fa-circle';
+            return `
+                <button type="button" class="choice-option" data-value="${label}">
+                    <i class="fas ${icon}"></i>
+                    <span>${label}</span>
+                </button>
+            `;
+        }).join('');
+
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+
+        const cleanup = () => {
+            modal.style.display = 'none';
+            btnCancel.onclick = null;
+            optsEl.querySelectorAll('.choice-option').forEach((b) => { b.onclick = null; });
+            modal.onclick = null;
+        };
+
+        optsEl.querySelectorAll('.choice-option').forEach((b) => {
+            b.onclick = () => { cleanup(); resolve(b.dataset.value); };
+        });
+        btnCancel.onclick = () => { cleanup(); resolve(null); };
+        modal.onclick = (e) => { if (e.target === modal) { cleanup(); resolve(null); } };
+    });
+}
+
 /**
  * NORMALIZA UN TEXTO PARA ID DE SISTEMA (QUITA TILDES Y PREFIJOS).
  */
@@ -246,6 +289,23 @@ export function detectVehicleType(plate) {
     }
     
     return null; // INDETERMINADO
+}
+
+/**
+ * ETIQUETA LEGIBLE DEL MÉTODO DE PAGO PARA EL REPORTE FINANCIERO.
+ * p.metodo: CAJA | Caja | Efectivo | DIGITAL | SALDO | MERCADOPAGO | Mercado Pago | ...
+ */
+export function metodoPagoReport(metodo, tipo) {
+    const m = String(metodo || '').toUpperCase().replace(/\s+/g, '');
+    if (m === 'CAJA' || m === 'EFECTIVO') return 'PAGO EN CAJA';
+    if (m === 'MERCADOPAGO') return 'MERCADO PAGO';
+    if (m === 'SALDO' || m === 'DIGITAL') return 'PAGO DIGITAL';
+    if (m === 'TRANSFERENCIA') return 'TRANSFERENCIA';
+    if (m === 'TARJETA') return 'TARJETA';
+    if (m === 'OTRO') return 'OTRO';
+    if (m === 'BILLETERAAUTOPASS') return 'PAGO DIGITAL';
+    if (tipo === 'Reembolso') return 'REEMBOLSO DIGITAL';
+    return 'PAGO DIGITAL';
 }
 
 // EXPONER GLOBALMENTE PARA SCRIPTS QUE NO SON MODULOS

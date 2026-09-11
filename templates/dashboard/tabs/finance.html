@@ -122,6 +122,84 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- DESGLOSE POR MÉTODO DE PAGO -->
+                <div class="card channel-card mt-20" id="metodos-breakdown">
+                    <div class="channel-header web-channel">
+                        <i class="fas fa-credit-card"></i>
+                        <span>DESGLOSE POR MÉTODO DE PAGO</span>
+                    </div>
+                    <div class="method-tabs">
+                        <button type="button" class="method-tab active" data-method="CAJA" onclick="switchMethodTab('CAJA')"><i class="fas fa-money-bill-wave"></i> Efectivo</button>
+                        <button type="button" class="method-tab" data-method="DIGITAL" onclick="switchMethodTab('DIGITAL')"><i class="fas fa-wallet"></i> Billetera</button>
+                        <button type="button" class="method-tab" data-method="MERCADOPAGO" onclick="switchMethodTab('MERCADOPAGO')"><i class="fas fa-hand-holding-dollar"></i> Mercado Pago</button>
+                        <button type="button" class="method-tab" data-method="TRANSFERENCIA" onclick="switchMethodTab('TRANSFERENCIA')"><i class="fas fa-building-columns"></i> Transferencia</button>
+                        <button type="button" class="method-tab" data-method="TARJETA" onclick="switchMethodTab('TARJETA')"><i class="fas fa-credit-card"></i> Tarjeta</button>
+                        <button type="button" class="method-tab" data-method="OTRO" onclick="switchMethodTab('OTRO')"><i class="fas fa-circle-question"></i> Otro</button>
+                    </div>
+                    <div class="method-panels">
+                        <div class="method-panel active" data-panel="CAJA">
+                            <div class="method-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-metodo-CAJA">$0</span>
+                            </div>
+                            <div class="method-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-metodo-CAJA-cnt">0</span>
+                            </div>
+                        </div>
+                        <div class="method-panel" data-panel="DIGITAL">
+                            <div class="method-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-metodo-DIGITAL">$0</span>
+                            </div>
+                            <div class="method-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-metodo-DIGITAL-cnt">0</span>
+                            </div>
+                        </div>
+                        <div class="method-panel" data-panel="MERCADOPAGO">
+                            <div class="method-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-metodo-MERCADOPAGO">$0</span>
+                            </div>
+                            <div class="method-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-metodo-MERCADOPAGO-cnt">0</span>
+                            </div>
+                        </div>
+                        <div class="method-panel" data-panel="TRANSFERENCIA">
+                            <div class="method-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-metodo-TRANSFERENCIA">$0</span>
+                            </div>
+                            <div class="method-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-metodo-TRANSFERENCIA-cnt">0</span>
+                            </div>
+                        </div>
+                        <div class="method-panel" data-panel="TARJETA">
+                            <div class="method-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-metodo-TARJETA">$0</span>
+                            </div>
+                            <div class="method-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-metodo-TARJETA-cnt">0</span>
+                            </div>
+                        </div>
+                        <div class="method-panel" data-panel="OTRO">
+                            <div class="method-stat">
+                                <span class="stat-label">Recaudado</span>
+                                <span class="stat-value" id="fin-metodo-OTRO">$0</span>
+                            </div>
+                            <div class="method-stat">
+                                <span class="stat-label">Cantidad</span>
+                                <span class="stat-value" id="fin-metodo-OTRO-cnt">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -141,6 +219,10 @@
                                 <option value="all">TODOS LOS PAGOS</option>
                                 <option value="DIGITAL">SOLO DIGITALES</option>
                                 <option value="CAJA">SOLO EN CAJA</option>
+                                <option value="MERCADOPAGO">SOLO MERCADO PAGO</option>
+                                <option value="TRANSFERENCIA">SOLO TRANSFERENCIAS</option>
+                                <option value="TARJETA">SOLO TARJETA</option>
+                                <option value="OTRO">SOLO OTRO</option>
                             </select>
                         </div>
 

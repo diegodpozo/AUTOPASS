@@ -63,19 +63,26 @@ window.showLogDetail = ops.showLogDetail;
 
 // 4. RESERVAS ADMINISTRATIVAS
 window.loadAdminReservations = reservations.loadAdminReservations;
-window.updateEditReservationPrice = reservations.updateEditReservationPrice;
-window.updateEditFormGroups = reservations.updateEditFormGroups;
-window.updateEditPeriodEnd = reservations.updateEditPeriodEnd;
-window.openEditReservationModal = reservations.openEditReservationModal;
-window.handleAdminEditReservation = reservations.handleAdminEditReservation;
+window.payReservationAdmin = reservations.payReservationAdmin;
 window.cancelReservationAdmin = reservations.cancelReservationAdmin;
 window.showReservationDetail = reservations.showReservationDetail;
+window.openNewReservationModal = reservations.openNewReservationModal;
+window.updateNewFormGroups = reservations.updateNewFormGroups;
+window.updateNewPeriodEnd = reservations.updateNewPeriodEnd;
+window.updateNewReservationPrice = reservations.updateNewReservationPrice;
+window.selectNewHourRange = reservations.selectNewHourRange;
+window.updateNewVehicleTypeIcon = reservations.updateNewVehicleTypeIcon;
+window.initNewResPatenteLookup = reservations.initNewResPatenteLookup;
+window.resetNewResPatenteLookup = reservations.resetNewResPatenteLookup;
+window.clearNewResPatenteLookup = reservations.clearNewResPatenteLookup;
+window.handleAdminNewReservation = reservations.handleAdminNewReservation;
 
 // 5. FINANZAS Y REPORTES
 window.loadFinanceData = finance.loadFinanceData;
 window.toggleFinanceDateFilter = finance.toggleFinanceDateFilter;
 window.nextFinancePage = finance.nextFinancePage;
 window.prevFinancePage = finance.prevFinancePage;
+window.switchMethodTab = finance.switchMethodTab;
 
 // 6. ACCIONES ADMINISTRATIVAS Y USUARIOS
 window.openBarrier = admin.openBarrier;
