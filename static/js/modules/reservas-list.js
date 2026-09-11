@@ -105,7 +105,7 @@ export function renderReservaCard(r, isFeatured) {
             <div class="detail-item-ultra"><i class="fas fa-hourglass-end"></i><div class="detail-info-ultra"><span class="detail-label-ultra">Hasta</span><span class="detail-value-ultra">${formatDate(r.fecha_fin)}</span></div></div>
         </div>
         <div class="reserva-actions-ultra">
-            <button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> VER COMPROBANTE</button>
+            <button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> VER COMPROBANTE + QR</button>
             ${r.estado_pago === 'Pendiente' && r.estado_reserva !== 'Cancelada' ? `
             <button class="btn-ultra btn-ultra-mp" onclick="payReservationWithMp(${r.id})"><i class="fab fa-google-pay"></i> PAGAR CON MP</button>` : ''}
             <button class="btn-ultra btn-ultra-secondary" onclick="prepareEditReservation(${r.id})" ${isStarted || r.estado_reserva === 'Activa' ? 'disabled' : ''}><i class="fas fa-pen"></i></button>

@@ -169,22 +169,23 @@ export async function showDigitalPass(id) {
     const total = r.monto_total || 0;
     document.getElementById('ticket-total').innerText = formatCurrency(total);
 
+    const calcEl = document.getElementById('ticket-calculo');
     if (isPaid) {
         const horas = (new Date(r.fecha_fin.replace(/-/g, "/")) - new Date(r.fecha_inicio.replace(/-/g, "/"))) / (1000 * 60 * 60);
         const tarifaHora = horas > 0 ? total / horas : total;
         document.getElementById('ticket-tarifa').innerText = `${formatCurrency(tarifaHora)}/hora`;
-        document.getElementById('ticket-calculo').innerText = `${duracionHoras(r.fecha_inicio, r.fecha_fin)} × ${formatCurrency(tarifaHora)}`;
+        if (calcEl) calcEl.innerText = `${duracionHoras(r.fecha_inicio, r.fecha_fin)} × ${formatCurrency(tarifaHora)}`;
         document.getElementById('ticket-metodo-pago').innerText = metodoPagoLabel(r.metodo_pago);
         const puntos = Math.floor(total / 100);
         document.getElementById('ticket-puntos').innerText = puntos > 0 ? `+${puntos} pts` : '---';
     } else if (isPending) {
         document.getElementById('ticket-tarifa').innerText = 'Estimado';
-        document.getElementById('ticket-calculo').innerText = `A confirmar al abonar (${duracionHoras(r.fecha_inicio, r.fecha_fin)})`;
+        if (calcEl) calcEl.innerText = `A confirmar al abonar (${duracionHoras(r.fecha_inicio, r.fecha_fin)})`;
         document.getElementById('ticket-metodo-pago').innerText = 'Pendiente de pago';
         document.getElementById('ticket-puntos').innerText = '---';
     } else {
         document.getElementById('ticket-tarifa').innerText = '---';
-        document.getElementById('ticket-calculo').innerText = '---';
+        if (calcEl) calcEl.innerText = '---';
         document.getElementById('ticket-metodo-pago').innerText = '---';
         document.getElementById('ticket-puntos').innerText = '---';
     }
