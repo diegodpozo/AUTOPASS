@@ -8,19 +8,20 @@ class BranchService:
     def get_branch_info_str(db: Session, sucursal_nombre: str) -> str:
         """OBTIENE EL TEXTO CON LA DIRECCIÓN Y HORARIO DE LA SUCURSAL."""
         if not sucursal_nombre:
-            return "Sede no especificada."
+            return "Dirección no disponible"
 
         branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
         if not branch:
             branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal_nombre}%")).first()
+        if not branch:
+            all_b = db.query(models.ParkingBranch).all()
+            branch = next((b for b in all_b if b.nombre.lower() in sucursal_nombre.lower() or sucursal_nombre.lower() in b.nombre.lower()), None)
 
-        if branch:
+        if branch and branch.direccion and branch.direccion.strip():
             horario_str = "Abierto 24hs" if branch.is_24h else (branch.horario or "Horario no especificado")
-            if branch.direccion and branch.direccion.strip():
-                return f"{branch.direccion.strip()}. {horario_str}."
-            return f"{branch.nombre}. {horario_str}."
+            return f"{branch.direccion.strip()}. {horario_str}."
 
-        return f"Sucursal {sucursal_nombre}." if sucursal_nombre else "Sede no especificada."
+        return "Dirección no disponible"
 
     @staticmethod
     def get_branch_tariffs(db: Session, branch_name: str) -> dict:

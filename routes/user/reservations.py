@@ -131,21 +131,20 @@ def get_user_reservations(db: Session = Depends(get_db), current_user: models.Us
     ReservationService.auto_finalize_reservations(db, current_user.id)
     reservations = db.query(models.Reservation).filter(models.Reservation.user_id == current_user.id).order_by(models.Reservation.id.desc()).all()
     en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in reservations])
-    branches = {b.nombre: b for b in db.query(models.ParkingBranch).all()}
+    branches = db.query(models.ParkingBranch).all()
+    updated = False
     for r in reservations:
         r.en_predio = r.id in en_predio
-        if not r.sucursal_info or r.sucursal_info == "Sede no especificada." or r.sucursal_info.startswith("Sede no especificada"):
-            b = branches.get(r.sucursal_nombre)
-            if not b and r.sucursal_nombre:
-                b = next((br for br in branches.values() if r.sucursal_nombre.lower() in br.nombre.lower() or br.nombre.lower() in r.sucursal_nombre.lower()), None)
-            if b:
-                horario_str = "Abierto 24hs" if b.is_24h else (b.horario or "Horario no especificado")
-                if b.direccion and b.direccion.strip():
-                    r.sucursal_info = f"{b.direccion.strip()}. {horario_str}."
-                else:
-                    r.sucursal_info = f"{b.nombre}. {horario_str}."
-            elif r.sucursal_nombre:
-                r.sucursal_info = f"Sucursal {r.sucursal_nombre}."
+        if not r.sucursal_info or "Sede no especificada" in r.sucursal_info or r.sucursal_info.startswith("Sucursal "):
+            info_str = BranchService.get_branch_info_str(db, r.sucursal_nombre)
+            if info_str and info_str != "Dirección no disponible":
+                r.sucursal_info = info_str
+                updated = True
+    if updated:
+        try:
+            db.commit()
+        except Exception:
+            pass
     return reservations
 
 @router.post("/reservations")

@@ -8,6 +8,39 @@ import { formatDate, formatPlate, formatNum, showToast, showConfirm } from './ut
  */
 
 let _currentPassResId = null;
+let _branchesListCache = null;
+
+async function resolveBranchAddress(sucursalNombre, sucursalInfo) {
+    if (sucursalInfo && sucursalInfo !== 'Sede no especificada.' && !sucursalInfo.startsWith('Sede no especificada') && !sucursalInfo.startsWith('Sucursal ')) {
+        return sucursalInfo;
+    }
+    if (!sucursalNombre) return 'Dirección no disponible';
+
+    if (!_branchesListCache) {
+        try {
+            const res = await api.get('/parking/branches');
+            if (res.ok && Array.isArray(res.data)) {
+                _branchesListCache = res.data;
+            }
+        } catch (e) {
+            console.error('Error al cargar sucursales:', e);
+        }
+    }
+
+    if (_branchesListCache && _branchesListCache.length > 0) {
+        const target = sucursalNombre.toLowerCase();
+        const b = _branchesListCache.find(item => {
+            const name = (item.nombre || '').toLowerCase();
+            return name === target || target.includes(name) || name.includes(target);
+        });
+        if (b && b.direccion && b.direccion.trim()) {
+            const horarioStr = b.is_24h ? 'Abierto 24hs' : (b.horario || 'Horario no especificado');
+            return `${b.direccion.trim()}. ${horarioStr}.`;
+        }
+    }
+
+    return (sucursalInfo && sucursalInfo !== 'Sede no especificada.') ? sucursalInfo : 'Dirección no disponible';
+}
 
 function duracionHoras(fechaInicio, fechaFin) {
     const diff = new Date(fechaFin.replace(/-/g, "/")) - new Date(fechaInicio.replace(/-/g, "/"));
@@ -125,11 +158,8 @@ export async function showDigitalPass(id) {
     document.getElementById('ticket-patente').innerText = formatPlate(r.patente);
     document.getElementById('ticket-tipo-vehiculo').innerText = r.tipo_vehiculo || 'Auto';
     document.getElementById('ticket-sucursal').innerText = r.sucursal_nombre || '---';
-    let dirText = r.sucursal_info;
-    if (!dirText || dirText === 'Sede no especificada.' || dirText.startsWith('Sede no especificada')) {
-        dirText = r.sucursal_nombre ? `Sucursal ${r.sucursal_nombre}` : 'Dirección no disponible';
-    }
-    document.getElementById('ticket-direccion').innerText = dirText;
+    const addressStr = await resolveBranchAddress(r.sucursal_nombre, r.sucursal_info);
+    document.getElementById('ticket-direccion').innerText = addressStr;
     document.getElementById('ticket-inicio').innerText = formatDate(r.fecha_inicio);
     document.getElementById('ticket-vence').innerText = formatDate(r.fecha_fin).split(',')[0];
     document.getElementById('ticket-tipo-estadia').innerText = tipoEstadiaLabel(r.tipo_estadia);
