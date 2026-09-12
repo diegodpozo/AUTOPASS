@@ -91,7 +91,7 @@ export function renderReservaCard(r, isFeatured) {
             </div>
             <div class="reserva-status-ultra">
                 <div class="status-badge-ultra ${r.estado_pago.toLowerCase()}">${r.estado_pago}</div>
-                <div class="price-container-ultra"><span class="price-value-ultra">$${formatNum(r.monto_total)}</span></div>
+                <div class="price-container-ultra"><span class="price-value-ultra">$${formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}</span></div>
             </div>
         </div>
         <div class="reserva-timeline-container">
@@ -125,7 +125,10 @@ export function renderHistory(history) {
         <div class="historial-item">
             <div class="hist-icon"><i class="fas ${r.estado_reserva === 'Completada' ? 'fa-car-circle-check' : 'fa-ban'}"></i></div>
             <div class="hist-main-info"><span class="hist-title">${r.sucursal_nombre}</span><div class="hist-subtitle-group"><span class="hist-plate-badge">${formatPlate(r.patente)}</span><span class="hist-date-info">${formatDate(r.fecha_inicio).split(',')[0]}</span></div></div>
-            <div class="hist-amount-info"><span class="hist-value">$${formatNum(r.monto_total)}</span><div class="status-pill ${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</div></div>
+            <div class="hist-amount-info">
+                <span class="hist-value">$${formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}</span>
+                <div class="status-pill ${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</div>
+            </div>
             <div class="hist-actions-group"><button class="btn-repeat-express" onclick="repeatReservation('${r.patente}','${r.sucursal_nombre}','${r.tipo_estadia}')"><i class="fas fa-rotate-right"></i></button></div>
         </div>`).join('');
 

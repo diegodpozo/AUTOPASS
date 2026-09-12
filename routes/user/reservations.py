@@ -1,9 +1,9 @@
 import datetime
 import math
 import re
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import models, schemas
 from core.config import settings
 from core.database import get_db
@@ -106,15 +106,17 @@ def get_disabled_hours(
     tipo_vehiculo: str = "Auto",
     duracion_horas: float = 1.0,
     paso_minutos: int = 30,
+    exclude_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """DEVUELVE LA LISTA DE SLOTS HORARIOS (HH:MM) DESHABILITADOS PARA UN DÍA ESPECÍFICO
-    Y LOS RANGOS REALMENTE RESERVADOS PARA DISTINGUIR OCUPACIÓN DE MARGEN DE SOLAPAMIENTO."""
+    Y LOS RANGOS REALMENTE RESERVADOS PARA DISTINGUIR OCUPACIÓN DE MARGEN DE SOLAPAMIENTO.
+    exclude_id: AL EDITAR UNA RESERVA, EXCLUYE SU PROPIO RANGO PARA NO MOSTRARLA COMO OCUPADA."""
     detalle = obtener_horas_deshabilitadas_con_reservas(
         db, sucursal_nombre=sucursal_nombre, fecha_str=fecha,
         tipo_vehiculo=tipo_vehiculo, duracion_horas=duracion_horas,
-        paso_minutos=paso_minutos
+        paso_minutos=paso_minutos, exclude_id=exclude_id
     )
     return {
         "sucursal_nombre": sucursal_nombre,

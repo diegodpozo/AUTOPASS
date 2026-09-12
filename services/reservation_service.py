@@ -48,16 +48,19 @@ def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehicu
     return 5
 
 
-def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, tipo_vehiculo: str) -> list:
+def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, tipo_vehiculo: str, exclude_id: int = None) -> list:
     """RESERVAS ACTIVAS/PENDIENTES SOLAPADAS EN EL RANGO [desde, hasta) FILTRADAS POR TIPO DE VEHICULO."""
     tipo_vehiculo = (tipo_vehiculo or "Auto").strip().title()
-    all_res = db.query(models.Reservation).filter(
+    q = db.query(models.Reservation).filter(
         models.Reservation.sucursal_nombre == sucursal_nombre,
         models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
         models.Reservation.estado_pago.in_(["Pendiente", "Pagado"]),
         models.Reservation.fecha_inicio < hasta_str,
         models.Reservation.fecha_fin > desde_str
-    ).all()
+    )
+    if exclude_id:
+        q = q.filter(models.Reservation.id != exclude_id)
+    all_res = q.all()
 
     if not all_res:
         return []
@@ -289,29 +292,31 @@ def obtener_horas_deshabilitadas_con_reservas(
     fecha_str: str,
     tipo_vehiculo: str = "Auto",
     duracion_horas: float = 1.0,
-    paso_minutos: int = 30
+    paso_minutos: int = 30,
+    exclude_id: int = None
 ) -> dict:
     """SLOTS DESHABILITADOS + RANGOS REALMENTE RESERVADOS DEL DÍA.
     PERMITE A LA GRILLA DISTINGUIR LO QUE ESTÁ OCUPADO POR UNA RESERVA (RANGO EXACTO)
-    DE LAS HORAS DE MARGEN QUE SOLO SE DESHABILITAN POR SOLAPAMIENTO."""
+    DE LAS HORAS DE MARGEN QUE SOLO SE DESHABILITAN POR SOLAPAMIENTO.
+    exclude_id: AL EDITAR, EXCLUYE LA PROPIA RESERVA DE LOS RANGOS OCUPADOS."""
     if not sucursal_nombre or not fecha_str:
         return {"disabled_hours": [], "reserved_ranges": []}
     fecha_clean = fecha_str.split("T")[0].split(" ")[0]
     disabled_hours = obtener_horas_deshabilitadas(
         db, sucursal_nombre, fecha_clean, tipo_vehiculo, duracion_horas, paso_minutos
     )
-    reserved_ranges = _obtener_rangos_reservados_dia(db, sucursal_nombre, fecha_clean, tipo_vehiculo)
+    reserved_ranges = _obtener_rangos_reservados_dia(db, sucursal_nombre, fecha_clean, tipo_vehiculo, exclude_id)
     return {
         "disabled_hours": disabled_hours,
         "reserved_ranges": reserved_ranges
     }
 
 
-def _obtener_rangos_reservados_dia(db: Session, sucursal_nombre: str, fecha_clean: str, tipo_vehiculo: str) -> list[dict]:
+def _obtener_rangos_reservados_dia(db: Session, sucursal_nombre: str, fecha_clean: str, tipo_vehiculo: str, exclude_id: int = None) -> list[dict]:
     """RANGOS [inicio, fin) EN HH:MM DE LAS RESERVAS ACTIVAS QUE TOCAN EL DÍA, RECORTADOS AL DÍA."""
     dia_ini = f"{fecha_clean} 00:00"
     dia_fin = f"{fecha_clean} 23:59"
-    reservas = _reservas_activas_tipo(db, sucursal_nombre, dia_ini, dia_fin, tipo_vehiculo)
+    reservas = _reservas_activas_tipo(db, sucursal_nombre, dia_ini, dia_fin, tipo_vehiculo, exclude_id)
     if not reservas:
         return []
     dia_ini_dt = datetime.datetime.fromisoformat(dia_ini)
@@ -424,7 +429,8 @@ class ReservationService:
             sucursal_nombre=data.sucursal_nombre,
             sucursal_info=info_sede,
             cliente_nombre=data.cliente_nombre,
-            tipo_vehiculo=tipo_v_str
+            tipo_vehiculo=tipo_v_str,
+            origen="manual"
         )
         db.add(new_res)
         db.commit()

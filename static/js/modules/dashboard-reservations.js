@@ -39,7 +39,10 @@ export async function loadAdminReservations() {
                         <div class="text-small text-dorado font-bold uppercase" style="letter-spacing: 1px;">${utils.toTitle(r.tipo_estadia)}</div>
                     </div>
                 </td>
-                <td data-label="Monto" class="text-bold text-white">$${utils.formatNum(r.monto_total)}</td>
+                <td data-label="Monto" class="text-bold text-white">
+                    $${utils.formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}
+                    ${(r.monto_reembolsado || 0) > 0 ? `<div class="text-xs text-muted" style="border-top:1px solid rgba(255,255,255,0.05); margin-top:4px; padding-top:4px; text-align:center;">Pagado $${utils.formatNum(r.monto_total)} · Reemb. -$${utils.formatNum(r.monto_reembolsado)}</div>` : ''}
+                </td>
                 <td data-label="Estado Pago"><span class="badge-status badge-${r.estado_pago.toLowerCase()}">${r.estado_pago}</span></td>
                 <td data-label="Estado Reserva">
                     <div class="flex-col items-center gap-8">
@@ -54,6 +57,11 @@ export async function loadAdminReservations() {
                 <td data-label="Acciones">
                     <div class="flex-row gap-8 justify-center actions-reveal">
                         ${r.estado_reserva !== 'Completada' && r.estado_reserva !== 'Cancelada' ? `
+                        ${r.origen === 'manual' ? `
+                        <button class="btn-icon-premium sm" onclick="editReservationAdmin(${r.id})" title="Editar Reserva">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        ` : ''}
                         ${r.estado_pago === 'Pendiente' ? `
                         <button class="btn-icon-premium sm btn-confirm-payment" onclick="payReservationAdmin(${r.id})" title="Pago Manual">
                             <i class="fas fa-money-bill-wave"></i>
@@ -118,7 +126,17 @@ export function showReservationDetail(resId) {
     document.getElementById('res-detail-end').innerText = utils.formatDate(r.fecha_fin);
     document.getElementById('res-detail-sucursal').innerText = r.sucursal_nombre;
     document.getElementById('res-detail-type').innerText = utils.toTitle(r.tipo_estadia);
-    document.getElementById('res-detail-amount').innerText = `$${utils.formatNum(r.monto_total)}`;
+    document.getElementById('res-detail-amount').innerText = `$${utils.formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}`;
+
+    const refundNote = document.getElementById('res-detail-amount-refund');
+    if (refundNote) {
+        if ((r.monto_reembolsado || 0) > 0) {
+            refundNote.style.display = '';
+            refundNote.innerText = `Pagado $${utils.formatNum(r.monto_total)} · Reembolsado -$${utils.formatNum(r.monto_reembolsado)}`;
+        } else {
+            refundNote.style.display = 'none';
+        }
+    }
 
     const badgeContainer = document.getElementById('res-detail-status-badges');
     if (badgeContainer) {
@@ -145,6 +163,12 @@ let newResBranches = [];
 let newResLinkedUserId = null;
 let newResPatenteLookupTimer = null;
 let newResRatesFallback = { hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
+let editingResId = null;
+let newResPickers = {};
+let editingOriginalReserva = null;
+let newResCalculatedTotal = 0;
+let pendingEditResumo = null;
+let pendingEditResumoMetodo = null;
 
 function _newResYmd(dt) {
     return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
@@ -229,6 +253,11 @@ export function initNewResPatenteLookup() {
 }
 
 export async function openNewReservationModal() {
+    editingResId = null;
+    editingOriginalReserva = null;
+    newResCalculatedTotal = 0;
+    pendingEditResumo = null;
+    setNewResModalMode(false);
     const formEl = document.getElementById('form-new-reservation');
     if (formEl) formEl.reset();
 
@@ -296,6 +325,113 @@ export async function openNewReservationModal() {
     updateNewReservationPrice();
 }
 
+function setNewResModalMode(editing) {
+    const title = document.getElementById('new-res-modal-title');
+    const subtitle = document.getElementById('new-res-modal-subtitle');
+    const submit = document.getElementById('new-res-submit-btn');
+    if (title) title.innerText = editing ? 'EDITAR RESERVA MANUAL' : 'NUEVA RESERVA MANUAL';
+    if (subtitle) subtitle.innerText = editing ? 'Modificá los datos de la reserva' : 'Reserva y pago en la sucursal asignada';
+    if (submit) {
+        const span = submit.querySelector('span');
+        if (span) span.innerText = editing ? 'GUARDAR CAMBIOS' : 'CREAR Y PAGAR';
+    }
+}
+
+export async function openEditReservationModal(resId) {
+    const r = allReservations.find(x => x.id === resId) || window.allReservations?.find(x => x.id === resId);
+    if (!r) return;
+
+    await openNewReservationModal();
+    editingResId = resId;
+    editingOriginalReserva = r;
+    setNewResModalMode(true);
+
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+
+    const sucursalInput = document.getElementById('new-res-sucursal');
+    if (sucursalInput && r.sucursal_nombre) sucursalInput.value = r.sucursal_nombre;
+
+    const tipoEl = document.getElementById('new-res-tipo');
+    const tipoVehEl = document.getElementById('new-res-tipo-vehiculo');
+    const patenteEl = document.getElementById('new-res-patente');
+    if (patenteEl) patenteEl.value = r.patente || '';
+    resetNewResPatenteLookup();
+    initNewResPatenteLookup();
+    if (r.user_id) {
+        newResLinkedUserId = r.user_id;
+        const badge = document.getElementById('new-res-patente-owner-badge');
+        if (badge) {
+            const span = badge.querySelector('span');
+            if (span) span.textContent = `${r.usuario_nombre || 'Cliente'} ${r.usuario_apellido || ''}`;
+            const icon = badge.querySelector('i');
+            if (icon) icon.className = 'fas fa-user-check';
+            badge.style.color = '#27ae60';
+            badge.style.display = 'inline-flex';
+        }
+    }
+    // RE-DETECCION AUTOMATICA DEL DUEÑO SEGUN LA PATENTE (IGUAL QUE AL CREAR)
+    setTimeout(async () => {
+        await lookupNewResPatente();
+        updateNewReservationPrice();
+    }, 60);
+    if (tipoEl) {
+        tipoEl.value = r.tipo_estadia || 'hora';
+        updateNewFormGroups(tipoEl.value);
+    }
+    if (tipoVehEl && r.tipo_vehiculo) {
+        tipoVehEl.value = r.tipo_vehiculo;
+        updateNewVehicleTypeIcon(r.tipo_vehiculo);
+    }
+
+    const tipoEstadia = r.tipo_estadia || 'hora';
+    const sDate = (r.fecha_inicio || '').split(' ')[0];
+    const eDate = (r.fecha_fin || '').split(' ')[0];
+
+    if (tipoEstadia === 'hora') {
+        const sTime = ((r.fecha_inicio || '').split(' ')[1] || '08:00').slice(0, 5);
+        const eTime = ((r.fecha_fin || '').split(' ')[1] || '09:00').slice(0, 5);
+        const start = new Date(`${sDate}T${sTime}`);
+        const end = new Date(`${eDate}T${eTime}`);
+        const qty = !isNaN(start.getTime()) && !isNaN(end.getTime())
+            ? Math.max(0.5, Math.round(((end - start) / 3600000) * 10) / 10)
+            : 1;
+        if (newResPickers.dateOnly) newResPickers.dateOnly.setDate(sDate || 'today', true);
+        else setVal('new-res-date-only', sDate);
+        setVal('new-res-time-only', sTime);
+        setVal('new-res-hours-qty', qty);
+    } else if (tipoEstadia === 'dia') {
+        if (newResPickers.dayOnly) newResPickers.dayOnly.setDate(sDate || 'today', true);
+        else setVal('new-res-day-only', sDate);
+    } else {
+        const days = { 'semana': 7, 'quincena': 15, 'mes': 30 };
+        const pickerNames = { 'semana': 'weekStart', 'quincena': 'fortnightStart', 'mes': 'monthStart' };
+        const endIds = { 'semana': 'new-res-week-end', 'quincena': 'new-res-fortnight-end', 'mes': 'new-res-month-end' };
+        const startIds = { 'semana': 'new-res-week-start', 'quincena': 'new-res-fortnight-start', 'mes': 'new-res-month-start' };
+        const picker = newResPickers[pickerNames[tipoEstadia]];
+        if (picker) picker.setDate(sDate || 'today', true);
+        else setVal(startIds[tipoEstadia], sDate);
+        updateNewPeriodEnd(sDate, days[tipoEstadia], `#${endIds[tipoEstadia]}`);
+    }
+
+    const payGroup = document.getElementById('new-res-metodo-pago-group');
+    if (r.estado_pago === 'Pagado') {
+        if (payGroup) payGroup.style.display = 'none';
+    } else {
+        if (payGroup) payGroup.style.display = '';
+        setVal('new-res-metodo-pago', r.metodo_pago || 'Efectivo');
+    }
+
+    newSlotRangeStart = null;
+    newSlotRangeEnd = null;
+    newSlotRangeDate = null;
+
+    updateNewReservationPrice();
+    updateNewHourlySlotsUI();
+
+    if (baseUi.openModal) baseUi.openModal('modal-new-reservation');
+    updateNewReservationPrice();
+}
+
 function initNewReservationPickers() {
     const now = getVirtualNow();
     const maxDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
@@ -312,11 +448,11 @@ function initNewReservationPickers() {
             updateNewHourlySlotsUI();
         }
     };
-    flatpickr("#new-res-date-only", common);
-    flatpickr("#new-res-day-only", common);
-    flatpickr("#new-res-week-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 7, '#new-res-week-end') });
-    flatpickr("#new-res-fortnight-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 15, '#new-res-fortnight-end') });
-    flatpickr("#new-res-month-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 30, '#new-res-month-end') });
+    newResPickers.dateOnly = flatpickr("#new-res-date-only", common);
+    newResPickers.dayOnly = flatpickr("#new-res-day-only", common);
+    newResPickers.weekStart = flatpickr("#new-res-week-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 7, '#new-res-week-end') });
+    newResPickers.fortnightStart = flatpickr("#new-res-fortnight-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 15, '#new-res-fortnight-end') });
+    newResPickers.monthStart = flatpickr("#new-res-month-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 30, '#new-res-month-end') });
 
     document.getElementById('new-res-hours-qty')?.addEventListener('input', () => updateNewReservationPrice());
 
@@ -476,6 +612,7 @@ export async function updateNewReservationPrice() {
     else total = Math.ceil(durationHours) * rates.hora;
 
     if (elMonto) elMonto.innerText = `$ ${utils.formatNum(total)}`;
+    newResCalculatedTotal = Math.round(total * 100) / 100;
 }
 
 // ==========================================================================
@@ -534,15 +671,15 @@ async function updateNewHourlySlotsUI() {
     }
 
     try {
-        const res = await api.get('/user/reservations/disabled-hours', {
-            params: {
-                sucursal_nombre: sucursal,
-                fecha: fecha,
-                tipo_vehiculo: tipoVehiculo,
-                duracion_horas: 1,
-                paso_minutos: 30
-            }
-        });
+        const params = {
+            sucursal_nombre: sucursal,
+            fecha: fecha,
+            tipo_vehiculo: tipoVehiculo,
+            duracion_horas: 1,
+            paso_minutos: 30
+        };
+        if (editingResId) params.exclude_id = editingResId;
+        const res = await api.get('/user/reservations/disabled-hours', { params });
 
         const reservedRanges = (res.ok && res.data && Array.isArray(res.data.reserved_ranges)) ? res.data.reserved_ranges : [];
 
@@ -753,14 +890,15 @@ export async function handleAdminNewReservation(event) {
         return utils.showToast(e.message, 'error');
     }
 
-    const av = await api.get('/user/reservations/check-availability', {
-        params: {
-            sucursal_nombre: sucursal,
-            fecha_inicio: inicio,
-            fecha_fin: fin,
-            tipo_vehiculo: tipoVehiculo
-        }
-    });
+    const avParams = {
+        sucursal_nombre: sucursal,
+        fecha_inicio: inicio,
+        fecha_fin: fin,
+        tipo_vehiculo: tipoVehiculo
+    };
+    if (editingResId) avParams.exclude_id = editingResId;
+
+    const av = await api.get('/user/reservations/check-availability', { params: avParams });
     if (av.ok && av.data && !av.data.disponible) {
         return utils.showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.', 'info');
     }
@@ -771,28 +909,126 @@ export async function handleAdminNewReservation(event) {
         fecha_inicio: inicio,
         fecha_fin: fin,
         sucursal_nombre: sucursal,
-        metodo_pago: metodoPago,
-        tipo_vehiculo: tipoVehiculo,
-        pagar: true
+        tipo_vehiculo: tipoVehiculo
     };
 
-    if (newResLinkedUserId) {
-        payload.user_id = newResLinkedUserId;
+    if (editingResId) {
+        if (document.getElementById('new-res-metodo-pago-group')?.style.display !== 'none') {
+            payload.metodo_pago = metodoPago;
+        }
+        payload.user_id = newResLinkedUserId || null;
+    } else {
+        payload.metodo_pago = metodoPago;
+        payload.pagar = true;
+        if (newResLinkedUserId) {
+            payload.user_id = newResLinkedUserId;
+        }
     }
+
+    // AVISO DE CONFIRMACION AL EDITAR UNA RESERVA PAGADA (DIFERENCIA DE IMPORTE)
+    if (editingResId && editingOriginalReserva && String(editingOriginalReserva.estado_pago).toLowerCase() === 'pagado') {
+        const totalAnterior = (editingOriginalReserva.monto_total || 0) - (editingOriginalReserva.monto_reembolsado || 0);
+        const diferencia = Math.round((newResCalculatedTotal - totalAnterior) * 100) / 100;
+
+        const resumoEl = document.getElementById('edit-confirm-resumo');
+        if (resumoEl) {
+            const actual = editingOriginalReserva;
+            const rows = [
+                ['Reserva', `#${editingResId}`],
+                ['Patente', actual.patente || patente],
+                ['Sucursal', actual.sucursal_nombre || sucursal],
+                ['Estadía', `${inicio} → ${fin}`],
+                ['Total pagado', `$ ${utils.formatNum(actual.monto_total || 0)}${(actual.monto_reembolsado || 0) > 0 ? ` (ya reembolsado -$ ${utils.formatNum(actual.monto_reembolsado)})` : ''}`],
+                ['Total nuevo', `$ ${utils.formatNum(newResCalculatedTotal)}`]
+            ];
+            resumoEl.innerHTML = rows.map(r => `<div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">${r[0]}</span><b>${r[1]}</b></div>`).join('');
+        }
+
+        const diffEl = document.getElementById('edit-confirm-diff');
+        if (diffEl) {
+            if (diferencia > 0) {
+                diffEl.innerHTML = `<i class="fas fa-arrow-up" style="margin-right:6px;"></i>Se cobran $ ${utils.formatNum(diferencia)} por la diferencia`;
+                diffEl.style.color = '#27ae60';
+            } else if (diferencia < 0) {
+                diffEl.innerHTML = `<i class="fas fa-arrow-down" style="margin-right:6px;"></i>Se reembolsan $ ${utils.formatNum(Math.abs(diferencia))}`;
+                diffEl.style.color = '#e74c3c';
+            } else {
+                diffEl.innerHTML = '<i class="fas fa-equals" style="margin-right:6px;"></i>Sin diferencias de importe';
+                diffEl.style.color = '#aaa';
+            }
+        }
+
+        const methodGroup = document.getElementById('edit-confirm-method-group');
+        if (methodGroup) {
+            const needsMethod = diferencia !== 0;
+            methodGroup.style.display = needsMethod ? '' : 'none';
+            const label = methodGroup.querySelector('label');
+            if (label) label.textContent = diferencia > 0 ? '¿Con qué método se cobra la diferencia?' : '¿Con qué método se reembolsa la diferencia?';
+        }
+
+        const methodSelect = document.getElementById('edit-confirm-metodo');
+        if (methodSelect) {
+            if (diferencia < 0) {
+                const origMetodo = String(actual.metodo_pago || '').toUpperCase().replace(/\s+/g, '');
+                methodSelect.value = ['CAJA', 'EFECTIVO'].includes(origMetodo) ? 'Efectivo' : 'Saldo';
+            } else if (diferencia > 0) {
+                methodSelect.value = ['CAJA', 'EFECTIVO'].includes(String(actual.metodo_pago || '').toUpperCase().replace(/\s+/g, '')) ? 'Efectivo' : 'Saldo';
+            }
+        }
+
+        pendingEditResumo = { payload, diferencia };
+        if (baseUi.openModal) baseUi.openModal('modal-edit-resumo');
+        return;
+    }
+
+    await _submitReservationPayload(payload);
+}
+
+export function confirmEditResumoProceed() {
+    if (!pendingEditResumo) return;
+    const { payload, diferencia } = pendingEditResumo;
+    pendingEditResumo = null;
+    const methodSelect = document.getElementById('edit-confirm-metodo');
+    const metodo = methodSelect ? methodSelect.value : null;
+    if (diferencia > 0) payload.cobrar_diferencia_metodo = metodo;
+    else if (diferencia < 0) payload.reembolsar_diferencia_metodo = metodo;
+    if (baseUi.closeModal) baseUi.closeModal('modal-edit-resumo');
+    _submitReservationPayload(payload);
+}
+
+export function cancelEditResumo() {
+    pendingEditResumo = null;
+    if (baseUi.closeModal) baseUi.closeModal('modal-edit-resumo');
+}
+
+async function _submitReservationPayload(payload) {
+    const btn = document.getElementById('new-res-submit-btn');
+    const originalContent = btn ? btn.innerHTML : '';
 
     if (btn) {
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> PROCESANDO...';
         btn.disabled = true;
     }
 
-    const res = await api.post('/admin/reservations', payload);
+    const res = editingResId
+        ? await api.put(`/admin/reservations/${editingResId}`, payload)
+        : await api.post('/admin/reservations', payload);
     if (res.ok) {
-        utils.showToast(`Reserva creada y pago registrado (${metodoPago})`, 'success');
+        let msg = editingResId ? `Reserva #${editingResId} actualizada` : `Reserva creada y pago registrado (${res.data?.metodo_pago || payload.metodo_pago || ''})`;
+        if (editingResId && res.data && res.data.accion === 'cobro') {
+            msg = `Reserva #${editingResId} actualizada. Se cobraron $ ${utils.formatNum(res.data.diferencia)} (${res.data.metodo_pago || 'Caja'})`;
+        } else if (editingResId && res.data && res.data.accion === 'reembolso') {
+            msg = `Reserva #${editingResId} actualizada. Se reembolsaron $ ${utils.formatNum(Math.abs(res.data.diferencia))} (${res.data.metodo_pago || 'Saldo'})`;
+        }
+        utils.showToast(msg, 'success');
         resetNewResPatenteLookup();
+        editingResId = null;
+        editingOriginalReserva = null;
+        setNewResModalMode(false);
         if (baseUi.closeModal) baseUi.closeModal('modal-new-reservation');
         loadAdminReservations();
     } else {
-        utils.showToast(res.error || 'Error al crear la reserva', 'error');
+        utils.showToast(res.error || 'Error al guardar la reserva', 'error');
     }
 
     if (btn) {

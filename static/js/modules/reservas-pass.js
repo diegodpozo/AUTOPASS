@@ -166,7 +166,7 @@ export async function showDigitalPass(id) {
     document.getElementById('ticket-duracion').innerText = duracionHoras(r.fecha_inicio, r.fecha_fin);
 
     /* SECCIÓN FINANCIERA */
-    const total = r.monto_total || 0;
+    const total = (r.monto_total || 0) - (r.monto_reembolsado || 0);
     document.getElementById('ticket-total').innerText = formatCurrency(total);
 
     const calcEl = document.getElementById('ticket-calculo');

@@ -1,13 +1,20 @@
 import datetime
 import math
 from sqlalchemy.orm import Session, aliased
-from sqlalchemy import func, union_all, literal_column, or_
+from sqlalchemy import func, union_all, literal_column, or_, and_
 import models
 from models.enums import UserRole, ReservationStatus, PaymentStatus, AccessEventType
 from services.billing_service import BillingService
 from services.time_service import TimeService
 
 CASH_METHODS = ("CAJA", "Caja", "Efectivo")
+
+def _es_reembolso_parcial(col_estado, col_reembolsado):
+    """Reembolsos: reservas reembolsadas completas O pagadas con reembolso parcial acumulado."""
+    return or_(
+        col_estado == PaymentStatus.REEMBOLSADO,
+        and_(col_estado == PaymentStatus.PAGADO, col_reembolsado > 0)
+    )
 
 PAYMENT_METHOD_VARIANTS = {
     "CAJA": CASH_METHODS,
@@ -150,7 +157,7 @@ class ReportService:
         
         # Reembolsos
         q_refunds = db.query(func.sum(models.Reservation.monto_reembolsado)).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
-        q_refunds = q_refunds.filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
+        q_refunds = q_refunds.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         
         if vehicle_type != "all":
             q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
@@ -295,7 +302,7 @@ class ReportService:
             func.sum(func.coalesce(models.Reservation.monto_reembolsado, 0.0)),
             func.count(models.Reservation.id)
         ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
-        q_grp_ref = q_grp_ref.filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
+        q_grp_ref = q_grp_ref.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         if vehicle_type != "all":
             q_grp_ref = q_grp_ref.filter(models.Vehicle.tipo == vehicle_type)
         if sucursal:
@@ -403,7 +410,7 @@ class ReportService:
             func.coalesce(models.Reservation.metodo_pago, "DIGITAL").label("metodo")
         ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
         
-        q_refunds = q_refunds.filter(models.Reservation.estado_pago == PaymentStatus.REEMBOLSADO)
+        q_refunds = q_refunds.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         if vehicle_type != "all": q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
         if sucursal:
             target_name = sucursal.replace('AUTOPASS ', '').strip()
@@ -524,10 +531,11 @@ class ReportService:
         }
 
     @classmethod
-    def get_access_activity(cls, db: Session, admin: models.User) -> dict:
+    def get_access_activity(cls, db: Session, admin: models.User, desde: str = None, hasta: str = None) -> dict:
         """Serie temporal horaria continua de accesos (ENTRADA/SALIDA) para el apartado Métricas.
         Va desde el primer registro disponible hasta la hora actual, completando huecos con cero
-        para que el gráfico pueda moverse y retroceder hasta el primer dato."""
+        para que el gráfico pueda moverse y retroceder hasta el primer dato. Acepta un rango
+        opcional desde/hasta (fechas YYYY-MM-DD o timestamps) para acotar la serie."""
         from core.time import localnow
 
         filters = []
@@ -554,11 +562,38 @@ class ReportService:
         def _hour_key(dt):
             return dt.strftime("%Y-%m-%d %H:00")
 
+        def _boundary(s, is_end=False):
+            if not s:
+                return None
+            s = str(s).strip()
+            if len(s) == 10:
+                s = f"{s} 23:59:59" if is_end else f"{s} 00:00:00"
+            return _parse(s)
+
+        f_desde = _boundary(desde, is_end=False)
+        f_hasta = _boundary(hasta, is_end=True)
+
+        if f_desde and f_hasta and f_desde > f_hasta:
+            return {
+                "first_bucket": None,
+                "first_datetime": None,
+                "last_bucket": None,
+                "now_bucket": None,
+                "buckets": [],
+                "totals": {"entrada": 0, "salida": 0, "total": 0}
+            }
+
+        now = localnow().replace(minute=0, second=0, microsecond=0)
+
         counts = {}
         first_dt = None
         for fecha_hora, tipo_evento in rows:
             dt = _parse(fecha_hora)
             if dt is None:
+                continue
+            if f_desde and dt < f_desde:
+                continue
+            if f_hasta and dt > f_hasta:
                 continue
             if first_dt is None or dt < first_dt:
                 first_dt = dt
@@ -578,12 +613,21 @@ class ReportService:
                 "totals": {"entrada": 0, "salida": 0, "total": 0}
             }
 
-        now = localnow().replace(minute=0, second=0, microsecond=0)
+        end_limit = now
+        if f_hasta and f_hasta < now:
+            end_limit = f_hasta
+
         buckets = []
         totals = {"entrada": 0, "salida": 0, "total": 0}
 
-        cur = datetime.datetime(first_dt.year, first_dt.month, first_dt.day, first_dt.hour)
-        while cur <= now:
+        start_limit = datetime.datetime(1, 1, 1)
+        if f_desde:
+            start_limit = f_desde.replace(minute=0, second=0, microsecond=0)
+        cur = max(
+            datetime.datetime(first_dt.year, first_dt.month, first_dt.day, first_dt.hour),
+            start_limit
+        )
+        while cur <= end_limit:
             key = _hour_key(cur)
             e = counts.get((key, "ENTRADA"), 0)
             s = counts.get((key, "SALIDA"), 0)
@@ -597,7 +641,7 @@ class ReportService:
             "first_bucket": _hour_key(first_dt),
             "first_datetime": first_dt.strftime("%Y-%m-%d %H:%M:%S"),
             "last_bucket": buckets[-1]["label"] if buckets else None,
-            "now_bucket": now.strftime("%Y-%m-%d %H:00"),
+            "now_bucket": end_limit.strftime("%Y-%m-%d %H:00"),
             "buckets": buckets,
             "totals": totals
         }

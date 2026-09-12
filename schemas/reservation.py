@@ -27,6 +27,8 @@ class AdminReservationCreate(BaseModel):
     metodo_pago: Optional[str] = None
     pagar: Optional[bool] = False
     tipo_vehiculo: Optional[str] = "Auto"
+    cobrar_diferencia_metodo: Optional[str] = None
+    reembolsar_diferencia_metodo: Optional[str] = None
 
 class ReservationUpdate(BaseModel):
     fecha_inicio: Optional[str] = None
@@ -54,6 +56,7 @@ class UserReservationResponse(BaseModel):
     estado_pago: str
     estado_reserva: str
     monto_total: float
+    monto_reembolsado: Optional[float] = 0.0
     sucursal_nombre: Optional[str] = None
     sucursal_info: Optional[str] = None
     metodo_pago: Optional[str] = None
@@ -63,3 +66,4 @@ class UserReservationResponse(BaseModel):
     usuario_nombre: Optional[str] = None
     usuario_apellido: Optional[str] = None
     en_predio: bool = False
+    origen: Optional[str] = "cliente"

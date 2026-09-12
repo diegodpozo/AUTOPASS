@@ -84,8 +84,8 @@
             <div class="card-header-premium">
                 <div class="header-icon" style="color: var(--dorado);"><i class="fas fa-calendar-plus"></i></div>
                 <div class="header-text">
-                    <h3 style="color: var(--dorado); margin: 0;">NUEVA RESERVA MANUAL</h3>
-                    <p style="margin: 5px 0 0 0;">Reserva y pago en la sucursal asignada</p>
+                    <h3 style="color: var(--dorado); margin: 0;" id="new-res-modal-title">NUEVA RESERVA MANUAL</h3>
+                    <p style="margin: 5px 0 0 0;" id="new-res-modal-subtitle">Reserva y pago en la sucursal asignada</p>
                 </div>
                 <button class="modal-close-top" onclick="closeModal('modal-new-reservation')" style="position: static; margin-left: auto;">&times;</button>
             </div>
@@ -206,7 +206,7 @@
                         </div>
 
                         <!-- MÉTODO DE PAGO -->
-                        <div class="form-group-premium full-width-premium" style="align-items: flex-start;">
+                        <div class="form-group-premium full-width-premium" style="align-items: flex-start;" id="new-res-metodo-pago-group">
                             <label>Método de Pago</label>
                             <div class="select-wrapper-premium" style="max-width: 380px;">
                                 <i class="fas fa-money-bill-transfer"></i>
@@ -228,13 +228,57 @@
                         </div>
                         <div class="flex-row gap-15">
                             <button type="button" class="btn btn-outline" onclick="closeModal('modal-new-reservation')" style="border-radius: 12px; padding: 12px 25px;">DESCARTAR</button>
-                            <button type="submit" class="btn-confirm-premium">
+                            <button type="submit" class="btn-confirm-premium" id="new-res-submit-btn">
                                 <span>CREAR Y PAGAR</span>
                                 <i class="fas fa-check"></i>
                             </button>
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN DE EDICIÓN DE RESERVA (DIFERENCIA FINANCIERA) -->
+<div id="modal-edit-resumo" class="modal">
+    <div class="modal-content" style="max-width: 500px; padding: 30px;">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+            <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(212,175,55,0.15); color: var(--dorado); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0;">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div style="text-align: left;">
+                <h3 style="margin: 0; font-size: 1.15rem; letter-spacing: 0.5px;">CONFIRMAR EDICIÓN</h3>
+                <p style="margin: 3px 0 0 0; font-size: 0.78rem; color: #aaa;">Revisá los datos antes de guardar los cambios</p>
+            </div>
+            <button class="modal-close-top" onclick="cancelEditResumo()" style="position: static; margin-left: auto; flex-shrink: 0;">&times;</button>
+        </div>
+        <div style="padding: 18px 0 0 0;">
+            <div id="edit-confirm-resumo" style="display: flex; flex-direction: column; gap: 9px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 16px; font-size: 0.83rem;"></div>
+            <div id="edit-confirm-diff" style="margin: 14px 0 4px 0; font-weight: 700; font-size: 0.95rem; text-align: center;"></div>
+
+            <div id="edit-confirm-method-group" class="form-group-premium full-width-premium" style="margin-top: 12px;">
+                <label>Método</label>
+                <div class="select-wrapper-premium" style="max-width: 100%;">
+                    <i class="fas fa-money-bill-transfer"></i>
+                    <select id="edit-confirm-metodo" style="text-align-last: left;">
+                        <option value="Efectivo">EFECTIVO</option>
+                        <option value="Mercado Pago">MERCADO PAGO</option>
+                        <option value="Transferencia">TRANSFERENCIA</option>
+                        <option value="Tarjeta">TARJETA</option>
+                        <option value="Caja">CAJA</option>
+                        <option value="Saldo">SALDO</option>
+                        <option value="Otro">OTRO</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07);">
+                <button type="button" class="btn btn-outline" onclick="cancelEditResumo()" style="border-radius: 12px; padding: 12px 25px;">CANCELAR</button>
+                <button type="button" class="btn-confirm-premium" onclick="confirmEditResumoProceed()" style="min-width: 200px;">
+                    <span>CONFIRMAR EDICIÓN</span>
+                    <i class="fas fa-check"></i>
+                </button>
             </div>
         </div>
     </div>
