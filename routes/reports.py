@@ -70,3 +70,19 @@ def get_ocr_stats(
 ):
     """Estadísticas de tiempos de procesamiento OCR."""
     return ReportService.get_ocr_stats(db=db, staff=staff, limit=limit)
+
+@router.get("/metrics/access-activity")
+def get_metrics_access_activity(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_local_manager)
+):
+    """Serie temporal horaria de accesos (ENTRADA/SALIDA) desde el primer dato hasta ahora."""
+    return ReportService.get_access_activity(db=db, admin=admin)
+
+@router.get("/ocr-activity")
+def get_ocr_activity(
+    db: Session = Depends(get_db),
+    staff: models.User = Depends(get_operational_user)
+):
+    """Serie cronológica completa de tiempos OCR para el gráfico móvil."""
+    return ReportService.get_ocr_activity(db=db, staff=staff)
