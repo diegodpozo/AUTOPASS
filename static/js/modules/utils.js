@@ -46,6 +46,57 @@ export function formatDate(isoStr) {
 }
 
 /**
+ * FORMATEADORES DE FECHA/HORA UNIFICADOS (SIEMPRE 24H).
+ * Todos los campos fijan `hour12: false` para que el formato NO dependa del
+ * default del locale (es-AR resuelve 12h en algunos engines si no se aclara).
+ * Usan las mismas opciones que las llamadas originales para no cambiar la
+ * apariencia de las horas que ya eran 24h.
+ */
+const _TIME_FMT = {
+    // HH:MM (ej: "14:05")
+    time: new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    // HH:MM:SS (ej: "14:05:07")
+    timeSec: new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+    // DD/MM/YYYY HH:MM:SS (ej: "11/09/2026, 14:05:07")
+    dateTime: new Intl.DateTimeFormat('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+    // DD/MM HH:MM (ej: "11/9, 14:05")
+    dayTime: new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
+    // D/M/YYYY HH:MM:SS (ej: "11/9/2026, 14:05:07")
+    localDateTime: new Intl.DateTimeFormat('es-AR', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false })
+};
+
+function _coerceDate(d) {
+    if (!d) return null;
+    const dt = d instanceof Date ? d : new Date(d);
+    return isNaN(dt.getTime()) ? null : dt;
+}
+
+export function formatTime(d) {
+    const dt = _coerceDate(d);
+    return dt ? _TIME_FMT.time.format(dt) : '';
+}
+
+export function formatTimeSeconds(d) {
+    const dt = _coerceDate(d);
+    return dt ? _TIME_FMT.timeSec.format(dt) : '';
+}
+
+export function formatDateTime(d) {
+    const dt = _coerceDate(d);
+    return dt ? _TIME_FMT.dateTime.format(dt) : '';
+}
+
+export function formatDayTime(d) {
+    const dt = _coerceDate(d);
+    return dt ? _TIME_FMT.dayTime.format(dt) : '';
+}
+
+export function formatLocalDateTime(d) {
+    const dt = _coerceDate(d);
+    return dt ? _TIME_FMT.localDateTime.format(dt) : '';
+}
+
+/**
  * MUESTRA UNA NOTIFICACION PREMIUM (TOAST).
  * TIPOS: 'SUCCESS', 'ERROR', 'INFO', 'POR DEFECTO'
  */
@@ -310,3 +361,8 @@ export function metodoPagoReport(metodo, tipo) {
 
 // EXPONER GLOBALMENTE PARA SCRIPTS QUE NO SON MODULOS
 window.formatNum = formatNum;
+window.formatTime = formatTime;
+window.formatTimeSeconds = formatTimeSeconds;
+window.formatDateTime = formatDateTime;
+window.formatDayTime = formatDayTime;
+window.formatLocalDateTime = formatLocalDateTime;

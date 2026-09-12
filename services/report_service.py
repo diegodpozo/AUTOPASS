@@ -497,3 +497,107 @@ class ReportService:
                 "p90_ocr": round(sorted_times[p90_idx], 3) if p90_idx < len(sorted_times) else round(sorted_times[-1], 3)
             }
         }
+
+    @classmethod
+    def get_ocr_activity(cls, db: Session, staff: models.User) -> dict:
+        """Serie cronológica COMPLETA de tiempos OCR (desde el primer dato hasta el último),
+        para el gráfico móvil de la página de estadísticas OCR."""
+        q = db.query(models.AccessLog).filter(models.AccessLog.ocr_time.isnot(None))
+        if str(staff.rol) != UserRole.ADMIN.value:
+            target_name = staff.sucursal.replace("AUTOPASS ", "").strip()
+            q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+
+        logs = q.order_by(models.AccessLog.id.asc()).all()
+        points = [{
+            "fecha_hora": l.fecha_hora,
+            "ocr_time": round(l.ocr_time, 3),
+            "patente": l.patente_detectada,
+            "sucursal": l.sucursal,
+            "tipo_evento": l.tipo_evento
+        } for l in logs if l.ocr_time is not None]
+
+        return {
+            "count": len(points),
+            "first_datetime": points[0]["fecha_hora"] if points else None,
+            "last_datetime": points[-1]["fecha_hora"] if points else None,
+            "points": points
+        }
+
+    @classmethod
+    def get_access_activity(cls, db: Session, admin: models.User) -> dict:
+        """Serie temporal horaria continua de accesos (ENTRADA/SALIDA) para el apartado Métricas.
+        Va desde el primer registro disponible hasta la hora actual, completando huecos con cero
+        para que el gráfico pueda moverse y retroceder hasta el primer dato."""
+        from core.time import localnow
+
+        filters = []
+        if str(admin.rol) != UserRole.ADMIN.value and admin.sucursal:
+            target_name = admin.sucursal.replace("AUTOPASS ", "").strip()
+            filters.append(models.AccessLog.sucursal.like(f"%{target_name}%"))
+
+        rows = db.query(
+            models.AccessLog.fecha_hora,
+            models.AccessLog.tipo_evento
+        ).filter(*filters).all()
+
+        def _parse(s):
+            if not s:
+                return None
+            norm = str(s).replace("T", " ").strip()
+            for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+                try:
+                    return datetime.datetime.strptime(norm, fmt)
+                except ValueError:
+                    continue
+            return None
+
+        def _hour_key(dt):
+            return dt.strftime("%Y-%m-%d %H:00")
+
+        counts = {}
+        first_dt = None
+        for fecha_hora, tipo_evento in rows:
+            dt = _parse(fecha_hora)
+            if dt is None:
+                continue
+            if first_dt is None or dt < first_dt:
+                first_dt = dt
+            key = _hour_key(dt)
+            ev = (tipo_evento or "").upper()
+            if ev in ("ENTRADA", "SALIDA"):
+                count_key = (key, ev)
+                counts[count_key] = counts.get(count_key, 0) + 1
+
+        if first_dt is None:
+            return {
+                "first_bucket": None,
+                "first_datetime": None,
+                "last_bucket": None,
+                "now_bucket": None,
+                "buckets": [],
+                "totals": {"entrada": 0, "salida": 0, "total": 0}
+            }
+
+        now = localnow().replace(minute=0, second=0, microsecond=0)
+        buckets = []
+        totals = {"entrada": 0, "salida": 0, "total": 0}
+
+        cur = datetime.datetime(first_dt.year, first_dt.month, first_dt.day, first_dt.hour)
+        while cur <= now:
+            key = _hour_key(cur)
+            e = counts.get((key, "ENTRADA"), 0)
+            s = counts.get((key, "SALIDA"), 0)
+            buckets.append({"label": key, "entrada": e, "salida": s, "total": e + s})
+            totals["entrada"] += e
+            totals["salida"] += s
+            totals["total"] += e + s
+            cur += datetime.timedelta(hours=1)
+
+        return {
+            "first_bucket": _hour_key(first_dt),
+            "first_datetime": first_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            "last_bucket": buckets[-1]["label"] if buckets else None,
+            "now_bucket": now.strftime("%Y-%m-%d %H:00"),
+            "buckets": buckets,
+            "totals": totals
+        }

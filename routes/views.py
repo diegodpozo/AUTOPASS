@@ -58,3 +58,7 @@ async def get_monitoreo(request: Request):
 @router.get("/estadisticas-ocr", response_class=HTMLResponse)
 async def get_estadisticas_ocr(request: Request):
     return templates.TemplateResponse(request=request, name="estadisticas_ocr.html")
+
+@router.get("/metricas", response_class=HTMLResponse)
+async def get_metricas(request: Request):
+    return templates.TemplateResponse(request=request, name="metricas.html")

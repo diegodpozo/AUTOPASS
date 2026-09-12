@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, formatDate, toTitle } from './utils.js';
+import { showToast, formatDate, toTitle, formatTime } from './utils.js';
 import { openModal, closeModal } from './ui.js';
 import { updateNotifBadge } from './notifications.js';
 
@@ -171,7 +171,7 @@ function renderAdminTicketMessages(messages) {
         const autor = toTitle(m.autor || (isMine ? 'Soporte' : 'Usuario'));
         const label = isMine ? `Soporte — ${autor}` : autor;
         const dt = m.created_at ? new Date(m.created_at) : null;
-        const time = dt ? dt.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' }) : '';
+        const time = dt ? formatTime(dt) : '';
         const dayKey = dt ? `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}` : '';
         let datePill = '';
         if (dt && dayKey !== lastDay) {
