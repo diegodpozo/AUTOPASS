@@ -330,6 +330,44 @@
     .ocr-header-tooltip.tooltip-right:hover::after {
         transform: translateX(0) translateY(0);
     }
+
+    /* --- GRAFICO DE LATENCIA --- */
+    .ocr-chart-card {
+        background: rgba(17, 20, 36, 0.7);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 18px 22px 22px 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .ocr-chart-body {
+        position: relative;
+        height: 320px;
+        margin-top: 12px;
+    }
+
+    .ocr-chart-legend {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        flex-wrap: wrap;
+        font-size: 0.72rem;
+        color: #9ca3af;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .ocr-chart-legend .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
 </style>
 {% endblock %}
 
@@ -428,6 +466,24 @@
         </div>
     </div>
 
+    <!-- GRAFICO DE LATENCIA OCR -->
+    <div class="ocr-chart-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h3 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-chart-line text-dorado"></i> CURVA DE LATENCIA OCR
+            </h3>
+            <div class="ocr-chart-legend">
+                <span><span class="dot" style="background:#C5A059;"></span>Tiempo OCR</span>
+                <span><span class="dot" style="background:#38bdf8;"></span>Promedio</span>
+                <span><span class="dot" style="background:#ef4444;"></span>Máximo</span>
+                <span><span class="dot" style="background:#10b981;"></span>Mínimo</span>
+            </div>
+        </div>
+        <div class="ocr-chart-body">
+            <canvas id="ocrChart"></canvas>
+        </div>
+    </div>
+
     <!-- TABLA DE DETALLE -->
     <div class="ocr-table-card">
         <div style="padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
@@ -465,9 +521,11 @@
 {% block extra_scripts %}
 <script type="module">
     import api from '/static/js/modules/api.js';
+    import { formatDateTime, formatTimeSeconds } from '/static/js/modules/utils.js';
 
     let todosLosLogs = [];
     let intervaloAutoRefresh = null;
+    let ocrChart = null;
 
     function formatearFecha(isoStr) {
         if (!isoStr) return '--';
@@ -476,14 +534,7 @@
             if (isNaN(d.getTime())) {
                 return isoStr.replace('T', ' ').substring(0, 19);
             }
-            return d.toLocaleString('es-AR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
+            return formatDateTime(d);
         } catch {
             return isoStr;
         }
@@ -543,6 +594,138 @@
         }
     };
 
+    function renderOcrChart(logs) {
+        const canvas = document.getElementById('ocrChart');
+        if (!canvas || typeof window.Chart === 'undefined') return;
+        const ctx = canvas.getContext('2d');
+
+        if (ocrChart) {
+            ocrChart.destroy();
+            ocrChart = null;
+        }
+
+        const puntos = (logs || [])
+            .filter(l => l.ocr_time !== null && l.ocr_time !== undefined)
+            .map(l => ({
+                t: new Date(String(l.fecha_hora).replace(' ', 'T')),
+                y: parseFloat(l.ocr_time)
+            }))
+            .filter(p => !isNaN(p.t.getTime()) && !isNaN(p.y))
+            .sort((a, b) => a.t - b.t);
+
+        const labels = puntos.map(p => formatTimeSeconds(p.t));
+        const values = puntos.map(p => p.y);
+
+        let avg = null;
+        let min = null;
+        let max = null;
+        if (values.length > 0) {
+            avg = values.reduce((s, v) => s + v, 0) / values.length;
+            const sorted = [...values].sort((a, b) => a - b);
+            min = sorted[0];
+            max = sorted[sorted.length - 1];
+        }
+        const flat = (val) => labels.map(() => val);
+
+        ocrChart = new window.Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels.length ? labels : ['Sin datos'],
+                datasets: [
+                    {
+                        label: 'Tiempo OCR',
+                        data: values.length ? values : [0],
+                        borderColor: '#C5A059',
+                        backgroundColor: 'rgba(197, 160, 89, 0.12)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#C5A059',
+                        pointBorderColor: '#000',
+                        pointBorderWidth: 1.5,
+                        hitRadius: 30
+                    },
+                    {
+                        label: 'Promedio',
+                        data: flat(avg !== null ? avg : 0),
+                        borderColor: '#38bdf8',
+                        borderWidth: 1.5,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        hitRadius: 14,
+                        fill: false
+                    },
+                    {
+                        label: 'Máximo',
+                        data: flat(max !== null ? max : 0),
+                        borderColor: '#ef4444',
+                        borderWidth: 1.5,
+                        borderDash: [2, 3],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        hitRadius: 14,
+                        fill: false
+                    },
+                    {
+                        label: 'Mínimo',
+                        data: flat(min !== null ? min : 0),
+                        borderColor: '#10b981',
+                        borderWidth: 1.5,
+                        borderDash: [2, 3],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        hitRadius: 14,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'nearest', intersect: true, axis: 'xy', includeInvisible: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0a0a0a',
+                        titleColor: '#C5A059',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(197, 160, 89, 0.3)',
+                        borderWidth: 1,
+                        displayColors: true,
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        usePointStyle: true,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        callbacks: {
+                            title: (items) => {
+                                const it = items[0];
+                                if (!it) return '';
+                                return it.datasetIndex === 0 ? `Lectura: ${it.label}` : it.dataset.label;
+                            },
+                            label: (c) => ` ${(c.parsed.y || 0).toFixed(3)} s`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Segundos', color: '#666', font: { size: 10 } },
+                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                        ticks: { color: '#666', font: { size: 10 }, callback: (v) => v + 's' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#666', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }
+                    }
+                }
+            }
+        });
+    }
+
     window.filtrarTablaOcr = function() {
         const texto = (document.getElementById('ocr-search-input')?.value || '').trim().toUpperCase();
         const eventoFiltro = document.getElementById('ocr-filter-evento')?.value || '';
@@ -556,6 +739,8 @@
 
             return coincideTexto && coincideEvento;
         });
+
+        renderOcrChart(filtrados);
 
         const countEl = document.getElementById('ocr-table-count');
         if (countEl) {
@@ -599,7 +784,7 @@
         const clockEl = document.getElementById('ocr-live-clock');
         if (clockEl) {
             const now = new Date();
-            clockEl.textContent = now.toLocaleTimeString('es-AR');
+            clockEl.textContent = formatTimeSeconds(now);
         }
     }
 

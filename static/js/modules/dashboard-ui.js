@@ -1,5 +1,5 @@
 import api from './api.js';
-import { normalizeSystemName } from './utils.js';
+import { normalizeSystemName, formatTimeSeconds } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService } from './dashboard-cameras.js';
 import { toggleMobileNav, closeMobileNav } from './ui.js';
@@ -11,7 +11,7 @@ export function initClock() {
     if (!clockEl) return;
     
     const update = () => {
-        clockEl.innerText = getVirtualNow().toLocaleTimeString('es-AR', { hour12: false });
+        clockEl.innerText = formatTimeSeconds(getVirtualNow());
     };
     
     update();

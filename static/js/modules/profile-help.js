@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, toTitle } from './utils.js';
+import { showToast, toTitle, formatDayTime } from './utils.js';
 
 /**
  * PERFIL HELP MODULE (v9.8.5)
@@ -213,7 +213,7 @@ function renderTicketMessages(messages) {
         const borderColor = isMine ? 'var(--dorado)' : '#4caf50';
         const borderSide = isMine ? 'border-left' : 'border-right';
         const label = isMine ? 'Vos' : 'Soporte';
-        const time = m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : '';
+        const time = m.created_at ? formatDayTime(new Date(m.created_at)) : '';
         let attachHtml = '';
         if (m.adjunto_url) {
             const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);

@@ -101,12 +101,12 @@ async function updateVT() {
 
     const bigTime = document.getElementById('vt-big-time');
     const bigDate = document.getElementById('vt-big-date');
-    if (bigTime) bigTime.textContent = virtDate.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit',second:'2-digit', hour12: false});
+    if (bigTime) bigTime.textContent = window.formatTimeSeconds ? window.formatTimeSeconds(virtDate) : virtDate.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit',second:'2-digit', hour12: false});
     if (bigDate) bigDate.textContent = virtDate.toLocaleDateString('es-AR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
     const panelReal = document.getElementById('vt-panel-real');
     const panelOffset = document.getElementById('vt-panel-offset');
-    if (panelReal) panelReal.textContent = realDate.toLocaleString('es-AR');
+    if (panelReal) panelReal.textContent = window.formatLocalDateTime ? window.formatLocalDateTime(realDate) : realDate.toLocaleString('es-AR');
     if (panelOffset) {
         const abs = Math.abs(info.offset_seconds);
         const h = Math.floor(abs / 3600);

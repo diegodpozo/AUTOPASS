@@ -1,5 +1,5 @@
 import api from './api.js';
-import { formatDate, formatPlate, formatNum, toTitle } from './utils.js';
+import { formatDate, formatPlate, formatNum, toTitle, formatTime } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**
@@ -214,7 +214,7 @@ export function renderLogsTable() {
 
     tbody.innerHTML = paginatedData.map(log => {
         const fecha = new Date(log.fecha_hora);
-        const time = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12:false });
+        const time = formatTime(fecha);
         const day = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
         const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-danger';
         const statusBadge = log.pago_confirmado 
@@ -436,7 +436,7 @@ function buildOccupancyRows() {
                 </span>
             </td>
             <td data-label="Reserva" class="text-center">${reservaBadge}</td>
-            <td data-label="Ingreso" class="text-center">${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12:false })}</td>
+            <td data-label="Ingreso" class="text-center">${formatTime(date)}</td>
             <td data-label="Permanencia" class="text-bold text-light text-center">${duration}</td>
             <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">
