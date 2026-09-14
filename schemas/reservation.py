@@ -27,6 +27,7 @@ class AdminReservationCreate(BaseModel):
     metodo_pago: Optional[str] = None
     pagar: Optional[bool] = False
     tipo_vehiculo: Optional[str] = "Auto"
+    redemption_ticket_id: Optional[int] = None
     cobrar_diferencia_metodo: Optional[str] = None
     reembolsar_diferencia_metodo: Optional[str] = None
 
@@ -43,6 +44,7 @@ class ReservationUpdate(BaseModel):
 
 class ConfirmPaymentRequest(BaseModel):
     metodo_pago: Optional[str] = "Caja"
+    redemption_ticket_id: Optional[int] = None
 
 class UserReservationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

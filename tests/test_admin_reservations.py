@@ -2,13 +2,17 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Reservation, ParkingBranch, ParkingAforo, User, Vehicle
+from models import Base, Reservation, ParkingBranch, ParkingAforo, User, Vehicle, RedemptionTicket
 from models.enums import ReservationStatus, PaymentStatus
 from services.reservation_service import ReservationService, verificar_disponibilidad, obtener_horas_deshabilitadas_con_reservas
 from services.report_service import ReportService
 from services.billing_service import BillingService
-from schemas import AdminReservationCreate
-from routes.admin.reservations import create_admin_reservation, update_admin_reservation, patente_lookup
+from schemas import AdminReservationCreate, ConfirmPaymentRequest
+from routes.admin.reservations import (
+    create_admin_reservation, update_admin_reservation, patente_lookup,
+    confirm_reservation_payment, reservation_available_redemptions, admin_available_redemptions,
+    reservation_redemption_info, get_new_reservations_count
+)
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
@@ -605,3 +609,311 @@ def test_reporte_cuenta_reembolso_parcial_de_reserva_pagada(db):
     reembolso = [e for e in historial if e["id"] == f"REF{r['id']}" and e["tipo"] == "Reembolso"]
     assert reembolso
     assert reembolso[0]["costo_estadia"] == -esperado
+
+
+# ==========================================================================
+# DESCUENTOS DE CANJE EN PAGO CAJA (MANUAL / ADMIN)
+# ==========================================================================
+
+def _descuento_ticket(db, user, sucursal="Sucursal Central", porc=10):
+    ticket = RedemptionTicket(
+        user_id=user.id,
+        codigo=f"T{user.id}S{porc}C{sucursal[:3].upper()}",
+        titulo="Descuento en Estacionamiento",
+        descripcion="10%",
+        tipo_canje="descuento_reserva",
+        valor_descuento=porc,
+        icono="fas fa-percent",
+        sucursal=sucursal,
+        estado="VIGENTE",
+        qr_data="AUTOPASS_REDEMPTION|ID:TEST",
+    )
+    db.add(ticket)
+    db.commit()
+    return ticket
+
+
+def test_pay_reservation_manual_aplica_descuento_de_canje(db):
+    user = _cliente(db)
+    ticket = _descuento_ticket(db, user, porc=10)
+    monto = _monto(db, "2026-07-10 10:00", "2026-07-10 12:00")
+    data = _reserva_data(user_id=user.id, cliente_nombre="Cliente Test",
+                         fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00")
+    res = ReservationService.create_reservation(db, data)
+    puntos_iniciales = user.puntos_acumulados
+
+    resultado = ReservationService.pay_reservation_manual(db, res, "Efectivo", ticket.id)
+    db.refresh(user); db.refresh(ticket); db.refresh(res)
+
+    descuento_esperado = round(monto * 0.10, 2)
+    assert resultado["status"] == "ok"
+    assert resultado["descuento"] == descuento_esperado
+    assert res.estado_pago == PaymentStatus.PAGADO
+    assert res.monto_total == round(monto - descuento_esperado, 2)
+    assert ticket.estado == "USADO"
+    assert ticket.reserva_id == res.id
+    assert user.puntos_acumulados == puntos_iniciales + BillingService.calculate_points(monto - descuento_esperado)
+
+
+def test_pay_reservation_manual_idempotente_con_descuento(db):
+    user = _cliente(db)
+    ticket = _descuento_ticket(db, user, porc=10)
+    res = ReservationService.create_reservation(db, _reserva_data(user_id=user.id, cliente_nombre="Cliente Test"))
+    ReservationService.pay_reservation_manual(db, res, "Efectivo", ticket.id)
+    # SEGUNDO LLAMADO: IDEMPOTENTE, NO CONSUME OTRO TICKET NI TOCA MONTO
+    second = ReservationService.pay_reservation_manual(db, res, "Tarjeta")
+    assert second["status"] == "ok"
+    assert second["descuento"] == 0.0
+    assert res.metodo_pago == "Efectivo"
+
+
+def test_pay_reservation_manual_rechaza_ticket_de_otra_sucursal(db):
+    user = _cliente(db)
+    res = ReservationService.create_reservation(db, _reserva_data(user_id=user.id, cliente_nombre="Cliente Test"))
+    ticket_otra = _descuento_ticket(db, user, sucursal="Sucursal Dos", porc=10)
+    with pytest.raises(HTTPException) as exc:
+        ReservationService.pay_reservation_manual(db, res, "Efectivo", ticket_otra.id)
+    assert exc.value.status_code == 400
+    assert res.estado_pago == PaymentStatus.PENDIENTE
+
+
+def test_pay_reservation_manual_sin_usuario_en_reserva_y_con_ticket_rechaza(db):
+    res = ReservationService.create_reservation(db, _reserva_data(pagar=False))
+    ticket = RedemptionTicket(user_id=999, codigo="X", titulo="T", tipo_canje="descuento_reserva",
+                              valor_descuento=10, sucursal="Sucursal Central", estado="VIGENTE",
+                              qr_data="AUTOPASS_REDEMPTION|ID:X")
+    db.add(ticket); db.commit()
+    with pytest.raises(HTTPException) as exc:
+        ReservationService.pay_reservation_manual(db, res, "Caja", ticket.id)
+    assert exc.value.status_code == 400
+    assert res.estado_pago == PaymentStatus.PENDIENTE
+
+
+def test_create_admin_reservation_con_descuento_crea_y_paga(db):
+    user = _cliente_con_vehiculo(db, patente="ABC 123", tipo="Auto")
+    staff = _staff(db)
+    ticket = _descuento_ticket(db, user, porc=10)
+    monto = _monto(db, "2026-07-10 10:00", "2026-07-10 12:00")
+
+    data = _reserva_data(user_id=user.id, cliente_nombre="Cliente Test",
+                         fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00",
+                         pagar=True, metodo_pago="Efectivo", redemption_ticket_id=ticket.id)
+    resultado = create_admin_reservation(data, db, staff)
+
+    assert resultado["status"] == "ok"
+    assert resultado["pagado"] is True
+    assert resultado["descuento"] == round(monto * 0.10, 2)
+
+    res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
+    db.refresh(ticket)
+    assert res.estado_pago == PaymentStatus.PAGADO
+    assert res.monto_total == round(monto - round(monto * 0.10, 2), 2)
+    assert ticket.estado == "USADO"
+    assert ticket.reserva_id == res.id
+
+
+def test_confirm_reservation_payment_aplica_descuento(db):
+    user = _cliente_con_vehiculo(db, patente="ABC 123", tipo="Auto")
+    staff = _staff(db)
+    ticket = _descuento_ticket(db, user, porc=10)
+    data = _reserva_data(user_id=user.id, cliente_nombre="Cliente Test",
+                         fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00", pagar=False)
+    r = create_admin_reservation(data, db, staff)
+    res = db.query(Reservation).filter(Reservation.id == r["id"]).one()
+    monto = _monto(db, "2026-07-10 10:00", "2026-07-10 12:00")
+    out = confirm_reservation_payment(r["id"], ConfirmPaymentRequest(metodo_pago="Caja", redemption_ticket_id=ticket.id), db, staff)
+    db.refresh(res); db.refresh(ticket)
+    descuento = round(monto * 0.10, 2)
+    assert out["descuento"] == descuento
+    assert res.monto_total == round(monto - descuento, 2)
+    assert res.estado_pago == PaymentStatus.PAGADO
+    assert ticket.estado == "USADO"
+
+
+def test_confirm_reservation_payment_con_ticket_invalido_rechaza(db):
+    user = _cliente_con_vehiculo(db, patente="ABC 123", tipo="Auto")
+    staff = _staff(db)
+    ticket_otra = _descuento_ticket(db, user, sucursal="Sucursal Dos", porc=10)
+    r = create_admin_reservation(_reserva_data(user_id=user.id, cliente_nombre="Cliente Test"), db, staff)
+    with pytest.raises(HTTPException) as exc:
+        confirm_reservation_payment(r["id"], ConfirmPaymentRequest(metodo_pago="Caja", redemption_ticket_id=ticket_otra.id), db, staff)
+    assert exc.value.status_code == 400
+    res = db.query(Reservation).filter(Reservation.id == r["id"]).one()
+    assert res.estado_pago == PaymentStatus.PENDIENTE
+
+
+def test_reservation_available_redemptions_lista_descuentos(db):
+    user = _cliente_con_vehiculo(db, patente="ABC 123", tipo="Auto")
+    staff = _staff(db)
+    ticket = _descuento_ticket(db, user, porc=10)
+    data = _reserva_data(user_id=user.id, cliente_nombre="Cliente Test",
+                         fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00", pagar=False)
+    r = create_admin_reservation(data, db, staff)
+    monto = _monto(db, "2026-07-10 10:00", "2026-07-10 12:00")
+    out = reservation_available_redemptions(r["id"], db, staff)
+    assert len(out) == 1
+    assert out[0]["id"] == ticket.id
+    assert out[0]["valor_descuento"] == 10
+    assert out[0]["descuento_peso"] == round(monto * 0.10, 2)
+    assert out[0]["monto_final"] == round(monto * 0.90, 2)
+
+
+def test_reservation_available_redemptions_vacio_sin_usuario(db):
+    staff = _staff(db)
+    r = create_admin_reservation(_reserva_data(pagar=False), db, staff)
+    out = reservation_available_redemptions(r["id"], db, staff)
+    assert out == []
+
+
+def test_admin_available_redemptions_por_usuario(db):
+    user = _cliente(db)
+    staff = _staff(db)
+    _descuento_ticket(db, user, porc=10)
+    out = admin_available_redemptions(user.id, "Sucursal Central", db, staff)
+    assert len(out) == 1
+    assert out[0]["valor_descuento"] == 10
+    # SIN USUARIO VINCULADO => VACÍA
+    assert admin_available_redemptions(None, "Sucursal Central", db, staff) == []
+
+
+def test_admin_available_redemptions_sin_tickets_vacia(db):
+    user = _cliente(db)
+    staff = _staff(db)
+    out = admin_available_redemptions(user.id, "Sucursal Central", db, staff)
+    assert out == []
+
+
+def test_redemption_info_edicion_reserva_pagada_con_descuento(db):
+    user = _cliente_con_vehiculo(db, patente="ABC 123", tipo="Auto")
+    staff = _staff(db)
+    ticket = _descuento_ticket(db, user, porc=10)
+    data = _reserva_data(user_id=user.id, cliente_nombre="Cliente Test",
+                         fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00", pagar=False)
+    r = create_admin_reservation(data, db, staff)
+    confirm_reservation_payment(r["id"], ConfirmPaymentRequest(metodo_pago="Caja", redemption_ticket_id=ticket.id), db, staff)
+
+    out = reservation_redemption_info(r["id"], db, staff)
+    assert out["aplica"] is True
+    assert out["fuente"] == "aplicado"
+    assert out["valor_descuento"] == 10
+    assert out["ticket_id"] == ticket.id
+
+
+def test_redemption_info_edicion_reserva_con_descuento_vigente(db):
+    user = _cliente_con_vehiculo(db, patente="ABC 123", tipo="Auto")
+    staff = _staff(db)
+    _descuento_ticket(db, user, porc=20)
+    r = create_admin_reservation(_reserva_data(user_id=user.id, cliente_nombre="Cliente Test"), db, staff)
+
+    out = reservation_redemption_info(r["id"], db, staff)
+    assert out["aplica"] is True
+    assert out["fuente"] == "vigente"
+    assert out["valor_descuento"] == 20
+
+
+def test_redemption_info_edicion_reserva_sin_descuento(db):
+    staff = _staff(db)
+    r = create_admin_reservation(_reserva_data(pagar=False), db, staff)
+    out = reservation_redemption_info(r["id"], db, staff)
+    assert out["aplica"] is False
+    assert out["fuente"] is None
+
+
+def test_editar_reserva_pagada_con_descuento_mantiene_descuento_al_recalcular(db):
+    user = _cliente_con_vehiculo(db, patente="ABC 123", tipo="Auto")
+    staff = _staff(db)
+    ticket = _descuento_ticket(db, user, porc=10)
+    data = _reserva_data(user_id=user.id, cliente_nombre="Cliente Test", patente="ABC123",
+                         fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00", pagar=False)
+    r = create_admin_reservation(data, db, staff)
+    confirm_reservation_payment(r["id"], ConfirmPaymentRequest(metodo_pago="Efectivo", redemption_ticket_id=ticket.id), db, staff)
+
+    monto_2h = _monto(db, "2026-07-10 10:00", "2026-07-10 12:00")
+    monto_4h = _monto(db, "2026-07-10 10:00", "2026-07-10 14:00")
+    desc_2h = round(monto_2h * 0.10, 2)
+    desc_4h = round(monto_4h * 0.10, 2)
+
+    res = update_admin_reservation(
+        r["id"],
+        _reserva_data(user_id=user.id, cliente_nombre="Cliente Test", patente="ABC123",
+                      fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 14:00", cobrar_diferencia_metodo="Tarjeta"),
+        db, staff
+    )
+
+    # EL MONTO RECALCULADO SE MANTIENE CON EL MISMO DESCUENTO (BASE DESCONTADA)
+    assert res["accion"] == "cobro"
+    assert res["monto"] == round(monto_4h - desc_4h, 2)
+    assert res["diferencia"] == round((monto_4h - desc_4h) - (monto_2h - desc_2h), 2)
+
+    row = db.query(Reservation).filter(Reservation.id == r["id"]).one()
+    assert row.estado_pago == PaymentStatus.PAGADO
+    assert row.monto_total == round(monto_4h - desc_4h, 2)
+    db.refresh(ticket)
+    assert ticket.estado == "USADO"
+    assert ticket.reserva_id == row.id
+
+
+def test_get_new_reservations_count_sin_reservas(db):
+    admin_user = User(nombre="Admin", apellido="Global", dni="99999999", email="admin@test.com",
+                      rol="admin", sucursal="Todas")
+    res = get_new_reservations_count(since_id=None, db=db, staff=admin_user)
+    assert res["count"] == 0
+    assert res["latest_id"] == 0
+
+
+def test_get_new_reservations_count_incrementa_con_nuevas_reservas(db):
+    admin_user = User(nombre="Admin", apellido="Global", dni="99999999", email="admin@test.com",
+                      rol="admin", sucursal="Todas")
+    
+    # Crear primera reserva
+    data1 = _reserva_data(patente="AAA111")
+    r1 = ReservationService.create_reservation(db, data1)
+    
+    # Inicialmente sin since_id
+    res0 = get_new_reservations_count(since_id=None, db=db, staff=admin_user)
+    assert res0["latest_id"] == r1.id
+    assert res0["count"] == 0
+
+    # Si ya se vio r1.id
+    res_seen = get_new_reservations_count(since_id=r1.id, db=db, staff=admin_user)
+    assert res_seen["count"] == 0
+
+    # Crear 2 reservas más
+    data2 = _reserva_data(patente="BBB222")
+    r2 = ReservationService.create_reservation(db, data2)
+    data3 = _reserva_data(patente="CCC333")
+    r3 = ReservationService.create_reservation(db, data3)
+
+    res_new = get_new_reservations_count(since_id=r1.id, db=db, staff=admin_user)
+    assert res_new["count"] == 2
+    assert res_new["latest_id"] == r3.id
+
+    # Al ver la última
+    res_cleared = get_new_reservations_count(since_id=r3.id, db=db, staff=admin_user)
+    assert res_cleared["count"] == 0
+
+
+def test_get_new_reservations_count_aislamiento_sucursales(db):
+    local_user = User(nombre="Local", apellido="Admin", dni="88888888", email="local@test.com",
+                      rol="local_admin", sucursal="Sucursal Central")
+    admin_global = User(nombre="Admin", apellido="Global", dni="99999999", email="admin@test.com",
+                        rol="admin", sucursal="Todas")
+
+    branch2 = ParkingBranch(nombre="Sucursal Norte", direccion="Calle Norte 456", horario="24hs", is_24h=True)
+    db.add(branch2)
+    db.commit()
+
+    # Reserva en Sucursal Central
+    r1 = ReservationService.create_reservation(db, _reserva_data(patente="AAA111", sucursal_nombre="Sucursal Central"))
+    # Reserva en Sucursal Norte
+    r2 = ReservationService.create_reservation(db, _reserva_data(patente="BBB222", sucursal_nombre="Sucursal Norte"))
+
+    # Local admin de Sucursal Central sólo debe ver la reserva de su sucursal
+    res_local = get_new_reservations_count(since_id=0, db=db, staff=local_user)
+    assert res_local["count"] == 1
+    assert res_local["latest_id"] == r1.id
+
+    # Admin global ve ambas reservas
+    res_global = get_new_reservations_count(since_id=0, db=db, staff=admin_global)
+    assert res_global["count"] == 2
+    assert res_global["latest_id"] == r2.id

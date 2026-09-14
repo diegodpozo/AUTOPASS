@@ -205,27 +205,30 @@
                             <div id="new-hourly-slots-grid" class="hourly-slots-grid-premium" style="display: none; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 520px; width: 100%;"></div>
                         </div>
 
-                        <!-- MÉTODO DE PAGO -->
-                        <div class="form-group-premium full-width-premium" style="align-items: flex-start;" id="new-res-metodo-pago-group">
-                            <label>Método de Pago</label>
-                            <div class="select-wrapper-premium" style="max-width: 380px;">
-                                <i class="fas fa-money-bill-transfer"></i>
-                                <select id="new-res-metodo-pago" required style="text-align-last: left;">
-                                    <option value="Efectivo">EFECTIVO</option>
-                                    <option value="Mercado Pago">MERCADO PAGO</option>
-                                    <option value="Transferencia">TRANSFERENCIA</option>
-                                    <option value="Tarjeta">TARJETA</option>
-                                    <option value="Otro">OTRO</option>
-                                </select>
+                        <!-- MÉTODO DE PAGO + TOTAL -->
+                        <div id="new-res-metodo-total-row" class="full-width-premium" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+                            <div class="form-group-premium" id="new-res-metodo-pago-group" style="align-items: flex-start; flex: 1 1 auto; min-width: 220px;">
+                                <label>Método de Pago</label>
+                                <div class="select-wrapper-premium" style="max-width: 380px;">
+                                    <i class="fas fa-money-bill-transfer"></i>
+                                    <select id="new-res-metodo-pago" required style="text-align-last: left;">
+                                        <option value="Efectivo">EFECTIVO</option>
+                                        <option value="Mercado Pago">MERCADO PAGO</option>
+                                        <option value="Transferencia">TRANSFERENCIA</option>
+                                        <option value="Tarjeta">TARJETA</option>
+                                        <option value="Otro">OTRO</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="price-summary-premium" style="align-items: center; text-align: center;">
+                                <div id="new-res-discount-line" style="display: none; flex-direction: row; align-items: center; gap: 8px; margin-bottom: 2px; font-size: 0.85rem;"></div>
+                                <span class="total-label">TOTAL A PAGAR</span>
+                                <span class="total-amount" id="new-res-monto-total">$ ---</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="reservation-footer-premium">
-                        <div class="price-summary-premium">
-                            <span class="total-label">TOTAL</span>
-                            <span class="total-amount" id="new-res-monto-total">$ ---</span>
-                        </div>
+                    <div class="reservation-footer-premium" style="justify-content: flex-end;">
                         <div class="flex-row gap-15">
                             <button type="button" class="btn btn-outline" onclick="closeModal('modal-new-reservation')" style="border-radius: 12px; padding: 12px 25px;">DESCARTAR</button>
                             <button type="submit" class="btn-confirm-premium" id="new-res-submit-btn">

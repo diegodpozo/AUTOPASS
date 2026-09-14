@@ -37,6 +37,12 @@ let currentRates = { '30min': 750, hora: 1500, dia: 15000, semana: 70000, quince
 let editingReservaId = null;
 let userVehicles = [];
 let branchesData = [];
+// DESCUENTO DE RESERVA VIGENTE PARA LA SUCURSAL SELECCIONADA (se refleja en el total estimado)
+let currentReservationDiscount = { pct: 0, sucursal: '', fetchedFor: '' };
+// TOTALES DEL ÚLTIMO CÁLCULO ESTIMADO (original, descuento y final)
+let currentReservationTotals = { original: 0, discount: 0, final: 0 };
+// TOKEN ANTI-RACE PARA CONSULTAS CONCURRENTES DE DESCUENTO POR SUCURSAL
+let discountFetchToken = 0;
 
 export function getEditingReservaId() {
     return editingReservaId;
@@ -611,6 +617,10 @@ export async function refreshReservationFormState() {
     const container = document.getElementById('reserva-form-container');
     if (!container) return;
 
+    // REINICIA EL CACHE DE DESCUENTO (siempre se consulta el estado actual al abrir el formulario)
+    currentReservationDiscount = { pct: 0, sucursal: '', fetchedFor: '' };
+    discountFetchToken++;
+
     fetchRates();
     
     // 1. CARGAR VEHÍCULOS
@@ -675,6 +685,9 @@ export async function refreshReservationFormState() {
             if (currentVal) select.value = currentVal;
         });
     }
+
+    // YA CON LAS SUCURSALES CARGADAS: consulta tarifas + descuento para la sucursal seleccionada
+    await fetchRates();
 }
 
 export function resetReservaForm() {
@@ -769,6 +782,34 @@ export async function fetchRates(sucursal = null) {
     const res = await api.get(url);
     if (res.ok) {
         currentRates = res.data;
+    }
+    await lazyLoadDiscount(sucursal);
+    updateReservationPrice();
+}
+
+// CONSULTA EL DESCUENTO DE RESERVA (%) VIGENTE PARA LA SUCURSAL Y LO CACHEA.
+// Lazy: si ya se cargó para esa sucursal no se vuelve a consultar; al completar la consulta
+// re-renderiza el total (evita que quede "Total sin descuento" si se eligió la hora antes).
+async function lazyLoadDiscount(sucursal = null) {
+    const branch = sucursal || document.querySelector('.res-sucursal')?.value || '';
+    if (!branch) {
+        currentReservationDiscount = { pct: 0, sucursal: '', fetchedFor: '' };
+        return;
+    }
+    if (currentReservationDiscount.fetchedFor === branch) return;
+    const token = ++discountFetchToken;
+    let pct = 0;
+    let suc = '';
+    try {
+        const res = await api.get(`/user/redemptions/available?sucursal=${encodeURIComponent(branch)}`);
+        if (res.ok && res.data && res.data.length > 0) {
+            pct = res.data[0].valor_descuento || 0;
+            suc = res.data[0].sucursal || '';
+        }
+    } catch (e) { /* noop */ }
+
+    if (token === discountFetchToken) {
+        currentReservationDiscount = { pct, sucursal: suc, fetchedFor: branch };
         updateReservationPrice();
     }
 }
@@ -847,7 +888,33 @@ export function updateReservationPrice() {
         }
     } catch (e) { console.error("Error calculando precio:", e); }
 
-    if (totalEl) totalEl.innerText = total > 0 ? `$ ${formatNum(total)}` : '$ ---';
+    const originalEl = document.getElementById('reserva-total-original');
+    const discountLineEl = document.getElementById('reserva-discount-line');
+    const labelEl = document.getElementById('reserva-total-label');
+    const pct = currentReservationDiscount.pct || 0;
+
+    if (total > 0 && pct > 0) {
+        const discountAmount = Math.round(total * pct) / 100;
+        const finalTotal = total - discountAmount;
+        currentReservationTotals = { original: total, discount: discountAmount, final: finalTotal };
+        if (originalEl) { originalEl.innerText = `$ ${formatNum(total)}`; originalEl.style.display = 'inline-block'; }
+        if (discountLineEl) {
+            discountLineEl.innerHTML = `<i class="fas fa-percent"></i> DESCUENTO ${pct}%${currentReservationDiscount.sucursal ? ` · ${currentReservationDiscount.sucursal}` : ''} &nbsp;·&nbsp; - $ ${formatNum(discountAmount)}`;
+            discountLineEl.style.display = 'block';
+        }
+        if (labelEl) labelEl.innerText = 'Total a pagar:';
+        if (totalEl) totalEl.innerText = `$ ${formatNum(finalTotal)}`;
+    } else {
+        currentReservationTotals = { original: total, discount: 0, final: total };
+        if (originalEl) { originalEl.innerText = ''; originalEl.style.display = 'none'; }
+        if (discountLineEl) { discountLineEl.innerHTML = ''; discountLineEl.style.display = 'none'; }
+        if (labelEl) labelEl.innerText = 'Total:';
+        if (totalEl) totalEl.innerText = total > 0 ? `$ ${formatNum(total)}` : '$ ---';
+    }
+
+    // GARANTIZA QUE EL DESCUENTO DE LA SUCURSAL ESTÉ CARGADO (carga lazy + re-render cuando llega)
+    const selBranch = document.querySelector('.res-sucursal')?.value || '';
+    if (total > 0) lazyLoadDiscount(selBranch);
 }
 
 export function updateFormGroups(type) {
@@ -992,6 +1059,45 @@ export async function createReservation(e) {
         }
     }
 
+    // DESCUENTO DE RESERVA DISPONIBLE: se refleja en el total (tachado + descuento + total final)
+    const totalOriginal = currentReservationTotals.original || 0;
+
+    let discountValue = 0;
+    let discountSucursal = '';
+    try {
+        const resAvail = await api.get(`/user/redemptions/available?sucursal=${encodeURIComponent(sucursal)}`);
+        if (resAvail.ok && resAvail.data && resAvail.data.length > 0) {
+            const desc = resAvail.data[0];
+            discountValue = desc.valor_descuento || 0;
+            discountSucursal = desc.sucursal || '';
+        }
+    } catch (e) { /* noop */ }
+
+    const discountAmount = discountValue > 0 ? Math.round(totalOriginal * discountValue) / 100 : 0;
+    const totalFinal = totalOriginal - discountAmount;
+    const hasDiscount = discountAmount > 0;
+
+    const totalBlock = hasDiscount ? `
+            <div style="padding-top: 25px; border-top: 2px solid rgba(197,160,89,0.2);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
+                    <b style="color: #777; font-size: 1.15rem; text-decoration: line-through; font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
+                    <span style="color: #c084fc; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px;"><i class="fas fa-percent"></i> DESCUENTO ${discountValue}%${discountSucursal ? ` · ${discountSucursal}` : ''}</span>
+                    <b style="color: #c084fc; font-size: 1rem; font-family: 'Montserrat'; white-space: nowrap;">- $ ${formatNum(discountAmount)}</b>
+                </div>
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(197,160,89,0.35); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL A PAGAR</span>
+                    <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(197,160,89,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalFinal)}</b>
+                </div>
+                <p style="margin: 10px 0 0 auto; text-align: right; color: #888; font-size: 0.7rem; max-width: 330px;"><i class="fas fa-bolt" style="color: var(--dorado); margin-right: 4px;"></i>El descuento se aplica automáticamente al abonar la reserva.</p>
+            </div>` : `
+            <div style="padding-top: 25px; border-top: 2px solid rgba(197,160,89,0.2); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
+                <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(197,160,89,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
+            </div>`;
+
     const resumenHtml = `
         <div style="text-align: left; padding: 5px; font-family: 'Montserrat', sans-serif;">
             <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 35px;">
@@ -1032,10 +1138,7 @@ export async function createReservation(e) {
                     <b style="color: #eee; font-size: 0.95rem;">${formatDate(fin)}</b>
                 </div>
             </div>
-            <div style="padding-top: 25px; border-top: 2px solid rgba(197,160,89,0.2); display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
-                <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(197,160,89,0.3); font-family: 'Montserrat'; white-space: nowrap;">${document.getElementById('reserva-total-est').innerText}</b>
-            </div>
+            ${totalBlock}
         </div>`;
 
     if (!await showConfirm('REVISÁ TU RESERVA', resumenHtml)) { console.groupEnd(); return; }

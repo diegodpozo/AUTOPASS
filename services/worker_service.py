@@ -109,7 +109,7 @@ class WorkerService:
         fmt_ahora = now.strftime("%Y-%m-%d %H:%M")
 
         candidatas = db.query(models.Reservation).filter(
-            models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_inicio >= fmt_ahora,
             models.Reservation.fecha_inicio <= fmt_corte,
             models.Reservation.recordatorio_confirmado == False

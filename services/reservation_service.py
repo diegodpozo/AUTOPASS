@@ -435,13 +435,53 @@ class ReservationService:
         db.add(new_res)
         db.commit()
         db.refresh(new_res)
+        try:
+            from services.notification_service import NotificationService
+            NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
+        except Exception:
+            pass
         return new_res
 
     @staticmethod
-    def pay_reservation_manual(db: Session, res: "models.Reservation", metodo_pago: str = None):
-        """MARCA UNA RESERVA COMO PAGADA (PAGO MANUAL ADMIN) SIN DESCONTAR SALDO NI USAR MERCADO PAGO."""
+    def get_available_redemption_discounts(db: Session, user_id: int, sucursal: str = None):
+        """LISTA LOS DESCUENTOS DE RESERVA (%) VIGENTES DE UN USUARIO APLICABLES A UNA SUCURSAL.
+        Se usa en caja (admin) para detectar el descuento que corresponde aplicar al cobrar.
+        Si no hay usuario vinculado, devuelve lista vacía."""
+        if not user_id:
+            return []
+        q = db.query(models.RedemptionTicket).filter(
+            models.RedemptionTicket.user_id == user_id,
+            models.RedemptionTicket.tipo_canje == "descuento_reserva",
+            models.RedemptionTicket.estado == "VIGENTE"
+        )
+        if sucursal:
+            q = q.filter(ReservationService.redemption_sucursal_clause(sucursal))
+        return q.order_by(models.RedemptionTicket.id.desc()).all()
+
+    @staticmethod
+    def pay_reservation_manual(db: Session, res: "models.Reservation", metodo_pago: str = None, redemption_ticket_id: int = None):
+        """MARCA UNA RESERVA COMO PAGADA (PAGO MANUAL ADMIN) SIN DESCONTAR SALDO NI USAR MERCADO PAGO.
+        Si se indica un redemption_ticket_id (descuento % de reserva) vigente del usuario
+        y de la misma sucursal (o global) se aplica el descuento sobre el monto total
+        y la reserva queda pagada por el valor final descontado."""
         if res.estado_pago == PaymentStatus.PAGADO:
-            return {"status": "ok", "message": "La reserva ya se encuentra pagada"}
+            return {"status": "ok", "message": "La reserva ya se encuentra pagada", "monto": res.monto_total, "monto_a_cobrar": res.monto_total, "descuento": 0.0, "metodo_pago": res.metodo_pago}
+
+        # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
+        descuento = 0.0
+        monto_a_cobrar = res.monto_total or 0.0
+        if redemption_ticket_id:
+            if not res.user_id:
+                raise HTTPException(status_code=400, detail="La reserva no tiene un usuario vinculado para aplicar el descuento")
+            ticket_redencion = ReservationService.validate_redemption_ticket(db, res.user_id, redemption_ticket_id, res.sucursal_nombre)
+            porc = ticket_redencion.valor_descuento or 0
+            descuento = round(monto_a_cobrar * porc / 100.0, 2)
+            monto_a_cobrar = round(monto_a_cobrar - descuento, 2)
+            res.monto_total = monto_a_cobrar
+            res.monto_reembolsado = 0.0
+            ticket_redencion.estado = "USADO"
+            ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
+            ticket_redencion.reserva_id = res.id
 
         res.estado_pago = PaymentStatus.PAGADO
         res.estado_reserva = ReservationStatus.ACTIVA
@@ -449,7 +489,7 @@ class ReservationService:
         res.metodo_pago = metodo_pago
 
         if res.user:
-            puntos_ganados = BillingService.calculate_points(res.monto_total)
+            puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
             res.user.puntos_acumulados += puntos_ganados
             db.add(models.PointsLog(
                 user_id=res.user.id,
@@ -457,10 +497,22 @@ class ReservationService:
                 motivo=f"Abono Manual Reserva: {res.patente}",
                 fecha=datetime.datetime.now().isoformat()
             ))
+            if puntos_ganados > 0:
+                try:
+                    from services.user_notification_service import UserNotificationService
+                    UserNotificationService.create_notification(
+                        db, res.user.id,
+                        tipo=models.NotificationType.POINTS_EARNED,
+                        titulo="¡Puntos AutoPass!",
+                        mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente})!",
+                        reserva_id=res.id
+                    )
+                except Exception:
+                    pass
 
         db.commit()
         db.refresh(res)
-        return {"status": "ok", "message": "Pago registrado", "monto": res.monto_total, "metodo_pago": res.metodo_pago}
+        return {"status": "ok", "message": "Pago registrado", "monto": res.monto_total, "monto_a_cobrar": monto_a_cobrar, "descuento": descuento, "metodo_pago": res.metodo_pago}
 
     @staticmethod
     def cleanup_overdue_reservations(db: Session):
@@ -551,18 +603,31 @@ class ReservationService:
         )
         return {row[0] for row in rows}
 
+    @staticmethod
+    def redemption_sucursal_clause(sucursal):
+        """CLÁUSULA DE FILTRADO DE REDEMPTION TICKET POR SUCURSAL.
+        Acepta el ticket global (sucursal NULL), igualdad exacta o igualdad normalizada
+        (sin prefijo 'AUTOPASS ', sin espacios extra y sin diferenciar mayúsculas),
+        para tolerar datos legados donde algunas sucursales se guardaron con prefijo."""
+        from sqlalchemy import or_, func
+        col = models.RedemptionTicket.sucursal
+        if not sucursal:
+            return or_(col == None, col == '')
+        norm_col = func.trim(func.replace(func.lower(col), 'autopass ', ''))
+        norm_param = func.trim(func.replace(func.lower(func.trim(sucursal)), 'autopass ', ''))
+        return or_(col == sucursal, col == None, norm_col == norm_param)
+
     @classmethod
     def validate_redemption_ticket(cls, db: Session, user_id: int, redemption_ticket_id: int, sucursal: str = None) -> models.RedemptionTicket:
         """Valida y obtiene un ticket de descuento por canje para un usuario y sucursal."""
         if not redemption_ticket_id:
             return None
-        from sqlalchemy import or_
         ticket = db.query(models.RedemptionTicket).filter(
             models.RedemptionTicket.id == redemption_ticket_id,
             models.RedemptionTicket.user_id == user_id,
             models.RedemptionTicket.tipo_canje == "descuento_reserva",
             models.RedemptionTicket.estado == "VIGENTE",
-            or_(models.RedemptionTicket.sucursal == sucursal, models.RedemptionTicket.sucursal == None)
+            cls.redemption_sucursal_clause(sucursal)
         ).first()
         if not ticket:
             raise HTTPException(status_code=400, detail="El descuento seleccionado no es válido para esta reserva o sucursal")

@@ -24,6 +24,14 @@ export async function loadAdminReservations() {
         allReservations = res.data;
         window.allReservations = allReservations;
 
+        if (allReservations.length > 0 && allReservations[0].id) {
+            const storageKey = getStorageKey();
+            const currentLastSeen = parseInt(localStorage.getItem(storageKey), 10) || 0;
+            if (allReservations[0].id > currentLastSeen) {
+                localStorage.setItem(storageKey, allReservations[0].id);
+            }
+        }
+
         tbody.innerHTML = res.data.map(r => `
             <tr class="row-premium">
                 <td data-label="Cliente"><div class="user-name">${r.usuario_nombre || 'S/N'} ${r.usuario_apellido || ''}</div></td>
@@ -93,10 +101,28 @@ export async function payReservationAdmin(resId) {
         { label: 'Otro', icon: 'fa-circle-question' }
     ]);
     if (!metodo) return;
-    
-    const res = await api.post(`/admin/reservations/${resId}/confirm-payment`, { metodo_pago: metodo });
+
+    // DETECTAR DESCUENTO DE RESERVA VIGENTE DEL CLIENTE PARA APLICARLO EN CAJA
+    let redemptionTicketId = null;
+    const discsRes = await api.get(`/admin/reservations/${resId}/redemptions`);
+    if (discsRes.ok && Array.isArray(discsRes.data) && discsRes.data.length > 0) {
+        const d = discsRes.data[0];
+        const aplicar = await utils.showConfirm('Descuento aplicable', `
+            <div style="text-align:left; font-size:0.85rem; line-height:1.8;">
+                <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Monto reserva</span><b>$${utils.formatNum(d.monto)}</b></div>
+                <div style="display:flex; justify-content:space-between; gap:12px; color:#c084fc;"><span><i class="fas fa-percent" style="margin-right:4px;"></i>Descuento ${d.valor_descuento}%</span><b>-$ ${utils.formatNum(d.descuento_peso)}</b></div>
+                <div style="border-top:1px solid rgba(255,255,255,0.1); margin:8px 0 6px; padding-top:8px; display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Total a cobrar</span><b style="font-size:1.05rem;">$${utils.formatNum(d.monto_final)}</b></div>
+            </div>
+        `);
+        if (aplicar) redemptionTicketId = d.id;
+    }
+
+    const res = await api.post(`/admin/reservations/${resId}/confirm-payment`, { metodo_pago: metodo, redemption_ticket_id: redemptionTicketId });
     if (res.ok) {
-        utils.showToast('Pago registrado correctamente', 'success');
+        const msg = redemptionTicketId
+            ? `Pago registrado (descuento aplicado: -$ ${utils.formatNum(res.data.descuento || 0)})`
+            : 'Pago registrado correctamente';
+        utils.showToast(msg, 'success');
         loadAdminReservations();
     } else {
         utils.showToast(res.error || 'Error al registrar pago', 'error');
@@ -167,6 +193,9 @@ let editingResId = null;
 let newResPickers = {};
 let editingOriginalReserva = null;
 let newResCalculatedTotal = 0;
+let newResLiveDiscount = null;
+let newResDiscountReq = 0;
+let newResSucursalListenerInit = false;
 let pendingEditResumo = null;
 let pendingEditResumoMetodo = null;
 
@@ -196,6 +225,7 @@ export function resetNewResPatenteLookup() {
     }
     const iconEl = document.getElementById('new-res-veh-icon');
     if (iconEl) iconEl.className = 'fas fa-car-side';
+    refreshNewResLiveDiscount();
 }
 
 export function clearNewResPatenteLookup() {
@@ -241,6 +271,33 @@ async function lookupNewResPatente() {
         badge.style.background = 'transparent';
         badge.style.display = 'inline-flex';
     }
+    refreshNewResLiveDiscount();
+}
+
+async function refreshNewResLiveDiscount() {
+    const token = ++newResDiscountReq;
+    if (editingResId) return;
+    if (newResLinkedUserId) {
+        const sucursal = document.getElementById('new-res-sucursal')?.value;
+        if (!sucursal) {
+            newResLiveDiscount = null;
+            updateNewReservationPrice();
+            return;
+        }
+        try {
+            const res = await api.get('/admin/redemptions/available', { params: { user_id: newResLinkedUserId, sucursal } });
+            if (token !== newResDiscountReq) return;
+            newResLiveDiscount = (res.ok && Array.isArray(res.data) && res.data.length)
+                ? { porc: res.data[0].valor_descuento || 0, fuente: 'vigente', ticketId: res.data[0].id }
+                : null;
+        } catch (e) {
+            if (token !== newResDiscountReq) return;
+            newResLiveDiscount = null;
+        }
+    } else {
+        newResLiveDiscount = null;
+    }
+    updateNewReservationPrice();
 }
 
 export function initNewResPatenteLookup() {
@@ -256,10 +313,13 @@ export async function openNewReservationModal() {
     editingResId = null;
     editingOriginalReserva = null;
     newResCalculatedTotal = 0;
+    newResLiveDiscount = null;
     pendingEditResumo = null;
     setNewResModalMode(false);
     const formEl = document.getElementById('form-new-reservation');
     if (formEl) formEl.reset();
+    const payRow = document.getElementById('new-res-metodo-total-row');
+    if (payRow) payRow.style.justifyContent = 'space-between';
 
     const now = getVirtualNow();
     const hh = String(now.getHours()).padStart(2, '0');
@@ -314,8 +374,13 @@ export async function openNewReservationModal() {
             b.nombre.trim().toLowerCase().includes(mySucursal.trim().toLowerCase())
         );
         sucursalInput.value = branch ? branch.nombre : (mySucursal || newResBranches[0]?.nombre || '');
+        if (!newResSucursalListenerInit) {
+            newResSucursalListenerInit = true;
+            sucursalInput.addEventListener('change', () => { refreshNewResLiveDiscount(); });
+        }
     }
     updateNewHourlySlotsUI();
+    refreshNewResLiveDiscount();
 
     if (!newResPickersInitialized && window.flatpickr) {
         initNewReservationPickers();
@@ -345,6 +410,15 @@ export async function openEditReservationModal(resId) {
     editingResId = resId;
     editingOriginalReserva = r;
     setNewResModalMode(true);
+
+    // CARGAR SITUACIÓN DE DESCUENTO PARA MOSTRAR EL TOTAL CON DESCUENTO EN EDICIÓN
+    newResLiveDiscount = null;
+    try {
+        const infoRes = await api.get(`/admin/reservations/${resId}/redemption-info`);
+        if (infoRes.ok && infoRes.data && infoRes.data.aplica) {
+            newResLiveDiscount = { porc: infoRes.data.valor_descuento || 0, fuente: infoRes.data.fuente, ticketId: infoRes.data.ticket_id };
+        }
+    } catch (e) { /* el total se muestra sin descuento */ }
 
     const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
 
@@ -414,10 +488,13 @@ export async function openEditReservationModal(resId) {
     }
 
     const payGroup = document.getElementById('new-res-metodo-pago-group');
+    const payRow = document.getElementById('new-res-metodo-total-row');
     if (r.estado_pago === 'Pagado') {
         if (payGroup) payGroup.style.display = 'none';
+        if (payRow) payRow.style.justifyContent = 'center';
     } else {
         if (payGroup) payGroup.style.display = '';
+        if (payRow) payRow.style.justifyContent = 'space-between';
         setVal('new-res-metodo-pago', r.metodo_pago || 'Efectivo');
     }
 
@@ -611,8 +688,35 @@ export async function updateNewReservationPrice() {
     else if (type === 'mes') total = Math.ceil(durationHours / (24 * 30)) * rates.mes;
     else total = Math.ceil(durationHours) * rates.hora;
 
-    if (elMonto) elMonto.innerText = `$ ${utils.formatNum(total)}`;
-    newResCalculatedTotal = Math.round(total * 100) / 100;
+    const base = Math.round(total * 100) / 100;
+    const dis = newResLiveDiscount;
+    const porc = dis && dis.porc > 0 ? dis.porc : 0;
+    let desc = 0;
+    let final = base;
+    if (porc > 0) {
+        desc = Math.round(base * porc / 100 * 100) / 100;
+        final = Math.round((base - desc) * 100) / 100;
+    }
+    // EN EDICIÓN EL MONTO CÁLCULADO VIENE DESCONTADO (EL BACKEND RECALCULA IGUAL);
+    // EN ALTA QUEDA EN BASE (EL DIÁLOGO DE CONFIRMAR PAGO RE-DERIVA EL DESCUENTO).
+    newResCalculatedTotal = editingResId ? final : base;
+
+    if (elMonto) elMonto.innerText = `$ ${utils.formatNum(final)}`;
+
+    const discLine = document.getElementById('new-res-discount-line');
+    if (discLine) {
+        if (porc > 0) {
+            discLine.style.display = 'flex';
+            discLine.innerHTML = `
+                <span style="color: #777; text-decoration: line-through; font-weight: 700; font-size: 0.95rem;">$ ${utils.formatNum(base)}</span>
+                <span style="color: #c084fc; font-weight: 700; letter-spacing: 0.5px;">DESC ${porc}% · -$ ${utils.formatNum(desc)}</span>`;
+            discLine.style.alignItems = 'center';
+            discLine.style.gap = '8px';
+        } else {
+            discLine.style.display = 'none';
+            discLine.innerHTML = '';
+        }
+    }
 }
 
 // ==========================================================================
@@ -931,8 +1035,8 @@ export async function handleAdminNewReservation(event) {
         const diferencia = Math.round((newResCalculatedTotal - totalAnterior) * 100) / 100;
 
         const resumoEl = document.getElementById('edit-confirm-resumo');
+        const actual = editingOriginalReserva;
         if (resumoEl) {
-            const actual = editingOriginalReserva;
             const rows = [
                 ['Reserva', `#${editingResId}`],
                 ['Patente', actual.patente || patente],
@@ -979,6 +1083,25 @@ export async function handleAdminNewReservation(event) {
         pendingEditResumo = { payload, diferencia };
         if (baseUi.openModal) baseUi.openModal('modal-edit-resumo');
         return;
+    }
+
+    // DETECTAR DESCUENTO DE RESERVA VIGENTE PARA APLICARLO EN CAJA (NUEVA RESERVA + PAGO)
+    if (!editingResId && newResLinkedUserId && newResCalculatedTotal > 0) {
+        const avail = await api.get('/admin/redemptions/available', { params: { user_id: newResLinkedUserId, sucursal } });
+        if (avail.ok && Array.isArray(avail.data) && avail.data.length > 0) {
+            const d = avail.data[0];
+            const pct = d.valor_descuento || 0;
+            const descuentoValor = Math.round(newResCalculatedTotal * pct / 100 * 100) / 100;
+            const montoFinal = Math.round((newResCalculatedTotal - descuentoValor) * 100) / 100;
+            const aplicar = await utils.showConfirm('Descuento aplicable', `
+                <div style="text-align:left; font-size:0.85rem; line-height:1.8;">
+                    <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Monto reserva</span><b>$${utils.formatNum(newResCalculatedTotal)}</b></div>
+                    <div style="display:flex; justify-content:space-between; gap:12px; color:#c084fc;"><span><i class="fas fa-percent" style="margin-right:4px;"></i>Descuento ${pct}% (${d.titulo || ''})</span><b>-$ ${utils.formatNum(descuentoValor)}</b></div>
+                    <div style="border-top:1px solid rgba(255,255,255,0.1); margin:8px 0 6px; padding-top:8px; display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Total a pagar</span><b style="font-size:1.05rem;">$${utils.formatNum(montoFinal)}</b></div>
+                </div>
+            `);
+            if (aplicar) payload.redemption_ticket_id = d.id;
+        }
     }
 
     await _submitReservationPayload(payload);
@@ -1035,4 +1158,80 @@ async function _submitReservationPayload(payload) {
         btn.innerHTML = originalContent;
         btn.disabled = false;
     }
+}
+
+function getStorageKey() {
+    const scope = (localStorage.getItem('rol') || 'admin') + '_' + (localStorage.getItem('sucursal') || 'all');
+    return 'autopass_last_seen_res_id_' + scope;
+}
+
+export async function updateReservationBadge() {
+    const badge = document.getElementById('reservation-badge-sidebar');
+    if (!badge) return;
+
+    const activeTab = localStorage.getItem('activeAdminTab');
+    const storageKey = getStorageKey();
+    let lastSeenId = parseInt(localStorage.getItem(storageKey), 10);
+
+    // Si el usuario está actualmente en la pestaña de reservas, ocultar badge y registrar latest_id
+    if (activeTab === 'admin-reservations') {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+        const res = await api.get('/admin/reservations/new-count');
+        if (res && res.ok && res.data && res.data.latest_id !== undefined) {
+            localStorage.setItem(storageKey, res.data.latest_id);
+        }
+        return;
+    }
+
+    // Primera vez en este navegador/sesión: inicializar con el ID actual para no mostrar reservas históricas
+    if (isNaN(lastSeenId)) {
+        const res = await api.get('/admin/reservations/new-count');
+        if (res && res.ok && res.data && res.data.latest_id !== undefined) {
+            localStorage.setItem(storageKey, res.data.latest_id);
+        }
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+        return;
+    }
+
+    // Consultar cantidad de reservas nuevas desde lastSeenId
+    const res = await api.get(`/admin/reservations/new-count?since_id=${lastSeenId}`);
+    if (!res || !res.ok || !res.data) return;
+
+    const count = res.data.count || 0;
+    if (count > 0) {
+        badge.style.display = 'inline-flex';
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.add('pulse');
+    } else {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+    }
+}
+
+export async function clearReservationBadge() {
+    const badge = document.getElementById('reservation-badge-sidebar');
+    if (badge) {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+    }
+    const storageKey = getStorageKey();
+    try {
+        const res = await api.get('/admin/reservations/new-count');
+        if (res && res.ok && res.data && res.data.latest_id !== undefined) {
+            localStorage.setItem(storageKey, res.data.latest_id);
+        }
+    } catch (e) {
+        console.error('[clearReservationBadge Error]', e);
+    }
+}
+
+window.updateReservationBadge = updateReservationBadge;
+window.clearReservationBadge = clearReservationBadge;
+
+if (!window._resBadgeInterval) {
+    window._resBadgeInterval = setInterval(() => {
+        updateReservationBadge();
+    }, 10000);
 }

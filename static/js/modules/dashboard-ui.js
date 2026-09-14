@@ -116,6 +116,12 @@ export function switchTab(tabId, element) {
     localStorage.setItem('activeAdminTab', tabId);
     if (window.loadTabData) window.loadTabData(tabId);
 
+    if (tabId === 'admin-reservations') {
+        if (typeof window.clearReservationBadge === 'function') {
+            window.clearReservationBadge();
+        }
+    }
+
     if (tabId === 'settings') {
         if (!window._diagInterval) {
             window._diagInterval = setInterval(() => {

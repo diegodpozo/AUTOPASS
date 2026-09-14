@@ -75,6 +75,10 @@ export async function payReservation(id) {
     else { showToast(res.error || 'Error en el pago', 'error'); }
 }
 
+export async function payReservationWithWallet(id) {
+    return payReservation(id);
+}
+
 export async function payReservationWithMp(id) {
     // 1. REUTILIZAR DESCUENTO DE RESERVA DISPONIBLE (si aplica)
     let redemptionTicketId = null;

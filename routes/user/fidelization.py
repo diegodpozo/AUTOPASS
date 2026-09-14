@@ -73,6 +73,17 @@ def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: mo
 
     ticket = _crear_ticket(db, current_user, promo)
 
+    try:
+        from services.user_notification_service import UserNotificationService
+        UserNotificationService.create_notification(
+            db, current_user.id,
+            tipo=models.NotificationType.PROMO_REDEEMED,
+            titulo="¡Canje exitoso!",
+            mensaje=f"Canjeaste {promo.costo_puntos} puntos por '{promo.titulo}' (Voucher #{ticket.id}). Tu beneficio ya está disponible en Mis Puntos."
+        )
+    except Exception:
+        pass
+
     db.commit()
     db.refresh(ticket)
 
@@ -119,8 +130,9 @@ def get_available_redemptions(sucursal: str = None, db: Session = Depends(get_db
         models.RedemptionTicket.estado == "VIGENTE"
     )
     if sucursal:
-        # SE PUEDE APLICAR SI ES DE ESA SUCURSAL O ES GLOBAL
-        q = q.filter(or_(models.RedemptionTicket.sucursal == sucursal, models.RedemptionTicket.sucursal == None))
+        # SE PUEDE APLICAR SI ES DE ESA SUCURSAL O ES GLOBAL (con tolerancia a prefijo 'AUTOPASS')
+        from services.reservation_service import ReservationService
+        q = q.filter(ReservationService.redemption_sucursal_clause(sucursal))
     return q.all()
 
 @router.post("/redemptions/{ticket_id}/cancel")
@@ -140,6 +152,17 @@ def cancel_redemption_ticket(ticket_id: int, db: Session = Depends(get_db), curr
     if costo > 0:
         current_user.puntos_acumulados += costo
         db.add(models.PointsLog(user_id=current_user.id, cantidad=costo, motivo=f"Anulación de canje: {ticket.titulo}", fecha=datetime.datetime.now().isoformat()))
+
+    try:
+        from services.user_notification_service import UserNotificationService
+        UserNotificationService.create_notification(
+            db, current_user.id,
+            tipo=models.NotificationType.PROMO_CANCELLED,
+            titulo="Canje cancelado",
+            mensaje=f"Se canceló tu beneficio '{ticket.titulo}' y se te reintegraron {costo} puntos a tu cuenta."
+        )
+    except Exception:
+        pass
 
     db.commit()
     return {"status": "ok", "message": "Ticket cancelado y puntos devueltos", "puntos_devueltos": costo}

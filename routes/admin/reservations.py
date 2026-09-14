@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 import models, schemas
+from models.enums import PaymentStatus
 from core.database import get_db
 from core.security import get_operational_user
 from core.normalize import format_plate
@@ -43,6 +44,32 @@ def patente_lookup(patente: str, db: Session = Depends(get_db), staff: models.Us
         "email": owner.email,
         "tipo_vehiculo": vehicle.tipo or "Auto",
         "marca_modelo": vehicle.marca_modelo or ""
+    }
+
+@router.get("/reservations/new-count")
+def get_new_reservations_count(
+    since_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    staff: models.User = Depends(get_operational_user)
+):
+    """RETORNA LA CANTIDAD DE RESERVAS NUEVAS DESDE since_id Y EL ULTIMO ID REGISTRADO.
+    Alimenta la burbuja de notificación en la pestaña de Reservas del Dashboard."""
+    q = db.query(models.Reservation)
+    if staff.rol != "admin":
+        staff_suc = staff.sucursal or ""
+        norm_col = func.trim(func.replace(func.lower(models.Reservation.sucursal_nombre), 'autopass ', ''))
+        norm_staff = staff_suc.lower().replace('autopass ', '').strip()
+        q = q.filter((models.Reservation.sucursal_nombre == staff_suc) | (norm_col == norm_staff))
+    
+    latest_id = q.with_entities(func.max(models.Reservation.id)).scalar() or 0
+    
+    count = 0
+    if since_id is not None:
+        count = q.filter(models.Reservation.id > since_id).count()
+        
+    return {
+        "count": count,
+        "latest_id": latest_id
     }
 
 @router.get("/reservations", response_model=List[schemas.UserReservationResponse])
@@ -111,16 +138,18 @@ def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session =
     try:
         new_res = ReservationService.create_reservation(db, data)
         if data.pagar:
-            ReservationService.pay_reservation_manual(db, new_res, data.metodo_pago)
+            result = ReservationService.pay_reservation_manual(db, new_res, data.metodo_pago, data.redemption_ticket_id)
+        else:
+            result = None
         if new_res.user_id:
             UserNotificationService.create_notification(
                 db, user_id=new_res.user_id,
-                tipo="reserva_creada_admin",
+                tipo=models.NotificationType.RESERVATION_CREATED_ADMIN,
                 titulo="Reserva creada por administrador",
                 mensaje=f"Se creó una reserva para {new_res.patente} el {new_res.fecha_inicio} en {new_res.sucursal_nombre}.",
                 reserva_id=new_res.id
             )
-        return {"status": "ok", "id": new_res.id, "monto": new_res.monto_total, "pagado": bool(data.pagar), "metodo_pago": data.metodo_pago}
+        return {"status": "ok", "id": new_res.id, "monto": new_res.monto_total, "pagado": bool(data.pagar), "metodo_pago": data.metodo_pago, "descuento": (result or {}).get("descuento", 0.0), "monto_a_cobrar": (result or {}).get("monto_a_cobrar", new_res.monto_total)}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -184,6 +213,18 @@ def update_admin_reservation(res_id: int, data: schemas.AdminReservationCreate, 
             db, data.tipo_estadia, data.fecha_inicio, data.fecha_fin,
             sucursal=data.sucursal_nombre, tipo_vehiculo=tipo_v_str
         )
+        # SI LA RESERVA SE PAGÓ CON UN DESCUENTO DE CANJE EN CAJA, MANTENER ESE DESCUENTO
+        # AL RECALCULAR EL MONTO (EL MONTO ACTUAL YA ES EL VALOR DESCONTADO).
+        ticket_aplicado = None
+        if reserva.estado_pago == PaymentStatus.PAGADO:
+            ticket_aplicado = db.query(models.RedemptionTicket).filter(
+                models.RedemptionTicket.reserva_id == reserva.id,
+                models.RedemptionTicket.tipo_canje == "descuento_reserva",
+                models.RedemptionTicket.estado == "USADO"
+            ).first()
+        if ticket_aplicado and ticket_aplicado.valor_descuento:
+            porc = ticket_aplicado.valor_descuento
+            monto = round(monto * (1 - porc / 100.0), 2)
         monto_anterior = reserva.monto_total or 0.0
         reembolsado_previo = reserva.monto_reembolsado or 0.0
         valor_actual = round(monto_anterior - reembolsado_previo, 2)
@@ -250,7 +291,7 @@ def update_admin_reservation(res_id: int, data: schemas.AdminReservationCreate, 
             if accion == "cobro":
                 UserNotificationService.create_notification(
                     db, user_id=reserva.user_id,
-                    tipo="reserva_editada_admin",
+                    tipo=models.NotificationType.RESERVATION_MODIFIED,
                     titulo="Reserva modificada por administrador",
                     mensaje=f"Tu reserva para {reserva.patente} fue actualizada. Se registró un cobro de ${diferencia:,.2f} por la diferencia ({metodo_ajuste or 'Caja'}).",
                     reserva_id=reserva.id
@@ -258,7 +299,7 @@ def update_admin_reservation(res_id: int, data: schemas.AdminReservationCreate, 
             elif accion == "reembolso":
                 UserNotificationService.create_notification(
                     db, user_id=reserva.user_id,
-                    tipo="reserva_editada_admin",
+                    tipo=models.NotificationType.RESERVATION_MODIFIED,
                     titulo="Reserva modificada por administrador",
                     mensaje=(f"Tu reserva para {reserva.patente} fue actualizada. Se te reembolsaron ${abs(diferencia):,.2f} a tu saldo."
                              if devolucion_a_saldo
@@ -268,7 +309,7 @@ def update_admin_reservation(res_id: int, data: schemas.AdminReservationCreate, 
             else:
                 UserNotificationService.create_notification(
                     db, user_id=reserva.user_id,
-                    tipo="reserva_editada_admin",
+                    tipo=models.NotificationType.RESERVATION_MODIFIED,
                     titulo="Reserva modificada por administrador",
                     mensaje=f"Tu reserva para {reserva.patente} fue actualizada: del {reserva.fecha_inicio} al {reserva.fecha_fin} en {reserva.sucursal_nombre}.",
                     reserva_id=reserva.id
@@ -298,18 +339,19 @@ def confirm_reservation_payment(res_id: int, data: schemas.ConfirmPaymentRequest
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
     
     metodo = (data.metodo_pago if data else None) or "Caja"
-    result = ReservationService.pay_reservation_manual(db, reserva, metodo)
+    redemption_ticket_id = (data.redemption_ticket_id if data else None)
+    result = ReservationService.pay_reservation_manual(db, reserva, metodo, redemption_ticket_id)
 
     if reserva.user:
         UserNotificationService.create_notification(
             db, user_id=reserva.user.id,
-            tipo="pago_confirmado_admin",
+            tipo=models.NotificationType.RESERVATION_CONFIRMED,
             titulo="Pago confirmado",
             mensaje=f"El pago de tu reserva #{res_id} ({reserva.patente}) fue confirmado por administrador.",
             reserva_id=res_id
         )
 
-    return {"status": "ok", "message": result["message"]}
+    return {"status": "ok", "message": result["message"], "monto": result["monto"], "descuento": result["descuento"], "monto_a_cobrar": result["monto_a_cobrar"]}
 
 @router.post("/reservations/{res_id}/cancel")
 def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
@@ -322,16 +364,77 @@ def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: 
         
     result = ReservationService.cancel_reservation(db, None, res_id)
     if result["status"] == "ok":
-        reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
-        if reserva and reserva.user and reserva.estado_reserva == "Cancelada":
-            UserNotificationService.create_notification(
-                db, user_id=reserva.user.id,
-                tipo="reserva_cancelada_admin",
-                titulo="Reserva cancelada por administrador",
-                mensaje=f"Tu reserva #{res_id} ({reserva.patente}) fue cancelada.",
-                reserva_id=res_id
-            )
         return result
     raise HTTPException(status_code=400, detail=result["message"])
+
+
+@router.get("/reservations/{res_id}/redemptions")
+def reservation_available_redemptions(res_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    """LISTA LOS DESCUENTOS DE RESERVA (%) VIGENTES DEL USUARIO VINCULADO A UNA RESERVA Y APLICABLES A SU SUCURSAL.
+    Se usa antes de registrar un pago en caja para informar y aplicar el descuento."""
+    reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+
+    if staff.rol != "admin" and reserva.sucursal_nombre != staff.sucursal:
+        raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+
+    descuentos = ReservationService.get_available_redemption_discounts(db, reserva.user_id, reserva.sucursal_nombre)
+    monto = reserva.monto_total or 0.0
+
+    return [{
+        "id": d.id,
+        "titulo": d.titulo,
+        "valor_descuento": d.valor_descuento or 0,
+        "monto": monto,
+        "descuento_peso": round(monto * (d.valor_descuento or 0) / 100.0, 2),
+        "monto_final": round(monto - monto * (d.valor_descuento or 0) / 100.0, 2),
+        "created_at": d.created_at
+    } for d in descuentos]
+
+
+@router.get("/reservations/{res_id}/redemption-info")
+def reservation_redemption_info(res_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    """INFORMA SI A UNA RESERVA APLICA DESCUENTO PARA MOSTRARLO EN LA EDICIÓN DEL PANEL.
+    - fuente 'vigente': el usuario tiene un canje descuento_reserva VIGENTE aplicable (aún no consumido).
+    - fuente 'aplicado': la reserva ya se pagó en caja con un descuento (ticket consumido en esta reserva)."""
+    reserva = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+
+    if staff.rol != "admin" and reserva.sucursal_nombre != staff.sucursal:
+        raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+
+    info = {
+        "aplica": False,
+        "fuente": None,
+        "valor_descuento": None,
+        "ticket_id": None,
+        "monto": reserva.monto_total or 0.0
+    }
+
+    vigente = ReservationService.get_available_redemption_discounts(db, reserva.user_id, reserva.sucursal_nombre)
+    if vigente:
+        d = vigente[0]
+        info.update(aplica=True, fuente="vigente", valor_descuento=d.valor_descuento or 0, ticket_id=d.id)
+        return info
+
+    ticket_aplicado = db.query(models.RedemptionTicket).filter(
+        models.RedemptionTicket.reserva_id == reserva.id,
+        models.RedemptionTicket.tipo_canje == "descuento_reserva",
+        models.RedemptionTicket.estado == "USADO"
+    ).first()
+    if ticket_aplicado and ticket_aplicado.valor_descuento:
+        info.update(aplica=True, fuente="aplicado", valor_descuento=ticket_aplicado.valor_descuento, ticket_id=ticket_aplicado.id)
+
+    return info
+
+
+@router.get("/redemptions/available")
+def admin_available_redemptions(user_id: int, sucursal: str = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    """LISTA LOS DESCUENTOS DE RESERVA (%) VIGENTES DE UN USUARIO APLICABLES A UNA SUCURSAL.
+    Se usa en el flujo de nueva reserva manual en caja para ofrecer el descuento antes de crear y pagar."""
+    descuentos = ReservationService.get_available_redemption_discounts(db, user_id, sucursal)
+    return [{"id": d.id, "titulo": d.titulo, "valor_descuento": d.valor_descuento or 0, "created_at": d.created_at} for d in descuentos]
 
 

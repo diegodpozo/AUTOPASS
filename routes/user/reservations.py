@@ -242,6 +242,11 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
     logger.debug(f"POST RESERVE ID={new_res.id} estado_reserva={new_res.estado_reserva}")
     db.refresh(new_res)
     logger.debug(f"POST RESERVE ID={new_res.id} estado_reserva={new_res.estado_reserva}")
+    try:
+        from services.notification_service import NotificationService
+        NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
+    except Exception as e:
+        logger.error(f"Error notificando nueva reserva: {e}")
     return {"status": "ok", "monto": monto, "estado_pago": estado_pago}
 
 @router.patch("/reservations/{res_id}")
@@ -320,6 +325,25 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
 
     res.monto_total = monto_nuevo
     db.commit()
+
+    try:
+        from services.user_notification_service import UserNotificationService
+        msg_detalle = f"Tu reserva #{res.id} ({res.patente}) en {res.sucursal_nombre} fue modificada exitosamente."
+        if ya_pagado and diferencia != 0:
+            if diferencia > 0:
+                msg_detalle += f" Se debitó una diferencia de ${diferencia:,.2f} de tu saldo."
+            else:
+                msg_detalle += f" Se acreditó un reembolso de ${abs(diferencia):,.2f} a tu saldo."
+        UserNotificationService.create_notification(
+            db, user_id=current_user.id,
+            tipo=models.NotificationType.RESERVATION_MODIFIED,
+            titulo="Reserva modificada",
+            mensaje=msg_detalle,
+            reserva_id=res.id
+        )
+    except Exception as e:
+        logger.error(f"Error creando notificación de reserva modificada: {e}")
+
     return {"status": "ok", "monto_total": monto_nuevo, "estado_pago": res.estado_pago}
 
 @router.post("/reservations/{res_id}/pay")

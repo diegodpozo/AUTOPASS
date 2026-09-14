@@ -1,5 +1,5 @@
 import api from './api.js';
-import { toTitle, formatDate, formatPlate, formatNum } from './utils.js';
+import { toTitle, formatDate, formatPlate, formatNum, showToast } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**
@@ -107,6 +107,7 @@ export function renderReservaCard(r, isFeatured) {
         <div class="reserva-actions-ultra">
             <button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> VER COMPROBANTE + QR</button>
             ${r.estado_pago === 'Pendiente' && r.estado_reserva !== 'Cancelada' ? `
+            <button class="btn-ultra btn-ultra-wallet" onclick="payReservationWithWallet(${r.id})"><i class="fas fa-wallet"></i> PAGAR CON SALDO</button>
             <button class="btn-ultra btn-ultra-mp" onclick="payReservationWithMp(${r.id})"><i class="fab fa-google-pay"></i> PAGAR CON MP</button>` : ''}
             <button class="btn-ultra btn-ultra-secondary" onclick="prepareEditReservation(${r.id})" ${isStarted || r.estado_reserva === 'Activa' ? 'disabled' : ''}><i class="fas fa-pen"></i></button>
             <button class="btn-ultra btn-ultra-danger" onclick="cancelReservation(${r.id})" ${r.estado_reserva === 'Cancelada' || r.estado_reserva === 'Fallido' ? 'disabled' : ''}><i class="fas fa-trash"></i></button>

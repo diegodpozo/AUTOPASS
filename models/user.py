@@ -94,3 +94,13 @@ class RedemptionTicket(Base):
     reserva_id = Column(Integer, nullable=True)        # RESERVA A LA QUE SE APLICO (si aplica)
 
     user = relationship("User", back_populates="redemption_tickets")
+
+    @property
+    def fecha_vencimiento(self):
+        if not self.created_at:
+            return None
+        try:
+            dt = datetime.datetime.fromisoformat(self.created_at)
+            return (dt + datetime.timedelta(days=30)).isoformat()
+        except Exception:
+            return None

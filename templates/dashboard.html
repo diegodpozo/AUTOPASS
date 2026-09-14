@@ -41,7 +41,7 @@
         </div>
         <nav class="nav-group">
             <div class="nav-item active hide-super-admin" onclick="switchTab('live', this)" title="Ver monitoreo en tiempo real"><i class="fas fa-video"></i> <span class="nav-text">Monitoreo</span></div>
-            <div class="nav-item hide-super-admin" onclick="switchTab('admin-reservations', this)" title="Gestionar reservas del sistema"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span></div>
+            <div class="nav-item hide-super-admin notification-nav-item" onclick="switchTab('admin-reservations', this)" title="Gestionar reservas del sistema" style="position:relative; overflow:visible;"><i class="fas fa-calendar-check"></i> <span class="nav-text">Reservas</span><span id="reservation-badge-sidebar" class="notif-badge" style="display:none;">0</span></div>
             
             <!-- SECCIONES EXCLUSIVAS ADMIN -->
             <div class="nav-item hide-staff" onclick="switchTab('users', this)" title="Administrar usuarios y permisos"><i class="fas fa-users-gear"></i> <span class="nav-text">Gestión de Usuarios</span></div>

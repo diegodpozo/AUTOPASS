@@ -37,12 +37,24 @@
         </div>
     </div>
 
-    <div class="section-subtitle" style="justify-content: center; margin-left: 0; margin-top: 34px;"><i class="fas fa-ticket"></i> MIS VOUCHERS</div>
+    <div id="vouchers-section-wrapper">
+        <div class="section-subtitle" style="justify-content: center; margin-left: 0; margin-top: 34px;"><i class="fas fa-ticket"></i> MIS VOUCHERS Y BENEFICIOS</div>
+        
+        <!-- PESTAÑAS DE VOUCHERS -->
+        <div class="voucher-tabs-bar" id="voucher-tabs-bar">
+            <button class="voucher-tab-btn active" id="btn-vouchers-vigentes" onclick="switchVoucherTab('VIGENTES')">
+                <i class="fas fa-circle-check"></i> Vigentes <span class="voucher-tab-count" id="count-vouchers-vigentes">0</span>
+            </button>
+            <button class="voucher-tab-btn" id="btn-vouchers-finalizados" onclick="switchVoucherTab('FINALIZADOS')">
+                <i class="fas fa-clock-rotate-left"></i> Finalizados <span class="voucher-tab-count" id="count-vouchers-finalizados">0</span>
+            </button>
+        </div>
 
-    <div id="vouchers-container" style="margin-top: 0;">
-        <div class="card card-narrow" style="padding: 0; overflow: hidden; margin: 0 auto;">
-            <div id="vouchers-list" class="pts-history-list">
-                <p class="text-bold" style="padding: 30px; text-align: center;">Cargando vouchers...</p>
+        <div id="vouchers-container" style="margin-top: 0;">
+            <div id="vouchers-grid" class="vouchers-grid">
+                <div class="loading-spinner" style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #888;">
+                    <i class="fas fa-circle-notch fa-spin"></i> Cargando vouchers...
+                </div>
             </div>
         </div>
     </div>

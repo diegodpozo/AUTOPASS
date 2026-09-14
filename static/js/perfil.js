@@ -1,4 +1,4 @@
-import * as prof from './modules/profile.js?v=9.3.0';
+import * as prof from './modules/profile.js?v=9.18.3';
 import * as res from './modules/reservas.js?v=9.10.1';
 import * as v from './modules/vehicles.js?v=9.3.0';
 import * as ui from './modules/ui.js?v=9.3.0';
@@ -43,6 +43,11 @@ window.adjustPoints = prof.adjustPoints;
 window.loadPointsHistory = prof.loadPointsHistory;
 window.changePtsPage = prof.changePtsPage;
 window.loadPromotions = prof.loadPromotions;
+window.loadVouchers = prof.loadVouchers;
+window.switchVoucherTab = prof.switchVoucherTab;
+window.renderVouchers = prof.renderVouchers;
+window.getVoucherVencimiento = prof.getVoucherVencimiento;
+window.cancelVoucher = prof.cancelVoucher;
 window.showCanjeTicket = prof.showCanjeTicket;
 window.showCanjeTicketById = prof.showCanjeTicketById;
 window.closeCanjeModal = prof.closeCanjeModal;

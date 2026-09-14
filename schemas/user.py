@@ -124,5 +124,6 @@ class RedemptionTicketResponse(BaseModel):
     qr_data: Optional[str] = None
     observacion: Optional[str] = None
     created_at: Optional[str] = None
+    fecha_vencimiento: Optional[str] = None
     fecha_uso: Optional[str] = None
     reserva_id: Optional[int] = None

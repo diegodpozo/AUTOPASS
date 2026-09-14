@@ -105,87 +105,115 @@
     box-shadow: 0 20px 45px rgba(197, 160, 89, 0.15);
 }
 
-.branch-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(197, 160, 89, 0.1);
-    color: var(--dorado);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.6rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    border: 1px solid rgba(197, 160, 89, 0.2);
+.promo-card-badges {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 6px;
-    z-index: 5;
+    gap: 10px;
+    padding: 16px 20px 0 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.branch-badge {
+    position: static;
+    background: rgba(197, 160, 89, 0.12);
+    color: var(--dorado);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(197, 160, 89, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    max-width: none;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .branch-badge.global {
-    background: rgba(46, 204, 113, 0.1);
+    background: rgba(46, 204, 113, 0.12);
     color: #2ecc71;
-    border-color: rgba(46, 204, 113, 0.2);
+    border-color: rgba(46, 204, 113, 0.25);
 }
 
 .promo-type-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
+    position: static;
     padding: 4px 10px;
     border-radius: 6px;
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 800;
-    letter-spacing: 1px;
-    display: flex;
+    letter-spacing: 0.8px;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-    z-index: 5;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .promo-type-badge.voucher {
-    background: rgba(52, 152, 219, 0.1);
+    background: rgba(52, 152, 219, 0.12);
     color: #3498db;
-    border: 1px solid rgba(52, 152, 219, 0.2);
+    border: 1px solid rgba(52, 152, 219, 0.25);
 }
 
 .promo-type-badge.discount {
-    background: rgba(46, 204, 113, 0.1);
+    background: rgba(46, 204, 113, 0.12);
     color: #2ecc71;
-    border: 1px solid rgba(46, 204, 113, 0.2);
+    border: 1px solid rgba(46, 204, 113, 0.25);
+}
+
+/* Fallback defensivo para tarjetas sin wrapper .promo-card-badges */
+.promo-card > .promo-type-badge {
+    position: static;
+    margin: 16px 20px 0;
+    align-self: flex-start;
+}
+
+.promo-card > .branch-badge {
+    position: static;
+    margin: 6px 20px 0;
+    align-self: flex-end;
 }
 
 .promo-header {
-    padding: 25px 25px 15px;
+    padding: 14px 20px 10px 20px;
     display: flex;
-    align-items: center;
-    gap: 15px;
+    align-items: flex-start;
+    gap: 14px;
 }
 
 .promo-icon {
-    width: 45px;
-    height: 45px;
+    width: 44px;
+    height: 44px;
     background: rgba(197, 160, 89, 0.1);
+    border: 1px solid rgba(197, 160, 89, 0.2);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--dorado);
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .promo-title {
-    font-family: 'Montserrat';
+    font-family: 'Montserrat', sans-serif;
     font-weight: 800;
     color: #fff;
     font-size: 0.95rem;
-    line-height: 1.3;
+    line-height: 1.35;
+    word-break: break-word;
+    margin: 0;
+    flex: 1;
 }
 
 .promo-body {
-    padding: 0 25px 20px;
+    padding: 0 20px 18px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -196,13 +224,13 @@
     color: #888;
     font-size: 0.8rem;
     line-height: 1.5;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .promo-cost {
-    font-family: 'Montserrat';
+    font-family: 'Montserrat', sans-serif;
     font-weight: 900;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     color: var(--dorado);
     display: flex;
     align-items: baseline;
@@ -217,7 +245,7 @@
 }
 
 .promo-footer {
-    padding: 0 25px 25px;
+    padding: 0 20px 20px;
 }
 
 .btn-redeem {

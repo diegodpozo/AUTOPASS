@@ -220,13 +220,26 @@ class SupportService:
                 UserNotificationService.create_notification(
                     db,
                     user_id=ticket.user_id,
-                    tipo="SUPPORT_RESPONSE",
+                    tipo=models.NotificationType.SUPPORT_RESPONSE,
                     titulo=f"Soporte: {ticket.asunto}",
                     mensaje=f"{admin_name} respondió: {respuesta[:100]}",
                     ticket_id=ticket.id
                 )
             except Exception as e:
                 print(f"[ERROR NOTIF] No se pudo crear notificacion de soporte: {e}")
+        else:
+            try:
+                from services.user_notification_service import UserNotificationService
+                UserNotificationService.create_notification(
+                    db,
+                    user_id=ticket.user_id,
+                    tipo=models.NotificationType.SUPPORT_STATUS_CHANGED,
+                    titulo=f"Soporte: {ticket.asunto}",
+                    mensaje=f"Tu ticket #{ticket.id} ('{ticket.asunto}') cambió su estado a: {estado}.",
+                    ticket_id=ticket.id
+                )
+            except Exception as e:
+                print(f"[ERROR NOTIF] No se pudo crear notificacion de estado de soporte: {e}")
 
         return ticket
 

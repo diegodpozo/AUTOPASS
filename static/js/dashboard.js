@@ -3,7 +3,7 @@ import * as stats from './modules/dashboard-stats.js';
 import * as admin from './modules/dashboard-admin.js';
 import * as promos from './modules/dashboard-promotions.js';
 import * as ops from './modules/dashboard-operations.js';
-import * as reservations from './modules/dashboard-reservations.js?v=9.18.2';
+import * as reservations from './modules/dashboard-reservations.js?v=9.18.4';
 import * as finance from './modules/dashboard-finance.js';
 import * as metricas from './modules/dashboard-metrics.js';
 import * as tickets from './modules/dashboard-tickets.js';
@@ -80,6 +80,8 @@ window.clearNewResPatenteLookup = reservations.clearNewResPatenteLookup;
 window.handleAdminNewReservation = reservations.handleAdminNewReservation;
 window.confirmEditResumoProceed = reservations.confirmEditResumoProceed;
 window.cancelEditResumo = reservations.cancelEditResumo;
+window.updateReservationBadge = reservations.updateReservationBadge;
+window.clearReservationBadge = reservations.clearReservationBadge;
 
 // 5. FINANZAS Y REPORTES
 window.loadFinanceData = finance.loadFinanceData;
@@ -193,6 +195,9 @@ window.loadTabData = async (tabId) => {
             break;
         case 'admin-reservations':
             reservations.loadAdminReservations();
+            if (typeof reservations.clearReservationBadge === 'function') {
+                reservations.clearReservationBadge();
+            }
             break;
         case 'users':
             admin.loadUsers();
@@ -279,6 +284,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // BURBUJA 'SOPORTE & TICKETS': mostrar conteo real de tickets pendientes al cargar
     if (typeof tickets.updateTicketBadge === 'function') {
         tickets.updateTicketBadge();
+    }
+
+    // BURBUJA 'RESERVAS': verificar si hay reservas nuevas al cargar
+    if (typeof reservations.updateReservationBadge === 'function') {
+        reservations.updateReservationBadge();
     }
 
     document.getElementById('form-add-branch')?.addEventListener('submit', window.handleCreateBranch);
