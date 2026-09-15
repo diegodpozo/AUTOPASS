@@ -46,29 +46,6 @@ function formatPoiAddress(t) {
     return t['address'] || t['addr:full'] || '';
 }
 
-function getVehicleAvailability(ocupacion, capacidad) {
-    const totalCap = parseInt(capacidad) || 0;
-    const totalOcc = parseInt(ocupacion) || 0;
-    const disp = Math.max(0, totalCap - totalOcc);
-    const pctFree = totalCap > 0 ? (disp / totalCap) * 100 : 0;
-
-    let color = '#22c55e'; // Verde = Alta (>40% disponible)
-    let label = 'Alta';
-
-    if (totalCap === 0 || disp === 0) {
-        color = '#ef4444'; // Rojo = Agotado
-        label = 'Agotado';
-    } else if (pctFree <= 15) {
-        color = '#f97316'; // Naranja = Baja (<=15% disponible)
-        label = 'Baja';
-    } else if (pctFree <= 40) {
-        color = '#eab308'; // Amarillo = Media (15%-40% disponible)
-        label = 'Media';
-    }
-
-    return { disp, totalCap, color, label, pctFree };
-}
-
 window.getDirectionsTo = function(branchLat, branchLng, mode) {
     const googleUrl = (lat, lng) => `https://www.google.com/maps/dir/${lat},${lng}/${branchLat},${branchLng}`;
     const wazeUrl = (lat, lng) => `https://www.waze.com/ul?ll=${branchLat},${branchLng}&navigate=yes&to=${branchLat},${branchLng}&from=${lat},${lng}`;
@@ -229,13 +206,8 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                 localitiesSet.add(loc);
                 p._locality = loc;
 
-                // DISPONIBILIDAD DISCRIMINADA POR TIPO DE VEHÍCULO
-                const autoStats = getVehicleAvailability(p.ocupacion_actual, p.capacidad_total);
-                const motoStats = getVehicleAvailability(p.ocupacion_motos, p.capacidad_motos);
-                const camionetaStats = getVehicleAvailability(p.ocupacion_camionetas, p.capacidad_camionetas);
-
                 // Color del marcador en el mapa basado en disponibilidad de autos
-                const statusColor = autoStats.color;
+                const statusColor = '#22c55e';
 
                 const formattedAddr = formatAddress(p.direccion);
                 const horarioText = p.is_24h ? '24 HORAS' : (p.horario ? p.horario.replace(' UN ', ' a ') : 'Consultar');
@@ -248,46 +220,6 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                         <br><span style="color: #888; font-size: 0.78rem; display: block; margin-top: 3px; text-transform: capitalize; line-height: 1.3;">${formattedAddr}</span>
                         <span style="color: var(--dorado); font-size: 0.75rem; display: inline-block; margin-top: 5px; margin-bottom: 10px; font-weight: 600;"><i class="fas fa-clock" style="margin-right: 5px;"></i>${horarioText}</span>
                         
-                        <!-- DISPONIBILIDAD DISCRIMINADA POR VEHÍCULO -->
-                        <div style="margin: 8px 0 12px; padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 14px; border: 1px solid rgba(197, 160, 89, 0.2); text-align: left;">
-                            <div style="font-size: 0.65rem; font-weight: 800; color: #C5A059; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center;">
-                                Estado de Disponibilidad
-                            </div>
-
-                            <!-- Auto -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 7px 10px; background: rgba(0,0,0,0.45); border-radius: 8px; border-left: 3.5px solid ${autoStats.color};">
-                                <span style="color: #eee; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 7px;">
-                                    <i class="fas fa-car" style="color: #888; font-size: 0.85rem; width: 14px;"></i> Auto
-                                </span>
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 0.7rem; font-weight: 800; color: ${autoStats.color}; text-transform: uppercase; letter-spacing: 0.5px;">${autoStats.label}</span>
-                                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${autoStats.color}; box-shadow: 0 0 8px ${autoStats.color}; display: inline-block;"></span>
-                                </div>
-                            </div>
-
-                            <!-- Moto -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 7px 10px; background: rgba(0,0,0,0.45); border-radius: 8px; border-left: 3.5px solid ${motoStats.color};">
-                                <span style="color: #eee; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 7px;">
-                                    <i class="fas fa-motorcycle" style="color: #888; font-size: 0.85rem; width: 14px;"></i> Moto
-                                </span>
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 0.7rem; font-weight: 800; color: ${motoStats.color}; text-transform: uppercase; letter-spacing: 0.5px;">${motoStats.label}</span>
-                                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${motoStats.color}; box-shadow: 0 0 8px ${motoStats.color}; display: inline-block;"></span>
-                                </div>
-                            </div>
-
-                            <!-- Camioneta -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: rgba(0,0,0,0.45); border-radius: 8px; border-left: 3.5px solid ${camionetaStats.color};">
-                                <span style="color: #eee; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 7px;">
-                                    <i class="fas fa-truck-pickup" style="color: #888; font-size: 0.85rem; width: 14px;"></i> Camioneta
-                                </span>
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 0.7rem; font-weight: 800; color: ${camionetaStats.color}; text-transform: uppercase; letter-spacing: 0.5px;">${camionetaStats.label}</span>
-                                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${camionetaStats.color}; box-shadow: 0 0 8px ${camionetaStats.color}; display: inline-block;"></span>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- BOTON RESERVAR -->
                         <a href="javascript:void(0)" onclick="irAReserva('${p.nombre}')" 
                            style="background: #C5A059; color: #000; padding: 10px 18px; font-size: 0.72rem; 

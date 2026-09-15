@@ -44,6 +44,30 @@ let currentReservationTotals = { original: 0, discount: 0, final: 0 };
 // TOKEN ANTI-RACE PARA CONSULTAS CONCURRENTES DE DESCUENTO POR SUCURSAL
 let discountFetchToken = 0;
 
+// RANGO DE LA GRILLA HORARIA SEGÚN EL HORARIO DE LA SUCURSAL SELECCIONADA.
+// RESPETA is_24h (00:00 → 23:30) Y el horario configurado (ej. "07:00 A 23:00" → 07:00 → 22:30).
+// Fallback al rango legado 07:00 → 23:30 si no hay info de horario disponible.
+function _branchSlotRange() {
+    const sucursalSelect = document.querySelector('.res-sucursal');
+    const sucursal = sucursalSelect ? sucursalSelect.value : '';
+    const branch = branchesData.find(b => b.nombre === sucursal);
+    if (branch && branch.is_24h) {
+        return { start: 0, end: 23 * 60 + 30 }; // 00:00 → 23:30
+    }
+    if (branch && branch.horario) {
+        const m = String(branch.horario).toUpperCase().trim().match(/^(\d{1,2}):(\d{2})\s+(?:A|UN)\s+(\d{1,2}):(\d{2})$/);
+        if (m) {
+            let start = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+            let end = parseInt(m[3], 10) * 60 + parseInt(m[4], 10);
+            if (end === 0) end = 24 * 60; // cierre 00:00 = final del día (grilla hasta 23:30)
+            // último slot de inicio: un paso (30 min) antes del cierre, sin pasar de 23:30
+            const lastStart = Math.max(start, Math.min(end - 30, 23 * 60 + 30));
+            return { start, end: lastStart };
+        }
+    }
+    return { start: 7 * 60, end: 23 * 60 + 30 }; // fallback legado
+}
+
 export function getEditingReservaId() {
     return editingReservaId;
 }
@@ -189,8 +213,9 @@ export async function updateHourlySlotsUI() {
             const fechaHoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const blockedToday = [];
             if (fecha === fechaHoy) {
+                const rango = _branchSlotRange();
                 const minInicioMs = now.getTime() + RESERVA_MIN_MS;
-                for (let min = 7 * 60; min <= 23 * 60 + 30; min += 30) {
+                for (let min = rango.start; min <= rango.end; min += 30) {
                     const hh = Math.floor(min / 60);
                     const mm = min % 60;
                     const hStr = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
@@ -201,10 +226,11 @@ export async function updateHourlySlotsUI() {
             }
 
             let html = `
-                <div style="width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:8px;">
+                <div style="width:100%; display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:8px;">
                     <div style="font-size:0.75rem; color:#aaa; text-align:center;">
                         <i class="fas fa-clock" style="color:var(--dorado); margin-right:4px;"></i> Tocá la hora de <b>inicio</b> y luego la de <b>fin</b>, o <b>arrastrá</b> sobre las casillas:
                     </div>
+                    ${_hourlySelectionSummary()}
                 </div>
                 <div class="chips-container-premium" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:4px; width:100%;">
             `;
@@ -212,7 +238,8 @@ export async function updateHourlySlotsUI() {
             let countTotal = 0;
             let countLibres = 0;
 
-            for (let min = 7 * 60; min <= 23 * 60 + 30; min += 30) {
+            const rango = _branchSlotRange();
+            for (let min = rango.start; min <= rango.end; min += 30) {
                 const h = Math.floor(min / 60);
                 const m = min % 60;
                 const hourStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -233,20 +260,20 @@ export async function updateHourlySlotsUI() {
                 countTotal++;
 
                 const inRange = slotRangeStart && slotRangeEnd
-                    && hourStr >= slotRangeStart && hourStr <= slotRangeEnd;
+                    && hourStr > slotRangeStart && hourStr < slotRangeEnd;
                 const isStart = slotRangeStart === hourStr;
+                const isEnd = slotRangeEnd === hourStr;
 
                 if (isReserved && !isBoundaryEnd) {
                     html += `<span class="hourly-chip-premium full" title="Horario reservado">${hourStr}</span>`;
                 } else if (isBlockedToday) {
                     html += `<span class="hourly-chip-premium full" title="Horario ya pasado o con anticipación mínima">${hourStr}</span>`;
+                } else if (isStart || isEnd) {
+                    const cls = isStart ? 'hourly-chip-premium available range-start' : 'hourly-chip-premium available range-end';
+                    const tip = isStart ? 'Hora de INICIO de tu estadía' : 'Hora de FIN de tu estadía';
+                    html += `<span class="${cls}" data-hora="${hourStr}" title="${tip}">${hourStr}</span>`;
                 } else if (inRange) {
-                    const cls = (isStart || hourStr === slotRangeEnd)
-                        ? 'hourly-chip-premium available selected'
-                        : 'hourly-chip-premium available in-range';
-                    html += `<span class="${cls}" data-hora="${hourStr}">${hourStr}</span>`;
-                } else if (isStart) {
-                    html += `<span class="hourly-chip-premium available selected" data-hora="${hourStr}">${hourStr}</span>`;
+                    html += `<span class="hourly-chip-premium available in-range" data-hora="${hourStr}">${hourStr}</span>`;
                 } else {
                     const title = isBoundaryEnd ? 'Inicio de otra reserva. Elegilo como FIN para terminar tu estadía acá' : '';
                     html += `<span class="hourly-chip-premium available" title="${title}" data-hora="${hourStr}">${hourStr}</span>`;
@@ -270,6 +297,23 @@ export async function updateHourlySlotsUI() {
     } catch (e) {
         console.warn('[RESERVAS] Error cargando disponibilidad horaria:', e);
     }
+}
+
+function _hourlySelectionSummary() {
+    if (!slotRangeStart) {
+        return '<div class="hourly-range-summary hint">Elegí el <b>INICIO</b> (verde) y después el <b>FIN</b> (rojo) de tu estadía:</div>';
+    }
+    let dur = '';
+    if (slotRangeEnd && _slotToMin(slotRangeEnd) > _slotToMin(slotRangeStart)) {
+        const horas = Math.round((_slotToMin(slotRangeEnd) - _slotToMin(slotRangeStart)) / 60 * 10) / 10;
+        dur = `<span class="hsum-dur">(${horas} hs)</span>`;
+    }
+    return `<div class="hourly-range-summary">
+        <span class="hsum-chip hsum-start"><i class="fas fa-arrow-right-to-bracket"></i> INICIO ${slotRangeStart}</span>
+        <span class="hsum-arrow"><i class="fas fa-arrow-right"></i></span>
+        <span class="hsum-chip hsum-end"><i class="fas fa-arrow-right-from-bracket"></i> FIN ${slotRangeEnd || '— toca la hora de <b>fin</b>'}</span>
+        ${dur}
+    </div>`;
 }
 
 let slotDragActive = false;

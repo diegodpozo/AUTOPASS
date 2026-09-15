@@ -87,6 +87,34 @@ class OccupancyManager:
             if close_session:
                 db.close()
 
+def _ocupacion_reservas_vigentes(db: Session, sucursal_nombre: str) -> Dict[str, int]:
+    """CUENTA RESERVAS PAGADAS EN VIGENCIA (ACTIVAS O PENDIENTES CON SU HORARIO ACTUAL)
+    PARA DESCONTAR LA PLAZA EXCLUSIVA DE RESERVAS EN EL DASHBOARD SIN DEPENDER DEL ALPR."""
+    try:
+        now_str = TimeService.now_str()
+        res = db.query(models.Reservation).filter(
+            models.Reservation.sucursal_nombre == sucursal_nombre,
+            models.Reservation.estado_pago == PaymentStatus.PAGADO,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.fecha_inicio <= now_str,
+            models.Reservation.fecha_fin >= now_str
+        ).all()
+    except Exception:
+        logger.warning("[PARKING STATUS] Error calculando reservas vigentes", exc_info=True)
+        return {"autos": 0, "motos": 0, "camionetas": 0}
+
+    conteo = {"autos": 0, "motos": 0, "camionetas": 0}
+    for r in res:
+        t = (r.tipo_vehiculo or "Auto").strip().lower()
+        if "moto" in t:
+            conteo["motos"] += 1
+        elif "camioneta" in t:
+            conteo["camionetas"] += 1
+        else:
+            conteo["autos"] += 1
+    return conteo
+
+
 def _calculate_branch_capacities(db: Session, branch: models.ParkingBranch):
     """CALCULA CAPACIDAD Y OCUPACION DE SUCURSAL UNIFICANDO PLANTA BAJA (ParkingAforo) Y PISOS ELEVADOS."""
     a = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
@@ -143,7 +171,11 @@ def _calculate_branch_capacities(db: Session, branch: models.ParkingBranch):
     cap_res_camionetas = cap_res_camionetas_pb + floors_cap_res_camionetas
     occ_res_camionetas = occ_res_camionetas_pb + floors_occ_res_camionetas
     cap_reservas = cap_reservas_pb + floors_cap_reservas
-    occ_reservas = occ_reservas_pb + floors_occ_reservas
+    ocupadas_reservadas = _ocupacion_reservas_vigentes(db, branch.nombre)
+    occ_res_autos = max(occ_res_autos, ocupadas_reservadas["autos"])
+    occ_res_motos = max(occ_res_motos, ocupadas_reservadas["motos"])
+    occ_res_camionetas = max(occ_res_camionetas, ocupadas_reservadas["camionetas"])
+    occ_reservas = occ_res_autos + occ_res_motos + occ_res_camionetas
 
     return {
         "capacidad_total": cap_total,

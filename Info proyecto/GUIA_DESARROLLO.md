@@ -223,6 +223,7 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
    - La **disponibilidad de reserva** se calcula contra los cupos dedicados `capacidad_reservas_*`/`ocupacion_reservas_*` (PB en `ParkingAforo` + pisos en `ParkingFloor`), no contra el aforo físico. Migración: `e6f7a8b9c0d1`.
    - Centralizar toda validación en `verificar_disponibilidad` (sweep-line, `exclude_id` para ediciones), `obtener_fechas_deshabilitadas` (ventana 90 días) y `obtener_horas_deshabilitadas` (paso 30 min, respeta `RESERVA_HORA_MIN_SEGUNDOS`).
    - No confundir `ocupacion_reservas_*` (cupos de reserva) con `ocupacion_actual` (aforo físico): son independientes.
+   - **Reporte (v9.20.0):** `routes/parking/status.py` reporta los cupos de reserva como `max(física ALPR, reservas pagadas vigentes)` vía `_ocupacion_reservas_vigentes` (reservas `Pagado`, `Pendiente`/`Activa`, ventana actual). Aplica a `/parking/status`, WS en vivo y `/parking/branches`. El aforo físico no cambia.
    - Al validar en rutas admin/user, delegar siempre al servicio; nunca hardcodear los defaults 5/3/2/10.
 
 7. **Consistencia JS:**

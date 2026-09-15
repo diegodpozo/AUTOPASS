@@ -908,6 +908,27 @@
     transform: translateX(-31px);
 }
 
+/* VOUCHERS FINALIZADOS (USADO / CANCELADO, no descuento):
+   Sin la corrección, el badge de estado + el wrap del header hacían que el badge de
+   sucursal saltara a una línea aparte alineado abajo-izquierda, desordenando
+   título, icono y badges. Se fuerza una única fila con todo centrado verticalmente. */
+.voucher-card:not(.discount-card).usado .voucher-content-header,
+.voucher-card:not(.discount-card).cancelado .voucher-content-header {
+    flex-wrap: nowrap;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.voucher-card:not(.discount-card).usado .discount-card-title,
+.voucher-card:not(.discount-card).cancelado .discount-card-title {
+    margin: 0;
+}
+
+.voucher-card:not(.discount-card).usado .voucher-card-body,
+.voucher-card:not(.discount-card).cancelado .voucher-card-body {
+    align-items: center;
+}
+
 /* Fila única: icono + título + badge de sucursal */
 .discount-header {
     justify-content: flex-start;
