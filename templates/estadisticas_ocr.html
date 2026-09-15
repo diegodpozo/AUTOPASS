@@ -368,63 +368,6 @@
         margin-right: 6px;
         vertical-align: middle;
     }
-
-    /* --- CONTROLES DEL GRÁFICO MÓVIL OCR --- */
-    .ocr-chart-controls {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .ocr-chart-controls-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .ocr-live-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        color: #d1d5db;
-        font-weight: 700;
-    }
-
-    .ocr-chart-range-wrap {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        flex: 1;
-        min-width: 260px;
-    }
-
-    .ocr-chart-range {
-        flex: 1;
-        accent-color: var(--dorado);
-        height: 6px;
-        cursor: pointer;
-    }
-
-    .ocr-chart-range-hint {
-        font-size: 0.72rem;
-        color: #6b7280;
-        font-family: var(--font-mono);
-        white-space: nowrap;
-    }
-
-    .ocr-chart-helper {
-        font-size: 0.78rem;
-        color: #8e95a5;
-        line-height: 1.6;
-        text-align: center;
-    }
 </style>
 {% endblock %}
 
@@ -540,39 +483,9 @@
             <canvas id="ocrChart"></canvas>
         </div>
 
-        <div class="ocr-chart-controls">
-            <div class="ocr-chart-controls-row">
-                <label class="ocr-live-toggle">
-                    <input type="checkbox" id="ocr-chart-live" checked style="accent-color: var(--dorado); width: 16px; height: 16px;">
-                    <span>SEGUIR EN VIVO</span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 0.72rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">VENTANA:</span>
-                    <select id="ocr-chart-ventana" class="input-premium" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
-                        <option value="6">6 HORAS</option>
-                        <option value="12">12 HORAS</option>
-                        <option value="24" selected>24 HORAS</option>
-                        <option value="48">48 HORAS</option>
-                        <option value="168">7 DÍAS</option>
-                        <option value="0">TODA LA HISTORIA</option>
-                    </select>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button id="btn-ocr-ir-inicio" class="btn btn-outline sm" onclick="irAlInicioOcr()"><i class="fas fa-backward-fast" style="margin-right: 4px;"></i>INICIO</button>
-                    <button id="btn-ocr-ir-final" class="btn btn-primary sm" onclick="irAlFinalOcr()"><i class="fas fa-forward-fast" style="margin-right: 4px;"></i>FINAL</button>
-                </div>
-            </div>
-
-            <div class="ocr-chart-range-wrap">
-                <span class="ocr-chart-range-hint"><i class="fas fa-flag-checkered text-dorado"></i></span>
-                <input type="range" id="ocr-chart-range" class="ocr-chart-range" min="0" max="0" value="0">
-                <span class="ocr-chart-range-hint"><i class="fas fa-clock"></i></span>
-            </div>
-
-            <div class="ocr-chart-helper">
-                <i class="fas fa-circle-info mr-6" style="color: var(--dorado);"></i>
-                El gráfico avanza solo con cada nueva lectura. Desactivá el seguimiento o mové el deslizador para recorrer hasta el primer dato; presioná <strong>FINAL</strong> para volver a seguirlo en vivo.
-            </div>
+        {% set prefix = "ocr" %}
+{% set default_span = "24" %}
+{% include "components/chart_window_controls.html" %}
         </div>
     </div>
 
@@ -613,18 +526,97 @@
 {% block extra_scripts %}
 <script type="module">
     import api from '/static/js/modules/api.js';
-    import { formatTime, formatTimeSeconds, formatDateTime, formatDayTime } from '/static/js/modules/utils.js';
+    import { formatTimeSeconds, formatDateTime } from '/static/js/modules/utils.js';
+    import { WindowedChart } from '/static/js/modules/chart_window.js';
 
     let todosLosLogs = [];
     let intervaloAutoRefresh = null;
-    let ocrChart = null;
     let serieOcr = [];
-    let chartNav = {
-        live: true,
-        spanMs: 24 * 3600000,
-        showAll: false,
-        endMs: null
+
+    // --- GRÁFICO MÓVIL (controles comunes en chart_window.js) ---
+    function buildOCRDatasets(pts) {
+        const values = pts.map(p => p.y);
+        let avg = null;
+        let min = null;
+        let max = null;
+        if (values.length > 0) {
+            avg = values.reduce((s, v) => s + v, 0) / values.length;
+            const sorted = [...values].sort((a, b) => a - b);
+            min = sorted[0];
+            max = sorted[sorted.length - 1];
+        }
+        const flat = (val) => pts.map(p => ({ x: p.x, y: val }));
+        return [
+            {
+                label: 'Tiempo OCR',
+                data: pts,
+                borderColor: '#C5A059',
+                backgroundColor: 'rgba(197, 160, 89, 0.12)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#C5A059',
+                pointBorderColor: '#000',
+                pointBorderWidth: 1.5,
+                hitRadius: 30
+            },
+            {
+                label: 'Promedio',
+                data: flat(avg !== null ? avg : 0),
+                borderColor: '#38bdf8',
+                borderWidth: 1.5,
+                borderDash: [6, 4],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                hitRadius: 14,
+                fill: false
+            },
+            {
+                label: 'Máximo',
+                data: flat(max !== null ? max : 0),
+                borderColor: '#ef4444',
+                borderWidth: 1.5,
+                borderDash: [2, 3],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                hitRadius: 14,
+                fill: false
+            },
+            {
+                label: 'Mínimo',
+                data: flat(min !== null ? min : 0),
+                borderColor: '#10b981',
+                borderWidth: 1.5,
+                borderDash: [2, 3],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                hitRadius: 14,
+                fill: false
+            }
+        ];
+    }
+
+    const yExtraOcr = {
+        title: { display: true, text: 'Segundos', color: '#666', font: { size: 10 } },
+        ticks: { color: '#666', font: { size: 10 }, callback: (v) => v + 's' }
     };
+
+    const chartOcr = new WindowedChart({
+        prefix: 'ocr',
+        canvasId: 'ocrChart',
+        defaultSpanH: 24,
+        buildDatasets: buildOCRDatasets,
+        yExtra: yExtraOcr,
+        tooltipTitle: (item) => item.datasetIndex === 0 ? `Lectura: ${formatDateTime(new Date(item.parsed.x))}` : item.dataset.label,
+        tooltipLabel: (c) => ` ${(c.parsed.y || 0).toFixed(3)} s`
+    });
+
+    // Alimenta el gráfico con la serie filtrada por los inputs de la tabla.
+    function pushSerieOcr() {
+        chartOcr.setSeries(serieFiltrada().map(p => ({ x: p.tMs, y: p.y })));
+    }
 
     function formatearFecha(isoStr) {
         if (!isoStr) return '--';
@@ -723,215 +715,6 @@
         });
     }
 
-    // RANGO DE LA VENTANA MÓVIL EN MILISEGUNDOS. El fin cae dentro de [minEnd, maxEnd].
-    function rangoOcr() {
-        const serie = serieFiltrada();
-        if (!serie.length || chartNav.showAll) return null;
-        const firstT = serie[0].tMs;
-        const lastT = serie[serie.length - 1].tMs;
-        const span = chartNav.spanMs;
-        const pad = Math.min(span * 0.05, 2 * 3600000);
-        const minEnd = firstT + span;
-        const maxEnd = Math.max(minEnd, lastT + pad);
-        let end = chartNav.live ? maxEnd : (chartNav.endMs ?? maxEnd);
-        end = Math.max(minEnd, Math.min(end, maxEnd));
-        return { end, minEnd, maxEnd, span };
-    }
-
-    function sincronizarSliderOcr() {
-        const slider = document.getElementById('ocr-chart-range');
-        if (!slider) return;
-        const rng = rangoOcr();
-        if (!rng) {
-            slider.min = 0;
-            slider.max = 0;
-            slider.value = 0;
-            slider.disabled = true;
-            return;
-        }
-        slider.min = rng.minEnd;
-        slider.max = rng.maxEnd;
-        slider.value = Math.max(rng.minEnd, Math.min(rng.end, rng.maxEnd));
-        slider.disabled = false;
-    }
-
-    function renderOcrChart() {
-        const canvas = document.getElementById('ocrChart');
-        if (!canvas || typeof window.Chart === 'undefined') return;
-        const ctx = canvas.getContext('2d');
-
-        if (ocrChart) {
-            ocrChart.destroy();
-            ocrChart = null;
-        }
-
-        sincronizarSliderOcr();
-
-        const rng = rangoOcr();
-        let puntos;
-        if (!rng) {
-            puntos = serieFiltrada().sort((a, b) => a.t - b.t);
-        } else {
-            puntos = serieFiltrada()
-                .filter(p => p.tMs >= rng.end - rng.span && p.tMs <= rng.end)
-                .sort((a, b) => a.t - b.t);
-        }
-
-        const dataPts = puntos.map(p => ({ x: p.tMs, y: p.y }));
-
-        if (!dataPts.length) {
-            ocrChart = new window.Chart(ctx, {
-                type: 'line',
-                data: { datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { type: 'linear', min: 0, max: 1, grid: { display: false }, ticks: { display: false } },
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }
-                    }
-                }
-            });
-            return;
-        }
-
-        let avg = null;
-        let min = null;
-        let max = null;
-        const values = dataPts.map(p => p.y);
-        if (values.length > 0) {
-            avg = values.reduce((s, v) => s + v, 0) / values.length;
-            const sorted = [...values].sort((a, b) => a - b);
-            min = sorted[0];
-            max = sorted[sorted.length - 1];
-        }
-        const flat = (val) => dataPts.map(p => ({ x: p.x, y: val }));
-
-        // ESCALA LINEAL DE TIEMPO REAL: los puntos se ubican según su fecha/hora
-        // verdadera (proporcional), no como categorías espaciadas por cantidad.
-        const xs = dataPts.map(p => p.x);
-        const xMin = Math.min(...xs);
-        const xMax = Math.max(...xs);
-        const rangeMs = xMax - xMin;
-        const padMs = Math.max(1, rangeMs * 0.03);
-        const tickFmt = (v) => {
-            const d = new Date(v);
-            return rangeMs > 2 * 86400000 ? formatDayTime(d) : formatTime(d);
-        };
-
-        ocrChart = new window.Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [
-                    {
-                        label: 'Tiempo OCR',
-                        data: dataPts.length ? dataPts : [],
-                        borderColor: '#C5A059',
-                        backgroundColor: 'rgba(197, 160, 89, 0.12)',
-                        borderWidth: 2.5,
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#C5A059',
-                        pointBorderColor: '#000',
-                        pointBorderWidth: 1.5,
-                        hitRadius: 30
-                    },
-                    {
-                        label: 'Promedio',
-                        data: flat(avg !== null ? avg : 0),
-                        borderColor: '#38bdf8',
-                        borderWidth: 1.5,
-                        borderDash: [6, 4],
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        hitRadius: 14,
-                        fill: false
-                    },
-                    {
-                        label: 'Máximo',
-                        data: flat(max !== null ? max : 0),
-                        borderColor: '#ef4444',
-                        borderWidth: 1.5,
-                        borderDash: [2, 3],
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        hitRadius: 14,
-                        fill: false
-                    },
-                    {
-                        label: 'Mínimo',
-                        data: flat(min !== null ? min : 0),
-                        borderColor: '#10b981',
-                        borderWidth: 1.5,
-                        borderDash: [2, 3],
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        hitRadius: 14,
-                        fill: false
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'nearest', intersect: true, axis: 'xy', includeInvisible: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#0a0a0a',
-                        titleColor: '#C5A059',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(197, 160, 89, 0.3)',
-                        borderWidth: 1,
-                        displayColors: true,
-                        boxWidth: 8,
-                        boxHeight: 8,
-                        usePointStyle: true,
-                        titleFont: { size: 12, weight: 'bold' },
-                        bodyFont: { size: 12 },
-                        callbacks: {
-                            title: (items) => {
-                                const it = items[0];
-                                if (!it) return '';
-                                if (it.datasetIndex === 0) {
-                                    const d = new Date(it.parsed.x);
-                                    return `Lectura: ${formatDateTime(d)}`;
-                                }
-                                return it.dataset.label;
-                            },
-                            label: (c) => ` ${(c.parsed.y || 0).toFixed(3)} s`
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Segundos', color: '#666', font: { size: 10 } },
-                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-                        ticks: { color: '#666', font: { size: 10 }, callback: (v) => v + 's' }
-                    },
-                    x: {
-                        type: 'linear',
-                        min: xMin - padMs,
-                        max: xMax + padMs,
-                        grid: { display: false },
-                        ticks: {
-                            color: '#666',
-                            font: { size: 9 },
-                            maxRotation: 0,
-                            autoSkip: true,
-                            maxTicksLimit: 10,
-                            callback: tickFmt
-                        }
-                    }
-                }
-            }
-        });
-    }
-
     window.filtrarTablaOcr = function() {
         const texto = (document.getElementById('ocr-search-input')?.value || '').trim().toUpperCase();
         const eventoFiltro = document.getElementById('ocr-filter-evento')?.value || '';
@@ -946,7 +729,7 @@
             return coincideTexto && coincideEvento;
         });
 
-        renderOcrChart();
+        pushSerieOcr();
 
         const countEl = document.getElementById('ocr-table-count');
         if (countEl) {
@@ -984,55 +767,6 @@
             `;
         }).join('');
     };
-
-    // NAVEGACIÓN DEL GRÁFICO MÓVIL
-    window.irAlInicioOcr = function() {
-        chartNav.live = false;
-        const check = document.getElementById('ocr-chart-live');
-        if (check) check.checked = false;
-        const rng = rangoOcr();
-        if (rng) chartNav.endMs = rng.minEnd;
-        sincronizarSliderOcr();
-        renderOcrChart();
-    };
-
-    window.irAlFinalOcr = function() {
-        chartNav.live = true;
-        const check = document.getElementById('ocr-chart-live');
-        if (check) check.checked = true;
-        chartNav.endMs = null;
-        sincronizarSliderOcr();
-        renderOcrChart();
-    };
-
-    document.getElementById('ocr-chart-live')?.addEventListener('change', (e) => {
-        chartNav.live = e.target.checked;
-        if (chartNav.live) chartNav.endMs = null;
-        sincronizarSliderOcr();
-        renderOcrChart();
-    });
-
-    document.getElementById('ocr-chart-range')?.addEventListener('input', (e) => {
-        chartNav.live = false;
-        const check = document.getElementById('ocr-chart-live');
-        if (check) check.checked = false;
-        chartNav.endMs = parseFloat(e.target.value);
-        sincronizarSliderOcr();
-        renderOcrChart();
-    });
-
-    document.getElementById('ocr-chart-ventana')?.addEventListener('change', (e) => {
-        const v = parseInt(e.target.value, 10);
-        if (v === 0) {
-            chartNav.showAll = true;
-        } else {
-            chartNav.showAll = false;
-            chartNav.spanMs = v * 3600000;
-        }
-        if (chartNav.live) chartNav.endMs = null;
-        sincronizarSliderOcr();
-        renderOcrChart();
-    });
 
     // RELOJ EN VIVO
     function actualizarReloj() {

@@ -1,0 +1,70 @@
+/* CONTROLES COMUNES DE GRÁFICOS MÓVILES (venana de tiempo, seguimiento en vivo, navegación) */
+.chart-window-controls {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.chart-window-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.chart-window-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #d1d5db;
+    font-weight: 700;
+}
+
+.chart-window-label {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.chart-window-select {
+    width: auto;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    background: #111424;
+}
+
+.chart-window-range-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 260px;
+}
+
+.chart-window-range {
+    flex: 1;
+    accent-color: var(--dorado);
+    height: 6px;
+    cursor: pointer;
+}
+
+.chart-window-range-hint {
+    font-size: 0.72rem;
+    color: #6b7280;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+}
+
+.chart-window-helper {
+    font-size: 0.78rem;
+    color: #8e95a5;
+    line-height: 1.6;
+    text-align: center;
+}
