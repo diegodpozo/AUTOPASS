@@ -24,6 +24,7 @@ class Reservation(Base):
     recordatorio_confirmado = Column(Boolean, default=False)
     metodo_pago = Column(String, nullable=True)  # METODO DE PAGO UTILIZADO (EFECTIVO, TRANSFERENCIA, TARJETA, MP, ETC)
     tipo_vehiculo = Column(String, default="Auto")  # AUTO / MOTO / CAMIONETA
+    origen = Column(String, default="cliente")  # 'cliente' (creada por el usuario) o 'manual' (creada por admin/empleado)
 
     user = relationship("User", back_populates="reservations")
     access_logs = relationship("AccessLog", back_populates="reservation")

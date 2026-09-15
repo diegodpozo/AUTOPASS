@@ -1,4 +1,5 @@
 import * as res from './modules/reservas.js?v=9.10.1';
+import * as resActions from './modules/reservas-actions.js?v=9.10.1';
 
 /**
  * PUENTE: RESERVAS.JS
@@ -15,8 +16,10 @@ window.updateFormGroups = res.updateFormGroups;
 window.createReservation = res.createReservation;
 window.loadReservations = res.loadReservations;
 window.applyHistoryFilters = res.applyHistoryFilters;
-window.cancelReservation = res.cancelReservation;
-window.payReservation = res.payReservation;
+window.cancelReservation = resActions.cancelReservation;
+window.payReservation = resActions.payReservation;
+window.payReservationWithWallet = resActions.payReservationWithWallet;
+window.payReservationWithMp = resActions.payReservationWithMp;
 window.historialPage = res.historialPage;
 
 //UI HELPERS MOVIDOS AL MODULO

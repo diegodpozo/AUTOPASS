@@ -1,12 +1,12 @@
 <!-- MODAL: CREAR PROMOCIÓN -->
 <div id="modal-create-promotion" class="modal" style="display: none;">
-    <div class="modal-content glass-premium" style="max-width: 500px;">
+    <div class="modal-content glass-premium" style="max-width: 580px;">
         <div class="modal-header">
             <div class="flex-row items-center gap-10">
                 <div class="header-icon-box sm">
                     <i class="fas fa-gift"></i>
                 </div>
-                <h3 style="color: var(--dorado);">NUEVA PROMOCIÓN</h3>
+                <h3 id="promo-modal-title" style="color: var(--dorado);">NUEVA PROMOCIÓN</h3>
             </div>
             <span class="close-btn" onclick="closeModal('modal-create-promotion')"><i class="fas fa-xmark"></i></span>
         </div>
@@ -85,6 +85,29 @@
                         </select>
                         <i class="fas fa-chevron-down" style="position: absolute; right: 15px; left: auto; color: #666; font-size: 0.7rem; pointer-events: none;"></i>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Dirección donde se canjea</label>
+                    <div class="flex-row gap-10">
+                        <div class="input-with-icon" style="flex: 1;">
+                            <i class="fas fa-map-location-dot"></i>
+                            <input type="text" id="promo-direccion" placeholder="Ej: Av. del Libertador 1200, CABA">
+                        </div>
+                        <button type="button" class="btn btn-secondary sm" onclick="searchPromoAddress()" style="min-width: 80px; padding: 0 10px; white-space: nowrap;">
+                            <i class="fas fa-search-location"></i> BUSCAR
+                        </button>
+                    </div>
+                    <small style="color:#888; font-size:0.7rem;">Buscá la dirección o tocá el mapa para marcar el punto exacto de canje.</small>
+                </div>
+
+                <!-- Campos ocultos de coordenadas -->
+                <input type="number" step="any" id="promo-latitude" style="display:none;">
+                <input type="number" step="any" id="promo-longitude" style="display:none;">
+
+                <div class="form-group">
+                    <label>Mapa de Ubicación</label>
+                    <div id="promo-map-picker" style="height: 300px; border-radius: 20px; border: 1.5px solid rgba(197, 160, 89, 0.2); box-shadow: inset 0 0 20px rgba(0,0,0,0.4);"></div>
                 </div>
                 
                 <div class="flex-row justify-center mt-30 gap-20">

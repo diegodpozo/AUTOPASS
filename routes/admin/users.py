@@ -5,7 +5,7 @@ import models, schemas
 from core.database import get_db
 from core.security import get_local_manager, get_super_admin, get_password_hash
 from core.normalize import normalize_branch_name
-from models.enums import UserRole
+from models.enums import UserRole, NotificationType
 from services.user_service import UserService
 from services.user_notification_service import UserNotificationService
 
@@ -70,7 +70,7 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
         if user.rol == UserRole.USER:
             UserNotificationService.create_notification(
                 db, user_id=user.id,
-                tipo="datos_actualizados_admin",
+                tipo=NotificationType.USER_PROFILE_UPDATED,
                 titulo="Tus datos fueron actualizados",
                 mensaje="Un administrador modificó tus datos de perfil."
             )
@@ -94,7 +94,7 @@ def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(ge
     if user.rol == UserRole.USER or nuevo_rol == UserRole.USER:
         UserNotificationService.create_notification(
             db, user_id=user.id,
-            tipo="rol_cambiado_admin",
+            tipo=NotificationType.USER_ROLE_CHANGED,
             titulo="Tu rol fue modificado",
             mensaje=f"Un administrador cambió tu rol a {nuevo_rol.value}."
         )
@@ -121,7 +121,7 @@ def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models
         estado = "bloqueado" if user.is_blocked else "desbloqueado"
         UserNotificationService.create_notification(
             db, user_id=user.id,
-            tipo="bloqueo_cambiado_admin",
+            tipo=NotificationType.USER_BLOCK_STATUS_CHANGED,
             titulo="Estado de tu cuenta modificado",
             mensaje=f"Un administrador {estado} tu cuenta."
         )
@@ -144,9 +144,9 @@ def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db
     if user.rol == UserRole.USER:
         UserNotificationService.create_notification(
             db, user_id=user.id,
-            tipo="saldo_ajustado_admin",
+            tipo=NotificationType.BALANCE_ADJUSTED_ADMIN,
             titulo="Tu saldo fue ajustado",
-            mensaje=f"Un administrador ajustó tu saldo a ${monto}."
+            mensaje=f"Un administrador ajustó tu saldo a ${monto:,.2f}."
         )
 
     return {"status": "ok"}
@@ -167,7 +167,7 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
     if user.rol == UserRole.USER:
         UserNotificationService.create_notification(
             db, user_id=user.id,
-            tipo="password_cambiada_admin",
+            tipo=NotificationType.PASSWORD_CHANGED_ADMIN,
             titulo="Tu contraseña fue cambiada",
             mensaje="Un administrador cambió tu contraseña."
         )

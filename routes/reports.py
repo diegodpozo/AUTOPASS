@@ -73,11 +73,13 @@ def get_ocr_stats(
 
 @router.get("/metrics/access-activity")
 def get_metrics_access_activity(
+    desde: str = None,
+    hasta: str = None,
     db: Session = Depends(get_db),
     admin: models.User = Depends(get_local_manager)
 ):
-    """Serie temporal horaria de accesos (ENTRADA/SALIDA) desde el primer dato hasta ahora."""
-    return ReportService.get_access_activity(db=db, admin=admin)
+    """Serie temporal horaria de accesos (ENTRADA/SALIDA) con filtro opcional de rango (desde/hasta)."""
+    return ReportService.get_access_activity(db=db, admin=admin, desde=desde, hasta=hasta)
 
 @router.get("/ocr-activity")
 def get_ocr_activity(

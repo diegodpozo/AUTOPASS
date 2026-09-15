@@ -190,6 +190,25 @@ class BillingService:
                 motivo=f"Estadía abonada (Mercado Pago): {log.patente_detectada}",
                 fecha=datetime.datetime.now().isoformat()
             ))
+        target_user = (vehiculo.owner if (vehiculo and vehiculo.owner) else user)
+        if target_user:
+            try:
+                from services.user_notification_service import UserNotificationService
+                UserNotificationService.create_notification(
+                    db, target_user.id,
+                    tipo=models.NotificationType.STAY_PAID,
+                    titulo="Estadía abonada con Mercado Pago",
+                    mensaje=f"Se confirmó el pago de ${monto:,.2f} para tu estadía con patente {log.patente_detectada} en {log.sucursal or 'nuestra sede'}."
+                )
+                if puntos_ganados > 0:
+                    UserNotificationService.create_notification(
+                        db, target_user.id,
+                        tipo=models.NotificationType.POINTS_EARNED,
+                        titulo="¡Puntos AutoPass!",
+                        mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar tu estadía ({log.patente_detectada})!"
+                    )
+            except Exception:
+                pass
 
         db.commit()
         return {"status": "ok", "monto_cobrado": monto, "puntos_ganados": puntos_ganados, "aplicado": True}
@@ -266,7 +285,7 @@ class BillingService:
         log.costo_estadia = (log.costo_estadia or 0) + monto_real
         log.fecha_pago = datetime.datetime.now().isoformat()
         
-        # ACREDITACION DE BENEFICIOS POR FIDELIZACION
+        # ACREDITACION DE BENEFICIOS POR FIDELIZACION Y NOTIFICACION
         vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == plate).first()
         puntos_ganados = 0
         if vehiculo and vehiculo.owner:
@@ -279,6 +298,25 @@ class BillingService:
                 motivo=motivo_puntos,
                 fecha=datetime.datetime.now().isoformat()
             ))
+
+            # Notificación al titular del vehículo
+            try:
+                from services.user_notification_service import UserNotificationService
+                UserNotificationService.create_notification(
+                    db, vehiculo.owner.id,
+                    tipo=models.NotificationType.STAY_PAID,
+                    titulo="Estadía abonada",
+                    mensaje=f"Se confirmó el pago de ${monto_real:,.2f} para tu vehículo con patente {plate} mediante {metodo}."
+                )
+                if puntos_ganados > 0:
+                    UserNotificationService.create_notification(
+                        db, vehiculo.owner.id,
+                        tipo=models.NotificationType.POINTS_EARNED,
+                        titulo="¡Puntos AutoPass!",
+                        mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar tu estadía ({plate})!"
+                    )
+            except Exception:
+                pass
         
         db.commit()
         return {"status": "ok", "monto_cobrado": monto_real, "puntos_ganados": puntos_ganados}

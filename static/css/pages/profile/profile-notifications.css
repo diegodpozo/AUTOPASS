@@ -287,6 +287,69 @@
 .notif-btn-support { background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.4); }
 .notif-btn-support:hover { background: #06b6d4; color: #000; }
 
+.notif-btn-security {
+    background: rgba(245, 158, 11, 0.18);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.notif-btn-security:hover {
+    background: #f59e0b;
+    color: #000;
+}
+
+.notif-btn-balance {
+    background: rgba(197, 160, 89, 0.18);
+    color: var(--dorado);
+    border: 1px solid rgba(197, 160, 89, 0.35);
+}
+.notif-btn-balance:hover {
+    background: var(--dorado);
+    color: #000;
+}
+
+.notif-btn-points {
+    background: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+}
+.notif-btn-points:hover {
+    background: #a855f7;
+    color: #fff;
+}
+
+.notif-btn-voucher {
+    background: rgba(212, 175, 55, 0.22);
+    color: #ffd700;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+}
+.notif-btn-voucher:hover {
+    background: var(--dorado);
+    color: #000;
+    box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4);
+}
+
+.notif-btn-profile {
+    background: rgba(99, 102, 241, 0.18);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+}
+.notif-btn-profile:hover {
+    background: #6366f1;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.notif-btn-vehicles {
+    background: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+}
+.notif-btn-vehicles:hover {
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+
 /* --- ACCIONES LATERALES (ELIMINAR / UNREAD DOT) --- */
 .notif-side-actions {
     display: flex;

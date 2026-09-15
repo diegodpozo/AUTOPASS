@@ -1,15 +1,16 @@
 import datetime
 import math
 import re
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import models, schemas
 from core.config import settings
 from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
 from services.billing_service import BillingService
+from services.branch_service import BranchService
 from services.reservation_service import (
     ReservationService,
     verificar_disponibilidad,
@@ -105,15 +106,17 @@ def get_disabled_hours(
     tipo_vehiculo: str = "Auto",
     duracion_horas: float = 1.0,
     paso_minutos: int = 30,
+    exclude_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """DEVUELVE LA LISTA DE SLOTS HORARIOS (HH:MM) DESHABILITADOS PARA UN DÍA ESPECÍFICO
-    Y LOS RANGOS REALMENTE RESERVADOS PARA DISTINGUIR OCUPACIÓN DE MARGEN DE SOLAPAMIENTO."""
+    Y LOS RANGOS REALMENTE RESERVADOS PARA DISTINGUIR OCUPACIÓN DE MARGEN DE SOLAPAMIENTO.
+    exclude_id: AL EDITAR UNA RESERVA, EXCLUYE SU PROPIO RANGO PARA NO MOSTRARLA COMO OCUPADA."""
     detalle = obtener_horas_deshabilitadas_con_reservas(
         db, sucursal_nombre=sucursal_nombre, fecha_str=fecha,
         tipo_vehiculo=tipo_vehiculo, duracion_horas=duracion_horas,
-        paso_minutos=paso_minutos
+        paso_minutos=paso_minutos, exclude_id=exclude_id
     )
     return {
         "sucursal_nombre": sucursal_nombre,
@@ -130,8 +133,20 @@ def get_user_reservations(db: Session = Depends(get_db), current_user: models.Us
     ReservationService.auto_finalize_reservations(db, current_user.id)
     reservations = db.query(models.Reservation).filter(models.Reservation.user_id == current_user.id).order_by(models.Reservation.id.desc()).all()
     en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in reservations])
+    branches = db.query(models.ParkingBranch).all()
+    updated = False
     for r in reservations:
         r.en_predio = r.id in en_predio
+        if not r.sucursal_info or "Sede no especificada" in r.sucursal_info or r.sucursal_info.startswith("Sucursal "):
+            info_str = BranchService.get_branch_info_str(db, r.sucursal_nombre)
+            if info_str and info_str != "Dirección no disponible":
+                r.sucursal_info = info_str
+                updated = True
+    if updated:
+        try:
+            db.commit()
+        except Exception:
+            pass
     return reservations
 
 @router.post("/reservations")
@@ -214,25 +229,25 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
         monto = math.ceil(duration_hours) * rate
 
     estado_pago = "Pendiente"
-    
-    sucursales_info = {
-        "AUTOPASS Central": "Av. del Libertador 1200, CABA. Abierto 24hs.",
-        "AUTOPASS Ituzaingó": "Punto de Acceso Estación Ituzaingó. Abierto 24hs.",
-        "AUTOPASS Castelar": "Centro Comercial Castelar. Abierto 24hs.",
-        "AUTOPASS Morón": "Plaza Oeste Shopping - Morón. Abierto 24hs."
-    }
+    info_sede = BranchService.get_branch_info_str(db, res.sucursal_nombre)
+    tipo_v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
     
     new_res = models.Reservation(
         user_id=current_user.id, patente=res.patente, fecha_inicio=res.fecha_inicio, fecha_fin=res.fecha_fin, 
         tipo_estadia=res.tipo_estadia, monto_total=monto, estado_pago=estado_pago, estado_reserva="Pendiente",
-        sucursal_nombre=res.sucursal_nombre, sucursal_info=sucursales_info.get(res.sucursal_nombre, "Sede no especificada."),
-        dias_semana=res.dias_semana
+        sucursal_nombre=res.sucursal_nombre, sucursal_info=info_sede,
+        dias_semana=res.dias_semana, tipo_vehiculo=tipo_v_str
     )
     db.add(new_res)
     db.commit()
     logger.debug(f"POST RESERVE ID={new_res.id} estado_reserva={new_res.estado_reserva}")
     db.refresh(new_res)
     logger.debug(f"POST RESERVE ID={new_res.id} estado_reserva={new_res.estado_reserva}")
+    try:
+        from services.notification_service import NotificationService
+        NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
+    except Exception as e:
+        logger.error(f"Error notificando nueva reserva: {e}")
     return {"status": "ok", "monto": monto, "estado_pago": estado_pago}
 
 @router.patch("/reservations/{res_id}")
@@ -311,6 +326,25 @@ def modify_reservation(res_id: int, data: schemas.ReservationUpdate, db: Session
 
     res.monto_total = monto_nuevo
     db.commit()
+
+    try:
+        from services.user_notification_service import UserNotificationService
+        msg_detalle = f"Tu reserva #{res.id} ({res.patente}) en {res.sucursal_nombre} fue modificada exitosamente."
+        if ya_pagado and diferencia != 0:
+            if diferencia > 0:
+                msg_detalle += f" Se debitó una diferencia de ${diferencia:,.2f} de tu saldo."
+            else:
+                msg_detalle += f" Se acreditó un reembolso de ${abs(diferencia):,.2f} a tu saldo."
+        UserNotificationService.create_notification(
+            db, user_id=current_user.id,
+            tipo=models.NotificationType.RESERVATION_MODIFIED,
+            titulo="Reserva modificada",
+            mensaje=msg_detalle,
+            reserva_id=res.id
+        )
+    except Exception as e:
+        logger.error(f"Error creando notificación de reserva modificada: {e}")
+
     return {"status": "ok", "monto_total": monto_nuevo, "estado_pago": res.estado_pago}
 
 @router.post("/reservations/{res_id}/pay")

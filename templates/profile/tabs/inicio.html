@@ -194,8 +194,10 @@
 
                             <div class="reservation-footer-premium" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; flex-direction: column; gap: 20px; align-items: center;">
                                 <div class="price-summary-premium" style="text-align: center;">
-                                    <span class="total-label" style="display: block; margin-bottom: 5px;">Total:</span>
+                                    <span class="total-label" id="reserva-total-label" style="display: block; margin-bottom: 5px;">Total:</span>
+                                    <span id="reserva-total-original" style="display: none; color: #777; font-size: 1.05rem; text-decoration: line-through; font-family: 'Montserrat', sans-serif; font-weight: 700;"></span>
                                     <span class="total-amount" id="reserva-total-est" style="font-size: 2rem;">$ ---</span>
+                                    <div id="reserva-discount-line" style="display: none; margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: #c084fc; letter-spacing: 0.4px;"></div>
                                     <div id="reserva-rates-detail" class="reserva-rates-detail" style="display: none; margin-top: 8px; font-size: 0.72rem; color: var(--text-secondary, #9ca3af); line-height: 1.5;"></div>
                                 </div>
                                 <button type="submit" class="btn-confirm-premium" style="width: 100%; max-width: 350px; justify-content: center; height: 55px; font-size: 1.1rem;">

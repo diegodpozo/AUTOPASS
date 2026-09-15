@@ -3,8 +3,9 @@ import * as stats from './modules/dashboard-stats.js';
 import * as admin from './modules/dashboard-admin.js';
 import * as promos from './modules/dashboard-promotions.js';
 import * as ops from './modules/dashboard-operations.js';
-import * as reservations from './modules/dashboard-reservations.js';
+import * as reservations from './modules/dashboard-reservations.js?v=9.18.4';
 import * as finance from './modules/dashboard-finance.js';
+import * as metricas from './modules/dashboard-metrics.js';
 import * as tickets from './modules/dashboard-tickets.js';
 import * as adminTour from './modules/admin-tour.js';
 import * as baseUi from './modules/ui.js';
@@ -67,6 +68,7 @@ window.payReservationAdmin = reservations.payReservationAdmin;
 window.cancelReservationAdmin = reservations.cancelReservationAdmin;
 window.showReservationDetail = reservations.showReservationDetail;
 window.openNewReservationModal = reservations.openNewReservationModal;
+window.editReservationAdmin = reservations.openEditReservationModal;
 window.updateNewFormGroups = reservations.updateNewFormGroups;
 window.updateNewPeriodEnd = reservations.updateNewPeriodEnd;
 window.updateNewReservationPrice = reservations.updateNewReservationPrice;
@@ -76,6 +78,10 @@ window.initNewResPatenteLookup = reservations.initNewResPatenteLookup;
 window.resetNewResPatenteLookup = reservations.resetNewResPatenteLookup;
 window.clearNewResPatenteLookup = reservations.clearNewResPatenteLookup;
 window.handleAdminNewReservation = reservations.handleAdminNewReservation;
+window.confirmEditResumoProceed = reservations.confirmEditResumoProceed;
+window.cancelEditResumo = reservations.cancelEditResumo;
+window.updateReservationBadge = reservations.updateReservationBadge;
+window.clearReservationBadge = reservations.clearReservationBadge;
 
 // 5. FINANZAS Y REPORTES
 window.loadFinanceData = finance.loadFinanceData;
@@ -83,6 +89,14 @@ window.toggleFinanceDateFilter = finance.toggleFinanceDateFilter;
 window.nextFinancePage = finance.nextFinancePage;
 window.prevFinancePage = finance.prevFinancePage;
 window.switchMethodTab = finance.switchMethodTab;
+
+// 5.1 MÉTRICAS DEL SISTEMA
+window.abrirMetrica = metricas.abrirMetrica;
+window.volverMetricas = metricas.volverMetricas;
+window.irAlInicio = metricas.irAlInicio;
+window.irAlFinal = metricas.irAlFinal;
+window.aplicarFiltroMetricas = metricas.aplicarFiltroMetricas;
+window.limpiarFiltroMetricas = metricas.limpiarFiltroMetricas;
 
 // 6. ACCIONES ADMINISTRATIVAS Y USUARIOS
 window.openBarrier = admin.openBarrier;
@@ -147,11 +161,13 @@ window.toggleLevelEdit = admin.toggleLevelEdit;
 // 10. PROMOCIONES
 window.loadPromotionsAdmin = promos.loadPromotionsAdmin;
 window.showCreatePromotionModal = promos.showCreatePromotionModal;
+window.editPromotion = promos.editPromotion;
 window.handleCreatePromotion = promos.handleCreatePromotion;
 window.togglePromotion = promos.togglePromotion;
 window.deletePromotion = promos.deletePromotion;
 window.selectPromoIcon = promos.selectPromoIcon;
 window.togglePromoTipoCanje = promos.togglePromoTipoCanje;
+window.searchPromoAddress = promos.searchPromoAddress;
 
 // 11. CAMARAS IP
 window.loadCameraSettings = ui.loadCameraSettings;
@@ -181,12 +197,18 @@ window.loadTabData = async (tabId) => {
             break;
         case 'admin-reservations':
             reservations.loadAdminReservations();
+            if (typeof reservations.clearReservationBadge === 'function') {
+                reservations.clearReservationBadge();
+            }
             break;
         case 'users':
             admin.loadUsers();
             break;
         case 'finance':
             finance.loadFinanceData();
+            break;
+        case 'metricas':
+            metricas.loadMetricas();
             break;
         case 'promotions':
             promos.loadPromotionsAdmin();
@@ -233,6 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initVirtualTime();
         ui.checkSystemHealth();
         stats.initOccupancyWS();
+        metricas.initMetricas();
     } catch (e) { 
         console.warn("Error en servicios UI:", e); 
     }
@@ -245,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             lastTab = 'users';
         }
     } else if (rol === 'staff') {
-        const restrictedStaff = ['users', 'finance', 'promotions', 'tickets', 'settings', 'branches'];
+        const restrictedStaff = ['users', 'finance', 'promotions', 'tickets', 'settings', 'branches', 'metricas'];
         if (!lastTab || restrictedStaff.includes(lastTab)) {
             lastTab = 'live';
         }
@@ -263,6 +286,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // BURBUJA 'SOPORTE & TICKETS': mostrar conteo real de tickets pendientes al cargar
     if (typeof tickets.updateTicketBadge === 'function') {
         tickets.updateTicketBadge();
+    }
+
+    // BURBUJA 'RESERVAS': verificar si hay reservas nuevas al cargar
+    if (typeof reservations.updateReservationBadge === 'function') {
+        reservations.updateReservationBadge();
     }
 
     document.getElementById('form-add-branch')?.addEventListener('submit', window.handleCreateBranch);

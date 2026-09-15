@@ -92,6 +92,9 @@ class PromotionCreate(BaseModel):
     sucursal: Optional[str] = None
     tipo_canje: Optional[str] = "voucher"          # 'descuento_reserva' o 'voucher'
     valor_descuento: Optional[int] = None          # porcentaje si tipo_canje == 'descuento_reserva'
+    direccion: Optional[str] = None                # dirección donde se canjea (visible en la card)
+    latitude: Optional[float] = None               # marcador del mapa
+    longitude: Optional[float] = None
 
 class PromotionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -106,6 +109,9 @@ class PromotionResponse(BaseModel):
     sucursal: Optional[str] = None
     tipo_canje: Optional[str] = "voucher"
     valor_descuento: Optional[int] = None
+    direccion: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class RedemptionTicketResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -124,5 +130,9 @@ class RedemptionTicketResponse(BaseModel):
     qr_data: Optional[str] = None
     observacion: Optional[str] = None
     created_at: Optional[str] = None
+    fecha_vencimiento: Optional[str] = None
     fecha_uso: Optional[str] = None
     reserva_id: Optional[int] = None
+    direccion: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None

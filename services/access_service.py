@@ -634,7 +634,7 @@ class AccessService:
                 if owner and owner.rol == models.enums.UserRole.USER:
                     UserNotificationService.create_notification(
                         db, user_id=owner.id,
-                        tipo="estadia_cancelada_admin",
+                        tipo=models.enums.NotificationType.STAY_CANCELLED_ADMIN,
                         titulo="Estadía cancelada",
                         mensaje=f"Un administrador canceló tu estadía en {sucursal} para la patente {plate}."
                     )

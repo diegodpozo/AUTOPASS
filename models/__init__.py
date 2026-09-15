@@ -6,6 +6,7 @@ from .notification import UserNotification
 from .user_session import UserSession
 from .support import SupportTicket, SupportTicketMessage
 from .mercadopago import MercadoPagoPayment
+from .enums import NotificationType
 
 # --- RE-EXPORTACION PARA COMPATIBILIDAD ---
 # ESTO PERMITE SEGUIR USANDO 'FROM MODELS IMPORT USER'

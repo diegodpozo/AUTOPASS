@@ -8,6 +8,39 @@ import { formatDate, formatPlate, formatNum, showToast, showConfirm } from './ut
  */
 
 let _currentPassResId = null;
+let _branchesListCache = null;
+
+async function resolveBranchAddress(sucursalNombre, sucursalInfo) {
+    if (sucursalInfo && sucursalInfo !== 'Sede no especificada.' && !sucursalInfo.startsWith('Sede no especificada') && !sucursalInfo.startsWith('Sucursal ')) {
+        return sucursalInfo;
+    }
+    if (!sucursalNombre) return 'Dirección no disponible';
+
+    if (!_branchesListCache) {
+        try {
+            const res = await api.get('/parking/branches');
+            if (res.ok && Array.isArray(res.data)) {
+                _branchesListCache = res.data;
+            }
+        } catch (e) {
+            console.error('Error al cargar sucursales:', e);
+        }
+    }
+
+    if (_branchesListCache && _branchesListCache.length > 0) {
+        const target = sucursalNombre.toLowerCase();
+        const b = _branchesListCache.find(item => {
+            const name = (item.nombre || '').toLowerCase();
+            return name === target || target.includes(name) || name.includes(target);
+        });
+        if (b && b.direccion && b.direccion.trim()) {
+            const horarioStr = b.is_24h ? 'Abierto 24hs' : (b.horario || 'Horario no especificado');
+            return `${b.direccion.trim()}. ${horarioStr}.`;
+        }
+    }
+
+    return (sucursalInfo && sucursalInfo !== 'Sede no especificada.') ? sucursalInfo : 'Dirección no disponible';
+}
 
 function duracionHoras(fechaInicio, fechaFin) {
     const diff = new Date(fechaFin.replace(/-/g, "/")) - new Date(fechaInicio.replace(/-/g, "/"));
@@ -125,32 +158,34 @@ export async function showDigitalPass(id) {
     document.getElementById('ticket-patente').innerText = formatPlate(r.patente);
     document.getElementById('ticket-tipo-vehiculo').innerText = r.tipo_vehiculo || 'Auto';
     document.getElementById('ticket-sucursal').innerText = r.sucursal_nombre || '---';
-    document.getElementById('ticket-direccion').innerText = r.sucursal_info || 'Dirección no disponible';
+    const addressStr = await resolveBranchAddress(r.sucursal_nombre, r.sucursal_info);
+    document.getElementById('ticket-direccion').innerText = addressStr;
     document.getElementById('ticket-inicio').innerText = formatDate(r.fecha_inicio);
     document.getElementById('ticket-vence').innerText = formatDate(r.fecha_fin).split(',')[0];
     document.getElementById('ticket-tipo-estadia').innerText = tipoEstadiaLabel(r.tipo_estadia);
     document.getElementById('ticket-duracion').innerText = duracionHoras(r.fecha_inicio, r.fecha_fin);
 
     /* SECCIÓN FINANCIERA */
-    const total = r.monto_total || 0;
+    const total = (r.monto_total || 0) - (r.monto_reembolsado || 0);
     document.getElementById('ticket-total').innerText = formatCurrency(total);
 
+    const calcEl = document.getElementById('ticket-calculo');
     if (isPaid) {
         const horas = (new Date(r.fecha_fin.replace(/-/g, "/")) - new Date(r.fecha_inicio.replace(/-/g, "/"))) / (1000 * 60 * 60);
         const tarifaHora = horas > 0 ? total / horas : total;
         document.getElementById('ticket-tarifa').innerText = `${formatCurrency(tarifaHora)}/hora`;
-        document.getElementById('ticket-calculo').innerText = `${duracionHoras(r.fecha_inicio, r.fecha_fin)} × ${formatCurrency(tarifaHora)}`;
+        if (calcEl) calcEl.innerText = `${duracionHoras(r.fecha_inicio, r.fecha_fin)} × ${formatCurrency(tarifaHora)}`;
         document.getElementById('ticket-metodo-pago').innerText = metodoPagoLabel(r.metodo_pago);
         const puntos = Math.floor(total / 100);
         document.getElementById('ticket-puntos').innerText = puntos > 0 ? `+${puntos} pts` : '---';
     } else if (isPending) {
         document.getElementById('ticket-tarifa').innerText = 'Estimado';
-        document.getElementById('ticket-calculo').innerText = `A confirmar al abonar (${duracionHoras(r.fecha_inicio, r.fecha_fin)})`;
+        if (calcEl) calcEl.innerText = `A confirmar al abonar (${duracionHoras(r.fecha_inicio, r.fecha_fin)})`;
         document.getElementById('ticket-metodo-pago').innerText = 'Pendiente de pago';
         document.getElementById('ticket-puntos').innerText = '---';
     } else {
         document.getElementById('ticket-tarifa').innerText = '---';
-        document.getElementById('ticket-calculo').innerText = '---';
+        if (calcEl) calcEl.innerText = '---';
         document.getElementById('ticket-metodo-pago').innerText = '---';
         document.getElementById('ticket-puntos').innerText = '---';
     }

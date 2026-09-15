@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 import models
 import schemas
 from services.billing_service import BillingService
+from services.branch_service import BranchService
 from core.config import settings
 from services.email_service import EmailService
 from services.notification_service import NotificationService
@@ -42,21 +43,26 @@ def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehicu
 
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
     if aforo:
-        val = getattr(aforo, attr_cap, 5)
-        return val if (val is not None and val > 0) else 5
+        val = getattr(aforo, attr_cap, None)
+        if val is None:
+            return 5
+        return val if val > 0 else 0
     return 5
 
 
-def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, tipo_vehiculo: str) -> list:
+def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, tipo_vehiculo: str, exclude_id: int = None) -> list:
     """RESERVAS ACTIVAS/PENDIENTES SOLAPADAS EN EL RANGO [desde, hasta) FILTRADAS POR TIPO DE VEHICULO."""
     tipo_vehiculo = (tipo_vehiculo or "Auto").strip().title()
-    all_res = db.query(models.Reservation).filter(
+    q = db.query(models.Reservation).filter(
         models.Reservation.sucursal_nombre == sucursal_nombre,
         models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
         models.Reservation.estado_pago.in_(["Pendiente", "Pagado"]),
         models.Reservation.fecha_inicio < hasta_str,
         models.Reservation.fecha_fin > desde_str
-    ).all()
+    )
+    if exclude_id:
+        q = q.filter(models.Reservation.id != exclude_id)
+    all_res = q.all()
 
     if not all_res:
         return []
@@ -130,21 +136,9 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
     """VERIFICA SI HAY PLAZAS DE RESERVA DISPONIBLES EN LA SUCURSAL PARA EL PERIODO Y TIPO DE VEHICULO SOLICITADO.
     RETORNA {disponible, capacidad_total, ocupada, restan, mensaje}."""
     tipo_vehiculo = (tipo_vehiculo or "Auto").strip().title()
-    attr_cap = "capacidad_reservas_autos"
-    if tipo_vehiculo == "Moto":
-        attr_cap = "capacidad_reservas_motos"
-    elif tipo_vehiculo == "Camioneta":
-        attr_cap = "capacidad_reservas_camionetas"
 
     # 1. OBTENER CAPACIDAD TOTAL DE PLAZAS EXCLUSIVAS PARA RESERVAS DEL TIPO DE VEHICULO (PB + PISOS)
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
-    capacidad_reservas = 0
-    if branch and branch.floors:
-        capacidad_reservas = sum(getattr(f, attr_cap, 5) for f in branch.floors)
-    else:
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
-        if aforo:
-            capacidad_reservas = getattr(aforo, attr_cap, 5)
+    capacidad_reservas = _capacidad_reservas_para_tipo(db, sucursal_nombre, tipo_vehiculo)
 
     if capacidad_reservas == 0:
         return {"disponible": False, "capacidad_total": 0, "ocupada": 0, "restan": 0, "mensaje": f"La sede no cuenta con plazas asignadas para reservas de {tipo_vehiculo}s."}
@@ -288,29 +282,31 @@ def obtener_horas_deshabilitadas_con_reservas(
     fecha_str: str,
     tipo_vehiculo: str = "Auto",
     duracion_horas: float = 1.0,
-    paso_minutos: int = 30
+    paso_minutos: int = 30,
+    exclude_id: int = None
 ) -> dict:
     """SLOTS DESHABILITADOS + RANGOS REALMENTE RESERVADOS DEL DÍA.
     PERMITE A LA GRILLA DISTINGUIR LO QUE ESTÁ OCUPADO POR UNA RESERVA (RANGO EXACTO)
-    DE LAS HORAS DE MARGEN QUE SOLO SE DESHABILITAN POR SOLAPAMIENTO."""
+    DE LAS HORAS DE MARGEN QUE SOLO SE DESHABILITAN POR SOLAPAMIENTO.
+    exclude_id: AL EDITAR, EXCLUYE LA PROPIA RESERVA DE LOS RANGOS OCUPADOS."""
     if not sucursal_nombre or not fecha_str:
         return {"disabled_hours": [], "reserved_ranges": []}
     fecha_clean = fecha_str.split("T")[0].split(" ")[0]
     disabled_hours = obtener_horas_deshabilitadas(
         db, sucursal_nombre, fecha_clean, tipo_vehiculo, duracion_horas, paso_minutos
     )
-    reserved_ranges = _obtener_rangos_reservados_dia(db, sucursal_nombre, fecha_clean, tipo_vehiculo)
+    reserved_ranges = _obtener_rangos_reservados_dia(db, sucursal_nombre, fecha_clean, tipo_vehiculo, exclude_id)
     return {
         "disabled_hours": disabled_hours,
         "reserved_ranges": reserved_ranges
     }
 
 
-def _obtener_rangos_reservados_dia(db: Session, sucursal_nombre: str, fecha_clean: str, tipo_vehiculo: str) -> list[dict]:
+def _obtener_rangos_reservados_dia(db: Session, sucursal_nombre: str, fecha_clean: str, tipo_vehiculo: str, exclude_id: int = None) -> list[dict]:
     """RANGOS [inicio, fin) EN HH:MM DE LAS RESERVAS ACTIVAS QUE TOCAN EL DÍA, RECORTADOS AL DÍA."""
     dia_ini = f"{fecha_clean} 00:00"
     dia_fin = f"{fecha_clean} 23:59"
-    reservas = _reservas_activas_tipo(db, sucursal_nombre, dia_ini, dia_fin, tipo_vehiculo)
+    reservas = _reservas_activas_tipo(db, sucursal_nombre, dia_ini, dia_fin, tipo_vehiculo, exclude_id)
     if not reservas:
         return []
     dia_ini_dt = datetime.datetime.fromisoformat(dia_ini)
@@ -409,8 +405,7 @@ class ReservationService:
             sucursal=data.sucursal_nombre, tipo_vehiculo=tipo_vehiculo
         )
 
-        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == data.sucursal_nombre).first()
-        info_sede = f"{branch.direccion}. {'Abierto 24hs' if branch.is_24h else branch.horario}." if branch else "Sede no especificada."
+        info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
 
         new_res = models.Reservation(
             user_id=data.user_id,
@@ -424,18 +419,59 @@ class ReservationService:
             sucursal_nombre=data.sucursal_nombre,
             sucursal_info=info_sede,
             cliente_nombre=data.cliente_nombre,
-            tipo_vehiculo=tipo_v_str
+            tipo_vehiculo=tipo_v_str,
+            origen="manual"
         )
         db.add(new_res)
         db.commit()
         db.refresh(new_res)
+        try:
+            from services.notification_service import NotificationService
+            NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
+        except Exception:
+            pass
         return new_res
 
     @staticmethod
-    def pay_reservation_manual(db: Session, res: "models.Reservation", metodo_pago: str = None):
-        """MARCA UNA RESERVA COMO PAGADA (PAGO MANUAL ADMIN) SIN DESCONTAR SALDO NI USAR MERCADO PAGO."""
+    def get_available_redemption_discounts(db: Session, user_id: int, sucursal: str = None):
+        """LISTA LOS DESCUENTOS DE RESERVA (%) VIGENTES DE UN USUARIO APLICABLES A UNA SUCURSAL.
+        Se usa en caja (admin) para detectar el descuento que corresponde aplicar al cobrar.
+        Si no hay usuario vinculado, devuelve lista vacía."""
+        if not user_id:
+            return []
+        q = db.query(models.RedemptionTicket).filter(
+            models.RedemptionTicket.user_id == user_id,
+            models.RedemptionTicket.tipo_canje == "descuento_reserva",
+            models.RedemptionTicket.estado == "VIGENTE"
+        )
+        if sucursal:
+            q = q.filter(ReservationService.redemption_sucursal_clause(sucursal))
+        return q.order_by(models.RedemptionTicket.id.desc()).all()
+
+    @staticmethod
+    def pay_reservation_manual(db: Session, res: "models.Reservation", metodo_pago: str = None, redemption_ticket_id: int = None):
+        """MARCA UNA RESERVA COMO PAGADA (PAGO MANUAL ADMIN) SIN DESCONTAR SALDO NI USAR MERCADO PAGO.
+        Si se indica un redemption_ticket_id (descuento % de reserva) vigente del usuario
+        y de la misma sucursal (o global) se aplica el descuento sobre el monto total
+        y la reserva queda pagada por el valor final descontado."""
         if res.estado_pago == PaymentStatus.PAGADO:
-            return {"status": "ok", "message": "La reserva ya se encuentra pagada"}
+            return {"status": "ok", "message": "La reserva ya se encuentra pagada", "monto": res.monto_total, "monto_a_cobrar": res.monto_total, "descuento": 0.0, "metodo_pago": res.metodo_pago}
+
+        # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
+        descuento = 0.0
+        monto_a_cobrar = res.monto_total or 0.0
+        if redemption_ticket_id:
+            if not res.user_id:
+                raise HTTPException(status_code=400, detail="La reserva no tiene un usuario vinculado para aplicar el descuento")
+            ticket_redencion = ReservationService.validate_redemption_ticket(db, res.user_id, redemption_ticket_id, res.sucursal_nombre)
+            porc = ticket_redencion.valor_descuento or 0
+            descuento = round(monto_a_cobrar * porc / 100.0, 2)
+            monto_a_cobrar = round(monto_a_cobrar - descuento, 2)
+            res.monto_total = monto_a_cobrar
+            res.monto_reembolsado = 0.0
+            ticket_redencion.estado = "USADO"
+            ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
+            ticket_redencion.reserva_id = res.id
 
         res.estado_pago = PaymentStatus.PAGADO
         res.estado_reserva = ReservationStatus.ACTIVA
@@ -443,7 +479,7 @@ class ReservationService:
         res.metodo_pago = metodo_pago
 
         if res.user:
-            puntos_ganados = BillingService.calculate_points(res.monto_total)
+            puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
             res.user.puntos_acumulados += puntos_ganados
             db.add(models.PointsLog(
                 user_id=res.user.id,
@@ -451,10 +487,22 @@ class ReservationService:
                 motivo=f"Abono Manual Reserva: {res.patente}",
                 fecha=datetime.datetime.now().isoformat()
             ))
+            if puntos_ganados > 0:
+                try:
+                    from services.user_notification_service import UserNotificationService
+                    UserNotificationService.create_notification(
+                        db, res.user.id,
+                        tipo=models.NotificationType.POINTS_EARNED,
+                        titulo="¡Puntos AutoPass!",
+                        mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente})!",
+                        reserva_id=res.id
+                    )
+                except Exception:
+                    pass
 
         db.commit()
         db.refresh(res)
-        return {"status": "ok", "message": "Pago registrado", "monto": res.monto_total, "metodo_pago": res.metodo_pago}
+        return {"status": "ok", "message": "Pago registrado", "monto": res.monto_total, "monto_a_cobrar": monto_a_cobrar, "descuento": descuento, "metodo_pago": res.metodo_pago}
 
     @staticmethod
     def cleanup_overdue_reservations(db: Session):
@@ -545,18 +593,31 @@ class ReservationService:
         )
         return {row[0] for row in rows}
 
+    @staticmethod
+    def redemption_sucursal_clause(sucursal):
+        """CLÁUSULA DE FILTRADO DE REDEMPTION TICKET POR SUCURSAL.
+        Acepta el ticket global (sucursal NULL), igualdad exacta o igualdad normalizada
+        (sin prefijo 'AUTOPASS ', sin espacios extra y sin diferenciar mayúsculas),
+        para tolerar datos legados donde algunas sucursales se guardaron con prefijo."""
+        from sqlalchemy import or_, func
+        col = models.RedemptionTicket.sucursal
+        if not sucursal:
+            return or_(col == None, col == '')
+        norm_col = func.trim(func.replace(func.lower(col), 'autopass ', ''))
+        norm_param = func.trim(func.replace(func.lower(func.trim(sucursal)), 'autopass ', ''))
+        return or_(col == sucursal, col == None, norm_col == norm_param)
+
     @classmethod
     def validate_redemption_ticket(cls, db: Session, user_id: int, redemption_ticket_id: int, sucursal: str = None) -> models.RedemptionTicket:
         """Valida y obtiene un ticket de descuento por canje para un usuario y sucursal."""
         if not redemption_ticket_id:
             return None
-        from sqlalchemy import or_
         ticket = db.query(models.RedemptionTicket).filter(
             models.RedemptionTicket.id == redemption_ticket_id,
             models.RedemptionTicket.user_id == user_id,
             models.RedemptionTicket.tipo_canje == "descuento_reserva",
             models.RedemptionTicket.estado == "VIGENTE",
-            or_(models.RedemptionTicket.sucursal == sucursal, models.RedemptionTicket.sucursal == None)
+            cls.redemption_sucursal_clause(sucursal)
         ).first()
         if not ticket:
             raise HTTPException(status_code=400, detail="El descuento seleccionado no es válido para esta reserva o sucursal")
@@ -632,10 +693,13 @@ class ReservationService:
                 _reservar_plaza_en_aforo(db, res)
 
         # ENVIAR MAIL DE CONFIRMACION
+        dir_info = res.sucursal_info
+        if not dir_info or dir_info == "Sede no especificada." or dir_info.startswith("Sede no especificada"):
+            dir_info = BranchService.get_branch_info_str(db, res.sucursal_nombre)
         res_info = {
             "id": res.id,
             "sucursal": res.sucursal_nombre,
-            "direccion": res.sucursal_info,
+            "direccion": dir_info,
             "patente": res.patente,
             "fecha_inicio": res.fecha_inicio,
             "fecha_fin": res.fecha_fin,
@@ -710,10 +774,13 @@ class ReservationService:
                 _reservar_plaza_en_aforo(db, res)
 
         # ENVIAR MAIL DE CONFIRMACION
+        dir_info = res.sucursal_info
+        if not dir_info or dir_info == "Sede no especificada." or dir_info.startswith("Sede no especificada"):
+            dir_info = BranchService.get_branch_info_str(db, res.sucursal_nombre)
         res_info = {
             "id": res.id,
             "sucursal": res.sucursal_nombre,
-            "direccion": res.sucursal_info,
+            "direccion": dir_info,
             "patente": res.patente,
             "fecha_inicio": res.fecha_inicio,
             "fecha_fin": res.fecha_fin,

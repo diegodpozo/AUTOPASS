@@ -1,5 +1,5 @@
 import api from './api.js';
-import { toTitle, formatDate, formatPlate, formatNum } from './utils.js';
+import { toTitle, formatDate, formatPlate, formatNum, showToast } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**
@@ -91,7 +91,7 @@ export function renderReservaCard(r, isFeatured) {
             </div>
             <div class="reserva-status-ultra">
                 <div class="status-badge-ultra ${r.estado_pago.toLowerCase()}">${r.estado_pago}</div>
-                <div class="price-container-ultra"><span class="price-value-ultra">$${formatNum(r.monto_total)}</span></div>
+                <div class="price-container-ultra"><span class="price-value-ultra">$${formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}</span></div>
             </div>
         </div>
         <div class="reserva-timeline-container">
@@ -105,8 +105,9 @@ export function renderReservaCard(r, isFeatured) {
             <div class="detail-item-ultra"><i class="fas fa-hourglass-end"></i><div class="detail-info-ultra"><span class="detail-label-ultra">Hasta</span><span class="detail-value-ultra">${formatDate(r.fecha_fin)}</span></div></div>
         </div>
         <div class="reserva-actions-ultra">
-            <button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> VER COMPROBANTE</button>
+            <button class="btn-ultra btn-ultra-primary" onclick="showDigitalPass(${r.id})"><i class="fas fa-ticket"></i> VER COMPROBANTE + QR</button>
             ${r.estado_pago === 'Pendiente' && r.estado_reserva !== 'Cancelada' ? `
+            <button class="btn-ultra btn-ultra-wallet" onclick="payReservationWithWallet(${r.id})"><i class="fas fa-wallet"></i> PAGAR CON SALDO</button>
             <button class="btn-ultra btn-ultra-mp" onclick="payReservationWithMp(${r.id})"><i class="fab fa-google-pay"></i> PAGAR CON MP</button>` : ''}
             <button class="btn-ultra btn-ultra-secondary" onclick="prepareEditReservation(${r.id})" ${isStarted || r.estado_reserva === 'Activa' ? 'disabled' : ''}><i class="fas fa-pen"></i></button>
             <button class="btn-ultra btn-ultra-danger" onclick="cancelReservation(${r.id})" ${r.estado_reserva === 'Cancelada' || r.estado_reserva === 'Fallido' ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
@@ -125,7 +126,10 @@ export function renderHistory(history) {
         <div class="historial-item">
             <div class="hist-icon"><i class="fas ${r.estado_reserva === 'Completada' ? 'fa-car-circle-check' : 'fa-ban'}"></i></div>
             <div class="hist-main-info"><span class="hist-title">${r.sucursal_nombre}</span><div class="hist-subtitle-group"><span class="hist-plate-badge">${formatPlate(r.patente)}</span><span class="hist-date-info">${formatDate(r.fecha_inicio).split(',')[0]}</span></div></div>
-            <div class="hist-amount-info"><span class="hist-value">$${formatNum(r.monto_total)}</span><div class="status-pill ${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</div></div>
+            <div class="hist-amount-info">
+                <span class="hist-value">$${formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}</span>
+                <div class="status-pill ${r.estado_reserva.toLowerCase()}">${r.estado_reserva}</div>
+            </div>
             <div class="hist-actions-group"><button class="btn-repeat-express" onclick="repeatReservation('${r.patente}','${r.sucursal_nombre}','${r.tipo_estadia}')"><i class="fas fa-rotate-right"></i></button></div>
         </div>`).join('');
 

@@ -34,7 +34,10 @@ def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db
         categoria=data.categoria,
         sucursal=sucursal,
         tipo_canje=data.tipo_canje or "voucher",
-        valor_descuento=data.valor_descuento if (data.tipo_canje == "descuento_reserva") else None
+        valor_descuento=data.valor_descuento if (data.tipo_canje == "descuento_reserva") else None,
+        direccion=data.direccion,
+        latitude=data.latitude,
+        longitude=data.longitude,
     )
     db.add(new_promo)
     db.commit()
@@ -52,6 +55,31 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     promo.activa = not promo.activa
     db.commit()
     return {"status": "ok", "activa": promo.activa}
+
+@router.put("/promotions/{promo_id}")
+def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+    """ACTUALIZA UNA PROMOCION EXISTENTE. EL ADMIN GLOBAL PUEDE REASIGNAR LA SUCURSAL."""
+    promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
+    if not promo:
+        raise HTTPException(status_code=404, detail="Promoción no encontrada")
+
+    if admin.rol != "admin" and promo.sucursal != admin.sucursal:
+        raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
+
+    promo.titulo = data.titulo
+    promo.descripcion = data.descripcion
+    promo.costo_puntos = data.costo_puntos
+    promo.icono = data.icono
+    promo.categoria = data.categoria
+    if admin.rol == "admin":
+        promo.sucursal = data.sucursal
+    promo.tipo_canje = data.tipo_canje or "voucher"
+    promo.valor_descuento = data.valor_descuento if (data.tipo_canje == "descuento_reserva") else None
+    promo.direccion = data.direccion
+    promo.latitude = data.latitude
+    promo.longitude = data.longitude
+    db.commit()
+    return {"status": "ok", "message": f"Promoción '{data.titulo}' actualizada"}
 
 @router.delete("/promotions/{promo_id}")
 def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):

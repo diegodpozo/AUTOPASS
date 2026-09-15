@@ -72,7 +72,7 @@ export async function initVideoStreams() {
 export function switchTab(tabId, element) {
     const rol = localStorage.getItem('rol');
     if (rol === 'staff') {
-        const restrictedStaff = ['users', 'finance', 'promotions', 'tickets', 'settings', 'branches'];
+        const restrictedStaff = ['users', 'finance', 'promotions', 'tickets', 'settings', 'branches', 'metricas'];
         if (restrictedStaff.includes(tabId)) {
             tabId = 'live';
             element = document.querySelector(`.nav-item[onclick*="'live'"]`);
@@ -104,6 +104,7 @@ export function switchTab(tabId, element) {
             'admin-reservations': 'Reservas',
             'users': 'Gestión de Usuarios',
             'finance': 'Reporte Financiero',
+            'metricas': 'Métricas',
             'promotions': 'Promociones',
             'branches': 'Gestión de Sucursales',
             'settings': 'Configuración',
@@ -114,6 +115,12 @@ export function switchTab(tabId, element) {
     
     localStorage.setItem('activeAdminTab', tabId);
     if (window.loadTabData) window.loadTabData(tabId);
+
+    if (tabId === 'admin-reservations') {
+        if (typeof window.clearReservationBadge === 'function') {
+            window.clearReservationBadge();
+        }
+    }
 
     if (tabId === 'settings') {
         if (!window._diagInterval) {

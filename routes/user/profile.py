@@ -31,4 +31,16 @@ def change_password(data: schemas.ChangePassword, db: Session = Depends(get_db),
         raise HTTPException(status_code=400, detail="La contraseña actual ingresada es incorrecta")
     current_user.password_hash = get_password_hash(data.new_password)
     db.commit()
+
+    try:
+        from services.user_notification_service import UserNotificationService
+        UserNotificationService.create_notification(
+            db, current_user.id,
+            tipo=models.NotificationType.SECURITY_PASSWORD_CHANGED,
+            titulo="Seguridad de la cuenta",
+            mensaje="Tu contraseña ha sido actualizada correctamente. Si no realizaste esta acción, comunicate de inmediato con soporte."
+        )
+    except Exception:
+        pass
+
     return {"status": "ok", "message": "Contraseña actualizada exitosamente"}

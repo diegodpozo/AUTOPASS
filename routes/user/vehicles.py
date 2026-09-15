@@ -45,6 +45,18 @@ def add_user_vehicle(patente: str, marca_modelo: str, tipo: str = "Auto", db: Se
     )
     db.add(new_vehicle)
     db.commit()
+
+    try:
+        from services.user_notification_service import UserNotificationService
+        UserNotificationService.create_notification(
+            db, current_user.id,
+            tipo=models.NotificationType.VEHICLE_REGISTERED,
+            titulo="Vehículo registrado",
+            mensaje=f"Se vinculó exitosamente el vehículo {new_vehicle.marca_modelo} ({new_vehicle.patente}) a tu flota."
+        )
+    except Exception:
+        pass
+
     return {"status": "ok"}
 
 @router.post("/vehicles/{patente}/favorite")
@@ -150,6 +162,19 @@ def delete_user_vehicle(patente: str, db: Session = Depends(get_db), current_use
         ).first()
         current_user.patente = other.patente if other else None
 
+    patente_borrada = vehicle.patente
     db.delete(vehicle)
     db.commit()
+
+    try:
+        from services.user_notification_service import UserNotificationService
+        UserNotificationService.create_notification(
+            db, current_user.id,
+            tipo=models.NotificationType.VEHICLE_REMOVED,
+            titulo="Vehículo desvinculado",
+            mensaje=f"Se eliminó el vehículo con patente {patente_borrada} de tu flota."
+        )
+    except Exception:
+        pass
+
     return {"status": "ok"}

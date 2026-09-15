@@ -55,6 +55,7 @@ function renderNotificationList() {
         else if (currentFilter === 'RESERVATION') msg = 'No hay notificaciones de reservas.';
         else if (currentFilter === 'FINANCE') msg = 'No hay notificaciones de pagos o saldo.';
         else if (currentFilter === 'SUPPORT') msg = 'No hay notificaciones de soporte.';
+        else if (currentFilter === 'SECURITY') msg = 'No hay notificaciones de seguridad.';
 
         container.innerHTML = `
             <div class="empty-state">
@@ -100,9 +101,23 @@ function renderNotificationList() {
 function filterNotificationsArray(list, filter) {
     if (!list) return [];
     if (filter === 'UNREAD') return list.filter(n => !n.leido);
-    if (filter === 'RESERVATION') return list.filter(n => ['REMINDER_PAID', 'REMINDER_UNPAID', 'RESERVATION_STARTED', 'AUTO_CANCELLED', 'RESERVATION_CONFIRMED', 'RESERVATION_CANCELLED'].includes(n.tipo));
-    if (filter === 'FINANCE') return list.filter(n => ['BALANCE_RECHARGED', 'PROMO_REDEEMED', 'POINTS_EARNED'].includes(n.tipo));
-    if (filter === 'SUPPORT') return list.filter(n => n.tipo === 'SUPPORT_RESPONSE' || n.tipo === 'SUPPORT_TICKET');
+    if (filter === 'RESERVATION') return list.filter(n => [
+        'REMINDER_PAID', 'REMINDER_UNPAID', 'RESERVATION_STARTED', 
+        'AUTO_CANCELLED', 'RESERVATION_CONFIRMED', 'RESERVATION_CANCELLED',
+        'RESERVATION_MODIFIED', 'RESERVATION_CREATED_ADMIN'
+    ].includes(n.tipo));
+    if (filter === 'FINANCE') return list.filter(n => [
+        'BALANCE_RECHARGED', 'BALANCE_ADJUSTED_ADMIN', 'PROMO_REDEEMED', 
+        'PROMO_CANCELLED', 'POINTS_EARNED', 'STAY_PAID', 'STAY_CANCELLED_ADMIN'
+    ].includes(n.tipo));
+    if (filter === 'SUPPORT') return list.filter(n => [
+        'SUPPORT_RESPONSE', 'SUPPORT_TICKET', 'SUPPORT_STATUS_CHANGED'
+    ].includes(n.tipo));
+    if (filter === 'SECURITY') return list.filter(n => [
+        'NEW_DEVICE_LOGIN', 'PASSWORD_CHANGED_ADMIN', 'SECURITY_PASSWORD_CHANGED',
+        'USER_PROFILE_UPDATED', 'USER_ROLE_CHANGED', 'USER_BLOCK_STATUS_CHANGED',
+        'VEHICLE_REGISTERED', 'VEHICLE_REMOVED', 'VEHICLE_ENTRY', 'VEHICLE_EXIT'
+    ].includes(n.tipo));
     return list;
 }
 
@@ -121,12 +136,28 @@ function getNotifIcon(tipo) {
         case 'AUTO_CANCELLED':
         case 'RESERVATION_CANCELLED': return 'fa-times-circle';
         case 'RESERVATION_CONFIRMED': return 'fa-check-circle';
-        case 'BALANCE_RECHARGED': return 'fa-wallet';
+        case 'RESERVATION_MODIFIED': return 'fa-calendar-check';
+        case 'RESERVATION_CREATED_ADMIN': return 'fa-calendar-plus';
+        case 'BALANCE_RECHARGED':
+        case 'BALANCE_ADJUSTED_ADMIN': return 'fa-wallet';
+        case 'STAY_PAID': return 'fa-receipt';
+        case 'STAY_CANCELLED_ADMIN': return 'fa-ban';
         case 'SUPPORT_RESPONSE': return 'fa-headset';
         case 'SUPPORT_TICKET': return 'fa-ticket';
-        case 'NEW_DEVICE_LOGIN': return 'fa-shield-halved';
+        case 'SUPPORT_STATUS_CHANGED': return 'fa-info-circle';
+        case 'NEW_DEVICE_LOGIN':
+        case 'PASSWORD_CHANGED_ADMIN':
+        case 'SECURITY_PASSWORD_CHANGED': return 'fa-shield-halved';
+        case 'USER_PROFILE_UPDATED': return 'fa-user-edit';
+        case 'USER_ROLE_CHANGED': return 'fa-user-tag';
+        case 'USER_BLOCK_STATUS_CHANGED': return 'fa-user-lock';
         case 'PROMO_REDEEMED':
+        case 'PROMO_CANCELLED':
         case 'POINTS_EARNED': return 'fa-gift';
+        case 'VEHICLE_REGISTERED':
+        case 'VEHICLE_REMOVED':
+        case 'VEHICLE_ENTRY':
+        case 'VEHICLE_EXIT': return 'fa-car';
         default: return 'fa-bell';
     }
 }
@@ -134,21 +165,36 @@ function getNotifIcon(tipo) {
 function getNotifCategoryClass(tipo) {
     switch (tipo) {
         case 'RESERVATION_CONFIRMED':
-        case 'BALANCE_RECHARGED': return 'notif-cat-success';
-        case 'REMINDER_UNPAID': return 'notif-cat-warning';
+        case 'RESERVATION_CREATED_ADMIN':
+        case 'BALANCE_RECHARGED':
+        case 'STAY_PAID':
+        case 'VEHICLE_REGISTERED': return 'notif-cat-success';
+        case 'REMINDER_UNPAID':
+        case 'NEW_DEVICE_LOGIN':
+        case 'PASSWORD_CHANGED_ADMIN':
+        case 'SECURITY_PASSWORD_CHANGED':
+        case 'USER_BLOCK_STATUS_CHANGED': return 'notif-cat-warning';
         case 'AUTO_CANCELLED':
-        case 'RESERVATION_CANCELLED': return 'notif-cat-danger';
-        case 'SUPPORT_RESPONSE': return 'notif-cat-support';
-        case 'SUPPORT_TICKET': return 'notif-cat-support';
-        case 'NEW_DEVICE_LOGIN': return 'notif-cat-warning';
+        case 'RESERVATION_CANCELLED':
+        case 'STAY_CANCELLED_ADMIN':
+        case 'PROMO_CANCELLED':
+        case 'VEHICLE_REMOVED': return 'notif-cat-danger';
+        case 'SUPPORT_RESPONSE':
+        case 'SUPPORT_TICKET':
+        case 'SUPPORT_STATUS_CHANGED': return 'notif-cat-support';
         case 'REMINDER_PAID':
+        case 'RESERVATION_MODIFIED':
         case 'PROMO_REDEEMED':
-        case 'POINTS_EARNED': return 'notif-cat-gold';
+        case 'POINTS_EARNED':
+        case 'BALANCE_ADJUSTED_ADMIN':
+        case 'USER_PROFILE_UPDATED':
+        case 'USER_ROLE_CHANGED': return 'notif-cat-gold';
         default: return 'notif-cat-default';
     }
 }
 
 function getNotifActions(n) {
+    // 1. RECORDATORIO DE PAGO PENDIENTE
     if (n.tipo === 'REMINDER_UNPAID' && n.reserva_id) {
         return `
             <button class="notif-btn notif-btn-confirm" onclick="confirmReminder(${n.id}, ${n.reserva_id}, this)">
@@ -158,19 +204,145 @@ function getNotifActions(n) {
                 <i class="fas fa-credit-card"></i> PAGAR
             </button>`;
     }
-    if ((n.tipo === 'REMINDER_PAID' || n.tipo === 'RESERVATION_CONFIRMED' || n.tipo === 'RESERVATION_STARTED') && n.reserva_id) {
+
+    // 2. RESERVAS CONFIRMADAS / RECORDATORIO PAGADO / EN CURSO / MODIFICADAS / CREADAS POR ADMIN
+    if (['REMINDER_PAID', 'RESERVATION_CONFIRMED', 'RESERVATION_STARTED', 'RESERVATION_MODIFIED', 'RESERVATION_CREATED_ADMIN'].includes(n.tipo) && n.reserva_id) {
         return `
             <button class="notif-btn notif-btn-view" onclick="goToReservation(${n.reserva_id})">
                 <i class="fas fa-eye"></i> VER RESERVA
             </button>`;
     }
-    if (n.tipo === 'SUPPORT_RESPONSE' || n.tipo === 'SUPPORT_TICKET') {
+
+    // 3. RESERVAS AUTO-CANCELADAS
+    if (n.tipo === 'AUTO_CANCELLED') {
+        return `
+            <button class="notif-btn notif-btn-confirm" onclick="goToNewReservation()">
+                <i class="fas fa-calendar-plus"></i> NUEVA RESERVA
+            </button>
+            ${n.reserva_id ? `
+            <button class="notif-btn notif-btn-view" onclick="goToReservation(${n.reserva_id})">
+                <i class="fas fa-eye"></i> VER DETALLE
+            </button>` : ''}`;
+    }
+
+    // 4. RESERVAS CANCELADAS
+    if (n.tipo === 'RESERVATION_CANCELLED') {
+        const hasRefund = n.mensaje && (n.mensaje.toLowerCase().includes('saldo') || n.mensaje.toLowerCase().includes('reembols'));
+        return `
+            ${hasRefund ? `
+            <button class="notif-btn notif-btn-balance" onclick="goToBalance()">
+                <i class="fas fa-wallet"></i> VER MI SALDO
+            </button>` : ''}
+            ${n.reserva_id ? `
+            <button class="notif-btn notif-btn-view" onclick="goToReservation(${n.reserva_id})">
+                <i class="fas fa-eye"></i> VER DETALLE
+            </button>` : `
+            <button class="notif-btn notif-btn-view" onclick="goToReservationsList()">
+                <i class="fas fa-calendar-alt"></i> VER RESERVAS
+            </button>`}`;
+    }
+
+    // 5. CANJE DE BENEFICIOS / VOUCHERS
+    if (n.tipo === 'PROMO_REDEEMED') {
+        const vMatch = n.mensaje?.match(/Voucher #(\d+)/i) || n.mensaje?.match(/#([0-9a-fA-F]{6,16})/);
+        const vId = vMatch ? vMatch[1] : '';
+        return `
+            <button class="notif-btn notif-btn-voucher" onclick="goToVoucher('${vId}')">
+                <i class="fas fa-ticket"></i> VER VOUCHER
+            </button>
+            <button class="notif-btn notif-btn-points" onclick="goToPoints()">
+                <i class="fas fa-gift"></i> MIS PUNTOS
+            </button>`;
+    }
+
+    // 6. CANJE CANCELADO O PUNTOS GANADOS
+    if (['PROMO_CANCELLED', 'POINTS_EARNED'].includes(n.tipo)) {
+        return `
+            <button class="notif-btn notif-btn-points" onclick="goToPoints()">
+                <i class="fas fa-gift"></i> VER MIS PUNTOS
+            </button>`;
+    }
+
+    // 7. PAGO DE ESTADÍA
+    if (n.tipo === 'STAY_PAID') {
+        return `
+            <button class="notif-btn notif-btn-balance" onclick="goToStays()">
+                <i class="fas fa-receipt"></i> VER ESTADÍAS
+            </button>
+            <button class="notif-btn notif-btn-balance" onclick="goToBalance()">
+                <i class="fas fa-wallet"></i> MI SALDO
+            </button>`;
+    }
+
+    // 8. ESTADÍA CANCELADA POR ADMIN
+    if (n.tipo === 'STAY_CANCELLED_ADMIN') {
+        return `
+            <button class="notif-btn notif-btn-vehicles" onclick="goToVehicles()">
+                <i class="fas fa-car"></i> MIS VEHÍCULOS
+            </button>
+            <button class="notif-btn notif-btn-support" onclick="openSupportTicketModal()">
+                <i class="fas fa-headset"></i> AYUDA
+            </button>`;
+    }
+
+    // 9. EVENTOS DE VEHÍCULOS
+    if (['VEHICLE_REGISTERED', 'VEHICLE_REMOVED'].includes(n.tipo)) {
+        return `
+            <button class="notif-btn notif-btn-vehicles" onclick="goToVehicles()">
+                <i class="fas fa-car"></i> MIS VEHÍCULOS
+            </button>`;
+    }
+    if (['VEHICLE_ENTRY', 'VEHICLE_EXIT'].includes(n.tipo)) {
+        return `
+            <button class="notif-btn notif-btn-vehicles" onclick="goToVehicles()">
+                <i class="fas fa-car"></i> MIS VEHÍCULOS
+            </button>
+            <button class="notif-btn notif-btn-balance" onclick="goToStays()">
+                <i class="fas fa-clock-rotate-left"></i> VER ESTADÍA
+            </button>`;
+    }
+
+    // 10. TICKETS DE SOPORTE
+    if (['SUPPORT_RESPONSE', 'SUPPORT_TICKET', 'SUPPORT_STATUS_CHANGED'].includes(n.tipo)) {
         const ticketId = n.ticket_id || '';
         return `
             <button class="notif-btn notif-btn-support" onclick="openSupportTicketModal(${ticketId})">
                 <i class="fas fa-headset"></i> IR A SOPORTE
             </button>`;
     }
+
+    // 11. SEGURIDAD: NUEVO DISPOSITIVO O CONTRASEÑA MODIFICADA POR ADMIN
+    if (['NEW_DEVICE_LOGIN', 'PASSWORD_CHANGED_ADMIN'].includes(n.tipo)) {
+        return `
+            <button class="notif-btn notif-btn-security" onclick="goToChangePassword()">
+                <i class="fas fa-key"></i> CAMBIAR CONTRASEÑA
+            </button>`;
+    }
+
+    // 12. SEGURIDAD: CONTRASEÑA MODIFICADA POR USUARIO O CUENTA BLOQUEADA/DESBLOQUEADA
+    if (['SECURITY_PASSWORD_CHANGED', 'USER_BLOCK_STATUS_CHANGED'].includes(n.tipo)) {
+        return `
+            <button class="notif-btn notif-btn-support" onclick="openSupportTicketModal()">
+                <i class="fas fa-headset"></i> CONTACTAR SOPORTE
+            </button>`;
+    }
+
+    // 13. PERFIL O ROL ACTUALIZADO
+    if (['USER_PROFILE_UPDATED', 'USER_ROLE_CHANGED'].includes(n.tipo)) {
+        return `
+            <button class="notif-btn notif-btn-profile" onclick="goToProfile()">
+                <i class="fas fa-user"></i> VER MI PERFIL
+            </button>`;
+    }
+
+    // 14. RECARGA O AJUSTE DE SALDO
+    if (['BALANCE_RECHARGED', 'BALANCE_ADJUSTED_ADMIN'].includes(n.tipo)) {
+        return `
+            <button class="notif-btn notif-btn-balance" onclick="goToBalance()">
+                <i class="fas fa-wallet"></i> VER MI SALDO
+            </button>`;
+    }
+
     return null;
 }
 
@@ -196,29 +368,37 @@ export async function fetchUnreadCount() {
     return res.data.count;
 }
 
-export async function updateNotifBadge() {
-    const count = await fetchUnreadCount();
-    // La burbuja del header/campana (perfil) y del sidebar de USUARIO/CLIENTE reflejan
-    // el conteo global de notificaciones.
-    const badgeSidebarUser = document.getElementById('notif-badge-sidebar-user');
-    const badgeHeader = document.getElementById('notif-badge-header');
-    const badges = [badgeSidebarUser, badgeHeader].filter(Boolean);
-    for (const badge of badges) {
-        if (count > 0) {
-            badge.style.display = 'inline-flex';
-            badge.textContent = count > 99 ? '99+' : count;
-            badge.classList.add('pulse');
-        } else {
-            badge.style.display = 'none';
-            badge.classList.remove('pulse');
-        }
-    }
+let isUpdatingBadge = false;
 
-    // DETECTAR SI LLEGARON NOTIFICACIONES NUEVAS
-    if (count > lastNotifCount && lastNotifCount !== -1) {
-        showToast(`Tenés ${count} notificación${count !== 1 ? 'es' : ''} sin leer`, 'info');
+export async function updateNotifBadge() {
+    if (isUpdatingBadge) return;
+    isUpdatingBadge = true;
+    try {
+        const count = await fetchUnreadCount();
+        // La burbuja del header/campana (perfil) y del sidebar de USUARIO/CLIENTE reflejan
+        // el conteo global de notificaciones.
+        const badgeSidebarUser = document.getElementById('notif-badge-sidebar-user');
+        const badgeHeader = document.getElementById('notif-badge-header');
+        const badges = [badgeSidebarUser, badgeHeader].filter(Boolean);
+        for (const badge of badges) {
+            if (count > 0) {
+                badge.style.display = 'inline-flex';
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.add('pulse');
+            } else {
+                badge.style.display = 'none';
+                badge.classList.remove('pulse');
+            }
+        }
+
+        // DETECTAR SI LLEGARON NOTIFICACIONES NUEVAS
+        if (lastNotifCount !== -1 && count > lastNotifCount) {
+            showToast(`Tenés ${count} notificación${count !== 1 ? 'es' : ''} sin leer`, 'info');
+        }
+        lastNotifCount = count;
+    } finally {
+        isUpdatingBadge = false;
     }
-    lastNotifCount = count;
 }
 
 export async function markNotifRead(notifId, el) {
@@ -334,13 +514,136 @@ window.payFromNotif = async function(reservaId) {
 };
 
 window.goToReservation = function(reservaId) {
+    window.closeNotifDropdown?.();
     window.showSection?.('reservas');
     setTimeout(() => {
         const card = document.querySelector(`[data-reserva-id="${reservaId}"]`);
         if (card) {
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.style.boxShadow = '0 0 0 3px var(--dorado), 0 8px 32px rgba(212, 175, 55, 0.3)';
+            setTimeout(() => { card.style.boxShadow = ''; }, 2000);
         }
     }, 500);
+};
+
+window.goToChangePassword = function() {
+    window.closeNotifDropdown?.();
+    window.showSection?.('perfil');
+    setTimeout(() => {
+        const btnPass = document.getElementById('current-password') || document.getElementById('btn-change-password') || document.querySelector('[data-bs-target="#changePasswordModal"]') || document.querySelector('.form-security-premium');
+        if (btnPass) {
+            btnPass.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            btnPass.focus?.();
+        }
+    }, 400);
+};
+
+window.goToBalance = function() {
+    window.closeNotifDropdown?.();
+    if (window.openRechargeModal) {
+        window.openRechargeModal();
+    } else {
+        window.showSection?.('perfil');
+    }
+};
+
+window.goToPoints = function() {
+    window.closeNotifDropdown?.();
+    window.showSection?.('puntos');
+    setTimeout(() => {
+        const ptsEl = document.getElementById('puntos-catalog-container') || document.querySelector('.fidelizacion-card') || document.getElementById('section-puntos');
+        if (ptsEl) ptsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+};
+
+window.goToVoucher = async function(voucherId) {
+    window.closeNotifDropdown?.();
+    window.showSection?.('puntos');
+    setTimeout(async () => {
+        const vContainer = document.getElementById('vouchers-container');
+        if (vContainer) {
+            vContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        try {
+            const { showCanjeTicket, showCanjeTicketById } = await import('./profile.js');
+            if (voucherId) {
+                const num = Number(voucherId);
+                if (!isNaN(num) && num > 0) {
+                    await showCanjeTicketById(num);
+                    return;
+                }
+            }
+            // Fallback: abrir el voucher más reciente o el que coincida
+            const res = await api.get('/user/redemption-tickets');
+            if (res.ok && res.data && res.data.length > 0) {
+                if (voucherId) {
+                    const match = res.data.find(x => x.codigo === voucherId || String(x.id) === String(voucherId));
+                    if (match) {
+                        showCanjeTicket(match);
+                        return;
+                    }
+                }
+                showCanjeTicket(res.data[0]);
+            }
+        } catch (e) {
+            console.error('[NOTIF VOUCHER ERROR]', e);
+        }
+    }, 450);
+};
+
+window.goToNewReservation = function() {
+    window.closeNotifDropdown?.();
+    window.showSection?.('inicio');
+    setTimeout(() => {
+        const formContainer = document.getElementById('reserva-form-container') || document.getElementById('section-inicio');
+        if (formContainer) {
+            formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 400);
+};
+
+window.goToReservationsList = function() {
+    window.closeNotifDropdown?.();
+    window.showSection?.('reservas');
+    setTimeout(() => {
+        const resList = document.getElementById('reservas-list') || document.getElementById('section-reservas');
+        if (resList) {
+            resList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 400);
+};
+
+window.goToVehicles = function() {
+    window.closeNotifDropdown?.();
+    window.showSection?.('vehiculos');
+    setTimeout(() => {
+        const vContainer = document.getElementById('vehicles-grid') || document.getElementById('vehicle-form-container') || document.getElementById('section-vehiculos');
+        if (vContainer) {
+            vContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 400);
+};
+
+window.goToProfile = function() {
+    window.closeNotifDropdown?.();
+    window.showSection?.('perfil');
+    setTimeout(() => {
+        const pCard = document.querySelector('.account-hub-card') || document.getElementById('section-perfil');
+        if (pCard) {
+            pCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 400);
+};
+
+window.goToStays = function() {
+    window.closeNotifDropdown?.();
+    window.showSection?.('perfil');
+    setTimeout(() => {
+        const staysCard = document.getElementById('container-active-stays') || document.querySelector('.account-hub-card') || document.getElementById('section-perfil');
+        if (staysCard) {
+            staysCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 400);
 };
 
 // DROPDOWN DE NOTIFICACIONES EN HEADER
@@ -414,17 +717,19 @@ document.addEventListener('click', function(e) {
 window.loadNotifications = loadNotifications;
 
 export function startNotifPolling() {
-    if (pollInterval) clearInterval(pollInterval);
+    if (window.__autopassNotifPollInterval) return;
     lastNotifCount = -1;
     updateNotifBadge();
-    pollInterval = setInterval(updateNotifBadge, 30000);
+    window.__autopassNotifPollInterval = setInterval(updateNotifBadge, 30000);
+    pollInterval = window.__autopassNotifPollInterval;
 }
 
 export function stopNotifPolling() {
-    if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
+    if (window.__autopassNotifPollInterval) {
+        clearInterval(window.__autopassNotifPollInterval);
+        window.__autopassNotifPollInterval = null;
     }
+    pollInterval = null;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

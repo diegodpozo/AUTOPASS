@@ -37,3 +37,18 @@ def test_create_reservation_success(db):
     res = ReservationService.create_reservation(db, data)
     assert res.estado_reserva == ReservationStatus.PENDIENTE
     assert res.estado_pago == PaymentStatus.PENDIENTE
+
+def test_branch_info_str_resolution(db):
+    from services.branch_service import BranchService
+    branch = ParkingBranch(nombre="AUTOPASS Castelar", direccion="Montes de Oca 1220, Castelar", horario="24hs", is_24h=True)
+    db.add(branch)
+    db.commit()
+
+    info = BranchService.get_branch_info_str(db, "AUTOPASS Castelar")
+    assert "Montes de Oca 1220" in info
+    assert "Abierto 24hs" in info
+
+    # Búsqueda insensible/parcial
+    info_partial = BranchService.get_branch_info_str(db, "Castelar")
+    assert "Montes de Oca 1220" in info_partial
+

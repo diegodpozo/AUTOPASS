@@ -24,6 +24,14 @@ export async function loadAdminReservations() {
         allReservations = res.data;
         window.allReservations = allReservations;
 
+        if (allReservations.length > 0 && allReservations[0].id) {
+            const storageKey = getStorageKey();
+            const currentLastSeen = parseInt(localStorage.getItem(storageKey), 10) || 0;
+            if (allReservations[0].id > currentLastSeen) {
+                localStorage.setItem(storageKey, allReservations[0].id);
+            }
+        }
+
         tbody.innerHTML = res.data.map(r => `
             <tr class="row-premium">
                 <td data-label="Cliente"><div class="user-name">${r.usuario_nombre || 'S/N'} ${r.usuario_apellido || ''}</div></td>
@@ -39,7 +47,10 @@ export async function loadAdminReservations() {
                         <div class="text-small text-dorado font-bold uppercase" style="letter-spacing: 1px;">${utils.toTitle(r.tipo_estadia)}</div>
                     </div>
                 </td>
-                <td data-label="Monto" class="text-bold text-white">$${utils.formatNum(r.monto_total)}</td>
+                <td data-label="Monto" class="text-bold text-white">
+                    $${utils.formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}
+                    ${(r.monto_reembolsado || 0) > 0 ? `<div class="text-xs text-muted" style="border-top:1px solid rgba(255,255,255,0.05); margin-top:4px; padding-top:4px; text-align:center;">Pagado $${utils.formatNum(r.monto_total)} · Reemb. -$${utils.formatNum(r.monto_reembolsado)}</div>` : ''}
+                </td>
                 <td data-label="Estado Pago"><span class="badge-status badge-${r.estado_pago.toLowerCase()}">${r.estado_pago}</span></td>
                 <td data-label="Estado Reserva">
                     <div class="flex-col items-center gap-8">
@@ -54,6 +65,11 @@ export async function loadAdminReservations() {
                 <td data-label="Acciones">
                     <div class="flex-row gap-8 justify-center actions-reveal">
                         ${r.estado_reserva !== 'Completada' && r.estado_reserva !== 'Cancelada' ? `
+                        ${r.origen === 'manual' ? `
+                        <button class="btn-icon-premium sm" onclick="editReservationAdmin(${r.id})" title="Editar Reserva">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        ` : ''}
                         ${r.estado_pago === 'Pendiente' ? `
                         <button class="btn-icon-premium sm btn-confirm-payment" onclick="payReservationAdmin(${r.id})" title="Pago Manual">
                             <i class="fas fa-money-bill-wave"></i>
@@ -69,10 +85,22 @@ export async function loadAdminReservations() {
         
         const statTotal = document.getElementById('admin-res-stat-total');
         const statPending = document.getElementById('admin-res-stat-pending');
-        const statPresence = document.getElementById('admin-res-stat-presence');
+        const statToday = document.getElementById('admin-res-stat-today');
         if (statTotal) statTotal.innerText = utils.formatNum(res.data.length);
         if (statPending) statPending.innerText = utils.formatNum(res.data.filter(r => r.estado_reserva === 'Pendiente').length);
-        if (statPresence) statPresence.innerText = utils.formatNum(res.data.filter(r => r.en_predio).length);
+        if (statToday) {
+            const now = getVirtualNow();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            const countToday = res.data.filter(r => {
+                if (r.estado_reserva === 'Completada' || r.estado_reserva === 'Cancelada') return false;
+                const ini = new Date(String(r.fecha_inicio || '').replace(/-/g, '/'));
+                const fin = new Date(String(r.fecha_fin || '').replace(/-/g, '/'));
+                if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return false;
+                return ini <= todayEnd && fin >= todayStart;
+            }).length;
+            statToday.innerText = utils.formatNum(countToday);
+        }
     }
 }
 
@@ -85,10 +113,28 @@ export async function payReservationAdmin(resId) {
         { label: 'Otro', icon: 'fa-circle-question' }
     ]);
     if (!metodo) return;
-    
-    const res = await api.post(`/admin/reservations/${resId}/confirm-payment`, { metodo_pago: metodo });
+
+    // DETECTAR DESCUENTO DE RESERVA VIGENTE DEL CLIENTE PARA APLICARLO EN CAJA
+    let redemptionTicketId = null;
+    const discsRes = await api.get(`/admin/reservations/${resId}/redemptions`);
+    if (discsRes.ok && Array.isArray(discsRes.data) && discsRes.data.length > 0) {
+        const d = discsRes.data[0];
+        const aplicar = await utils.showConfirm('Descuento aplicable', `
+            <div style="text-align:left; font-size:0.85rem; line-height:1.8;">
+                <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Monto reserva</span><b>$${utils.formatNum(d.monto)}</b></div>
+                <div style="display:flex; justify-content:space-between; gap:12px; color:#c084fc;"><span><i class="fas fa-percent" style="margin-right:4px;"></i>Descuento ${d.valor_descuento}%</span><b>-$ ${utils.formatNum(d.descuento_peso)}</b></div>
+                <div style="border-top:1px solid rgba(255,255,255,0.1); margin:8px 0 6px; padding-top:8px; display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Total a cobrar</span><b style="font-size:1.05rem;">$${utils.formatNum(d.monto_final)}</b></div>
+            </div>
+        `);
+        if (aplicar) redemptionTicketId = d.id;
+    }
+
+    const res = await api.post(`/admin/reservations/${resId}/confirm-payment`, { metodo_pago: metodo, redemption_ticket_id: redemptionTicketId });
     if (res.ok) {
-        utils.showToast('Pago registrado correctamente', 'success');
+        const msg = redemptionTicketId
+            ? `Pago registrado (descuento aplicado: -$ ${utils.formatNum(res.data.descuento || 0)})`
+            : 'Pago registrado correctamente';
+        utils.showToast(msg, 'success');
         loadAdminReservations();
     } else {
         utils.showToast(res.error || 'Error al registrar pago', 'error');
@@ -118,7 +164,17 @@ export function showReservationDetail(resId) {
     document.getElementById('res-detail-end').innerText = utils.formatDate(r.fecha_fin);
     document.getElementById('res-detail-sucursal').innerText = r.sucursal_nombre;
     document.getElementById('res-detail-type').innerText = utils.toTitle(r.tipo_estadia);
-    document.getElementById('res-detail-amount').innerText = `$${utils.formatNum(r.monto_total)}`;
+    document.getElementById('res-detail-amount').innerText = `$${utils.formatNum((r.monto_total || 0) - (r.monto_reembolsado || 0))}`;
+
+    const refundNote = document.getElementById('res-detail-amount-refund');
+    if (refundNote) {
+        if ((r.monto_reembolsado || 0) > 0) {
+            refundNote.style.display = '';
+            refundNote.innerText = `Pagado $${utils.formatNum(r.monto_total)} · Reembolsado -$${utils.formatNum(r.monto_reembolsado)}`;
+        } else {
+            refundNote.style.display = 'none';
+        }
+    }
 
     const badgeContainer = document.getElementById('res-detail-status-badges');
     if (badgeContainer) {
@@ -145,6 +201,15 @@ let newResBranches = [];
 let newResLinkedUserId = null;
 let newResPatenteLookupTimer = null;
 let newResRatesFallback = { hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
+let editingResId = null;
+let newResPickers = {};
+let editingOriginalReserva = null;
+let newResCalculatedTotal = 0;
+let newResLiveDiscount = null;
+let newResDiscountReq = 0;
+let newResSucursalListenerInit = false;
+let pendingEditResumo = null;
+let pendingEditResumoMetodo = null;
 
 function _newResYmd(dt) {
     return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
@@ -172,6 +237,7 @@ export function resetNewResPatenteLookup() {
     }
     const iconEl = document.getElementById('new-res-veh-icon');
     if (iconEl) iconEl.className = 'fas fa-car-side';
+    refreshNewResLiveDiscount();
 }
 
 export function clearNewResPatenteLookup() {
@@ -217,6 +283,33 @@ async function lookupNewResPatente() {
         badge.style.background = 'transparent';
         badge.style.display = 'inline-flex';
     }
+    refreshNewResLiveDiscount();
+}
+
+async function refreshNewResLiveDiscount() {
+    const token = ++newResDiscountReq;
+    if (editingResId) return;
+    if (newResLinkedUserId) {
+        const sucursal = document.getElementById('new-res-sucursal')?.value;
+        if (!sucursal) {
+            newResLiveDiscount = null;
+            updateNewReservationPrice();
+            return;
+        }
+        try {
+            const res = await api.get('/admin/redemptions/available', { params: { user_id: newResLinkedUserId, sucursal } });
+            if (token !== newResDiscountReq) return;
+            newResLiveDiscount = (res.ok && Array.isArray(res.data) && res.data.length)
+                ? { porc: res.data[0].valor_descuento || 0, fuente: 'vigente', ticketId: res.data[0].id }
+                : null;
+        } catch (e) {
+            if (token !== newResDiscountReq) return;
+            newResLiveDiscount = null;
+        }
+    } else {
+        newResLiveDiscount = null;
+    }
+    updateNewReservationPrice();
 }
 
 export function initNewResPatenteLookup() {
@@ -229,8 +322,16 @@ export function initNewResPatenteLookup() {
 }
 
 export async function openNewReservationModal() {
+    editingResId = null;
+    editingOriginalReserva = null;
+    newResCalculatedTotal = 0;
+    newResLiveDiscount = null;
+    pendingEditResumo = null;
+    setNewResModalMode(false);
     const formEl = document.getElementById('form-new-reservation');
     if (formEl) formEl.reset();
+    const payRow = document.getElementById('new-res-metodo-total-row');
+    if (payRow) payRow.style.justifyContent = 'space-between';
 
     const now = getVirtualNow();
     const hh = String(now.getHours()).padStart(2, '0');
@@ -285,12 +386,136 @@ export async function openNewReservationModal() {
             b.nombre.trim().toLowerCase().includes(mySucursal.trim().toLowerCase())
         );
         sucursalInput.value = branch ? branch.nombre : (mySucursal || newResBranches[0]?.nombre || '');
+        if (!newResSucursalListenerInit) {
+            newResSucursalListenerInit = true;
+            sucursalInput.addEventListener('change', () => { refreshNewResLiveDiscount(); });
+        }
     }
     updateNewHourlySlotsUI();
+    refreshNewResLiveDiscount();
 
     if (!newResPickersInitialized && window.flatpickr) {
         initNewReservationPickers();
     }
+
+    if (baseUi.openModal) baseUi.openModal('modal-new-reservation');
+    updateNewReservationPrice();
+}
+
+function setNewResModalMode(editing) {
+    const title = document.getElementById('new-res-modal-title');
+    const subtitle = document.getElementById('new-res-modal-subtitle');
+    const submit = document.getElementById('new-res-submit-btn');
+    if (title) title.innerText = editing ? 'EDITAR RESERVA MANUAL' : 'NUEVA RESERVA MANUAL';
+    if (subtitle) subtitle.innerText = editing ? 'Modificá los datos de la reserva' : 'Reserva y pago en la sucursal asignada';
+    if (submit) {
+        const span = submit.querySelector('span');
+        if (span) span.innerText = editing ? 'GUARDAR CAMBIOS' : 'CREAR Y PAGAR';
+    }
+}
+
+export async function openEditReservationModal(resId) {
+    const r = allReservations.find(x => x.id === resId) || window.allReservations?.find(x => x.id === resId);
+    if (!r) return;
+
+    await openNewReservationModal();
+    editingResId = resId;
+    editingOriginalReserva = r;
+    setNewResModalMode(true);
+
+    // CARGAR SITUACIÓN DE DESCUENTO PARA MOSTRAR EL TOTAL CON DESCUENTO EN EDICIÓN
+    newResLiveDiscount = null;
+    try {
+        const infoRes = await api.get(`/admin/reservations/${resId}/redemption-info`);
+        if (infoRes.ok && infoRes.data && infoRes.data.aplica) {
+            newResLiveDiscount = { porc: infoRes.data.valor_descuento || 0, fuente: infoRes.data.fuente, ticketId: infoRes.data.ticket_id };
+        }
+    } catch (e) { /* el total se muestra sin descuento */ }
+
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+
+    const sucursalInput = document.getElementById('new-res-sucursal');
+    if (sucursalInput && r.sucursal_nombre) sucursalInput.value = r.sucursal_nombre;
+
+    const tipoEl = document.getElementById('new-res-tipo');
+    const tipoVehEl = document.getElementById('new-res-tipo-vehiculo');
+    const patenteEl = document.getElementById('new-res-patente');
+    if (patenteEl) patenteEl.value = r.patente || '';
+    resetNewResPatenteLookup();
+    initNewResPatenteLookup();
+    if (r.user_id) {
+        newResLinkedUserId = r.user_id;
+        const badge = document.getElementById('new-res-patente-owner-badge');
+        if (badge) {
+            const span = badge.querySelector('span');
+            if (span) span.textContent = `${r.usuario_nombre || 'Cliente'} ${r.usuario_apellido || ''}`;
+            const icon = badge.querySelector('i');
+            if (icon) icon.className = 'fas fa-user-check';
+            badge.style.color = '#27ae60';
+            badge.style.display = 'inline-flex';
+        }
+    }
+    // RE-DETECCION AUTOMATICA DEL DUEÑO SEGUN LA PATENTE (IGUAL QUE AL CREAR)
+    setTimeout(async () => {
+        await lookupNewResPatente();
+        updateNewReservationPrice();
+    }, 60);
+    if (tipoEl) {
+        tipoEl.value = r.tipo_estadia || 'hora';
+        updateNewFormGroups(tipoEl.value);
+    }
+    if (tipoVehEl && r.tipo_vehiculo) {
+        tipoVehEl.value = r.tipo_vehiculo;
+        updateNewVehicleTypeIcon(r.tipo_vehiculo);
+    }
+
+    const tipoEstadia = r.tipo_estadia || 'hora';
+    const sDate = (r.fecha_inicio || '').split(' ')[0];
+    const eDate = (r.fecha_fin || '').split(' ')[0];
+
+    if (tipoEstadia === 'hora') {
+        const sTime = ((r.fecha_inicio || '').split(' ')[1] || '08:00').slice(0, 5);
+        const eTime = ((r.fecha_fin || '').split(' ')[1] || '09:00').slice(0, 5);
+        const start = new Date(`${sDate}T${sTime}`);
+        const end = new Date(`${eDate}T${eTime}`);
+        const qty = !isNaN(start.getTime()) && !isNaN(end.getTime())
+            ? Math.max(0.5, Math.round(((end - start) / 3600000) * 10) / 10)
+            : 1;
+        if (newResPickers.dateOnly) newResPickers.dateOnly.setDate(sDate || 'today', true);
+        else setVal('new-res-date-only', sDate);
+        setVal('new-res-time-only', sTime);
+        setVal('new-res-hours-qty', qty);
+    } else if (tipoEstadia === 'dia') {
+        if (newResPickers.dayOnly) newResPickers.dayOnly.setDate(sDate || 'today', true);
+        else setVal('new-res-day-only', sDate);
+    } else {
+        const days = { 'semana': 7, 'quincena': 15, 'mes': 30 };
+        const pickerNames = { 'semana': 'weekStart', 'quincena': 'fortnightStart', 'mes': 'monthStart' };
+        const endIds = { 'semana': 'new-res-week-end', 'quincena': 'new-res-fortnight-end', 'mes': 'new-res-month-end' };
+        const startIds = { 'semana': 'new-res-week-start', 'quincena': 'new-res-fortnight-start', 'mes': 'new-res-month-start' };
+        const picker = newResPickers[pickerNames[tipoEstadia]];
+        if (picker) picker.setDate(sDate || 'today', true);
+        else setVal(startIds[tipoEstadia], sDate);
+        updateNewPeriodEnd(sDate, days[tipoEstadia], `#${endIds[tipoEstadia]}`);
+    }
+
+    const payGroup = document.getElementById('new-res-metodo-pago-group');
+    const payRow = document.getElementById('new-res-metodo-total-row');
+    if (r.estado_pago === 'Pagado') {
+        if (payGroup) payGroup.style.display = 'none';
+        if (payRow) payRow.style.justifyContent = 'center';
+    } else {
+        if (payGroup) payGroup.style.display = '';
+        if (payRow) payRow.style.justifyContent = 'space-between';
+        setVal('new-res-metodo-pago', r.metodo_pago || 'Efectivo');
+    }
+
+    newSlotRangeStart = null;
+    newSlotRangeEnd = null;
+    newSlotRangeDate = null;
+
+    updateNewReservationPrice();
+    updateNewHourlySlotsUI();
 
     if (baseUi.openModal) baseUi.openModal('modal-new-reservation');
     updateNewReservationPrice();
@@ -312,11 +537,11 @@ function initNewReservationPickers() {
             updateNewHourlySlotsUI();
         }
     };
-    flatpickr("#new-res-date-only", common);
-    flatpickr("#new-res-day-only", common);
-    flatpickr("#new-res-week-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 7, '#new-res-week-end') });
-    flatpickr("#new-res-fortnight-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 15, '#new-res-fortnight-end') });
-    flatpickr("#new-res-month-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 30, '#new-res-month-end') });
+    newResPickers.dateOnly = flatpickr("#new-res-date-only", common);
+    newResPickers.dayOnly = flatpickr("#new-res-day-only", common);
+    newResPickers.weekStart = flatpickr("#new-res-week-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 7, '#new-res-week-end') });
+    newResPickers.fortnightStart = flatpickr("#new-res-fortnight-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 15, '#new-res-fortnight-end') });
+    newResPickers.monthStart = flatpickr("#new-res-month-start", { ...common, onChange: (sd, ds) => updateNewPeriodEnd(ds, 30, '#new-res-month-end') });
 
     document.getElementById('new-res-hours-qty')?.addEventListener('input', () => updateNewReservationPrice());
 
@@ -408,7 +633,7 @@ export async function updateNewReservationPrice() {
         if (type === 'hora') {
             const fecha = document.getElementById('new-res-date-only').value;
             const hora = document.getElementById('new-res-time-only').value;
-            const qty = parseInt(document.getElementById('new-res-hours-qty').value) || 1;
+            const qty = parseFloat(document.getElementById('new-res-hours-qty').value) || 1;
             if (fecha && hora) {
                 inicio = new Date(`${fecha}T${hora}`);
                 fin = new Date(inicio.getTime() + qty * 3600000);
@@ -440,7 +665,7 @@ export async function updateNewReservationPrice() {
     }
 
     if (type === 'hora') {
-        const qty = parseInt(document.getElementById('new-res-hours-qty').value);
+        const qty = parseFloat(document.getElementById('new-res-hours-qty').value);
         if (isNaN(qty) || qty <= 0) {
             if (elMonto) elMonto.innerText = `$ ---`;
             return;
@@ -475,7 +700,35 @@ export async function updateNewReservationPrice() {
     else if (type === 'mes') total = Math.ceil(durationHours / (24 * 30)) * rates.mes;
     else total = Math.ceil(durationHours) * rates.hora;
 
-    if (elMonto) elMonto.innerText = `$ ${utils.formatNum(total)}`;
+    const base = Math.round(total * 100) / 100;
+    const dis = newResLiveDiscount;
+    const porc = dis && dis.porc > 0 ? dis.porc : 0;
+    let desc = 0;
+    let final = base;
+    if (porc > 0) {
+        desc = Math.round(base * porc / 100 * 100) / 100;
+        final = Math.round((base - desc) * 100) / 100;
+    }
+    // EN EDICIÓN EL MONTO CÁLCULADO VIENE DESCONTADO (EL BACKEND RECALCULA IGUAL);
+    // EN ALTA QUEDA EN BASE (EL DIÁLOGO DE CONFIRMAR PAGO RE-DERIVA EL DESCUENTO).
+    newResCalculatedTotal = editingResId ? final : base;
+
+    if (elMonto) elMonto.innerText = `$ ${utils.formatNum(final)}`;
+
+    const discLine = document.getElementById('new-res-discount-line');
+    if (discLine) {
+        if (porc > 0) {
+            discLine.style.display = 'flex';
+            discLine.innerHTML = `
+                <span style="color: #777; text-decoration: line-through; font-weight: 700; font-size: 0.95rem;">$ ${utils.formatNum(base)}</span>
+                <span style="color: #c084fc; font-weight: 700; letter-spacing: 0.5px;">DESC ${porc}% · -$ ${utils.formatNum(desc)}</span>`;
+            discLine.style.alignItems = 'center';
+            discLine.style.gap = '8px';
+        } else {
+            discLine.style.display = 'none';
+            discLine.innerHTML = '';
+        }
+    }
 }
 
 // ==========================================================================
@@ -534,15 +787,15 @@ async function updateNewHourlySlotsUI() {
     }
 
     try {
-        const res = await api.get('/user/reservations/disabled-hours', {
-            params: {
-                sucursal_nombre: sucursal,
-                fecha: fecha,
-                tipo_vehiculo: tipoVehiculo,
-                duracion_horas: 1,
-                paso_minutos: 30
-            }
-        });
+        const params = {
+            sucursal_nombre: sucursal,
+            fecha: fecha,
+            tipo_vehiculo: tipoVehiculo,
+            duracion_horas: 1,
+            paso_minutos: 30
+        };
+        if (editingResId) params.exclude_id = editingResId;
+        const res = await api.get('/user/reservations/disabled-hours', { params });
 
         const reservedRanges = (res.ok && res.data && Array.isArray(res.data.reserved_ranges)) ? res.data.reserved_ranges : [];
 
@@ -728,7 +981,7 @@ export async function handleAdminNewReservation(event) {
         if (tipo === 'hora') {
             const fecha = document.getElementById('new-res-date-only').value;
             const hora = document.getElementById('new-res-time-only').value;
-            const qty = parseInt(document.getElementById('new-res-hours-qty').value) || 1;
+            const qty = parseFloat(document.getElementById('new-res-hours-qty').value) || 1;
             if (!fecha || !hora) throw new Error("Seleccioná fecha y hora");
             inicio = `${fecha} ${hora}`;
             const s = new Date(`${fecha}T${hora}`);
@@ -753,14 +1006,15 @@ export async function handleAdminNewReservation(event) {
         return utils.showToast(e.message, 'error');
     }
 
-    const av = await api.get('/user/reservations/check-availability', {
-        params: {
-            sucursal_nombre: sucursal,
-            fecha_inicio: inicio,
-            fecha_fin: fin,
-            tipo_vehiculo: tipoVehiculo
-        }
-    });
+    const avParams = {
+        sucursal_nombre: sucursal,
+        fecha_inicio: inicio,
+        fecha_fin: fin,
+        tipo_vehiculo: tipoVehiculo
+    };
+    if (editingResId) avParams.exclude_id = editingResId;
+
+    const av = await api.get('/user/reservations/check-availability', { params: avParams });
     if (av.ok && av.data && !av.data.disponible) {
         return utils.showToast(av.data.mensaje || 'No hay disponibilidad para el horario solicitado.', 'info');
     }
@@ -771,32 +1025,225 @@ export async function handleAdminNewReservation(event) {
         fecha_inicio: inicio,
         fecha_fin: fin,
         sucursal_nombre: sucursal,
-        metodo_pago: metodoPago,
-        tipo_vehiculo: tipoVehiculo,
-        pagar: true
+        tipo_vehiculo: tipoVehiculo
     };
 
-    if (newResLinkedUserId) {
-        payload.user_id = newResLinkedUserId;
+    if (editingResId) {
+        if (document.getElementById('new-res-metodo-pago-group')?.style.display !== 'none') {
+            payload.metodo_pago = metodoPago;
+        }
+        payload.user_id = newResLinkedUserId || null;
+    } else {
+        payload.metodo_pago = metodoPago;
+        payload.pagar = true;
+        if (newResLinkedUserId) {
+            payload.user_id = newResLinkedUserId;
+        }
     }
+
+    // AVISO DE CONFIRMACION AL EDITAR UNA RESERVA PAGADA (DIFERENCIA DE IMPORTE)
+    if (editingResId && editingOriginalReserva && String(editingOriginalReserva.estado_pago).toLowerCase() === 'pagado') {
+        const totalAnterior = (editingOriginalReserva.monto_total || 0) - (editingOriginalReserva.monto_reembolsado || 0);
+        const diferencia = Math.round((newResCalculatedTotal - totalAnterior) * 100) / 100;
+
+        const resumoEl = document.getElementById('edit-confirm-resumo');
+        const actual = editingOriginalReserva;
+        if (resumoEl) {
+            const rows = [
+                ['Reserva', `#${editingResId}`],
+                ['Patente', actual.patente || patente],
+                ['Sucursal', actual.sucursal_nombre || sucursal],
+                ['Estadía', `${inicio} → ${fin}`],
+                ['Total pagado', `$ ${utils.formatNum(actual.monto_total || 0)}${(actual.monto_reembolsado || 0) > 0 ? ` (ya reembolsado -$ ${utils.formatNum(actual.monto_reembolsado)})` : ''}`],
+                ['Total nuevo', `$ ${utils.formatNum(newResCalculatedTotal)}`]
+            ];
+            resumoEl.innerHTML = rows.map(r => `<div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">${r[0]}</span><b>${r[1]}</b></div>`).join('');
+        }
+
+        const diffEl = document.getElementById('edit-confirm-diff');
+        if (diffEl) {
+            if (diferencia > 0) {
+                diffEl.innerHTML = `<i class="fas fa-arrow-up" style="margin-right:6px;"></i>Se cobran $ ${utils.formatNum(diferencia)} por la diferencia`;
+                diffEl.style.color = '#27ae60';
+            } else if (diferencia < 0) {
+                diffEl.innerHTML = `<i class="fas fa-arrow-down" style="margin-right:6px;"></i>Se reembolsan $ ${utils.formatNum(Math.abs(diferencia))}`;
+                diffEl.style.color = '#e74c3c';
+            } else {
+                diffEl.innerHTML = '<i class="fas fa-equals" style="margin-right:6px;"></i>Sin diferencias de importe';
+                diffEl.style.color = '#aaa';
+            }
+        }
+
+        const methodGroup = document.getElementById('edit-confirm-method-group');
+        if (methodGroup) {
+            const needsMethod = diferencia !== 0;
+            methodGroup.style.display = needsMethod ? '' : 'none';
+            const label = methodGroup.querySelector('label');
+            if (label) label.textContent = diferencia > 0 ? '¿Con qué método se cobra la diferencia?' : '¿Con qué método se reembolsa la diferencia?';
+        }
+
+        const methodSelect = document.getElementById('edit-confirm-metodo');
+        if (methodSelect) {
+            if (diferencia < 0) {
+                const origMetodo = String(actual.metodo_pago || '').toUpperCase().replace(/\s+/g, '');
+                methodSelect.value = ['CAJA', 'EFECTIVO'].includes(origMetodo) ? 'Efectivo' : 'Saldo';
+            } else if (diferencia > 0) {
+                methodSelect.value = ['CAJA', 'EFECTIVO'].includes(String(actual.metodo_pago || '').toUpperCase().replace(/\s+/g, '')) ? 'Efectivo' : 'Saldo';
+            }
+        }
+
+        pendingEditResumo = { payload, diferencia };
+        if (baseUi.openModal) baseUi.openModal('modal-edit-resumo');
+        return;
+    }
+
+    // DETECTAR DESCUENTO DE RESERVA VIGENTE PARA APLICARLO EN CAJA (NUEVA RESERVA + PAGO)
+    if (!editingResId && newResLinkedUserId && newResCalculatedTotal > 0) {
+        const avail = await api.get('/admin/redemptions/available', { params: { user_id: newResLinkedUserId, sucursal } });
+        if (avail.ok && Array.isArray(avail.data) && avail.data.length > 0) {
+            const d = avail.data[0];
+            const pct = d.valor_descuento || 0;
+            const descuentoValor = Math.round(newResCalculatedTotal * pct / 100 * 100) / 100;
+            const montoFinal = Math.round((newResCalculatedTotal - descuentoValor) * 100) / 100;
+            const aplicar = await utils.showConfirm('Descuento aplicable', `
+                <div style="text-align:left; font-size:0.85rem; line-height:1.8;">
+                    <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Monto reserva</span><b>$${utils.formatNum(newResCalculatedTotal)}</b></div>
+                    <div style="display:flex; justify-content:space-between; gap:12px; color:#c084fc;"><span><i class="fas fa-percent" style="margin-right:4px;"></i>Descuento ${pct}% (${d.titulo || ''})</span><b>-$ ${utils.formatNum(descuentoValor)}</b></div>
+                    <div style="border-top:1px solid rgba(255,255,255,0.1); margin:8px 0 6px; padding-top:8px; display:flex; justify-content:space-between; gap:12px;"><span style="color:#aaa;">Total a pagar</span><b style="font-size:1.05rem;">$${utils.formatNum(montoFinal)}</b></div>
+                </div>
+            `);
+            if (aplicar) payload.redemption_ticket_id = d.id;
+        }
+    }
+
+    await _submitReservationPayload(payload);
+}
+
+export function confirmEditResumoProceed() {
+    if (!pendingEditResumo) return;
+    const { payload, diferencia } = pendingEditResumo;
+    pendingEditResumo = null;
+    const methodSelect = document.getElementById('edit-confirm-metodo');
+    const metodo = methodSelect ? methodSelect.value : null;
+    if (diferencia > 0) payload.cobrar_diferencia_metodo = metodo;
+    else if (diferencia < 0) payload.reembolsar_diferencia_metodo = metodo;
+    if (baseUi.closeModal) baseUi.closeModal('modal-edit-resumo');
+    _submitReservationPayload(payload);
+}
+
+export function cancelEditResumo() {
+    pendingEditResumo = null;
+    if (baseUi.closeModal) baseUi.closeModal('modal-edit-resumo');
+}
+
+async function _submitReservationPayload(payload) {
+    const btn = document.getElementById('new-res-submit-btn');
+    const originalContent = btn ? btn.innerHTML : '';
 
     if (btn) {
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> PROCESANDO...';
         btn.disabled = true;
     }
 
-    const res = await api.post('/admin/reservations', payload);
+    const res = editingResId
+        ? await api.put(`/admin/reservations/${editingResId}`, payload)
+        : await api.post('/admin/reservations', payload);
     if (res.ok) {
-        utils.showToast(`Reserva creada y pago registrado (${metodoPago})`, 'success');
+        let msg = editingResId ? `Reserva #${editingResId} actualizada` : `Reserva creada y pago registrado (${res.data?.metodo_pago || payload.metodo_pago || ''})`;
+        if (editingResId && res.data && res.data.accion === 'cobro') {
+            msg = `Reserva #${editingResId} actualizada. Se cobraron $ ${utils.formatNum(res.data.diferencia)} (${res.data.metodo_pago || 'Caja'})`;
+        } else if (editingResId && res.data && res.data.accion === 'reembolso') {
+            msg = `Reserva #${editingResId} actualizada. Se reembolsaron $ ${utils.formatNum(Math.abs(res.data.diferencia))} (${res.data.metodo_pago || 'Saldo'})`;
+        }
+        utils.showToast(msg, 'success');
         resetNewResPatenteLookup();
+        editingResId = null;
+        editingOriginalReserva = null;
+        setNewResModalMode(false);
         if (baseUi.closeModal) baseUi.closeModal('modal-new-reservation');
         loadAdminReservations();
     } else {
-        utils.showToast(res.error || 'Error al crear la reserva', 'error');
+        utils.showToast(res.error || 'Error al guardar la reserva', 'error');
     }
 
     if (btn) {
         btn.innerHTML = originalContent;
         btn.disabled = false;
     }
+}
+
+function getStorageKey() {
+    const scope = (localStorage.getItem('rol') || 'admin') + '_' + (localStorage.getItem('sucursal') || 'all');
+    return 'autopass_last_seen_res_id_' + scope;
+}
+
+export async function updateReservationBadge() {
+    const badge = document.getElementById('reservation-badge-sidebar');
+    if (!badge) return;
+
+    const activeTab = localStorage.getItem('activeAdminTab');
+    const storageKey = getStorageKey();
+    let lastSeenId = parseInt(localStorage.getItem(storageKey), 10);
+
+    // Si el usuario está actualmente en la pestaña de reservas, ocultar badge y registrar latest_id
+    if (activeTab === 'admin-reservations') {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+        const res = await api.get('/admin/reservations/new-count');
+        if (res && res.ok && res.data && res.data.latest_id !== undefined) {
+            localStorage.setItem(storageKey, res.data.latest_id);
+        }
+        return;
+    }
+
+    // Primera vez en este navegador/sesión: inicializar con el ID actual para no mostrar reservas históricas
+    if (isNaN(lastSeenId)) {
+        const res = await api.get('/admin/reservations/new-count');
+        if (res && res.ok && res.data && res.data.latest_id !== undefined) {
+            localStorage.setItem(storageKey, res.data.latest_id);
+        }
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+        return;
+    }
+
+    // Consultar cantidad de reservas nuevas desde lastSeenId
+    const res = await api.get(`/admin/reservations/new-count?since_id=${lastSeenId}`);
+    if (!res || !res.ok || !res.data) return;
+
+    const count = res.data.count || 0;
+    if (count > 0) {
+        badge.style.display = 'inline-flex';
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.add('pulse');
+    } else {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+    }
+}
+
+export async function clearReservationBadge() {
+    const badge = document.getElementById('reservation-badge-sidebar');
+    if (badge) {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+    }
+    const storageKey = getStorageKey();
+    try {
+        const res = await api.get('/admin/reservations/new-count');
+        if (res && res.ok && res.data && res.data.latest_id !== undefined) {
+            localStorage.setItem(storageKey, res.data.latest_id);
+        }
+    } catch (e) {
+        console.error('[clearReservationBadge Error]', e);
+    }
+}
+
+window.updateReservationBadge = updateReservationBadge;
+window.clearReservationBadge = clearReservationBadge;
+
+if (!window._resBadgeInterval) {
+    window._resBadgeInterval = setInterval(() => {
+        updateReservationBadge();
+    }, 10000);
 }

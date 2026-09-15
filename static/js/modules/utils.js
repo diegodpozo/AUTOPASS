@@ -104,6 +104,11 @@ export function showToast(msg, type = 'default', duration = 5000) {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
+    // Evitar toasts duplicados idénticos en pantalla simultáneamente
+    const existing = Array.from(container.querySelectorAll('.toast:not(.hiding)'))
+        .some(el => el.querySelector('span')?.textContent?.trim() === (msg || '').trim());
+    if (existing) return;
+
     // CREAR ELEMENTO
     const t = document.createElement('div');
     t.className = `toast ${type}`;
@@ -160,7 +165,7 @@ export function showConfirm(title, msg) {
             titleEl.style.display = 'block';
             titleEl.innerText = title || '¿Estás seguro?';
         }
-        if (msg.includes('<')) {
+        if (msg && msg.includes('<')) {
             msgEl.innerHTML = msg;
         } else {
             msgEl.innerText = msg || 'Esta acción no se puede deshacer.';

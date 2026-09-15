@@ -26,6 +26,13 @@ export function initOccupancyWS() {
         if (typeof window.loadAdminTickets === 'function') {
             window.loadAdminTickets();
         }
+        if (typeof window.updateReservationBadge === 'function') {
+            window.updateReservationBadge();
+        }
+        const activeTab = localStorage.getItem('activeAdminTab');
+        if (activeTab === 'admin-reservations' && typeof window.loadAdminReservations === 'function') {
+            window.loadAdminReservations();
+        }
     };
 
     socket.onclose = () => {
