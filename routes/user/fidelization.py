@@ -28,6 +28,21 @@ def _crear_ticket(db: Session, user: models.User, promo: models.Promotion) -> mo
     if promo.tipo_canje == "voucher":
         observacion = "Este beneficio será válido por 30 días desde la fecha de emisión."
 
+    # UBICACION DE CANJE: SI LA PROMO NO DEFINE UNA PROPIA, FALLBACK A LA DIRECCION DE LA SUCURSAL ASIGNADA
+    direccion = promo.direccion
+    latitude = promo.latitude
+    longitude = promo.longitude
+
+    if not (latitude and longitude) and promo.sucursal:
+        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == promo.sucursal).first()
+        if branch:
+            if not direccion:
+                direccion = branch.direccion
+            if not latitude:
+                latitude = branch.latitude
+            if not longitude:
+                longitude = branch.longitude
+
     ticket = models.RedemptionTicket(
         user_id=user.id,
         promotion_id=promo.id,
@@ -41,6 +56,9 @@ def _crear_ticket(db: Session, user: models.User, promo: models.Promotion) -> mo
         estado="VIGENTE",
         qr_data=qr_data,
         observacion=observacion,
+        direccion=direccion,
+        latitude=latitude,
+        longitude=longitude,
         created_at=datetime.datetime.now().isoformat(),
     )
     db.add(ticket)
@@ -95,31 +113,47 @@ def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: mo
     }
     return result
 
-@router.post("/points-adjust")
-def adjust_points(delta: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """SUMAR O RESTAR PUNTOS AL USUARIO (SOLO PARA PRUEBAS). delta = +10 o -10.
-    Registra el movimiento en el historial de puntos."""
-    if delta == 0:
-        raise HTTPException(status_code=400, detail="Delta no puede ser cero")
-    if current_user.puntos_acumulados + delta < 0:
-        raise HTTPException(status_code=400, detail="No podés tener puntos negativos")
-
-    current_user.puntos_acumulados += delta
-    db.add(models.PointsLog(
-        user_id=current_user.id,
-        cantidad=delta,
-        motivo="Ajuste manual de prueba",
-        fecha=datetime.datetime.now().isoformat()
-    ))
-    db.commit()
-    return {"status": "ok", "puntos_acumulados": current_user.puntos_acumulados}
-
 @router.get("/redemption-tickets", response_model=List[schemas.RedemptionTicketResponse])
 def get_user_redemption_tickets(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """LISTA LOS TICKETS/VOUCHERS DE CANJE DEL USUARIO."""
-    return db.query(models.RedemptionTicket).filter(
+    """LISTA LOS TICKETS/VOUCHERS DE CANJE DEL USUARIO.
+    SI UN TICKET NO GUARDÓ UBICACIÓN (ej. canjeado antes de que la promo tuviera dirección),
+    se resuelve la dirección de SU PROMO actual, o la de la sucursal asignada como último recurso.
+    No se reescribe la BD: es solo enriquecimiento de la respuesta."""
+    tickets = db.query(models.RedemptionTicket).filter(
         models.RedemptionTicket.user_id == current_user.id
     ).order_by(models.RedemptionTicket.id.desc()).all()
+
+    result = []
+    for t in tickets:
+        direccion, latitude, longitude = t.direccion, t.latitude, t.longitude
+
+        if not (latitude and longitude) and t.promotion_id:
+            promo = db.query(models.Promotion).filter(models.Promotion.id == t.promotion_id).first()
+            if promo:
+                if not direccion:
+                    direccion = promo.direccion
+                if not latitude:
+                    latitude = promo.latitude
+                if not longitude:
+                    longitude = promo.longitude
+
+        if not (latitude and longitude) and t.sucursal:
+            branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == t.sucursal).first()
+            if branch:
+                if not direccion:
+                    direccion = branch.direccion
+                if not latitude:
+                    latitude = branch.latitude
+                if not longitude:
+                    longitude = branch.longitude
+
+        resp = schemas.RedemptionTicketResponse.model_validate(t)
+        resp.direccion = direccion
+        resp.latitude = latitude
+        resp.longitude = longitude
+        result.append(resp)
+
+    return result
 
 @router.get("/redemptions/available")
 def get_available_redemptions(sucursal: str = None, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

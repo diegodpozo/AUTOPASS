@@ -43,8 +43,10 @@ def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehicu
 
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
     if aforo:
-        val = getattr(aforo, attr_cap, 5)
-        return val if (val is not None and val > 0) else 5
+        val = getattr(aforo, attr_cap, None)
+        if val is None:
+            return 5
+        return val if val > 0 else 0
     return 5
 
 
@@ -134,21 +136,9 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
     """VERIFICA SI HAY PLAZAS DE RESERVA DISPONIBLES EN LA SUCURSAL PARA EL PERIODO Y TIPO DE VEHICULO SOLICITADO.
     RETORNA {disponible, capacidad_total, ocupada, restan, mensaje}."""
     tipo_vehiculo = (tipo_vehiculo or "Auto").strip().title()
-    attr_cap = "capacidad_reservas_autos"
-    if tipo_vehiculo == "Moto":
-        attr_cap = "capacidad_reservas_motos"
-    elif tipo_vehiculo == "Camioneta":
-        attr_cap = "capacidad_reservas_camionetas"
 
     # 1. OBTENER CAPACIDAD TOTAL DE PLAZAS EXCLUSIVAS PARA RESERVAS DEL TIPO DE VEHICULO (PB + PISOS)
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
-    capacidad_reservas = 0
-    if branch and branch.floors:
-        capacidad_reservas = sum(getattr(f, attr_cap, 5) for f in branch.floors)
-    else:
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
-        if aforo:
-            capacidad_reservas = getattr(aforo, attr_cap, 5)
+    capacidad_reservas = _capacidad_reservas_para_tipo(db, sucursal_nombre, tipo_vehiculo)
 
     if capacidad_reservas == 0:
         return {"disponible": False, "capacidad_total": 0, "ocupada": 0, "restan": 0, "mensaje": f"La sede no cuenta con plazas asignadas para reservas de {tipo_vehiculo}s."}

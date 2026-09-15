@@ -85,10 +85,22 @@ export async function loadAdminReservations() {
         
         const statTotal = document.getElementById('admin-res-stat-total');
         const statPending = document.getElementById('admin-res-stat-pending');
-        const statPresence = document.getElementById('admin-res-stat-presence');
+        const statToday = document.getElementById('admin-res-stat-today');
         if (statTotal) statTotal.innerText = utils.formatNum(res.data.length);
         if (statPending) statPending.innerText = utils.formatNum(res.data.filter(r => r.estado_reserva === 'Pendiente').length);
-        if (statPresence) statPresence.innerText = utils.formatNum(res.data.filter(r => r.en_predio).length);
+        if (statToday) {
+            const now = getVirtualNow();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            const countToday = res.data.filter(r => {
+                if (r.estado_reserva === 'Completada' || r.estado_reserva === 'Cancelada') return false;
+                const ini = new Date(String(r.fecha_inicio || '').replace(/-/g, '/'));
+                const fin = new Date(String(r.fecha_fin || '').replace(/-/g, '/'));
+                if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return false;
+                return ini <= todayEnd && fin >= todayStart;
+            }).length;
+            statToday.innerText = utils.formatNum(countToday);
+        }
     }
 }
 
@@ -621,7 +633,7 @@ export async function updateNewReservationPrice() {
         if (type === 'hora') {
             const fecha = document.getElementById('new-res-date-only').value;
             const hora = document.getElementById('new-res-time-only').value;
-            const qty = parseInt(document.getElementById('new-res-hours-qty').value) || 1;
+            const qty = parseFloat(document.getElementById('new-res-hours-qty').value) || 1;
             if (fecha && hora) {
                 inicio = new Date(`${fecha}T${hora}`);
                 fin = new Date(inicio.getTime() + qty * 3600000);
@@ -653,7 +665,7 @@ export async function updateNewReservationPrice() {
     }
 
     if (type === 'hora') {
-        const qty = parseInt(document.getElementById('new-res-hours-qty').value);
+        const qty = parseFloat(document.getElementById('new-res-hours-qty').value);
         if (isNaN(qty) || qty <= 0) {
             if (elMonto) elMonto.innerText = `$ ---`;
             return;
@@ -969,7 +981,7 @@ export async function handleAdminNewReservation(event) {
         if (tipo === 'hora') {
             const fecha = document.getElementById('new-res-date-only').value;
             const hora = document.getElementById('new-res-time-only').value;
-            const qty = parseInt(document.getElementById('new-res-hours-qty').value) || 1;
+            const qty = parseFloat(document.getElementById('new-res-hours-qty').value) || 1;
             if (!fecha || !hora) throw new Error("Seleccioná fecha y hora");
             inicio = `${fecha} ${hora}`;
             const s = new Date(`${fecha}T${hora}`);

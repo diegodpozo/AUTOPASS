@@ -600,6 +600,12 @@
     border: 1px solid rgba(52, 152, 219, 0.25);
 }
 
+.voucher-type-badge.discount {
+    background: rgba(46, 204, 113, 0.12);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.25);
+}
+
 .voucher-branch-badge {
     background: rgba(197, 160, 89, 0.1);
     color: var(--dorado);
@@ -621,6 +627,22 @@
     background: rgba(46, 204, 113, 0.1);
     color: #2ecc71;
     border-color: rgba(46, 204, 113, 0.25);
+}
+
+.voucher-address-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--dorado);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    margin-top: 3px;
+    max-width: 100%;
+}
+
+.voucher-address-link:hover {
+    text-decoration: underline;
 }
 
 .voucher-card-body {

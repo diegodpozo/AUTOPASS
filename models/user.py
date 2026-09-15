@@ -72,6 +72,10 @@ class Promotion(Base):
     tipo_canje = Column(String, default="voucher")
     # PORCENTAJE DE DESCUENTO (solo aplica a tipo_canje == 'descuento_reserva')
     valor_descuento = Column(Integer, nullable=True)
+    # UBICACION DONDE SE CANJEA EL BENEFICIO (seleccionada en el mapa al crear/editar)
+    direccion = Column(String, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
 class RedemptionTicket(Base):
     """VOUCHER/TICKET PERSISTENTE GENERADO AL CANJEAR PUNTOS POR UN BENEFICIO."""
@@ -92,6 +96,11 @@ class RedemptionTicket(Base):
     created_at = Column(String, default=datetime_now_iso)
     fecha_uso = Column(String, nullable=True)
     reserva_id = Column(Integer, nullable=True)        # RESERVA A LA QUE SE APLICO (si aplica)
+
+    # SNAPSHOT DE LA UBICACION DEL CANJE (para el botón de Google Maps en la card del voucher)
+    direccion = Column(String, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="redemption_tickets")
 

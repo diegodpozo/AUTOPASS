@@ -121,3 +121,43 @@ def test_disabled_dates_calculation(db):
     )
     assert "10:00" in disabled_hours
     assert "11:00" not in disabled_hours
+
+
+def test_capacidad_reservas_cero_no_muestra_disponibilidad(db):
+    """REGRESION: SI LA SEDE NO TIENE PLAZAS ASIGNADAS PARA RESERVAS (capacidad 0 EXPLICITA),
+    NO DEBE MOSTRARSE NINGUN HORARIO COMO DISPONIBLE. ANTES EL FALLBACK A 5 HACIA QUE EL
+    PICKER MOSTRARA TODO LIBRE PERO LA RESERVA SE RECHAZARA AL CREARSE."""
+    branch_name = "AUTOPASS Ituzaingó"
+    branch = ParkingBranch(nombre=branch_name, direccion="Av. Ituzaingó 456", horario="24hs")
+    # capacidad_reservas_autos = 0 EXPLICITO: NO HAY PLAZAS PARA RESERVAS DE AUTOS
+    aforo = ParkingAforo(sucursal=branch_name, capacidad_total=0, capacidad_reservas_autos=0)
+    db.add_all([branch, aforo])
+    db.commit()
+
+    # 1. verificar_disponibilidad debe rechazar (NO usar el fallback de 5)
+    disp = verificar_disponibilidad(db, branch_name, "2026-09-20 10:00", "2026-09-20 11:00", tipo_vehiculo="Auto")
+    assert disp["disponible"] is False
+    assert disp["capacidad_total"] == 0
+    assert "no cuenta con plazas" in disp["mensaje"]
+
+    # 2. Las horas deshabilitadas deben cubrir TODO el día (no devolver [] y fingir que hay lugar)
+    disabled_hours = obtener_horas_deshabilitadas(
+        db, sucursal_nombre=branch_name, fecha_str="2026-09-20", tipo_vehiculo="Auto"
+    )
+    assert "10:00" in disabled_hours
+    assert len(disabled_hours) >= 24
+
+    # 3. Las fechas deshabilitadas deben incluir los días evaluados
+    disabled_days = obtener_fechas_deshabilitadas(
+        db, sucursal_nombre=branch_name, tipo_vehiculo="Auto",
+        tipo_estadia="hora", fecha_desde_str="2026-09-20", dias_evaluar=3
+    )
+    assert "2026-09-20" in disabled_days
+    assert "2026-09-22" in disabled_days
+
+    # 4. SI SE CONFIGURA CAPACIDAD POSTERIORMENTE, LA DISPONIBILIDAD VUELVE A FUNCIONAR
+    aforo.capacidad_reservas_autos = 2
+    db.commit()
+    disp2 = verificar_disponibilidad(db, branch_name, "2026-09-20 10:00", "2026-09-20 11:00", tipo_vehiculo="Auto")
+    assert disp2["disponible"] is True
+    assert disp2["restan"] == 2

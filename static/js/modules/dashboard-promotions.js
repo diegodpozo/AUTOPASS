@@ -6,6 +6,105 @@ import { showToast, showConfirm } from './utils.js';
  * GESTION DE BENEFICIOS Y PROMOCIONES PARA EL SISTEMA DE FIDELIZACION.
  */
 
+let promotionsCache = [];
+let editingPromotionId = null;
+let promoMap = null;
+let promoMarker = null;
+let reverseGeocodeTimer = null;
+
+export function initPromoMap() {
+    const mapEl = document.getElementById('promo-map-picker');
+    if (!mapEl || promoMap || !window.L) return;
+
+    promoMap = window.L.map('promo-map-picker').setView([-34.5888, -58.3900], 13);
+
+    const googleStreets = window.L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; <a href="https://www.google.com/maps" target="_blank">Google Maps</a>'
+    });
+    googleStreets.addTo(promoMap);
+
+    promoMap.on('click', function(e) {
+        updatePromoMarker(e.latlng.lat, e.latlng.lng);
+    });
+}
+
+function updatePromoMarker(lat, lng) {
+    if (!promoMap || !window.L) return;
+
+    if (promoMarker) {
+        promoMarker.setLatLng([lat, lng]);
+    } else {
+        const goldIcon = window.L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #C5A059; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #C5A059;"></div>`,
+            iconSize: [15, 15],
+            iconAnchor: [7, 7]
+        });
+        promoMarker = window.L.marker([lat, lng], { icon: goldIcon }).addTo(promoMap);
+    }
+
+    const elLat = document.getElementById('promo-latitude');
+    const elLng = document.getElementById('promo-longitude');
+    if (elLat) elLat.value = lat.toFixed(6);
+    if (elLng) elLng.value = lng.toFixed(6);
+
+    // REVERSE GEOCODING: AL MARCA R UN PUNTO EN EL MAPA, ACTUALIZAR EL CAMPO DE DIRECCION CON ESA CALLE
+    const dirInput = document.getElementById('promo-direccion');
+    if (dirInput && window.L) {
+        if (reverseGeocodeTimer) clearTimeout(reverseGeocodeTimer);
+        reverseGeocodeTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(6)}&lon=${lng.toFixed(6)}&addressdetails=1`);
+                const data = await res.json();
+                if (data && data.display_name) {
+                    const a = data.address || {};
+                    const calle = [a.road || a.pedestrian || a.suburb, a.house_number].filter(Boolean).join(' ');
+                    const localidad = a.city || a.town || a.county || '';
+                    dirInput.value = [calle, localidad].filter(Boolean).join(', ') || data.display_name;
+                }
+            } catch (err) {
+                console.error('Error en reverse geocoding:', err);
+            }
+        }, 500);
+    }
+}
+
+function _resetPromoMap() {
+    if (promoMarker && promoMap) {
+        promoMap.removeLayer(promoMarker);
+        promoMarker = null;
+    }
+    if (promoMap) promoMap.setView([-34.5888, -58.3900], 13);
+}
+
+export async function searchPromoAddress() {
+    const address = document.getElementById('promo-direccion')?.value;
+    if (!address) return showToast('Ingresá una dirección para buscar');
+
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+
+            initPromoMap();
+            updatePromoMarker(lat, lng);
+            if (promoMap) promoMap.setView([lat, lng], 16);
+            showToast('Ubicación encontrada', 'success');
+        } else {
+            showToast('No se encontró la dirección. Intentá ser más específico.', 'error');
+        }
+    } catch (err) {
+        console.error('Error en geocoding:', err);
+        showToast('Error al buscar la dirección', 'error');
+    }
+}
+
 export async function loadPromotionsAdmin() {
     const tbody = document.getElementById('promotions-admin-table-body');
     if (!tbody) return;
@@ -23,6 +122,7 @@ export async function loadPromotionsAdmin() {
 
     const res = await api.get('/admin/promotions');
     if (res.ok) {
+        promotionsCache = res.data;
         tbody.innerHTML = res.data.map(p => {
             const branchLabel = p.sucursal ? p.sucursal.replace('AUTOPASS ', '') : 'Global';
             const branchClass = p.sucursal ? 'text-dorado' : 'text-success';
@@ -37,6 +137,9 @@ export async function loadPromotionsAdmin() {
             const actionCell = isStaff
                 ? `<span class="text-xs text-muted font-bold">SOLO LECTURA</span>`
                 : `<div class="flex-row gap-8 justify-center actions-reveal">
+                        <button class="btn-icon-premium sm btn-edit-promo" onclick="editPromotion(${p.id})" title="Editar">
+                            <i class="fas fa-pen"></i>
+                        </button>
                         <button class="btn-icon-premium sm danger btn-delete-promo" onclick="deletePromotion(${p.id})" title="Eliminar">
                             <i class="fas fa-xmark"></i>
                         </button>
@@ -82,13 +185,11 @@ export async function loadPromotionsAdmin() {
     }
 }
 
-export async function showCreatePromotionModal() {
+async function _cargarSucursalesPromo(selectedNombre) {
     const rol = localStorage.getItem('rol');
-    if (rol === 'staff') return;
-    const sucursal = localStorage.getItem('sucursal') || '';
     const field = document.querySelector('.admin-only-field');
     const select = document.getElementById('promo-sucursal');
-    
+
     if (rol === 'admin') {
         // ADMIN GLOBAL: MOSTRAR CAMPO SUCURSAL
         if (field) field.style.display = 'block';
@@ -101,11 +202,12 @@ export async function showCreatePromotionModal() {
                 });
                 select.innerHTML = options;
                 select.disabled = false;
-                select.value = "";
+                select.value = selectedNombre || "";
             }
         }
     } else {
         // ADMIN LOCAL / LOGUEADO POR SUCURSAL: OCULTAR CAMPO SUCURSAL
+        const sucursal = localStorage.getItem('sucursal') || '';
         if (field) field.style.display = 'none';
         if (select) {
             select.innerHTML = `<option value="${sucursal}">${sucursal.toUpperCase()}</option>`;
@@ -113,14 +215,26 @@ export async function showCreatePromotionModal() {
             select.disabled = true;
         }
     }
-    
+}
+
+export async function showCreatePromotionModal() {
+    const rol = localStorage.getItem('rol');
+    if (rol === 'staff') return;
+    editingPromotionId = null;
+    const title = document.getElementById('promo-modal-title');
+    if (title) title.textContent = 'NUEVA PROMOCIÓN';
+
+    await _cargarSucursalesPromo("");
+
     // RESET ICON PICKER
     document.querySelectorAll('.icon-option').forEach(opt => opt.classList.remove('active'));
     const defaultOpt = document.querySelector('.icon-option[data-icon="fas fa-gift"]');
     if (defaultOpt) defaultOpt.classList.add('active');
     document.getElementById('promo-icono').value = 'fas fa-gift';
 
-    // RESET TIPO DE CANJE
+    // RESET FORMULARIO Y TIPO DE CANJE
+    const promoForm = document.getElementById('form-create-promotion');
+    if (promoForm) promoForm.reset();
     const tipoCanje = document.getElementById('promo-tipo-canje');
     if (tipoCanje) tipoCanje.value = 'voucher';
     const descField = document.getElementById('promo-descuento-field');
@@ -128,7 +242,69 @@ export async function showCreatePromotionModal() {
     const descInput = document.getElementById('promo-valor-descuento');
     if (descInput) descInput.value = '';
 
+    // RESET UBICACIÓN Y MAPA
+    const promoDir = document.getElementById('promo-direccion');
+    if (promoDir) promoDir.value = '';
+    const promoLat = document.getElementById('promo-latitude');
+    const promoLng = document.getElementById('promo-longitude');
+    if (promoLat) promoLat.value = '';
+    if (promoLng) promoLng.value = '';
+
     if (window.openModal) window.openModal('modal-create-promotion');
+
+    setTimeout(() => {
+        initPromoMap();
+        _resetPromoMap();
+    }, 300);
+}
+
+export async function editPromotion(id) {
+    const rol = localStorage.getItem('rol');
+    if (rol === 'staff') return;
+    const p = (promotionsCache || []).find(x => x.id === id);
+    if (!p) {
+        showToast('No se encontró la promoción', 'error');
+        return;
+    }
+
+    await _cargarSucursalesPromo(p.sucursal || "");
+
+    // RELLENAR CAMPOS CON LOS DATOS ACTUALES
+    document.getElementById('promo-titulo').value = p.titulo || '';
+    document.getElementById('promo-descripcion').value = p.descripcion || '';
+    document.getElementById('promo-costo').value = p.costo_puntos || '';
+    document.getElementById('promo-icono').value = p.icono || 'fas fa-gift';
+    document.querySelectorAll('.icon-option').forEach(opt => opt.classList.toggle('active', opt.dataset.icon === (p.icono || 'fas fa-gift')));
+
+    const tipoCanje = document.getElementById('promo-tipo-canje');
+    if (tipoCanje) tipoCanje.value = p.tipo_canje || 'voucher';
+    togglePromoTipoCanje(tipoCanje);
+    const descInput = document.getElementById('promo-valor-descuento');
+    if (descInput) descInput.value = p.valor_descuento || '';
+
+    const title = document.getElementById('promo-modal-title');
+    if (title) title.textContent = 'EDITAR PROMOCIÓN';
+    editingPromotionId = id;
+
+    // UBICACIÓN DONDE SE CANJEA
+    const promoDir = document.getElementById('promo-direccion');
+    if (promoDir) promoDir.value = p.direccion || '';
+    const promoLat = document.getElementById('promo-latitude');
+    const promoLng = document.getElementById('promo-longitude');
+    if (promoLat) promoLat.value = p.latitude || '';
+    if (promoLng) promoLng.value = p.longitude || '';
+
+    if (window.openModal) window.openModal('modal-create-promotion');
+
+    setTimeout(() => {
+        initPromoMap();
+        if (p.latitude && p.longitude) {
+            updatePromoMarker(parseFloat(p.latitude), parseFloat(p.longitude));
+            if (promoMap) promoMap.setView([parseFloat(p.latitude), parseFloat(p.longitude)], 15);
+        } else {
+            _resetPromoMap();
+        }
+    }, 300);
 }
 
 export function togglePromoTipoCanje(select) {
@@ -153,8 +329,28 @@ export async function handleCreatePromotion() {
         tipo_canje: (document.getElementById('promo-tipo-canje') || {}).value || 'voucher',
         valor_descuento: document.getElementById('promo-valor-descuento').value
             ? parseInt(document.getElementById('promo-valor-descuento').value)
+            : null,
+        direccion: document.getElementById('promo-direccion')?.value || null,
+        latitude: document.getElementById('promo-latitude')?.value
+            ? parseFloat(document.getElementById('promo-latitude').value)
+            : null,
+        longitude: document.getElementById('promo-longitude')?.value
+            ? parseFloat(document.getElementById('promo-longitude').value)
             : null
     };
+
+    if (editingPromotionId) {
+        const res = await api.put(`/admin/promotions/${editingPromotionId}`, payload);
+        if (res.ok) {
+            showToast('Promoción actualizada', 'success');
+            if (window.closeModal) window.closeModal('modal-create-promotion');
+            editingPromotionId = null;
+            loadPromotionsAdmin();
+        } else {
+            showToast(res.error || 'Error al actualizar la promoción', 'error');
+        }
+        return;
+    }
 
     const res = await api.post('/admin/promotions', payload);
     if (res.ok) {

@@ -230,12 +230,13 @@ def create_user_reservation(res: schemas.UserReservationCreate, db: Session = De
 
     estado_pago = "Pendiente"
     info_sede = BranchService.get_branch_info_str(db, res.sucursal_nombre)
+    tipo_v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
     
     new_res = models.Reservation(
         user_id=current_user.id, patente=res.patente, fecha_inicio=res.fecha_inicio, fecha_fin=res.fecha_fin, 
         tipo_estadia=res.tipo_estadia, monto_total=monto, estado_pago=estado_pago, estado_reserva="Pendiente",
         sucursal_nombre=res.sucursal_nombre, sucursal_info=info_sede,
-        dias_semana=res.dias_semana
+        dias_semana=res.dias_semana, tipo_vehiculo=tipo_v_str
     )
     db.add(new_res)
     db.commit()

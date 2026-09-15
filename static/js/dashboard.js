@@ -161,11 +161,13 @@ window.toggleLevelEdit = admin.toggleLevelEdit;
 // 10. PROMOCIONES
 window.loadPromotionsAdmin = promos.loadPromotionsAdmin;
 window.showCreatePromotionModal = promos.showCreatePromotionModal;
+window.editPromotion = promos.editPromotion;
 window.handleCreatePromotion = promos.handleCreatePromotion;
 window.togglePromotion = promos.togglePromotion;
 window.deletePromotion = promos.deletePromotion;
 window.selectPromoIcon = promos.selectPromoIcon;
 window.togglePromoTipoCanje = promos.togglePromoTipoCanje;
+window.searchPromoAddress = promos.searchPromoAddress;
 
 // 11. CAMARAS IP
 window.loadCameraSettings = ui.loadCameraSettings;

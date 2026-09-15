@@ -120,6 +120,13 @@ export function renderVouchers() {
     const grid = document.getElementById('vouchers-grid') || document.getElementById('vouchers-list');
     if (!grid) return;
 
+    // SI HAY TICKETS SIN UBICACION PROPIA PERO CON SUCURSAL, GARANTIZAR CACHE DE SUCURSALES PARA EL FALLBACK DE DIRECCION
+    const needsBranchCache = cachedUserTickets.some(t => !((t.latitude && t.longitude) || t.direccion) && t.sucursal && String(t.sucursal) !== 'GLOBAL');
+    if (needsBranchCache && !cachedBranches && !_branchesCachePromise) {
+        getBranchesCache().then(() => renderVouchers());
+        return;
+    }
+
     const vigentes = cachedUserTickets.filter(t => (t.estado || '').toUpperCase() === 'VIGENTE');
     const finalizados = cachedUserTickets.filter(t => (t.estado || '').toUpperCase() !== 'VIGENTE');
 
@@ -187,6 +194,10 @@ export function renderVouchers() {
 
         const branchBadge = `<span class="voucher-branch-badge ${isGlobal ? 'global' : ''}"><i class="fas ${isGlobal ? 'fa-globe' : 'fa-location-dot'}"></i> ${branchName}</span>`;
 
+        // UBICACION DE CANJE (LINK A GOOGLE MAPS DESDE LAS COORDENADAS O LA DIRECCION)
+        const mapsUrl = buildMapsUrl(t);
+        const direccionMostrar = getVoucherDireccion(t);
+
         const escapedTitulo = formatTitulo(t.titulo).replace(/'/g, "\\'");
         const vencimientoStr = getVoucherVencimiento(t);
 
@@ -205,6 +216,7 @@ export function renderVouchers() {
                         ${branchBadge}
                     </div>
                     ${t.descripcion ? `<p class="voucher-card-desc">${t.descripcion}</p>` : ''}
+                    ${mapsUrl && direccionMostrar ? `<a class="voucher-address-link" href="${mapsUrl}" target="_blank" rel="noopener"><i class="fas fa-location-dot"></i> ${direccionMostrar}</a>` : ''}
                     <div class="voucher-card-meta">
                         ${vencimientoStr ? `<span>Vto.: ${vencimientoStr}</span>` : ''}
                         ${t.fecha_uso ? `<span><i class="fas fa-check"></i> Usado: ${formatDate(t.fecha_uso)}</span>` : ''}
@@ -281,6 +293,7 @@ function renderDiscountCard(t, { estado, isVigente, isUsado, branchName, isGloba
                     <span class="voucher-branch-badge ${isGlobal ? 'global' : ''}"><i class="fas ${isGlobal ? 'fa-globe' : 'fa-location-dot'}"></i> ${branchName}</span>
                 </div>
                 ${t.descripcion ? `<p class="voucher-card-desc">${t.descripcion}</p>` : ''}
+                ${getVoucherDireccion(t) ? `<a class="voucher-address-link" href="${buildMapsUrl(t)}" target="_blank" rel="noopener"><i class="fas fa-location-dot"></i> ${getVoucherDireccion(t)}</a>` : ''}
                 <div class="voucher-card-meta">
                     ${metaInfo}
                     ${usadoMeta}
@@ -319,6 +332,74 @@ function formatTitulo(titulo) {
         .join(' ');
 }
 
+// ---------------------------------------------------------------------------
+// UBICACION DE CANJE: CACHE DE SUCURSALES PARA RESOLVER DIRECCIONES
+// ---------------------------------------------------------------------------
+let cachedBranches = null;
+let _branchesCachePromise = null;
+
+export function getBranchesCache() {
+    if (cachedBranches) return Promise.resolve(cachedBranches);
+    if (!_branchesCachePromise) {
+        _branchesCachePromise = fetch('/v1/parking/branches')
+            .then(r => r.ok ? r.json() : [])
+            .then(data => { cachedBranches = data || []; return cachedBranches; })
+            .catch(() => { cachedBranches = []; _branchesCachePromise = null; return cachedBranches; });
+    }
+    return _branchesCachePromise;
+}
+
+// RESUELVE LA UBICACION DEL VOUCHER: SI EL TICKET NO GUARDO COORDENADAS/DIRECCION,
+// FALLBACK A LA DIRECCION DE LA SUCURSAL ASIGNADA EN SU SNAPSHOT.
+function resolveVoucherLocation(t) {
+    if (!t) return null;
+
+    if (t.latitude && t.longitude) {
+        return { lat: parseFloat(t.latitude), lng: parseFloat(t.longitude), direccion: t.direccion || '' };
+    }
+
+    if (t.sucursal && t.sucursal !== 'GLOBAL' && cachedBranches && cachedBranches.length) {
+        const b = cachedBranches.find(x => String(x.nombre || '').toLowerCase() === String(t.sucursal).toLowerCase());
+        if (b) {
+            if (b.latitude && b.longitude) {
+                return { lat: parseFloat(b.latitude), lng: parseFloat(b.longitude), direccion: b.direccion || '' };
+            }
+            if (b.direccion) {
+                return { lat: null, lng: null, direccion: b.direccion };
+            }
+        }
+    }
+
+    if (t.direccion) return { lat: null, lng: null, direccion: t.direccion };
+
+    return null;
+}
+
+// DEVUELVE EL LINK A GOOGLE MAPS (MAPA COMUN DE CALLES / ROADMAP).
+// OJO: NO agregar el sufijo "data=!3m1!1e3" porque ese token activa la vista AEREA (satelite/render 3D).
+// Sin el token, "place/direccion/@lat,lng" ancla el pin en las coordenadas exactas con el mapa de calles plano.
+function buildMapsUrl(t) {
+    const loc = resolveVoucherLocation(t);
+    if (!loc) return null;
+
+    if (loc.direccion && loc.lat && loc.lng) {
+        return `https://www.google.com/maps/place/${encodeURIComponent(loc.direccion)}/@${loc.lat},${loc.lng},16z`;
+    }
+    if (loc.direccion) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.direccion)}`;
+    }
+    if (loc.lat && loc.lng) {
+        return `https://www.google.com/maps?q=${loc.lat},${loc.lng}&z=16`;
+    }
+    return null;
+}
+
+// DEVUELVE LA DIRECCION RESUELTA (PROPIA DEL TICKET O FALLBACK DE LA SUCURSAL) PARA MOSTRAR AL USUARIO.
+function getVoucherDireccion(t) {
+    const loc = resolveVoucherLocation(t);
+    return (loc && loc.direccion) || '';
+}
+
 // CALCULA LA FECHA DE VENCIMIENTO DEL VOUCHER (30 DIAS DESDE SU EMISION)
 export function getVoucherVencimiento(t) {
     if (!t) return '';
@@ -350,6 +431,7 @@ export async function loadVouchers() {
     }
 
     cachedUserTickets = res.data || [];
+    await getBranchesCache();
     renderVouchers();
 }
 
@@ -376,7 +458,104 @@ export async function showCanjeTicketById(id) {
     if (!res.ok) return;
     const t = res.data.find(x => x.id === id);
     if (!t) { showToast('No se encontró el voucher', 'error'); return; }
+    await getBranchesCache();
     showCanjeTicket(t);
+}
+
+let cachedPromotions = [];
+let promoBranchFilter = '';
+const PROMO_FILTER_GLOBAL = '__GLOBALES__';
+
+// COMPLETA/REFRESCA EL SELECTOR DE SUCURSAL DEL FILTRO DE PROMOS
+function populatePromoBranchFilter(promos) {
+    const sel = document.getElementById('promo-branch-filter');
+    const bar = document.getElementById('promo-filter-bar');
+    if (!sel) return;
+    const branches = [...new Set(
+        promos.filter(p => p.sucursal).map(p => p.sucursal.replace(/AUTOPASS\s+/i, '').trim())
+    )];
+    const hasGlobal = promos.some(p => !p.sucursal);
+    if (promoBranchFilter === PROMO_FILTER_GLOBAL) {
+        if (!hasGlobal) promoBranchFilter = '';
+    } else if (!branches.includes(promoBranchFilter)) {
+        promoBranchFilter = '';
+    }
+    let options = '<option value="">Todas las sucursales</option>';
+    if (hasGlobal) {
+        options += `<option value="${PROMO_FILTER_GLOBAL}">Globales</option>`;
+    }
+    options += branches.map(b => `<option value="${b}">${b}</option>`).join('');
+    sel.innerHTML = options;
+    sel.value = promoBranchFilter;
+    if (bar) bar.style.display = promos.length ? 'flex' : 'none';
+}
+
+// RENDERIZA LA GRILLA DE PROMOS APLICANDO EL FILTRO DE SUCURSAL ACTUAL (las globales se ocultan al filtrar por sucursal)
+function renderPromotionCards() {
+    const grid = document.getElementById('promotions-grid');
+    if (!grid) return;
+    const promos = cachedPromotions || [];
+    const filtered = promoBranchFilter === PROMO_FILTER_GLOBAL
+        ? promos.filter(p => !p.sucursal)
+        : promoBranchFilter
+            ? promos.filter(p => p.sucursal && p.sucursal.replace(/AUTOPASS\s+/i, '').trim().toLowerCase() === promoBranchFilter.toLowerCase())
+            : promos;
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div class="empty-state-minimal"><p>No hay promociones para la sucursal seleccionada.</p></div>';
+        return;
+    }
+
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const currentPts = userData.puntos_acumulados || 0;
+
+    grid.innerHTML = filtered.map(p => {
+        const branchName = p.sucursal ? p.sucursal.replace(/AUTOPASS\s+/i, '').trim().toUpperCase() : 'GLOBAL';
+        const isGlobal = !p.sucursal;
+        const isDiscount = p.tipo_canje === 'descuento_reserva';
+
+        const typeBadge = isDiscount
+            ? `<div class="voucher-type-badge discount"><i class="fas fa-percent"></i> ${p.valor_descuento || 0}% DESC</div>`
+            : `<div class="voucher-type-badge voucher"><i class="fas fa-ticket"></i> VOUCHER</div>`;
+
+        const promoMapsUrl = buildMapsUrl(p);
+        const promoDireccion = getVoucherDireccion(p);
+
+        return `
+        <div class="voucher-card promo-card">
+            <div class="voucher-card-top">
+                <div class="voucher-badges-group">
+                    ${typeBadge}
+                </div>
+                <span class="voucher-branch-badge ${isGlobal ? 'global' : ''}">
+                    <i class="fas ${isGlobal ? 'fa-globe' : 'fa-location-dot'}"></i> ${branchName}
+                </span>
+            </div>
+            <div class="voucher-card-body">
+                <div class="promo-card-title-row">
+                    <div class="promo-icon"><i class="${p.icono || 'fas fa-gift'}"></i></div>
+                    <h3 class="promo-title">${p.titulo}</h3>
+                </div>
+                <div class="voucher-content-wrap">
+                    ${p.descripcion ? `<p class="voucher-card-desc">${p.descripcion}</p>` : ''}
+                    ${promoMapsUrl && promoDireccion ? `<a class="voucher-address-link" href="${promoMapsUrl}" target="_blank" rel="noopener"><i class="fas fa-location-dot"></i> ${promoDireccion}</a>` : ''}
+                    <div class="voucher-card-meta">
+                        <span><i class="fas fa-coins"></i> ${formatNum(p.costo_puntos)} PUNTOS</span>
+                    </div>
+                </div>
+            </div>
+            <div class="voucher-card-divider">
+                <div class="voucher-cutout left"></div>
+                <div class="voucher-cutout right"></div>
+            </div>
+            <div class="voucher-card-footer">
+                <button class="btn-voucher-action btn-voucher-qr btn-redeem" onclick="redeemPoints(${p.id}, ${p.costo_puntos}, '${p.tipo_canje || 'voucher'}')"
+                    ${currentPts < p.costo_puntos ? 'disabled' : ''}>
+                    <i class="fas fa-arrow-right"></i> CANJEAR
+                </button>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 export async function loadPromotions() {
@@ -385,45 +564,21 @@ export async function loadPromotions() {
     const res = await api.get('/user/promotions');
     if (!res.ok) { grid.innerHTML = '<p class="text-danger">Error al cargar promociones.</p>'; return; }
 
-    const promos = res.data;
-    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    const currentPts = userData.puntos_acumulados || 0;
+    cachedPromotions = res.data || [];
+    await getBranchesCache();
+    populatePromoBranchFilter(cachedPromotions);
 
-    if (promos.length === 0) {
+    if (cachedPromotions.length === 0) {
         grid.innerHTML = '<div class="empty-state-minimal"><p>No hay promociones activas.</p></div>';
         return;
     }
+    renderPromotionCards();
+}
 
-    grid.innerHTML = promos.map(p => {
-        const branchName = p.sucursal ? p.sucursal.replace(/AUTOPASS\s+/i, '').trim().toUpperCase() : 'GLOBAL';
-        const isGlobal = !p.sucursal;
-        const isDiscount = p.tipo_canje === 'descuento_reserva';
-        const badge = isDiscount
-            ? `<div class="promo-type-badge discount"><i class="fas fa-percent"></i> ${p.valor_descuento || 0}% DESC</div>`
-            : `<div class="promo-type-badge voucher"><i class="fas fa-ticket"></i> VOUCHER</div>`;
-
-        return `
-        <div class="promo-card">
-            <div class="promo-card-badges">
-                ${badge}
-                <div class="branch-badge ${isGlobal ? 'global' : ''}">
-                    <i class="fas ${isGlobal ? 'fa-globe' : 'fa-location-dot'}"></i> ${branchName}
-                </div>
-            </div>
-            <div class="promo-header">
-                <div class="promo-icon"><i class="${p.icono || 'fas fa-gift'}"></i></div>
-                <div class="promo-title">${p.titulo}</div>
-            </div>
-            <div class="promo-body">
-                <p class="promo-desc">${p.descripcion}</p>
-                <div class="promo-cost">${formatNum(p.costo_puntos)} <span>puntos</span></div>
-            </div>
-            <div class="promo-footer">
-                <button class="btn-redeem" onclick="redeemPoints(${p.id}, ${p.costo_puntos}, '${p.tipo_canje || 'voucher'}')" 
-                    ${currentPts < p.costo_puntos ? 'disabled' : ''}>CANJEAR</button>
-            </div>
-        </div>`;
-    }).join('');
+// AL CAMBIAR EL FILTRO DE SUCURSAL SE RE-RENDERIZA LA GRILLA SIN VOLVER A FETCHEAR
+export function applyPromoBranchFilter(value) {
+    promoBranchFilter = value || '';
+    renderPromotionCards();
 }
 
 let currentPtsPage = 1;
@@ -495,17 +650,6 @@ export async function redeemPoints(promoId, cost, tipoCanje) {
     }
 }
 
-// AJUSTE MANUAL DE PUNTOS (PRUEBAS): +10 / -10
-export async function adjustPoints(delta) {
-    const res = await api.post(`/user/points-adjust?delta=${delta}`);
-    if (res.ok) {
-        showToast(delta > 0 ? `+${delta} puntos` : `${delta} puntos`, 'success');
-        await loadPointsData();
-    } else {
-        showToast(res.error || 'Error al ajustar puntos', 'error');
-    }
-}
-
 // MODAL DE TICKET DE CANJE (VOUCHER)
 export function showCanjeTicket(t) {
     const modal = document.getElementById('modal-canje');
@@ -517,6 +661,14 @@ export function showCanjeTicket(t) {
     const vencEl = document.getElementById('canje-vencimiento');
     if (vencEl) vencEl.innerText = getVoucherVencimiento(t) || '---';
     document.getElementById('canje-sucursal').innerText = t.sucursal || 'GLOBAL';
+    const dirEl = document.getElementById('canje-direccion');
+    if (dirEl) {
+        const mapsUrl = buildMapsUrl(t);
+        const dirMostrar = getVoucherDireccion(t);
+        dirEl.innerHTML = mapsUrl
+            ? `<a href="${mapsUrl}" target="_blank" rel="noopener" style="color: var(--dorado); text-decoration: none; word-break: break-word;"><i class="fas fa-map-marked-alt"></i> ${dirMostrar || 'Ver en Google Maps'}</a>`
+            : (dirMostrar || '---');
+    }
     document.getElementById('canje-observacion').innerText = t.observacion || 'Será válido por 30 días desde la fecha de canje.';
 
     const qrContainer = document.getElementById('canje-qr');

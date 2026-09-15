@@ -15,62 +15,6 @@
     box-shadow: 0 15px 35px rgba(0,0,0,0.5);
 }
 
-.points-adjust-row {
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px dashed rgba(255,255,255,0.08);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.points-adjust-hint {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #666;
-}
-
-.points-adjust-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-.btn-points-adjust {
-    border: none;
-    border-radius: 12px;
-    padding: 8px 22px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 800;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    transition: all 0.2s ease;
-}
-
-.btn-points-adjust.plus {
-    background: rgba(46, 204, 113, 0.12);
-    color: #2ecc71;
-    border: 1px solid rgba(46, 204, 113, 0.3);
-}
-
-.btn-points-adjust.plus:hover {
-    background: rgba(46, 204, 113, 0.25);
-}
-
-.btn-points-adjust.minus {
-    background: rgba(231, 76, 60, 0.12);
-    color: #e74c3c;
-    border: 1px solid rgba(231, 76, 60, 0.3);
-}
-
-.btn-points-adjust.minus:hover {
-    background: rgba(231, 76, 60, 0.25);
-}
-
 .points-count {
     font-family: 'Montserrat', sans-serif;
     font-size: 4rem;
@@ -100,9 +44,140 @@
 }
 
 .promo-card:hover {
-    transform: translateY(-8px);
-    border-color: var(--dorado);
-    box-shadow: 0 20px 45px rgba(197, 160, 89, 0.15);
+    transform: translateY(-5px);
+    border-color: rgba(155, 89, 182, 0.55);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(155, 89, 182, 0.15);
+}
+
+/* Reuso del look "ticket" de las cards de voucher ya canjeadas en las cards de canjeo */
+.voucher-card.promo-card {
+    background: linear-gradient(160deg, rgba(155, 89, 182, 0.12) 0%, rgba(18, 20, 24, 0.85) 48%);
+    border: 1px solid rgba(155, 89, 182, 0.28);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* Layout de las cards de canjeo: fila icono + título, contenido centrado abajo */
+.voucher-card.promo-card .voucher-card-body {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 16px;
+    padding: 14px 18px 16px;
+    flex-grow: 1;
+}
+
+.promo-card-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.voucher-card.promo-card .promo-icon {
+    width: 44px;
+    height: 44px;
+    margin-top: 2px;
+}
+
+.voucher-card.promo-card .promo-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    color: #fff;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    word-break: break-word;
+    margin: 0;
+    flex: 1;
+    text-align: left;
+}
+
+.voucher-card.promo-card .voucher-content-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.voucher-card.promo-card .voucher-card-desc {
+    margin-bottom: 6px;
+    max-width: 320px;
+    transform: none;
+}
+
+.voucher-card.promo-card .voucher-address-link {
+    justify-content: center;
+}
+
+/* Puntos del costo bien grandes y en dorado */
+.voucher-card.promo-card .voucher-card-meta {
+    justify-content: center;
+    margin-top: 14px;
+    transform: none;
+}
+
+.voucher-card.promo-card .voucher-card-meta span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--dorado);
+    gap: 8px;
+}
+
+.voucher-card.promo-card .voucher-card-meta span i {
+    font-size: 1.1rem;
+    color: var(--dorado);
+}
+
+/* Barra de filtro por sucursal de las promos por canjear */
+.promo-filter-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 18px 0;
+    flex-wrap: wrap;
+}
+
+.promo-filter-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #aaa;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+}
+
+.promo-filter-label i {
+    color: var(--dorado);
+}
+
+.promo-branch-select {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #ddd;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 8px 14px;
+    min-width: 220px;
+    max-width: 320px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.25s ease;
+}
+
+.promo-branch-select:hover,
+.promo-branch-select:focus {
+    border-color: rgba(197, 160, 89, 0.4);
+}
+
+.promo-branch-select option {
+    background: #1a1626;
+    color: #ddd;
 }
 
 .promo-card-badges {

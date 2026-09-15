@@ -1,5 +1,14 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 14, 2026 - UBICACIÓN DE CANJE (MAPAS) & CARDS DE CANJEO CON FILTRO POR SUCURSAL (V9.19.0)**:
+    *   **Ubicación de canje**: `promotions` y `redemption_tickets` suman `direccion`, `latitude` y `longitude` (migración Alembic `ce7d1e2f3a5b`, aplicada y verificada en Neon). El admin edita la ubicación de cada promo desde el panel con búsqueda Nominatim y mapa Leaflet (`promotion_modal.html`, `dashboard-promotions.js`).
+    *   **Fallback de ubicación doble**: `_crear_ticket` guarda snapshot (ubicación de la promo → sino la de su sucursal); `GET /user/redemption-tickets` enriquece la respuesta sin reescribir BD (ticket → promo actual → sucursal), mostrando la dirección vigente incluso en tickets canjeados antes.
+    *   **Link a Google Maps (mapa de calles)**: La dirección es un link `place/<direccion>/@lat,lng,z` con pin exacto en roadmap. Se quitó el token `data=!3m1!1e3` porque activaba la vista aérea/satélite (render 3D de casas); se descartaron `?basemap=roadmap` y `loc:` por romper la posición del pin. Fallbacks: `search/?api=1&query=` (solo dirección) y `?q=lat,lng&z=16` (solo coords).
+    *   **Cards de canjeo con look tipo ticket**: Promos por canjear reescritas como `voucher-card promo-card` (gradiente violeta, badges de tipo + sucursal, divider, footer dorado), icono+título a la izquierda y descripción/dirección/puntos centrados (se anuló `translateX(-31px)` que las corría a la izquierda).
+    *   **Filtro por sucursal**: Dropdown "Sucursal" sobre la grilla de promos (opciones: Todas / Globales / cada sucursal). Al filtrar por sucursal se ocultan las globales; `applyPromoBranchFilter` re-renderiza sin refetch.
+    *   **Baja del ajuste manual de puntos**: Eliminados los botones `+10/−10`, `adjustPoints` (profile.js/perfil.js), el CSS `.points-adjust-*` y el endpoint `POST /user/points-adjust`.
+    *   **Verificación**: `node --check` y `py_compile` en verde; assets versionados a `?v=9.19.0` para forzar la recarga de caché.
+
 - **SEPTIEMBRE 13, 2026 - GLOBITO DE NOTIFICACIÓN EN RESERVAS DEL DASHBOARD EN TIEMPO REAL (V9.18.4)**:
     *   **Globito de Notificación en Reservas (`#reservation-badge-sidebar`)**: Badge rojo dinámico con animación pulsante `.pulse` sobre el ítem de navegación "Reservas" del Dashboard (`templates/dashboard.html`).
     *   **Endpoint Liviano de Detección**: `GET /v1/admin/reservations/new-count?since_id=...` (`routes/admin/reservations.py`) que obtiene de forma ultra rápida (`MAX(id)` y `COUNT(*)`) la cantidad de reservas nuevas registradas, con filtro de sucursal para administradores locales.

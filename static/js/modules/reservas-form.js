@@ -179,6 +179,9 @@ export async function updateHourlySlotsUI() {
 
         if (res.ok && res.data && Array.isArray(res.data.disabled_hours)) {
             const reservedRanges = Array.isArray(res.data.reserved_ranges) ? res.data.reserved_ranges : [];
+            // SLOTS DESHABILITADOS POR CAPACIDAD CALCULADOS EN EL SERVER (OCUPADA >= CAPACIDAD):
+            // NO SON SOLO LOS RANGOS DE RESERVAS, POR ESO HAY QUE RESPETARLOS ADEMÁS DE reservedRanges.
+            const disabledSet = new Set(Array.isArray(res.data.disabled_hours) ? res.data.disabled_hours : []);
 
             // HOY: BLOQUEAR LOS SLOTS QUE YA PASARON O NO RESPETAN LA ANTICIPACION MINIMA
             // (EL SERVER TAMBIEN LOS FILTRA, PERO EL CACHE DE 30s PUEDE ESTAR DESACTUALIZADO)
@@ -219,6 +222,11 @@ export async function updateHourlySlotsUI() {
                 for (const rg of reservedRanges) {
                     if (hourStr >= rg.inicio && hourStr < rg.fin) isReserved = true;
                     if (hourStr === rg.inicio) isBoundaryEnd = true;
+                }
+                // SI EL SERVER LO DESHABILITÓ POR CAPACIDAD, EL SLOT NO PUEDE USARSE NI COMO INICIO NI COMO FIN
+                if (disabledSet.has(hourStr)) {
+                    isReserved = true;
+                    isBoundaryEnd = false;
                 }
                 const isBlockedToday = fecha === fechaHoy && blockedToday.includes(hourStr);
                 if (!isReserved && !isBlockedToday) countLibres++;
