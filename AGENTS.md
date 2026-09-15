@@ -1,5 +1,13 @@
 # AGENTS — Reglas para asistentes automatizados
 
+## Estilo de código
+
+- Escribir código **escalable**, **minimalista** y **agrupado por funciones** (seguir el principio DRY): no duplicar lógica, CSS, marcado o componentes.
+- Cuando una pieza de UI o lógica se repita en más de un lugar, extraerla a un componente/compartido único (partial de template, CSS global, módulo JS, helper de backend, etc.) y reutilizarlo configurando la parte específica de cada página o contexto.
+- Aplicar el mismo criterio a cualquier lenguaje o tecnología del proyecto (Python, JS, HTML/CSS, SQL, etc.): lógica común → módulos/funciones reutilizables; estilos y marcado común → clases y partials globales.
+- Preferir patrones reutilizables (prefijos de ids, clases/helpers) sobre copiar código.
+- Antes de implementar algo nuevo, verificar si ya existe una función, módulo o componente que lo cubra y reutilizarlo en vez de reimplementarlo.
+
 ## Control de versiones (git)
 
 - Antes de hacer `git push`, verificar que no haya conflictos de merge sin resolver (marcas `<<<<<<<`, `=======`, `>>>>>>>`) en ningún archivo del proyecto.
@@ -18,3 +26,12 @@
   sqlite3 archivo.db ".schema"           # local
   git show :archivo.db | sqlite3 ".schema"  # remoto (versión del index)
   ```
+
+## Backlog web (backlogAUTOPASS)
+
+- El tablero vive en el repo `backlogAUTOPASS/` (sitio: `https://marianojac.github.io/backlogAUTOPASS/`). El `DATA` dentro de `index.html` es solo la semilla/fallback: si Firebase (`backlog/rows2`) tiene datos, la app los usa e IGNORA el `DATA` del HTML.
+- Por lo tanto, para que filas/secciones nuevas (o ediciones hechas a mano en `index.html`) se vean en el tablero, hay que escribirlas también en Firebase:
+  - `GET https://backlog-dd061-default-rtdb.firebaseio.com/backlog/rows2.json`
+  - `PUT` (reemplazo completo del array) con la lista final; Firebase está en reglas de lectura/escritura pública.
+- Las filas son objetos `{comp, desc, estado, ffin, finicio (dd/mm/yy), id, kind: "row", mvp, obs, responsable, tipo}` (claves en orden alfabético); las secciones son `{fecha:"", kind:"section", text}`. `estado` ∈ CERRADA/EN CURSO/PENDIENTE; `mvp` ∈ "MVP 1".."MVP 4".
+- El historial "Revisiones" vive en `backlog/revisions` (array, máximo 40): se agrega al inicio `{ts, autor, count, data}` (`count` = cantidad de elementos `kind:"row"`). Un alta hecha por API no genera revisión automática: hay que agregarla manualmente si se quiere que figure en la pestaña "Revisiones".

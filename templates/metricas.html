@@ -192,62 +192,6 @@
         height: 340px;
         margin-top: 12px;
     }
-
-    .metricas-controls {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .metricas-controls-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .metricas-live-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        color: #d1d5db;
-        font-weight: 700;
-    }
-
-    .metricas-range-wrap {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        flex: 1;
-        min-width: 260px;
-    }
-
-    .metricas-range {
-        flex: 1;
-        accent-color: var(--dorado);
-        height: 6px;
-        cursor: pointer;
-    }
-
-    .metricas-range-hint {
-        font-size: 0.72rem;
-        color: #6b7280;
-        font-family: var(--font-mono);
-        white-space: nowrap;
-    }
-
-    .metricas-helper {
-        font-size: 0.78rem;
-        color: #8e95a5;
-        line-height: 1.6;
-        text-align: center;
-    }
 </style>
 {% endblock %}
 
@@ -376,40 +320,9 @@
                 <canvas id="metricasChart"></canvas>
             </div>
 
-            <div class="metricas-controls">
-                <div class="metricas-controls-row">
-                    <label class="metricas-live-toggle">
-                        <input type="checkbox" id="metricas-live" checked style="accent-color: var(--dorado); width: 16px; height: 16px;">
-                        <span>SEGUIR EN VIVO</span>
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.72rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">VENTANA:</span>
-                        <select id="metricas-ventana" class="input-premium" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
-                            <option value="6">6 HORAS</option>
-                            <option value="12">12 HORAS</option>
-                            <option value="24">24 HORAS</option>
-                            <option value="48" selected>48 HORAS</option>
-                            <option value="168">7 DÍAS</option>
-                            <option value="0">TODA LA HISTORIA</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button id="btn-ir-inicio" class="btn btn-outline sm" onclick="irAlInicio()"><i class="fas fa-backward-fast" style="margin-right: 4px;"></i>INICIO</button>
-                        <button id="btn-ir-final" class="btn btn-primary sm" onclick="irAlFinal()"><i class="fas fa-forward-fast" style="margin-right: 4px;"></i>FINAL</button>
-                    </div>
-                </div>
-
-                <div class="metricas-range-wrap">
-                    <span class="metricas-range-hint"><i class="fas fa-flag-checkered text-dorado"></i></span>
-                    <input type="range" id="metricas-range" class="metricas-range" min="0" max="0" value="0">
-                    <span class="metricas-range-hint"><i class="fas fa-clock"></i></span>
-                </div>
-
-                <div class="metricas-helper">
-                    <i class="fas fa-circle-info mr-6" style="color: var(--dorado);"></i>
-                    El gráfico avanza solo a medida que pasa el tiempo. Si querés recorrer hasta el primer dato, desactivá el seguimiento o mové el deslizador; luego presioná <strong>FINAL</strong> para volver a seguirlo en vivo.
-                </div>
-            </div>
+            {% set prefix = "metricas" %}
+{% set default_span = "48" %}
+{% include "components/chart_window_controls.html" %}
         </div>
     </div>
 </div>
@@ -418,7 +331,8 @@
 {% block extra_scripts %}
 <script type="module">
     import api from '/static/js/modules/api.js';
-    import { formatTimeSeconds, formatDateTime, formatDayTime } from '/static/js/modules/utils.js';
+    import { formatTimeSeconds, formatDateTime } from '/static/js/modules/utils.js';
+    import { WindowedChart } from '/static/js/modules/chart_window.js';
 
     // --- GUARDIA DE SESIÓN: SOLO ADMINISTRADORES (GLOBAL O DE SUCURSAL) ---
     (function() {
@@ -431,13 +345,7 @@
     })();
 
     let serieData = { buckets: [], first_bucket: null, first_datetime: null, last_bucket: null, totals: {} };
-    let estado = {
-        viewStart: 0,
-        viewLen: 48,
-        showAll: false,
-        live: true
-    };
-    let chartMetricas = null;
+    let chartWindow = null;
     let intervaloRefresh = null;
 
     // --- UTILIDADES DE FECHA ---
@@ -447,6 +355,48 @@
         return isNaN(d.getTime()) ? null : d;
     }
 
+    // --- CONFIGURACIÓN DEL GRÁFICO (controles comunes en chart_window.js) ---
+    function buildDatasets(pts) {
+        const toData = (get) => pts.map(p => ({ x: p.x, y: get(p) }));
+        return [
+            {
+                label: 'Entradas',
+                data: toData(p => p.entrada),
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.10)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#000',
+                pointBorderWidth: 1.5,
+                hitRadius: 30
+            },
+            {
+                label: 'Salidas',
+                data: toData(p => p.salida),
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.10)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointBackgroundColor: '#ef4444',
+                pointBorderColor: '#000',
+                pointBorderWidth: 1.5,
+                hitRadius: 30
+            }
+        ];
+    }
+
+    const yExtra = {
+        title: { display: true, text: 'Movimientos', color: '#666', font: { size: 10 } },
+        ticks: { color: '#666', font: { size: 10 }, precision: 0 }
+    };
+
     // --- CARGA DE DATOS ---
     async function cargarSerie() {
         const res = await api.get('/reports/metrics/access-activity');
@@ -455,20 +405,15 @@
             return false;
         }
         serieData = res.data;
-        const wasFollowing = estado.live && !estado.showAll;
         actualizarKPIs();
-        if (wasFollowing) {
-            estado.viewStart = Math.max(0, serieData.buckets.length - estado.viewLen);
-        }
-        estado.viewStart = Math.min(estado.viewStart, maxStart());
-        sincronizarSlider();
-        renderGrafico();
+        const puntos = serieData.buckets
+            .map(b => {
+                const d = bucketToDate(b.label);
+                return d ? { x: d.getTime(), entrada: b.entrada, salida: b.salida } : null;
+            })
+            .filter(Boolean);
+        if (chartWindow) chartWindow.setSeries(puntos);
         return true;
-    }
-
-    function maxStart() {
-        if (estado.showAll || serieData.buckets.length === 0) return 0;
-        return Math.max(0, serieData.buckets.length - estado.viewLen);
     }
 
     function actualizarKPIs() {
@@ -486,170 +431,20 @@
         set('kpi-total', (serieData.totals.total || 0).toLocaleString('es-AR'));
     }
 
-    function ventanaVisible() {
-        const buckets = serieData.buckets;
-        if (!buckets.length) return { labels: [], entradas: [], salidas: [] };
-        if (estado.showAll) {
-            return {
-                labels: buckets.map(b => b.label),
-                entradas: buckets.map(b => b.entrada),
-                salidas: buckets.map(b => b.salida)
-            };
-        }
-        const end = Math.min(estado.viewStart + estado.viewLen, buckets.length);
-        const slice = buckets.slice(estado.viewStart, end);
-        return {
-            labels: slice.map(b => b.label),
-            entradas: slice.map(b => b.entrada),
-            salidas: slice.map(b => b.salida)
-        };
-    }
-
-    // --- GRÁFICO ---
-    function renderGrafico() {
-        const canvas = document.getElementById('metricasChart');
-        if (!canvas || typeof window.Chart === 'undefined') return;
-        const ctx = canvas.getContext('2d');
-
-        if (chartMetricas) {
-            chartMetricas.destroy();
-            chartMetricas = null;
-        }
-
-        if (!serieData.buckets.length) {
-            fillEmpty(canvas.parentNode, 'Sin datos de accesos registrados aún.');
-            return;
-        }
-
-        const { labels, entradas, salidas } = ventanaVisible();
-        const span = estado.showAll ? labels.length : estado.viewLen;
-        const fromLabel = labels.length ? labels[0] : '--';
-        const toLabel = labels.length ? labels[labels.length - 1] : '--';
-
-        chartMetricas = new window.Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'Entradas',
-                        data: entradas,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.10)',
-                        borderWidth: 2.5,
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointBackgroundColor: '#10b981',
-                        pointBorderColor: '#000',
-                        pointBorderWidth: 1.5,
-                        hitRadius: 30
-                    },
-                    {
-                        label: 'Salidas',
-                        data: salidas,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.10)',
-                        borderWidth: 2.5,
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointBackgroundColor: '#ef4444',
-                        pointBorderColor: '#000',
-                        pointBorderWidth: 1.5,
-                        hitRadius: 30
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'nearest', intersect: false, axis: 'xy', includeInvisible: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#0a0a0a',
-                        titleColor: '#C5A059',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(197, 160, 89, 0.3)',
-                        borderWidth: 1,
-                        displayColors: true,
-                        boxWidth: 8,
-                        boxHeight: 8,
-                        usePointStyle: true,
-                        titleFont: { size: 12, weight: 'bold' },
-                        bodyFont: { size: 12 },
-                        callbacks: {
-                            title: (items) => {
-                                const it = items[0];
-                                if (!it) return '';
-                                const d = bucketToDate(it.label);
-                                return d ? formatDateTime(d) : it.label;
-                            },
-                            label: (c) => ` ${c.dataset.label}: ${c.parsed.y}`
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Movimientos', color: '#666', font: { size: 10 } },
-                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-                        ticks: { color: '#666', font: { size: 10 }, precision: 0 }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: {
-                            color: '#666',
-                            font: { size: 9 },
-                            maxRotation: 0,
-                            autoSkip: true,
-                            maxTicksLimit: 12,
-                            callback: function(val, idx) {
-                                const d = bucketToDate(this.getLabelForValue(val));
-                                return d ? formatDayTime(d) : this.getLabelForValue(val);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function fillEmpty(container, msg) {
-        const div = document.createElement('div');
-        div.style.cssText = 'height:100%;display:flex;align-items:center;justify-content:center;color:#6b7280;flex-direction:column;gap:10px;';
-        div.innerHTML = `<i class="fas fa-inbox fa-2x" style="opacity:0.4;"></i><span style="font-size:0.85rem;">${msg}</span>`;
-        container.appendChild(div);
-    }
-
-    // --- NAVEGACIÓN POR EL GRÁFICO ---
-    function sincronizarSlider() {
-        const slider = document.getElementById('metricas-range');
-        if (!slider) return;
-        slider.min = 0;
-        slider.max = maxStart();
-        slider.value = Math.min(estado.viewStart, maxStart());
-        slider.disabled = estado.showAll || serieData.buckets.length === 0;
-    }
-
-    function setVentana(vlen) {
-        if (vlen === 0) {
-            estado.showAll = true;
-        } else {
-            estado.showAll = false;
-            estado.viewLen = vlen;
-        }
-        estado.viewStart = Math.min(estado.viewStart, maxStart());
-        sincronizarSlider();
-        renderGrafico();
-    }
-
+    // --- VISTAS ---
     window.abrirMetrica = function(key) {
         document.getElementById('metricas-list').style.display = 'none';
         document.getElementById('metricas-detail').style.display = 'block';
+        if (!chartWindow) {
+            chartWindow = new WindowedChart({
+                prefix: 'metricas',
+                canvasId: 'metricasChart',
+                defaultSpanH: 48,
+                buildDatasets,
+                yExtra,
+                tooltipLabel: (c) => ` ${c.dataset.label}: ${Math.round(c.parsed.y)}`
+            });
+        }
         cargarSerie();
         configurarRefresh();
     };
@@ -661,48 +456,11 @@
             clearInterval(intervaloRefresh);
             intervaloRefresh = null;
         }
-    };
-
-    window.irAlInicio = function() {
-        estado.live = false;
-        const check = document.getElementById('metricas-live');
-        if (check) check.checked = false;
-        estado.viewStart = 0;
-        sincronizarSlider();
-        renderGrafico();
-    };
-
-    window.irAlFinal = function() {
-        estado.live = true;
-        const check = document.getElementById('metricas-live');
-        if (check) check.checked = true;
-        estado.viewStart = maxStart();
-        sincronizarSlider();
-        renderGrafico();
-    };
-
-    document.getElementById('metricas-live')?.addEventListener('change', (e) => {
-        estado.live = e.target.checked;
-        if (estado.live) {
-            estado.viewStart = maxStart();
-            sincronizarSlider();
-            renderGrafico();
+        if (chartWindow) {
+            chartWindow.destroy();
+            chartWindow = null;
         }
-        actualizarRefreshState();
-    });
-
-    document.getElementById('metricas-range')?.addEventListener('input', (e) => {
-        estado.viewStart = parseInt(e.target.value, 10);
-        estado.live = false;
-        const check = document.getElementById('metricas-live');
-        if (check) check.checked = false;
-        actualizarRefreshState();
-        renderGrafico();
-    });
-
-    document.getElementById('metricas-ventana')?.addEventListener('change', (e) => {
-        setVentana(parseInt(e.target.value, 10));
-    });
+    };
 
     // --- REFRESCO AUTOMÁTICO ---
     function configurarRefresh() {
@@ -710,10 +468,6 @@
         intervaloRefresh = setInterval(async () => {
             await cargarSerie();
         }, 15000);
-    }
-
-    function actualizarRefreshState() {
-        // El refresco se mantiene activo para no perder datos nuevos; solo cambia el comportamiento de la ventana.
     }
 
     // --- RELOJ ---
