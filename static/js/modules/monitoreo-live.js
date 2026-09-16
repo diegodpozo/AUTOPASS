@@ -297,11 +297,14 @@ function showLastEventOnCameras() {
 
         // SALUDO GRANDE DE BIENVENIDA (INGRESO) / HASTA LUEGO (SALIDA) sobre el video
         if (isOk && (type === 'INGRESO' || type === 'SALIDA')) {
-            showCameraGreeting(box, type, plate || '');
-            let eventLine = box.querySelector('.cctv-event-line');
-            if (eventLine) {
-                if (eventLine._hideTimer) clearTimeout(eventLine._hideTimer);
-                eventLine.style.opacity = '0';
+            const matchType = type === 'INGRESO' ? 'PATENTE_INGRESO' : 'PATENTE_EGRESO';
+            if (cam.tipo === matchType) {
+                showCameraGreeting(box, type, plate || '');
+                let eventLine = box.querySelector('.cctv-event-line');
+                if (eventLine) {
+                    if (eventLine._hideTimer) clearTimeout(eventLine._hideTimer);
+                    eventLine.style.opacity = '0';
+                }
             }
             return;
         }

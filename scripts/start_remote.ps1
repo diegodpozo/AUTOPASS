@@ -57,7 +57,51 @@ foreach ($c in $prevCf) {
 Start-Sleep -Seconds 2
 Write-Host "   [OK] Procesos previos detenidos." -ForegroundColor Green
 
-# 3. INICIAR SERVIDOR Uvicorn en 0.0.0.0
+# 3. INICIAR TÚNEL CLOUDFLARED (quick tunnel, sin cuenta)
+# Se levanta ANTES que uvicorn porque el servidor debe arrancar con la URL
+# del túnel en .env (settings.BASE_URL se lee una sola vez al importarse).
+# cloudflared mantiene el túnel activo aunque el backend tarde unos segundos.
+$cfLog = "$env:TEMP\opencode\cloudflared_remote.log"
+$cfErr = "$env:TEMP\opencode\cloudflared_remote.err.log"
+$cf = Start-Process -FilePath $cfBin -ArgumentList "tunnel","--url","http://localhost:$uvicornPort","--no-autoupdate" `
+    -RedirectStandardOutput $cfLog -RedirectStandardError $cfErr -PassThru -WindowStyle Hidden
+Write-Host "   [OK] Túnel Cloudflare iniciado (PID $($cf.Id))" -ForegroundColor Green
+
+# Esperar a que cloudflared genere el túnel (parsear la URL del log)
+$publicUrl = $null
+for ($i = 0; $i -lt 60; $i++) {
+    Start-Sleep -Milliseconds 500
+    $logContent = (Get-Content $cfLog -ErrorAction SilentlyContinue | Out-String) + "`n" + (Get-Content $cfErr -ErrorAction SilentlyContinue | Out-String)
+    $m = [regex]::Match($logContent, 'https://[a-z0-9\-]+\.trycloudflare\.com')
+    if ($m.Success) { $publicUrl = $m.Value; break }
+}
+if (-not $publicUrl) {
+    Write-Host "   [ERROR] No se pudo obtener la URL del túnel Cloudflare." -ForegroundColor Red
+    Get-Content $cfLog -ErrorAction SilentlyContinue
+    Get-Content $cfErr -ErrorAction SilentlyContinue
+    exit 1
+}
+Write-Host "   [OK] Túnel público: $publicUrl" -ForegroundColor Green
+
+# 4. ACTUALIZAR .ENV (BASE_URL y MP_WEBHOOK_URL)
+$envFile = "$root\.env"
+if (Test-Path $envFile) {
+    Copy-Item $envFile "$envFile.bak" -Force
+    $lines = Get-Content $envFile
+    $updated = @()
+    foreach ($line in $lines) {
+        if ($line -match '^BASE_URL=')       { $updated += "BASE_URL=$publicUrl" }
+        elseif ($line -match '^MP_WEBHOOK_URL=') { $updated += "MP_WEBHOOK_URL=$publicUrl/v1/user/mercadopago/webhook" }
+        else { $updated += $line }
+    }
+    Set-Content -Path $envFile -Value $updated -Encoding UTF8
+    Write-Host "   [OK] .env actualizado con la nueva URL del túnel (backup en .env.bak)" -ForegroundColor Green
+} else {
+    Write-Host "   [AVISO] No se encontró .env; no se actualizó BASE_URL." -ForegroundColor Yellow
+}
+
+# 5. INICIAR SERVIDOR Uvicorn en 0.0.0.0 (ahora con el .env ya apuntando
+# al túnel vigente: settings.BASE_URL se lee al importar core/config.py)
 $uvLog = "$env:TEMP\opencode\uvicorn_remote.log"
 $uvErr = "$env:TEMP\opencode\uvicorn_remote.err.log"
 $uv = Start-Process -FilePath $venvPy `
@@ -87,46 +131,6 @@ if (-not $ready) {
     exit 1
 }
 Write-Host "   [OK] Servidor respondiendo en 127.0.0.1:$uvicornPort" -ForegroundColor Green
-
-# 4. INICIAR TÚNEL CLOUDFLARED (quick tunnel, sin cuenta)
-$cfLog = "$env:TEMP\opencode\cloudflared_remote.log"
-$cfErr = "$env:TEMP\opencode\cloudflared_remote.err.log"
-$cf = Start-Process -FilePath $cfBin -ArgumentList "tunnel","--url","http://localhost:$uvicornPort","--no-autoupdate" `
-    -RedirectStandardOutput $cfLog -RedirectStandardError $cfErr -PassThru -WindowStyle Hidden
-Write-Host "   [OK] Túnel Cloudflare iniciado (PID $($cf.Id))" -ForegroundColor Green
-
-# Esperar a que cloudflared genere el túnel (parsear la URL del log)
-$publicUrl = $null
-for ($i = 0; $i -lt 60; $i++) {
-    Start-Sleep -Milliseconds 500
-    $logContent = (Get-Content $cfLog -ErrorAction SilentlyContinue | Out-String) + "`n" + (Get-Content $cfErr -ErrorAction SilentlyContinue | Out-String)
-    $m = [regex]::Match($logContent, 'https://[a-z0-9\-]+\.trycloudflare\.com')
-    if ($m.Success) { $publicUrl = $m.Value; break }
-}
-if (-not $publicUrl) {
-    Write-Host "   [ERROR] No se pudo obtener la URL del túnel Cloudflare." -ForegroundColor Red
-    Get-Content $cfLog -ErrorAction SilentlyContinue
-    Get-Content $cfErr -ErrorAction SilentlyContinue
-    exit 1
-}
-Write-Host "   [OK] Túnel público: $publicUrl" -ForegroundColor Green
-
-# 5. ACTUALIZAR .ENV (BASE_URL y MP_WEBHOOK_URL)
-$envFile = "$root\.env"
-if (Test-Path $envFile) {
-    Copy-Item $envFile "$envFile.bak" -Force
-    $lines = Get-Content $envFile
-    $updated = @()
-    foreach ($line in $lines) {
-        if ($line -match '^BASE_URL=')       { $updated += "BASE_URL=$publicUrl" }
-        elseif ($line -match '^MP_WEBHOOK_URL=') { $updated += "MP_WEBHOOK_URL=$publicUrl/v1/user/mercadopago/webhook" }
-        else { $updated += $line }
-    }
-    Set-Content -Path $envFile -Value $updated -Encoding UTF8
-    Write-Host "   [OK] .env actualizado con la nueva URL del túnel (backup en .env.bak)" -ForegroundColor Green
-} else {
-    Write-Host "   [AVISO] No se encontró .env; no se actualizó BASE_URL." -ForegroundColor Yellow
-}
 
 Write-Host ""
 Write-Host " ============================================================" -ForegroundColor Green
