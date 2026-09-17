@@ -7,6 +7,21 @@ import models
 
 class BranchRepository:
     @staticmethod
+    def get_all(db: Session) -> list:
+        """OBTIENE TODAS LAS SUCURSALES (SEDES)."""
+        return db.query(models.ParkingBranch).all()
+
+    @staticmethod
+    def get_by_name_like(db: Session, nombre: str) -> models.ParkingBranch:
+        """OBTIENE UNA SUCURSAL POR NOMBRE APROXIMADO (ILIKE)."""
+        return db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{nombre}%")).first()
+
+    @staticmethod
+    def get_floor_by_id(db: Session, floor_id: int) -> models.ParkingFloor:
+        """OBTIENE UN PISO POR SU IDENTIFICADOR UNICO."""
+        return db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
+
+    @staticmethod
     def get_by_name_with_floors(db: Session, nombre: str) -> models.ParkingBranch:
         """OBTIENE UNA SUCURSAL CON SUS PISOS CARGADOS."""
         return (

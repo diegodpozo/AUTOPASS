@@ -9,6 +9,19 @@ from models.enums import AccessEventType
 
 class AccessRepository:
     @staticmethod
+    def get_last_by_patente_and_sucursal(db: Session, normalized_patente: str, sucursal: str) -> models.AccessLog:
+        """ULTIMO EVENTO FISICO (CUALQUIER TIPO) DE UNA PATENTE EN UNA SUCURSAL."""
+        return (
+            db.query(models.AccessLog)
+            .filter(
+                models.AccessLog.normalized_patente == normalized_patente,
+                models.AccessLog.sucursal == sucursal
+            )
+            .order_by(models.AccessLog.id.desc())
+            .first()
+        )
+
+    @staticmethod
     def get_entry_for_reserva(db: Session, reserva_id: int) -> models.AccessLog:
         """OBTIENE EL PRIMER REGISTRO DE INGRESO VINCULADO A UNA RESERVA."""
         return (

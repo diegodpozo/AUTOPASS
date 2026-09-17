@@ -19,6 +19,13 @@ class VehicleRepository:
         return db.query(models.Vehicle).filter(models.Vehicle.patente == patente).first()
 
     @staticmethod
+    def get_by_normalized_patente(db: Session, norm: str) -> models.Vehicle:
+        """OBTIENE UN VEHICULO POR PATENTE NORMALIZADA (SIN ESPACIOS, MAYUSCULAS)."""
+        return db.query(models.Vehicle).filter(
+            func.replace(func.upper(models.Vehicle.patente), ' ', '') == norm
+        ).first()
+
+    @staticmethod
     def get_by_patente_and_user(db: Session, patente: str, user_id: int) -> models.Vehicle:
         """OBTIENE UN VEHICULO POR PATENTE EXACTA Y USUARIO DUENO."""
         return db.query(models.Vehicle).filter(
