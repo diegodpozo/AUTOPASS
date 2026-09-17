@@ -15,7 +15,7 @@
 | Frontend Bridge Pattern | Cumplido | 0 asignaciones `window.*` en módulos (76 migradas a puentes en v9.21.0); doble instancia de `notifications.js` [resuelta en v9.21.0] |
 | Repositorios | Parcial | Solo 2 repos, usados por 2 servicios; el acceso a datos sigue descentralizado |
 | Enums / Tipado | Parcial | Enums implementados, con strings mágicos residuales en 3 puntos |
-| Tamaño de clases/módulos | God modules | `tour.js` (1590), `reservation_service.py` (817), etc. |
+| Tamaño de clases/módulos | God modules | `tour.js` (1730), `access_service.py` (607), `report_service.py` (581), etc. `reservation_service.py` descompuesto [v9.21.0] |
 | Lógica inline en templates | Desviado | `reset_password.html` y `estadisticas_ocr.html` con lógica embebida |
 | Config / Hardcoding | Correcto | Configuración centralizada en `core/config.py` |
 
@@ -73,11 +73,13 @@ main.py
 
 | Servicio | Líneas | Riesgo |
 |---|---|---|
-| `services/reservation_service.py` | 817 | Mezcla disponibilidad (sweep-line), ciclo de vida, pagos, reembolsos, descuentos y cleanups |
+| `services/reservation_service.py` | 687 (fachada; era 1451) | Disponibilidad extraída a `availability.py` (382) y pagos a `payments.py` (422) — ver §2.3
 | `services/access_service.py` | 607 | Entrada/salida, reservas, notificaciones, hardware |
 | `services/report_service.py` | 581 | Resúmenes, historial, reembolsos, auditoría |
 
 **Sugerencia:** en `reservation_service.py` extraer `availability.py` (sweep-line y fechas/horas deshabilitadas) y `payments.py` (pago manual/MP/reembolsos), manteniendo el resto como fachada.
+
+**Resolución (v9.21.0, working tree):** aplicado. `reservation_service.py` quedó como **fachada de 687 líneas** (`class ReservationService(ReservationPaymentsMixin)`): extraídos `services/availability.py` (382 líneas: capacidad por tipo, `verificar_disponibilidad`, fechas/horas deshabilitadas, sweep-line, aforo no-op) y `services/payments.py` (422 líneas: `ReservationPaymentsMixin` con `get_available_redemption_discounts`, `pay_reservation_manual`, `redemption_sucursal_clause`, `validate_redemption_ticket`, `pay_reservation`, `pay_reservation_mp`, `simulate_refund`, `cancel_reservation`). La fachada re-exporta `verificar_disponibilidad`/`obtener_fechas_deshabilitadas`/`obtener_horas_deshabilitadas_con_reservas` etc. (los tests y `routes/user/reservations.py` siguen importando desde `services.reservation_service`). Todos los `onclick` de llamadas externas resuelven por herencia MRO (`ReservationService.pay_reservation_manual`, `.simulate_refund`, `.validate_redemption_ticket`, `.redemption_sucursal_clause`). **152 tests en verde y `py_compile` OK.** El dominio "ciclo de vida" (cleanups, finalización, `get_en_predio_ids`, listados y CRUD user/admin) quedó como núcleo del facade hasta una descomposición futura si hace falta.
 
 ### 2.4 Repositorios subutilizados
 
@@ -222,7 +224,7 @@ Son mantenibles pero se acercan al límite de responsabilidad única; conviene p
 
 ### Prioridad 3 — Enums y god services
 7. ~~Reemplazar los strings mágicos de 2.5 por los `AccessEventType`, `UserRole` y `ReservationStatus`.~~ — **[HECHO]** en v9.21.0: los strings de la tabla 2.5 ya estaban corregidos; se completó el barrido de los restantes en 14 archivos (`routes/parking/status.py`, `routes/admin/settings.py` y `promotions.py`, `routes/system/cameras.py`, `health.py`, `video.py`, `common.py`, `routes/user/balance.py`, `services/reservation_service.py` (8 estados + 7 roles), `support_service.py` (incluye `in_([UserRole.ADMIN, UserRole.LOCAL_ADMIN])`), `branch_service.py` (`UserRole.LOCAL_ADMIN`), `billing_service.py`, `occupancy_service.py`, `report_service.py` y `oauth_service.py`). **152 tests en verde.** Quedan intencionalmente sin enum: naming de `gate_id`/`GATE_TYPE` de ALPR (cameras/access/hardware, acoplamiento documentado), claves de diccionario de `report_service` (pares almacenados) y el `estado` de `SupportTicket` (no existe enum de tickets).
-8. Descomponer `reservation_service.py` en `availability.py` + `payments.py` (fachada) y evaluar lo mismo para `access_service.py` y `report_service.py`.
+8. ~~Descomponer `reservation_service.py` en `availability.py` + `payments.py` (fachada) y evaluar lo mismo para `access_service.py` y `report_service.py`.~~ — **[HECHO]** en v9.21.0 (working tree): fachada de 687 líneas + `availability.py` (382) + `payments.py` (422) vía mixin; 152 tests en verde. Pendiente de evaluación: `access_service.py` (607) y `report_service.py` (581).
 
 ### Prioridad 4 — Templates y megamódulos
 9. Extraer la lógica de `reset_password.html` a un módulo (reutilizar validación de `auth.js`) y `estadisticas_ocr.html` a un módulo dedicado.
