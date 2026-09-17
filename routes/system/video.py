@@ -61,7 +61,7 @@ async def update_frame_http(camera_id: str, request: Request):
 @router.get("/video-feed/{camera_id}")
 async def video_feed_legacy(camera_id: str, staff: models.User = Depends(get_operational_user)):
     """Streaming de video MJPEG fallback."""
-    if staff.rol != "admin" and staff.sucursal:
+    if staff.rol != UserRole.ADMIN and staff.sucursal:
         branch_prefix = camera_id.split('_')[0]
         # Comparar contra la sucursal normalizada (misma lógica que el WebSocket)
         if branch_prefix.upper() != normalize_system_name(staff.sucursal):

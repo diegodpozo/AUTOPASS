@@ -250,7 +250,7 @@ class AccessService:
         try:
             if data.gate_id and '_' in data.gate_id:
                 suc_short = normalize_name(data.gate_id.split('_')[0])
-            if suc_short not in ('ENTRADA', 'SALIDA'):
+            if suc_short not in (AccessEventType.ENTRADA.value, AccessEventType.SALIDA.value):
                 sucursal = suc_short
             if sucursal:
                 try:

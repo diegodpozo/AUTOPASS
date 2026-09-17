@@ -121,7 +121,7 @@ function filterNotificationsArray(list, filter) {
     return list;
 }
 
-window.filterNotifs = function(filterType, btn) {
+export function filterNotifs(filterType, btn) {
     currentFilter = filterType;
     document.querySelectorAll('.notif-chip').forEach(c => c.classList.remove('active'));
     if (btn) btn.classList.add('active');
@@ -416,8 +416,6 @@ export async function markNotifRead(notifId, el) {
     updateNotifBadge();
     await api.patch(`/user/profile/notifications/${notifId}/read`);
 }
-window.markNotifRead = markNotifRead;
-
 export async function markAllNotifRead() {
     const res = await api.post('/user/profile/notifications/read-all');
     if (!res.ok) {
@@ -431,8 +429,6 @@ export async function markAllNotifRead() {
     updateNotifBadge();
     showToast('Todas las notificaciones marcadas como leídas', 'success');
 }
-window.markAllNotifRead = markAllNotifRead;
-
 export async function deleteNotif(notifId, e, btn) {
     if (e) e.stopPropagation();
     const res = await api.delete(`/user/profile/notifications/${notifId}`);
@@ -458,8 +454,6 @@ export async function deleteNotif(notifId, e, btn) {
     }
     showToast('Notificación eliminada', 'info');
 }
-window.deleteNotif = deleteNotif;
-
 export async function clearReadNotifs() {
     const confirmed = await showConfirm(
         '¿Borrar notificaciones?',
@@ -481,9 +475,7 @@ export async function clearReadNotifs() {
     updateNotifBadge();
     showToast('Se han borrado todas las notificaciones', 'success');
 }
-window.clearReadNotifs = clearReadNotifs;
-
-window.confirmReminder = async function(notifId, reservaId, btn) {
+export async function confirmReminder(notifId, reservaId, btn) {
     const res = await api.post(`/user/reservations/${reservaId}/confirm-reminder`);
     if (!res.ok) {
         showToast('Error al confirmar recordatorio', 'error');
@@ -499,7 +491,7 @@ window.confirmReminder = async function(notifId, reservaId, btn) {
     showToast('Reserva confirmada. Te esperamos!', 'success');
 };
 
-window.payFromNotif = async function(reservaId) {
+export async function payFromNotif(reservaId) {
     window.showSection?.('reservas');
     setTimeout(async () => {
         const card = document.querySelector(`[data-reserva-id="${reservaId}"]`);
@@ -513,8 +505,8 @@ window.payFromNotif = async function(reservaId) {
     }, 600);
 };
 
-window.goToReservation = function(reservaId) {
-    window.closeNotifDropdown?.();
+export function goToReservation(reservaId) {
+    closeNotifDropdown?.();
     window.showSection?.('reservas');
     setTimeout(() => {
         const card = document.querySelector(`[data-reserva-id="${reservaId}"]`);
@@ -526,8 +518,8 @@ window.goToReservation = function(reservaId) {
     }, 500);
 };
 
-window.goToChangePassword = function() {
-    window.closeNotifDropdown?.();
+export function goToChangePassword() {
+    closeNotifDropdown?.();
     window.showSection?.('perfil');
     setTimeout(() => {
         const btnPass = document.getElementById('current-password') || document.getElementById('btn-change-password') || document.querySelector('[data-bs-target="#changePasswordModal"]') || document.querySelector('.form-security-premium');
@@ -538,8 +530,8 @@ window.goToChangePassword = function() {
     }, 400);
 };
 
-window.goToBalance = function() {
-    window.closeNotifDropdown?.();
+export function goToBalance() {
+    closeNotifDropdown?.();
     if (window.openRechargeModal) {
         window.openRechargeModal();
     } else {
@@ -547,8 +539,8 @@ window.goToBalance = function() {
     }
 };
 
-window.goToPoints = function() {
-    window.closeNotifDropdown?.();
+export function goToPoints() {
+    closeNotifDropdown?.();
     window.showSection?.('puntos');
     setTimeout(() => {
         const ptsEl = document.getElementById('puntos-catalog-container') || document.querySelector('.fidelizacion-card') || document.getElementById('section-puntos');
@@ -556,8 +548,8 @@ window.goToPoints = function() {
     }, 400);
 };
 
-window.goToVoucher = async function(voucherId) {
-    window.closeNotifDropdown?.();
+export async function goToVoucher(voucherId) {
+    closeNotifDropdown?.();
     window.showSection?.('puntos');
     setTimeout(async () => {
         const vContainer = document.getElementById('vouchers-container');
@@ -591,8 +583,8 @@ window.goToVoucher = async function(voucherId) {
     }, 450);
 };
 
-window.goToNewReservation = function() {
-    window.closeNotifDropdown?.();
+export function goToNewReservation() {
+    closeNotifDropdown?.();
     window.showSection?.('inicio');
     setTimeout(() => {
         const formContainer = document.getElementById('reserva-form-container') || document.getElementById('section-inicio');
@@ -602,8 +594,8 @@ window.goToNewReservation = function() {
     }, 400);
 };
 
-window.goToReservationsList = function() {
-    window.closeNotifDropdown?.();
+export function goToReservationsList() {
+    closeNotifDropdown?.();
     window.showSection?.('reservas');
     setTimeout(() => {
         const resList = document.getElementById('reservas-list') || document.getElementById('section-reservas');
@@ -613,8 +605,8 @@ window.goToReservationsList = function() {
     }, 400);
 };
 
-window.goToVehicles = function() {
-    window.closeNotifDropdown?.();
+export function goToVehicles() {
+    closeNotifDropdown?.();
     window.showSection?.('vehiculos');
     setTimeout(() => {
         const vContainer = document.getElementById('vehicles-grid') || document.getElementById('vehicle-form-container') || document.getElementById('section-vehiculos');
@@ -624,8 +616,8 @@ window.goToVehicles = function() {
     }, 400);
 };
 
-window.goToProfile = function() {
-    window.closeNotifDropdown?.();
+export function goToProfile() {
+    closeNotifDropdown?.();
     window.showSection?.('perfil');
     setTimeout(() => {
         const pCard = document.querySelector('.account-hub-card') || document.getElementById('section-perfil');
@@ -635,8 +627,8 @@ window.goToProfile = function() {
     }, 400);
 };
 
-window.goToStays = function() {
-    window.closeNotifDropdown?.();
+export function goToStays() {
+    closeNotifDropdown?.();
     window.showSection?.('perfil');
     setTimeout(() => {
         const staysCard = document.getElementById('container-active-stays') || document.querySelector('.account-hub-card') || document.getElementById('section-perfil');
@@ -647,7 +639,7 @@ window.goToStays = function() {
 };
 
 // DROPDOWN DE NOTIFICACIONES EN HEADER
-window.toggleNotifDropdown = function(e) {
+export function toggleNotifDropdown(e) {
     if (e) e.stopPropagation();
     const dropdown = document.getElementById('notif-dropdown');
     if (!dropdown) return;
@@ -660,7 +652,7 @@ window.toggleNotifDropdown = function(e) {
     loadNotifDropdown();
 };
 
-window.closeNotifDropdown = function() {
+export function closeNotifDropdown() {
     const dropdown = document.getElementById('notif-dropdown');
     if (dropdown) dropdown.classList.remove('visible');
 };
@@ -714,22 +706,18 @@ document.addEventListener('click', function(e) {
     }
 });
 
-window.loadNotifications = loadNotifications;
-
 export function startNotifPolling() {
-    if (window.__autopassNotifPollInterval) return;
+    if (pollInterval) return;
     lastNotifCount = -1;
     updateNotifBadge();
-    window.__autopassNotifPollInterval = setInterval(updateNotifBadge, 30000);
-    pollInterval = window.__autopassNotifPollInterval;
+    pollInterval = setInterval(updateNotifBadge, 30000);
 }
 
 export function stopNotifPolling() {
-    if (window.__autopassNotifPollInterval) {
-        clearInterval(window.__autopassNotifPollInterval);
-        window.__autopassNotifPollInterval = null;
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
     }
-    pollInterval = null;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

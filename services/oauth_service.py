@@ -11,6 +11,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 import models
+from models.enums import UserRole
 from core.config import settings
 from core.logger import get_logger
 from core.normalize import normalize_dni, normalize_user_name
@@ -252,7 +253,7 @@ def complete_oauth_signup(db: Session, code: str, dni: str, telefono: str) -> mo
         telefono=(telefono or "").strip(),
         email=email,
         password_hash=get_password_hash(random_secret),
-        rol="user",
+        rol=UserRole.USER,
         sucursal=None,
     )
     db.add(user)

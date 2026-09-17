@@ -6,6 +6,7 @@ from typing import Dict, List
 from fastapi import WebSocket
 from pydantic import BaseModel
 import models
+from models.enums import UserRole
 from core.logger import get_logger
 
 logger = get_logger("SystemCommon")
@@ -44,7 +45,7 @@ class ConnectionManager:
 
     async def connect(self, websocket: WebSocket, camera_id: str, user: models.User) -> bool:
         """Valida permisos por sucursal antes de conectar al espectador."""
-        if user.rol != "admin":
+        if user.rol != UserRole.ADMIN:
             branch_prefix = camera_id.split('_')[0] if '_' in camera_id else ""
             user_branch_norm = normalize_system_name(user.sucursal)
             

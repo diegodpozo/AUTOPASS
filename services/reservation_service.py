@@ -1,4 +1,6 @@
 import datetime
+import math
+import re
 import time
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
@@ -7,12 +9,13 @@ import schemas
 from services.billing_service import BillingService
 from services.branch_service import BranchService
 from core.config import settings
+from core.normalize import format_plate
 from services.email_service import EmailService
 from services.notification_service import NotificationService
 from services.time_service import TimeService
 from repositories.reservation_repository import ReservationRepository
 from fastapi import HTTPException
-from models.enums import ReservationStatus, PaymentStatus, VehicleType, AccessEventType
+from models.enums import UserRole, ReservationStatus, PaymentStatus, VehicleType, AccessEventType
 from core.logger import get_logger
 
 logger = get_logger("ReservationService")
@@ -55,8 +58,8 @@ def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, ha
     tipo_vehiculo = (tipo_vehiculo or "Auto").strip().title()
     q = db.query(models.Reservation).filter(
         models.Reservation.sucursal_nombre == sucursal_nombre,
-        models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
-        models.Reservation.estado_pago.in_(["Pendiente", "Pagado"]),
+        models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+        models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
         models.Reservation.fecha_inicio < hasta_str,
         models.Reservation.fecha_fin > desde_str
     )
@@ -146,8 +149,8 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
     # 2. CONSULTAR RESERVAS SOLAPADAS EN EL RANGO (EXCLUYENDO CANCELADAS/COMPLETADAS)
     query = db.query(models.Reservation).filter(
         models.Reservation.sucursal_nombre == sucursal_nombre,
-        models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
-        models.Reservation.estado_pago.in_(["Pendiente", "Pagado"]),
+        models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+        models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
         models.Reservation.fecha_inicio < fecha_fin,
         models.Reservation.fecha_fin > fecha_inicio
     )
@@ -812,7 +815,6 @@ class ReservationService:
     def simulate_refund(db: Session, res: models.Reservation):
         """CALCULA EL REEMBOLSO POTENCIAL SIN EJECUTAR LA CANCELACION."""
         # 1. VERIFICACION DE PRESENCIA FISICA
-        import re
         norm_pat = re.sub(r'[^A-Z0-9]', '', (res.patente or '').upper())
         vinc_log = db.query(models.AccessLog).filter(
             models.AccessLog.normalized_patente == norm_pat,
@@ -924,3 +926,526 @@ class ReservationService:
             print(f"[ERROR NOTIF] No se pudo notificar cancelacion de reserva: {e}")
 
         return {"status": "ok", "message": msg, "reembolso": monto_a_reembolsar}
+
+    # -------------------------------------------------------------------
+    # RUTAS DELGADAS: helpers y wrappers completos para routes/admin y routes/user
+    # -------------------------------------------------------------------
+
+    @staticmethod
+    def get_reservation_or_404(db: Session, res_id: int, user_id: int = None):
+        """Obtiene una reserva o lanza 404. Con user_id, la filtra por dueño."""
+        q = db.query(models.Reservation).filter(models.Reservation.id == res_id)
+        if user_id is not None:
+            q = q.filter(models.Reservation.user_id == user_id)
+        res = q.first()
+        if not res:
+            raise HTTPException(status_code=404, detail="Reserva no encontrada")
+        return res
+
+    @staticmethod
+    def get_permissioned_reservation(db: Session, staff, res_id: int):
+        """Obtiene una reserva validando que el operador tenga acceso (admin == todas)."""
+        res = ReservationService.get_reservation_or_404(db, res_id)
+        if staff.rol != UserRole.ADMIN and res.sucursal_nombre != staff.sucursal:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+        return res
+
+    @staticmethod
+    def lookup_patente(db: Session, patente: str) -> dict:
+        norm = re.sub(r'[^A-Z0-9]', '', (patente or '').upper())
+        if len(norm) < 4:
+            return {"encontrado": False, "patente": patente}
+        vehicle = (
+            db.query(models.Vehicle)
+            .join(models.User, models.User.id == models.Vehicle.user_id)
+            .filter(
+                func.replace(func.upper(models.Vehicle.patente), ' ', '') == norm,
+                models.User.is_deleted == False
+            )
+            .first()
+        )
+        if not vehicle or not vehicle.owner:
+            return {"encontrado": False, "patente": patente}
+        owner = vehicle.owner
+        return {
+            "encontrado": True, "user_id": owner.id, "nombre": owner.nombre,
+            "apellido": owner.apellido, "email": owner.email,
+            "tipo_vehiculo": vehicle.tipo or "Auto",
+            "marca_modelo": vehicle.marca_modelo or ""
+        }
+
+    @staticmethod
+    def get_new_reservations_count(db: Session, staff, since_id: int = None) -> dict:
+        q = db.query(models.Reservation)
+        if staff.rol != UserRole.ADMIN:
+            staff_suc = staff.sucursal or ""
+            norm_col = func.trim(func.replace(func.lower(models.Reservation.sucursal_nombre), 'autopass ', ''))
+            norm_staff = staff_suc.lower().replace('autopass ', '').strip()
+            q = q.filter((models.Reservation.sucursal_nombre == staff_suc) | (norm_col == norm_staff))
+        latest_id = q.with_entities(func.max(models.Reservation.id)).scalar() or 0
+        count = 0
+        if since_id is not None:
+            count = q.filter(models.Reservation.id > since_id).count()
+        return {"count": count, "latest_id": latest_id}
+
+    @staticmethod
+    def validar_horario_sucursal(db: Session, sucursal_nombre: str, start: datetime.datetime, end: datetime.datetime):
+        if not sucursal_nombre:
+            return
+        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+        if not branch or branch.is_24h or not branch.horario:
+            return
+        match = re.match(r'^(\d{1,2}):(\d{2})\s+(?:A|UN)\s+(\d{1,2}):(\d{2})$', branch.horario.upper().strip())
+        if not match:
+            return
+        open_h, open_m = int(match.group(1)), int(match.group(2))
+        close_h, close_m = int(match.group(3)), int(match.group(4))
+        if close_h == 0 and close_m == 0:
+            close_h, close_m = 23, 59
+        apertura = datetime.time(open_h, open_m)
+        cierre = datetime.time(close_h, close_m)
+        if start.date() != end.date():
+            raise HTTPException(status_code=400, detail=f"La sucursal cierra a las {match.group(3)}:{match.group(4)}. La estadía no puede extenderse más allá del cierre.")
+        if start.time() < apertura or start.time() >= cierre:
+            raise HTTPException(status_code=400, detail=f"La sucursal abre de {branch.horario}. La hora de inicio debe estar dentro del horario de atención.")
+        if end.time() > cierre:
+            raise HTTPException(status_code=400, detail=f"La sucursal cierra a las {match.group(3)}:{match.group(4)}. La hora de fin no puede exceder el horario de cierre.")
+
+    @staticmethod
+    def validate_manual_vinculacion(db: Session, user_id: int, patente: str):
+        user = None
+        vehicle = None
+        if user_id:
+            user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            vehicle = db.query(models.Vehicle).filter(
+                models.Vehicle.user_id == user_id,
+                func.replace(func.upper(models.Vehicle.patente), ' ', '') == re.sub(r'[^A-Z0-9]', '', patente.upper())
+            ).first()
+            if not vehicle:
+                raise HTTPException(status_code=400, detail="La patente no está vinculada a ese usuario")
+        return user, vehicle
+
+    @classmethod
+    def create_user_reservation(cls, db: Session, user, data: schemas.UserReservationCreate) -> dict:
+        if user.is_blocked:
+            raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
+        vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente, models.Vehicle.user_id == user.id).first()
+        if not vehicle:
+            raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
+        p_clean = data.patente.upper().replace(' ', '')
+        existing_overlap = db.query(models.Reservation).filter(
+            func.replace(func.upper(models.Reservation.patente), ' ', '') == p_clean,
+            models.Reservation.sucursal_nombre == data.sucursal_nombre,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+            models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
+            models.Reservation.fecha_inicio < data.fecha_fin,
+            models.Reservation.fecha_fin > data.fecha_inicio
+        ).first()
+        if existing_overlap:
+            raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")
+        rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
+        start = datetime.datetime.fromisoformat(data.fecha_inicio)
+        end = datetime.datetime.fromisoformat(data.fecha_fin)
+        max_future = datetime.datetime.now() + datetime.timedelta(days=90)
+        if start > max_future:
+            raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
+        if data.tipo_estadia == "hora":
+            min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
+            if (start - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+                raise HTTPException(status_code=400, detail=f"Las reservas por hora deben realizarse con al menos {min_antelacion_min} minutos de anticipación.")
+            cls.validar_horario_sucursal(db, data.sucursal_nombre, start, end)
+        disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, tipo_vehiculo=vehicle.tipo)
+        if not disp["disponible"]:
+            raise HTTPException(status_code=400, detail=disp["mensaje"])
+        duration_hours = (end - start).total_seconds() / 3600
+        if duration_hours <= 0:
+            raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
+        if data.tipo_estadia == "dia" and data.dias_semana:
+            dias_seleccionados = [int(d.strip()) for d in data.dias_semana.split(",") if d.strip()]
+            count, d = 0, start
+            while d <= end:
+                if d.weekday() in dias_seleccionados:
+                    count += 1
+                d += datetime.timedelta(days=1)
+            if count == 0:
+                raise HTTPException(status_code=400, detail="No hay días seleccionados dentro del rango")
+            monto = count * rate
+        elif data.tipo_estadia == "hora":
+            v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
+            tarifa_30min = BillingService.get_30min_rate(db, sucursal=data.sucursal_nombre, tipo_vehiculo=v_str)
+            monto = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
+        elif data.tipo_estadia == "dia":
+            monto = max(1, math.ceil(duration_hours / 24)) * rate
+        elif data.tipo_estadia == "semana":
+            monto = math.ceil(duration_hours / (24 * 7)) * rate
+        elif data.tipo_estadia == "quincena":
+            monto = math.ceil(duration_hours / (24 * 15)) * rate
+        elif data.tipo_estadia == "mes":
+            monto = math.ceil(duration_hours / (24 * 30)) * rate
+        else:
+            monto = math.ceil(duration_hours) * rate
+        estado_pago = PaymentStatus.PENDIENTE
+        info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
+        tipo_v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
+        new_res = models.Reservation(
+            user_id=user.id, patente=data.patente, fecha_inicio=data.fecha_inicio, fecha_fin=data.fecha_fin,
+            tipo_estadia=data.tipo_estadia, monto_total=monto, estado_pago=estado_pago, estado_reserva=ReservationStatus.PENDIENTE,
+            sucursal_nombre=data.sucursal_nombre, sucursal_info=info_sede,
+            dias_semana=data.dias_semana, tipo_vehiculo=tipo_v_str
+        )
+        db.add(new_res)
+        db.commit()
+        db.refresh(new_res)
+        try:
+            NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
+        except Exception as e:
+            logger.error(f"Error notificando nueva reserva: {e}")
+        return {"status": "ok", "monto": monto, "estado_pago": estado_pago}
+
+    @classmethod
+    def modify_user_reservation(cls, db: Session, user, res_id: int, data: schemas.ReservationUpdate) -> dict:
+        if user.is_blocked:
+            raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
+        res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == user.id).first()
+        if not res:
+            raise HTTPException(status_code=404, detail="Reserva no encontrada")
+        if res.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
+            raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva en estado '{res.estado_reserva}'.")
+        tipo_efectivo = data.tipo_estadia if data.tipo_estadia else res.tipo_estadia
+        suc_efectivo = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
+        start_efectivo = datetime.datetime.fromisoformat(data.fecha_inicio) if data.fecha_inicio else datetime.datetime.fromisoformat(res.fecha_inicio)
+        end_efectivo = datetime.datetime.fromisoformat(data.fecha_fin) if data.fecha_fin else datetime.datetime.fromisoformat(res.fecha_fin)
+        max_future = datetime.datetime.now() + datetime.timedelta(days=90)
+        if start_efectivo > max_future:
+            raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
+        if tipo_efectivo == "hora":
+            min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
+            if (start_efectivo - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+                raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva por hora con menos de {min_antelacion_min} minutos de antelación")
+            cls.validar_horario_sucursal(db, suc_efectivo, start_efectivo, end_efectivo)
+        fec_ini = data.fecha_inicio if data.fecha_inicio else res.fecha_inicio
+        fec_fin = data.fecha_fin if data.fecha_fin else res.fecha_fin
+        suc_efect = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
+        disp = verificar_disponibilidad(db, suc_efect, fec_ini, fec_fin, exclude_id=res.id)
+        if not disp["disponible"]:
+            raise HTTPException(status_code=400, detail=disp["mensaje"])
+        monto_anterior, ya_pagado = res.monto_total, res.estado_pago == PaymentStatus.PAGADO
+        if data.fecha_inicio:
+            res.fecha_inicio = data.fecha_inicio
+        if data.fecha_fin:
+            res.fecha_fin = data.fecha_fin
+        if data.patente:
+            if not db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente, models.Vehicle.user_id == user.id).first():
+                raise HTTPException(status_code=400, detail="Patente no vinculada")
+            res.patente = data.patente
+        if data.tipo_estadia:
+            res.tipo_estadia = data.tipo_estadia
+        if data.sucursal_nombre:
+            res.sucursal_nombre = data.sucursal_nombre
+        vehiculo_mod = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
+        tipo_vehiculo_mod = vehiculo_mod.tipo if vehiculo_mod else "Auto"
+        rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+        duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
+        if duration_hours <= 0:
+            raise HTTPException(status_code=400, detail="Fechas inválidas")
+        monto_nuevo = math.ceil(duration_hours) * rate
+        if res.tipo_estadia == "hora":
+            tarifa_30min = BillingService.get_30min_rate(db, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+            monto_nuevo = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
+        elif res.tipo_estadia == "dia":
+            monto_nuevo = max(1, math.ceil(duration_hours / 24)) * rate
+        elif res.tipo_estadia == "semana":
+            monto_nuevo = math.ceil(duration_hours / (24 * 7)) * rate
+        elif res.tipo_estadia == "quincena":
+            monto_nuevo = math.ceil(duration_hours / (24 * 15)) * rate
+        elif res.tipo_estadia == "mes":
+            monto_nuevo = math.ceil(duration_hours / (24 * 30)) * rate
+        if ya_pagado:
+            diferencia = monto_nuevo - monto_anterior
+            dif_puntos = BillingService.calculate_points(monto_nuevo) - BillingService.calculate_points(monto_anterior)
+            if dif_puntos != 0:
+                user.puntos_acumulados += dif_puntos
+                db.add(models.PointsLog(user_id=user.id, cantidad=dif_puntos, motivo=f"Ajuste Reserva: {res.patente}", fecha=datetime.datetime.now().isoformat()))
+            if diferencia > 0:
+                if user.saldo < diferencia:
+                    raise HTTPException(status_code=400, detail=f"Saldo insuficiente (+${diferencia})")
+                user.saldo -= diferencia
+            else:
+                user.saldo += abs(diferencia)
+        else:
+            res.estado_pago = PaymentStatus.PENDIENTE
+        res.monto_total = monto_nuevo
+        db.commit()
+        try:
+            from services.user_notification_service import UserNotificationService
+            msg_detalle = f"Tu reserva #{res.id} ({res.patente}) en {res.sucursal_nombre} fue modificada exitosamente."
+            if ya_pagado and diferencia != 0:
+                if diferencia > 0:
+                    msg_detalle += f" Se debitó una diferencia de ${diferencia:,.2f} de tu saldo."
+                else:
+                    msg_detalle += f" Se acreditó un reembolso de ${abs(diferencia):,.2f} a tu saldo."
+            UserNotificationService.create_notification(
+                db, user_id=user.id,
+                tipo=models.NotificationType.RESERVATION_MODIFIED,
+                titulo="Reserva modificada",
+                mensaje=msg_detalle,
+                reserva_id=res.id
+            )
+        except Exception as e:
+            logger.error(f"Error creando notificación de reserva modificada: {e}")
+        return {"status": "ok", "monto_total": monto_nuevo, "estado_pago": res.estado_pago}
+
+    @staticmethod
+    def list_user_reservations(db: Session, user_id: int):
+        ReservationService.cleanup_overdue_reservations(db)
+        ReservationService.auto_finalize_reservations(db, user_id)
+        reservations = db.query(models.Reservation).filter(models.Reservation.user_id == user_id).order_by(models.Reservation.id.desc()).all()
+        en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in reservations])
+        updated = False
+        for r in reservations:
+            r.en_predio = r.id in en_predio
+            if not r.sucursal_info or "Sede no especificada" in r.sucursal_info or r.sucursal_info.startswith("Sucursal "):
+                info_str = BranchService.get_branch_info_str(db, r.sucursal_nombre)
+                if info_str and info_str != "Dirección no disponible":
+                    r.sucursal_info = info_str
+                    updated = True
+        if updated:
+            try:
+                db.commit()
+            except Exception:
+                pass
+        return reservations
+
+    @staticmethod
+    def confirm_reminder(db: Session, user_id: int, res_id: int) -> dict:
+        res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == user_id).first()
+        if not res:
+            raise HTTPException(status_code=404, detail="Reserva no encontrada")
+        res.recordatorio_confirmado = True
+        from services.user_notification_service import UserNotificationService
+        UserNotificationService.mark_reservation_notifications_as_read(db, user_id, res_id, tipo="REMINDER_UNPAID")
+        db.commit()
+        return {"status": "ok", "message": "Recordatorio confirmado"}
+
+    @staticmethod
+    def list_admin_reservations(db: Session, staff, estado: str = None, sucursal: str = None):
+        ReservationService.cleanup_overdue_reservations(db)
+        q = db.query(models.Reservation)
+        if estado:
+            q = q.filter(models.Reservation.estado_reserva == estado)
+        if staff.rol != UserRole.ADMIN:
+            sucursal = staff.sucursal
+            q = q.filter(models.Reservation.sucursal_nombre == sucursal)
+        elif sucursal:
+            q = q.filter(models.Reservation.sucursal_nombre == sucursal)
+        results = q.order_by(models.Reservation.id.desc()).all()
+        en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in results])
+        out = []
+        for r in results:
+            d = schemas.UserReservationResponse.model_validate(r)
+            d.en_predio = r.id in en_predio
+            if r.user:
+                d.usuario_nombre = r.user.nombre
+                d.usuario_apellido = r.user.apellido
+                d.user_name = f"{r.user.nombre} {r.user.apellido}"
+                d.user_email = r.user.email
+            if r.cliente_nombre:
+                d.user_name = r.cliente_nombre
+                parts = r.cliente_nombre.split(' ', 1)
+                d.usuario_nombre = parts[0]
+                d.usuario_apellido = parts[1] if len(parts) > 1 else ""
+            out.append(d)
+        return out
+
+    @staticmethod
+    def create_admin_reservation(db: Session, staff, data) -> dict:
+        data.patente = format_plate(data.patente)
+        if staff.rol != UserRole.ADMIN:
+            data.sucursal_nombre = staff.sucursal
+        user, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)
+        tipo_v = data.tipo_vehiculo or "Auto"
+        if vehicle:
+            tipo_v = data.tipo_vehiculo or (vehicle.tipo.value if hasattr(vehicle.tipo, 'value') else str(vehicle.tipo))
+        disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, tipo_vehiculo=tipo_v)
+        if not disp["disponible"]:
+            raise HTTPException(status_code=400, detail=disp["mensaje"])
+        try:
+            new_res = ReservationService.create_reservation(db, data)
+            if data.pagar:
+                result = ReservationService.pay_reservation_manual(db, new_res, data.metodo_pago, data.redemption_ticket_id)
+            else:
+                result = None
+            if new_res.user_id:
+                from services.user_notification_service import UserNotificationService
+                UserNotificationService.create_notification(
+                    db, user_id=new_res.user_id,
+                    tipo=models.NotificationType.RESERVATION_CREATED_ADMIN,
+                    titulo="Reserva creada por administrador",
+                    mensaje=f"Se creó una reserva para {new_res.patente} el {new_res.fecha_inicio} en {new_res.sucursal_nombre}.",
+                    reserva_id=new_res.id
+                )
+            return {"status": "ok", "id": new_res.id, "monto": new_res.monto_total, "pagado": bool(data.pagar),
+                    "metodo_pago": data.metodo_pago,
+                    "descuento": (result or {}).get("descuento", 0.0),
+                    "monto_a_cobrar": (result or {}).get("monto_a_cobrar", new_res.monto_total)}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @staticmethod
+    def update_admin_reservation(db: Session, staff, res_id: int, data) -> dict:
+        data.patente = format_plate(data.patente)
+        reserva = ReservationService.get_reservation_or_404(db, res_id)
+        if (getattr(reserva, "origen", None) or "cliente") != "manual":
+            raise HTTPException(status_code=400, detail="Solo se pueden editar reservas creadas por administración o empleados")
+        if reserva.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
+            raise HTTPException(status_code=400, detail="No se puede editar una reserva completada o cancelada")
+        if staff.rol != UserRole.ADMIN and reserva.sucursal_nombre != staff.sucursal:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+        if staff.rol != UserRole.ADMIN:
+            data.sucursal_nombre = staff.sucursal
+        if data.fecha_fin <= data.fecha_inicio:
+            raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
+        vehicle = None
+        if data.user_id:
+            _, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)
+        vinculo_final = None
+        if data.user_id:
+            vinculo_final = data.user_id
+        elif reserva.user_id:
+            sigue_vinculada = db.query(models.Vehicle.id).filter(
+                models.Vehicle.user_id == reserva.user_id,
+                func.replace(func.upper(models.Vehicle.patente), ' ', '') == re.sub(r'[^A-Z0-9]', '', data.patente.upper())
+            ).first()
+            vinculo_final = reserva.user_id if sigue_vinculada else None
+        tipo_v = data.tipo_vehiculo or (vehicle.tipo if vehicle else "Auto")
+        tipo_v_str = tipo_v.value if hasattr(tipo_v, "value") else str(tipo_v)
+        disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, exclude_id=res_id, tipo_vehiculo=tipo_v_str)
+        if not disp["disponible"]:
+            raise HTTPException(status_code=400, detail=disp["mensaje"])
+        try:
+            monto = BillingService.calculate_total_amount(
+                db, data.tipo_estadia, data.fecha_inicio, data.fecha_fin,
+                sucursal=data.sucursal_nombre, tipo_vehiculo=tipo_v_str
+            )
+            ticket_aplicado = None
+            if reserva.estado_pago == PaymentStatus.PAGADO:
+                ticket_aplicado = db.query(models.RedemptionTicket).filter(
+                    models.RedemptionTicket.reserva_id == reserva.id,
+                    models.RedemptionTicket.tipo_canje == "descuento_reserva",
+                    models.RedemptionTicket.estado == "USADO"
+                ).first()
+            if ticket_aplicado and ticket_aplicado.valor_descuento:
+                porc = ticket_aplicado.valor_descuento
+                monto = round(monto * (1 - porc / 100.0), 2)
+            monto_anterior = reserva.monto_total or 0.0
+            reembolsado_previo = reserva.monto_reembolsado or 0.0
+            valor_actual = round(monto_anterior - reembolsado_previo, 2)
+            diferencia = round(monto - valor_actual, 2)
+            reserva.patente = data.patente
+            reserva.fecha_inicio = data.fecha_inicio
+            reserva.fecha_fin = data.fecha_fin
+            reserva.tipo_estadia = data.tipo_estadia
+            reserva.tipo_vehiculo = tipo_v_str
+            reserva.sucursal_nombre = data.sucursal_nombre
+            reserva.sucursal_info = BranchService.get_branch_info_str(db, data.sucursal_nombre)
+            reserva.cliente_nombre = data.cliente_nombre
+            reserva.user_id = vinculo_final
+            accion = "sin_cambio"
+            metodo_ajuste = None
+            devolucion_a_saldo = False
+            if reserva.estado_pago == PaymentStatus.PAGADO:
+                if diferencia > 0:
+                    accion = "cobro"
+                    metodo_ajuste = data.cobrar_diferencia_metodo
+                    reserva.monto_total = round(monto_anterior + diferencia, 2)
+                    if metodo_ajuste:
+                        reserva.metodo_pago = metodo_ajuste
+                    reserva.fecha_pago = datetime.datetime.now().isoformat()
+                elif diferencia < 0:
+                    accion = "reembolso"
+                    metodo_ajuste = data.reembolsar_diferencia_metodo
+                    if not metodo_ajuste:
+                        metodo_ajuste = reserva.metodo_pago or "Saldo"
+                    reembolso = round(abs(diferencia), 2)
+                    reserva.monto_reembolsado = round(reembolsado_previo + reembolso, 2)
+                    reserva.metodo_pago = metodo_ajuste
+                    reserva.fecha_pago = datetime.datetime.now().isoformat()
+                    norm_metodo = re.sub(r'[^A-Z]', '', str(metodo_ajuste).upper())
+                    devolucion_a_saldo = norm_metodo in ("SALDO", "DIGITAL", "BILLETERA", "BILLETERAAUTOPASS")
+                    if devolucion_a_saldo and reserva.user_id and reserva.user:
+                        reserva.user.saldo += reembolso
+                        puntos_desc = BillingService.calculate_points(reembolso)
+                        reserva.user.puntos_acumulados = max(0, reserva.user.puntos_acumulados - puntos_desc)
+                        db.add(models.PointsLog(
+                            user_id=reserva.user_id, cantidad=-puntos_desc,
+                            motivo=f"Reembolso por Edición de Reserva: {reserva.patente}",
+                            fecha=datetime.datetime.now().isoformat()
+                        ))
+                else:
+                    reserva.monto_total = monto
+            else:
+                reserva.monto_total = monto
+            if data.metodo_pago and reserva.estado_pago == PaymentStatus.PENDIENTE:
+                reserva.metodo_pago = data.metodo_pago
+            db.commit()
+            db.refresh(reserva)
+            if reserva.user_id and reserva.user:
+                from services.user_notification_service import UserNotificationService
+                if accion == "cobro":
+                    UserNotificationService.create_notification(
+                        db, user_id=reserva.user_id, tipo=models.NotificationType.RESERVATION_MODIFIED,
+                        titulo="Reserva modificada por administrador",
+                        mensaje=f"Tu reserva para {reserva.patente} fue actualizada. Se registró un cobro de ${diferencia:,.2f} por la diferencia ({metodo_ajuste or 'Caja'}).",
+                        reserva_id=reserva.id
+                    )
+                elif accion == "reembolso":
+                    UserNotificationService.create_notification(
+                        db, user_id=reserva.user_id, tipo=models.NotificationType.RESERVATION_MODIFIED,
+                        titulo="Reserva modificada por administrador",
+                        mensaje=(f"Tu reserva para {reserva.patente} fue actualizada. Se te reembolsaron ${abs(diferencia):,.2f} a tu saldo."
+                                 if devolucion_a_saldo
+                                 else f"Tu reserva para {reserva.patente} fue actualizada. Se te devolvieron ${abs(diferencia):,.2f} en efectivo."),
+                        reserva_id=reserva.id
+                    )
+                else:
+                    UserNotificationService.create_notification(
+                        db, user_id=reserva.user_id, tipo=models.NotificationType.RESERVATION_MODIFIED,
+                        titulo="Reserva modificada por administrador",
+                        mensaje=f"Tu reserva para {reserva.patente} fue actualizada: del {reserva.fecha_inicio} al {reserva.fecha_fin} en {reserva.sucursal_nombre}.",
+                        reserva_id=reserva.id
+                    )
+            return {
+                "status": "ok", "id": reserva.id, "monto": reserva.monto_total,
+                "monto_anterior": monto_anterior, "diferencia": diferencia,
+                "accion": accion, "metodo_pago": metodo_ajuste or reserva.metodo_pago,
+                "reembolsado_total": reserva.monto_reembolsado or 0.0
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @staticmethod
+    def confirm_reservation_payment(db: Session, staff, res_id: int, data=None) -> dict:
+        reserva = ReservationService.get_reservation_or_404(db, res_id)
+        if staff.rol != UserRole.ADMIN and reserva.sucursal_nombre != staff.sucursal:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+        metodo = (data.metodo_pago if data else None) or "Caja"
+        redemption_ticket_id = (data.redemption_ticket_id if data else None)
+        result = ReservationService.pay_reservation_manual(db, reserva, metodo, redemption_ticket_id)
+        if reserva.user:
+            from services.user_notification_service import UserNotificationService
+            UserNotificationService.create_notification(
+                db, user_id=reserva.user.id,
+                tipo=models.NotificationType.RESERVATION_CONFIRMED,
+                titulo="Pago confirmado",
+                mensaje=f"El pago de tu reserva #{res_id} ({reserva.patente}) fue confirmado por administrador.",
+                reserva_id=res_id
+            )
+        return {"status": "ok", "message": result["message"], "monto": result["monto"],
+                "descuento": result["descuento"], "monto_a_cobrar": result["monto_a_cobrar"]}

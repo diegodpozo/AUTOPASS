@@ -236,7 +236,7 @@ function renderTicketMessages(messages) {
     container.scrollTop = container.scrollHeight;
 }
 
-window.handleTicketAttach = function(input) {
+export function handleTicketAttach(input) {
     const file = input && input.files && input.files[0];
     const nameEl = document.getElementById('modal-ticket-attach-name');
     if (!file) {
@@ -263,7 +263,7 @@ window.handleTicketAttach = function(input) {
     if (nameEl) nameEl.textContent = `📎 ${file.name}`;
 };
 
-window.openSupportTicketModal = async function(ticketId) {
+export async function openSupportTicketModal(ticketId) {
     if (!ticketId) {
         window.showSection?.('ayuda');
         return;
@@ -314,7 +314,7 @@ window.openSupportTicketModal = async function(ticketId) {
     }
 };
 
-window.closeSupportTicketModal = function() {
+export function closeSupportTicketModal() {
     const modal = document.getElementById('support-ticket-modal');
     if (modal) {
         modal.classList.remove('active');
@@ -323,7 +323,7 @@ window.closeSupportTicketModal = function() {
     currentTicketId = null;
 };
 
-window.submitTicketReply = async function() {
+export async function submitTicketReply() {
     if (!currentTicketId) return;
     const input = document.getElementById('modal-ticket-reply-input');
     const btn = document.getElementById('modal-ticket-reply-btn');

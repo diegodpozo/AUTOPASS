@@ -270,16 +270,16 @@ function renderLogsPagination() {
     container.innerHTML = html;
 }
 
-window.changePageLogs = (page) => {
+export function changePageLogs(page) {
     currentPageLogs = page;
     renderLogsTable();
-};
+}
 
-window.filterLogs = (query) => {
+export function filterLogs(query) {
     currentLogsSearchQuery = query;
     currentPageLogs = 1;
     applyLogsFilter();
-};
+}
 
 let fullOccupancyData = [];
 let filteredOccupancyData = [];
@@ -481,16 +481,16 @@ function renderOccupancyPagination() {
     });
 }
 
-window.changePageOcc = (page) => {
+export function changePageOcc(page) {
     currentPageOcc = page;
     renderOccupancyTable();
-};
+}
 
-window.filterOccupancy = (query) => {
+export function filterOccupancy(query) {
     currentSearchQuery = query;
     currentPageOcc = 1;
     applyOccupancyFilter();
-};
+}
 
 
 

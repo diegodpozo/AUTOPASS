@@ -8,7 +8,7 @@ from services.time_service import TimeService
 
 # --- SERVICIO DE FACTURACION Y PUNTOS ---
 
-from models.enums import VehicleType
+from models.enums import VehicleType, AccessEventType
 
 class BillingService:
     @staticmethod
@@ -220,7 +220,7 @@ class BillingService:
 
         log = db.query(models.AccessLog).filter(
             models.AccessLog.patente_detectada == plate,
-            models.AccessLog.tipo_evento == "ENTRADA"
+            models.AccessLog.tipo_evento == AccessEventType.ENTRADA
         ).order_by(models.AccessLog.id.desc()).first()
 
         if not log:

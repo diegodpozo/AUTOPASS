@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 import models
 import schemas
+from models.enums import UserRole
 from core.database import get_db
 from core.security import get_operational_user
 from core.logger import get_logger
@@ -57,7 +58,7 @@ router = APIRouter()
 @router.get("/camera-config/{gate_id}")
 def get_camera_config(gate_id: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     gate_id = gate_id.upper()
-    if staff.rol != "admin" and staff.sucursal:
+    if staff.rol != UserRole.ADMIN and staff.sucursal:
         branch_prefix = gate_id.split('_')[0]
         if branch_prefix != normalize_system_name(staff.sucursal):
             raise HTTPException(status_code=403, detail="No tenés acceso a esta configuración")
@@ -74,7 +75,7 @@ def get_camera_config(gate_id: str, db: Session = Depends(get_db), staff: models
 @router.post("/camera-config")
 def set_camera_config(config: CameraConfig, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     gate_id = config.gate_id.upper()
-    if staff.rol != "admin":
+    if staff.rol != UserRole.ADMIN:
         branch_prefix = normalize_system_name(staff.sucursal)
         if not gate_id.startswith(branch_prefix):
             raise HTTPException(status_code=403, detail="No tenés acceso a esta configuración")
@@ -95,7 +96,7 @@ def set_camera_config(config: CameraConfig, db: Session = Depends(get_db), staff
 @router.post("/camera-service/{gate_id}/{action}")
 def control_camera_service(gate_id: str, action: str, request: Request, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     gate_id = gate_id.upper()
-    if staff.rol != "admin":
+    if staff.rol != UserRole.ADMIN:
         branch_prefix = normalize_system_name(staff.sucursal)
         if not gate_id.startswith(branch_prefix):
             raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
@@ -157,7 +158,7 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
 @router.get("/cameras", response_model=List[schemas.CameraResponse])
 def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     query = db.query(models.ParkingCamera)
-    if staff.rol != "admin" and staff.sucursal:
+    if staff.rol != UserRole.ADMIN and staff.sucursal:
         query = query.filter(models.ParkingCamera.sucursal == staff.sucursal)
     cameras = query.all()
     res = []
@@ -178,7 +179,7 @@ def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_
 
 @router.post("/cameras", response_model=schemas.CameraResponse)
 def create_camera(data: schemas.CameraCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    sucursal = staff.sucursal if staff.rol != "admin" else data.sucursal
+    sucursal = staff.sucursal if staff.rol != UserRole.ADMIN else data.sucursal
     new_cam = models.ParkingCamera(
         nombre=data.nombre,
         tipo=data.tipo.upper(),
@@ -204,13 +205,13 @@ def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depe
     camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
-    if staff.rol != "admin" and camera.sucursal != staff.sucursal:
+    if staff.rol != UserRole.ADMIN and camera.sucursal != staff.sucursal:
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
     camera.nombre = data.nombre
     camera.tipo = data.tipo.upper()
     camera.source = data.source
     camera.activa = data.activa
-    if staff.rol == "admin":
+    if staff.rol == UserRole.ADMIN:
         camera.sucursal = data.sucursal
     db.commit()
     db.refresh(camera)
@@ -234,7 +235,7 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db), staff: models.U
     camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
-    if staff.rol != "admin" and camera.sucursal != staff.sucursal:
+    if staff.rol != UserRole.ADMIN and camera.sucursal != staff.sucursal:
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
         
     norm_suc = normalize_system_name(camera.sucursal) if camera.sucursal else "GLOBAL"
@@ -260,7 +261,7 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
     camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
-    if staff.rol != "admin" and camera.sucursal != staff.sucursal:
+    if staff.rol != UserRole.ADMIN and camera.sucursal != staff.sucursal:
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
         
     norm_suc = normalize_system_name(camera.sucursal) if camera.sucursal else "GLOBAL"

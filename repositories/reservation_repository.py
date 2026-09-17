@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 import models
+from models.enums import ReservationStatus
 
 #--- REPOSITORIO DE RESERVAS (ACCESO UN DATOS) ---
 
@@ -22,7 +23,7 @@ class ReservationRepository:
         """OBTIENE LAS RESERVAS VENCIDAS QUE AUN NO HAN SIDO COMPLETADAS."""
         return db.query(models.Reservation).filter(
             models.Reservation.user_id == user_id,
-            models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
             models.Reservation.fecha_fin < now_str
         ).all()
 

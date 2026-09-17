@@ -9,6 +9,7 @@ from core.security import get_super_admin, get_operational_user
 from core.config import settings
 from services.time_service import TimeService
 from routes.system.common import ALPR_HEARTBEATS, normalize_system_name
+from models.enums import UserRole
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_o
     now = datetime.datetime.now()
     alpr_status = {}
     
-    if staff.rol == "admin":
+    if staff.rol == UserRole.ADMIN:
         for gate, ts in ALPR_HEARTBEATS.items():
             alpr_status[gate] = "ONLINE" if (now - ts).total_seconds() < 90 else "OFFLINE"
     else:
@@ -62,7 +63,7 @@ def reset_system(db: Session = Depends(get_db), admin: models.User = Depends(get
     db.query(models.ParkingAforo).delete()
     db.query(models.Reservation).delete()
     db.query(models.Vehicle).delete()
-    db.query(models.User).filter(models.User.rol == 'user').delete()
+    db.query(models.User).filter(models.User.rol == UserRole.USER.value).delete()
     db.commit()
     if os.path.exists(IMAGE_DIR):
         for f in os.listdir(IMAGE_DIR):

@@ -599,7 +599,7 @@ class ReportService:
                 first_dt = dt
             key = _hour_key(dt)
             ev = (tipo_evento or "").upper()
-            if ev in ("ENTRADA", "SALIDA"):
+            if ev in (AccessEventType.ENTRADA, AccessEventType.SALIDA):
                 count_key = (key, ev)
                 counts[count_key] = counts.get(count_key, 0) + 1
 

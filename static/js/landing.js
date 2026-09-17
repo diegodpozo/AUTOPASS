@@ -1,8 +1,12 @@
-import * as land from './modules/landing.js?v=9.3.0';
+import * as land from './modules/landing.js';
+import { getDirectionsTo } from './modules/landing-map.js';
 
 /**
  * PUENTE: LANDING.JS
  */
+
+// MAPA: RUTAS HACIA SUCURSAL DESDE LOS POPUPS (elementos onclick inline)
+window.getDirectionsTo = getDirectionsTo;
 
 window.irAReserva = function(branchName = null) {
     if (!localStorage.getItem('token')) {

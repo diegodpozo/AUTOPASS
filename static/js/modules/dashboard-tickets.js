@@ -53,8 +53,6 @@ export async function updateTicketBadge() {
     }
 }
 
-window.updateTicketBadge = updateTicketBadge;
-
 export function filterTicketList(query = '') {
     if (!query) {
         renderAdminTickets(allTickets);
@@ -70,9 +68,6 @@ export function filterTicketList(query = '') {
     );
     renderAdminTickets(filtered);
 }
-
-window.loadAdminTickets = loadAdminTickets;
-window.filterTicketList = filterTicketList;
 
 if (!autoRefreshInterval) {
     autoRefreshInterval = setInterval(() => {

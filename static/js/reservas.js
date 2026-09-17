@@ -1,5 +1,5 @@
-import * as res from './modules/reservas.js?v=9.10.1';
-import * as resActions from './modules/reservas-actions.js?v=9.10.1';
+import * as res from './modules/reservas.js';
+import * as resActions from './modules/reservas-actions.js';
 
 /**
  * PUENTE: RESERVAS.JS

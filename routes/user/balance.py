@@ -2,6 +2,7 @@ import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models, schemas
+from models.enums import AccessEventType
 from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
@@ -25,7 +26,7 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
         func.max(models.AccessLog.id).label("max_id")
     ).filter(
         models.AccessLog.patente_detectada.in_(user_plates),
-        models.AccessLog.tipo_evento == "ENTRADA"
+        models.AccessLog.tipo_evento == AccessEventType.ENTRADA
     ).group_by(models.AccessLog.patente_detectada).subquery()
 
     ultimo_ingresos = db.query(models.AccessLog).join(
@@ -42,7 +43,7 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
         models.AccessLog.fecha_hora
     ).filter(
         models.AccessLog.patente_detectada.in_(ingreso_patentes),
-        models.AccessLog.tipo_evento == "SALIDA"
+        models.AccessLog.tipo_evento == AccessEventType.SALIDA
     ).all()
 
     salida_map = {}

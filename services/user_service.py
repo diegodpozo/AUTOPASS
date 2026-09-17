@@ -3,8 +3,8 @@ from fastapi import HTTPException
 import models
 import schemas
 from core.security import get_password_hash
-from core.normalize import normalize_user_name as normalize_name, normalize_dni
-from models.enums import UserRole
+from core.normalize import normalize_user_name as normalize_name, normalize_dni, normalize_plate, format_plate
+from models.enums import UserRole, ReservationStatus, AccessEventType
 from repositories.user_repository import UserRepository
 
 class UserService:
@@ -86,7 +86,6 @@ class UserService:
     def delete_user(db: Session, user_id: int):
         """MARCA UN USUARIO COMO ELIMINADO Y ANONIMIZA SUS DATOS PERSONALES TRAS VALIDAR ESTADIAS Y RESERVAS."""
         import datetime
-        from sqlalchemy import func
 
         user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
         if not user:
@@ -96,14 +95,11 @@ class UserService:
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         active_res = db.query(models.Reservation).filter(
             models.Reservation.user_id == user_id,
-            models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
             models.Reservation.fecha_fin >= now_str
         ).first()
         if active_res:
-            raise HTTPException(
-                status_code=400, 
-                detail="No se puede eliminar un usuario con reservas activas o pendientes."
-            )
+            raise HTTPException(status_code=400, detail="No se puede eliminar un usuario con reservas activas o pendientes.")
 
         # 2. VALIDAR SI ALGUNO DE SUS VEHICULOS ESTA DENTRO DEL ESTACIONAMIENTO
         user_vehicles = db.query(models.Vehicle.patente).filter(models.Vehicle.user_id == user_id).all()
@@ -112,22 +108,9 @@ class UserService:
             pats.append(user.patente.upper().replace(' ', ''))
 
         for p in pats:
-            last_entry = db.query(models.AccessLog).filter(
-                func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == p,
-                models.AccessLog.tipo_evento == "ENTRADA"
-            ).order_by(models.AccessLog.id.desc()).first()
-
-            if last_entry:
-                subsequent_exit = db.query(models.AccessLog).filter(
-                    func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == p,
-                    models.AccessLog.tipo_evento == "SALIDA",
-                    models.AccessLog.id > last_entry.id
-                ).first()
-                if not subsequent_exit:
-                    raise HTTPException(
-                        status_code=400, 
-                        detail="No se puede eliminar un usuario con vehículos físicamente dentro del estacionamiento."
-                    )
+            entry = UserService._last_entry_active(db, p)
+            if entry and not entry[1]:
+                raise HTTPException(status_code=400, detail="No se puede eliminar un usuario con vehículos físicamente dentro del estacionamiento.")
 
         anon_suffix = str(user_id)
         user.nombre = "Usuario"
@@ -140,3 +123,172 @@ class UserService:
         user.is_deleted = True
         db.commit()
         return True
+
+    # --- HELPERS DE ESTADÍA ---
+
+    @staticmethod
+    def _last_entry_active(db: Session, patente_clean: str):
+        """RETORNA (last_entry, subsequent_exit) SI HAY ESTADÍA ABIERTA, None CASO CONTRARIO."""
+        from sqlalchemy import func
+        last_entry = db.query(models.AccessLog).filter(
+            func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == patente_clean,
+            models.AccessLog.tipo_evento == AccessEventType.ENTRADA.value
+        ).order_by(models.AccessLog.id.desc()).first()
+        if not last_entry:
+            return None
+        subsequent_exit = db.query(models.AccessLog).filter(
+            func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == patente_clean,
+            models.AccessLog.tipo_evento == AccessEventType.SALIDA.value,
+            models.AccessLog.id > last_entry.id
+        ).first()
+        return (last_entry, subsequent_exit)
+
+    # --- VEHÍCULOS ---
+
+    @staticmethod
+    def list_vehicles(db: Session, user_id: int):
+        """LISTA TODOS LOS VEHÍCULOS VINCULADOS A LA CUENTA."""
+        return db.query(models.Vehicle).filter(models.Vehicle.user_id == user_id).all()
+
+    @staticmethod
+    def add_vehicle(db: Session, user, patente, marca_modelo, tipo="Auto"):
+        """VINCULA UN NUEVO VEHÍCULO VALIDANDO BLOQUEO, TIPO Y FORMATO DE PATENTE."""
+        import re
+        from sqlalchemy import func
+
+        if user.is_blocked:
+            raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
+
+        if tipo not in ["Auto", "Moto", "Camioneta"]:
+            raise HTTPException(status_code=400, detail="Tipo de vehículo inválido. Use 'Auto', 'Moto' o 'Camioneta'.")
+
+        p_clean = normalize_plate(patente)
+        old_format   = re.match(r'^[A-Z]{3}[0-9]{3}$', p_clean)
+        new_format   = re.match(r'^[A-Z]{2}[0-9]{3}[A-Z]{2}$', p_clean)
+        moto_format  = re.match(r'^[0-9]{3}[A-Z]{3}$', p_clean) or re.match(r'^[A-Z]{1}[0-9]{3}[A-Z]{3}$', p_clean)
+        if not old_format and not new_format and not moto_format:
+            raise HTTPException(status_code=400, detail="Formato de patente inválido.")
+
+        existing = db.query(models.Vehicle).filter(func.replace(models.Vehicle.patente, ' ', '') == p_clean).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Esta patente ya se encuentra registrada en el sistema")
+
+        new_vehicle = models.Vehicle(
+            user_id=user.id,
+            patente=format_plate(patente),
+            marca_modelo=normalize_name(marca_modelo),
+            tipo=tipo
+        )
+        db.add(new_vehicle)
+        db.commit()
+
+        try:
+            from services.user_notification_service import UserNotificationService
+            UserNotificationService.create_notification(
+                db, user.id,
+                tipo=models.NotificationType.VEHICLE_REGISTERED,
+                titulo="Vehículo registrado",
+                mensaje=f"Se vinculó exitosamente el vehículo {new_vehicle.marca_modelo} ({new_vehicle.patente}) a tu flota."
+            )
+        except Exception:
+            pass
+
+        return {"status": "ok"}
+
+    @staticmethod
+    def set_favorite_vehicle(db: Session, user, patente):
+        """MARCA UN VEHÍCULO COMO FAVORITO (TOGGLE: SI YA ESTÁ MARCADO LO DESMARCA)."""
+        from sqlalchemy import func
+        p_clean = normalize_plate(patente)
+
+        if user.is_blocked:
+            raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
+
+        vehicle = db.query(models.Vehicle).filter(
+            func.replace(models.Vehicle.patente, ' ', '') == p_clean,
+            models.Vehicle.user_id == user.id
+        ).first()
+        if not vehicle:
+            raise HTTPException(status_code=404, detail="Vehículo no encontrado en su flota")
+
+        if vehicle.is_favorite:
+            vehicle.is_favorite = False
+        else:
+            db.query(models.Vehicle).filter(
+                models.Vehicle.user_id == user.id,
+                models.Vehicle.is_favorite == True
+            ).update({"is_favorite": False})
+            vehicle.is_favorite = True
+
+        db.commit()
+        return {"status": "ok", "patente": vehicle.patente, "is_favorite": vehicle.is_favorite}
+
+    @staticmethod
+    def delete_vehicle(db: Session, user, patente):
+        """DESVINCULA UN VEHÍCULO VALIDANDO RESERVAS, ESTADÍAS Y DEUDAS."""
+        import datetime
+        from sqlalchemy import func
+        p_clean = normalize_plate(patente)
+
+        if user.is_blocked:
+            raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
+
+        vehicle = db.query(models.Vehicle).filter(
+            func.replace(models.Vehicle.patente, ' ', '') == p_clean,
+            models.Vehicle.user_id == user.id
+        ).first()
+        if not vehicle:
+            raise HTTPException(status_code=404, detail="Vehículo no encontrado en su flota")
+
+        # 1. VALIDAR RESERVAS ACTIVAS O PENDIENTES
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        active_res = db.query(models.Reservation).filter(
+            func.replace(func.upper(models.Reservation.patente), ' ', '') == p_clean,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+            models.Reservation.fecha_fin >= now_str
+        ).first()
+        if active_res:
+            raise HTTPException(status_code=400, detail="No se puede eliminar un vehículo que posee reservas activas o pendientes.")
+
+        # 2. VALIDAR SI EL VEHÍCULO SE ENCUENTRA FÍSICAMENTE DENTRO DEL ESTACIONAMIENTO
+        entry = UserService._last_entry_active(db, p_clean)
+        if entry:
+            last_entry, subsequent_exit = entry
+            if not subsequent_exit:
+                raise HTTPException(status_code=400, detail="No se puede eliminar un vehículo que se encuentra físicamente ingresado en el estacionamiento.")
+            # 3. VALIDAR DEUDAS / ESTADÍAS IMPAGAS PENDIENTES
+            if not last_entry.pago_confirmado:
+                raise HTTPException(status_code=400, detail="No se puede eliminar un vehículo con deudas o estadías impagas pendientes.")
+
+        # REASIGNAR FAVORITO O PATENTE PRINCIPAL SI CORRESPONDE
+        if vehicle.is_favorite:
+            other = db.query(models.Vehicle).filter(
+                models.Vehicle.user_id == user.id,
+                models.Vehicle.id != vehicle.id
+            ).first()
+            if other:
+                other.is_favorite = True
+
+        if user.patente and normalize_plate(user.patente) == p_clean:
+            other = db.query(models.Vehicle).filter(
+                models.Vehicle.user_id == user.id,
+                models.Vehicle.id != vehicle.id
+            ).first()
+            user.patente = other.patente if other else None
+
+        patente_borrada = vehicle.patente
+        db.delete(vehicle)
+        db.commit()
+
+        try:
+            from services.user_notification_service import UserNotificationService
+            UserNotificationService.create_notification(
+                db, user.id,
+                tipo=models.NotificationType.VEHICLE_REMOVED,
+                titulo="Vehículo desvinculado",
+                mensaje=f"Se eliminó el vehículo con patente {patente_borrada} de tu flota."
+            )
+        except Exception:
+            pass
+
+        return {"status": "ok"}

@@ -3,7 +3,7 @@ import * as stats from './modules/dashboard-stats.js';
 import * as admin from './modules/dashboard-admin.js';
 import * as promos from './modules/dashboard-promotions.js';
 import * as ops from './modules/dashboard-operations.js';
-import * as reservations from './modules/dashboard-reservations.js?v=9.18.4';
+import * as reservations from './modules/dashboard-reservations.js';
 import * as finance from './modules/dashboard-finance.js';
 import * as metricas from './modules/dashboard-metrics.js';
 import * as tickets from './modules/dashboard-tickets.js';
@@ -39,6 +39,12 @@ window.openModal = baseUi.openModal;
 window.closeModal = baseUi.closeModal;
 window.filterTable = utils.filterTable;
 window.formatDate = utils.formatDate;
+window.formatNum = utils.formatNum;
+window.formatTime = utils.formatTime;
+window.formatTimeSeconds = utils.formatTimeSeconds;
+window.formatDateTime = utils.formatDateTime;
+window.formatDayTime = utils.formatDayTime;
+window.formatLocalDateTime = utils.formatLocalDateTime;
 
 // 3. TOURS GUIADOS Y AYUDA OPERATIVA DE ADMINISTRACION
 window.startAdminLiveTour = adminTour.startAdminLiveTour;
@@ -50,6 +56,14 @@ window.startAdminBranchesSettingsTour = adminTour.startAdminBranchesSettingsTour
 window.startAdminFullDashboardTour = adminTour.startAdminFullDashboardTour;
 window.openAdminHelpModal = adminTour.openAdminHelpModal;
 window.toggleAdminFaq = adminTour.toggleAdminFaq;
+window.filterAdminHelpCategory = adminTour.filterAdminHelpCategory;
+window.filterAdminHelpSearch = adminTour.filterAdminHelpSearch;
+
+// 3.1 OPERACIONES Y PAGINADOR DE LOGS / OCUPACION
+window.changePageLogs = stats.changePageLogs;
+window.filterLogs = stats.filterLogs;
+window.changePageOcc = stats.changePageOcc;
+window.filterOccupancy = stats.filterOccupancy;
 
 // 4. OPERACIONES MANUALES
 window.manualEntry = ops.manualEntry;

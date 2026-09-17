@@ -1,14 +1,15 @@
-import * as prof from './modules/profile.js?v=9.19.0';
-import * as res from './modules/reservas.js?v=9.10.1';
-import * as v from './modules/vehicles.js?v=9.3.0';
-import * as ui from './modules/ui.js?v=9.3.0';
-import { initPasswordValidation } from './modules/auth.js?v=9.3.0';
-import { showToast } from './modules/utils.js?v=9.3.0';
-import { initMap } from './modules/landing.js?v=9.3.0';
-import * as notif from './modules/notifications.js?v=9.8.6';
-import * as onboarding from './modules/onboarding_helpers.js?v=9.3.0';
-import { startReservationTour, startAddVehicleTour, startCreateReservationTour, startRechargeBalanceTour, startRedeemPointsTour, startQrPassTour } from './modules/tour.js?v=9.3.0';
-import * as help from './modules/profile-help.js?v=9.8.5';
+import * as prof from './modules/profile.js';
+import * as res from './modules/reservas.js';
+import * as v from './modules/vehicles.js';
+import * as ui from './modules/ui.js';
+import { initPasswordValidation } from './modules/auth.js';
+import { showToast, formatNum, formatTime, formatTimeSeconds, formatDateTime, formatDayTime, formatLocalDateTime } from './modules/utils.js';
+import { initMap } from './modules/landing.js';
+import { getDirectionsTo } from './modules/landing-map.js';
+import * as notif from './modules/notifications.js';
+import * as onboarding from './modules/onboarding_helpers.js';
+import { startReservationTour, startAddVehicleTour, startCreateReservationTour, startRechargeBalanceTour, startRedeemPointsTour, startQrPassTour, startPostAddReservationTour, startReservationTourAtReservations, endTour } from './modules/tour.js';
+import * as help from './modules/profile-help.js';
 
 /**
  * PUENTE: PERFIL.JS
@@ -22,18 +23,49 @@ window.startCreateReservationTour = startCreateReservationTour;
 window.startRechargeBalanceTour = startRechargeBalanceTour;
 window.startRedeemPointsTour = startRedeemPointsTour;
 window.startQrPassTour = startQrPassTour;
+window.startPostAddReservationTour = startPostAddReservationTour;
+window.startReservationTourAtReservations = startReservationTourAtReservations;
+window.endReservationTour = endTour;
 window.toggleFaq = help.toggleFaq;
 window.filterHelpCategory = help.filterHelpCategory;
 window.filterHelpContent = help.filterHelpContent;
 window.clearHelpSearch = help.clearHelpSearch;
 window.submitSupportTicket = help.submitSupportTicket;
 window.loadHelpBranches = help.loadHelpBranches;
+window.handleTicketAttach = help.handleTicketAttach;
+window.openSupportTicketModal = help.openSupportTicketModal;
+window.closeSupportTicketModal = help.closeSupportTicketModal;
+window.submitTicketReply = help.submitTicketReply;
+
+// FORMATEADORES DE FECHA/HORA (SCROLL DE SCRIPTS NO MODULARES)
+window.formatNum = formatNum;
+window.formatTime = formatTime;
+window.formatTimeSeconds = formatTimeSeconds;
+window.formatDateTime = formatDateTime;
+window.formatDayTime = formatDayTime;
+window.formatLocalDateTime = formatLocalDateTime;
 
 // NOTIFICACIONES
 window.loadNotifications = notif.loadNotifications;
 window.markAllNotifRead = notif.markAllNotifRead;
 window.clearReadNotifs = notif.clearReadNotifs;
 window.deleteNotif = notif.deleteNotif;
+window.filterNotifs = notif.filterNotifs;
+window.markNotifRead = notif.markNotifRead;
+window.confirmReminder = notif.confirmReminder;
+window.payFromNotif = notif.payFromNotif;
+window.goToReservation = notif.goToReservation;
+window.goToChangePassword = notif.goToChangePassword;
+window.goToBalance = notif.goToBalance;
+window.goToPoints = notif.goToPoints;
+window.goToVoucher = notif.goToVoucher;
+window.goToNewReservation = notif.goToNewReservation;
+window.goToReservationsList = notif.goToReservationsList;
+window.goToVehicles = notif.goToVehicles;
+window.goToProfile = notif.goToProfile;
+window.goToStays = notif.goToStays;
+window.toggleNotifDropdown = notif.toggleNotifDropdown;
+window.closeNotifDropdown = notif.closeNotifDropdown;
 
 // PERFIL
 window.loadProfile = prof.loadProfile;
@@ -149,6 +181,9 @@ window.addEventListener('popstate', () => {
     }
 });
 
+// MAPA: RUTAS HACIA SUCURSAL DESDE LOS POPUPS (elementos onclick inline)
+window.getDirectionsTo = getDirectionsTo;
+
 window.enterEditMode = function(field) {
     const item = document.getElementById(`item-${field}`);
     if (!item) return;
@@ -256,6 +291,8 @@ window.closeReservationOnboarding = onboarding.closeReservationOnboarding;
 window.skipReservationOnboarding = onboarding.skipReservationOnboarding;
 window.startReservationOnboarding = onboarding.startReservationOnboarding;
 window.checkFirstLoginOnboarding = onboarding.checkFirstLoginOnboarding;
+window.openLegalModal = onboarding.openLegalModal;
+window.closeLegalModal = onboarding.closeLegalModal;
 
 // Global error hooks para detectar problemas de runtime y mostrar alerta en UI
 window.addEventListener('error', (e) => {
@@ -292,6 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 2. CARGAR DATOS
         await prof.loadProfile();
         const vehicles = await v.loadVehicles();
+        window.userVehicles = vehicles;
         await res.loadReservations();
         res.initReservationForm();
         

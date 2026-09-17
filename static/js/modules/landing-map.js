@@ -3,6 +3,9 @@ import { ESTADIOS_FIJOS, POI_CACHE_KEY, POI_CACHE_TTL } from './landing-data.js'
 let mapInstance = null;
 const _mapInstances = {};
 const _mapLocalityItems = {};
+let allBranchesMap = null;
+let _userMarker = null;
+let _userCircle = null;
 
 function extractLocality(branch) {
     if (branch.localidad && branch.localidad.trim()) return branch.localidad.trim();
@@ -46,7 +49,7 @@ function formatPoiAddress(t) {
     return t['address'] || t['addr:full'] || '';
 }
 
-window.getDirectionsTo = function(branchLat, branchLng, mode) {
+export function getDirectionsTo(branchLat, branchLng, mode) {
     const googleUrl = (lat, lng) => `https://www.google.com/maps/dir/${lat},${lng}/${branchLat},${branchLng}`;
     const wazeUrl = (lat, lng) => `https://www.waze.com/ul?ll=${branchLat},${branchLng}&navigate=yes&to=${branchLat},${branchLng}&from=${lat},${lng}`;
     const openFallback = () => {
@@ -177,7 +180,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
     fetch('/v1/parking/branches')
         .then(res => res.json())
         .then(branches => {
-            window.allBranchesMap = branches; // GUARDAR PARA GEOLOCALIZACION
+            allBranchesMap = branches; // GUARDAR PARA GEOLOCALIZACION
             const branchMarkers = [];
 
             const zoomSizer = (zoom) => Math.round((12 + zoom * 0.6) * 3);
@@ -742,11 +745,11 @@ export function findNearestBranch(targetMap = null) {
         const myLat = pos.coords.latitude;
         const myLng = pos.coords.longitude;
 
-        if (!window.allBranchesMap || window.allBranchesMap.length === 0) return;
+        if (!allBranchesMap || allBranchesMap.length === 0) return;
 
         // LIMPIAR MARCADOR Y CIRCULO ANTERIOR DEL USUARIO
-        if (window._userMarker && activeMap) activeMap.removeLayer(window._userMarker);
-        if (window._userCircle && activeMap) activeMap.removeLayer(window._userCircle);
+        if (_userMarker && activeMap) activeMap.removeLayer(_userMarker);
+        if (_userCircle && activeMap) activeMap.removeLayer(_userCircle);
 
         // MARCADOR DE UBICACION REAL DEL USUARIO
         const userIcon = L.divIcon({
@@ -755,12 +758,12 @@ export function findNearestBranch(targetMap = null) {
             iconSize: [22, 22],
             iconAnchor: [11, 11]
         });
-        window._userMarker = L.marker([myLat, myLng], { icon: userIcon, zIndexOffset: 1000 })
+        _userMarker = L.marker([myLat, myLng], { icon: userIcon, zIndexOffset: 1000 })
             .addTo(activeMap)
             .bindPopup(`<div style="text-align:center;padding:5px;color:#fff;"><b>📍 Tu ubicación</b></div>`);
 
         // CIRCULO DE PRECISION ALREDEDOR DEL USUARIO
-        window._userCircle = L.circle([myLat, myLng], {
+        _userCircle = L.circle([myLat, myLng], {
             radius: pos.coords.accuracy || 50,
             color: '#4285F4',
             fillColor: '#4285F4',
@@ -772,7 +775,7 @@ export function findNearestBranch(targetMap = null) {
         let nearest = null;
         let minDistance = Infinity;
 
-        window.allBranchesMap.forEach(p => {
+        allBranchesMap.forEach(p => {
             if (!p.latitude || !p.longitude) return;
             const dist = calculateDistance(myLat, myLng, p.latitude, p.longitude);
             if (dist < minDistance) {
@@ -850,5 +853,4 @@ export function filterMapByLocality(selectedLocality, containerId = 'map', targe
         window.showToast(`Mapa filtrado por localidad: ${selectedLocality} (${matchingItems.length} sucursal${matchingItems.length !== 1 ? 'es' : ''})`, 'info');
     }
 }
-window.filterMapByLocality = filterMapByLocality;
 

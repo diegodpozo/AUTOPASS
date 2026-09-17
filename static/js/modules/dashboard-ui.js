@@ -6,6 +6,8 @@ import { toggleMobileNav, closeMobileNav } from './ui.js';
 
 export { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService };
 
+let diagInterval = null;
+
 export function initClock() {
     const clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -123,17 +125,17 @@ export function switchTab(tabId, element) {
     }
 
     if (tabId === 'settings') {
-        if (!window._diagInterval) {
-            window._diagInterval = setInterval(() => {
+        if (!diagInterval) {
+            diagInterval = setInterval(() => {
                 if (localStorage.getItem('activeAdminTab') === 'settings' && window.refreshSystemDiagnostics) {
                     window.refreshSystemDiagnostics();
                 }
             }, 5000);
         }
     } else {
-        if (window._diagInterval) {
-            clearInterval(window._diagInterval);
-            window._diagInterval = null;
+        if (diagInterval) {
+            clearInterval(diagInterval);
+            diagInterval = null;
         }
     }
 

@@ -1,7 +1,10 @@
+import os
+import subprocess
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import models
 from services.billing_service import BillingService
-from models.enums import VehicleType
+from models.enums import VehicleType, UserRole
 
 class BranchService:
     @staticmethod
@@ -95,6 +98,69 @@ class BranchService:
         }
 
     @staticmethod
+    def has_physical_occupancy(db: Session, branch: models.ParkingBranch) -> bool:
+        """RETORNA TRUE SI HAY VEHICULOS ESTACIONADOS FISICAMENTE EN LA SUCURSAL (PB + PISOS)."""
+        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+        if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0 or (getattr(aforo, 'ocupacion_reservas', 0) or 0) > 0):
+            return True
+        if branch.floors:
+            total_occ = sum((f.ocupacion_actual or 0) + (f.ocupacion_motos or 0) + (f.ocupacion_camionetas or 0) + (getattr(f, 'ocupacion_reservas', 0) or 0) for f in branch.floors)
+            if total_occ > 0:
+                return True
+        return False
+
+    @staticmethod
+    def rename_branch(db: Session, branch: models.ParkingBranch, new_nombre: str) -> None:
+        """RENOMBRA UNA SUCURSAL PROPAGANDO EL CAMBIO A TABLAS DEPENDIENTES Y REMAPEA CANALES ALPR."""
+        from core.normalize import normalize_name as normalize_system_name
+
+        old_nombre = branch.nombre
+        if old_nombre == new_nombre:
+            return
+
+        existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == new_nombre, models.ParkingBranch.id != branch.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Ya existe una sucursal con ese nombre")
+
+        old_prefix = normalize_system_name(old_nombre)
+        new_prefix = normalize_system_name(new_nombre)
+
+        # Propagar el cambio de nombre a tablas dependientes
+        db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == old_nombre).update({models.ParkingAforo.sucursal: new_nombre})
+        db.query(models.Settings).filter(models.Settings.sucursal == old_nombre).update({models.Settings.sucursal: new_nombre})
+        db.query(models.User).filter(models.User.sucursal == old_nombre).update({models.User.sucursal: new_nombre})
+        db.query(models.Reservation).filter(models.Reservation.sucursal_nombre == old_nombre).update({models.Reservation.sucursal_nombre: new_nombre})
+        db.query(models.AccessLog).filter(models.AccessLog.sucursal == old_nombre).update({models.AccessLog.sucursal: new_nombre})
+        db.query(models.SupportTicket).filter(models.SupportTicket.sucursal == old_nombre).update({models.SupportTicket.sucursal: new_nombre})
+        db.query(models.ParkingCamera).filter(models.ParkingCamera.sucursal == old_nombre).update({models.ParkingCamera.sucursal: new_nombre})
+        db.query(models.Promotion).filter(models.Promotion.sucursal == old_nombre).update({models.Promotion.sucursal: new_nombre})
+
+        # El gate_id/WS de cada cámara se compone con el prefijo normalizado del nombre
+        # de sucursal. Si el prefijo cambia, remapear las claves legacy CAMERA_SOURCE_* y
+        # detener los subprocesos ALPR del prefijo viejo para que espectador y proceso
+        # converjan al mismo canal (si no, la cámara queda en negro).
+        if old_prefix and old_prefix != new_prefix:
+            source_rows = db.query(models.Settings).filter(models.Settings.clave.like(f"CAMERA_SOURCE_{old_prefix}_%")).all()
+            for row in source_rows:
+                row.clave = row.clave.replace(f"CAMERA_SOURCE_{old_prefix}", f"CAMERA_SOURCE_{new_prefix}", 1)
+
+            from routes.system.common import CAMERA_PROCESSES
+            stale_gates = [g for g in list(CAMERA_PROCESSES.keys()) if g.startswith(f"{old_prefix}_")]
+            for gate_id in stale_gates:
+                proc = CAMERA_PROCESSES.get(gate_id)
+                if proc and proc.poll() is None:
+                    try:
+                        if os.name == 'nt':
+                            subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        else:
+                            proc.terminate()
+                    except Exception:
+                        pass
+                CAMERA_PROCESSES.pop(gate_id, None)
+
+        branch.nombre = new_nombre
+
+    @staticmethod
     def list_branches_with_summary(db: Session):
         """LISTA TODAS LAS SUCURSALES CON SU RESUMEN ADMINISTRATIVO."""
         branches = db.query(models.ParkingBranch).all()
@@ -102,7 +168,7 @@ class BranchService:
             # ADMINISTRADOR
             admin_sede = db.query(models.User).filter(
                 models.User.sucursal == b.nombre,
-                models.User.rol == "local_admin",
+                models.User.rol == UserRole.LOCAL_ADMIN,
                 models.User.is_deleted == False
             ).first()
             b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"

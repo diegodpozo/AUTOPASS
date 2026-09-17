@@ -775,38 +775,26 @@ export function startAdminLiveTour() {
     if (window.closeModal) window.closeModal('modal-admin-help');
     launchAdminTour(adminLiveTourSteps);
 }
-window.startAdminLiveTour = startAdminLiveTour;
-
 export function startAdminReservationsTour() {
     if (window.closeModal) window.closeModal('modal-admin-help');
     launchAdminTour(adminReservationsTourSteps);
 }
-window.startAdminReservationsTour = startAdminReservationsTour;
-
 export function startAdminUsersTour() {
     if (window.closeModal) window.closeModal('modal-admin-help');
     launchAdminTour(adminUsersTourSteps);
 }
-window.startAdminUsersTour = startAdminUsersTour;
-
 export function startAdminFinanceTour() {
     if (window.closeModal) window.closeModal('modal-admin-help');
     launchAdminTour(adminFinanceTourSteps);
 }
-window.startAdminFinanceTour = startAdminFinanceTour;
-
 export function startAdminTicketsTour() {
     if (window.closeModal) window.closeModal('modal-admin-help');
     launchAdminTour(adminTicketsTourSteps);
 }
-window.startAdminTicketsTour = startAdminTicketsTour;
-
 export function startAdminBranchesSettingsTour() {
     if (window.closeModal) window.closeModal('modal-admin-help');
     launchAdminTour(adminBranchesSettingsTourSteps);
 }
-window.startAdminBranchesSettingsTour = startAdminBranchesSettingsTour;
-
 export function startAdminFullDashboardTour() {
     if (window.closeModal) window.closeModal('modal-admin-help');
     const rol = localStorage.getItem('rol');
@@ -820,8 +808,6 @@ export function startAdminFullDashboardTour() {
         launchAdminTour(adminFullDashboardTourSteps);
     }
 }
-window.startAdminFullDashboardTour = startAdminFullDashboardTour;
-
 export function openAdminHelpModal() {
     if (window.openModal) {
         window.openModal('modal-admin-help');
@@ -830,16 +816,12 @@ export function openAdminHelpModal() {
         if (modal) modal.style.display = 'flex';
     }
 }
-window.openAdminHelpModal = openAdminHelpModal;
-
 export function toggleAdminFaq(el) {
     const item = el.closest('.admin-faq-item');
     if (item) {
         item.classList.toggle('open');
     }
 }
-window.toggleAdminFaq = toggleAdminFaq;
-
 export function filterAdminHelpCategory(category, buttonEl) {
     const pills = document.querySelectorAll('.admin-help-pill');
     pills.forEach(p => p.classList.remove('active'));
@@ -865,8 +847,6 @@ export function filterAdminHelpCategory(category, buttonEl) {
         }
     });
 }
-window.filterAdminHelpCategory = filterAdminHelpCategory;
-
 export function filterAdminHelpSearch(query) {
     const term = (query || '').toLowerCase().trim();
     const cards = document.querySelectorAll('.admin-help-quick-card');
@@ -891,5 +871,4 @@ export function filterAdminHelpSearch(query) {
         }
     });
 }
-window.filterAdminHelpSearch = filterAdminHelpSearch;
 

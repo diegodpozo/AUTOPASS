@@ -141,8 +141,9 @@ function _closeAllToasts() {
     });
 }
 
-if (!window.__toastsClickBound) {
-    window.__toastsClickBound = true;
+let _toastsClickBound = false;
+if (!_toastsClickBound) {
+    _toastsClickBound = true;
     document.addEventListener('click', _closeAllToasts, true);
 }
 
@@ -363,11 +364,3 @@ export function metodoPagoReport(metodo, tipo) {
     if (tipo === 'Reembolso') return 'REEMBOLSO DIGITAL';
     return 'PAGO DIGITAL';
 }
-
-// EXPONER GLOBALMENTE PARA SCRIPTS QUE NO SON MODULOS
-window.formatNum = formatNum;
-window.formatTime = formatTime;
-window.formatTimeSeconds = formatTimeSeconds;
-window.formatDateTime = formatDateTime;
-window.formatDayTime = formatDayTime;
-window.formatLocalDateTime = formatLocalDateTime;

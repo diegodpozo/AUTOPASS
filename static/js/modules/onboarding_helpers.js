@@ -111,7 +111,7 @@ export function startReservationOnboarding() {
 
     // intentar iniciar un mini-tour específico para quick-add si está disponible
     try {
-        import('./tour.js?v=9.3.0')
+        import('./tour.js')
             .then(m => {
                 if (m && typeof m.startQuickAddTour === 'function') {
                     m.startQuickAddTour();
@@ -128,7 +128,7 @@ export function startReservationOnboarding() {
             // pequeño delay para que la UI se estabilice y el formulario de reserva se abra
             setTimeout(async () => {
                 try {
-                    const m = await import('./tour.js?v=9.3.0');
+                    const m = await import('./tour.js');
                     if (m && typeof m.startPostAddReservationTour === 'function') {
                         m.startPostAddReservationTour();
                     } else if (typeof window.startPostAddReservationTour === 'function') {
@@ -174,7 +174,4 @@ export function closeLegalModal() {
     const modal = document.getElementById('modal-legal-terms');
     if (modal) modal.style.display = 'none';
 }
-
-window.openLegalModal = openLegalModal;
-window.closeLegalModal = closeLegalModal;
 

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from typing import List, Optional
 import models, schemas
+from models.enums import UserRole
 from core.time import localnow
 from core.normalize import normalize_branch_name
 
@@ -20,17 +21,17 @@ class SupportService:
         try:
             from services.user_notification_service import UserNotificationService
             q = db.query(models.User).filter(
-                models.User.rol.in_(["admin", "local_admin"]),
+                models.User.rol.in_([UserRole.ADMIN, UserRole.LOCAL_ADMIN]),
                 models.User.is_deleted == False
             )
             if ticket.sucursal and ticket.sucursal != "General":
                 user_suc_norm = normalize_branch_name(ticket.sucursal)
                 admins = [
                     a for a in q.all()
-                    if normalize_branch_name(a.sucursal or "") == user_suc_norm or a.rol == "admin"
+                    if normalize_branch_name(a.sucursal or "") == user_suc_norm or a.rol == UserRole.ADMIN
                 ]
             else:
-                admins = [a for a in q.all() if a.rol == "admin"]
+                admins = [a for a in q.all() if a.rol == UserRole.ADMIN]
             if not admins:
                 admins = q.all()
             for admin in admins:
@@ -87,7 +88,7 @@ class SupportService:
         query = db.query(models.SupportTicket).options(joinedload(models.SupportTicket.user)).order_by(desc(models.SupportTicket.created_at))
         all_tickets = query.all()
 
-        if current_user.rol != "admin":
+        if current_user.rol != UserRole.ADMIN:
             user_suc_norm = normalize_branch_name(current_user.sucursal)
             tickets = [
                 t for t in all_tickets
@@ -309,7 +310,7 @@ class SupportService:
         la burbuja de 'Soporte & Tickets' del menu lateral (no las notificaciones)."""
         all_tickets = db.query(models.SupportTicket).all()
 
-        if current_user.rol != "admin":
+        if current_user.rol != UserRole.ADMIN:
             user_suc_norm = normalize_branch_name(current_user.sucursal or "")
             scoped = [
                 t for t in all_tickets

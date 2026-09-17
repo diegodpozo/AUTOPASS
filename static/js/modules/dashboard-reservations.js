@@ -8,6 +8,7 @@ import { getVirtualNow } from './virtual-time.js';
  */
 
 let allReservations = [];
+let resBadgeInterval = null;
 
 export function getAllReservations() {
     return allReservations;
@@ -21,8 +22,7 @@ export async function loadAdminReservations() {
         const tbody = document.getElementById('admin-res-list');
         if (!tbody) return;
         
-        allReservations = res.data;
-        window.allReservations = allReservations;
+allReservations = res.data;
 
         if (allReservations.length > 0 && allReservations[0].id) {
             const storageKey = getStorageKey();
@@ -154,7 +154,7 @@ export async function cancelReservationAdmin(resId) {
 }
 
 export function showReservationDetail(resId) {
-    const r = allReservations.find(x => x.id === resId) || window.allReservations?.find(x => x.id === resId);
+    const r = allReservations.find(x => x.id === resId);
     if (!r) return;
 
     document.getElementById('res-detail-id').innerText = `#${r.id}`;
@@ -438,7 +438,7 @@ function setNewResModalMode(editing) {
 }
 
 export async function openEditReservationModal(resId) {
-    const r = allReservations.find(x => x.id === resId) || window.allReservations?.find(x => x.id === resId);
+    const r = allReservations.find(x => x.id === resId);
     if (!r) return;
 
     await openNewReservationModal();
@@ -1279,16 +1279,13 @@ export async function clearReservationBadge() {
         if (res && res.ok && res.data && res.data.latest_id !== undefined) {
             localStorage.setItem(storageKey, res.data.latest_id);
         }
-    } catch (e) {
+} catch (e) {
         console.error('[clearReservationBadge Error]', e);
     }
 }
 
-window.updateReservationBadge = updateReservationBadge;
-window.clearReservationBadge = clearReservationBadge;
-
-if (!window._resBadgeInterval) {
-    window._resBadgeInterval = setInterval(() => {
+if (!resBadgeInterval) {
+    resBadgeInterval = setInterval(() => {
         updateReservationBadge();
     }, 10000);
 }

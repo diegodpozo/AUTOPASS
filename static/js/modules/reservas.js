@@ -18,7 +18,7 @@ export {
     getEditingReservaId,
     setEditingReservaId,
     getUserVehicles
-} from './reservas-form.js?v=9.10.1';
+} from './reservas-form.js';
 
 export {
     loadReservations,

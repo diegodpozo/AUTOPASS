@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
+from models.enums import UserRole
 from core.database import get_db
 from core.security import get_local_manager
 
@@ -11,7 +12,7 @@ router = APIRouter()
 def list_promotions_admin(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """LISTA TODAS LAS PROMOCIONES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
     q = db.query(models.Promotion)
-    if admin.rol != "admin":
+    if admin.rol != UserRole.ADMIN:
         q = q.filter(models.Promotion.sucursal == admin.sucursal)
     
     promos = q.all()
@@ -24,7 +25,7 @@ def list_promotions_admin(db: Session = Depends(get_db), admin: models.User = De
 @router.post("/promotions")
 def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """CREA UNA NUEVA PROMOCION VINCULADA A LA SEDE DEL ADMINISTRADOR."""
-    sucursal = admin.sucursal if admin.rol != "admin" else data.sucursal
+    sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else data.sucursal
     
     new_promo = models.Promotion(
         titulo=data.titulo,
@@ -49,7 +50,7 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     
-    if admin.rol != "admin" and promo.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
         
     promo.activa = not promo.activa
@@ -63,7 +64,7 @@ def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session =
     if not promo:
         raise HTTPException(status_code=404, detail="Promoción no encontrada")
 
-    if admin.rol != "admin" and promo.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
 
     promo.titulo = data.titulo
@@ -71,7 +72,7 @@ def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session =
     promo.costo_puntos = data.costo_puntos
     promo.icono = data.icono
     promo.categoria = data.categoria
-    if admin.rol == "admin":
+    if admin.rol == UserRole.ADMIN:
         promo.sucursal = data.sucursal
     promo.tipo_canje = data.tipo_canje or "voucher"
     promo.valor_descuento = data.valor_descuento if (data.tipo_canje == "descuento_reserva") else None
@@ -89,7 +90,7 @@ def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     
-    if admin.rol != "admin" and promo.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
     
     # DESASOCIAR TICKETS DE CANJE PARA EVITAR VIOLACION DE FK (los tickets guardan snapshot)

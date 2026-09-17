@@ -31,7 +31,6 @@ export async function initVirtualTime() {
 export function getVirtualNow() {
     return new Date(Date.now() + _offsetMs);
 }
-window.getVirtualNow = getVirtualNow;
 
 export function getOffsetMs() {
     return _offsetMs;

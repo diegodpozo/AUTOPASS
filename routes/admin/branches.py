@@ -1,15 +1,14 @@
 import os
 import shutil
-import subprocess
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
 from core.database import get_db
-from core.normalize import normalize_name as normalize_system_name
 from core.security import get_super_admin, get_local_manager
 from services.branch_service import BranchService
+from models.enums import ReservationStatus
 
 router = APIRouter()
 
@@ -178,21 +177,6 @@ async def create_branch(
 @router.delete("/branches/{branch_id}")
 def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS."""
-def _check_physical_occupancy(db: Session, branch: models.ParkingBranch) -> bool:
-    """RETORNA TRUE SI HAY VEHICULOS ESTACIONADOS FISICAMENTE EN LA SUCURSAL."""
-    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
-    if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0 or (getattr(aforo, 'ocupacion_reservas', 0) or 0) > 0):
-        return True
-    if branch.floors:
-        total_occ = sum((f.ocupacion_actual or 0) + (f.ocupacion_motos or 0) + (f.ocupacion_camionetas or 0) + (getattr(f, 'ocupacion_reservas', 0) or 0) for f in branch.floors)
-        if total_occ > 0:
-            return True
-    return False
-
-
-@router.delete("/branches/{branch_id}")
-def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
-    """ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS."""
     import datetime
 
     branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
@@ -200,14 +184,14 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.U
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
     # 1. VALIDAR OCUPACION FISICA
-    if _check_physical_occupancy(db, branch):
+    if BranchService.has_physical_occupancy(db, branch):
         raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con vehículos físicamente en su interior.")
 
     # 2. VALIDAR RESERVAS ACTIVAS O PENDIENTES
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     active_res = db.query(models.Reservation).filter(
         models.Reservation.sucursal_nombre == branch.nombre,
-        models.Reservation.estado_reserva.in_(["Pendiente", "Activa"]),
+        models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
         models.Reservation.fecha_fin >= now_str
     ).first()
     if active_res:
@@ -250,45 +234,7 @@ async def update_branch(
     old_nombre = branch.nombre
 
     if old_nombre != new_nombre:
-        existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == new_nombre, models.ParkingBranch.id != branch_id).first()
-        if existing:
-            raise HTTPException(status_code=400, detail="Ya existe una sucursal con ese nombre")
-
-        old_prefix = normalize_system_name(old_nombre)
-        new_prefix = normalize_system_name(new_nombre)
-
-        # Propagar el cambio de nombre a tablas dependientes
-        db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == old_nombre).update({models.ParkingAforo.sucursal: new_nombre})
-        db.query(models.Settings).filter(models.Settings.sucursal == old_nombre).update({models.Settings.sucursal: new_nombre})
-        db.query(models.User).filter(models.User.sucursal == old_nombre).update({models.User.sucursal: new_nombre})
-        db.query(models.Reservation).filter(models.Reservation.sucursal_nombre == old_nombre).update({models.Reservation.sucursal_nombre: new_nombre})
-        db.query(models.AccessLog).filter(models.AccessLog.sucursal == old_nombre).update({models.AccessLog.sucursal: new_nombre})
-        db.query(models.SupportTicket).filter(models.SupportTicket.sucursal == old_nombre).update({models.SupportTicket.sucursal: new_nombre})
-        db.query(models.ParkingCamera).filter(models.ParkingCamera.sucursal == old_nombre).update({models.ParkingCamera.sucursal: new_nombre})
-        db.query(models.Promotion).filter(models.Promotion.sucursal == old_nombre).update({models.Promotion.sucursal: new_nombre})
-
-        # El gate_id/WS de cada camara se compone con el prefijo normalizado del nombre
-        # de sucursal. Si el prefijo cambia, remapear las claves legacy CAMERA_SOURCE_* y
-        # detener los subprocesos ALPR del prefijo viejo para que espectador y proceso
-        # converjan al mismo canal (si no, la camara queda en negro).
-        if old_prefix and old_prefix != new_prefix:
-            source_rows = db.query(models.Settings).filter(models.Settings.clave.like(f"CAMERA_SOURCE_{old_prefix}_%")).all()
-            for row in source_rows:
-                row.clave = row.clave.replace(f"CAMERA_SOURCE_{old_prefix}", f"CAMERA_SOURCE_{new_prefix}", 1)
-
-            from routes.system.common import CAMERA_PROCESSES
-            stale_gates = [g for g in list(CAMERA_PROCESSES.keys()) if g.startswith(f"{old_prefix}_")]
-            for gate_id in stale_gates:
-                proc = CAMERA_PROCESSES.get(gate_id)
-                if proc and proc.poll() is None:
-                    try:
-                        if os.name == 'nt':
-                            subprocess.call(['taskkill', '/F', '/T', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                        else:
-                            proc.terminate()
-                    except Exception:
-                        pass
-                CAMERA_PROCESSES.pop(gate_id, None)
+        BranchService.rename_branch(db, branch, new_nombre)
 
     branch.nombre = new_nombre
     branch.direccion = direccion
@@ -330,7 +276,7 @@ def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: m
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
-    if branch.activa and _check_physical_occupancy(db, branch):
+    if branch.activa and BranchService.has_physical_occupancy(db, branch):
         raise HTTPException(status_code=400, detail="No se puede desactivar una sucursal con vehículos en su interior.")
 
     branch.activa = not branch.activa

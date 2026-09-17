@@ -2,6 +2,7 @@ import datetime
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import models
+from models.enums import UserRole
 from core.database import get_db
 from core.security import get_local_manager
 
@@ -11,7 +12,7 @@ router = APIRouter()
 def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """RETORNA LAS CONFIGURACIONES VIGENTES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
     q = db.query(models.Settings)
-    if admin.rol != "admin":
+    if admin.rol != UserRole.ADMIN:
         q = q.filter(models.Settings.sucursal == admin.sucursal)
     else:
         q = q.filter(models.Settings.sucursal == None)
@@ -20,7 +21,7 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
     config_dict = {s.clave: s.valor for s in all_settings}
     config_dict["sucursal_nombre"] = admin.sucursal
 
-    sucursal = admin.sucursal if admin.rol != "admin" else None
+    sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
     if aforo:
         config_dict["capacidad_total"] = aforo.capacidad_total
@@ -43,7 +44,7 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
 @router.post("/settings/prices")
 def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR."""
-    sucursal = admin.sucursal if admin.rol != "admin" else None
+    sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
 
     if clave in ["capacidad_total", "capacidad_motos", "capacidad_camionetas", "capacidad_reservas", "capacidad_reservas_autos", "capacidad_reservas_motos", "capacidad_reservas_camionetas"]:
         aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()

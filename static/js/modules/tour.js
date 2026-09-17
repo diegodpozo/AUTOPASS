@@ -1428,8 +1428,6 @@ export function startAddVehicleTour() {
         showTourStep(0);
     }, 15);
 }
-window.startAddVehicleTour = startAddVehicleTour;
-
 export function startQrPassTour() {
     isTourActive = true;
     onboardingSessionActive = true;
@@ -1442,8 +1440,6 @@ export function startQrPassTour() {
         showTourStep(0);
     }, 15);
 }
-window.startQrPassTour = startQrPassTour;
-
 export function startCreateReservationTour() {
     isTourActive = true;
     onboardingSessionActive = true;
@@ -1456,8 +1452,6 @@ export function startCreateReservationTour() {
         showTourStep(0);
     }, 15);
 }
-window.startCreateReservationTour = startCreateReservationTour;
-
 export function startRechargeBalanceTour() {
     isTourActive = true;
     onboardingSessionActive = true;
@@ -1470,8 +1464,6 @@ export function startRechargeBalanceTour() {
         showTourStep(0);
     }, 15);
 }
-window.startRechargeBalanceTour = startRechargeBalanceTour;
-
 export function startRedeemPointsTour() {
     isTourActive = true;
     onboardingSessionActive = true;
@@ -1484,8 +1476,6 @@ export function startRedeemPointsTour() {
         showTourStep(0);
     }, 15);
 }
-window.startRedeemPointsTour = startRedeemPointsTour;
-
 export function startReservationTour(startIndex = 0) {
     // MARCAR QUE EL TOUR ESTA ACTIVO
     isTourActive = true;
@@ -1527,8 +1517,6 @@ export function startPostAddReservationTour() {
         showTourStep(0);
     }, 15);
 }
-window.startPostAddReservationTour = startPostAddReservationTour;
-
 export function startReservationTourAtReservations() {
     try {
         // SI YA FUE INICIALIZADO POR EL EVENTO DIRECTO, EVITAMOS COLISION
@@ -1562,8 +1550,6 @@ export function startReservationTourAtReservations() {
         }
     } catch (e) { console.error('[TOUR] startReservationTourAtReservations error', e); }
 }
-
-window.startReservationTourAtReservations = startReservationTourAtReservations;
 
 function nextTourStep() {
     if (currentTourIndex < tourSteps.length - 1) showTourStep(currentTourIndex + 1);
@@ -1599,8 +1585,6 @@ function _baseEndTour(isOmitted = false) {
     // save seen flag
     try { localStorage.setItem('seen_reservation_onboarding','1'); } catch(e) { /* noop */ }
 }
-
-window.startReservationTour = startReservationTour;
 
 // QUICK-ADD TOUR: steps to guide through add-vehicle form
 const quickAddSteps = [
@@ -1661,8 +1645,6 @@ export function endTour(isOmitted = false) {
     _savedTourSteps = null;
     _isQuickAddTour = false;
 }
-
-window.endReservationTour = endTour;
 
 function _handleReservationCreated(ev) {
     try {

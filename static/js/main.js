@@ -11,6 +11,12 @@ window.toTitle = utils.toTitle;
 window.formatDate = utils.formatDate;
 window.showToast = utils.showToast;
 window.showConfirm = utils.showConfirm;
+window.formatNum = utils.formatNum;
+window.formatTime = utils.formatTime;
+window.formatTimeSeconds = utils.formatTimeSeconds;
+window.formatDateTime = utils.formatDateTime;
+window.formatDayTime = utils.formatDayTime;
+window.formatLocalDateTime = utils.formatLocalDateTime;
 
 // INTERFAZ
 window.openModal = ui.openModal;

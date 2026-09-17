@@ -342,7 +342,7 @@ const _slotCommitRange = function() {
     updateHourlySlotsUI();
 };
 
-window.selectHourRange = function(hourStr) {
+export function selectHourRange(hourStr) {
     if (!slotDragActive) {
         if (!slotRangeStart || _slotToMin(hourStr) < _slotToMin(slotRangeStart)) {
             slotRangeStart = hourStr;
