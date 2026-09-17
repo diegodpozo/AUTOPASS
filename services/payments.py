@@ -5,10 +5,12 @@ import re
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 import models
-from models.enums import AccessEventType, PaymentStatus, ReservationStatus
+from models.enums import PaymentStatus, ReservationStatus
+from repositories.access_log_repository import AccessRepository
+from repositories.redemption_repository import RedemptionRepository
+from repositories.reservation_repository import ReservationRepository
 from services.availability import _liberar_plaza_en_aforo, _reservar_plaza_en_aforo
 from services.billing_service import BillingService
 from services.branch_service import BranchService
@@ -26,14 +28,7 @@ class ReservationPaymentsMixin:
         Si no hay usuario vinculado, devuelve lista vacía."""
         if not user_id:
             return []
-        q = db.query(models.RedemptionTicket).filter(
-            models.RedemptionTicket.user_id == user_id,
-            models.RedemptionTicket.tipo_canje == "descuento_reserva",
-            models.RedemptionTicket.estado == "VIGENTE"
-        )
-        if sucursal:
-            q = q.filter(ReservationPaymentsMixin.redemption_sucursal_clause(sucursal))
-        return q.order_by(models.RedemptionTicket.id.desc()).all()
+        return RedemptionRepository.list_discounts_by_user(db, user_id, sucursal)
 
     @staticmethod
     def pay_reservation_manual(db: Session, res: "models.Reservation", metodo_pago: str = None, redemption_ticket_id: int = None):
@@ -93,30 +88,15 @@ class ReservationPaymentsMixin:
 
     @staticmethod
     def redemption_sucursal_clause(sucursal):
-        """CLÁUSULA DE FILTRADO DE REDEMPTION TICKET POR SUCURSAL.
-        Acepta el ticket global (sucursal NULL), igualdad exacta o igualdad normalizada
-        (sin prefijo 'AUTOPASS ', sin espacios extra y sin diferenciar mayúsculas),
-        para tolerar datos legados donde algunas sucursales se guardaron con prefijo."""
-        from sqlalchemy import or_
-        col = models.RedemptionTicket.sucursal
-        if not sucursal:
-            return or_(col == None, col == '')
-        norm_col = func.trim(func.replace(func.lower(col), 'autopass ', ''))
-        norm_param = func.trim(func.replace(func.lower(func.trim(sucursal)), 'autopass ', ''))
-        return or_(col == sucursal, col == None, norm_col == norm_param)
+        """CLÁUSULA DE FILTRADO DE REDEMPTION TICKET POR SUCURSAL (delegada al repositorio)."""
+        return RedemptionRepository.redemption_sucursal_clause(sucursal)
 
-    @classmethod
-    def validate_redemption_ticket(cls, db: Session, user_id: int, redemption_ticket_id: int, sucursal: str = None) -> models.RedemptionTicket:
+    @staticmethod
+    def validate_redemption_ticket(db: Session, user_id: int, redemption_ticket_id: int, sucursal: str = None) -> models.RedemptionTicket:
         """Valida y obtiene un ticket de descuento por canje para un usuario y sucursal."""
         if not redemption_ticket_id:
             return None
-        ticket = db.query(models.RedemptionTicket).filter(
-            models.RedemptionTicket.id == redemption_ticket_id,
-            models.RedemptionTicket.user_id == user_id,
-            models.RedemptionTicket.tipo_canje == "descuento_reserva",
-            models.RedemptionTicket.estado == "VIGENTE",
-            cls.redemption_sucursal_clause(sucursal)
-        ).first()
+        ticket = RedemptionRepository.get_valid_discount(db, redemption_ticket_id, user_id, sucursal)
         if not ticket:
             raise HTTPException(status_code=400, detail="El descuento seleccionado no es válido para esta reserva o sucursal")
         return ticket
@@ -310,20 +290,11 @@ class ReservationPaymentsMixin:
         """CALCULA EL REEMBOLSO POTENCIAL SIN EJECUTAR LA CANCELACION."""
         # 1. VERIFICACION DE PRESENCIA FISICA
         norm_pat = re.sub(r'[^A-Z0-9]', '', (res.patente or '').upper())
-        vinc_log = db.query(models.AccessLog).filter(
-            models.AccessLog.normalized_patente == norm_pat,
-            models.AccessLog.tipo_evento == AccessEventType.ENTRADA,
-            models.AccessLog.sucursal == res.sucursal_nombre
-        ).order_by(models.AccessLog.id.desc()).first()
+        vinc_log = AccessRepository.get_last_entry(db, norm_pat, res.sucursal_nombre)
 
         es_presencial = False
         if vinc_log:
-            salida = db.query(models.AccessLog).filter(
-                models.AccessLog.patente_detectada == vinc_log.patente_detectada,
-                models.AccessLog.tipo_evento == AccessEventType.SALIDA,
-                models.AccessLog.id > vinc_log.id,
-                models.AccessLog.sucursal == vinc_log.sucursal
-            ).first()
+            salida = AccessRepository.get_exit_after(db, vinc_log.patente_detectada, vinc_log.id, vinc_log.sucursal)
             if not salida:
                 es_presencial = True
 

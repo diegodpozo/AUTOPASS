@@ -5,14 +5,18 @@ import re
 import models
 import schemas
 from fastapi import HTTPException
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.logger import get_logger
 from core.normalize import format_plate, normalize_name as _normalizar_sucursal
-from models.enums import AccessEventType, PaymentStatus, ReservationStatus, UserRole, VehicleType
+from models.enums import PaymentStatus, ReservationStatus, UserRole, VehicleType
+from repositories.access_log_repository import AccessRepository
+from repositories.branch_repository import BranchRepository
+from repositories.redemption_repository import RedemptionRepository
 from repositories.reservation_repository import ReservationRepository
+from repositories.user_repository import UserRepository
+from repositories.vehicle_repository import VehicleRepository
 from services.availability import (
     _calcular_ocupacion_maxima_simultanea,
     _liberar_plaza_en_aforo,
@@ -38,7 +42,7 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def create_reservation(db: Session, data: schemas.AdminReservationCreate) -> models.Reservation:
         """CREA UNA NUEVA RESERVA MANUAL DESDE EL PANEL ADMINISTRATIVO."""
-        vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente).first()
+        vehiculo = VehicleRepository.get_by_patente(db, data.patente)
         tipo_vehiculo = getattr(data, "tipo_vehiculo", None) or (vehiculo.tipo if vehiculo else VehicleType.AUTO)
         tipo_v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
 
@@ -88,10 +92,7 @@ class ReservationService(ReservationPaymentsMixin):
             logger.info(f"Cancelando {len(overdue)} reservas impagas vencidas. Cutoff: {cutoff_str}")
             for r in overdue:
                 # SI EL VEHICULO YA INGRESO AL PREDIO CON SU RESERVA, NO CANCELAR
-                entry = db.query(models.AccessLog).filter(
-                    models.AccessLog.reserva_id == r.id,
-                    models.AccessLog.tipo_evento == AccessEventType.ENTRADA
-                ).first()
+                entry = AccessRepository.get_entry_for_reserva(db, r.id)
                 if entry:
                     continue
                 r.estado_reserva = ReservationStatus.CANCELADA
@@ -139,21 +140,7 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def get_en_predio_ids(db: Session, reserva_ids) -> set:
         """DEVUELVE LOS IDS DE RESERVAS CUYO ULTIMO EVENTO FISICO FUE UN INGRESO (VEHICULO DENTRO DEL PREDIO)."""
-        if not reserva_ids:
-            return set()
-        latest = (
-            db.query(models.AccessLog.reserva_id, func.max(models.AccessLog.id).label('max_id'))
-            .filter(models.AccessLog.reserva_id.in_(list(reserva_ids)))
-            .group_by(models.AccessLog.reserva_id)
-            .subquery()
-        )
-        rows = (
-            db.query(latest.c.reserva_id)
-            .join(models.AccessLog, models.AccessLog.id == latest.c.max_id)
-            .filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
-            .all()
-        )
-        return {row[0] for row in rows}
+        return AccessRepository.get_en_predio_ids(db, reserva_ids)
 
     # -------------------------------------------------------------------
     # RUTAS DELGADAS: helpers y wrappers completos para routes/admin y routes/user
@@ -180,15 +167,7 @@ class ReservationService(ReservationPaymentsMixin):
         norm = re.sub(r'[^A-Z0-9]', '', (patente or '').upper())
         if len(norm) < 4:
             return {"encontrado": False, "patente": patente}
-        vehicle = (
-            db.query(models.Vehicle)
-            .join(models.User, models.User.id == models.Vehicle.user_id)
-            .filter(
-                func.replace(func.upper(models.Vehicle.patente), ' ', '') == norm,
-                models.User.is_deleted == False
-            )
-            .first()
-        )
+        vehicle = VehicleRepository.get_by_normalized_patente_with_active_owner(db, norm)
         if not vehicle or not vehicle.owner:
             return {"encontrado": False, "patente": patente}
         owner = vehicle.owner
@@ -209,7 +188,7 @@ class ReservationService(ReservationPaymentsMixin):
     def validar_horario_sucursal(db: Session, sucursal_nombre: str, start: datetime.datetime, end: datetime.datetime):
         if not sucursal_nombre:
             return
-        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+        branch = BranchRepository.get_by_name(db, sucursal_nombre)
         if not branch or branch.is_24h or not branch.horario:
             return
         match = re.match(r'^(\d{1,2}):(\d{2})\s+(?:A|UN)\s+(\d{1,2}):(\d{2})$', branch.horario.upper().strip())
@@ -233,13 +212,10 @@ class ReservationService(ReservationPaymentsMixin):
         user = None
         vehicle = None
         if user_id:
-            user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
+            user = UserRepository.get_active_by_id(db, user_id)
             if not user:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
-            vehicle = db.query(models.Vehicle).filter(
-                models.Vehicle.user_id == user_id,
-                func.replace(func.upper(models.Vehicle.patente), ' ', '') == re.sub(r'[^A-Z0-9]', '', patente.upper())
-            ).first()
+            vehicle = VehicleRepository.get_by_user_and_normalized_patente(db, user_id, re.sub(r'[^A-Z0-9]', '', patente.upper()))
             if not vehicle:
                 raise HTTPException(status_code=400, detail="La patente no está vinculada a ese usuario")
         return user, vehicle
@@ -248,7 +224,7 @@ class ReservationService(ReservationPaymentsMixin):
     def create_user_reservation(cls, db: Session, user, data: schemas.UserReservationCreate) -> dict:
         if user.is_blocked:
             raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
-        vehicle = db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente, models.Vehicle.user_id == user.id).first()
+        vehicle = VehicleRepository.get_by_patente_and_user(db, data.patente, user.id)
         if not vehicle:
             raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
         p_clean = data.patente.upper().replace(' ', '')
@@ -347,14 +323,14 @@ class ReservationService(ReservationPaymentsMixin):
         if data.fecha_fin:
             res.fecha_fin = data.fecha_fin
         if data.patente:
-            if not db.query(models.Vehicle).filter(models.Vehicle.patente == data.patente, models.Vehicle.user_id == user.id).first():
+            if not VehicleRepository.get_by_patente_and_user(db, data.patente, user.id):
                 raise HTTPException(status_code=400, detail="Patente no vinculada")
             res.patente = data.patente
         if data.tipo_estadia:
             res.tipo_estadia = data.tipo_estadia
         if data.sucursal_nombre:
             res.sucursal_nombre = data.sucursal_nombre
-        vehiculo_mod = db.query(models.Vehicle).filter(models.Vehicle.patente == res.patente).first()
+        vehiculo_mod = VehicleRepository.get_by_patente(db, res.patente)
         tipo_vehiculo_mod = vehiculo_mod.tipo if vehiculo_mod else "Auto"
         rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
         duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
@@ -519,10 +495,9 @@ class ReservationService(ReservationPaymentsMixin):
         if data.user_id:
             vinculo_final = data.user_id
         elif reserva.user_id:
-            sigue_vinculada = db.query(models.Vehicle.id).filter(
-                models.Vehicle.user_id == reserva.user_id,
-                func.replace(func.upper(models.Vehicle.patente), ' ', '') == re.sub(r'[^A-Z0-9]', '', data.patente.upper())
-            ).first()
+            sigue_vinculada = VehicleRepository.get_by_user_and_normalized_patente(
+                db, reserva.user_id, re.sub(r'[^A-Z0-9]', '', data.patente.upper())
+            )
             vinculo_final = reserva.user_id if sigue_vinculada else None
         tipo_v = data.tipo_vehiculo or (vehicle.tipo if vehicle else "Auto")
         tipo_v_str = tipo_v.value if hasattr(tipo_v, "value") else str(tipo_v)
@@ -536,11 +511,7 @@ class ReservationService(ReservationPaymentsMixin):
             )
             ticket_aplicado = None
             if reserva.estado_pago == PaymentStatus.PAGADO:
-                ticket_aplicado = db.query(models.RedemptionTicket).filter(
-                    models.RedemptionTicket.reserva_id == reserva.id,
-                    models.RedemptionTicket.tipo_canje == "descuento_reserva",
-                    models.RedemptionTicket.estado == "USADO"
-                ).first()
+                ticket_aplicado = RedemptionRepository.get_used_discount_for_reserva(db, reserva.id)
             if ticket_aplicado and ticket_aplicado.valor_descuento:
                 porc = ticket_aplicado.valor_descuento
                 monto = round(monto * (1 - porc / 100.0), 2)

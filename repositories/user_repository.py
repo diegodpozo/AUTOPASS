@@ -10,6 +10,11 @@ class UserRepository:
         return db.query(models.User).filter(models.User.id == user_id).first()
 
     @staticmethod
+    def get_active_by_id(db: Session, user_id: int) -> models.User:
+        """OBTIENE UN USUARIO NO ELIMINADO POR SU IDENTIFICADOR UNICO."""
+        return db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
+
+    @staticmethod
     def get_by_email(db: Session, email: str) -> models.User:
         """BUSCA UN USUARIO POR SU DIRECCION DE CORREO ELECTRONICO."""
         return db.query(models.User).filter(models.User.email == email.lower().strip()).first()

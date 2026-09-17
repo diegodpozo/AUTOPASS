@@ -3,11 +3,12 @@
 import datetime
 import time
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
-import models
 from core.config import settings
+from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
+from repositories.vehicle_repository import VehicleRepository
 from services.time_service import TimeService
 
 
@@ -24,13 +25,13 @@ def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehicu
     elif tipo_vehiculo == "Camioneta":
         attr_cap = "capacidad_reservas_camionetas"
 
-    branch = db.query(models.ParkingBranch).options(joinedload(models.ParkingBranch.floors)).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+    branch = BranchRepository.get_by_name_with_floors(db, sucursal_nombre)
     if branch and branch.floors:
         cap_floors = sum(getattr(f, attr_cap, 5) or 0 for f in branch.floors)
         if cap_floors > 0:
             return cap_floors
 
-    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first()
+    aforo = BranchRepository.get_aforo_by_sucursal(db, sucursal_nombre)
     if aforo:
         val = getattr(aforo, attr_cap, None)
         if val is None:
@@ -48,7 +49,7 @@ def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, ha
         return []
 
     patentes = [r.patente for r in all_res]
-    v_map = {v.patente: v.tipo for v in db.query(models.Vehicle).filter(models.Vehicle.patente.in_(patentes)).all()}
+    v_map = VehicleRepository.get_tipos_by_patentes(db, patentes)
     return [r for r in all_res if v_map.get(r.patente, r.tipo_vehiculo or "Auto").strip().title() == tipo_vehiculo]
 
 
@@ -128,7 +129,7 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
     reservas_filtradas = []
     if all_res:
         patentes = [r.patente for r in all_res]
-        v_map = {v.patente: v.tipo for v in db.query(models.Vehicle).filter(models.Vehicle.patente.in_(patentes)).all()}
+        v_map = VehicleRepository.get_tipos_by_patentes(db, patentes)
         for r in all_res:
             v_tipo = v_map.get(r.patente, r.tipo_vehiculo or "Auto")
             if v_tipo.strip().title() == tipo_vehiculo:
