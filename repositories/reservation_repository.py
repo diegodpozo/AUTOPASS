@@ -87,6 +87,18 @@ class ReservationRepository:
         return q.first()
 
     @staticmethod
+    def get_active_in_range_by_normalized_patente(db: Session, patente_norm: str, now_str: str, sucursal: str) -> models.Reservation:
+        """RESERVA PENDIENTE/ACTIVA DE UNA PATENTE NORMALIZADA VIGENTE EN EL RANGO EN LA SUCURSAL (o global)."""
+        return db.query(models.Reservation).filter(
+            func.replace(func.upper(models.Reservation.patente), ' ', '') == patente_norm,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+            models.Reservation.fecha_inicio <= now_str,
+            models.Reservation.fecha_fin >= now_str
+        ).filter(
+            (models.Reservation.sucursal_nombre == sucursal) | (models.Reservation.sucursal_nombre == None)
+        ).first()
+
+    @staticmethod
     def _filtered_base_query(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None, normalized_staff: bool = False):
         q = db.query(models.Reservation)
         if estado:

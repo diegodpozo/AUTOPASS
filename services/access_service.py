@@ -13,6 +13,10 @@ from models.enums import VehicleType, AccessEventType, ReservationStatus, Paymen
 from services.notification_service import NotificationService
 from services.time_service import TimeService
 from core.normalize import normalize_name, normalize_plate
+from repositories.access_log_repository import AccessRepository
+from repositories.branch_repository import BranchRepository
+from repositories.reservation_repository import ReservationRepository
+from repositories.vehicle_repository import VehicleRepository
 
 logger = get_logger("AccessService")
 
