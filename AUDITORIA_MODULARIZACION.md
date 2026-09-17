@@ -83,10 +83,11 @@ main.py
 
 ### 2.4 Repositorios subutilizados
 
-- Solo existen `user_repository.py` (22 líneas) y `reservation_repository.py` (36 líneas).
+- Solo existen `user_repository.py` (22 líneas) y `reservation_repository.py` (36 → **~150 líneas en v9.21.0**).
 - **Solo 2 servicios** los importan (`user_service.py:8`, `reservation_service.py:13`).
 - Ninguna ruta los usa; el acceso a datos sigue mayormente en las rutas (ver 2.2).
 - La capa `repositories/` debería ser la única puerta de acceso a datos; hoy es un "casi esquema".
+- **[PARCIAL v9.21.0 — working tree]** El acceso a datos de **reservas** quedó centralizado en `ReservationRepository`: `get_active_overlapping`, `get_overlap_by_patente`, `get_unpaid_overdue`, `get_expired`, `get_by_id(user_id)`, `list_filtered`, `latest_id_and_count`; `availability.py`, `payments.py` y el fachada ya **no hacen `db.query(models.Reservation)`** (0 hits). Pendiente: el resto de las entidades (Vehicle, User, AccessLog, RedemptionTicket, ParkingBranch/Aforo) sigue consultada desde servicios.
 
 ### 2.5 Strings mágicos vs Enums — **[RESUELTO v9.21.0]**
 

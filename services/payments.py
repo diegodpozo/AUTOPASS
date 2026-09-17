@@ -356,7 +356,7 @@ class ReservationPaymentsMixin:
     @staticmethod
     def cancel_reservation(db: Session, user: models.User, res_id: int):
         """CANCELA UNA RESERVA Y GESTIONA REEMBOLSOS PROPORCIONALES."""
-        res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
+        res = ReservationRepository.get_by_id(db, res_id)
 
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")

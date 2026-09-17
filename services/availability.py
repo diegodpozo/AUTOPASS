@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 
 import models
 from core.config import settings
-from models.enums import ReservationStatus, PaymentStatus
+from repositories.reservation_repository import ReservationRepository
 from services.time_service import TimeService
 
 
@@ -42,16 +42,7 @@ def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehicu
 def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, tipo_vehiculo: str, exclude_id: int = None) -> list:
     """RESERVAS ACTIVAS/PENDIENTES SOLAPADAS EN EL RANGO [desde, hasta) FILTRADAS POR TIPO DE VEHICULO."""
     tipo_vehiculo = (tipo_vehiculo or "Auto").strip().title()
-    q = db.query(models.Reservation).filter(
-        models.Reservation.sucursal_nombre == sucursal_nombre,
-        models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
-        models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
-        models.Reservation.fecha_inicio < hasta_str,
-        models.Reservation.fecha_fin > desde_str
-    )
-    if exclude_id:
-        q = q.filter(models.Reservation.id != exclude_id)
-    all_res = q.all()
+    all_res = ReservationRepository.get_active_overlapping(db, sucursal_nombre, desde_str, hasta_str, exclude_id)
 
     if not all_res:
         return []
@@ -133,17 +124,7 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
         return {"disponible": False, "capacidad_total": 0, "ocupada": 0, "restan": 0, "mensaje": f"La sede no cuenta con plazas asignadas para reservas de {tipo_vehiculo}s."}
 
     # 2. CONSULTAR RESERVAS SOLAPADAS EN EL RANGO (EXCLUYENDO CANCELADAS/COMPLETADAS)
-    query = db.query(models.Reservation).filter(
-        models.Reservation.sucursal_nombre == sucursal_nombre,
-        models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
-        models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
-        models.Reservation.fecha_inicio < fecha_fin,
-        models.Reservation.fecha_fin > fecha_inicio
-    )
-    if exclude_id:
-        query = query.filter(models.Reservation.id != exclude_id)
-
-    all_res = query.all()
+    all_res = ReservationRepository.get_active_overlapping(db, sucursal_nombre, fecha_inicio, fecha_fin, exclude_id)
     reservas_filtradas = []
     if all_res:
         patentes = [r.patente for r in all_res]

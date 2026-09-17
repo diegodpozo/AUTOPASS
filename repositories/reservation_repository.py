@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 import models
-from models.enums import ReservationStatus
+from models.enums import PaymentStatus, ReservationStatus
 
 #--- REPOSITORIO DE RESERVAS (ACCESO UN DATOS) ---
 
@@ -33,6 +33,92 @@ class ReservationRepository:
         return db.query(models.Reservation).filter(
             models.Reservation.user_id == user_id
         ).order_by(models.Reservation.id.desc()).all()
+
+    @staticmethod
+    def get_active_overlapping(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, exclude_id: int = None):
+        """RESERVAS ACTIVAS/PENDIENTES SOLAPADAS EN EL RANGO [desde, hasta) DE UNA SUCURSAL."""
+        q = db.query(models.Reservation).filter(
+            models.Reservation.sucursal_nombre == sucursal_nombre,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+            models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
+            models.Reservation.fecha_inicio < hasta_str,
+            models.Reservation.fecha_fin > desde_str
+        )
+        if exclude_id:
+            q = q.filter(models.Reservation.id != exclude_id)
+        return q.all()
+
+    @staticmethod
+    def get_overlap_by_patente(db: Session, patente_norm: str, sucursal_nombre: str, desde_str: str, hasta_str: str):
+        """RESERVA ACTIVA DE UNA PATENTE (normalizada) QUE SE SUPERPONE CON EL RANGO EN LA SUCURSAL."""
+        return db.query(models.Reservation).filter(
+            func.replace(func.upper(models.Reservation.patente), ' ', '') == patente_norm,
+            models.Reservation.sucursal_nombre == sucursal_nombre,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+            models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
+            models.Reservation.fecha_inicio < hasta_str,
+            models.Reservation.fecha_fin > desde_str
+        ).first()
+
+    @staticmethod
+    def get_unpaid_overdue(db: Session, cutoff_str: str):
+        """RESERVAS POR HORA IMPAGAS CUYO INICIO YA VENCIO HASTA EL CUTOFF."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.estado_pago == PaymentStatus.PENDIENTE,
+            models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
+            models.Reservation.fecha_inicio <= cutoff_str,
+            models.Reservation.tipo_estadia == "hora"
+        ).all()
+
+    @staticmethod
+    def get_expired(db: Session, now_str: str):
+        """RESERVAS PENDIENTES/ACTIVAS CUYA FECHA FIN YA PASO."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.fecha_fin < now_str
+        ).all()
+
+    @staticmethod
+    def get_by_id(db: Session, res_id: int, user_id: int = None):
+        """BUSCA UNA RESERVA POR ID; si `user_id` se pasa, la filtra por dueño."""
+        q = db.query(models.Reservation).filter(models.Reservation.id == res_id)
+        if user_id is not None:
+            q = q.filter(models.Reservation.user_id == user_id)
+        return q.first()
+
+    @staticmethod
+    def _filtered_base_query(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None, normalized_staff: bool = False):
+        q = db.query(models.Reservation)
+        if estado:
+            q = q.filter(models.Reservation.estado_reserva == estado)
+        if staff_sucursal is not None:
+            if normalized_staff:
+                staff_suc = staff_sucursal or ""
+                norm_col = func.trim(func.replace(func.lower(models.Reservation.sucursal_nombre), 'autopass ', ''))
+                norm_staff = staff_suc.lower().replace('autopass ', '').strip()
+                q = q.filter((models.Reservation.sucursal_nombre == staff_suc) | (norm_col == norm_staff))
+            else:
+                q = q.filter(models.Reservation.sucursal_nombre == staff_sucursal)
+        elif sucursal:
+            q = q.filter(models.Reservation.sucursal_nombre == sucursal)
+        return q
+
+    @staticmethod
+    def list_filtered(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None):
+        """RESERVAS FILTRADAS POR ESTADO Y SUCURSAL (staff_sucursal primero, luego sucursal), ordenadas por id desc."""
+        return ReservationRepository._filtered_base_query(
+            db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal
+        ).order_by(models.Reservation.id.desc()).all()
+
+    @staticmethod
+    def latest_id_and_count(db: Session, since_id: int = None, staff_sucursal: str = None):
+        """(id_maximo, count_reservas_con_id > since_id) con filtro de sucursal normalizado si staff_sucursal."""
+        q = ReservationRepository._filtered_base_query(db, staff_sucursal=staff_sucursal, normalized_staff=True)
+        latest_id = q.with_entities(func.max(models.Reservation.id)).scalar() or 0
+        count = 0
+        if since_id is not None:
+            count = q.filter(models.Reservation.id > since_id).count()
+        return latest_id, count
 
     @staticmethod
     def save(db: Session, reservation: models.Reservation):

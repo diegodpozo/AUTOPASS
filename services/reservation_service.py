@@ -82,12 +82,7 @@ class ReservationService(ReservationPaymentsMixin):
         grace_cutoff = now - datetime.timedelta(hours=2)
         cutoff_str = grace_cutoff.strftime("%Y-%m-%d %H:%M")
         
-        overdue = db.query(models.Reservation).filter(
-            models.Reservation.estado_pago == PaymentStatus.PENDIENTE,
-            models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
-            models.Reservation.fecha_inicio <= cutoff_str,
-            models.Reservation.tipo_estadia == "hora"
-        ).all()
+        overdue = ReservationRepository.get_unpaid_overdue(db, cutoff_str)
         
         if overdue:
             logger.info(f"Cancelando {len(overdue)} reservas impagas vencidas. Cutoff: {cutoff_str}")
@@ -120,10 +115,7 @@ class ReservationService(ReservationPaymentsMixin):
         """MARCA COMO COMPLETADAS TODAS LAS RESERVAS VENCIDAS DEL SISTEMA."""
         now_str = TimeService.now_str()
         # BUSCAMOS RESERVAS QUE ESTEN PENDIENTES O ACTIVAS PERO CUYA FECHA_FIN YA PASO
-        vencidas = db.query(models.Reservation).filter(
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
-            models.Reservation.fecha_fin < now_str
-        ).all()
+        vencidas = ReservationRepository.get_expired(db, now_str)
         
         if vencidas:
             logger.info(f"Finalizando {len(vencidas)} reservas vencidas.")
@@ -170,10 +162,7 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def get_reservation_or_404(db: Session, res_id: int, user_id: int = None):
         """Obtiene una reserva o lanza 404. Con user_id, la filtra por dueño."""
-        q = db.query(models.Reservation).filter(models.Reservation.id == res_id)
-        if user_id is not None:
-            q = q.filter(models.Reservation.user_id == user_id)
-        res = q.first()
+        res = ReservationRepository.get_by_id(db, res_id, user_id)
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
         return res
@@ -212,16 +201,8 @@ class ReservationService(ReservationPaymentsMixin):
 
     @staticmethod
     def get_new_reservations_count(db: Session, staff, since_id: int = None) -> dict:
-        q = db.query(models.Reservation)
-        if staff.rol != UserRole.ADMIN:
-            staff_suc = staff.sucursal or ""
-            norm_col = func.trim(func.replace(func.lower(models.Reservation.sucursal_nombre), 'autopass ', ''))
-            norm_staff = staff_suc.lower().replace('autopass ', '').strip()
-            q = q.filter((models.Reservation.sucursal_nombre == staff_suc) | (norm_col == norm_staff))
-        latest_id = q.with_entities(func.max(models.Reservation.id)).scalar() or 0
-        count = 0
-        if since_id is not None:
-            count = q.filter(models.Reservation.id > since_id).count()
+        staff_sucursal = staff.sucursal if staff.rol != UserRole.ADMIN else None
+        latest_id, count = ReservationRepository.latest_id_and_count(db, since_id, staff_sucursal)
         return {"count": count, "latest_id": latest_id}
 
     @staticmethod
@@ -271,14 +252,7 @@ class ReservationService(ReservationPaymentsMixin):
         if not vehicle:
             raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
         p_clean = data.patente.upper().replace(' ', '')
-        existing_overlap = db.query(models.Reservation).filter(
-            func.replace(func.upper(models.Reservation.patente), ' ', '') == p_clean,
-            models.Reservation.sucursal_nombre == data.sucursal_nombre,
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
-            models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
-            models.Reservation.fecha_inicio < data.fecha_fin,
-            models.Reservation.fecha_fin > data.fecha_inicio
-        ).first()
+        existing_overlap = ReservationRepository.get_overlap_by_patente(db, p_clean, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
         if existing_overlap:
             raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")
         rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
@@ -344,7 +318,7 @@ class ReservationService(ReservationPaymentsMixin):
     def modify_user_reservation(cls, db: Session, user, res_id: int, data: schemas.ReservationUpdate) -> dict:
         if user.is_blocked:
             raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
-        res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == user.id).first()
+        res = ReservationRepository.get_by_user_and_id(db, user.id, res_id)
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
         if res.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
@@ -437,7 +411,7 @@ class ReservationService(ReservationPaymentsMixin):
     def list_user_reservations(db: Session, user_id: int):
         ReservationService.cleanup_overdue_reservations(db)
         ReservationService.auto_finalize_reservations(db, user_id)
-        reservations = db.query(models.Reservation).filter(models.Reservation.user_id == user_id).order_by(models.Reservation.id.desc()).all()
+        reservations = ReservationRepository.get_all_by_user(db, user_id)
         en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in reservations])
         updated = False
         for r in reservations:
@@ -456,7 +430,7 @@ class ReservationService(ReservationPaymentsMixin):
 
     @staticmethod
     def confirm_reminder(db: Session, user_id: int, res_id: int) -> dict:
-        res = db.query(models.Reservation).filter(models.Reservation.id == res_id, models.Reservation.user_id == user_id).first()
+        res = ReservationRepository.get_by_user_and_id(db, user_id, res_id)
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
         res.recordatorio_confirmado = True
@@ -468,15 +442,8 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def list_admin_reservations(db: Session, staff, estado: str = None, sucursal: str = None):
         ReservationService.cleanup_overdue_reservations(db)
-        q = db.query(models.Reservation)
-        if estado:
-            q = q.filter(models.Reservation.estado_reserva == estado)
-        if staff.rol != UserRole.ADMIN:
-            sucursal = staff.sucursal
-            q = q.filter(models.Reservation.sucursal_nombre == sucursal)
-        elif sucursal:
-            q = q.filter(models.Reservation.sucursal_nombre == sucursal)
-        results = q.order_by(models.Reservation.id.desc()).all()
+        staff_sucursal = staff.sucursal if staff.rol != UserRole.ADMIN else None
+        results = ReservationRepository.list_filtered(db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal)
         en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in results])
         out = []
         for r in results:
