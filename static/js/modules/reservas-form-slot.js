@@ -60,20 +60,6 @@ function _branchSlotRange() {
     return { start: 7 * 60, end: 23 * 60 + 30 }; // fallback legado
 }
 
-export function getEditingReservaId() {
-    return editingReservaId;
-}
-
-export function setEditingReservaId(val) {
-    editingReservaId = val;
-}
-
-export function getUserVehicles() {
-    return userVehicles;
-}
-
-let fpInstances = {};
-
 export async function updateDisabledDatesInPicker() {
     const sucursalSelect = document.querySelector('.res-sucursal');
     const vehicleSelect = document.querySelector('.res-vehicle');

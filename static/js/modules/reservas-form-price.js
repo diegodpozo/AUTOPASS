@@ -137,7 +137,7 @@ export function updateReservationPrice() {
     if (total > 0 && pct > 0) {
         const discountAmount = Math.round(total * pct) / 100;
         const finalTotal = total - discountAmount;
-        setReservationTotals({ original: total, discount: discountAmount, final: finalTotal };
+        setReservationTotals({ original: total, discount: discountAmount, final: finalTotal });
         if (originalEl) { originalEl.innerText = `$ ${formatNum(total)}`; originalEl.style.display = 'inline-block'; }
         if (discountLineEl) {
             discountLineEl.innerHTML = `<i class="fas fa-percent"></i> DESCUENTO ${pct}%${getReservationDiscount().sucursal ? ` · ${getReservationDiscount().sucursal}` : ''} &nbsp;·&nbsp; - $ ${formatNum(discountAmount)}`;
@@ -146,7 +146,7 @@ export function updateReservationPrice() {
         if (labelEl) labelEl.innerText = 'Total a pagar:';
         if (totalEl) totalEl.innerText = `$ ${formatNum(finalTotal)}`;
     } else {
-        setReservationTotals({ original: total, discount: 0, final: total };
+        setReservationTotals({ original: total, discount: 0, final: total });
         if (originalEl) { originalEl.innerText = ''; originalEl.style.display = 'none'; }
         if (discountLineEl) { discountLineEl.innerHTML = ''; discountLineEl.style.display = 'none'; }
         if (labelEl) labelEl.innerText = 'Total:';
