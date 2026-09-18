@@ -1,493 +1,40 @@
-import api from './api.js';
-import { toTitle, formatDate, formatPlate, showToast, showConfirm, formatNum } from './utils.js';
-import { getVirtualNow } from './virtual-time.js';
-import { loadReservations } from './reservas-list.js';
-
 /**
- * MÓDULO RESERVAS - FORMULARIO Y TARIFAS
- * Gestión del formulario de creación/edición, cálculo dinámico de tarifas y validaciones.
+ * MÓDULO RESERVAS - FORMULARIO Y TARIFAS (FACHADA)
+ * Orquesta el ciclo de vida del formulario (init, toggle, refresh, reset,
+ * edición, creación y repetición) delegando tarifas y grilla horaria a los
+ * submódulos temáticos. Re-exporta toda la API histórica para mantener
+ * 100% de compatibilidad con modules/reservas.js.
  */
 
-const RESERVA_MIN_MS = (window.RESERVA_HORA_MIN_SEGUNDOS || 1800) * 1000;
-const RESERVA_MIN_MIN = (window.RESERVA_HORA_MIN_SEGUNDOS || 1800) / 60;
-
-// CACHE CORTO PARA CONSULTAS DE DISPONIBILIDAD (EVITA RE-QUERYS EN CADA focus/click/change)
-const availabilityCache = new Map();
-const AVAILABILITY_CACHE_TTL_MS = 30000;
-
-async function cachedAvailabilityGet(url, params) {
-    const key = `${url}?${new URLSearchParams(params).toString()}`;
-    const now = Date.now();
-    const hit = availabilityCache.get(key);
-    if (hit && (now - hit.t) < AVAILABILITY_CACHE_TTL_MS) {
-        return hit.res;
-    }
-    const res = await api.get(url, { params });
-    if (res && res.ok) {
-        availabilityCache.set(key, { t: now, res });
-        if (availabilityCache.size > 50) {
-            const firstKey = availabilityCache.keys().next().value;
-            availabilityCache.delete(firstKey);
-        }
-    }
-    return res;
-}
-
-let currentRates = { '30min': 750, hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
-let editingReservaId = null;
-let userVehicles = [];
-let branchesData = [];
-// DESCUENTO DE RESERVA VIGENTE PARA LA SUCURSAL SELECCIONADA (se refleja en el total estimado)
-let currentReservationDiscount = { pct: 0, sucursal: '', fetchedFor: '' };
-// TOTALES DEL ÚLTIMO CÁLCULO ESTIMADO (original, descuento y final)
-let currentReservationTotals = { original: 0, discount: 0, final: 0 };
-// TOKEN ANTI-RACE PARA CONSULTAS CONCURRENTES DE DESCUENTO POR SUCURSAL
-let discountFetchToken = 0;
-
-// RANGO DE LA GRILLA HORARIA SEGÚN EL HORARIO DE LA SUCURSAL SELECCIONADA.
-// RESPETA is_24h (00:00 → 23:30) Y el horario configurado (ej. "07:00 A 23:00" → 07:00 → 22:30).
-// Fallback al rango legado 07:00 → 23:30 si no hay info de horario disponible.
-function _branchSlotRange() {
-    const sucursalSelect = document.querySelector('.res-sucursal');
-    const sucursal = sucursalSelect ? sucursalSelect.value : '';
-    const branch = branchesData.find(b => b.nombre === sucursal);
-    if (branch && branch.is_24h) {
-        return { start: 0, end: 23 * 60 + 30 }; // 00:00 → 23:30
-    }
-    if (branch && branch.horario) {
-        const m = String(branch.horario).toUpperCase().trim().match(/^(\d{1,2}):(\d{2})\s+(?:A|UN)\s+(\d{1,2}):(\d{2})$/);
-        if (m) {
-            let start = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-            let end = parseInt(m[3], 10) * 60 + parseInt(m[4], 10);
-            if (end === 0) end = 24 * 60; // cierre 00:00 = final del día (grilla hasta 23:30)
-            // último slot de inicio: un paso (30 min) antes del cierre, sin pasar de 23:30
-            const lastStart = Math.max(start, Math.min(end - 30, 23 * 60 + 30));
-            return { start, end: lastStart };
-        }
-    }
-    return { start: 7 * 60, end: 23 * 60 + 30 }; // fallback legado
-}
-
-export function getEditingReservaId() {
-    return editingReservaId;
-}
-
-export function setEditingReservaId(val) {
-    editingReservaId = val;
-}
-
-export function getUserVehicles() {
-    return userVehicles;
-}
-
-let fpInstances = {};
-
-export async function updateDisabledDatesInPicker() {
-    const sucursalSelect = document.querySelector('.res-sucursal');
-    const vehicleSelect = document.querySelector('.res-vehicle');
-    const typeSelect = document.querySelector('.res-type');
-
-    if (!sucursalSelect || !vehicleSelect || !typeSelect) return;
-
-    const sucursal = sucursalSelect.value;
-    const patente = vehicleSelect.value;
-    const tipoEstadia = typeSelect.value;
-
-    if (!sucursal || !patente || !tipoEstadia) return;
-
-    const veh = userVehicles.find(v => v.patente === patente);
-    const tipoVehiculo = veh ? veh.tipo : 'Auto';
-
-    try {
-        const res = await cachedAvailabilityGet('/user/reservations/disabled-dates', {
-            sucursal_nombre: sucursal,
-            tipo_vehiculo: tipoVehiculo,
-            tipo_estadia: tipoEstadia
-        });
-
-        if (res.ok && res.data && Array.isArray(res.data.disabled_dates)) {
-            const disabledDates = res.data.disabled_dates;
-            const fpMap = {
-                'hora': fpInstances.hourlyDate,
-                'dia': fpInstances.day,
-                'semana': fpInstances.week,
-                'quincena': fpInstances.fortnight,
-                'mes': fpInstances.month
-            };
-
-            Object.values(fpMap).forEach(fpRef => {
-                if (fpRef) {
-                    const fpObj = Array.isArray(fpRef) ? fpRef[0] : fpRef;
-                    if (fpObj && typeof fpObj.set === 'function') {
-                        fpObj.set('disable', disabledDates);
-                    }
-                }
-            });
-        }
-    } catch (err) {
-        console.warn('[RESERVAS] Error cargando fechas deshabilitadas:', err);
-    }
-}
-
-let slotRangeStart = null;
-let slotRangeEnd = null;
-let slotRangeDate = null;
-
-export async function updateHourlySlotsUI() {
-    const sucursalSelect = document.querySelector('.res-sucursal');
-    const vehicleSelect = document.querySelector('.res-vehicle');
-    const typeSelect = document.querySelector('.res-type');
-    const dateInput = document.querySelector('.res-date-only');
-    const timeInput = document.querySelector('.res-time-only');
-    const hoursQtyInput = document.querySelector('.res-hours-qty');
-
-    const container = document.getElementById('availability-status-container');
-    const badge = document.getElementById('availability-badge');
-    const grid = document.getElementById('hourly-slots-grid');
-
-    if (!container || !badge || !grid) return;
-
-    if (!typeSelect || typeSelect.value !== 'hora') {
-        grid.style.display = 'none';
-        grid.innerHTML = '';
-        return;
-    }
-
-    container.style.display = 'flex';
-
-    if (!sucursalSelect || !sucursalSelect.value) {
-        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--dorado); padding:8px;"><i class="fas fa-info-circle" style="margin-right:6px;"></i> Seleccioná tu sucursal para ver la disponibilidad horaria en vivo</div>';
-        grid.style.display = 'flex';
-        badge.style.display = 'none';
-        return;
-    }
-
-    if (!vehicleSelect || !vehicleSelect.value) {
-        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--dorado); padding:8px;"><i class="fas fa-info-circle" style="margin-right:6px;"></i> Seleccioná tu vehículo para consultar la disponibilidad de plazas</div>';
-        grid.style.display = 'flex';
-        badge.style.display = 'none';
-        return;
-    }
-
-    const sucursal = sucursalSelect.value;
-    const patente = vehicleSelect.value;
-    const fecha = dateInput ? dateInput.value : '';
-
-    if (slotRangeDate && slotRangeDate !== fecha) {
-        slotRangeStart = null;
-        slotRangeEnd = null;
-        slotRangeDate = null;
-        if (timeInput) timeInput.value = '';
-        if (hoursQtyInput) hoursQtyInput.value = '1';
-    }
-
-    if (!fecha) {
-        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--dorado); padding:8px;"><i class="fas fa-calendar-day" style="margin-right:6px;"></i> Seleccioná la fecha en el calendario para consultar los horarios libres</div>';
-        grid.style.display = 'flex';
-        badge.style.display = 'none';
-        return;
-    }
-
-    const veh = userVehicles.find(v => v.patente === patente);
-    const tipoVehiculo = veh ? veh.tipo : 'Auto';
-    const duracionHoras = 1;
-
-    try {
-        const res = await cachedAvailabilityGet('/user/reservations/disabled-hours', {
-            sucursal_nombre: sucursal,
-            fecha: fecha,
-            tipo_vehiculo: tipoVehiculo,
-            duracion_horas: duracionHoras,
-            paso_minutos: 30
-        });
-
-        if (res.ok && res.data && Array.isArray(res.data.disabled_hours)) {
-            const reservedRanges = Array.isArray(res.data.reserved_ranges) ? res.data.reserved_ranges : [];
-            // SLOTS DESHABILITADOS POR CAPACIDAD CALCULADOS EN EL SERVER (OCUPADA >= CAPACIDAD):
-            // NO SON SOLO LOS RANGOS DE RESERVAS, POR ESO HAY QUE RESPETARLOS ADEMÁS DE reservedRanges.
-            const disabledSet = new Set(Array.isArray(res.data.disabled_hours) ? res.data.disabled_hours : []);
-
-            // HOY: BLOQUEAR LOS SLOTS QUE YA PASARON O NO RESPETAN LA ANTICIPACION MINIMA
-            // (EL SERVER TAMBIEN LOS FILTRA, PERO EL CACHE DE 30s PUEDE ESTAR DESACTUALIZADO)
-            const now = getVirtualNow();
-            const fechaHoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            const blockedToday = [];
-            if (fecha === fechaHoy) {
-                const rango = _branchSlotRange();
-                const minInicioMs = now.getTime() + RESERVA_MIN_MS;
-                for (let min = rango.start; min <= rango.end; min += 30) {
-                    const hh = Math.floor(min / 60);
-                    const mm = min % 60;
-                    const hStr = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-                    if (new Date(`${fecha}T${hStr}`).getTime() < minInicioMs) {
-                        blockedToday.push(hStr);
-                    }
-                }
-            }
-
-            let html = `
-                <div style="width:100%; display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:8px;">
-                    <div style="font-size:0.75rem; color:#aaa; text-align:center;">
-                        <i class="fas fa-clock" style="color:var(--dorado); margin-right:4px;"></i> Tocá la hora de <b>inicio</b> y luego la de <b>fin</b>, o <b>arrastrá</b> sobre las casillas:
-                    </div>
-                    ${_hourlySelectionSummary()}
-                </div>
-                <div class="chips-container-premium" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:4px; width:100%;">
-            `;
-
-            let countTotal = 0;
-            let countLibres = 0;
-
-            const rango = _branchSlotRange();
-            for (let min = rango.start; min <= rango.end; min += 30) {
-                const h = Math.floor(min / 60);
-                const m = min % 60;
-                const hourStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-
-                let isReserved = false;
-                let isBoundaryEnd = false;
-                for (const rg of reservedRanges) {
-                    if (hourStr >= rg.inicio && hourStr < rg.fin) isReserved = true;
-                    if (hourStr === rg.inicio) isBoundaryEnd = true;
-                }
-                // SI EL SERVER LO DESHABILITÓ POR CAPACIDAD, EL SLOT NO PUEDE USARSE NI COMO INICIO NI COMO FIN
-                if (disabledSet.has(hourStr)) {
-                    isReserved = true;
-                    isBoundaryEnd = false;
-                }
-                const isBlockedToday = fecha === fechaHoy && blockedToday.includes(hourStr);
-                if (!isReserved && !isBlockedToday) countLibres++;
-                countTotal++;
-
-                const inRange = slotRangeStart && slotRangeEnd
-                    && hourStr > slotRangeStart && hourStr < slotRangeEnd;
-                const isStart = slotRangeStart === hourStr;
-                const isEnd = slotRangeEnd === hourStr;
-
-                if (isReserved && !isBoundaryEnd) {
-                    html += `<span class="hourly-chip-premium full" title="Horario reservado">${hourStr}</span>`;
-                } else if (isBlockedToday) {
-                    html += `<span class="hourly-chip-premium full" title="Horario ya pasado o con anticipación mínima">${hourStr}</span>`;
-                } else if (isStart || isEnd) {
-                    const cls = isStart ? 'hourly-chip-premium available range-start' : 'hourly-chip-premium available range-end';
-                    const tip = isStart ? 'Hora de INICIO de tu estadía' : 'Hora de FIN de tu estadía';
-                    html += `<span class="${cls}" data-hora="${hourStr}" title="${tip}">${hourStr}</span>`;
-                } else if (inRange) {
-                    html += `<span class="hourly-chip-premium available in-range" data-hora="${hourStr}">${hourStr}</span>`;
-                } else {
-                    const title = isBoundaryEnd ? 'Inicio de otra reserva. Elegilo como FIN para terminar tu estadía acá' : '';
-                    html += `<span class="hourly-chip-premium available" title="${title}" data-hora="${hourStr}">${hourStr}</span>`;
-                }
-            }
-
-            // COMPLETAR LA ULTIMA FILA CON CELDAS VACIAS PARA MANTENER LA GRILLA ALINEADA (6 COLUMNAS)
-            const resto = countTotal % 6;
-            if (resto > 0) {
-                for (let i = 0; i < 6 - resto; i++) {
-                    html += `<span class="hourly-chip-premium placeholder"></span>`;
-                }
-            }
-
-            html += `</div>`;
-
-            grid.innerHTML = html;
-            grid.style.display = 'flex';
-            badge.style.display = 'none';
-        }
-    } catch (e) {
-        console.warn('[RESERVAS] Error cargando disponibilidad horaria:', e);
-    }
-}
-
-function _hourlySelectionSummary() {
-    if (!slotRangeStart) {
-        return '<div class="hourly-range-summary hint">Elegí el <b>INICIO</b> (verde) y después el <b>FIN</b> (rojo) de tu estadía:</div>';
-    }
-    let dur = '';
-    if (slotRangeEnd && _slotToMin(slotRangeEnd) > _slotToMin(slotRangeStart)) {
-        const horas = Math.round((_slotToMin(slotRangeEnd) - _slotToMin(slotRangeStart)) / 60 * 10) / 10;
-        dur = `<span class="hsum-dur">(${horas} hs)</span>`;
-    }
-    return `<div class="hourly-range-summary">
-        <span class="hsum-chip hsum-start"><i class="fas fa-arrow-right-to-bracket"></i> INICIO ${slotRangeStart}</span>
-        <span class="hsum-arrow"><i class="fas fa-arrow-right"></i></span>
-        <span class="hsum-chip hsum-end"><i class="fas fa-arrow-right-from-bracket"></i> FIN ${slotRangeEnd || '— toca la hora de <b>fin</b>'}</span>
-        ${dur}
-    </div>`;
-}
-
-let slotDragActive = false;
-
-const _slotToMin = (t) => {
-    const [hh, mm] = (t || '00:00').split(':').map(Number);
-    return hh * 60 + mm;
-};
-
-const _slotCommitRange = function() {
-    const timeInput = document.querySelector('.res-time-only');
-    const hoursQtyInput = document.querySelector('.res-hours-qty');
-    const dateInput = document.querySelector('.res-date-only');
-    if (!timeInput || !hoursQtyInput) return;
-
-    if (dateInput && dateInput.value) slotRangeDate = dateInput.value;
-
-    if (slotRangeStart && slotRangeEnd && _slotToMin(slotRangeEnd) > _slotToMin(slotRangeStart)) {
-        timeInput.value = slotRangeStart;
-        hoursQtyInput.value = Math.round((_slotToMin(slotRangeEnd) - _slotToMin(slotRangeStart)) / 60 * 10) / 10;
-    } else {
-        timeInput.value = '';
-        hoursQtyInput.value = '1';
-    }
-    updateReservationPrice();
-    updateHourlySlotsUI();
-};
-
-export function selectHourRange(hourStr) {
-    if (!slotDragActive) {
-        if (!slotRangeStart || _slotToMin(hourStr) < _slotToMin(slotRangeStart)) {
-            slotRangeStart = hourStr;
-            slotRangeEnd = null;
-        } else if (!slotRangeEnd) {
-            slotRangeEnd = hourStr;
-        } else {
-            slotRangeStart = hourStr;
-            slotRangeEnd = null;
-        }
-        _slotCommitRange();
-    }
-};
-
-export function initHourlySlotDrag() {
-    const grid = document.getElementById('hourly-slots-grid');
-    if (!grid) return;
-
-    grid.addEventListener('pointerdown', (ev) => {
-        if (ev.button !== undefined && ev.button !== 0 && ev.type === 'pointerdown') return;
-        const chip = ev.target.closest('.hourly-chip-premium');
-        if (!chip || chip.classList.contains('full')) return;
-        const hourStr = chip.dataset.hora;
-        if (!hourStr) return;
-
-        ev.preventDefault();
-        slotDragActive = true;
-
-        try { grid.setPointerCapture(ev.pointerId); } catch (e) { /* noop */ }
-
-        if (!slotRangeStart || _slotToMin(hourStr) < _slotToMin(slotRangeStart)) {
-            slotRangeStart = hourStr;
-            slotRangeEnd = null;
-        } else if (!slotRangeEnd) {
-            if (hourStr === slotRangeStart) {
-                slotRangeEnd = null;
-            } else {
-                slotRangeEnd = hourStr;
-            }
-        } else {
-            slotRangeStart = hourStr;
-            slotRangeEnd = null;
-        }
-        _slotCommitRange();
-    });
-
-    grid.addEventListener('pointermove', (ev) => {
-        if (!slotDragActive) return;
-        const el = document.elementFromPoint(ev.clientX, ev.clientY);
-        const chip = el && el.closest('.hourly-chip-premium');
-        if (!chip || chip.classList.contains('full')) return;
-        const hourStr = chip.dataset.hora;
-        if (!hourStr) return;
-
-        if (_slotToMin(hourStr) > _slotToMin(slotRangeStart)) {
-            if (!slotRangeEnd || slotRangeEnd !== hourStr) {
-                slotRangeEnd = hourStr;
-                _slotCommitRange();
-            }
-        } else if (_slotToMin(hourStr) < _slotToMin(slotRangeStart)) {
-            slotRangeStart = hourStr;
-            slotRangeEnd = null;
-            _slotCommitRange();
-        }
-    });
-
-    const finishDrag = () => {
-        if (!slotDragActive) return;
-        slotDragActive = false;
-        _slotCommitRange();
-    };
-    grid.addEventListener('pointerup', finishDrag);
-    grid.addEventListener('pointercancel', finishDrag);
-}
-
-export async function updatePeriodAvailabilityBadge() {
-    const sucursalSelect = document.querySelector('.res-sucursal');
-    const vehicleSelect = document.querySelector('.res-vehicle');
-    const typeSelect = document.querySelector('.res-type');
-    const container = document.getElementById('availability-status-container');
-    const badge = document.getElementById('availability-badge');
-    const grid = document.getElementById('hourly-slots-grid');
-
-    if (!container || !badge || !grid) return;
-
-    if (!typeSelect || typeSelect.value === 'hora' || !sucursalSelect || !sucursalSelect.value || !vehicleSelect || !vehicleSelect.value) {
-        if (typeSelect && typeSelect.value !== 'hora') {
-            container.style.display = 'none';
-            badge.style.display = 'none';
-        }
-        return;
-    }
-
-    const type = typeSelect.value;
-    let inicio, fin;
-
-    if (type === 'dia') {
-        const fecha = document.querySelector('.res-day-only')?.value;
-        if (fecha) { inicio = `${fecha} 00:00`; fin = `${fecha} 23:59`; }
-    } else {
-        const selectorMap = { 'semana': '.res-week-start', 'quincena': '.res-fortnight-start', 'mes': '.res-month-start' };
-        const fecha = document.querySelector(selectorMap[type])?.value;
-        const periodDays = { 'semana': 7, 'quincena': 15, 'mes': 30 }[type];
-        if (fecha && periodDays) {
-            inicio = `${fecha} 00:00`;
-            const startDt = new Date(fecha.replace(/-/g, "/"));
-            const endDt = new Date(startDt.getTime() + (periodDays - 1) * 24 * 60 * 60 * 1000);
-            fin = `${endDt.getFullYear()}-${String(endDt.getMonth()+1).padStart(2,'0')}-${String(endDt.getDate()).padStart(2,'0')} 23:59`;
-        }
-    }
-
-    if (!inicio || !fin) return;
-
-    container.style.display = 'flex';
-    grid.style.display = 'none';
-
-    const sucursal = sucursalSelect.value;
-    const patente = vehicleSelect.value;
-    const veh = userVehicles.find(v => v.patente === patente);
-    const tipoVehiculo = veh ? veh.tipo : 'Auto';
-
-    try {
-        const av = await api.get('/user/reservations/check-availability', {
-            params: {
-                sucursal_nombre: sucursal,
-                fecha_inicio: inicio,
-                fecha_fin: fin,
-                tipo_vehiculo: tipoVehiculo
-            }
-        });
-
-        if (av.ok && av.data) {
-            if (av.data.disponible) {
-                badge.className = 'availability-badge-premium success';
-                badge.innerHTML = `<i class="fas fa-check-circle"></i> Disponibilidad confirmada en ${sucursal} (${av.data.restan} de ${av.data.capacidad_total} plazas libres para ${tipoVehiculo}s)`;
-            } else {
-                badge.className = 'availability-badge-premium danger';
-                badge.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Sin disponibilidad de plazas de ${tipoVehiculo} en ${sucursal} para este período`;
-            }
-            badge.style.display = 'inline-flex';
-        }
-    } catch (e) {
-        console.warn('[RESERVAS] Error verificando disponibilidad de período:', e);
-    }
-}
+import api from './api.js';
+import { formatDate, formatPlate, showToast, showConfirm, formatNum } from './utils.js';
+import { getVirtualNow } from './virtual-time.js';
+import { loadReservations } from './reservas-list.js';
+import {
+    getEditingReservaId,
+    setEditingReservaId,
+    getUserVehicles,
+    setUserVehicles,
+    getBranchesData,
+    setBranchesData,
+    getReservationDiscount,
+    setReservationDiscount,
+    getReservationTotals,
+    getFpInstances,
+    bumpDiscountToken,
+    RESERVA_MIN_MS,
+    RESERVA_MIN_MIN
+} from './reservas-form-state.js';
+import { fetchRates, updateReservationPrice } from './reservas-form-price.js';
+import {
+    updateDisabledDatesInPicker,
+    updateHourlySlotsUI,
+    selectHourRange,
+    initHourlySlotDrag,
+    updatePeriodAvailabilityBadge,
+    resetSlotRange,
+    setSlotRange
+} from './reservas-form-slot.js';
 
 export function initReservationForm() {
     if (!window.flatpickr) return;
@@ -514,31 +61,31 @@ export function initReservationForm() {
         }
     };
 
-    fpInstances.hourlyDate = flatpickr(".res-date-only", { ...commonConfig });
-    fpInstances.day = flatpickr(".res-day-only", { ...commonConfig });
-    fpInstances.week = flatpickr(".res-week-start", { 
+    getFpInstances().hourlyDate = flatpickr(".res-date-only", { ...commonConfig });
+    getFpInstances().day = flatpickr(".res-day-only", { ...commonConfig });
+    getFpInstances().week = flatpickr(".res-week-start", { 
         ...commonConfig, 
         onChange: (sd, ds) => {
             updatePeriodEnd(ds, 7, '.res-week-end');
             updatePeriodAvailabilityBadge();
         } 
     });
-    fpInstances.fortnight = flatpickr(".res-fortnight-start", { 
+    getFpInstances().fortnight = flatpickr(".res-fortnight-start", { 
         ...commonConfig, 
         onChange: (sd, ds) => {
             updatePeriodEnd(ds, 15, '.res-fortnight-end');
             updatePeriodAvailabilityBadge();
         } 
     });
-    fpInstances.month = flatpickr(".res-month-start", { 
+    getFpInstances().month = flatpickr(".res-month-start", { 
         ...commonConfig, 
         onChange: (sd, ds) => {
             updatePeriodEnd(ds, 30, '.res-month-end');
             updatePeriodAvailabilityBadge();
         } 
     });
-    fpInstances.start = flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
-    fpInstances.end = flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
+    getFpInstances().start = flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
+    getFpInstances().end = flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
 
     // CALCULAR FECHAS DE FIN PARA PERÍODOS CON LA FECHA POR DEFECTO
     const todayYmd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -549,8 +96,7 @@ export function initReservationForm() {
     const typeSelect = document.querySelector('.res-type');
     if (typeSelect) {
         typeSelect.addEventListener('change', (e) => {
-            slotRangeStart = null;
-            slotRangeEnd = null;
+            resetSlotRange();
             updateFormGroups(e.target.value);
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
@@ -561,8 +107,7 @@ export function initReservationForm() {
     const vehicleSelect = document.querySelector('.res-vehicle');
     if (vehicleSelect) {
         vehicleSelect.addEventListener('change', () => {
-            slotRangeStart = null;
-            slotRangeEnd = null;
+            resetSlotRange();
             updateReservationPrice();
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
@@ -573,8 +118,7 @@ export function initReservationForm() {
     const sucursalSelect = document.querySelector('.res-sucursal');
     if (sucursalSelect) {
         sucursalSelect.addEventListener('change', (e) => {
-            slotRangeStart = null;
-            slotRangeEnd = null;
+            resetSlotRange();
             const sucursalId = e.target.value;
             fetchRates(sucursalId);
             updateDisabledDatesInPicker();
@@ -670,19 +214,19 @@ export async function refreshReservationFormState() {
     if (!container) return;
 
     // REINICIA EL CACHE DE DESCUENTO (siempre se consulta el estado actual al abrir el formulario)
-    currentReservationDiscount = { pct: 0, sucursal: '', fetchedFor: '' };
-    discountFetchToken++;
+    setReservationDiscount({ pct: 0, sucursal: '', fetchedFor: '' });
+    bumpDiscountToken();
 
     fetchRates();
     
     // 1. CARGAR VEHÍCULOS
     const resVehicles = await api.get('/user/vehicles');
     if (resVehicles.ok) {
-        userVehicles = resVehicles.data;
+        setUserVehicles(resVehicles.data);
         const noVehiclesSec = document.getElementById('reserva-no-vehicles');
         const mainForm = document.getElementById('reserva-form-content');
 
-        if (userVehicles.length === 0) {
+        if (getUserVehicles().length === 0) {
             if (noVehiclesSec) noVehiclesSec.style.display = 'block';
             if (mainForm) mainForm.style.display = 'none';
         } else {
@@ -692,17 +236,17 @@ export async function refreshReservationFormState() {
             selects.forEach(select => {
                 const currentVal = select.value;
                 select.innerHTML = '<option value="" selected disabled hidden>Seleccioná vehículo...</option>' + 
-                    userVehicles.map(v => `<option value="${v.patente}">${formatPlate(v.patente)} - ${v.marca_modelo}</option>`).join('');
+                    getUserVehicles().map(v => `<option value="${v.patente}">${formatPlate(v.patente)} - ${v.marca_modelo}</option>`).join('');
                 if (currentVal) select.value = currentVal;
-                if (userVehicles.length === 1) {
-                    select.value = userVehicles[0].patente;
+                if (getUserVehicles().length === 1) {
+                    select.value = getUserVehicles()[0].patente;
                 }
             });
-            if (userVehicles.length === 1) {
-                selects.forEach(select => select.value = userVehicles[0].patente);
+            if (getUserVehicles().length === 1) {
+                selects.forEach(select => select.value = getUserVehicles()[0].patente);
                 updateReservationPrice();
             } else {
-                const fav = userVehicles.find(v => v.is_favorite);
+                const fav = getUserVehicles().find(v => v.is_favorite);
                 if (fav) {
                     selects.forEach(select => select.value = fav.patente);
                     updateReservationPrice();
@@ -710,7 +254,7 @@ export async function refreshReservationFormState() {
             }
 
             try {
-                if (userVehicles.length === 1) {
+                if (getUserVehicles().length === 1) {
                     const container = document.getElementById('reserva-form-container');
                     if (container && !container.classList.contains('open') && typeof toggleReservaForm === 'function') {
                         toggleReservaForm();
@@ -728,12 +272,12 @@ export async function refreshReservationFormState() {
     // 2. CARGAR SUCURSALES DINÁMICAMENTE
     const resBranches = await api.get('/admin/branches');
     if (resBranches.ok) {
-        branchesData = resBranches.data;
+        setBranchesData(resBranches.data);
         const sucursalSelects = document.querySelectorAll('.res-sucursal');
         sucursalSelects.forEach(select => {
             const currentVal = select.value;
             select.innerHTML = '<option value="" selected disabled hidden>Seleccioná sucursal...</option>' + 
-                branchesData.map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
+                getBranchesData().map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
     }
@@ -743,10 +287,8 @@ export async function refreshReservationFormState() {
 }
 
 export function resetReservaForm() {
-    editingReservaId = null;
-    slotRangeStart = null;
-    slotRangeEnd = null;
-    slotRangeDate = null;
+    setEditingReservaId(null);
+    resetSlotRange();
     const form = document.querySelector('.reservation-form-modern');
     if (form) {
         form.reset();
@@ -772,7 +314,7 @@ export async function prepareEditReservation(id) {
         return showToast(`No se puede modificar con menos de ${RESERVA_MIN_MIN} minutos de antelación`, 'info');
     }
 
-    editingReservaId = id;
+    setEditingReservaId(id);
     
     if (window.showSection) {
         const inicioNavItem = document.querySelector('.nav-item[onclick*="inicio"]');
@@ -803,9 +345,7 @@ export async function prepareEditReservation(id) {
             const endParts = r.fecha_fin.split(' ');
             document.querySelector('.res-date-only').value = dtParts[0];
             document.querySelector('.res-time-only').value = dtParts[1];
-            slotRangeStart = dtParts[1];
-            slotRangeEnd = endParts[1] || null;
-            slotRangeDate = dtParts[0];
+            setSlotRange({ start: dtParts[1], end: endParts[1] || null, date: dtParts[0] });
             const startDt = new Date(r.fecha_inicio.replace(/-/g, "/"));
             const endDt = new Date(r.fecha_fin.replace(/-/g, "/"));
             const minutes = Math.round((endDt - startDt) / 60000);
@@ -827,146 +367,6 @@ export async function prepareEditReservation(id) {
         }
         updateReservationPrice();
     }, 500);
-}
-
-export async function fetchRates(sucursal = null) {
-    const url = sucursal ? `/user/rates?sucursal=${sucursal}` : '/user/rates';
-    const res = await api.get(url);
-    if (res.ok) {
-        currentRates = res.data;
-    }
-    await lazyLoadDiscount(sucursal);
-    updateReservationPrice();
-}
-
-// CONSULTA EL DESCUENTO DE RESERVA (%) VIGENTE PARA LA SUCURSAL Y LO CACHEA.
-// Lazy: si ya se cargó para esa sucursal no se vuelve a consultar; al completar la consulta
-// re-renderiza el total (evita que quede "Total sin descuento" si se eligió la hora antes).
-async function lazyLoadDiscount(sucursal = null) {
-    const branch = sucursal || document.querySelector('.res-sucursal')?.value || '';
-    if (!branch) {
-        currentReservationDiscount = { pct: 0, sucursal: '', fetchedFor: '' };
-        return;
-    }
-    if (currentReservationDiscount.fetchedFor === branch) return;
-    const token = ++discountFetchToken;
-    let pct = 0;
-    let suc = '';
-    try {
-        const res = await api.get(`/user/redemptions/available?sucursal=${encodeURIComponent(branch)}`);
-        if (res.ok && res.data && res.data.length > 0) {
-            pct = res.data[0].valor_descuento || 0;
-            suc = res.data[0].sucursal || '';
-        }
-    } catch (e) { /* noop */ }
-
-    if (token === discountFetchToken) {
-        currentReservationDiscount = { pct, sucursal: suc, fetchedFor: branch };
-        updateReservationPrice();
-    }
-}
-
-export function updateReservationPrice() {
-    const typeSelect = document.querySelector('.res-type');
-    const vehicleSelect = document.querySelector('.res-vehicle');
-    if (!typeSelect) return;
-    
-    const type = typeSelect.value;
-    const patente = vehicleSelect?.value;
-    const totalEl = document.getElementById('reserva-total-est');
-    const ratesDetailEl = document.getElementById('reserva-rates-detail');
-    let total = 0;
-
-    const vehiculo = userVehicles.find(v => v.patente === patente);
-    const isMoto = vehiculo && vehiculo.tipo === 'Moto';
-
-    const key = isMoto ? `${type}_moto` : type;
-    const rate = currentRates[key] || currentRates[type] || 0;
-    const rate30 = currentRates[isMoto ? '30min_moto' : '30min'] || rate / 2;
-
-    if (ratesDetailEl) {
-        if (type === 'hora' && rate > 0) {
-            ratesDetailEl.style.display = 'block';
-            ratesDetailEl.innerHTML = `1 hora = <b style="color:#dfba6b;">$${formatNum(rate)}</b> &nbsp;·&nbsp; 30 min = <b style="color:#dfba6b;">$${formatNum(rate30)}</b>`;
-        } else {
-            ratesDetailEl.style.display = 'none';
-            ratesDetailEl.innerHTML = '';
-        }
-    }
-
-    let inicio, fin;
-    try {
-        if (type === 'hora') {
-            const fecha = document.querySelector('.res-date-only')?.value;
-            const hora = document.querySelector('.res-time-only')?.value;
-            const hoursQtyInput = document.querySelector('.res-hours-qty');
-            const hoursQty = parseFloat(hoursQtyInput?.value);
-            
-            if (fecha && hora && !isNaN(hoursQty) && hoursQty > 0) {
-                inicio = new Date(`${fecha}T${hora}`);
-                fin = new Date(inicio.getTime() + hoursQty * 60 * 60 * 1000);
-            }
-        } else if (type === 'dia') {
-            const fecha = document.querySelector('.res-day-only')?.value;
-            if (fecha) {
-                inicio = new Date(`${fecha}T00:00`);
-                fin = new Date(`${fecha}T23:59`);
-            }
-        } else {
-            const periods = { 'semana': 7, 'quincena': 15, 'mes': 30 };
-            const periodClasses = { 'semana': '.res-week-start', 'quincena': '.res-fortnight-start', 'mes': '.res-month-start' };
-            const selector = periodClasses[type];
-            const fechaInput = selector ? document.querySelector(selector) : null;
-            const fecha = fechaInput?.value;
-            if (fecha) {
-                inicio = new Date(`${fecha}T00:00`);
-                fin = new Date(inicio.getTime() + periods[type] * 24 * 60 * 60 * 1000);
-                fin.setSeconds(fin.getSeconds() - 1);
-            }
-        }
-
-        if (inicio && fin) {
-            const durationHours = (fin - inicio) / 3600000;
-            const key = isMoto ? `${type}_moto` : type;
-            const rate = currentRates[key] || currentRates[type] || 0;
-            const rate30 = currentRates[isMoto ? '30min_moto' : '30min'] || rate / 2;
-            
-            if (type === 'hora') total = Math.max(1, Math.ceil(durationHours * 2)) * rate30;
-            else if (type === 'dia') total = Math.max(1, Math.ceil(durationHours / 24)) * rate;
-            else if (type === 'semana') total = Math.ceil(durationHours / (24 * 7)) * rate;
-            else if (type === 'quincena') total = Math.ceil(durationHours / (24 * 15)) * rate;
-            else if (type === 'mes') total = Math.ceil(durationHours / (24 * 30)) * rate;
-            else total = Math.ceil(durationHours) * rate;
-        }
-    } catch (e) { console.error("Error calculando precio:", e); }
-
-    const originalEl = document.getElementById('reserva-total-original');
-    const discountLineEl = document.getElementById('reserva-discount-line');
-    const labelEl = document.getElementById('reserva-total-label');
-    const pct = currentReservationDiscount.pct || 0;
-
-    if (total > 0 && pct > 0) {
-        const discountAmount = Math.round(total * pct) / 100;
-        const finalTotal = total - discountAmount;
-        currentReservationTotals = { original: total, discount: discountAmount, final: finalTotal };
-        if (originalEl) { originalEl.innerText = `$ ${formatNum(total)}`; originalEl.style.display = 'inline-block'; }
-        if (discountLineEl) {
-            discountLineEl.innerHTML = `<i class="fas fa-percent"></i> DESCUENTO ${pct}%${currentReservationDiscount.sucursal ? ` · ${currentReservationDiscount.sucursal}` : ''} &nbsp;·&nbsp; - $ ${formatNum(discountAmount)}`;
-            discountLineEl.style.display = 'block';
-        }
-        if (labelEl) labelEl.innerText = 'Total a pagar:';
-        if (totalEl) totalEl.innerText = `$ ${formatNum(finalTotal)}`;
-    } else {
-        currentReservationTotals = { original: total, discount: 0, final: total };
-        if (originalEl) { originalEl.innerText = ''; originalEl.style.display = 'none'; }
-        if (discountLineEl) { discountLineEl.innerHTML = ''; discountLineEl.style.display = 'none'; }
-        if (labelEl) labelEl.innerText = 'Total:';
-        if (totalEl) totalEl.innerText = total > 0 ? `$ ${formatNum(total)}` : '$ ---';
-    }
-
-    // GARANTIZA QUE EL DESCUENTO DE LA SUCURSAL ESTÉ CARGADO (carga lazy + re-render cuando llega)
-    const selBranch = document.querySelector('.res-sucursal')?.value || '';
-    if (total > 0) lazyLoadDiscount(selBranch);
 }
 
 export function updateFormGroups(type) {
@@ -1012,7 +412,7 @@ export async function createReservation(e) {
         return showToast('Error interno: Formulario incompleto', 'error');
     }
 
-    if (!userVehicles || userVehicles.length === 0) {
+    if (!getUserVehicles() || getUserVehicles().length === 0) {
         if (typeof window.showQuickAddVehicle === 'function') window.showQuickAddVehicle();
         console.groupEnd();
         return showToast('Agregá tu primer vehículo para poder reservar', 'info');
@@ -1042,7 +442,7 @@ export async function createReservation(e) {
             const endDt = new Date(startDt.getTime() + hoursQty * 60 * 60 * 1000);
             fin = `${endDt.getFullYear()}-${(endDt.getMonth() + 1).toString().padStart(2, '0')}-${endDt.getDate().toString().padStart(2, '0')} ${endDt.getHours().toString().padStart(2, '0')}:${endDt.getMinutes().toString().padStart(2, '0')}`;
             
-            const branch = branchesData.find(b => b.nombre === sucursal);
+            const branch = getBranchesData().find(b => b.nombre === sucursal);
             if (branch && !branch.is_24h && branch.horario) {
                 const hMatch = branch.horario.toUpperCase().trim().match(/^(\d{1,2}):(\d{2})\s+(?:A|UN)\s+(\d{1,2}):(\d{2})$/);
                 if (hMatch) {
@@ -1098,7 +498,7 @@ export async function createReservation(e) {
             sucursal_nombre: sucursal,
             fecha_inicio: inicio,
             fecha_fin: fin,
-            exclude_id: editingReservaId || undefined
+            exclude_id: getEditingReservaId() || undefined
         }
     });
     if (av.ok && av.data) {
@@ -1112,7 +512,7 @@ export async function createReservation(e) {
     }
 
     // DESCUENTO DE RESERVA DISPONIBLE: se refleja en el total (tachado + descuento + total final)
-    const totalOriginal = currentReservationTotals.original || 0;
+    const totalOriginal = getReservationTotals().original || 0;
 
     let discountValue = 0;
     let discountSucursal = '';
@@ -1199,12 +599,12 @@ export async function createReservation(e) {
     btn.disabled = true;
 
     const payload = { patente, fecha_inicio: inicio, fecha_fin: fin, sucursal_nombre: sucursal, tipo_estadia: tipo };
-    const result = editingReservaId ? 
-        await api.patch(`/user/reservations/${editingReservaId}`, payload) : 
+    const result = getEditingReservaId() ? 
+        await api.patch(`/user/reservations/${getEditingReservaId()}`, payload) : 
         await api.post('/user/reservations', payload);
 
     if (result.ok) {
-        showToast(editingReservaId ? '¡Reserva actualizada!' : '¡Reserva creada con éxito!', 'success');
+        showToast(getEditingReservaId() ? '¡Reserva actualizada!' : '¡Reserva creada con éxito!', 'success');
         resetReservaForm();
         toggleReservaForm();
         try {
@@ -1260,3 +660,22 @@ export async function repeatReservation(patente, sucursal, tipo) {
         showToast('¡Datos cargados! Seleccioná la nueva fecha.', 'info');
     }, 500);
 }
+
+export {
+    updateDisabledDatesInPicker,
+    updateHourlySlotsUI,
+    selectHourRange,
+    initHourlySlotDrag,
+    updatePeriodAvailabilityBadge
+} from './reservas-form-slot.js';
+
+export {
+    fetchRates,
+    updateReservationPrice
+} from './reservas-form-price.js';
+
+export {
+    getEditingReservaId,
+    setEditingReservaId,
+    getUserVehicles
+} from './reservas-form-state.js';

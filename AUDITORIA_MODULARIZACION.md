@@ -15,11 +15,11 @@
 | Frontend Bridge Pattern | Cumplido | 0 asignaciones `window.*` en módulos (76 migradas a puentes en v9.21.0); doble instancia de `notifications.js` [resuelta en v9.21.0] |
 | Repositorios | Parcial | Solo 2 repos, usados por 2 servicios; el acceso a datos sigue descentralizado |
 | Enums / Tipado | Parcial | Enums implementados, con strings mágicos residuales en 3 puntos |
-| Tamaño de clases/módulos | God modules | Backend saneado: `access_service.py` (607→499) + `access_occupancy.py` (80), `report_service.py` (581→639 tras helpers) evaluado y no descompuesto; pendientes megamódulos JS `tour.js` (1730), `dashboard-reservations.js` (1294), `reservas-form.js` (1262). `reservation_service.py` descompuesto [v9.21.0] |
+| Tamaño de clases/módulos | Parcial | Backend saneado: `access_service.py` (607→499) + `access_occupancy.py` (80), `report_service.py` (581→639 tras helpers) evaluado y no descompuesto; megamódulos JS partidos en submódulos temáticos [v9.22.0]: `tour.js` (1712→836 + `tour-steps.js` 897), `dashboard-reservations.js` (1291→fachada 31 + list 267 + form 1030), `reservas-form.js` (1262→fachada 681 + state 47 + price 159 + slot 494). `reservation_service.py` descompuesto [v9.21.0]. Siguen como candidatos (prioridad baja): `landing-map.js`, `admin-tour.js`, `notifications.js` |
 | Lógica inline en templates | Cumplido | Lógica de `reset_password.html` y `estadisticas_ocr.html` extraída a módulos [v9.22.0] |
 | Config / Hardcoding | Correcto | Configuración centralizada en `core/config.py` |
 
-**Puntaje de salud de modularización: 8.0 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes, +0.5 por extraer la lógica inline de `reset_password.html` y `estadisticas_ocr.html` a módulos en v9.22.0).
+**Puntaje de salud de modularización: 8.5 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes, +0.5 por extraer la lógica inline de `reset_password.html` y `estadisticas_ocr.html` a módulos en v9.22.0, +0.5 por partir los tres megamódulos JS en submódulos temáticos en v9.22.0).
 
 ---
 
@@ -188,14 +188,14 @@ Con versionado distinto (`?v=9.10.1` vs `?v=9.8.6`) el navegador creaba **dos in
 
 | Módulo | Líneas | Observación |
 |---|---|---|
-| `tour.js` | 1730 | Tours de cliente + helpers de onboarding mezclados |
-| `dashboard-reservations.js` | 1294 | Listado + filtros + alta + edición + badge + descuentos |
-| `reservas-form.js` | 1262 | Formulario + estimador + pickers + disponibilidad + descuentos |
+| `tour.js` | 836 (+ `tour-steps.js` 897) | Motor de tours separado de los pasos/datos de onboarding |
+| `dashboard-reservations.js` | 31 (fachada) + list 267 + form 1030 | Fachada re-exporta 20 nombres desde los submódulos admin |
+| `reservas-form.js` | 681 (fachada) + state 47 + price 159 + slot 494 | Formulario + estimador + pickers + disponibilidad + descuentos |
 | `landing-map.js` | 854 | Mapa + buscador + autocompletado + POIs |
 | `admin-tour.js` | 895 | Tours admin + centro de ayuda (FAQ/buscador) |
 | `notifications.js` | 745 | Centro de notificaciones + dropdown + badges + acciones |
 
-Son mantenibles pero se acercan al límite de responsabilidad única; conviene partir en submódulos (acción recomendada, prioridad baja/media).
+`tour.js`, `dashboard-reservations.js` y `reservas-form.js` quedaron bajo el límite de responsabilidad única (split v9.22.0): los tres son ahora fachadas/esqueletos que delegan en submódulos temáticos (`tour-steps.js`, `reservations-admin-list/form.js`, `reservas-form-state/price/slot.js`). La superficie exportada se mantuvo 100% compatible (grep de imports en `perfil.js`, `dashboard.js`, `reservas.js`, `vehicles.js`, `onboarding_helpers.js` sin cambios), `node --check` en verde para los 9 módulos tocados y **152 tests en verde**. Quedan candidatos de prioridad baja: `landing-map.js`, `admin-tour.js`, `notifications.js`.
 
 ### 3.6 ~~Cache-busting manual inconsistente~~ **[RESUELTO v9.21.0]**
 
@@ -233,7 +233,7 @@ Son mantenibles pero se acercan al límite de responsabilidad única; conviene p
 
 ### Prioridad 4 — Templates y megamódulos
 9. ~~Extraer la lógica de `reset_password.html` a un módulo (reutilizar validación de `auth.js`) y `estadisticas_ocr.html` a un módulo dedicado.~~ — **[HECHO]** en v9.22.0 (working tree): nuevos módulos `static/js/modules/reset_password.js` y `static/js/modules/estadisticas_ocr.js`; validación de clave reutilizada vía `evaluatePassword`/`initPasswordValidation` de `auth.js`; `estadisticas_ocr.html` con bridge inline de 5 líneas. `node --check` OK y 152 tests en verde. Ver §3.4.
-10. Partir `tour.js`, `dashboard-reservations.js` y `reservas-form.js` en submódulos temáticos.
+10. Partir `tour.js`, `dashboard-reservations.js` y `reservas-form.js` en submódulos temáticos. — **[HECHO]** en v9.22.0 (working tree): `tour.js` → motor (836) + `tour-steps.js` (897, arrays de pasos + helpers `ensure*`); `dashboard-reservations.js` → fachada (31) + `reservations-admin-list.js` (267) + `reservations-admin-form.js` (1030); `reservas-form.js` → fachada (681) + `reservas-form-state.js` (47) + `reservas-form-price.js` (159) + `reservas-form-slot.js` (494, con acceso a estado vía getters/setters). Superficie exportada idéntica (grep de imports en `perfil.js`, `dashboard.js`, `reservas.js`, `vehicles.js`, `onboarding_helpers.js` sin cambios); `sw.js` con la precache actualizada; `node --check` OK y 152 tests en verde. Ver §3.5.
 
 ---
 
