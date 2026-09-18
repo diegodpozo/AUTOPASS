@@ -7,6 +7,19 @@ import { switchModal, openModal } from './ui.js';
  * LOGICA DE INICIO DE SESION, REGISTRO Y VALIDACION DE SEGURIDAD.
  */
 
+/**
+ * EVALUA LOS REQUISITOS DE SEGURIDAD DE UNA CONTRASEÑA (REUTILIZADO POR
+ * initPasswordValidation, reset_password Y EL FLUJO DE REGISTRO).
+ */
+export function evaluatePassword(value, confirmValue) {
+    const val = value || '';
+    const isLen = val.length >= 8;
+    const isUp = /[A-Z]/.test(val);
+    const isSpec = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+    const isMatch = val.length > 0 && val === (confirmValue || '');
+    return { isLen, isUp, isSpec, isMatch, valid: isLen && isUp && isSpec && isMatch };
+}
+
 export function initPasswordValidation(passId, confirmId, strengthId, reqLenId, reqUpId, reqSpecId, reqMatchId) {
     const regPass = document.getElementById(passId);
     const regPassConfirm = document.getElementById(confirmId);
@@ -18,15 +31,9 @@ export function initPasswordValidation(passId, confirmId, strengthId, reqLenId, 
 
     if (regPass) {
         const validatePass = () => {
-            const val = regPass.value;
-            const confirmVal = regPassConfirm ? regPassConfirm.value : "";
-            
             if (strengthMeter) strengthMeter.className = 'strength-meter';
-            
-            const isLen = val.length >= 8;
-            const isUp = /[A-Z]/.test(val);
-            const isSpec = /[!@#$%^&*(),.?":{}|<>]/.test(val);
-            const isMatch = val.length > 0 && val === confirmVal;
+
+            const r = evaluatePassword(regPass.value, regPassConfirm ? regPassConfirm.value : '');
 
             const updateReq = (el, condition) => {
                 if (!el) return;
@@ -40,14 +47,14 @@ export function initPasswordValidation(passId, confirmId, strengthId, reqLenId, 
                 }
             };
             
-            updateReq(reqLen, isLen); 
-            updateReq(reqUp, isUp); 
-            updateReq(reqSpec, isSpec); 
-            updateReq(reqMatch, isMatch);
+            updateReq(reqLen, r.isLen); 
+            updateReq(reqUp, r.isUp); 
+            updateReq(reqSpec, r.isSpec); 
+            updateReq(reqMatch, r.isMatch);
             
             if (strengthMeter) {
-                if (val.length === 0) return;
-                let strength = (isLen ? 1 : 0) + (isUp ? 1 : 0) + (isSpec ? 1 : 0);
+                if (regPass.value.length === 0) return;
+                let strength = (r.isLen ? 1 : 0) + (r.isUp ? 1 : 0) + (r.isSpec ? 1 : 0);
                 if (strength === 1) strengthMeter.classList.add('strength-weak');
                 if (strength === 2) strengthMeter.classList.add('strength-medium');
                 if (strength === 3) strengthMeter.classList.add('strength-strong');
@@ -146,8 +153,7 @@ export async function handleRegister(e) {
         return;
     }
     
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
-    if (!passwordRegex.test(password)) {
+    if (!evaluatePassword(password, passwordConfirm).valid) {
         errorMsg.innerText = 'La contraseña no cumple con los requisitos de seguridad';
         errorMsg.style.display = 'block';
         return;

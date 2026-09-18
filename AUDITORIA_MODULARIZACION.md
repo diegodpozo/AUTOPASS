@@ -15,11 +15,11 @@
 | Frontend Bridge Pattern | Cumplido | 0 asignaciones `window.*` en módulos (76 migradas a puentes en v9.21.0); doble instancia de `notifications.js` [resuelta en v9.21.0] |
 | Repositorios | Parcial | Solo 2 repos, usados por 2 servicios; el acceso a datos sigue descentralizado |
 | Enums / Tipado | Parcial | Enums implementados, con strings mágicos residuales en 3 puntos |
-| Tamaño de clases/módulos | God modules | `tour.js` (1730), `access_service.py` (607), `report_service.py` (581), etc. `reservation_service.py` descompuesto [v9.21.0] |
-| Lógica inline en templates | Desviado | `reset_password.html` y `estadisticas_ocr.html` con lógica embebida |
+| Tamaño de clases/módulos | God modules | Backend saneado: `access_service.py` (607→499) + `access_occupancy.py` (80), `report_service.py` (581→639 tras helpers) evaluado y no descompuesto; pendientes megamódulos JS `tour.js` (1730), `dashboard-reservations.js` (1294), `reservas-form.js` (1262). `reservation_service.py` descompuesto [v9.21.0] |
+| Lógica inline en templates | Cumplido | Lógica de `reset_password.html` y `estadisticas_ocr.html` extraída a módulos [v9.22.0] |
 | Config / Hardcoding | Correcto | Configuración centralizada en `core/config.py` |
 
-**Puntaje de salud de modularización: 7.5 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes).
+**Puntaje de salud de modularización: 8.0 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes, +0.5 por extraer la lógica inline de `reset_password.html` y `estadisticas_ocr.html` a módulos en v9.22.0).
 
 ---
 
@@ -74,12 +74,14 @@ main.py
 | Servicio | Líneas | Riesgo |
 |---|---|---|
 | `services/reservation_service.py` | 687 (fachada; era 1451) | Disponibilidad extraída a `availability.py` (382) y pagos a `payments.py` (422) — ver §2.3
-| `services/access_service.py` | 607 | Entrada/salida, reservas, notificaciones, hardware |
-| `services/report_service.py` | 581 | Resúmenes, historial, reembolsos, auditoría |
+| `services/access_service.py` | 499 (era 607) | Entrada/salida ALPR/QR/manuales; ocupación extraída a `access_occupancy.py` (80) — ver §2.3 |
+| `services/report_service.py` | 639 (era 581) | Evaluado: cohesivo (una query analítica por método), no se descompone en módulos — ver §2.3 |
 
 **Sugerencia:** en `reservation_service.py` extraer `availability.py` (sweep-line y fechas/horas deshabilitadas) y `payments.py` (pago manual/MP/reembolsos), manteniendo el resto como fachada.
 
 **Resolución (v9.21.0, working tree):** aplicado. `reservation_service.py` quedó como **fachada de 687 líneas** (`class ReservationService(ReservationPaymentsMixin)`): extraídos `services/availability.py` (382 líneas: capacidad por tipo, `verificar_disponibilidad`, fechas/horas deshabilitadas, sweep-line, aforo no-op) y `services/payments.py` (422 líneas: `ReservationPaymentsMixin` con `get_available_redemption_discounts`, `pay_reservation_manual`, `redemption_sucursal_clause`, `validate_redemption_ticket`, `pay_reservation`, `pay_reservation_mp`, `simulate_refund`, `cancel_reservation`). La fachada re-exporta `verificar_disponibilidad`/`obtener_fechas_deshabilitadas`/`obtener_horas_deshabilitadas_con_reservas` etc. (los tests y `routes/user/reservations.py` siguen importando desde `services.reservation_service`). Todos los `onclick` de llamadas externas resuelven por herencia MRO (`ReservationService.pay_reservation_manual`, `.simulate_refund`, `.validate_redemption_ticket`, `.redemption_sucursal_clause`). **152 tests en verde y `py_compile` OK.** El dominio "ciclo de vida" (cleanups, finalización, `get_en_predio_ids`, listados y CRUD user/admin) quedó como núcleo del facade hasta una descomposición futura si hace falta.
+
+**Evaluación/sección descompuesta posterior (working tree, item 8):** `access_service.py` quedó como **fachada de 499 líneas** (`class AccessService(AccessOccupancyMixin)`): extraído `services/access_occupancy.py` (80 líneas: normalización de tipo, `_inc/_dec_reserva_occ`, `_asignar_plaza`/`_liberar_plaza` y `_capacidad_por_tipo`, que reemplazan los bloques duplicados de incremento/decremento de ocupación que aparecían **7 veces** en los flujos ALPR/QR/manuales). Además se deduplicaron 3 bloques repetidos (resolución de sucursal por `gate_id`, detección de "ingreso sin salida posterior", get-or-create de aforo) y el acceso a datos pasó de 13 consultas directas en el dominio a **solo 2** (último registro de QR por `patente_detectada` y owner de `cancel_stay`; semántica distinta a los repos existentes), usando `AccessRepository`, `BranchRepository`, `ReservationRepository` y `VehicleRepository`. **`report_service.py` se evaluó y NO se descompone en módulos**: es dimensionalmente cohesivo (cada método es una query analítica read-only distinta; `get_financial_summary` es un único pipeline con estado local compartido). Se aplicó solo la extracción del helper de módulo `_branch_filter` (retira el filtro de aislamiento por sucursal duplicado en **13 sitios**). **152 tests en verde y `py_compile` OK.**
 
 ### 2.4 Repositorios subutilizados
 
@@ -87,6 +89,7 @@ main.py
 - **6 servicios** los importan; ninguna ruta los usa; el acceso a datos sigue mayormente en las rutas (ver 2.2).
 - La capa `repositories/` debería ser la única puerta de acceso a datos; hoy es un "casi esquema".
 - **[PARCIAL v9.21.0]** El dominio de **reservas** quedó con acceso a datos 100% en repositorios: `ReservationRepository` (overlap, vencidas, expiradas, filtrado admin, stats), `VehicleRepository`, `UserRepository.get_active_by_id`, `AccessRepository`, `RedemptionRepository` y `BranchRepository`. `availability.py`, `payments.py` y el fachada tienen **0 `db.query(models.*)`**. Pendiente: otros servicios (`user_service`, `branch_service`, `access_service`, etc.) aún consultan datos directamente.
+- **[working tree]** El dominio de **accesos** también quedó con acceso a datos en repositorios: `access_service.py` baja de 13 consultas directas a **2** (todas a `AccessRepository`/`BranchRepository`/`ReservationRepository`/`VehicleRepository`); solo quedan el último registro QR por `patente_detectada` y el owner de `cancel_stay`, por semántica distinta a los repos existentes.
 
 ### 2.5 Strings mágicos vs Enums — **[RESUELTO v9.21.0]**
 
@@ -175,9 +178,11 @@ Con versionado distinto (`?v=9.10.1` vs `?v=9.8.6`) el navegador creaba **dos in
 
 - **`static/js/main.js`**: 84 líneas con lógica real (`updateAuthNav`, restauración de sidebar, manejo bfcache/pageshow y tecla Escape). El propio archivo lo admite con `// MANTENER AQUI POR AHORA O MOVER UN UI.JS`.
 - **`static/js/dashboard.js`**: `switchMonitorTab` implementa lógica inline, y el bloque `DOMContentLoaded` decide tab inicial por rol (lógica de RBAC en el puente). Un dispatcher/puente no debería decidir permisos.
-- **`templates/reset_password.html`**: ~95 líneas de validación de contraseña en un `<script type="module">` (líneas 112-207, de 207 totales; deberían estar en un módulo reutilizando `auth.js`).
-- **`templates/estadisticas_ocr.html`**: ~269 líneas de script inline (líneas 527-796 de 797 totales) con lógica de la página — una reducción respecto a versiones previas pero sigue sin ser un módulo externo.
+- ~~**`templates/reset_password.html`**: ~95 líneas de validación de contraseña en un `<script type="module">` (líneas 112-207, de 207 totales; deberían estar en un módulo reutilizando `auth.js`).~~
+- ~~**`templates/estadisticas_ocr.html`**: ~269 líneas de script inline (líneas 527-796 de 797 totales) con lógica de la página — una reducción respecto a versiones previas pero sigue sin ser un módulo externo.~~
 - **`templates/monitoreo_live.html`**: bridge inline de 16 líneas (aceptable, cumple el patrón de forma liviana).
+
+**Resolución (v9.22.0):** `reset_password.html` pasó a cargar `static/js/modules/reset_password.js` (reutiliza `auth.evaluatePassword`/`initPasswordValidation` y `api.js`; se eliminó la reasignación redundante de `window.togglePasswordVisibility`, ya global vía `main.js`, y el `fetch` directo a `/v1`). `estadisticas_ocr.html` extrajo su lógica a `static/js/modules/estadisticas_ocr.js` (módulo sin `window.*`), con un bridge inline de 5 líneas en el template que expone `window.actualizarEstadisticasOcr`/`window.filtrarTablaOcr` (exigidos por los handlers inline) e inicia el dashboard vía `initEstadisticasOcr()`, siguiendo el precedente aceptado de `monitoreo_live.html`. `node --check` OK y **152 tests en verde**.
 
 ### 3.5 Megamódulos frontend
 
@@ -224,10 +229,10 @@ Son mantenibles pero se acercan al límite de responsabilidad única; conviene p
 
 ### Prioridad 3 — Enums y god services
 7. ~~Reemplazar los strings mágicos de 2.5 por los `AccessEventType`, `UserRole` y `ReservationStatus`.~~ — **[HECHO]** en v9.21.0: los strings de la tabla 2.5 ya estaban corregidos; se completó el barrido de los restantes en 14 archivos (`routes/parking/status.py`, `routes/admin/settings.py` y `promotions.py`, `routes/system/cameras.py`, `health.py`, `video.py`, `common.py`, `routes/user/balance.py`, `services/reservation_service.py` (8 estados + 7 roles), `support_service.py` (incluye `in_([UserRole.ADMIN, UserRole.LOCAL_ADMIN])`), `branch_service.py` (`UserRole.LOCAL_ADMIN`), `billing_service.py`, `occupancy_service.py`, `report_service.py` y `oauth_service.py`). **152 tests en verde.** Quedan intencionalmente sin enum: naming de `gate_id`/`GATE_TYPE` de ALPR (cameras/access/hardware, acoplamiento documentado), claves de diccionario de `report_service` (pares almacenados) y el `estado` de `SupportTicket` (no existe enum de tickets).
-8. ~~Descomponer `reservation_service.py` en `availability.py` + `payments.py` (fachada) y evaluar lo mismo para `access_service.py` y `report_service.py`.~~ — **[HECHO]** en v9.21.0 (working tree): fachada de 687 líneas + `availability.py` (382) + `payments.py` (422) vía mixin; 152 tests en verde. Pendiente de evaluación: `access_service.py` (607) y `report_service.py` (581).
+8. ~~Descomponer `reservation_service.py` en `availability.py` + `payments.py` (fachada) y evaluar lo mismo para `access_service.py` y `report_service.py`.~~ — **[HECHO]** en v9.21.0 (working tree): fachada de 687 líneas + `availability.py` (382) + `payments.py` (422) vía mixin; 152 tests en verde. Incluye la evaluación pendiente: `access_service.py` (607) y `report_service.py` (581) resueltos en working tree — `access_service.py` descompuesto con `AccessOccupancyMixin` en `access_occupancy.py` (fachada 499 líneas, 2 queries directas), `report_service.py` evaluado como cohesivo (no se descompone; se extrajo el helper `_branch_filter`). Ver §2.3.
 
 ### Prioridad 4 — Templates y megamódulos
-9. Extraer la lógica de `reset_password.html` a un módulo (reutilizar validación de `auth.js`) y `estadisticas_ocr.html` a un módulo dedicado.
+9. ~~Extraer la lógica de `reset_password.html` a un módulo (reutilizar validación de `auth.js`) y `estadisticas_ocr.html` a un módulo dedicado.~~ — **[HECHO]** en v9.22.0 (working tree): nuevos módulos `static/js/modules/reset_password.js` y `static/js/modules/estadisticas_ocr.js`; validación de clave reutilizada vía `evaluatePassword`/`initPasswordValidation` de `auth.js`; `estadisticas_ocr.html` con bridge inline de 5 líneas. `node --check` OK y 152 tests en verde. Ver §3.4.
 10. Partir `tour.js`, `dashboard-reservations.js` y `reservas-form.js` en submódulos temáticos.
 
 ---

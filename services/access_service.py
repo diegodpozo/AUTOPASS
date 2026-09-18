@@ -3,13 +3,13 @@ import json
 import base64
 import os
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from fastapi import Request, HTTPException
 import models
 import schemas
 from core.config import settings
 from core.logger import get_logger
 from models.enums import VehicleType, AccessEventType, ReservationStatus, PaymentStatus
+from services.access_occupancy import AccessOccupancyMixin
 from services.notification_service import NotificationService
 from services.time_service import TimeService
 from core.normalize import normalize_name, normalize_plate
@@ -20,7 +20,9 @@ from repositories.vehicle_repository import VehicleRepository
 
 logger = get_logger("AccessService")
 
-class AccessService:
+class AccessService(AccessOccupancyMixin):
+    """Flujos de acceso físico: entrada/salida ALPR, QR de reservas y operaciones manuales."""
+
     @staticmethod
     def _save_image(plate: str, image_base64: str) -> str:
         if not image_base64:
@@ -41,32 +43,44 @@ class AccessService:
             request.app.mqtt_client.publish(topic, json.dumps(payload))
 
     @staticmethod
-    def _inc_reserva_occ(target_obj, tipo_vehiculo):
-        tipo_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, 'value') else str(tipo_vehiculo or "Auto")
-        tipo_lower = tipo_str.lower()
-        target_obj.ocupacion_reservas = (getattr(target_obj, 'ocupacion_reservas', 0) or 0) + 1
-        if "moto" in tipo_lower:
-            target_obj.ocupacion_reservas_motos = (getattr(target_obj, 'ocupacion_reservas_motos', 0) or 0) + 1
-        elif "camioneta" in tipo_lower:
-            target_obj.ocupacion_reservas_camionetas = (getattr(target_obj, 'ocupacion_reservas_camionetas', 0) or 0) + 1
-        else:
-            target_obj.ocupacion_reservas_autos = (getattr(target_obj, 'ocupacion_reservas_autos', 0) or 0) + 1
+    def _branch_from_gate_id(db: Session, gate_id: str) -> str:
+        """Resuelve la sucursal completa a partir del prefijo del gate_id (ALPR)."""
+        if gate_id and '_' in gate_id:
+            suc_short = normalize_name(gate_id.split('_')[0])
+            try:
+                for b in BranchRepository.get_all(db):
+                    if normalize_name(b.nombre) == suc_short:
+                        return b.nombre
+            except Exception:
+                pass
+        return None
 
     @staticmethod
-    def _dec_reserva_occ(target_obj, tipo_vehiculo):
-        tipo_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, 'value') else str(tipo_vehiculo or "Auto")
-        tipo_lower = tipo_str.lower()
-        if (getattr(target_obj, 'ocupacion_reservas', 0) or 0) > 0:
-            target_obj.ocupacion_reservas -= 1
-        if "moto" in tipo_lower:
-            if (getattr(target_obj, 'ocupacion_reservas_motos', 0) or 0) > 0:
-                target_obj.ocupacion_reservas_motos -= 1
-        elif "camioneta" in tipo_lower:
-            if (getattr(target_obj, 'ocupacion_reservas_camionetas', 0) or 0) > 0:
-                target_obj.ocupacion_reservas_camionetas -= 1
-        else:
-            if (getattr(target_obj, 'ocupacion_reservas_autos', 0) or 0) > 0:
-                target_obj.ocupacion_reservas_autos -= 1
+    def _unclosed_last_entry(db: Session, p: str, sucursal: str):
+        """Último ingreso físico de la patente que no tiene salida posterior (sigue dentro)."""
+        ultima_entrada = AccessRepository.get_last_entry(db, p, sucursal)
+        if ultima_entrada:
+            tiene_salida = AccessRepository.get_exit_after(db, ultima_entrada.patente_detectada, ultima_entrada.id, sucursal)
+            if not tiene_salida:
+                return ultima_entrada
+        return None
+
+    @staticmethod
+    def _get_aforo(db: Session, sucursal: str):
+        return BranchRepository.get_aforo_by_sucursal(db, sucursal)
+
+    @staticmethod
+    def _get_or_create_aforo(db: Session, sucursal: str):
+        aforo = AccessService._get_aforo(db, sucursal)
+        if not aforo:
+            aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
+            db.add(aforo)
+        return aforo
+
+    @staticmethod
+    def _suc_key(sucursal: str) -> str:
+        """Clave normalizada de sucursal para notificaciones (GLOBAL si es None)."""
+        return normalize_name(sucursal) if sucursal else "GLOBAL"
 
     @classmethod
     def validate_plate(cls, db: Session, data: schemas.PlateValidation, request: Request = None) -> dict:
@@ -77,40 +91,15 @@ class AccessService:
         except Exception:
             pass
         p = normalize_plate(data.plate)
-        # Normalizar sucursal a partir de gate_id: intentar mapear a nombre completo en parking_branches
-        sucursal = None
-        if data.gate_id and '_' in data.gate_id:
-            suc_short = normalize_name(data.gate_id.split('_')[0])
-            try:
-                branches = db.query(models.ParkingBranch).all()
-                for b in branches:
-                    if normalize_name(b.nombre) == suc_short:
-                        sucursal = b.nombre
-                        break
-            except Exception:
-                pass
+        sucursal = cls._branch_from_gate_id(db, data.gate_id)
         
-        ultima_entrada = db.query(models.AccessLog).filter(
-            models.AccessLog.normalized_patente == p,
-            models.AccessLog.tipo_evento == AccessEventType.ENTRADA,
-            models.AccessLog.sucursal == sucursal
-        ).order_by(models.AccessLog.id.desc()).first()
-        
+        ultima_entrada = cls._unclosed_last_entry(db, p, sucursal)
         if ultima_entrada:
-            tiene_salida = db.query(models.AccessLog.id).filter(
-                models.AccessLog.patente_detectada == ultima_entrada.patente_detectada,
-                models.AccessLog.tipo_evento == AccessEventType.SALIDA,
-                models.AccessLog.id > ultima_entrada.id,
-                models.AccessLog.sucursal == sucursal
-            ).first()
-            if not tiene_salida:
-                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, "Vehículo ya dentro de esta sede", "error")
-                return {"status": "denied", "message": "El vehículo ya figura dentro de esta sede"}
+            NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, "Vehículo ya dentro de esta sede", "error")
+            return {"status": "denied", "message": "El vehículo ya figura dentro de esta sede"}
         
         # DETERMINAR TIPO DE VEHICULO (normalizando espacios en ambos lados)
-        vehiculo = db.query(models.Vehicle).filter(
-            func.replace(func.upper(models.Vehicle.patente), ' ', '') == p
-        ).first()
+        vehiculo = VehicleRepository.get_by_normalized_patente(db, p)
         tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
         now = TimeService.now()
@@ -118,44 +107,21 @@ class AccessService:
                 
         # BUSCAMOS RESERVA VIGENTE (PAGADA O IMPAGA) QUE ESTE EN EL RANGO DE TIEMPO ACTUAL
         now_str = now.strftime("%Y-%m-%d %H:%M")
-        reserva = db.query(models.Reservation).filter(
-            func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
-            models.Reservation.fecha_inicio <= now_str,
-            models.Reservation.fecha_fin >= now_str
-        ).filter(
-            (models.Reservation.sucursal_nombre == sucursal) | (models.Reservation.sucursal_nombre == None)
-        ).first()
+        reserva = ReservationRepository.get_active_in_range_by_normalized_patente(db, p, now_str, sucursal)
         
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
-        if not aforo:
-            aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
-            db.add(aforo)
+        aforo = cls._get_or_create_aforo(db, sucursal)
         
         # VALIDAR CAPACIDAD SEGUN TIPO
-        if tipo_vehiculo == VehicleType.AUTO:
-            capacidad = aforo.capacidad_total
-            ocupacion = aforo.ocupacion_actual
-        elif tipo_vehiculo == VehicleType.CAMIONETA:
-            capacidad = getattr(aforo, 'capacidad_camionetas', 5)
-            ocupacion = getattr(aforo, 'ocupacion_camionetas', 0)
-        else:
-            capacidad = aforo.capacidad_motos
-            ocupacion = aforo.ocupacion_motos
+        capacidad, ocupacion = cls._capacidad_por_tipo(aforo, tipo_vehiculo)
 
         if reserva:
             if reserva.estado_reserva == ReservationStatus.PENDIENTE: 
                 reserva.estado_reserva = ReservationStatus.ACTIVA
-            cls._inc_reserva_occ(aforo, tipo_vehiculo)
+            cls._asignar_plaza(aforo, tipo_vehiculo, es_reserva=True)
         elif ocupacion < capacidad:
-            if tipo_vehiculo == VehicleType.AUTO:
-                aforo.ocupacion_actual += 1
-            elif tipo_vehiculo == VehicleType.CAMIONETA:
-                aforo.ocupacion_camionetas += 1
-            else:
-                aforo.ocupacion_motos += 1
+            cls._asignar_plaza(aforo, tipo_vehiculo, es_reserva=False)
         else:
-            NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, "Capacidad máxima alcanzada", "error")
+            NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, "Capacidad máxima alcanzada", "error")
             return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
             
         db.add(models.AccessLog(
@@ -172,7 +138,7 @@ class AccessService:
         ))
         db.commit()
         logger.info(f"Notificando cambio de aforo para sucursal={sucursal}")
-        NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "INGRESO", p, f"Bienvenido {p}", "ok")
+        NotificationService.set_last_event(cls._suc_key(sucursal), "INGRESO", p, f"Bienvenido {p}", "ok")
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
         from services.hardware_service import HardwareService
@@ -183,25 +149,12 @@ class AccessService:
     @classmethod
     def exit_plate(cls, db: Session, data: schemas.PlateValidation, request: Request = None) -> dict:
         p = normalize_plate(data.plate)
-        sucursal = None
-        if data.gate_id and '_' in data.gate_id:
-            suc_short = normalize_name(data.gate_id.split('_')[0])
-            try:
-                branches = db.query(models.ParkingBranch).all()
-                for b in branches:
-                    if normalize_name(b.nombre) == suc_short:
-                        sucursal = b.nombre
-                        break
-            except Exception:
-                pass
+        sucursal = cls._branch_from_gate_id(db, data.gate_id)
 
-        ultimo = db.query(models.AccessLog).filter(
-            models.AccessLog.normalized_patente == p,
-            models.AccessLog.sucursal == sucursal
-        ).order_by(models.AccessLog.id.desc()).first()
+        ultimo = AccessRepository.get_last_by_patente_and_sucursal(db, p, sucursal)
         
         if not ultimo or ultimo.tipo_evento != AccessEventType.ENTRADA: 
-            NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, "Sin registro de ingreso", "error")
+            NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, "Sin registro de ingreso", "error")
             return {"status": "error", "message": "El vehículo no tiene registro de ingreso en esta sede"}
         
         if not (ultimo.pago_confirmado or (ultimo.reservation and ultimo.reservation.estado_pago == PaymentStatus.PAGADO)):
@@ -209,19 +162,13 @@ class AccessService:
             entrada_dt = datetime.datetime.fromisoformat(fecha_str)
             minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
             if minutos_transcurridos > 10:
-                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", p, f"Deuda pendiente ({int(minutos_transcurridos)} min)", "error")
+                NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, f"Deuda pendiente ({int(minutos_transcurridos)} min)", "error")
                 return {"status": "denied", "message": f"Deuda pendiente de pago en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min"}
             
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+        aforo = cls._get_aforo(db, sucursal)
         if aforo:
-            if ultimo.reserva_id or (ultimo.reservation and ultimo.reservation.estado_pago == PaymentStatus.PAGADO):
-                cls._dec_reserva_occ(aforo, ultimo.tipo_vehiculo)
-            elif ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
-                aforo.ocupacion_actual -= 1
-            elif ultimo.tipo_vehiculo == VehicleType.CAMIONETA and getattr(aforo, 'ocupacion_camionetas', 0) > 0:
-                aforo.ocupacion_camionetas -= 1
-            elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
-                aforo.ocupacion_motos -= 1
+            es_reserva = bool(ultimo.reserva_id or (ultimo.reservation and ultimo.reservation.estado_pago == PaymentStatus.PAGADO))
+            cls._liberar_plaza(aforo, ultimo.tipo_vehiculo, es_reserva)
             
             now = TimeService.now()
         db.add(models.AccessLog(
@@ -235,7 +182,7 @@ class AccessService:
             ocr_time=data.ocr_time
         ))
         db.commit()
-        NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "SALIDA", p, f"Hasta luego {p}", "ok")
+        NotificationService.set_last_event(cls._suc_key(sucursal), "SALIDA", p, f"Hasta luego {p}", "ok")
         NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
         
         from services.hardware_service import HardwareService
@@ -258,7 +205,7 @@ class AccessService:
                 sucursal = suc_short
             if sucursal:
                 try:
-                    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal}%")).first()
+                    branch = BranchRepository.get_by_name_like(db, sucursal)
                     if branch:
                         sucursal = branch.nombre
                 except Exception:
@@ -270,7 +217,7 @@ class AccessService:
             reserva_id = int(parts[1].split(':')[1])
             patente_qr = normalize_plate(parts[2].split(':')[1])
             
-            reserva = db.query(models.Reservation).filter(models.Reservation.id == reserva_id).first()
+            reserva = ReservationRepository.get_by_id(db, reserva_id)
             if not reserva:
                 return {"status": "error", "message": "Reserva no encontrada"}
             
@@ -282,9 +229,7 @@ class AccessService:
 
             pagada = reserva.estado_pago == PaymentStatus.PAGADO
 
-            vehiculo = db.query(models.Vehicle).filter(
-                func.replace(func.upper(models.Vehicle.patente), ' ', '') == patente_qr
-            ).first()
+            vehiculo = VehicleRepository.get_by_normalized_patente(db, patente_qr)
             tipo_vehiculo = vehiculo.tipo if vehiculo else VehicleType.AUTO
 
             now = TimeService.now()
@@ -307,20 +252,9 @@ class AccessService:
                 if reserva.fecha_inicio > now_str or reserva.fecha_fin < now_str:
                     return {"status": "denied", "message": "La reserva no está vigente en este horario"}
 
-                aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
-                if not aforo:
-                    aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
-                    db.add(aforo)
+                aforo = cls._get_or_create_aforo(db, sucursal)
                 
-                if tipo_vehiculo == VehicleType.AUTO:
-                    capacidad = aforo.capacidad_total
-                    ocupacion = aforo.ocupacion_actual
-                elif tipo_vehiculo == VehicleType.CAMIONETA:
-                    capacidad = getattr(aforo, 'capacidad_camionetas', 5)
-                    ocupacion = getattr(aforo, 'ocupacion_camionetas', 0)
-                else:
-                    capacidad = aforo.capacidad_motos
-                    ocupacion = aforo.ocupacion_motos
+                capacidad, ocupacion = cls._capacidad_por_tipo(aforo, tipo_vehiculo)
                     
                 if not reserva and ocupacion >= capacidad:
                     return {"status": "denied", "message": "Capacidad máxima alcanzada en esta sede"}
@@ -328,14 +262,9 @@ class AccessService:
                 if reserva:
                     if reserva.estado_reserva == ReservationStatus.PENDIENTE:
                         reserva.estado_reserva = ReservationStatus.ACTIVA
-                    cls._inc_reserva_occ(aforo, tipo_vehiculo)
+                    cls._asignar_plaza(aforo, tipo_vehiculo, es_reserva=True)
                 else:
-                    if tipo_vehiculo == VehicleType.AUTO:
-                        aforo.ocupacion_actual += 1
-                    elif tipo_vehiculo == VehicleType.CAMIONETA:
-                        aforo.ocupacion_camionetas += 1
-                    else:
-                        aforo.ocupacion_motos += 1
+                    cls._asignar_plaza(aforo, tipo_vehiculo, es_reserva=False)
 
                 db.add(models.AccessLog(
                     patente_detectada=normalize_plate(reserva.patente), 
@@ -349,7 +278,7 @@ class AccessService:
                 ))
                 db.commit()
                 logger.info(f"Notificando cambio de aforo (QR) para sucursal={sucursal}")
-                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "INGRESO", reserva.patente, f"QR - Bienvenido {reserva.patente}", "ok")
+                NotificationService.set_last_event(cls._suc_key(sucursal), "INGRESO", reserva.patente, f"QR - Bienvenido {reserva.patente}", "ok")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 from services.hardware_service import HardwareService
@@ -365,19 +294,13 @@ class AccessService:
                     entrada_dt = datetime.datetime.fromisoformat(fecha_str)
                     minutos_transcurridos = (now - entrada_dt).total_seconds() / 60
                     if minutos_transcurridos > 10:
-                        NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "error", patente_qr, f"Deuda pendiente de reserva impaga ({int(minutos_transcurridos)} min)", "error")
+                        NotificationService.set_last_event(cls._suc_key(sucursal), "error", patente_qr, f"Deuda pendiente de reserva impaga ({int(minutos_transcurridos)} min)", "error")
                         return {"status": "denied", "message": f"Deuda pendiente de pago en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min"}
 
-                aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+                aforo = cls._get_aforo(db, sucursal)
                 if aforo:
-                    if ultimo.reserva_id or getattr(reserva, 'id', None):
-                        cls._dec_reserva_occ(aforo, ultimo.tipo_vehiculo)
-                    elif ultimo.tipo_vehiculo == VehicleType.AUTO and aforo.ocupacion_actual > 0:
-                        aforo.ocupacion_actual -= 1
-                    elif ultimo.tipo_vehiculo == VehicleType.CAMIONETA and getattr(aforo, 'ocupacion_camionetas', 0) > 0:
-                        aforo.ocupacion_camionetas -= 1
-                    elif ultimo.tipo_vehiculo == VehicleType.MOTO and aforo.ocupacion_motos > 0:
-                        aforo.ocupacion_motos -= 1
+                    es_reserva = bool(ultimo.reserva_id or getattr(reserva, 'id', None))
+                    cls._liberar_plaza(aforo, ultimo.tipo_vehiculo, es_reserva)
                 
                 db.add(models.AccessLog(
                     patente_detectada=normalize_plate(reserva.patente), 
@@ -391,7 +314,7 @@ class AccessService:
                 ))
                 db.commit()
                 logger.info(f"Notificando cambio de aforo (QR SALIDA) para sucursal={sucursal}")
-                NotificationService.set_last_event(normalize_name(sucursal) if sucursal else "GLOBAL", "SALIDA", reserva.patente, f"QR - Hasta luego {reserva.patente}", "ok")
+                NotificationService.set_last_event(cls._suc_key(sucursal), "SALIDA", reserva.patente, f"QR - Hasta luego {reserva.patente}", "ok")
                 NotificationService.notify_occupancy_change(db, normalize_name(sucursal))
                 
                 from services.hardware_service import HardwareService
@@ -409,59 +332,23 @@ class AccessService:
         now = TimeService.now()
         
         # Buscar la última ENTRADA y verificar si el vehículo sigue adentro
-        ultima_entrada = db.query(models.AccessLog).filter(
-            models.AccessLog.normalized_patente == p,
-            models.AccessLog.tipo_evento == AccessEventType.ENTRADA,
-            models.AccessLog.sucursal == sucursal
-        ).order_by(models.AccessLog.id.desc()).first()
-        
+        ultima_entrada = cls._unclosed_last_entry(db, p, sucursal)
         if ultima_entrada:
-            tiene_salida = db.query(models.AccessLog.id).filter(
-                models.AccessLog.patente_detectada == ultima_entrada.patente_detectada,
-                models.AccessLog.tipo_evento == AccessEventType.SALIDA,
-                models.AccessLog.id > ultima_entrada.id,
-                models.AccessLog.sucursal == sucursal
-            ).first()
-            if not tiene_salida:
-                return {"status": "ok", "message": "El vehículo ya figura como ingresado en esta sede; se reutilizó el registro", "access_log_id": ultima_entrada.id}
+            return {"status": "ok", "message": "El vehículo ya figura como ingresado en esta sede; se reutilizó el registro", "access_log_id": ultima_entrada.id}
         
         # Buscar reserva vigente (pagada o impaga)
         now_str = now.strftime("%Y-%m-%d %H:%M")
-        reserva = db.query(models.Reservation).filter(
-            func.replace(func.upper(models.Reservation.patente), ' ', '') == p,
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
-            models.Reservation.fecha_inicio <= now_str,
-            models.Reservation.fecha_fin >= now_str
-        ).filter((models.Reservation.sucursal_nombre == sucursal) | (models.Reservation.sucursal_nombre == None)).first()
+        reserva = ReservationRepository.get_active_in_range_by_normalized_patente(db, p, now_str, sucursal)
 
         floor = None
         if floor_id:
-            floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
+            floor = BranchRepository.get_floor_by_id(db, floor_id)
             if not floor:
                 raise HTTPException(status_code=404, detail="Piso no encontrado")
-            
-            if reserva:
-                cls._inc_reserva_occ(floor, tipo_vehiculo)
-            elif tipo_vehiculo == "Auto":
-                floor.ocupacion_actual = (floor.ocupacion_actual or 0) + 1
-            elif tipo_vehiculo == "Camioneta":
-                floor.ocupacion_camionetas = (floor.ocupacion_camionetas or 0) + 1
-            else:
-                floor.ocupacion_motos = (floor.ocupacion_motos or 0) + 1
+            cls._asignar_plaza(floor, tipo_vehiculo, bool(reserva))
         else:
-            aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
-            if not aforo:
-                aforo = models.ParkingAforo(sucursal=sucursal, capacidad_total=20, ocupacion_actual=0, capacidad_motos=10, ocupacion_motos=0)
-                db.add(aforo)
-            
-            if reserva:
-                cls._inc_reserva_occ(aforo, tipo_vehiculo)
-            elif tipo_vehiculo == "Auto":
-                aforo.ocupacion_actual += 1
-            elif tipo_vehiculo == "Camioneta":
-                aforo.ocupacion_camionetas += 1
-            else:
-                aforo.ocupacion_motos += 1
+            aforo = cls._get_or_create_aforo(db, sucursal)
+            cls._asignar_plaza(aforo, tipo_vehiculo, bool(reserva))
 
         db.add(models.AccessLog(
             patente_detectada=p, 
@@ -492,10 +379,7 @@ class AccessService:
         """Registra una salida manual forzada por personal staff/admin."""
         p = normalize_plate(plate)
         
-        ultimo = db.query(models.AccessLog).filter(
-            models.AccessLog.normalized_patente == p,
-            models.AccessLog.sucursal == sucursal
-        ).order_by(models.AccessLog.id.desc()).first()
+        ultimo = AccessRepository.get_last_by_patente_and_sucursal(db, p, sucursal)
         
         if not ultimo or ultimo.tipo_evento != AccessEventType.ENTRADA:
             raise HTTPException(status_code=400, detail="El vehículo no figura en esta sede")
@@ -508,28 +392,14 @@ class AccessService:
         if not ultimo.pago_confirmado and not dentro_cortesia:
             raise HTTPException(status_code=403, detail=f"DEUDA PENDIENTE en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min")
         
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+        aforo = cls._get_aforo(db, sucursal)
         if aforo:
-            if ultimo.reserva_id:
-                cls._dec_reserva_occ(aforo, ultimo.tipo_vehiculo)
-            elif ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0:
-                aforo.ocupacion_actual -= 1
-            elif ultimo.tipo_vehiculo == "Camioneta" and aforo.ocupacion_camionetas > 0:
-                aforo.ocupacion_camionetas -= 1
-            elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
-                aforo.ocupacion_motos -= 1
+            cls._liberar_plaza(aforo, ultimo.tipo_vehiculo, bool(ultimo.reserva_id))
 
         if ultimo.floor_id:
-            floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == ultimo.floor_id).first()
+            floor = BranchRepository.get_floor_by_id(db, ultimo.floor_id)
             if floor:
-                if ultimo.reserva_id:
-                    cls._dec_reserva_occ(floor, ultimo.tipo_vehiculo)
-                elif ultimo.tipo_vehiculo == "Auto" and (floor.ocupacion_actual or 0) > 0:
-                    floor.ocupacion_actual -= 1
-                elif ultimo.tipo_vehiculo == "Camioneta" and (floor.ocupacion_camionetas or 0) > 0:
-                    floor.ocupacion_camionetas -= 1
-                elif ultimo.tipo_vehiculo == "Moto" and (floor.ocupacion_motos or 0) > 0:
-                    floor.ocupacion_motos -= 1
+                cls._liberar_plaza(floor, ultimo.tipo_vehiculo, bool(ultimo.reserva_id))
 
         db.add(models.AccessLog(
             patente_detectada=p, 
@@ -563,10 +433,7 @@ class AccessService:
         from services.user_notification_service import UserNotificationService
         p = normalize_plate(plate)
         
-        ultimo = db.query(models.AccessLog).filter(
-            models.AccessLog.normalized_patente == p,
-            models.AccessLog.sucursal == sucursal
-        ).order_by(models.AccessLog.id.desc()).first()
+        ultimo = AccessRepository.get_last_by_patente_and_sucursal(db, p, sucursal)
         
         if not ultimo or ultimo.tipo_evento != AccessEventType.ENTRADA:
             raise HTTPException(status_code=400, detail="El vehículo no figura como ingresado")
@@ -575,28 +442,14 @@ class AccessService:
         entrada_dt = datetime.datetime.fromisoformat(fecha_str)
         minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
         
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+        aforo = cls._get_aforo(db, sucursal)
         if aforo:
-            if ultimo.reserva_id:
-                cls._dec_reserva_occ(aforo, ultimo.tipo_vehiculo)
-            elif ultimo.tipo_vehiculo == "Auto" and aforo.ocupacion_actual > 0:
-                aforo.ocupacion_actual -= 1
-            elif ultimo.tipo_vehiculo == "Camioneta" and aforo.ocupacion_camionetas > 0:
-                aforo.ocupacion_camionetas -= 1
-            elif ultimo.tipo_vehiculo == "Moto" and aforo.ocupacion_motos > 0:
-                aforo.ocupacion_motos -= 1
+            cls._liberar_plaza(aforo, ultimo.tipo_vehiculo, bool(ultimo.reserva_id))
 
         if ultimo.floor_id:
-            floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == ultimo.floor_id).first()
+            floor = BranchRepository.get_floor_by_id(db, ultimo.floor_id)
             if floor:
-                if ultimo.reserva_id:
-                    cls._dec_reserva_occ(floor, ultimo.tipo_vehiculo)
-                elif ultimo.tipo_vehiculo == "Auto" and (floor.ocupacion_actual or 0) > 0:
-                    floor.ocupacion_actual -= 1
-                elif ultimo.tipo_vehiculo == "Camioneta" and (floor.ocupacion_camionetas or 0) > 0:
-                    floor.ocupacion_camionetas -= 1
-                elif ultimo.tipo_vehiculo == "Moto" and (floor.ocupacion_motos or 0) > 0:
-                    floor.ocupacion_motos -= 1
+                cls._liberar_plaza(floor, ultimo.tipo_vehiculo, bool(ultimo.reserva_id))
         
         if minutos_transcurridos <= 10:
             db.add(models.AccessLog(
@@ -630,9 +483,7 @@ class AccessService:
         db.commit()
 
         try:
-            vehicle = db.query(models.Vehicle).filter(
-                func.replace(func.upper(models.Vehicle.patente), ' ', '') == p
-            ).first()
+            vehicle = VehicleRepository.get_by_normalized_patente(db, p)
             if vehicle and vehicle.user_id:
                 owner = db.query(models.User).filter(models.User.id == vehicle.user_id).first()
                 if owner and owner.rol == models.enums.UserRole.USER:
@@ -646,4 +497,3 @@ class AccessService:
             pass
 
         return {"status": "ok", "message": msg}
-

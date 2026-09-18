@@ -50,6 +50,13 @@ def _payment_method_filter(column, method: str):
         return column.in_(variants)
     return column == method
 
+def _branch_filter(column, sucursal: str):
+    """Filtro SQL de aislamiento por sucursal (subcadena 'AUTOPASS ' normalizada)."""
+    if not sucursal:
+        return None
+    target_name = sucursal.replace('AUTOPASS ', '').strip()
+    return column.like(f"%{target_name}%")
+
 class ReportService:
     """Servicio de Inteligencia de Negocio para analítica financiera y auditoría de accesos."""
 
@@ -99,8 +106,7 @@ class ReportService:
                 q = q.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
 
             if sucursal:
-                target_name = sucursal.replace('AUTOPASS ', '').strip()
-                q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+                q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
 
             if start_date:
                 q = q.filter((models.AccessLog.fecha_pago >= start_date) |
@@ -139,8 +145,7 @@ class ReportService:
             q_res_pagos = q_res_pagos.filter(models.Vehicle.tipo == vehicle_type)
         
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_res_pagos = q_res_pagos.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+            q_res_pagos = q_res_pagos.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
 
         if start_date:
             q_res_pagos = q_res_pagos.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -163,8 +168,7 @@ class ReportService:
             q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
             
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+            q_refunds = q_refunds.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         
         if start_date:
             q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -192,9 +196,8 @@ class ReportService:
                 q_total_res = q_total_res.filter(models.Vehicle.tipo == vehicle_type)
 
             if sucursal:
-                target_name = sucursal.replace('AUTOPASS ', '').strip()
-                q_cancelled = q_cancelled.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
-                q_total_res = q_total_res.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+                q_cancelled = q_cancelled.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+                q_total_res = q_total_res.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
             
             if start_date:
                 q_cancelled = q_cancelled.filter(models.Reservation.fecha_inicio >= start_date)
@@ -237,8 +240,7 @@ class ReportService:
             q_parked = q_parked.filter(Log.tipo_vehiculo == vehicle_type)
 
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_parked = q_parked.filter(Log.sucursal.like(f"%{target_name}%"))
+            q_parked = q_parked.filter(_branch_filter(Log.sucursal, sucursal))
         
         entradas = q_parked.all()
         deuda_proyectada = 0.0
@@ -264,8 +266,7 @@ class ReportService:
         if vehicle_type != "all":
             q_grp_logs = q_grp_logs.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_grp_logs = q_grp_logs.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+            q_grp_logs = q_grp_logs.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
         if start_date:
             q_grp_logs = q_grp_logs.filter((models.AccessLog.fecha_pago >= start_date) | ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
         if end_date:
@@ -285,8 +286,7 @@ class ReportService:
         if vehicle_type != "all":
             q_grp_res = q_grp_res.filter(models.Vehicle.tipo == vehicle_type)
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_grp_res = q_grp_res.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+            q_grp_res = q_grp_res.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date:
             q_grp_res = q_grp_res.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
         if end_date:
@@ -306,8 +306,7 @@ class ReportService:
         if vehicle_type != "all":
             q_grp_ref = q_grp_ref.filter(models.Vehicle.tipo == vehicle_type)
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_grp_ref = q_grp_ref.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+            q_grp_ref = q_grp_ref.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date:
             q_grp_ref = q_grp_ref.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
         if end_date:
@@ -374,8 +373,7 @@ class ReportService:
             q_logs = q_logs.filter(filtro_logs)
 
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_logs = q_logs.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+            q_logs = q_logs.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
         if start_date: q_logs = q_logs.filter((models.AccessLog.fecha_pago >= start_date) | ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
         if end_date: q_logs = q_logs.filter((models.AccessLog.fecha_pago <= end_date) | ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora <= end_date)))
 
@@ -392,8 +390,7 @@ class ReportService:
         q_res = q_res.filter(models.Reservation.estado_pago == PaymentStatus.PAGADO)
         if vehicle_type != "all": q_res = q_res.filter(models.Vehicle.tipo == vehicle_type)
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_res = q_res.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+            q_res = q_res.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date: q_res = q_res.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
         if end_date: q_res = q_res.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
         filtro_res_hist = _payment_method_filter(models.Reservation.metodo_pago, payment_method)
@@ -413,8 +410,7 @@ class ReportService:
         q_refunds = q_refunds.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         if vehicle_type != "all": q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
         if sucursal:
-            target_name = sucursal.replace('AUTOPASS ', '').strip()
-            q_refunds = q_refunds.filter(models.Reservation.sucursal_nombre.like(f"%{target_name}%"))
+            q_refunds = q_refunds.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
         if end_date: q_refunds = q_refunds.filter((models.Reservation.fecha_pago <= end_date) | ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio <= end_date)))
         filtro_ref_hist = _payment_method_filter(models.Reservation.metodo_pago, payment_method)
@@ -436,8 +432,7 @@ class ReportService:
         """Obtiene historial de accesos ALPR filtrado por sucursal y patente opcional."""
         q = db.query(models.AccessLog)
         if str(staff.rol) != UserRole.ADMIN.value:
-            target_name = staff.sucursal.replace('AUTOPASS ', '').strip()
-            q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+            q = q.filter(_branch_filter(models.AccessLog.sucursal, staff.sucursal))
         if patente:
             q = q.filter(models.AccessLog.patente_detectada.like(f"%{patente.upper()}%"))
         logs = q.order_by(models.AccessLog.id.desc()).all()
@@ -474,8 +469,7 @@ class ReportService:
         """Estadísticas de tiempos de procesamiento OCR."""
         q = db.query(models.AccessLog).filter(models.AccessLog.ocr_time.isnot(None))
         if str(staff.rol) != UserRole.ADMIN.value:
-            target_name = staff.sucursal.replace('AUTOPASS ', '').strip()
-            q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+            q = q.filter(_branch_filter(models.AccessLog.sucursal, staff.sucursal))
         
         logs = q.order_by(models.AccessLog.id.desc()).limit(limit).all()
         
@@ -511,8 +505,7 @@ class ReportService:
         para el gráfico móvil de la página de estadísticas OCR."""
         q = db.query(models.AccessLog).filter(models.AccessLog.ocr_time.isnot(None))
         if str(staff.rol) != UserRole.ADMIN.value:
-            target_name = staff.sucursal.replace("AUTOPASS ", "").strip()
-            q = q.filter(models.AccessLog.sucursal.like(f"%{target_name}%"))
+            q = q.filter(_branch_filter(models.AccessLog.sucursal, staff.sucursal))
 
         logs = q.order_by(models.AccessLog.id.asc()).all()
         points = [{
@@ -540,8 +533,7 @@ class ReportService:
 
         filters = []
         if str(admin.rol) != UserRole.ADMIN.value and admin.sucursal:
-            target_name = admin.sucursal.replace("AUTOPASS ", "").strip()
-            filters.append(models.AccessLog.sucursal.like(f"%{target_name}%"))
+            filters.append(_branch_filter(models.AccessLog.sucursal, admin.sucursal))
 
         rows = db.query(
             models.AccessLog.fecha_hora,
