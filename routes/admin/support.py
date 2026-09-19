@@ -5,6 +5,8 @@ import models, schemas
 from core.database import get_db
 from core.security import get_operational_user
 from services.support_service import SupportService
+from repositories.notification_repository import NotificationRepository
+from repositories.support_repository import SupportRepository
 from services.notification_service import NotificationService
 
 router = APIRouter()
@@ -26,12 +28,7 @@ def mark_ticket_notifications_read(
     current_user: models.User = Depends(get_operational_user)
 ):
     """MARCA COMO LEIDAS LAS NOTIFICACIONES DE UN TICKET PARA EL ADMIN ACTUAL."""
-    updated = db.query(models.UserNotification).filter(
-        models.UserNotification.ticket_id == ticket_id,
-        models.UserNotification.user_id == current_user.id,
-        models.UserNotification.leido == False
-    ).update({"leido": True})
-    db.commit()
+    updated = NotificationRepository.mark_ticket_read_for_user(db, ticket_id, current_user.id)
     return {"marked": updated}
 
 @router.get("/support-tickets/{ticket_id}")
@@ -41,10 +38,7 @@ def get_admin_support_ticket(
     current_user: models.User = Depends(get_operational_user)
 ):
     """RETORNA UN TICKET ESPECIFICO CON TODOS SUS MENSAJES."""
-    from sqlalchemy.orm import joinedload
-    ticket = db.query(models.SupportTicket).options(
-        joinedload(models.SupportTicket.user)
-    ).filter(models.SupportTicket.id == ticket_id).first()
+    ticket = SupportRepository.get_by_id_with_user(db, ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
     messages = SupportService.get_ticket_messages(db, ticket_id)

@@ -2,7 +2,6 @@ import datetime
 import urllib.parse
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import and_
 from sqlalchemy.orm import Session
 import models, schemas
 from core.database import get_db
@@ -14,6 +13,8 @@ from services.user_notification_service import UserNotificationService
 from services import oauth_service
 from core.limiter import limiter
 from models.enums import UserRole
+from repositories.user_repository import UserRepository
+from repositories.session_repository import SessionRepository
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication"])
 
@@ -57,7 +58,7 @@ def register(request: Request, user: schemas.UserCreate, db: Session = Depends(g
 @limiter.limit("5/minute")
 def forgot_password(request: Request, body: schemas.auth.ForgotPasswordRequest, db: Session = Depends(get_db)):
     """GENERA UN TOKEN DE RECUPERACION Y ENVIA UN CORREO AL USUARIO."""
-    user = db.query(models.User).filter(models.User.email == body.email.lower().strip(), models.User.is_deleted == False).first()
+    user = UserRepository.get_active_by_email(db, body.email.lower().strip())
     if not user:
         #POR SEGURIDAD, NO REVELAMOS SI EL CORREO EXISTE O NO
         return {"status": "ok", "message": "Si el correo está registrado, recibirás un enlace de recuperación."}
@@ -91,7 +92,7 @@ def reset_password(request: Request, body: schemas.auth.ResetPasswordRequest, db
     except JWTError:
         raise HTTPException(status_code=400, detail="El enlace de recuperación ha expirado o es inválido.")
     
-    user = db.query(models.User).filter(models.User.email == email, models.User.is_deleted == False).first()
+    user = UserRepository.get_active_by_email(db, email)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
     
@@ -126,20 +127,13 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
         since = now - datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
         # 1) SESION CON LA MISMA DEVICE_ID (CASO NORMAL: MISMO NAVEGADOR)
-        session = db.query(models.UserSession).filter(
-            models.UserSession.user_id == user.id,
-            models.UserSession.device_id == device_id
-        ).first()
+        session = SessionRepository.get_by_device(db, user.id, device_id)
 
         # 2) SI EL NAVEGADOR REGENERO EL DEVICE_ID (INCOGNITO, STORAGE BORRADO,
         #    OTRO ORIGEN localhost vs 127.0.0.1) PERO ES EL MISMO NAVEGADOR (MISMO USER-AGENT),
         #    ABSORBEMOS LA SESION RECIENTE.
         if not session and user_agent:
-            session = db.query(models.UserSession).filter(
-                models.UserSession.user_id == user.id,
-                models.UserSession.user_agent == user_agent,
-                models.UserSession.last_login_at >= since
-            ).order_by(models.UserSession.last_login_at.desc()).first()
+            session = SessionRepository.get_recent_by_user_agent(db, user.id, user_agent, since)
             if session:
                 session.device_id = device_id
 
@@ -164,14 +158,7 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
 
         # CONTAR OTROS DISPOSITIVOS CON SESION ACTIVA (LOGIN DENTRO DE LA VENTANA DEL TOKEN).
         # SE IGNORAN SESIONES DEL MISMO NAVEGADOR (MISMO USER-AGENT) PARA EVITAR AVISOS FALSOS.
-        other_q = db.query(models.UserSession.device_id).filter(
-            models.UserSession.user_id == user.id,
-            models.UserSession.device_id != device_id,
-            models.UserSession.last_login_at >= since
-        )
-        if user_agent:
-            other_q = other_q.filter(models.UserSession.user_agent != user_agent)
-        other_active = other_q.distinct().count()
+        other_active = SessionRepository.count_other_devices(db, user.id, device_id, since, user_agent)
 
         if is_new_device and other_active > 0:
             nuevo_dispositivo = True
@@ -242,9 +229,7 @@ def oauth_callback(
         return _oauth_redirect(oauth_error=e.detail)
 
     email = info["email"]
-    user = db.query(models.User).filter(
-        models.User.email == email, models.User.is_deleted == False
-    ).first()
+    user = UserRepository.get_active_by_email(db, email)
 
     if user:
         if user.is_blocked:

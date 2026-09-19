@@ -19,6 +19,13 @@ class VehicleRepository:
         return db.query(models.Vehicle).filter(models.Vehicle.patente == patente).first()
 
     @staticmethod
+    def get_by_patentes(db: Session, patentes: list) -> list:
+        """OBTIENE TODOS LOS VEHICULOS CUYAS PATENTES ESTAN EN LA LISTA."""
+        if not patentes:
+            return []
+        return db.query(models.Vehicle).filter(models.Vehicle.patente.in_(patentes)).all()
+
+    @staticmethod
     def get_by_normalized_patente(db: Session, norm: str) -> models.Vehicle:
         """OBTIENE UN VEHICULO POR PATENTE NORMALIZADA (SIN ESPACIOS, MAYUSCULAS)."""
         return db.query(models.Vehicle).filter(
@@ -53,3 +60,30 @@ class VehicleRepository:
             )
             .first()
         )
+
+    @staticmethod
+    def get_plates_by_user(db: Session, user_id: int) -> list:
+        """PATENTES DE TODOS LOS VEHICULOS DE UN USUARIO."""
+        rows = db.query(models.Vehicle.patente).filter(models.Vehicle.user_id == user_id).all()
+        return [v.patente for v in rows]
+
+    @staticmethod
+    def get_by_user(db: Session, user_id: int) -> list:
+        """OBTIENE TODOS LOS VEHICULOS DE UN USUARIO."""
+        return db.query(models.Vehicle).filter(models.Vehicle.user_id == user_id).all()
+
+    @staticmethod
+    def get_other_by_user(db: Session, user_id: int, vehicle_id: int) -> models.Vehicle:
+        """OBTIENE UN VEHICULO DEL USUARIO DISTINTO AL INDICADO."""
+        return db.query(models.Vehicle).filter(
+            models.Vehicle.user_id == user_id,
+            models.Vehicle.id != vehicle_id
+        ).first()
+
+    @staticmethod
+    def unset_favorite_for_user(db: Session, user_id: int):
+        """QUITA EL FAVORITO A TODOS LOS VEHICULOS DE UN USUARIO."""
+        db.query(models.Vehicle).filter(
+            models.Vehicle.user_id == user_id,
+            models.Vehicle.is_favorite == True
+        ).update({"is_favorite": False})

@@ -9,8 +9,11 @@ from services.reservation_service import ReservationService
 from services.user_notification_service import UserNotificationService
 from services.email_service import EmailService
 from services.time_service import TimeService
-import models
-from models.enums import PaymentStatus, ReservationStatus, AccessEventType
+from models.enums import PaymentStatus, ReservationStatus
+from repositories.access_log_repository import AccessRepository
+from repositories.notification_repository import NotificationRepository
+from repositories.reservation_repository import ReservationRepository
+from repositories.user_repository import UserRepository
 
 logger = get_logger("WorkerService")
 
@@ -108,12 +111,7 @@ class WorkerService:
         fmt_corte = corte.strftime("%Y-%m-%d %H:%M")
         fmt_ahora = now.strftime("%Y-%m-%d %H:%M")
 
-        candidatas = db.query(models.Reservation).filter(
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
-            models.Reservation.fecha_inicio >= fmt_ahora,
-            models.Reservation.fecha_inicio <= fmt_corte,
-            models.Reservation.recordatorio_confirmado == False
-        ).all()
+        candidatas = ReservationRepository.get_pending_reminders(db, fmt_ahora, fmt_corte)
 
         for res in candidatas:
             try:
@@ -126,10 +124,9 @@ class WorkerService:
                     continue
 
                 # Evitar notificaciones duplicadas si ya fue notificado previamente
-                notif_existente = db.query(models.UserNotification).filter(
-                    models.UserNotification.reserva_id == res.id,
-                    models.UserNotification.tipo.in_(["REMINDER_PAID", "REMINDER_UNPAID"])
-                ).first()
+                notif_existente = NotificationRepository.get_by_reserva_and_types(
+                    db, res.id, ["REMINDER_PAID", "REMINDER_UNPAID"]
+                )
                 if notif_existente:
                     continue
 
@@ -167,11 +164,7 @@ class WorkerService:
     def _process_started_reservations(db):
         """PASA A ACTIVA LAS RESERVAS PENDIENTES CUYO HORARIO INICIO Y NOTIFICA EL INICIO (UNA SOLA VEZ)."""
         now_str = TimeService.now_str()
-        iniciadas = db.query(models.Reservation).filter(
-            models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
-            models.Reservation.fecha_inicio <= now_str,
-            models.Reservation.fecha_fin >= now_str
-        ).all()
+        iniciadas = ReservationRepository.get_pending_started(db, now_str)
 
         for res in iniciadas:
             try:
@@ -191,10 +184,9 @@ class WorkerService:
                     from services.reservation_service import _reservar_plaza_en_aforo
                     _reservar_plaza_en_aforo(db, res)
 
-                notif_existente = db.query(models.UserNotification).filter(
-                    models.UserNotification.reserva_id == res.id,
-                    models.UserNotification.tipo == "RESERVATION_STARTED"
-                ).first()
+                notif_existente = NotificationRepository.get_by_reserva_and_types(
+                    db, res.id, ["RESERVATION_STARTED"]
+                )
                 if notif_existente:
                     continue
 
@@ -219,19 +211,12 @@ class WorkerService:
         grace = now - datetime.timedelta(minutes=30)
         fmt_grace = grace.strftime("%Y-%m-%d %H:%M")
 
-        candidatas = db.query(models.Reservation).filter(
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
-            models.Reservation.estado_pago == PaymentStatus.PENDIENTE,
-            models.Reservation.fecha_inicio < fmt_grace
-        ).all()
+        candidatas = ReservationRepository.get_unpaid_overdue(db, fmt_grace)
 
         for res in candidatas:
             try:
                 # VERIFICAR SI EL VEHICULO INGRESO
-                entry = db.query(models.AccessLog).filter(
-                    models.AccessLog.reserva_id == res.id,
-                    models.AccessLog.tipo_evento == AccessEventType.ENTRADA
-                ).first()
+                entry = AccessRepository.get_entry_for_reserva(db, res.id)
 
                 if entry:
                     continue  # YA INGRESO, NO CANCELAR
@@ -248,7 +233,7 @@ class WorkerService:
                 db.commit()
 
                 # NOTIFICAR AL USUARIO
-                user = db.query(models.User).filter(models.User.id == res.user_id).first()
+                user = UserRepository.get_by_id(db, res.user_id)
                 if user:
                     UserNotificationService.create_notification(
                         db, user.id, "AUTO_CANCELLED",

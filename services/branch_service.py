@@ -4,7 +4,10 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import models
 from services.billing_service import BillingService
-from models.enums import VehicleType, UserRole
+from models.enums import VehicleType
+from repositories.branch_repository import BranchRepository
+from repositories.settings_repository import SettingsRepository
+from repositories.user_repository import UserRepository
 
 class BranchService:
     @staticmethod
@@ -13,11 +16,11 @@ class BranchService:
         if not sucursal_nombre:
             return "Dirección no disponible"
 
-        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+        branch = BranchRepository.get_by_name(db, sucursal_nombre)
         if not branch:
-            branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre.ilike(f"%{sucursal_nombre}%")).first()
+            branch = BranchRepository.get_by_name_like(db, sucursal_nombre)
         if not branch:
-            all_b = db.query(models.ParkingBranch).all()
+            all_b = BranchRepository.get_all(db)
             branch = next((b for b in all_b if b.nombre.lower() in sucursal_nombre.lower() or sucursal_nombre.lower() in b.nombre.lower()), None)
 
         if branch and branch.direccion and branch.direccion.strip():
@@ -46,7 +49,7 @@ class BranchService:
     @staticmethod
     def get_branch_capacity_summary(db: Session, branch: models.ParkingBranch) -> dict:
         """CALCULA LOS TOTALES DE CAPACIDAD Y OCUPACION (PB + PISOS)."""
-        pb_settings = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+        pb_settings = BranchRepository.get_aforo_by_sucursal(db, branch.nombre)
         
         cap_autos_pb = pb_settings.capacidad_total if pb_settings else 20
         cap_motos_pb = pb_settings.capacidad_motos if pb_settings else 10
@@ -100,7 +103,7 @@ class BranchService:
     @staticmethod
     def has_physical_occupancy(db: Session, branch: models.ParkingBranch) -> bool:
         """RETORNA TRUE SI HAY VEHICULOS ESTACIONADOS FISICAMENTE EN LA SUCURSAL (PB + PISOS)."""
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+        aforo = BranchRepository.get_aforo_by_sucursal(db, branch.nombre)
         if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0 or (getattr(aforo, 'ocupacion_reservas', 0) or 0) > 0):
             return True
         if branch.floors:
@@ -118,7 +121,7 @@ class BranchService:
         if old_nombre == new_nombre:
             return
 
-        existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == new_nombre, models.ParkingBranch.id != branch.id).first()
+        existing = BranchRepository.get_other_by_name(db, new_nombre, branch.id)
         if existing:
             raise HTTPException(status_code=400, detail="Ya existe una sucursal con ese nombre")
 
@@ -126,21 +129,14 @@ class BranchService:
         new_prefix = normalize_system_name(new_nombre)
 
         # Propagar el cambio de nombre a tablas dependientes
-        db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == old_nombre).update({models.ParkingAforo.sucursal: new_nombre})
-        db.query(models.Settings).filter(models.Settings.sucursal == old_nombre).update({models.Settings.sucursal: new_nombre})
-        db.query(models.User).filter(models.User.sucursal == old_nombre).update({models.User.sucursal: new_nombre})
-        db.query(models.Reservation).filter(models.Reservation.sucursal_nombre == old_nombre).update({models.Reservation.sucursal_nombre: new_nombre})
-        db.query(models.AccessLog).filter(models.AccessLog.sucursal == old_nombre).update({models.AccessLog.sucursal: new_nombre})
-        db.query(models.SupportTicket).filter(models.SupportTicket.sucursal == old_nombre).update({models.SupportTicket.sucursal: new_nombre})
-        db.query(models.ParkingCamera).filter(models.ParkingCamera.sucursal == old_nombre).update({models.ParkingCamera.sucursal: new_nombre})
-        db.query(models.Promotion).filter(models.Promotion.sucursal == old_nombre).update({models.Promotion.sucursal: new_nombre})
+        BranchRepository.propagate_rename(db, old_nombre, new_nombre)
 
         # El gate_id/WS de cada cámara se compone con el prefijo normalizado del nombre
         # de sucursal. Si el prefijo cambia, remapear las claves legacy CAMERA_SOURCE_* y
         # detener los subprocesos ALPR del prefijo viejo para que espectador y proceso
         # converjan al mismo canal (si no, la cámara queda en negro).
         if old_prefix and old_prefix != new_prefix:
-            source_rows = db.query(models.Settings).filter(models.Settings.clave.like(f"CAMERA_SOURCE_{old_prefix}_%")).all()
+            source_rows = SettingsRepository.get_camera_sources_by_prefix(db, old_prefix)
             for row in source_rows:
                 row.clave = row.clave.replace(f"CAMERA_SOURCE_{old_prefix}", f"CAMERA_SOURCE_{new_prefix}", 1)
 
@@ -163,14 +159,10 @@ class BranchService:
     @staticmethod
     def list_branches_with_summary(db: Session):
         """LISTA TODAS LAS SUCURSALES CON SU RESUMEN ADMINISTRATIVO."""
-        branches = db.query(models.ParkingBranch).all()
+        branches = BranchRepository.get_all(db)
         for b in branches:
             # ADMINISTRADOR
-            admin_sede = db.query(models.User).filter(
-                models.User.sucursal == b.nombre,
-                models.User.rol == UserRole.LOCAL_ADMIN,
-                models.User.is_deleted == False
-            ).first()
+            admin_sede = UserRepository.get_local_admin_by_sucursal(db, b.nombre)
             b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"
 
             # RESUMEN

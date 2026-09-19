@@ -5,24 +5,23 @@ import models
 from models.enums import UserRole
 from core.database import get_db
 from core.security import get_local_manager
+from repositories.settings_repository import SettingsRepository
+from repositories.branch_repository import BranchRepository
 
 router = APIRouter()
 
 @router.get("/settings")
 def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """RETORNA LAS CONFIGURACIONES VIGENTES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
-    q = db.query(models.Settings)
-    if admin.rol != UserRole.ADMIN:
-        q = q.filter(models.Settings.sucursal == admin.sucursal)
-    else:
-        q = q.filter(models.Settings.sucursal == None)
-        
-    all_settings = q.all()
+    q = SettingsRepository.get_all_by_sucursal(
+        db, sucursal=admin.sucursal if admin.rol != UserRole.ADMIN else None
+    )
+    all_settings = q
     config_dict = {s.clave: s.valor for s in all_settings}
     config_dict["sucursal_nombre"] = admin.sucursal
 
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
-    aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+    aforo = BranchRepository.get_aforo_by_sucursal(db, sucursal)
     if aforo:
         config_dict["capacidad_total"] = aforo.capacidad_total
         config_dict["capacidad_motos"] = aforo.capacidad_motos
@@ -47,7 +46,7 @@ def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin:
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
 
     if clave in ["capacidad_total", "capacidad_motos", "capacidad_camionetas", "capacidad_reservas", "capacidad_reservas_autos", "capacidad_reservas_motos", "capacidad_reservas_camionetas"]:
-        aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal).first()
+        aforo = BranchRepository.get_aforo_by_sucursal(db, sucursal)
         if not aforo:
             aforo = models.ParkingAforo(
                 capacidad_total=20,
@@ -89,10 +88,7 @@ def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin:
             pass
         return {"status": "ok"}
 
-    setting = db.query(models.Settings).filter(
-        models.Settings.clave == clave, 
-        models.Settings.sucursal == sucursal
-    ).first()
+    setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal)
     
     if setting: 
         setting.valor = valor

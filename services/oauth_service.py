@@ -16,6 +16,7 @@ from core.config import settings
 from core.logger import get_logger
 from core.normalize import normalize_dni, normalize_user_name
 from core.security import create_access_token, get_password_hash
+from repositories.user_repository import UserRepository
 
 logger = get_logger("OAuth")
 
@@ -231,16 +232,12 @@ def complete_oauth_signup(db: Session, code: str, dni: str, telefono: str) -> mo
     if not email:
         raise HTTPException(status_code=400, detail="Datos de registro inválidos.")
 
-    existing = db.query(models.User).filter(
-        models.User.email == email, models.User.is_deleted == False
-    ).first()
+    existing = UserRepository.get_active_by_email(db, email)
     if existing:
         raise HTTPException(status_code=400, detail="Ya existe una cuenta con ese correo. Iniciá sesión.")
 
     dni_normalized = normalize_dni(dni or "")
-    existing_dni = db.query(models.User).filter(
-        models.User.dni == dni_normalized, models.User.is_deleted == False
-    ).first()
+    existing_dni = UserRepository.get_active_by_dni(db, dni_normalized)
     if existing_dni:
         raise HTTPException(status_code=400, detail="El DNI ya está registrado por otro usuario.")
 

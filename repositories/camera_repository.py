@@ -1,0 +1,17 @@
+from sqlalchemy.orm import Session
+
+import models
+
+#--- REPOSITORIO DE CÁMARAS (GESTIÓN DE HARDWARE) ---
+
+
+class CameraRepository:
+    @staticmethod
+    def get_all(db: Session) -> list:
+        """OBTIENE TODAS LAS CÁMARAS REGISTRADAS."""
+        return db.query(models.ParkingCamera).all()
+
+    @staticmethod
+    def get_by_id(db: Session, camera_id: int) -> models.ParkingCamera:
+        """OBTIENE UNA CÁMARA POR SU IDENTIFICADOR UNICO."""
+        return db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()

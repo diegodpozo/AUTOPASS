@@ -7,6 +7,10 @@ from core.config import settings
 from core.logger import get_logger
 from models.enums import PaymentStatus, ReservationStatus
 from services.billing_service import BillingService
+from repositories.access_log_repository import AccessRepository
+from repositories.mercadopago_repository import MercadoPagoPaymentRepository
+from repositories.reservation_repository import ReservationRepository
+from repositories.user_repository import UserRepository
 
 logger = get_logger("MercadoPago")
 
@@ -98,10 +102,7 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
     if tipo == "reserva":
         if not data.reserva_id:
             raise HTTPException(status_code=400, detail="Falta reserva_id")
-        res = db.query(models.Reservation).filter(
-            models.Reservation.id == data.reserva_id,
-            models.Reservation.user_id == user.id,
-        ).first()
+        res = ReservationRepository.get_by_user_and_id(db, user.id, data.reserva_id)
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
         if res.estado_reserva in [ReservationStatus.CANCELADA, ReservationStatus.COMPLETADA]:
@@ -116,7 +117,7 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
     elif tipo == "estadia":
         if not data.access_log_id:
             raise HTTPException(status_code=400, detail="Falta access_log_id")
-        log = db.query(models.AccessLog).filter(models.AccessLog.id == data.access_log_id).first()
+        log = AccessRepository.get_by_id(db, data.access_log_id)
         if not log:
             raise HTTPException(status_code=404, detail="Estadía no encontrada")
         user_plates = [v.patente for v in user.vehicles]
@@ -211,9 +212,7 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
 def confirm_payment(db: Session, external_reference: str, payment_id=None) -> dict:
     """VERIFICA EL PAGO EN MERCADO PAGO Y APLICA LA ACREDITACION SI FUE APROBADO.
     Es idempotente: un pago ya aplicado no se vuelve a aplicar."""
-    pago = db.query(models.MercadoPagoPayment).filter(
-        models.MercadoPagoPayment.external_reference == external_reference
-    ).first()
+    pago = MercadoPagoPaymentRepository.get_by_external_reference(db, external_reference)
     if not pago:
         raise HTTPException(status_code=404, detail="Referencia de pago no encontrada")
 
@@ -252,18 +251,18 @@ def confirm_payment(db: Session, external_reference: str, payment_id=None) -> di
 
 def _aplicar_pago(db: Session, pago: "models.MercadoPagoPayment", payment_id: str) -> dict:
     """APLICA LA ACREDITACION REAL DEL PAGO (RESERVA O ESTADIA) SIN TOCAR EL SALDO DEL USUARIO."""
-    user = db.query(models.User).filter(models.User.id == pago.user_id).first()
+    user = UserRepository.get_by_id(db, pago.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     if pago.tipo == "reserva":
-        res = db.query(models.Reservation).filter(models.Reservation.id == pago.reserva_id).first()
+        res = ReservationRepository.get_by_id(db, pago.reserva_id)
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
         from services.reservation_service import ReservationService
         resultado = ReservationService.pay_reservation_mp(db, user, res, pago.monto, pago.redemption_ticket_id)
     elif pago.tipo == "estadia":
-        log = db.query(models.AccessLog).filter(models.AccessLog.id == pago.access_log_id).first()
+        log = AccessRepository.get_by_id(db, pago.access_log_id)
         if not log:
             raise HTTPException(status_code=404, detail="Estadía no encontrada")
         from services.billing_service import BillingService

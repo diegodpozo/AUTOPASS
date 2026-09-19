@@ -6,6 +6,7 @@ from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
 import services.mercadopago_service as mp_service
+from repositories.mercadopago_repository import MercadoPagoPaymentRepository
 
 logger = get_logger("MercadoPagoRoutes")
 
@@ -28,9 +29,7 @@ def _procesar_retorno(external_reference: str, payment_id: str):
     mp_status = "failed"
     db = SessionLocal()
     try:
-        pago = db.query(models.MercadoPagoPayment).filter(
-            models.MercadoPagoPayment.external_reference == external_reference
-        ).first()
+        pago = MercadoPagoPaymentRepository.get_by_external_reference(db, external_reference)
         if pago:
             tipo = pago.tipo or "reserva"
         try:

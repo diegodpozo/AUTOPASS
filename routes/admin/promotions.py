@@ -5,17 +5,17 @@ import models, schemas
 from models.enums import UserRole
 from core.database import get_db
 from core.security import get_local_manager
+from repositories.promotion_repository import PromotionRepository
+from repositories.redemption_repository import RedemptionRepository
 
 router = APIRouter()
 
 @router.get("/promotions", response_model=List[schemas.PromotionResponse])
 def list_promotions_admin(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """LISTA TODAS LAS PROMOCIONES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
-    q = db.query(models.Promotion)
-    if admin.rol != UserRole.ADMIN:
-        q = q.filter(models.Promotion.sucursal == admin.sucursal)
-    
-    promos = q.all()
+    promos = PromotionRepository.get_all(
+        db, sucursal=admin.sucursal if admin.rol != UserRole.ADMIN else None
+    )
     for p in promos:
         if p.activa is None:
             p.activa = True
@@ -47,7 +47,7 @@ def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db
 @router.post("/promotions/{promo_id}/toggle")
 def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTIVA O DESACTIVA UNA PROMOCION."""
-    promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
+    promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     
     if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
@@ -60,7 +60,7 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
 @router.put("/promotions/{promo_id}")
 def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA UNA PROMOCION EXISTENTE. EL ADMIN GLOBAL PUEDE REASIGNAR LA SUCURSAL."""
-    promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
+    promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo:
         raise HTTPException(status_code=404, detail="Promoción no encontrada")
 
@@ -87,16 +87,14 @@ def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     """ELIMINA UNA PROMOCION PERMANENTEMENTE.
     Antes de borrar desasocia los tickets de canje (FK) poniendo promotion_id = NULL,
     ya que los tickets guardan un snapshot del beneficio y no dependen de la promoción."""
-    promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id).first()
+    promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     
     if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
     
     # DESASOCIAR TICKETS DE CANJE PARA EVITAR VIOLACION DE FK (los tickets guardan snapshot)
-    db.query(models.RedemptionTicket).filter(
-        models.RedemptionTicket.promotion_id == promo_id
-    ).update({models.RedemptionTicket.promotion_id: None})
+    RedemptionRepository.unlink_promotion(db, promo_id)
     
     db.delete(promo)
     db.commit()

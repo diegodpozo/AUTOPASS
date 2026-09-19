@@ -2,11 +2,12 @@ import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models, schemas
-from models.enums import AccessEventType
 from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
 from services.billing_service import BillingService
+from repositories.access_log_repository import AccessRepository
+from repositories.settings_repository import SettingsRepository
 
 logger = get_logger("UserBalance")
 
@@ -19,32 +20,15 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
     if not user_plates:
         return []
 
-    from sqlalchemy import func
     # 1. Obtenemos la última entrada por cada patente en 1 sola consulta
-    subq = db.query(
-        models.AccessLog.patente_detectada,
-        func.max(models.AccessLog.id).label("max_id")
-    ).filter(
-        models.AccessLog.patente_detectada.in_(user_plates),
-        models.AccessLog.tipo_evento == AccessEventType.ENTRADA
-    ).group_by(models.AccessLog.patente_detectada).subquery()
-
-    ultimo_ingresos = db.query(models.AccessLog).join(
-        subq, models.AccessLog.id == subq.c.max_id
-    ).all()
+    ultimo_ingresos = AccessRepository.get_last_entries_by_patentes(db, user_plates)
 
     if not ultimo_ingresos:
         return []
 
     # 2. Obtenemos las salidas posteriores en 1 sola consulta agrupada
     ingreso_patentes = [e.patente_detectada for e in ultimo_ingresos]
-    salidas = db.query(
-        models.AccessLog.patente_detectada,
-        models.AccessLog.fecha_hora
-    ).filter(
-        models.AccessLog.patente_detectada.in_(ingreso_patentes),
-        models.AccessLog.tipo_evento == AccessEventType.SALIDA
-    ).all()
+    salidas = AccessRepository.get_exit_times_by_patentes(db, ingreso_patentes)
 
     salida_map = {}
     for patente, fecha_salida in salidas:
@@ -70,11 +54,7 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
 def get_user_payment_history(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """HISTORIAL CRONOLOGICO DE PAGOS REALIZADOS POR EL USUARIO."""
     user_plates = [v.patente for v in current_user.vehicles]
-    return db.query(models.AccessLog).filter(
-        models.AccessLog.patente_detectada.in_(user_plates),
-        models.AccessLog.pago_confirmado == True,
-        models.AccessLog.costo_estadia > 0
-    ).order_by(models.AccessLog.id.desc()).all()
+    return AccessRepository.get_paid_logs_by_patentes(db, user_plates)
 
 @router.get("/rates")
 def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
@@ -84,18 +64,12 @@ def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
         "precio_30min_moto", "precio_hora_moto", "precio_dia_moto", "precio_semana_moto", "precio_quincena_moto", "precio_mes_moto"
     ]
 
-    global_settings = db.query(models.Settings).filter(
-        models.Settings.clave.in_(keys),
-        models.Settings.sucursal == None
-    ).all()
+    global_settings = SettingsRepository.get_rates_by_claves(db, keys)
 
     res = {s.clave.replace("precio_", ""): s.valor for s in global_settings}
 
     if sucursal:
-        branch_settings = db.query(models.Settings).filter(
-            models.Settings.clave.in_(keys),
-            models.Settings.sucursal == sucursal
-        ).all()
+        branch_settings = SettingsRepository.get_rates_by_claves(db, keys, sucursales=[sucursal])
         for s in branch_settings:
             res[s.clave.replace("precio_", "")] = s.valor
 

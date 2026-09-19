@@ -1,9 +1,9 @@
 from core.time import localnow
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
 import models
 import schemas
+from repositories.notification_repository import NotificationRepository
 
 class UserNotificationService:
     @staticmethod
@@ -26,10 +26,7 @@ class UserNotificationService:
             leido=False,
             created_at=localnow()
         )
-        db.add(notif)
-        db.commit()
-        db.refresh(notif)
-        return notif
+        return NotificationRepository.save(db, notif)
 
     @staticmethod
     def get_user_notifications(
@@ -38,81 +35,41 @@ class UserNotificationService:
         limit: int = 50,
         offset: int = 0
     ) -> List[models.UserNotification]:
-        return db.query(models.UserNotification)\
-            .filter(models.UserNotification.user_id == user_id)\
-            .order_by(desc(models.UserNotification.created_at))\
-            .offset(offset)\
-            .limit(limit)\
-            .all()
+        return NotificationRepository.get_user_notifications(db, user_id, limit=limit, offset=offset)
 
     @staticmethod
     def get_unread_count(db: Session, user_id: int) -> int:
-        return db.query(models.UserNotification)\
-            .filter(
-                models.UserNotification.user_id == user_id,
-                models.UserNotification.leido == False
-            ).count()
+        return NotificationRepository.get_unread_count(db, user_id)
 
     @staticmethod
     def mark_as_read(db: Session, notif_id: int, user_id: int) -> bool:
-        notif = db.query(models.UserNotification)\
-            .filter(
-                models.UserNotification.id == notif_id,
-                models.UserNotification.user_id == user_id
-            ).first()
+        notif = NotificationRepository.get_by_id_and_user(db, notif_id, user_id)
         if not notif:
             return False
-        notif.leido = True
-        db.commit()
+        NotificationRepository.mark_as_read(db, notif)
         return True
 
     @staticmethod
     def mark_all_as_read(db: Session, user_id: int) -> int:
-        count = db.query(models.UserNotification)\
-            .filter(
-                models.UserNotification.user_id == user_id,
-                models.UserNotification.leido == False
-            ).update({"leido": True})
-        db.commit()
-        return count
+        return NotificationRepository.mark_all_as_read(db, user_id)
 
     @staticmethod
     def get_total_count(db: Session, user_id: int) -> int:
-        return db.query(models.UserNotification)\
-            .filter(models.UserNotification.user_id == user_id).count()
+        return NotificationRepository.get_total_count(db, user_id)
 
     @staticmethod
     def delete_notification(db: Session, notif_id: int, user_id: int) -> bool:
-        notif = db.query(models.UserNotification)\
-            .filter(
-                models.UserNotification.id == notif_id,
-                models.UserNotification.user_id == user_id
-            ).first()
+        notif = NotificationRepository.get_by_id_and_user(db, notif_id, user_id)
         if not notif:
             return False
-        db.delete(notif)
-        db.commit()
+        NotificationRepository.delete(db, notif)
         return True
 
     @staticmethod
     def clear_read_notifications(db: Session, user_id: int) -> int:
-        deleted = db.query(models.UserNotification)\
-            .filter(
-                models.UserNotification.user_id == user_id,
-                models.UserNotification.leido == True
-            ).delete(synchronize_session=False)
-        db.commit()
-        return deleted
+        return NotificationRepository.clear_read_notifications(db, user_id)
 
     @staticmethod
     def mark_reservation_notifications_as_read(db: Session, user_id: int, reserva_id: int, tipo: str = None) -> int:
         """MARCA COMO LEIDAS TODAS LAS NOTIFICACIONES DE UNA RESERVA, OPCIONALMENTE FILTRANDO POR TIPO."""
-        q = db.query(models.UserNotification).filter(
-            models.UserNotification.user_id == user_id,
-            models.UserNotification.reserva_id == reserva_id
-        )
-        if tipo:
-            q = q.filter(models.UserNotification.tipo == tipo)
-        count = q.update({"leido": True})
-        db.commit()
-        return count
+        return NotificationRepository.mark_reservation_notifications_as_read(db, user_id, reserva_id, tipo)

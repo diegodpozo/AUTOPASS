@@ -11,6 +11,8 @@ from core.security import get_operational_user, decode_access_token
 from core.config import settings
 from core.logger import get_logger
 from routes.system.common import manager, normalize_system_name
+from repositories.user_repository import UserRepository
+from repositories.access_log_repository import AccessRepository
 
 logger = get_logger("VideoWS")
 
@@ -25,7 +27,7 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
         try:
             payload = decode_access_token(token)
             db = next(get_db())
-            user = db.query(models.User).filter(models.User.email == payload.get("sub")).first()
+            user = UserRepository.get_by_email(db, payload.get("sub"))
         except Exception:
             pass
 
@@ -84,10 +86,7 @@ def _user_from_token(token: str, db: Session):
     payload = decode_access_token(token)
     if not payload:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
-    user = db.query(models.User).filter(
-        models.User.email == payload.get("sub"),
-        models.User.is_deleted == False
-    ).first()
+    user = UserRepository.get_active_by_email(db, payload.get("sub"))
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     if str(user.rol) not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
@@ -106,7 +105,7 @@ def get_capture(log_id: int, request: Request, token: str = Query(None), db: Ses
     else:
         raise HTTPException(status_code=401, detail="No autenticado")
 
-    log = db.query(models.AccessLog).filter(models.AccessLog.id == log_id).first()
+    log = AccessRepository.get_by_id(db, log_id)
     if not log:
         raise HTTPException(status_code=404, detail="Log no encontrado")
     if str(staff.rol) != UserRole.ADMIN.value and log.sucursal != staff.sucursal:

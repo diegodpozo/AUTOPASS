@@ -33,6 +33,24 @@ class RedemptionRepository:
         return q.order_by(models.RedemptionTicket.id.desc()).all()
 
     @staticmethod
+    def get_by_user(db: Session, user_id: int) -> list:
+        """TICKETS DE CANJE DE UN USUARIO, MAS RECIENTES PRIMERO."""
+        return (
+            db.query(models.RedemptionTicket)
+            .filter(models.RedemptionTicket.user_id == user_id)
+            .order_by(models.RedemptionTicket.id.desc())
+            .all()
+        )
+
+    @staticmethod
+    def get_by_id_and_user(db: Session, ticket_id: int, user_id: int) -> models.RedemptionTicket:
+        """TICKET DE CANJE POR IDENTIFICADOR UNICO PERTENECIENTE A UN USUARIO."""
+        return db.query(models.RedemptionTicket).filter(
+            models.RedemptionTicket.id == ticket_id,
+            models.RedemptionTicket.user_id == user_id
+        ).first()
+
+    @staticmethod
     def get_valid_discount(db: Session, redemption_ticket_id: int, user_id: int, sucursal: str = None) -> models.RedemptionTicket:
         """TICKET DE DESCUENTO VIGENTE Y VALIDO PARA EL USUARIO Y SUCURSAL."""
         if not redemption_ticket_id:
@@ -61,3 +79,14 @@ class RedemptionRepository:
             )
             .first()
         )
+
+    @staticmethod
+    def unlink_promotion(db: Session, promo_id: int) -> int:
+        """DESASOCIA LOS TICKETS DE CANJE DE UNA PROMOCION (promotion_id = NULL) ANTES DE BORRARLA."""
+        updated = (
+            db.query(models.RedemptionTicket)
+            .filter(models.RedemptionTicket.promotion_id == promo_id)
+            .update({models.RedemptionTicket.promotion_id: None})
+        )
+        db.commit()
+        return updated

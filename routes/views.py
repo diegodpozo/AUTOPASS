@@ -3,9 +3,9 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-import models
 from core.database import get_db
 from core.config import settings
+from repositories.branch_repository import BranchRepository
 
 router = APIRouter(tags=["Frontend Views"])
 templates = Jinja2Templates(directory="templates")
@@ -32,7 +32,7 @@ async def get_perfil(request: Request):
 
 @router.get("/nuestra-red", response_class=HTMLResponse)
 async def get_nuestra_red(request: Request, db: Session = Depends(get_db)):
-    branches = db.query(models.ParkingBranch).all()
+    branches = BranchRepository.get_all(db)
     return templates.TemplateResponse(request=request, name="nuestra-red.html", context={"branches": branches})
 
 @router.get("/contacto", response_class=HTMLResponse)

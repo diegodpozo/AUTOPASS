@@ -1,6 +1,6 @@
 import asyncio
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Query
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from typing import List, Dict
 import models, schemas
 from models.enums import UserRole
@@ -9,6 +9,8 @@ from core.security import get_operational_user, decode_access_token
 from core.logger import get_logger
 from services.notification_service import NotificationService
 from services.occupancy_service import OccupancyService
+from repositories.branch_repository import BranchRepository
+from repositories.user_repository import UserRepository
 from core.normalize import normalize_name
 
 logger = get_logger("WS")
@@ -83,7 +85,7 @@ class OccupancyManager:
                 db.close()
 
     def _get_global_status(self, db: Session):
-        branches = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
+        branches = BranchRepository.get_all_active(db)
         res = []
         for b in branches:
             caps = OccupancyService.calculate_branch_capacities(db, b)
@@ -138,7 +140,7 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
     try:
         payload = decode_access_token(token)
         db = next(get_db())
-        user = db.query(models.User).filter(models.User.email == payload.get("sub")).first()
+        user = UserRepository.get_by_email(db, payload.get("sub"))
         if not user:
             await websocket.close(code=4008)
             return
@@ -171,7 +173,7 @@ def list_public_branches(db: Session = Depends(get_db)):
     if cached is not None:
         return cached
 
-    branches = db.query(models.ParkingBranch).options(joinedload(models.ParkingBranch.floors)).filter(models.ParkingBranch.activa == True, models.ParkingBranch.latitude != None, models.ParkingBranch.longitude != None).all()
+    branches = BranchRepository.get_all_active_with_location(db)
     
     res = []
     for b in branches:
@@ -215,14 +217,14 @@ def get_parking_status(db: Session = Depends(get_db), user: models.User = Depend
     
     branch = None
     if sucursal_nombre:
-        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == sucursal_nombre).first()
+        branch = BranchRepository.get_by_name(db, sucursal_nombre)
     if not branch:
-        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).first()
+        branch = BranchRepository.get_first_active(db)
 
     if branch:
         return OccupancyService.calculate_branch_capacities(db, branch)
     
-    a = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == sucursal_nombre).first() if sucursal_nombre else None
+    a = BranchRepository.get_aforo_by_sucursal(db, sucursal_nombre)
     if not a: 
         return OccupancyService.default_capacities()
 

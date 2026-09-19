@@ -3,11 +3,14 @@ import math
 import secrets
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_
 from typing import List
 import models, schemas
 from core.database import get_db
 from core.security import get_current_user
+from repositories.promotion_repository import PromotionRepository
+from repositories.redemption_repository import RedemptionRepository
+from repositories.branch_repository import BranchRepository
+from repositories.points_repository import PointsRepository
 
 router = APIRouter()
 
@@ -34,7 +37,7 @@ def _crear_ticket(db: Session, user: models.User, promo: models.Promotion) -> mo
     longitude = promo.longitude
 
     if not (latitude and longitude) and promo.sucursal:
-        branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == promo.sucursal).first()
+        branch = BranchRepository.get_by_name(db, promo.sucursal)
         if branch:
             if not direccion:
                 direccion = branch.direccion
@@ -70,19 +73,14 @@ def _crear_ticket(db: Session, user: models.User, promo: models.Promotion) -> mo
 @router.get("/promotions", response_model=List[schemas.PromotionResponse])
 def get_promotions(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """LISTA LAS PROMOCIONES Y BENEFICIOS VIGENTES FILTRADOS POR LA SEDE DEL USUARIO."""
-    q = db.query(models.Promotion).filter(models.Promotion.activa == True)
-    
-    if current_user.sucursal:
-        q = q.filter(or_(models.Promotion.sucursal == current_user.sucursal, models.Promotion.sucursal == None))
-        
-    return q.all()
+    return PromotionRepository.get_active(db, sucursal=current_user.sucursal)
 
 @router.post("/redeem/{promo_id}")
 def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """PROCESA EL CANJE DE PUNTOS POR UN BENEFICIO DEL CATALOGO.
     - tipo_canje == 'descuento_reserva': genera un descuento (%) aplicable al pagar una reserva de su sucursal.
     - tipo_canje == 'voucher': genera un ticket con QR persistente (válido por 30 días), sin validación automática."""
-    promo = db.query(models.Promotion).filter(models.Promotion.id == promo_id, models.Promotion.activa == True).first()
+    promo = PromotionRepository.get_active_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     if current_user.puntos_acumulados < promo.costo_puntos: raise HTTPException(status_code=400, detail="Puntos insuficientes")
 
@@ -119,16 +117,14 @@ def get_user_redemption_tickets(db: Session = Depends(get_db), current_user: mod
     SI UN TICKET NO GUARDÓ UBICACIÓN (ej. canjeado antes de que la promo tuviera dirección),
     se resuelve la dirección de SU PROMO actual, o la de la sucursal asignada como último recurso.
     No se reescribe la BD: es solo enriquecimiento de la respuesta."""
-    tickets = db.query(models.RedemptionTicket).filter(
-        models.RedemptionTicket.user_id == current_user.id
-    ).order_by(models.RedemptionTicket.id.desc()).all()
+    tickets = RedemptionRepository.get_by_user(db, current_user.id)
 
     result = []
     for t in tickets:
         direccion, latitude, longitude = t.direccion, t.latitude, t.longitude
 
         if not (latitude and longitude) and t.promotion_id:
-            promo = db.query(models.Promotion).filter(models.Promotion.id == t.promotion_id).first()
+            promo = PromotionRepository.get_by_id(db, t.promotion_id)
             if promo:
                 if not direccion:
                     direccion = promo.direccion
@@ -138,7 +134,7 @@ def get_user_redemption_tickets(db: Session = Depends(get_db), current_user: mod
                     longitude = promo.longitude
 
         if not (latitude and longitude) and t.sucursal:
-            branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == t.sucursal).first()
+            branch = BranchRepository.get_by_name(db, t.sucursal)
             if branch:
                 if not direccion:
                     direccion = branch.direccion
@@ -158,28 +154,16 @@ def get_user_redemption_tickets(db: Session = Depends(get_db), current_user: mod
 @router.get("/redemptions/available")
 def get_available_redemptions(sucursal: str = None, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """LISTA LOS DESCUENTOS DE RESERVA (%). CANJEADOS Y AUN VIGENTES, APLICABLES A UNA SUCURSAL."""
-    q = db.query(models.RedemptionTicket).filter(
-        models.RedemptionTicket.user_id == current_user.id,
-        models.RedemptionTicket.tipo_canje == "descuento_reserva",
-        models.RedemptionTicket.estado == "VIGENTE"
-    )
-    if sucursal:
-        # SE PUEDE APLICAR SI ES DE ESA SUCURSAL O ES GLOBAL (con tolerancia a prefijo 'AUTOPASS')
-        from services.reservation_service import ReservationService
-        q = q.filter(ReservationService.redemption_sucursal_clause(sucursal))
-    return q.all()
+    return RedemptionRepository.list_discounts_by_user(db, current_user.id, sucursal=sucursal)
 
 @router.post("/redemptions/{ticket_id}/cancel")
 def cancel_redemption_ticket(ticket_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """CANCELA UN TICKET/USADO NO USADO Y DEVUELVE LOS PUNTOS AL USUARIO."""
-    ticket = db.query(models.RedemptionTicket).filter(
-        models.RedemptionTicket.id == ticket_id,
-        models.RedemptionTicket.user_id == current_user.id
-    ).first()
+    ticket = RedemptionRepository.get_by_id_and_user(db, ticket_id, current_user.id)
     if not ticket: raise HTTPException(status_code=404, detail="Ticket no encontrado")
     if ticket.estado != "VIGENTE": raise HTTPException(status_code=400, detail="El ticket ya no se encuentra vigente")
 
-    promo = db.query(models.Promotion).filter(models.Promotion.id == ticket.promotion_id).first() if ticket.promotion_id else None
+    promo = PromotionRepository.get_by_id(db, ticket.promotion_id) if ticket.promotion_id else None
     costo = promo.costo_puntos if promo else 0
 
     ticket.estado = "CANCELADO"
@@ -204,20 +188,11 @@ def cancel_redemption_ticket(ticket_id: int, db: Session = Depends(get_db), curr
 @router.get("/points-history")
 def get_points_history(page: int = 1, limit: int = 10, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """RETORNA EL HISTORIAL DE MOVIMIENTOS DE PUNTOS DEL USUARIO CON PAGINACION Y TOTALES."""
-    query = db.query(models.PointsLog).filter(models.PointsLog.user_id == current_user.id)
-    total = query.count()
-    
-    earned = db.query(func.sum(models.PointsLog.cantidad)).filter(
-        models.PointsLog.user_id == current_user.id,
-        models.PointsLog.cantidad > 0
-    ).scalar() or 0
-    
-    redeemed = db.query(func.sum(models.PointsLog.cantidad)).filter(
-        models.PointsLog.user_id == current_user.id,
-        models.PointsLog.cantidad < 0
-    ).scalar() or 0
-
-    items = query.order_by(models.PointsLog.id.desc()).offset((page - 1) * limit).limit(limit).all()
+    data = PointsRepository.get_history(db, current_user.id, page, limit)
+    total = data["total"]
+    earned = data["earned"]
+    redeemed = data["redeemed"]
+    items = data["items"]
     
     return {
         "items": items,

@@ -4,8 +4,11 @@ import models
 import schemas
 from core.security import get_password_hash
 from core.normalize import normalize_user_name as normalize_name, normalize_dni, normalize_plate, format_plate
-from models.enums import UserRole, ReservationStatus, AccessEventType
+from models.enums import UserRole
 from repositories.user_repository import UserRepository
+from repositories.vehicle_repository import VehicleRepository
+from repositories.access_log_repository import AccessRepository
+from repositories.reservation_repository import ReservationRepository
 
 class UserService:
     @staticmethod
@@ -44,18 +47,14 @@ class UserService:
     @staticmethod
     def update_user(db: Session, user_id: int, user_data: schemas.UserAdminUpdate) -> models.User:
         """ACTUALIZA LOS DATOS DE UN USUARIO VALIDANDO UNICIDAD DE EMAIL Y DNI."""
-        user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
+        user = UserRepository.get_active_by_id(db, user_id)
         if not user:
             return None
 
         if user_data.email:
             new_email = user_data.email.lower().strip()
             if new_email != user.email:
-                existing_email = db.query(models.User).filter(
-                    models.User.email == new_email,
-                    models.User.id != user_id,
-                    models.User.is_deleted == False
-                ).first()
+                existing_email = UserRepository.get_other_by_email(db, new_email, user_id)
                 if existing_email:
                     raise HTTPException(status_code=400, detail="El correo ya está registrado por otro usuario.")
                 user.email = new_email
@@ -63,11 +62,7 @@ class UserService:
         if user_data.dni:
             new_dni = normalize_dni(user_data.dni)
             if new_dni != user.dni:
-                existing_dni = db.query(models.User).filter(
-                    models.User.dni == new_dni,
-                    models.User.id != user_id,
-                    models.User.is_deleted == False
-                ).first()
+                existing_dni = UserRepository.get_other_by_dni(db, new_dni, user_id)
                 if existing_dni:
                     raise HTTPException(status_code=400, detail="El DNI ya está registrado por otro usuario.")
                 user.dni = new_dni
@@ -87,23 +82,19 @@ class UserService:
         """MARCA UN USUARIO COMO ELIMINADO Y ANONIMIZA SUS DATOS PERSONALES TRAS VALIDAR ESTADIAS Y RESERVAS."""
         import datetime
 
-        user = db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
+        user = UserRepository.get_active_by_id(db, user_id)
         if not user:
             return False
 
         # 1. VALIDAR SI TIENE RESERVAS ACTIVAS O PENDIENTES
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        active_res = db.query(models.Reservation).filter(
-            models.Reservation.user_id == user_id,
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
-            models.Reservation.fecha_fin >= now_str
-        ).first()
+        active_res = ReservationRepository.get_active_by_user(db, user_id, now_str)
         if active_res:
             raise HTTPException(status_code=400, detail="No se puede eliminar un usuario con reservas activas o pendientes.")
 
         # 2. VALIDAR SI ALGUNO DE SUS VEHICULOS ESTA DENTRO DEL ESTACIONAMIENTO
-        user_vehicles = db.query(models.Vehicle.patente).filter(models.Vehicle.user_id == user_id).all()
-        pats = [v.patente.upper().replace(' ', '') for v in user_vehicles if v.patente]
+        patentes_usuario = VehicleRepository.get_plates_by_user(db, user_id)
+        pats = [v.upper().replace(' ', '') for v in patentes_usuario if v]
         if user.patente and user.patente.upper().replace(' ', '') not in pats:
             pats.append(user.patente.upper().replace(' ', ''))
 
@@ -129,18 +120,10 @@ class UserService:
     @staticmethod
     def _last_entry_active(db: Session, patente_clean: str):
         """RETORNA (last_entry, subsequent_exit) SI HAY ESTADÍA ABIERTA, None CASO CONTRARIO."""
-        from sqlalchemy import func
-        last_entry = db.query(models.AccessLog).filter(
-            func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == patente_clean,
-            models.AccessLog.tipo_evento == AccessEventType.ENTRADA.value
-        ).order_by(models.AccessLog.id.desc()).first()
+        last_entry = AccessRepository.get_last_entry_clean(db, patente_clean)
         if not last_entry:
             return None
-        subsequent_exit = db.query(models.AccessLog).filter(
-            func.replace(func.upper(models.AccessLog.patente_detectada), ' ', '') == patente_clean,
-            models.AccessLog.tipo_evento == AccessEventType.SALIDA.value,
-            models.AccessLog.id > last_entry.id
-        ).first()
+        subsequent_exit = AccessRepository.get_exit_after_clean(db, patente_clean, last_entry.id)
         return (last_entry, subsequent_exit)
 
     # --- VEHÍCULOS ---
@@ -148,13 +131,12 @@ class UserService:
     @staticmethod
     def list_vehicles(db: Session, user_id: int):
         """LISTA TODOS LOS VEHÍCULOS VINCULADOS A LA CUENTA."""
-        return db.query(models.Vehicle).filter(models.Vehicle.user_id == user_id).all()
+        return VehicleRepository.get_by_user(db, user_id)
 
     @staticmethod
     def add_vehicle(db: Session, user, patente, marca_modelo, tipo="Auto"):
         """VINCULA UN NUEVO VEHÍCULO VALIDANDO BLOQUEO, TIPO Y FORMATO DE PATENTE."""
         import re
-        from sqlalchemy import func
 
         if user.is_blocked:
             raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
@@ -169,7 +151,7 @@ class UserService:
         if not old_format and not new_format and not moto_format:
             raise HTTPException(status_code=400, detail="Formato de patente inválido.")
 
-        existing = db.query(models.Vehicle).filter(func.replace(models.Vehicle.patente, ' ', '') == p_clean).first()
+        existing = VehicleRepository.get_by_normalized_patente(db, p_clean)
         if existing:
             raise HTTPException(status_code=400, detail="Esta patente ya se encuentra registrada en el sistema")
 
@@ -198,26 +180,19 @@ class UserService:
     @staticmethod
     def set_favorite_vehicle(db: Session, user, patente):
         """MARCA UN VEHÍCULO COMO FAVORITO (TOGGLE: SI YA ESTÁ MARCADO LO DESMARCA)."""
-        from sqlalchemy import func
         p_clean = normalize_plate(patente)
 
         if user.is_blocked:
             raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
 
-        vehicle = db.query(models.Vehicle).filter(
-            func.replace(models.Vehicle.patente, ' ', '') == p_clean,
-            models.Vehicle.user_id == user.id
-        ).first()
+        vehicle = VehicleRepository.get_by_user_and_normalized_patente(db, user.id, p_clean)
         if not vehicle:
             raise HTTPException(status_code=404, detail="Vehículo no encontrado en su flota")
 
         if vehicle.is_favorite:
             vehicle.is_favorite = False
         else:
-            db.query(models.Vehicle).filter(
-                models.Vehicle.user_id == user.id,
-                models.Vehicle.is_favorite == True
-            ).update({"is_favorite": False})
+            VehicleRepository.unset_favorite_for_user(db, user.id)
             vehicle.is_favorite = True
 
         db.commit()
@@ -227,26 +202,18 @@ class UserService:
     def delete_vehicle(db: Session, user, patente):
         """DESVINCULA UN VEHÍCULO VALIDANDO RESERVAS, ESTADÍAS Y DEUDAS."""
         import datetime
-        from sqlalchemy import func
         p_clean = normalize_plate(patente)
 
         if user.is_blocked:
             raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
 
-        vehicle = db.query(models.Vehicle).filter(
-            func.replace(models.Vehicle.patente, ' ', '') == p_clean,
-            models.Vehicle.user_id == user.id
-        ).first()
+        vehicle = VehicleRepository.get_by_user_and_normalized_patente(db, user.id, p_clean)
         if not vehicle:
             raise HTTPException(status_code=404, detail="Vehículo no encontrado en su flota")
 
         # 1. VALIDAR RESERVAS ACTIVAS O PENDIENTES
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        active_res = db.query(models.Reservation).filter(
-            func.replace(func.upper(models.Reservation.patente), ' ', '') == p_clean,
-            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
-            models.Reservation.fecha_fin >= now_str
-        ).first()
+        active_res = ReservationRepository.get_active_by_clean_patente(db, p_clean, now_str)
         if active_res:
             raise HTTPException(status_code=400, detail="No se puede eliminar un vehículo que posee reservas activas o pendientes.")
 
@@ -261,19 +228,11 @@ class UserService:
                 raise HTTPException(status_code=400, detail="No se puede eliminar un vehículo con deudas o estadías impagas pendientes.")
 
         # REASIGNAR FAVORITO O PATENTE PRINCIPAL SI CORRESPONDE
-        if vehicle.is_favorite:
-            other = db.query(models.Vehicle).filter(
-                models.Vehicle.user_id == user.id,
-                models.Vehicle.id != vehicle.id
-            ).first()
-            if other:
-                other.is_favorite = True
+        other = VehicleRepository.get_other_by_user(db, user.id, vehicle.id)
+        if vehicle.is_favorite and other:
+            other.is_favorite = True
 
         if user.patente and normalize_plate(user.patente) == p_clean:
-            other = db.query(models.Vehicle).filter(
-                models.Vehicle.user_id == user.id,
-                models.Vehicle.id != vehicle.id
-            ).first()
             user.patente = other.patente if other else None
 
         patente_borrada = vehicle.patente

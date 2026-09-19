@@ -1,14 +1,17 @@
 import datetime
 import math
 from typing import Dict
-from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import func, and_, or_
+from sqlalchemy.orm import Session
 import models
 from core.config import settings
 from core.logger import get_logger
 from services.time_service import TimeService
-from models.enums import ReservationStatus, PaymentStatus, AccessEventType
+from models.enums import PaymentStatus, ReservationStatus
 from core.normalize import normalize_name
+from repositories.access_log_repository import AccessRepository
+from repositories.branch_repository import BranchRepository
+from repositories.reservation_repository import ReservationRepository
+from repositories.settings_repository import SettingsRepository
 
 logger = get_logger("PARKING_STATUS")
 
@@ -23,13 +26,7 @@ class OccupancyService:
         para descontar la plaza exclusiva de reservas en el dashboard sin depender del ALPR."""
         try:
             now_str = TimeService.now_str()
-            res = db.query(models.Reservation).filter(
-                models.Reservation.sucursal_nombre == sucursal_nombre,
-                models.Reservation.estado_pago == PaymentStatus.PAGADO,
-                models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
-                models.Reservation.fecha_inicio <= now_str,
-                models.Reservation.fecha_fin >= now_str
-            ).all()
+            res = ReservationRepository.get_paid_current_by_sucursal(db, sucursal_nombre, now_str)
         except Exception:
             logger.warning("[PARKING STATUS] Error calculando reservas vigentes", exc_info=True)
             return {"autos": 0, "motos": 0, "camionetas": 0}
@@ -102,18 +99,18 @@ class OccupancyService:
 
     @staticmethod
     def branch_by_normalized_name(db: Session, sucursal_norm: str):
-        return next((b for b in db.query(models.ParkingBranch).all()
+        return next((b for b in BranchRepository.get_all(db)
                      if normalize_name(b.nombre) == sucursal_norm), None)
 
     @staticmethod
     def aforo_by_normalized_name(db: Session, sucursal_norm: str):
-        return next((a for a in db.query(models.ParkingAforo).all()
+        return next((a for a in BranchRepository.get_all_aforos(db)
                      if a.sucursal and normalize_name(a.sucursal) == sucursal_norm), None)
 
     @staticmethod
     def calculate_branch_capacities(db: Session, branch: models.ParkingBranch) -> Dict:
         """Calcula capacidad y ocupación de sucursal unificando planta baja (ParkingAforo) y pisos elevados."""
-        a = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == branch.nombre).first()
+        a = BranchRepository.get_aforo_by_sucursal(db, branch.nombre)
         if not a and branch.nombre:
             a = OccupancyService.aforo_by_normalized_name(db, normalize_name(branch.nombre))
 
@@ -198,45 +195,23 @@ class OccupancyService:
         """Lista vehículos estacionados en la sede (o todas si admin global) con deuda calculada.
         Optimizado para unicidad y orden (una sola query por patente vía subconsulta)."""
         # 1. ENTRADAS MAS RECIENTES POR PATENTE EN LA SEDE (ID MAXIMO DE ENTRADA POR PATENTE)
-        subq = db.query(
-            models.AccessLog.patente_detectada,
-            func.max(models.AccessLog.id).label("max_id")
-        ).filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
-
-        if sucursal:
-            subq = subq.filter(models.AccessLog.sucursal == sucursal)
-
-        subq = subq.group_by(models.AccessLog.patente_detectada).subquery()
-
-        # 2. DETALLES DE ESAS ENTRADAS (CON EL PISO CARGADO EN LA MISMA QUERY)
-        entradas = db.query(models.AccessLog).options(
-            selectinload(models.AccessLog.floor)
-        ).join(
-            subq, models.AccessLog.id == subq.c.max_id
-        ).order_by(models.AccessLog.fecha_hora.desc()).all()
+        entradas = AccessRepository.get_current_entries(db, sucursal=sucursal)
 
         # 3. SALIDAS POSTERIORES POR (PATENTE, SUCURSAL): 1 SOLA QUERY AGRUPADA
         salida_max = {}
         if entradas:
             patentes = {e.patente_detectada for e in entradas}
             sucursales = {e.sucursal for e in entradas if e.sucursal}
-            rows = db.query(
-                models.AccessLog.patente_detectada,
-                models.AccessLog.sucursal,
-                func.max(models.AccessLog.id).label("max_salida_id")
-            ).filter(
-                models.AccessLog.tipo_evento == AccessEventType.SALIDA,
-                models.AccessLog.patente_detectada.in_(patentes),
-                models.AccessLog.sucursal.in_(sucursales)
-            ).group_by(models.AccessLog.patente_detectada, models.AccessLog.sucursal).all()
-            salida_max = {(p, s): m for p, s, m in rows}
+            salida_max = AccessRepository.get_exit_max_by_patente_sucursal(
+                db, list(patentes), list(sucursales)
+            )
 
         # 4. RESERVAS DE LAS ENTRADAS: 1 SOLA QUERY
         reservas = {}
         res_ids = [e.reserva_id for e in entradas if e.reserva_id]
         if res_ids:
             reservas = {
-                r.id: r for r in db.query(models.Reservation).filter(models.Reservation.id.in_(res_ids)).all()
+                r.id: r for r in ReservationRepository.get_by_ids(db, res_ids)
             }
 
         # 5. TARIFAS HORARIAS PRECARGADAS (EVITA 1 QUERY A SETTINGS POR VEHICULO)
@@ -247,17 +222,9 @@ class OccupancyService:
         }
         sucursales = {e.sucursal for e in entradas if e.sucursal}
         todas_claves = [c for pair in RATE_CLAVES.values() for c in pair]
-        rate_cond = models.Settings.clave.in_(todas_claves)
-        if sucursales:
-            rate_cond = and_(
-                models.Settings.clave.in_(todas_claves),
-                or_(models.Settings.sucursal.in_(sucursales), models.Settings.sucursal.is_(None))
-            )
-        else:
-            rate_cond = and_(models.Settings.clave.in_(todas_claves), models.Settings.sucursal.is_(None))
         rate_map = {
             (r.clave, r.sucursal): float(r.valor)
-            for r in db.query(models.Settings).filter(rate_cond).all()
+            for r in SettingsRepository.get_rates_by_claves(db, todas_claves, sucursales)
         }
 
         def rate30_for(suc, tipo):

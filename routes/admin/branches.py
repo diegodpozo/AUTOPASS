@@ -8,7 +8,8 @@ import models, schemas
 from core.database import get_db
 from core.security import get_super_admin, get_local_manager
 from services.branch_service import BranchService
-from models.enums import ReservationStatus
+from repositories.branch_repository import BranchRepository
+from repositories.reservation_repository import ReservationRepository
 
 router = APIRouter()
 
@@ -22,7 +23,7 @@ def list_branches(db: Session = Depends(get_db)):
 @router.post("/{branch_id}/floors", response_model=schemas.FloorResponse)
 def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """AGREGA UN NUEVO PISO A LA SUCURSAL."""
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
@@ -55,14 +56,14 @@ def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(g
 @router.delete("/floors/{floor_id}")
 def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ELIMINA UN PISO DE LA SUCURSAL TRAS VALIDAR QUE NO HAYA VEHICULOS ESTACIONADOS."""
-    floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
+    floor = BranchRepository.get_floor_by_id(db, floor_id)
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
     if (floor.ocupacion_actual or 0) > 0 or (floor.ocupacion_motos or 0) > 0 or (floor.ocupacion_camionetas or 0) > 0 or (getattr(floor, 'ocupacion_reservas', 0) or 0) > 0:
         raise HTTPException(status_code=400, detail="No se puede eliminar un piso que posee vehículos actualmente estacionados en él.")
 
     branch_id = floor.branch_id
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    branch = BranchRepository.get_by_id(db, branch_id)
 
     db.delete(floor)
     db.commit()
@@ -88,7 +89,7 @@ def update_floor_capacity(
     admin: models.User = Depends(get_local_manager)
 ):
     """ACTUALIZA LA CAPACIDAD DE UN PISO VALIDANDO QUE SEA MAYOR O IGUAL A LA OCUPACION ACTUAL."""
-    floor = db.query(models.ParkingFloor).filter(models.ParkingFloor.id == floor_id).first()
+    floor = BranchRepository.get_floor_by_id(db, floor_id)
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     
     if cap_autos < (floor.ocupacion_actual or 0):
@@ -145,7 +146,7 @@ async def create_branch(
     admin: models.User = Depends(get_super_admin)
 ):
     nombre_clean = nombre.strip()
-    existing = db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre_clean).first()
+    existing = BranchRepository.get_by_name(db, nombre_clean)
     if existing:
         raise HTTPException(status_code=400, detail="La sucursal ya existe")
     
@@ -179,7 +180,7 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.U
     """ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS."""
     import datetime
 
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
@@ -189,11 +190,7 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.U
 
     # 2. VALIDAR RESERVAS ACTIVAS O PENDIENTES
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    active_res = db.query(models.Reservation).filter(
-        models.Reservation.sucursal_nombre == branch.nombre,
-        models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
-        models.Reservation.fecha_fin >= now_str
-    ).first()
+    active_res = ReservationRepository.get_active_by_sucursal(db, branch.nombre, now_str)
     if active_res:
         raise HTTPException(status_code=400, detail="No se puede eliminar una sucursal con reservas activas o pendientes.")
 
@@ -226,7 +223,7 @@ async def update_branch(
     admin: models.User = Depends(get_super_admin)
 ):
     """ACTUALIZA LA INFORMACION DE UNA SUCURSAL CON SOPORTE PARA NUEVO LOGO."""
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     
@@ -272,7 +269,7 @@ async def update_branch(
 @router.post("/branches/{branch_id}/toggle")
 def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """ACTIVA O SUSPENDE UNA SUCURSAL VALIDANDO QUE NO HAYA VEHICULOS EN SU INTERIOR AL DESACTIVAR."""
-    branch = db.query(models.ParkingBranch).filter(models.ParkingBranch.id == branch_id).first()
+    branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     

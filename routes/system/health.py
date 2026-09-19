@@ -10,6 +10,8 @@ from core.config import settings
 from services.time_service import TimeService
 from routes.system.common import ALPR_HEARTBEATS, normalize_system_name
 from models.enums import UserRole
+from repositories.camera_repository import CameraRepository
+from repositories.system_repository import SystemRepository
 
 router = APIRouter()
 
@@ -28,7 +30,7 @@ def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_o
         for gate, ts in ALPR_HEARTBEATS.items():
             alpr_status[gate] = "ONLINE" if (now - ts).total_seconds() < 90 else "OFFLINE"
     else:
-        cameras = db.query(models.ParkingCamera).filter(models.ParkingCamera.sucursal == staff.sucursal).all()
+        cameras = [c for c in CameraRepository.get_all(db) if c.sucursal == staff.sucursal]
         if not cameras:
             prefix = normalize_system_name(staff.sucursal)
             gates_to_check = [f"{prefix}_ENTRADA", f"{prefix}_SALIDA"]
@@ -59,12 +61,7 @@ def alpr_heartbeat(gate_id: str):
 @router.post("/reset")
 def reset_system(db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     IMAGE_DIR = settings.IMAGE_DIR
-    db.query(models.AccessLog).delete()
-    db.query(models.ParkingAforo).delete()
-    db.query(models.Reservation).delete()
-    db.query(models.Vehicle).delete()
-    db.query(models.User).filter(models.User.rol == UserRole.USER.value).delete()
-    db.commit()
+    SystemRepository.reset_all_data(db)
     if os.path.exists(IMAGE_DIR):
         for f in os.listdir(IMAGE_DIR):
             try:

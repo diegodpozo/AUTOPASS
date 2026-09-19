@@ -5,10 +5,14 @@ import models
 
 from core.config import settings
 from services.time_service import TimeService
+from repositories.access_log_repository import AccessRepository
+from repositories.reservation_repository import ReservationRepository
+from repositories.settings_repository import SettingsRepository
+from repositories.vehicle_repository import VehicleRepository
 
 # --- SERVICIO DE FACTURACION Y PUNTOS ---
 
-from models.enums import VehicleType, AccessEventType
+from models.enums import VehicleType
 
 class BillingService:
     @staticmethod
@@ -36,19 +40,9 @@ class BillingService:
         elif tipo_vehiculo == VehicleType.CAMIONETA:
             clave = f"{clave}_camioneta"
         
-        # BUSCAR TARIFA POR SEDE
-        setting = db.query(models.Settings).filter(
-            models.Settings.clave == clave,
-            models.Settings.sucursal == sucursal
-        ).first()
-        
-        #FALLBACK UN GLOBAL SI NO HAY SEDE ESPECIFICA
-        if not setting and sucursal:
-            setting = db.query(models.Settings).filter(
-                models.Settings.clave == clave,
-                models.Settings.sucursal == None
-            ).first()
-            
+        # BUSCAR TARIFA POR SEDE (CON FALLBACK A GLOBAL DENTRO DEL REPOSITORIO)
+        setting = SettingsRepository.get_by_clave(db, clave, sucursal=sucursal)
+
         val = float(setting.valor) if setting else settings.DEFAULT_BASE_RATE
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
@@ -68,17 +62,8 @@ class BillingService:
         elif tipo_vehiculo == "Camioneta":
             clave = "precio_hora_camioneta"
 
-        setting = db.query(models.Settings).filter(
-            models.Settings.clave == clave,
-            models.Settings.sucursal == sucursal
-        ).first()
-        
-        if not setting and sucursal:
-            setting = db.query(models.Settings).filter(
-                models.Settings.clave == clave,
-                models.Settings.sucursal == None
-            ).first()
-            
+        setting = SettingsRepository.get_by_clave(db, clave, sucursal=sucursal)
+
         val = float(setting.valor) if setting else settings.DEFAULT_HOURLY_RATE
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
@@ -98,16 +83,7 @@ class BillingService:
         elif tipo_vehiculo == "Camioneta":
             clave = "precio_30min_camioneta"
 
-        setting = db.query(models.Settings).filter(
-            models.Settings.clave == clave,
-            models.Settings.sucursal == sucursal
-        ).first()
-
-        if not setting and sucursal:
-            setting = db.query(models.Settings).filter(
-                models.Settings.clave == clave,
-                models.Settings.sucursal == None
-            ).first()
+        setting = SettingsRepository.get_by_clave(db, clave, sucursal=sucursal)
 
         # FALLBACK: MITAD DE LA TARIFA POR HORA
         val = float(setting.valor) if setting else (BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo) / 2)
@@ -172,7 +148,7 @@ class BillingService:
         log.fecha_pago = datetime.datetime.now().isoformat()
 
         # ACREDITACION DE BENEFICIOS POR FIDELIZACION
-        vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == log.patente_detectada).first()
+        vehiculo = VehicleRepository.get_by_patente(db, log.patente_detectada)
         puntos_ganados = BillingService.calculate_points(monto)
         if vehiculo and vehiculo.owner:
             vehiculo.owner.puntos_acumulados += puntos_ganados
@@ -218,10 +194,7 @@ class BillingService:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
         from models.enums import ReservationStatus, PaymentStatus
 
-        log = db.query(models.AccessLog).filter(
-            models.AccessLog.patente_detectada == plate,
-            models.AccessLog.tipo_evento == AccessEventType.ENTRADA
-        ).order_by(models.AccessLog.id.desc()).first()
+        log = AccessRepository.get_last_entry_by_patente(db, plate)
 
         if not log:
             return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}
@@ -229,7 +202,7 @@ class BillingService:
         # SI YA ESTA PAGADO, VERIFICAR SI TIENE RESERVA VENCIDA (EXTRA TIME)
         if log.pago_confirmado:
             if log.reserva_id:
-                r = db.query(models.Reservation).filter(models.Reservation.id == log.reserva_id).first()
+                r = ReservationRepository.get_by_id(db, log.reserva_id)
                 if r:
                     now_str = TimeService.now_str()
                     if not (r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str):
@@ -242,7 +215,7 @@ class BillingService:
                     log.metodo_pago = metodo
                     
                     puntos_ganados = 0
-                    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == plate).first()
+                    vehiculo = VehicleRepository.get_by_patente(db, plate)
                     if vehiculo and vehiculo.owner:
                         puntos_ganados = BillingService.calculate_points(monto_real)
                         vehiculo.owner.puntos_acumulados += puntos_ganados
@@ -260,7 +233,7 @@ class BillingService:
         motivo_puntos = f"Estadía abonada: {plate}"
         now_str = TimeService.now_str()
         if log.reserva_id:
-            r = db.query(models.Reservation).filter(models.Reservation.id == log.reserva_id).first()
+            r = ReservationRepository.get_by_id(db, log.reserva_id)
             if r and r.estado_pago != PaymentStatus.PAGADO:
                 # RESERVA IMPAGA QUE YA INGRESÓ: COBRAR MONTO DE LA RESERVA + EXTRA ACUMULADO SI VENCIÓ
                 monto_real = (r.monto_total or 0)
@@ -286,7 +259,7 @@ class BillingService:
         log.fecha_pago = datetime.datetime.now().isoformat()
         
         # ACREDITACION DE BENEFICIOS POR FIDELIZACION Y NOTIFICACION
-        vehiculo = db.query(models.Vehicle).filter(models.Vehicle.patente == plate).first()
+        vehiculo = VehicleRepository.get_by_patente(db, plate)
         puntos_ganados = 0
         if vehiculo and vehiculo.owner:
             puntos_ganados = BillingService.calculate_points(monto_real)

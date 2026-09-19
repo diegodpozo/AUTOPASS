@@ -79,6 +79,79 @@ class ReservationRepository:
         ).all()
 
     @staticmethod
+    def get_paid_current_by_sucursal(db: Session, sucursal_nombre: str, now_str: str):
+        """RESERVAS PAGADAS EN VIGENCIA (ACTIVAS O PENDIENTES CON SU HORARIO ACTUAL) DE UNA SUCURSAL."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.sucursal_nombre == sucursal_nombre,
+            models.Reservation.estado_pago == PaymentStatus.PAGADO,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.fecha_inicio <= now_str,
+            models.Reservation.fecha_fin >= now_str
+        ).all()
+
+    @staticmethod
+    def get_pending_reminders(db: Session, inicio_min: str, inicio_max: str):
+        """RESERVAS VIGENTES SIN RECORDATORIO ENVIADO CUYO INICIO CAE DENTRO DE LA VENTANA DE AVISO."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.fecha_inicio >= inicio_min,
+            models.Reservation.fecha_inicio <= inicio_max,
+            models.Reservation.recordatorio_confirmado == False
+        ).all()
+
+    @staticmethod
+    def get_pending_started(db: Session, now_str: str):
+        """RESERVAS PENDIENTES CUYO HORARIO DE INICIO YA LLEGO (Y LA FECHA FIN AUN NO)."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
+            models.Reservation.fecha_inicio <= now_str,
+            models.Reservation.fecha_fin >= now_str
+        ).all()
+
+    @staticmethod
+    def get_unpaid_overdue(db: Session, fecha_limite: str):
+        """RESERVAS IMPAGAS VIGENTES CUYO INICIO SUPERO LA GRACIA DE CANCELACION AUTOMATICA."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.estado_pago == PaymentStatus.PENDIENTE,
+            models.Reservation.fecha_inicio < fecha_limite
+        ).all()
+
+    @staticmethod
+    def get_active_by_user(db: Session, user_id: int, now_str: str) -> models.Reservation:
+        """RESERVA VIGENTE (PENDIENTE/ACTIVA Y FECHA FIN AUN NO VENCIDA) DE UN USUARIO."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.user_id == user_id,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.fecha_fin >= now_str
+        ).first()
+
+    @staticmethod
+    def get_active_by_clean_patente(db: Session, patente_clean: str, now_str: str) -> models.Reservation:
+        """RESERVA VIGENTE (PENDIENTE/ACTIVA Y FECHA FIN AUN NO VENCIDA) DE UNA PATENTE SIN ESPACIOS."""
+        return db.query(models.Reservation).filter(
+            func.replace(func.upper(models.Reservation.patente), ' ', '') == patente_clean,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.fecha_fin >= now_str
+        ).first()
+
+    @staticmethod
+    def get_active_by_sucursal(db: Session, sucursal_nombre: str, now_str: str) -> models.Reservation:
+        """RESERVA VIGENTE (PENDIENTE/ACTIVA Y FECHA FIN AUN NO VENCIDA) EN UNA SUCURSAL."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.sucursal_nombre == sucursal_nombre,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
+            models.Reservation.fecha_fin >= now_str
+        ).first()
+
+    @staticmethod
+    def get_by_ids(db: Session, res_ids) -> list:
+        """OBTIENE LAS RESERVAS CUYOS IDENTIFICADORES ESTAN EN LA LISTA."""
+        if not res_ids:
+            return []
+        return db.query(models.Reservation).filter(models.Reservation.id.in_(res_ids)).all()
+
+    @staticmethod
     def get_by_id(db: Session, res_id: int, user_id: int = None):
         """BUSCA UNA RESERVA POR ID; si `user_id` se pasa, la filtra por dueño."""
         q = db.query(models.Reservation).filter(models.Reservation.id == res_id)

@@ -17,6 +17,7 @@ from repositories.access_log_repository import AccessRepository
 from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
 from repositories.vehicle_repository import VehicleRepository
+from repositories.user_repository import UserRepository
 
 logger = get_logger("AccessService")
 
@@ -236,10 +237,7 @@ class AccessService(AccessOccupancyMixin):
             gate_id = data.gate_id.upper() if data.gate_id else "ENTRADA"
             is_entry = "EGRESO" not in gate_id and "SALIDA" not in gate_id
             
-            ultimo = db.query(models.AccessLog).filter(
-                models.AccessLog.patente_detectada == patente_qr,
-                models.AccessLog.sucursal == sucursal
-            ).order_by(models.AccessLog.id.desc()).first()
+            ultimo = AccessRepository.get_last_detected_by_patente_and_sucursal(db, patente_qr, sucursal)
 
             if is_entry:
                 if ultimo and ultimo.tipo_evento == AccessEventType.ENTRADA:
@@ -485,7 +483,7 @@ class AccessService(AccessOccupancyMixin):
         try:
             vehicle = VehicleRepository.get_by_normalized_patente(db, p)
             if vehicle and vehicle.user_id:
-                owner = db.query(models.User).filter(models.User.id == vehicle.user_id).first()
+                owner = UserRepository.get_by_id(db, vehicle.user_id)
                 if owner and owner.rol == models.enums.UserRole.USER:
                     UserNotificationService.create_notification(
                         db, user_id=owner.id,

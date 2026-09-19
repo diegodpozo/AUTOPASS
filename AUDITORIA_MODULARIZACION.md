@@ -13,13 +13,13 @@
 |---|---|---|
 | Separación de capas backend | Aceptable | Sin acoplamiento circular, pero rutas con mucha lógica y consultas directas |
 | Frontend Bridge Pattern | Cumplido | 0 asignaciones `window.*` en módulos (76 migradas a puentes en v9.21.0); doble instancia de `notifications.js` [resuelta en v9.21.0] |
-| Repositorios | Parcial | Solo 2 repos, usados por 2 servicios; el acceso a datos sigue descentralizado |
+| Repositorios | Cumplido | 0 consultas `db.query(...)` en `services/` y `routes/` [v9.22.0]: 16 repositorios como única puerta de acceso a datos (ver §2.4) |
 | Enums / Tipado | Parcial | Enums implementados, con strings mágicos residuales en 3 puntos |
 | Tamaño de clases/módulos | Parcial | Backend saneado: `access_service.py` (607→499) + `access_occupancy.py` (80), `report_service.py` (581→639 tras helpers) evaluado y no descompuesto; megamódulos JS partidos en submódulos temáticos [v9.22.0]: `tour.js` (1712→836 + `tour-steps.js` 897), `dashboard-reservations.js` (1291→fachada 31 + list 267 + form 1030), `reservas-form.js` (1262→fachada 681 + state 47 + price 159 + slot 494). `reservation_service.py` descompuesto [v9.21.0]. Siguen como candidatos (prioridad baja): `landing-map.js`, `admin-tour.js`, `notifications.js` |
 | Lógica inline en templates | Cumplido | Lógica de `reset_password.html` y `estadisticas_ocr.html` extraída a módulos [v9.22.0] |
 | Config / Hardcoding | Correcto | Configuración centralizada en `core/config.py` |
 
-**Puntaje de salud de modularización: 8.5 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes, +0.5 por extraer la lógica inline de `reset_password.html` y `estadisticas_ocr.html` a módulos en v9.22.0, +0.5 por partir los tres megamódulos JS en submódulos temáticos en v9.22.0).
+**Puntaje de salud de modularización: 9.5 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes, +0.5 por extraer la lógica inline de `reset_password.html` y `estadisticas_ocr.html` a módulos en v9.22.0, +0.5 por partir los tres megamódulos JS en submódulos temáticos en v9.22.0, +1.0 por migrar los últimos 77 `db.query` de las rutas a repositorios, dejando `services/` y `routes/` con 0 consultas directas [v9.22.0]).
 
 ---
 
@@ -32,7 +32,7 @@ main.py
  └─ routes/* (APIRouter por dominio)
      ├─ core/          -> config, security, database, mqtt, seed, limiter, logger, time, normalize, cache   [OK]
      ├─ services/*     -> lógica de negocio (15 servicios)                                                    [OK]
-     ├─ repositories/  -> 2 repos usados SOLO por reservation_service y user_service                         [PARCIAL]
+├─ repositories/  -> única puerta de acceso a datos (16 repos)                                                                 [OK]
      ├─ models/        -> 8 modelos + enums                                                                  [OK]
      └─ schemas/       -> validación Pydantic por dominio                                                    [OK]
 ```
@@ -42,9 +42,9 @@ main.py
 - **[OK]** **`core/`** concentra la infraestructura (11 archivos).
 - **[OK]** **`schemas/`** separada por dominio (auth, user, reservation, parking, support, notification, mercadopago) con `validators.py` compartido.
 
-### 2.2 VIOLACIÓN ALTA: Rutas gordas (mandato "rutas delgadas")
+### 2.2 Rutas gordas (mandato "rutas delgadas") — **[RESUELTO v9.22.0]**
 
-**~77 consultas directas `db.query(...)` + 4 `SessionLocal()`** repartidas en 17 archivos de `routes/` (revisión v9.21.0; Fases 1-4 aplicadas: brancheos, vehículos, ocupación y reservas delegados a servicios). La capa de transporte está hablando con la BD y ejecutando lógica de negocio en lugar de delegar a servicios.
+**Estado actual:** 0 consultas `db.query(...)` en `services/` y `routes/`. La capa de transporte delega todo acceso a datos a los repositorios (ver §2.4). La tabla siguiente documenta el **baseline previo** (revisión v9.21.0) que motivó la migración: **77 consultas directas + 4 `SessionLocal()`** repartidas en 17 archivos de `routes/`.
 
 | Archivo (ruta) | `db.query` | Lógica de negocio inline |
 |---|---|---|
@@ -67,7 +67,9 @@ main.py
 | `routes/user/mercadopago.py` | 1 | Confirmación de pago MP |
 | **Total** | **77** | |
 
-**Consecuencias:** duplicación de consultas (repos no se usan), riesgo de inconsistencia, tests difíciles de aislar y desvío del mandato arquitectónico V9.6.0.
+**Migración realizada (v9.22.0, working tree):** los 77 `db.query` de rutas fueron mapeados a métodos de repositorio (Ver §2.4): conjuntos por sucursal/estado en `PromotionRepository`/`SettingsRepository`/`CameraRepository`, CRUD por id en `BranchRepository.get_by_id`/`CameraRepository.get_by_id`/`UserRepository.get_active_by_id`/`PromotionRepository.get_active_by_id`/`RedemptionRepository.get_by_id_and_user`, estadías y pagos en `AccessRepository` (`get_last_entries_by_patentes`, `get_exit_times_by_patentes`, `get_paid_logs_by_patentes`), sesiones multi-dispositivo en `SessionRepository`, historial de puntos en `PointsRepository`, reset destructivo en `SystemRepository`, y el bulk-update de desasociación de tickets en `RedemptionRepository.unlink_promotion`. **152 tests en verde.**
+
+**Consecuencias:** duplicación de consultas (repos no se usan), riesgo de inconsistencia, tests difíciles de aislar y desvío del mandato arquitectónico V9.6.0. — *resueltas por la migración.*
 
 ### 2.3 God services (servicios excesivamente grandes)
 
@@ -83,13 +85,10 @@ main.py
 
 **Evaluación/sección descompuesta posterior (working tree, item 8):** `access_service.py` quedó como **fachada de 499 líneas** (`class AccessService(AccessOccupancyMixin)`): extraído `services/access_occupancy.py` (80 líneas: normalización de tipo, `_inc/_dec_reserva_occ`, `_asignar_plaza`/`_liberar_plaza` y `_capacidad_por_tipo`, que reemplazan los bloques duplicados de incremento/decremento de ocupación que aparecían **7 veces** en los flujos ALPR/QR/manuales). Además se deduplicaron 3 bloques repetidos (resolución de sucursal por `gate_id`, detección de "ingreso sin salida posterior", get-or-create de aforo) y el acceso a datos pasó de 13 consultas directas en el dominio a **solo 2** (último registro de QR por `patente_detectada` y owner de `cancel_stay`; semántica distinta a los repos existentes), usando `AccessRepository`, `BranchRepository`, `ReservationRepository` y `VehicleRepository`. **`report_service.py` se evaluó y NO se descompone en módulos**: es dimensionalmente cohesivo (cada método es una query analítica read-only distinta; `get_financial_summary` es un único pipeline con estado local compartido). Se aplicó solo la extracción del helper de módulo `_branch_filter` (retira el filtro de aislamiento por sucursal duplicado en **13 sitios**). **152 tests en verde y `py_compile` OK.**
 
-### 2.4 Repositorios subutilizados
+### 2.4 Repositorios subutilizados — **[RESUELTO v9.22.0]**
 
-- Existen 6 repositorios: `user_repository.py` (30 líneas), `reservation_repository.py` (~150 líneas), `vehicle_repository.py`, `access_log_repository.py`, `redemption_repository.py` y `branch_repository.py`.
-- **6 servicios** los importan; ninguna ruta los usa; el acceso a datos sigue mayormente en las rutas (ver 2.2).
-- La capa `repositories/` debería ser la única puerta de acceso a datos; hoy es un "casi esquema".
-- **[PARCIAL v9.21.0]** El dominio de **reservas** quedó con acceso a datos 100% en repositorios: `ReservationRepository` (overlap, vencidas, expiradas, filtrado admin, stats), `VehicleRepository`, `UserRepository.get_active_by_id`, `AccessRepository`, `RedemptionRepository` y `BranchRepository`. `availability.py`, `payments.py` y el fachada tienen **0 `db.query(models.*)`**. Pendiente: otros servicios (`user_service`, `branch_service`, `access_service`, etc.) aún consultan datos directamente.
-- **[working tree]** El dominio de **accesos** también quedó con acceso a datos en repositorios: `access_service.py` baja de 13 consultas directas a **2** (todas a `AccessRepository`/`BranchRepository`/`ReservationRepository`/`VehicleRepository`); solo quedan el último registro QR por `patente_detectada` y el owner de `cancel_stay`, por semántica distinta a los repos existentes.
+- Estado inicial (v9.20.0): existían 6 repositorios usados por 6 servicios; ninguna ruta los usaba; el acceso a datos estaba mayormente en las rutas (ver 2.2).
+- **[CUMPLIDO v9.22.0]** Los **16 repositorios** (`user`, `reservation`, `vehicle`, `branch`, `access_log`, `redemption`, `notification`, `support`, `settings`, `mercadopago`, `report`, `promotion`, `camera`, `points`, `session` y `system`) son hoy la **única puerta de acceso a datos**: `services/` y `routes/` tienen **0 `db.query(...)`** y `core/` + `scripts/` quedan fuera del alcance (infra/seed/migraciones). Cada repositorio encapsula lecturas y escrituras de su dominio, incluidas operaciones bulk que antes eran inline en rutas/servicios (`BranchRepository.propagate_rename` 8 tablas, `RedemptionRepository.unlink_promotion`, `UserRepository.unset_favorite_for_user` (lote), `NotificationRepository.mark_ticket_read_for_user`, `SystemRepository.reset_all_data`). **152 tests en verde.**
 
 ### 2.5 Strings mágicos vs Enums — **[RESUELTO v9.21.0]**
 

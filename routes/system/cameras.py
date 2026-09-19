@@ -13,6 +13,9 @@ from core.security import get_operational_user
 from core.logger import get_logger
 from routes.system.common import CAMERA_PROCESSES, CameraConfig, normalize_system_name
 from routes.system.common import manager as video_manager
+from repositories.camera_repository import CameraRepository
+from repositories.settings_repository import SettingsRepository
+from repositories.branch_repository import BranchRepository
 
 logger = get_logger("Cameras")
 
@@ -63,9 +66,7 @@ def get_camera_config(gate_id: str, db: Session = Depends(get_db), staff: models
         if branch_prefix != normalize_system_name(staff.sucursal):
             raise HTTPException(status_code=403, detail="No tenés acceso a esta configuración")
              
-    setting = db.query(models.Settings).filter(
-        models.Settings.clave == f"CAMERA_SOURCE_{gate_id}"
-    ).first()
+    setting = SettingsRepository.get_by_clave(db, f"CAMERA_SOURCE_{gate_id}")
     
     source = setting.valor_str if setting else "0"
     is_running = gate_id in CAMERA_PROCESSES and CAMERA_PROCESSES[gate_id].poll() is None
@@ -80,9 +81,7 @@ def set_camera_config(config: CameraConfig, db: Session = Depends(get_db), staff
         if not gate_id.startswith(branch_prefix):
             raise HTTPException(status_code=403, detail="No tenés acceso a esta configuración")
             
-    setting = db.query(models.Settings).filter(
-        models.Settings.clave == f"CAMERA_SOURCE_{gate_id}"
-    ).first()
+    setting = SettingsRepository.get_by_clave(db, f"CAMERA_SOURCE_{gate_id}")
     
     if not setting:
         setting = models.Settings(clave=f"CAMERA_SOURCE_{gate_id}", valor_str=config.source, sucursal=staff.sucursal)
@@ -105,7 +104,7 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
         if gate_id in CAMERA_PROCESSES and CAMERA_PROCESSES[gate_id].poll() is None:
             return {"status": "error", "message": "Ya está en ejecución"}
             
-        setting = db.query(models.Settings).filter(models.Settings.clave == f"CAMERA_SOURCE_{gate_id}").first()
+        setting = SettingsRepository.get_by_clave(db, f"CAMERA_SOURCE_{gate_id}")
         source = setting.valor_str if setting else "0"
         # El ALPR corre en la misma máquina que el backend: conectar por localhost
         # (no a través de un túnel) para evitar el doble-hop de los frames de video.
@@ -157,10 +156,10 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
 
 @router.get("/cameras", response_model=List[schemas.CameraResponse])
 def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    query = db.query(models.ParkingCamera)
+    query = CameraRepository.get_all(db)
     if staff.rol != UserRole.ADMIN and staff.sucursal:
-        query = query.filter(models.ParkingCamera.sucursal == staff.sucursal)
-    cameras = query.all()
+        query = [c for c in query if c.sucursal == staff.sucursal]
+    cameras = query
     res = []
     for c in cameras:
         norm_suc = normalize_system_name(c.sucursal) if c.sucursal else "GLOBAL"
@@ -202,7 +201,7 @@ def create_camera(data: schemas.CameraCreate, db: Session = Depends(get_db), sta
 
 @router.put("/cameras/{camera_id}", response_model=schemas.CameraResponse)
 def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
+    camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
     if staff.rol != UserRole.ADMIN and camera.sucursal != staff.sucursal:
@@ -232,7 +231,7 @@ def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depe
 
 @router.delete("/cameras/{camera_id}")
 def delete_camera(camera_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
+    camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
     if staff.rol != UserRole.ADMIN and camera.sucursal != staff.sucursal:
@@ -258,7 +257,7 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db), staff: models.U
 
 @router.post("/cameras/{camera_id}/control/{action}")
 def control_dynamic_camera_service(camera_id: int, action: str, request: Request, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    camera = db.query(models.ParkingCamera).filter(models.ParkingCamera.id == camera_id).first()
+    camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
     if staff.rol != UserRole.ADMIN and camera.sucursal != staff.sucursal:
@@ -332,7 +331,7 @@ def notify_camera_reading(gate_id: str, db: Session = Depends(get_db)):
     if '_' in gate_id:
         suc_short = normalize_name(gate_id.split('_')[0])
         try:
-            branches = db.query(models.ParkingBranch).all()
+            branches = BranchRepository.get_all(db)
             for b in branches:
                 if normalize_name(b.nombre) == suc_short:
                     sucursal = b.nombre

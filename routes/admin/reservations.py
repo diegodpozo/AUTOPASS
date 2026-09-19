@@ -5,6 +5,7 @@ import models, schemas
 from core.database import get_db
 from core.security import get_operational_user
 from services.reservation_service import ReservationService
+from repositories.redemption_repository import RedemptionRepository
 
 router = APIRouter()
 
@@ -87,11 +88,7 @@ def reservation_redemption_info(res_id: int, db: Session = Depends(get_db), staf
         d = vigente[0]
         info.update(aplica=True, fuente="vigente", valor_descuento=d.valor_descuento or 0, ticket_id=d.id)
         return info
-    ticket_aplicado = db.query(models.RedemptionTicket).filter(
-        models.RedemptionTicket.reserva_id == reserva.id,
-        models.RedemptionTicket.tipo_canje == "descuento_reserva",
-        models.RedemptionTicket.estado == "USADO"
-    ).first()
+    ticket_aplicado = RedemptionRepository.get_used_discount_for_reserva(db, reserva.id)
     if ticket_aplicado and ticket_aplicado.valor_descuento:
         info.update(aplica=True, fuente="aplicado", valor_descuento=ticket_aplicado.valor_descuento, ticket_id=ticket_aplicado.id)
     return info

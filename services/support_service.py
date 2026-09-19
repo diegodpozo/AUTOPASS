@@ -1,11 +1,13 @@
 from fastapi import HTTPException
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc
+from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
 from models.enums import UserRole
 from core.time import localnow
 from core.normalize import normalize_branch_name
+from repositories.support_repository import SupportRepository
+from repositories.notification_repository import NotificationRepository
+from repositories.user_repository import UserRepository
 
 class SupportService:
 
@@ -20,20 +22,17 @@ class SupportService:
         """NOTIFICA A TODOS LOS ADMINS/LOCAL_ADMINS DE LA SUCURSAL DEL TICKET."""
         try:
             from services.user_notification_service import UserNotificationService
-            q = db.query(models.User).filter(
-                models.User.rol.in_([UserRole.ADMIN, UserRole.LOCAL_ADMIN]),
-                models.User.is_deleted == False
-            )
+            staff = UserRepository.get_staff(db)
             if ticket.sucursal and ticket.sucursal != "General":
                 user_suc_norm = normalize_branch_name(ticket.sucursal)
                 admins = [
-                    a for a in q.all()
+                    a for a in staff
                     if normalize_branch_name(a.sucursal or "") == user_suc_norm or a.rol == UserRole.ADMIN
                 ]
             else:
-                admins = [a for a in q.all() if a.rol == UserRole.ADMIN]
+                admins = [a for a in staff if a.rol == UserRole.ADMIN]
             if not admins:
-                admins = q.all()
+                admins = staff
             for admin in admins:
                 UserNotificationService.create_notification(
                     db,
@@ -56,18 +55,14 @@ class SupportService:
             mensaje=ticket_data.mensaje,
             estado="Pendiente"
         )
-        db.add(ticket)
-        db.flush()
 
-        msg = models.SupportTicketMessage(
-            ticket_id=ticket.id,
+        msg_factory = lambda t: models.SupportTicketMessage(
+            ticket_id=t.id,
             user_id=user.id,
             mensaje=ticket_data.mensaje,
             created_at=localnow()
         )
-        db.add(msg)
-        db.commit()
-        db.refresh(ticket)
+        ticket = SupportRepository.create_ticket(db, ticket, msg_factory)
 
         suc_text = f" ({ticket.sucursal})" if ticket.sucursal and ticket.sucursal != "General" else ""
         SupportService._notify_admins(
@@ -79,14 +74,11 @@ class SupportService:
 
     @staticmethod
     def get_user_tickets(db: Session, user_id: int) -> List[models.SupportTicket]:
-        return db.query(models.SupportTicket).filter(
-            models.SupportTicket.user_id == user_id
-        ).order_by(desc(models.SupportTicket.created_at)).all()
+        return SupportRepository.get_user_tickets(db, user_id)
 
     @staticmethod
     def get_admin_tickets(db: Session, current_user: models.User, sucursal_filter: Optional[str] = None, estado_filter: Optional[str] = None) -> List[dict]:
-        query = db.query(models.SupportTicket).options(joinedload(models.SupportTicket.user)).order_by(desc(models.SupportTicket.created_at))
-        all_tickets = query.all()
+        all_tickets = SupportRepository.get_all_with_user(db)
 
         if current_user.rol != UserRole.ADMIN:
             user_suc_norm = normalize_branch_name(current_user.sucursal)
@@ -115,30 +107,16 @@ class SupportService:
         # Auto-limpiar notificaciones pendientes de tickets que ya fueron resueltos o cancelados
         resolved_ticket_ids = [t.id for t in tickets if t.estado.lower() in ("resuelto", "cancelado")]
         if resolved_ticket_ids:
-            db.query(models.UserNotification).filter(
-                models.UserNotification.ticket_id.in_(resolved_ticket_ids),
-                models.UserNotification.leido == False
-            ).update({"leido": True}, synchronize_session=False)
-            db.commit()
+            NotificationRepository.mark_ticket_notifications_as_read(db, resolved_ticket_ids)
 
         # Obtener los ticket_id que tienen notificaciones sin leer para el usuario actual
-        unread_ticket_ids = set(
-            r[0] for r in db.query(models.UserNotification.ticket_id).filter(
-                models.UserNotification.user_id == current_user.id,
-                models.UserNotification.ticket_id.isnot(None),
-                models.UserNotification.leido == False
-            ).all()
-        )
+        unread_ticket_ids = set(NotificationRepository.get_unread_ticket_ids_by_user(db, current_user.id))
 
         # Precargar todos los mensajes de los tickets y sus autores en 1 sola consulta agrupada (elimina N+1 y M*N+1)
         ticket_ids = [t.id for t in tickets]
         messages_by_ticket = {}
         if ticket_ids:
-            msgs = db.query(models.SupportTicketMessage).options(
-                joinedload(models.SupportTicketMessage.user)
-            ).filter(
-                models.SupportTicketMessage.ticket_id.in_(ticket_ids)
-            ).order_by(models.SupportTicketMessage.created_at).all()
+            msgs = SupportRepository.get_messages_for_tickets(db, ticket_ids)
             for m in msgs:
                 messages_by_ticket.setdefault(m.ticket_id, []).append(m)
 
@@ -185,7 +163,7 @@ class SupportService:
 
     @staticmethod
     def update_ticket_status(db: Session, current_user: models.User, ticket_id: int, estado: str, respuesta: Optional[str] = None) -> models.SupportTicket:
-        ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+        ticket = SupportRepository.get_by_id(db, ticket_id)
         if not ticket:
             return None
 
@@ -206,10 +184,7 @@ class SupportService:
             db.add(msg)
 
         # Marcar todas las notificaciones asociadas a este ticket como leídas
-        db.query(models.UserNotification).filter(
-            models.UserNotification.ticket_id == ticket_id,
-            models.UserNotification.leido == False
-        ).update({"leido": True})
+        NotificationRepository.mark_ticket_notifications_as_read(db, [ticket_id])
 
         db.commit()
         db.refresh(ticket)
@@ -246,16 +221,11 @@ class SupportService:
 
     @staticmethod
     def get_ticket_by_id(db: Session, ticket_id: int, user_id: int) -> Optional[models.SupportTicket]:
-        return db.query(models.SupportTicket).filter(
-            models.SupportTicket.id == ticket_id,
-            models.SupportTicket.user_id == user_id
-        ).first()
+        return SupportRepository.get_by_id_and_user(db, ticket_id, user_id)
 
     @staticmethod
     def get_ticket_messages(db: Session, ticket_id: int) -> List[dict]:
-        messages = db.query(models.SupportTicketMessage).filter(
-            models.SupportTicketMessage.ticket_id == ticket_id
-        ).order_by(models.SupportTicketMessage.created_at).all()
+        messages = SupportRepository.get_messages_by_ticket(db, ticket_id)
         return [
             {
                 "id": m.id,
@@ -272,10 +242,7 @@ class SupportService:
 
     @staticmethod
     def reply_to_ticket(db: Session, ticket_id: int, user_id: int, mensaje: str, adjunto_url: str = None, adjunto_nombre: str = None) -> Optional[models.SupportTicket]:
-        ticket = db.query(models.SupportTicket).filter(
-            models.SupportTicket.id == ticket_id,
-            models.SupportTicket.user_id == user_id
-        ).first()
+        ticket = SupportRepository.get_by_id_and_user(db, ticket_id, user_id)
         if not ticket:
             return None
 
@@ -308,7 +275,7 @@ class SupportService:
         """CUENTA LOS TICKETS DE SOPORTE PENDIENTES (NO RESUELTOS) QUE PUEDE VER
         EL ADMINISTRADOR ACTUAL, SEGUN SU ROL Y SUCURSAL. Este contador alimenta
         la burbuja de 'Soporte & Tickets' del menu lateral (no las notificaciones)."""
-        all_tickets = db.query(models.SupportTicket).all()
+        all_tickets = SupportRepository.get_all(db)
 
         if current_user.rol != UserRole.ADMIN:
             user_suc_norm = normalize_branch_name(current_user.sucursal or "")
