@@ -293,8 +293,8 @@
 - [x] **Clean Empty States**: Estados vacíos simplificados con iconos neutros (#444) y sin ruido visual.
 
 ### 🛠️ Arquitectura Actual (v9.14.1+)
-- **Backend**: Clean Architecture con Servicios y Repositories. 14 servicios en `services/`, 83 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`).
-- **Frontend**: Dashboard Premium modularizado. 36 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 49 templates HTML, 40 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+- **Backend**: Clean Architecture con Servicios y Repositories. 19 servicios en `services/`, 102 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`), 16 repositorios en `repositories/`.
+- **Frontend**: Dashboard Premium modularizado. 62 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 49 templates HTML, 40 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user) + Rate limiting (SlowAPI).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).

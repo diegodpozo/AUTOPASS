@@ -19,13 +19,13 @@ AUTOPASS/
 │   ├── user/           # User portal (profile, vehicles, reservations, balance, fidelization, notifications, support, mercadopago)
 │   ├── parking/        # Access control (access, status, utils)
 │   └── system/         # System management (health, cameras, video, common)
-├── services/           # Inteligencia de Negocio (14 servicios)
-├── repositories/       # Data Access (user, reservation)
+├── services/           # Inteligencia de Negocio (19 servicios)
+├── repositories/       # Data Access (16 repos)
 ├── scripts/            # Utilidades (arduino_bridge, generate_test_plates, test_video, setup/run_server)
 ├── tests/              # Pruebas unitarias (pytest)
 ├── static/
 │   ├── js/
-│   │   ├── modules/    # 36 módulos ES6 (lógica de negocio frontend)
+│   │   ├── modules/    # 62 módulos ES6 (lógica de negocio frontend)
 │   │   └── *.js        # 9 scripts puente (bridge: módulos → window.*)
 │   ├── css/            # 40 archivos CSS organizados en base/layout/components/pages
 │   └── images/
@@ -95,46 +95,72 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 - **Scripts Puente** (`static/js/*.js`): Importan módulos y exponen funciones al scope global (`window.*`) para compatibilidad con handlers inline en templates Jinja2.
 - **Carga**: Los scripts puente se cargan como `<script type="module">`. Los módulos se cargan en paralelo y se resuelven automáticamente.
 
-#### Módulos Frontend (`static/js/modules/` - 36 módulos ES6)
+#### Módulos Frontend (`static/js/modules/` - 62 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
 | `dashboard-ui.js` | Navegación de pestañas (`switchTab`), reloj, salud del sistema, streaming de video, gestión de cámaras |
 | `dashboard-stats.js` | Estadísticas en vivo, logs recientes, tabla de ocupación, WebSocket de aforo, cancelar estadía |
+| `dashboard-metrics.js` | Métricas del sistema: gráfico de accesos en vivo, filtros por rango y navegación de ventana |
 | `dashboard-admin.js` | Orquestador del admin (importa sub-módulos y expone funciones globales) |
 | `dashboard-admin-users.js` | CRUD usuarios (crear, editar, toggle-block, balance, password, rol, eliminar) |
 | `dashboard-admin-branches.js` | Fachada de sucursales (re-exporta `crud` y `floors`) |
 | `dashboard-admin-branches-crud.js` | CRUD sucursales, mapa Leaflet, geocoding, logo upload |
 | `dashboard-admin-branches-floors.js` | Gestión de pisos (`ParkingFloor`), aforos por piso y Planta Baja |
 | `dashboard-admin-settings.js` | Configuración del sistema, monitoreo de cámaras, control de barreras |
+| `dashboard-cameras.js` | Configuración y control de cámaras del dashboard |
 | `dashboard-finance.js` | Reportes financieros, filtros por fecha/tipo/método de pago, exportación CSV |
 | `dashboard-operations.js` | Operaciones manuales (ingreso/egreso manual, abrir barrera, cancelar estadía) |
-| `dashboard-reservations.js` | CRUD reservas admin, confirmar pago, cancelar, actualizar |
+| `dashboard-reservations.js` | Fachada de reservas admin (re-exporta `list` y `form`) |
+| `reservations-admin-list.js` | Listado de reservas admin: carga, filtros, pago, cancelar, detalle y badge |
+| `reservations-admin-form.js` | Formulario de reserva admin: alta/edición, lookup de patente, tipo de vehículo |
 | `dashboard-promotions.js` | CRUD promociones, selección de iconos |
 | `dashboard-tickets.js` | Gestión de tickets de soporte admin, auto-actualización real-time y búsqueda en vivo |
-| `admin-tour.js` | Tour guiado interactivo para administradores |
+| `admin-tour.js` | Fachada del tour admin (re-exporta `steps`, `engine` y `help`; lanzadores por página) |
+| `admin-tour-steps.js` | Pasos de los tours admin (`adminLiveTourSteps`, `adminReservationsTourSteps`, etc.) |
+| `admin-tour-engine.js` | Motor del tour admin (`showAdminTour`, avance, highlight, navegación) |
+| `admin-help.js` | Centro de ayuda admin: modal `openAdminHelpModal`, FAQ y filtros |
 | `monitoreo-live.js` | Monitoreo CCTV en vivo, grilla dinámica de cámaras, controles DVR |
 | `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
-| `api.js` | Cliente HTTP centralizado (GET/POST/PUT/PATCH/DELETE) with manejo de tokens y errores |
+| `tour.js` | Tour guiado interactivo (lanzadores `startAddVehicleTour`, `startCreateReservationTour`, etc.) |
+| `tour-steps.js` | Definición de pasos de los tours del portal (`mainTourSteps`, etc.) |
+| `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
+| `api.js` | Cliente HTTP centralizado (GET/POST/PUT/PATCH/DELETE) con manejo de tokens y errores |
 | `utils.js` | Utilidades: `formatNum`, `toTitle`, `formatDate`, `showToast`, `showConfirm`, `validatePlate`, `detectVehicleType` |
 | `ui.js` | UI base: modales, sidebar, toggle password, logout |
 | `virtual-time.js` | Tiempo virtual del servidor (sync periódica cada 60s) |
-| `notifications.js` | Polling de notificaciones (30s), badge de unread |
+| `notifications.js` | Fachada de notificaciones (re-exporta 24 funciones de `state`, `format`, `render`, `badge`, `actions`, `nav`, `dropdown`, `polling`) |
+| `notifications-state.js` | Estado global compartido de notificaciones (`notifState`) |
+| `notifications-format.js` | Formateo de notificaciones (títulos, enlaces, tiempo relativo, iconos) |
+| `notifications-render.js` | Renderizado de listados, toasts y badges de notificaciones |
+| `notifications-badge.js` | Badge de unread y contador en header/sidebar |
+| `notifications-actions.js` | Acciones: marcar leída, enviadas/resueltas, guardar dispositivo |
+| `notifications-nav.js` | Navegación de pestañas del panel de notificaciones |
+| `notifications-dropdown.js` | Dropdown del panel (registra listener de cierre al hacer click fuera) |
+| `notifications-polling.js` | Polling de notificaciones (30s) y arranque (`startNotifPolling`) |
 | `auth.js` | Validación de forms, login, registro, recuperación |
+| `reset_password.js` | Reset de contraseña (validación en vivo de nueva clave + token) |
 | `profile.js` | Portal de usuario: perfil, puntos, promociones, historial |
 | `reservas.js` | Fachada de reservas (re-exporta `form`, `list`, `actions`, `pass`) |
 | `reservas-form.js` | Formulario de reserva, datepickers, estimador dinámico de tarifas, validaciones |
+| `reservas-form-state.js` | Estado compartido del formulario de reserva (tarifas, vehículos, IDs, slots) |
+| `reservas-form-price.js` | Estimación de precios y tarifas (`fetchRates`, `updateReservationPrice`) |
+| `reservas-form-slot.js` | Selector de slots horarios (drag, horas deshabilitadas, resumen) |
 | `reservas-list.js` | Renderizado de tarjetas de reservas activas, timeline, historial y paginación |
 | `reservas-actions.js` | Pago de reservas con saldo y cancelación con simulación de reembolso |
 | `reservas-pass.js` | Renderizado de Pase Digital, QR `QRCode.js` y compartir ticket |
 | `vehicles.js` | CRUD vehículos de usuario, auto-detección de tipo |
-| `landing.js` | Landing page: mapa Leaflet, carrusel, header scroll |
+| `landing.js` | Fachada de landing (re-exporta `initMap`, `findNearestBranch`, `filterMapByLocality`, `InicializarCarrusel`; header scroll, auth state) |
 | `landing-carousel.js` | Carrusel de imágenes de la landing |
 | `landing-data.js` | Cache de POIs y datos de estadios |
-| `landing-map.js` | Mapa interactivo Leaflet con selector multicapa (Google Maps, CartoDB) |
-| `dashboard-cameras.js` | Configuración y control de cámaras del dashboard |
-| `tour.js` | Tour guiado interactivo |
-| `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
+| `landing-map.js` | Fachada del mapa Leaflet (re-exporta `getDirectionsTo`, `findNearestBranch`, `filterMapByLocality`; expone `initMap`) |
+| `landing-map-state.js` | Estado global compartido del mapa (`lmState`) |
+| `landing-map-data.js` | Datos del mapa: extracción de localidad, formato de direcciones, `getDirectionsTo`, cache de POIs |
+| `landing-map-pois.js` | POIs del mapa: cines y estadios (escenario nocturno) |
+| `landing-map-geo.js` | Geocoding y sucursal más cercana (`findNearestBranch`) |
+| `landing-map-locality.js` | Filtro y búsqueda por localidad (`filterMapByLocality`) |
+| `chart_window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
+| `estadisticas_ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
 
 #### Scripts Puente del Dashboard (`static/js/dashboard.js`)
 El orquestador centraliza todas las asignaciones `window.*`:

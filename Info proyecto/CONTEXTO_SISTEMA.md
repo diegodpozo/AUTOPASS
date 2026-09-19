@@ -43,9 +43,22 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `services/email_service.py`: Envío de emails transaccionales con templates HTML Jinja2 (confirmación de reserva con QR embebido en base64, recuperación de contraseña con token).
     *   `services/mercadopago_service.py` (v9.14.0): Integración Checkout Pro por redirección — `create_payment` crea la preferencia y `confirm_payment` la confirma de forma **idempotente** (retorno `success/pending/failure` y webhook). Requiere `BASE_URL` con `https://`.
 
-4.  **Capa de Repositories (`repositories/`)**:
-    *   `repositories/user_repository.py`: Acceso a datos de usuarios.
-    *   `repositories/reservation_repository.py`: Acceso a datos de reservas.
+4.  **Capa de Repositories (`repositories/` - 16 repos)**:
+    *   `user_repository.py`: Acceso a datos de usuarios.
+    *   `reservation_repository.py`: Acceso a datos de reservas.
+    *   `branch_repository.py`: Acceso a datos de sucursales y aforos.
+    *   `access_log_repository.py`: Acceso a registros de acceso/estadías.
+    *   `vehicle_repository.py`: Acceso a vehículos de usuario.
+    *   `promotion_repository.py` / `redemption_repository.py`: Promociones y tickets de canje.
+    *   `points_repository.py`: Registro de puntos (fidelización).
+    *   `notification_repository.py`: Notificaciones in-app.
+    *   `support_repository.py`: Tickets de soporte.
+    *   `settings_repository.py`: Configuraciones del sistema/sucursal.
+    *   `camera_repository.py`: Cámaras ALPR.
+    *   `session_repository.py`: Sesiones multi-dispositivo.
+    *   `report_repository.py`: Consultas de reporte financiero.
+    *   `system_repository.py`: Datos de sistema (tablas auxiliares).
+    *   `mercadopago_repository.py`: Pagos Mercado Pago.
 
 5.  **Gestión de Accesos ALPR (`alpr/` + `alpr_service.py`)**:
     *   `alpr/`: Paquete modular desacoplado compuesto por `config.py` (variables y regexes), `preprocessor.py` (filtros Moiré, recorte MERCOSUR adaptativo B&N/color, ROI), `video_streamer.py` (captura thread-safe OpenCV), `ws_client.py` (WebSocket streamer), `ocr_engine.py` (RapidOCR ONNX / PaddleOCR dual, QR, prioridad de 7 caracteres y consenso de votación) y `runner.py` (orquestador).
@@ -139,46 +152,72 @@ El frontend usa un patrón de **dos capas** para compatibilizar módulos ES6 con
 modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclick handlers
 ```
 
-### Módulos Frontend (36 módulos ES6)
+### Módulos Frontend (62 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
 | `dashboard-ui.js` | Navegación (`switchTab`), reloj, salud del sistema, streaming de video, cámaras |
 | `dashboard-stats.js` | Estadísticas en vivo, logs, ocupación, WebSocket de aforo |
+| `dashboard-metrics.js` | Métricas del sistema: gráfico de accesos en vivo, filtros por rango y navegación de ventana |
 | `dashboard-admin.js` | Orquestador del admin (importa sub-módulos y expone funciones globales) |
 | `dashboard-admin-users.js` | CRUD usuarios (crear, editar, toggle-block, balance, password, rol, eliminar) |
 | `dashboard-admin-branches.js` | Fachada de sucursales (re-exporta `crud` y `floors`) |
 | `dashboard-admin-branches-crud.js` | CRUD sucursales, mapa Leaflet, geocoding, logo upload |
 | `dashboard-admin-branches-floors.js` | Gestión de pisos (`ParkingFloor`), aforos por piso y Planta Baja |
 | `dashboard-admin-settings.js` | Configuración del sistema, monitoreo de cámaras, control de barreras |
+| `dashboard-cameras.js` | Configuración y control de cámaras del dashboard |
 | `dashboard-finance.js` | Reportes financieros, filtros por fecha/tipo/método de pago, exportación CSV |
 | `dashboard-operations.js` | Operaciones manuales (ingreso/egreso manual, abrir barrera, cancelar estadía) |
-| `dashboard-reservations.js` | CRUD reservas admin, confirmar pago, cancelar, actualizar |
+| `dashboard-reservations.js` | Fachada de reservas admin (re-exporta `list` y `form`) |
+| `reservations-admin-list.js` | Listado de reservas admin: carga, filtros, pago, cancelar, detalle y badge |
+| `reservations-admin-form.js` | Formulario de reserva admin: alta/edición, lookup de patente, tipo de vehículo |
 | `dashboard-promotions.js` | CRUD promociones, iconos |
 | `dashboard-tickets.js` | Gestión de tickets de soporte admin, auto-actualización real-time y búsqueda en vivo |
-| `admin-tour.js` | Tour guiado interactivo para administradores |
-| `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
+| `admin-tour.js` | Fachada del tour admin (re-exporta `steps`, `engine` y `help`; lanzadores por página) |
+| `admin-tour-steps.js` | Pasos de los tours admin (`adminLiveTourSteps`, `adminReservationsTourSteps`, etc.) |
+| `admin-tour-engine.js` | Motor del tour admin (`showAdminTour`, avance, highlight, navegación) |
+| `admin-help.js` | Centro de ayuda admin: modal `openAdminHelpModal`, FAQ y filtros |
 | `monitoreo-live.js` | Monitoreo CCTV en vivo, grilla dinámica de cámaras, controles DVR |
+| `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
+| `tour.js` | Tour guiado interactivo (lanzadores `startAddVehicleTour`, `startCreateReservationTour`, etc.) |
+| `tour-steps.js` | Definición de pasos de los tours del portal (`mainTourSteps`, etc.) |
+| `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
 | `api.js` | Cliente HTTP centralizado con manejo de tokens y errores |
 | `utils.js` | Utilidades: formatNum, formatDate, showToast, showConfirm, validatePlate, detectVehicleType |
 | `ui.js` | UI base: modales, sidebar, toggle password, logout |
 | `virtual-time.js` | Tiempo virtual del servidor (sync periódica cada 60s) |
-| `notifications.js` | Polling de notificaciones (30s), badge de unread |
+| `notifications.js` | Fachada de notificaciones (re-exporta 24 funciones de `state`, `format`, `render`, `badge`, `actions`, `nav`, `dropdown`, `polling`) |
+| `notifications-state.js` | Estado global compartido de notificaciones (`notifState`) |
+| `notifications-format.js` | Formateo de notificaciones (títulos, enlaces, tiempo relativo, iconos) |
+| `notifications-render.js` | Renderizado de listados, toasts y badges de notificaciones |
+| `notifications-badge.js` | Badge de unread y contador en header/sidebar |
+| `notifications-actions.js` | Acciones: marcar leída, enviadas/resueltas, guardar dispositivo |
+| `notifications-nav.js` | Navegación de pestañas del panel de notificaciones |
+| `notifications-dropdown.js` | Dropdown del panel (registra listener de cierre al hacer click fuera) |
+| `notifications-polling.js` | Polling de notificaciones (30s) y arranque (`startNotifPolling`) |
 | `auth.js` | Validación de forms, login, registro, recuperación |
+| `reset_password.js` | Reset de contraseña (validación en vivo de nueva clave + token) |
 | `profile.js` | Portal de usuario: perfil, puntos, promociones, historial |
 | `reservas.js` | Fachada de reservas (re-exporta `form`, `list`, `actions`, `pass`) |
 | `reservas-form.js` | Formulario de reserva, datepickers, estimador dinámico de tarifas, validaciones |
+| `reservas-form-state.js` | Estado compartido del formulario de reserva (tarifas, vehículos, IDs, slots) |
+| `reservas-form-price.js` | Estimación de precios y tarifas (`fetchRates`, `updateReservationPrice`) |
+| `reservas-form-slot.js` | Selector de slots horarios (drag, horas deshabilitadas, resumen) |
 | `reservas-list.js` | Renderizado de tarjetas de reservas activas, timeline, historial y paginación |
 | `reservas-actions.js` | Pago de reservas con saldo y cancelación con simulación de reembolso |
 | `reservas-pass.js` | Renderizado de Pase Digital, QR `QRCode.js` y compartir ticket |
 | `vehicles.js` | CRUD vehículos de usuario, auto-detección de tipo |
-| `landing.js` | Landing page: mapa Leaflet, carrusel, header scroll |
+| `landing.js` | Fachada de landing (re-exporta `initMap`, `findNearestBranch`, `filterMapByLocality`, `InicializarCarrusel`; header scroll, auth state) |
 | `landing-carousel.js` | Carrusel de imágenes de la landing |
 | `landing-data.js` | Cache de POIs y datos de estadios |
-| `landing-map.js` | Mapa interactivo Leaflet con selector multicapa (Google Maps, CartoDB) |
-| `dashboard-cameras.js` | Configuración y control de cámaras del dashboard |
-| `tour.js` | Tour guiado interactivo para clientes |
-| `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
+| `landing-map.js` | Fachada del mapa Leaflet (re-exporta `getDirectionsTo`, `findNearestBranch`, `filterMapByLocality`; expone `initMap`) |
+| `landing-map-state.js` | Estado global compartido del mapa (`lmState`) |
+| `landing-map-data.js` | Datos del mapa: extracción de localidad, formato de direcciones, `getDirectionsTo`, cache de POIs |
+| `landing-map-pois.js` | POIs del mapa: cines y estadios (escenario nocturno) |
+| `landing-map-geo.js` | Geocoding y sucursal más cercana (`findNearestBranch`) |
+| `landing-map-locality.js` | Filtro y búsqueda por localidad (`filterMapByLocality`) |
+| `chart_window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
+| `estadisticas_ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
 
 ### Scripts Puente (Orquestadores)
 

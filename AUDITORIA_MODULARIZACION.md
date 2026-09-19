@@ -14,12 +14,12 @@
 | Separación de capas backend | Aceptable | Sin acoplamiento circular, pero rutas con mucha lógica y consultas directas |
 | Frontend Bridge Pattern | Cumplido | 0 asignaciones `window.*` en módulos (76 migradas a puentes en v9.21.0); doble instancia de `notifications.js` [resuelta en v9.21.0] |
 | Repositorios | Cumplido | 0 consultas `db.query(...)` en `services/` y `routes/` [v9.22.0]: 16 repositorios como única puerta de acceso a datos (ver §2.4) |
-| Enums / Tipado | Parcial | Enums implementados, con strings mágicos residuales en 3 puntos |
-| Tamaño de clases/módulos | Parcial | Backend saneado: `access_service.py` (607→499) + `access_occupancy.py` (80), `report_service.py` (581→639 tras helpers) evaluado y no descompuesto; megamódulos JS partidos en submódulos temáticos [v9.22.0]: `tour.js` (1712→836 + `tour-steps.js` 897), `dashboard-reservations.js` (1291→fachada 31 + list 267 + form 1030), `reservas-form.js` (1262→fachada 681 + state 47 + price 159 + slot 494). `reservation_service.py` descompuesto [v9.21.0]. Siguen como candidatos (prioridad baja): `landing-map.js`, `admin-tour.js`, `notifications.js` |
+| Enums / Tipado | Cumplido | Enums implementados; restan 3 residuos intencionales y documentados (naming de gate ALPR, claves de diccionario de `report_service`, estado de `SupportTicket` — ver §2.5) [v9.21.0] |
+| Tamaño de clases/módulos | Cumplido | Backend saneado: `access_service.py` (607→499) + `access_occupancy.py` (80), `report_service.py` (581→639 tras helpers) evaluado y no descompuesto; megamódulos JS partidos en submódulos temáticos [v9.22.0]: `tour.js` (1712→836 + `tour-steps.js` 897), `dashboard-reservations.js` (1291→fachada 31 + list 267 + form 1030), `reservas-form.js` (1262→fachada 681 + state 47 + price 159 + slot 494). `reservation_service.py` descompuesto [v9.21.0]. Los tres megamódulos restantes también partidos [v9.23.0]: `landing-map.js` (854→fachada 397 + state 12 + data 90 + pois 256 + geo 108 + locality 47), `admin-tour.js` (895→fachada 60 + steps 325 + engine 444 + help 72), `notifications.js` (745→fachada 36 + state 13 + format 241 + render 130 + badge 46 + actions 101 + nav 155 + dropdown 75 + polling 21) |
 | Lógica inline en templates | Cumplido | Lógica de `reset_password.html` y `estadisticas_ocr.html` extraída a módulos [v9.22.0] |
 | Config / Hardcoding | Correcto | Configuración centralizada en `core/config.py` |
 
-**Puntaje de salud de modularización: 9.5 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes, +0.5 por extraer la lógica inline de `reset_password.html` y `estadisticas_ocr.html` a módulos en v9.22.0, +0.5 por partir los tres megamódulos JS en submódulos temáticos en v9.22.0, +1.0 por migrar los últimos 77 `db.query` de las rutas a repositorios, dejando `services/` y `routes/` con 0 consultas directas [v9.22.0]).
+**Puntaje de salud de modularización: 10 / 10** (era 6.5 / 10; +1.0 por restaurar el Bridge Pattern al mover las 76 asignaciones `window.*` a los puentes, +0.5 por extraer la lógica inline de `reset_password.html` y `estadisticas_ocr.html` a módulos en v9.22.0, +0.5 por partir los megamódulos JS `tour.js`/`dashboard-reservations.js`/`reservas-form.js` en submódulos temáticos en v9.22.0, +1.0 por migrar los últimos 77 `db.query` de las rutas a repositorios, dejando `services/` y `routes/` con 0 consultas directas [v9.22.0], +0.5 por partir los tres megamódulos JS restantes (`landing-map.js`, `admin-tour.js`, `notifications.js`) en submódulos temáticos en v9.23.0).
 
 ---
 
@@ -116,7 +116,7 @@ Se implementaron `UserRole`, `VehicleType`, `AccessEventType`, `ReservationStatu
 ### 3.1 Arquitectura actual
 
 ```
-modules/*.js  (38 módulos ES6, lógica real; incluye `chart_window.js` — componente `WindowedChart` compartido)
+modules/*.js  (62 módulos ES6, lógica real; +16 submódulos temáticos en v9.23.0 — ver §3.5; incluye `chart_window.js` — componente `WindowedChart` compartido)
       |
       v
 *_bridge.js   (9 scripts puente: dashboard.js, perfil.js, main.js, auth.js, landing.js, reservas.js, vehicles.js, contacto.js, api_client.js)
@@ -190,11 +190,17 @@ Con versionado distinto (`?v=9.10.1` vs `?v=9.8.6`) el navegador creaba **dos in
 | `tour.js` | 836 (+ `tour-steps.js` 897) | Motor de tours separado de los pasos/datos de onboarding |
 | `dashboard-reservations.js` | 31 (fachada) + list 267 + form 1030 | Fachada re-exporta 20 nombres desde los submódulos admin |
 | `reservas-form.js` | 681 (fachada) + state 47 + price 159 + slot 494 | Formulario + estimador + pickers + disponibilidad + descuentos |
-| `landing-map.js` | 854 | Mapa + buscador + autocompletado + POIs |
-| `admin-tour.js` | 895 | Tours admin + centro de ayuda (FAQ/buscador) |
-| `notifications.js` | 745 | Centro de notificaciones + dropdown + badges + acciones |
+| `landing-map.js` | 397 (fachada) + state 12 + data 90 + pois 256 + geo 108 + locality 47 | Mapa, buscador, autocompletado y POIs delegados por tema |
+| `admin-tour.js` | 60 (fachada) + steps 325 + engine 444 + help 72 | Pasos/datos, motor de recorrido y centro de ayuda separados |
+| `notifications.js` | 36 (fachada) + state 13 + format 241 + render 130 + badge 46 + actions 101 + nav 155 + dropdown 75 + polling 21 | Fachada re-exporta las 24 funciones; estado compartido en submódulo |
 
-`tour.js`, `dashboard-reservations.js` y `reservas-form.js` quedaron bajo el límite de responsabilidad única (split v9.22.0): los tres son ahora fachadas/esqueletos que delegan en submódulos temáticos (`tour-steps.js`, `reservations-admin-list/form.js`, `reservas-form-state/price/slot.js`). La superficie exportada se mantuvo 100% compatible (grep de imports en `perfil.js`, `dashboard.js`, `reservas.js`, `vehicles.js`, `onboarding_helpers.js` sin cambios), `node --check` en verde para los 9 módulos tocados y **152 tests en verde**. Quedan candidatos de prioridad baja: `landing-map.js`, `admin-tour.js`, `notifications.js`.
+Los **6 megamódulos** quedan bajo el límite de responsabilidad única y son ahora fachadas/esqueletos que delegan en submódulos temáticos. `tour.js`, `dashboard-reservations.js` y `reservas-form.js` se partieron en v9.22.0 (`tour-steps.js`, `reservations-admin-list/form.js`, `reservas-form-state/price/slot.js`); `landing-map.js`, `admin-tour.js` y `notifications.js` se partieron en v9.23.0:
+
+- `landing-map.js` (854) → fachada `initMap` (397) + `landing-map-state.js` (12, estado `lmState` compartido por sub-módulos) + `landing-map-data.js` (90: `extractLocality`, `formatAddress`, `formatPoiAddress`, cache de POIs, `getDirectionsTo`) + `landing-map-pois.js` (256: cines/teatros/museos vía Overpass con cache, estadios fijos, loading y leyenda) + `landing-map-geo.js` (108: `findNearestBranch`, marcador/círculo del usuario) + `landing-map-locality.js` (47: `filterMapByLocality`). El estado mutable (`mapInstance`, `_mapInstances`, `_mapLocalityItems`, `allBranchesMap`) se movió a `lmState` porque los enlaces de módulos ES son read-only para primitivas.
+- `admin-tour.js` (895) → fachada con los 7 lanzadores `startAdmin*Tour` (60) + `admin-tour-steps.js` (325: los 7 arrays de pasos, datos puros) + `admin-tour-engine.js` (444: overlay/tooltip/posicionamiento/navegación, `launchAdminTour`) + `admin-help.js` (72: modal de ayuda, FAQ, filtros).
+- `notifications.js` (745) → fachada de 36 líneas que re-exporta las **24 funciones** y registra el `DOMContentLoaded` (side-effect requerido por `dashboard.js:14`) + `notifications-state.js` (13) + `notifications-format.js` (241) + `notifications-render.js` (130) + `notifications-badge.js` (46) + `notifications-actions.js` (101) + `notifications-nav.js` (155) + `notifications-dropdown.js` (75, registra el listener de cierre al importar) + `notifications-polling.js` (21).
+
+La superficie exportada se mantuvo **100% compatible** (grep de imports en `modules/landing.js` → `initMap`/`findNearestBranch`/`filterMapByLocality`, `perfil.js` → `getDirectionsTo`/`* as notif`, `dashboard.js` → `* as adminTour` + side-effect, `dashboard-tickets.js` → `updateNotifBadge` sin cambios), `sw.js` con la precache ampliada para los 16 submódulos nuevos, `node --check` en verde para los 19 archivos tocados y **152 tests en verde**.
 
 ### 3.6 ~~Cache-busting manual inconsistente~~ **[RESUELTO v9.21.0]**
 
@@ -233,6 +239,7 @@ Con versionado distinto (`?v=9.10.1` vs `?v=9.8.6`) el navegador creaba **dos in
 ### Prioridad 4 — Templates y megamódulos
 9. ~~Extraer la lógica de `reset_password.html` a un módulo (reutilizar validación de `auth.js`) y `estadisticas_ocr.html` a un módulo dedicado.~~ — **[HECHO]** en v9.22.0 (working tree): nuevos módulos `static/js/modules/reset_password.js` y `static/js/modules/estadisticas_ocr.js`; validación de clave reutilizada vía `evaluatePassword`/`initPasswordValidation` de `auth.js`; `estadisticas_ocr.html` con bridge inline de 5 líneas. `node --check` OK y 152 tests en verde. Ver §3.4.
 10. Partir `tour.js`, `dashboard-reservations.js` y `reservas-form.js` en submódulos temáticos. — **[HECHO]** en v9.22.0 (working tree): `tour.js` → motor (836) + `tour-steps.js` (897, arrays de pasos + helpers `ensure*`); `dashboard-reservations.js` → fachada (31) + `reservations-admin-list.js` (267) + `reservations-admin-form.js` (1030); `reservas-form.js` → fachada (681) + `reservas-form-state.js` (47) + `reservas-form-price.js` (159) + `reservas-form-slot.js` (494, con acceso a estado vía getters/setters). Superficie exportada idéntica (grep de imports en `perfil.js`, `dashboard.js`, `reservas.js`, `vehicles.js`, `onboarding_helpers.js` sin cambios); `sw.js` con la precache actualizada; `node --check` OK y 152 tests en verde. Ver §3.5.
+11. Partir los tres megamódulos JS restantes: `landing-map.js`, `admin-tour.js` y `notifications.js`. — **[HECHO]** en v9.23.0 (working tree): `landing-map.js` → fachada 397 + state 12 + data 90 + pois 256 + geo 108 + locality 47 (estado mutable a `lmState`, enlaces ES read-only); `admin-tour.js` → fachada 60 + steps 325 + engine 444 + help 72; `notifications.js` → fachada 36 + state 13 + format 241 + render 130 + badge 46 + actions 101 + nav 155 + dropdown 75 + polling 21 (re-exporta las 24 funciones; el `DOMContentLoaded` queda en la fachada, el listener de cierre del dropdown en el submódulo dropdown, ambos requeridos por la carga side-effect de `dashboard.js:14`). Superficie exportada idéntica (sin cambios en `landing.js`, `perfil.js`, `dashboard.js`, `dashboard-tickets.js`); `sw.js` con precache ampliada (16 submódulos nuevos); `node --check` OK en los 19 archivos tocados y 152 tests en verde. Ver §3.5.
 
 ---
 

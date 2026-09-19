@@ -20,8 +20,8 @@ Diseno_Proyecto/
 │   └── 04_Arquitectura_General.md   # Clean Architecture, capas, patrones, flujo de datos
 │
 ├── 03_Construction/                  # FASE DE CONSTRUCCION
-│   ├── 01_Modelo_De_Datos.md        # DER, 14 entidades, columnas, relaciones
-│   ├── 02_Diagramas_De_Secuencia.md # 5 diagramas de secuencia detallados
+│   ├── 01_Modelo_De_Datos.md        # DER, 18 entidades, columnas, relaciones
+│   ├── 02_Diagramas_De_Secuencia.md # 6 diagramas de secuencia detallados
 │   ├── 03_Diagrama_De_Clases.md     # Diagrama de clases por capa
 │   └── 04_Diseno_Frontend.md        # Arquitectura frontend, design system, componentes
 │
@@ -44,18 +44,18 @@ multi-sucursal, multi-piso, facturacion trimodal y reservas. Identifica 4 roles 
 (ADMIN, LOCAL_ADMIN, STAFF, USER) y establece el alcance del sistema.
 
 ### 2. Elaboration (Elaboracion)
-Especifica **44 requisitos funcionales** y **29 no funcionales**, detalla **20 casos de uso**
+Especifica **51 requisitos funcionales** y **29 no funcionales**, detalla **20 casos de uso**
 con flujos principales y alternativos, y define la **arquitectura Clean Architecture** con
 5 capas (Presentation, Transport, Business, Data, Infrastructure) mas frontend Jinja2 + WebSockets.
 
 ### 3. Construction (Construccion)
-Documenta el **modelo de datos** con 14 entidades (User, Vehicle, AccessLog, Reservation,
-ParkingFloor, ParkingAforo, Settings, ParkingCamera, PointsLog, Coupon, Promotion,
-UserNotification, SupportTicket) y sus relaciones, **5 diagramas de secuencia** (ingreso ALPR, egreso con
+Documenta el **modelo de datos** con 18 entidades (User, Vehicle, AccessLog, Reservation,
+ParkingFloor, ParkingBranch, ParkingAforo, Settings, ParkingCamera, PointsLog, Coupon, Promotion,
+UserNotification, SupportTicket, SupportTicketMessage, RedemptionTicket, UserSession, MercadoPagoPayment)
+y sus relaciones, **6 diagramas de secuencia** (ingreso ALPR, egreso con
 pago, reserva, worker de limpieza, worker de notificaciones, operacion manual),
-**diagrama de clases** completo por capa (14 servicios), y el **diseno del frontend** con
+**diagrama de clases** completo por capa (19 servicios, 16 repositorios), y el **diseno del frontend** con
 design system (Glassmorphism, dorado #C5A059, FAB).
-> **Nota:** el modelo incluye además entidades posteriores al diseño base: `RedemptionTicket` (canje de puntos), `UserSession` (sesiones multi-dispositivo) y `MercadoPagoPayment` (pagos Checkout Pro).
 
 ### 4. Transition (Transicion)
 Cubre el **plan de despliegue** (SQLite dev / PostgreSQL prod), **estrategia de pruebas**
@@ -84,6 +84,11 @@ Mapa completo de **rutas API** (129 endpoints HTTP + 2 WebSocket), **arquitectur
 | TimeService | Tiempo virtual para testing (offset persistido en JSON) |
 | HardwareService | Control de barreras MQTT (ESP32) y comunicacion Serie USB con Arduino Uno |
 | MercadoPagoService | Checkout Pro por redireccion (preferencia, confirmacion idempotente por retorno/webhook) |
+| OAuthService | Login social Google/Facebook (state HMAC, intercambio de token, callback) |
+| AvailabilityService | Disponibilidad de reserva (cupos exclusivos, sweep-line, fechas/horas deshabilitadas) |
+| OccupancyService | Ocupacion multi-piso y logica de aforo (Reservation) |
+| AccessOccupancy | Ocupacion integrada del acceso (helpers de aforo para access_service) |
+| PaymentsService | Pagos de reservas (abono manual/saldo/Mercado Pago, descuentos por canje, reembolsos) |
 
 ## Version del Sistema
 **AUTOPASS v9.14.1** — Septiembre 2026
