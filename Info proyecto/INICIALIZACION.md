@@ -45,12 +45,9 @@ MP_PREFERENCE_EXPIRE_MINUTES=45               # Vigencia de la preferencia de pa
 ## 3. Preparación y Migración de Base de Datos
 Este paso crea las tablas, los roles iniciales (Admin Global) y sincroniza las migraciones con Alembic:
 ```bash
-# 1. Crear tablas y seed inicial
+# Flujo único: crea tablas desde los modelos (create_all) y sincroniza Alembic al head.
+# Si la cadena de migraciones no es reproducible de cero, sella el head con warning explícito.
 venv\Scripts\python.exe init_db.py
-
-# 2. Sellar e inspeccionar migraciones de Alembic
-venv\Scripts\alembic.exe stamp head
-venv\Scripts\alembic.exe upgrade head
 ```
 
 ## 4. Credenciales por Defecto

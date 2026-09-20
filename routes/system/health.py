@@ -1,10 +1,11 @@
 import os
 import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import models
 from core.database import get_db
+from core.limiter import limiter
 from core.security import get_super_admin, get_operational_user
 from core.config import settings
 from services.time_service import TimeService
@@ -59,7 +60,8 @@ def alpr_heartbeat(gate_id: str):
     return {"status": "ok"}
 
 @router.post("/reset")
-def reset_system(db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
+@limiter.limit("5/minute")
+def reset_system(request: Request, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     IMAGE_DIR = settings.IMAGE_DIR
     SystemRepository.reset_all_data(db)
     if os.path.exists(IMAGE_DIR):

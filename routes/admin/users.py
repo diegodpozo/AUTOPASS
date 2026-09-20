@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
 from core.database import get_db
+from core.limiter import limiter
 from core.security import get_local_manager, get_super_admin, get_password_hash
 from core.normalize import normalize_branch_name
 from models.enums import UserRole, NotificationType
@@ -79,7 +80,8 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
 
 
 @router.post("/users/{user_id}/role")
-def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+@limiter.limit("30/minute")
+def change_user_role(request: Request, user_id: int, nuevo_rol: UserRole, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE CAMBIAR EL ROL DE UN USUARIO. LOS LOCALES SOLO GESTIONAN ROLES DE SU SUCURSAL."""
     user = UserRepository.get_active_by_id(db, user_id)
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -103,7 +105,8 @@ def change_user_role(user_id: int, nuevo_rol: UserRole, db: Session = Depends(ge
 
 
 @router.post("/users/{user_id}/toggle-block")
-def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+@limiter.limit("30/minute")
+def toggle_user_block(request: Request, user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ALTERNA EL ESTADO DE BLOQUEO. LOS LOCALES SOLO BLOQUEAN A SU GENTE O CLIENTES."""
     user = UserRepository.get_active_by_id(db, user_id)
     if not user:
@@ -131,7 +134,8 @@ def toggle_user_block(user_id: int, db: Session = Depends(get_db), admin: models
 
 
 @router.post("/users/{user_id}/balance")
-def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+@limiter.limit("30/minute")
+def adjust_user_balance(request: Request, user_id: int, monto: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """AJUSTA EL SALDO DE UN USUARIO."""
     user = UserRepository.get_active_by_id(db, user_id)
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -153,7 +157,8 @@ def adjust_user_balance(user_id: int, monto: float, db: Session = Depends(get_db
 
 
 @router.post("/users/{user_id}/password")
-def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+@limiter.limit("30/minute")
+def change_user_password(request: Request, user_id: int, payload: schemas.UserPasswordChange, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE AL ADMINISTRADOR CAMBIAR LA CONTRASENA DE UN USUARIO."""
     user = UserRepository.get_active_by_id(db, user_id)
     if not user:
@@ -177,7 +182,8 @@ def change_user_password(user_id: int, payload: schemas.UserPasswordChange, db: 
 
 @router.delete("/users/{user_id}")
 @router.post("/users/{user_id}/delete")
-def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+@limiter.limit("30/minute")
+def delete_user(request: Request, user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE A UN ADMINISTRADOR BORRAR CUENTAS DE SU SUCURSAL O CLIENTES."""
     if user_id == admin.id: 
         raise HTTPException(status_code=400, detail="No podés eliminar tu propia cuenta")

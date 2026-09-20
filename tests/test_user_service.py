@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from starlette.requests import Request
 from models import Base, User, Vehicle, Reservation
 from models.enums import UserRole
 from services.user_service import UserService
@@ -51,18 +52,19 @@ def test_local_admin_permissions_on_branch_users(db):
     assert res_up["status"] == "ok"
 
     # 2. Local admin can change role of staff in their branch
-    res_role = change_user_role(staff.id, UserRole.STAFF, db=db, admin=local_admin)
+    fake_request = Request({"type": "http", "method": "POST", "path": "/", "headers": [], "client": ("127.0.0.1", 12345), "server": ("test", 80), "scheme": "http", "query_string": b""})
+    res_role = change_user_role(fake_request, staff.id, UserRole.STAFF, db=db, admin=local_admin)
     assert res_role["status"] == "ok"
 
     # 3. Local admin can delete staff in their branch
-    res_del = delete_user(staff.id, db=db, admin=local_admin)
+    res_del = delete_user(fake_request, staff.id, db=db, admin=local_admin)
     assert res_del["status"] == "ok"
     assert staff.is_deleted is True
 
     # 4. Local admin CANNOT delete Global Admin
     from fastapi import HTTPException
     with pytest.raises(HTTPException) as exc:
-        delete_user(global_admin.id, db=db, admin=local_admin)
+        delete_user(fake_request, global_admin.id, db=db, admin=local_admin)
     assert exc.value.status_code == 403
 
 def _make_user(db):

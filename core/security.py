@@ -68,6 +68,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.query(models.User).filter(models.User.email == email, models.User.is_deleted == False).first()
     if user is None:
         raise credentials_exception
+    if hasattr(user, 'is_blocked') and user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta ha sido suspendida. Contactá al administrador."
+        )
     return user
 
 def get_super_admin(current_user: models.User = Depends(get_current_user)):

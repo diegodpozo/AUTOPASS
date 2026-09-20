@@ -10,7 +10,7 @@ from core.logger import setup_logging, get_logger
 
 setup_logging()
 logger = get_logger("System")
-from core.database import engine, init_db
+from core.database import engine, sync_schema
 from core.mqtt import mqtt_client
 from services.worker_service import WorkerService
 import models
@@ -62,11 +62,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ORIGENES EXTERNOS PERMITIDOS POR LA CSP (CDNs, fuentes de Google y APIs de mapas)
+CSP_CDNS = "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://npmcdn.com"
+CSP_GOOGLE_FONTS = "https://fonts.googleapis.com https://fonts.gstatic.com"
+CSP_MAP_APIS = "https://overpass-api.de https://nominatim.openstreetmap.org"
+CSP_HEADER = (
+    "default-src 'self'; "
+    f"script-src 'self' {CSP_CDNS} 'unsafe-inline'; "
+    f"style-src 'self' 'unsafe-inline' {CSP_CDNS} {CSP_GOOGLE_FONTS}; "
+    f"font-src 'self' data: https://cdnjs.cloudflare.com {CSP_GOOGLE_FONTS}; "
+    "img-src 'self' data: blob: https://*.google.com https://www.google.com; "
+    f"connect-src 'self' ws: wss: {CSP_MAP_APIS} {CSP_CDNS}; "
+    "frame-ancestors 'self'; "
+    "base-uri 'self'; "
+    "form-action 'self'"
+)
+
 @app.middleware("http")
 async def no_cache_js(request, call_next):
     response = await call_next(request)
     if request.url.path.startswith("/static/js/"):
         response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
+@app.middleware("http")
+async def security_headers_middleware(request, call_next):
+    """Headers de seguridad en toda respuesta (CSP pragmático, HSTS, XFO, nosniff)."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = CSP_HEADER
+    forwarded = request.headers.get("x-forwarded-proto", "")
+    if request.url.scheme == "https" or forwarded.lower() == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
 @app.on_event("startup")
@@ -81,22 +110,11 @@ async def startup_event():
         mqtt_client.connect_async(settings.MQTT_BROKER, settings.MQTT_PORT, 60)
         mqtt_client.loop_start()
         
-        # BASE DE DATOS: APLICAR MIGRACIONES PENDIENTES Y LUEGO CREAR TABLAS NUEVAS
+        # BASE DE DATOS: FLUJO UNICO DE ESQUEMA (create_all de modelos + Alembic al head)
         try:
-            from alembic.config import Config as AlembicConfig
-            from alembic import command as AlembicCommand
-            alembic_cfg = AlembicConfig("alembic.ini")
-            try:
-                AlembicCommand.upgrade(alembic_cfg, "head")
-                logger.debug("Migraciones Alembic aplicadas correctamente.")
-            except Exception:
-                # Tablas ya existen de init_db(); stamp version y seguir
-                AlembicCommand.stamp(alembic_cfg, "head")
-                logger.debug("Migraciones stamp (tablas ya existían).")
-        except Exception as alembic_err:
-            logger.warning(f"Migraciones Alembic omitidas: {alembic_err}")
-
-        init_db()
+            sync_schema()
+        except Exception as schema_err:
+            logger.error(f"Error en sincronización de esquema: {schema_err}")
         
         # BACKGROUND WORKERS
         WorkerService.start_reservation_cleanup()

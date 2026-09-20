@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-import schemas
+import models, schemas
 from core.database import get_db
 from core.limiter import limiter
+from core.security import get_operational_user
 from services.billing_service import BillingService
 from services.access_service import AccessService
 from .utils import normalize_plate
@@ -28,8 +29,9 @@ def validate_qr(request: Request, data: schemas.QRValidation, db: Session = Depe
     return AccessService.validate_qr(db, data, request)
 
 @router.post("/access/pay-stay")
-def pay_stay(plate: str, metodo: str = "DIGITAL", db: Session = Depends(get_db)):
-    """PROCESA EL PAGO DE UNA ESTADIA EN CURSO."""
+@limiter.limit("10/minute")
+def pay_stay(request: Request, plate: str, metodo: str = "DIGITAL", db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    """PROCESA EL PAGO DE UNA ESTADIA EN CURSO (SOLO PERSONAL OPERATIVO)."""
     result = BillingService.process_payment(db, normalize_plate(plate), metodo=metodo.upper())
     if result["status"] == "ok": return result
     raise HTTPException(status_code=400, detail=result["message"])

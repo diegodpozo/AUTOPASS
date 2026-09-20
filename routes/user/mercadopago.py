@@ -5,6 +5,7 @@ import models, schemas
 from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
+from core.limiter import limiter
 import services.mercadopago_service as mp_service
 from repositories.mercadopago_repository import MercadoPagoPaymentRepository
 
@@ -66,6 +67,7 @@ def mp_failure(external_reference: str = None, payment_id: str = None, collectio
 
 
 @router.post("/mercadopago/webhook")
+@limiter.limit("60/minute")
 async def mp_webhook(request: Request, db: Session = Depends(get_db)):
     """WEBHOOK DE NOTIFICACIONES DE MERCADO PAGO (para producción / túnel / acceso remoto)."""
     try:

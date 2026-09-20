@@ -98,7 +98,7 @@ pip install -r requirements.txt
 
 ### 2. Inicialización de Base de Datos
 ```powershell
-python init_db.py  # Crea tablas y datos iniciales
+python init_db.py  # Crea tablas desde modelos y datos iniciales (flujo único: create_all + Alembic al head)
 ```
 
 ### 4. Ejecución del Servidor

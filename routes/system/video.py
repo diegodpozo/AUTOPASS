@@ -1,6 +1,7 @@
 import os
 import base64
 import time
+import ipaddress
 from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect, Query
 from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
@@ -18,20 +19,42 @@ logger = get_logger("VideoWS")
 
 router = APIRouter()
 
+def _is_local_or_private(host: str) -> bool:
+    """True si el host es loopback o red privada (nodo ALPR de confianza)."""
+    try:
+        addr = ipaddress.ip_address(host)
+        return addr.is_loopback or addr.is_private
+    except ValueError:
+        return False
+
+def _is_trusted_alpr_node(host: str, node_secret: str) -> bool:
+    """Valida un nodo ALPR: secreto configurado (comparado en tiempo constante) o red local/privada."""
+    if settings.ALPR_NODE_SECRET:
+        import secrets as _secrets
+        return bool(node_secret) and _secrets.compare_digest(node_secret, settings.ALPR_NODE_SECRET)
+    return _is_local_or_private(host)
+
 @router.websocket("/ws/video/{camera_id}")
-async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: str = Query(None)):
-    """Endpoint WebSocket con seguridad por token y aislamiento por sucursal."""
+async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: str = Query(None), node_secret: str = Query(None)):
+    """Endpoint WebSocket con seguridad por token y aislamiento por sucursal.
+    Los nodos ALPR se autentican por node_secret (si esta configurado) o red local/privada.
+    Los espectadores requieren rol STAFF+."""
     camera_id = camera_id.upper()
     user = None
     if token:
         try:
             payload = decode_access_token(token)
             db = next(get_db())
-            user = UserRepository.get_by_email(db, payload.get("sub"))
+            user = UserRepository.get_active_by_email(db, payload.get("sub"))
         except Exception:
             pass
 
     if not user:
+        peer = websocket.client.host if websocket.client else ""
+        if not _is_trusted_alpr_node(peer, node_secret or ""):
+            logger.warning(f"Intento de conexión de nodo no autorizado: {camera_id} desde {peer}")
+            await websocket.close(code=4403)
+            return
         logger.info(f"Nodo ALPR conectado: {camera_id}")
         await websocket.accept()
         try:
@@ -43,6 +66,10 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
         except Exception as e:
             logger.error(f"Error en nodo ALPR {camera_id}: {e}")
     else:
+        if str(user.rol) not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
+            logger.warning(f"Conexión rechazada a video: role {user.rol} ({user.email})")
+            await websocket.close(code=4403)
+            return
         logger.info(f"Espectador conectado: {user.email} -> {camera_id}")
         success = await manager.connect(websocket, camera_id, user)
         if success:
@@ -54,7 +81,11 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
                 manager.disconnect(websocket, camera_id)
 
 @router.post("/update-frame/{camera_id}")
-async def update_frame_http(camera_id: str, request: Request):
+async def update_frame_http(camera_id: str, request: Request, node_secret: str = Query(None)):
+    """Actualiza el frame de una camara. Solo acepta nodos ALPR autorizados."""
+    peer = request.client.host if request.client else ""
+    if not _is_trusted_alpr_node(peer, node_secret or ""):
+        raise HTTPException(status_code=403, detail="Nodo ALPR no autorizado")
     raw_body = await request.json()
     if "image" in raw_body:
         await manager.broadcast_frame(camera_id, raw_body["image"])

@@ -123,9 +123,9 @@ SMTP_FROM=noreply@autopass.com.ar
 
 ### 4. Inicializar Base de Datos (solo instalación manual)
 ```bash
+# Flujo único: crea tablas desde los modelos (create_all) y sincroniza Alembic al head.
+# Si la cadena de migraciones no es reproducible de cero, sella el head con warning explícito.
 .\venv\Scripts\python.exe init_db.py
-.\venv\Scripts\python.exe -m alembic stamp head
-.\venv\Scripts\python.exe -m alembic upgrade head
 ```
 
 ### 5. Ejecutar

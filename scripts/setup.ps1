@@ -107,20 +107,11 @@ Write-Host ""
 # PASO 5: BASE DE DATOS Y MIGRACIONES (83%)
 # -----------------------------------------------------------------------------
 Show-ProgressBar -Percent 83 -StepText "5/6" -StepName "Estructurando base de datos y aplicando migraciones..."
+# Flujo único: init_db.py crea tablas (create_all) y sincroniza Alembic al head.
 & venv\Scripts\python.exe init_db.py 2>&1
 $initStatus = $LASTEXITCODE
 
 if ($initStatus -eq 0) {
-    & venv\Scripts\python.exe -m alembic stamp head 2>&1
-    $stampStatus = $LASTEXITCODE
-    if ($stampStatus -eq 0) {
-        & venv\Scripts\python.exe -m alembic upgrade head 2>&1
-        $upgradeStatus = $LASTEXITCODE
-    }
-    if (($stampStatus -ne 0) -or ($upgradeStatus -ne 0)) {
-        Write-Host "        [✖] Error al aplicar migraciones Alembic." -ForegroundColor Red
-        exit 1
-    }
     Write-Host "        [✔] Base de datos y esquema de migraciones listos." -ForegroundColor Green
 } else {
     Write-Host "        [✖] Error al inicializar la base de datos." -ForegroundColor Red

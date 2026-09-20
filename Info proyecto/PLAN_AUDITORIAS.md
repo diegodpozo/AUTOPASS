@@ -1,6 +1,6 @@
 # Plan de Auditorías — AUTOPASS
 
-> Documento de planificación. Estado: **propuesto** — cada auditoría se ejecuta contra la rama `main` y deja su informe en `Info proyecto/`. Solo existe hoy `AUDITORIA_MODULARIZACION.md` (resuelta, 10/10); este plan cubre las 9 restantes.
+> Documento de planificación. Estado: **en ejecución** — **A1–A4 HECHO** (informes en `Info proyecto/`), pendientes **A5–A9**. Además se ejecutó `Info proyecto/AUDITORIA_MODULARIZACION.md` (resuelta, 10/10), fuera del plan.
 
 ## Resumen
 
@@ -22,6 +22,8 @@
 
 **Prioridad:** Alta · **Esfuerzo:** 1–2 días · **Entregable:** `Info proyecto/AUDITORIA_SEGURIDAD_API.md`
 
+> **Estado: HECHO** (informe 2026-09-19) + **remediación P0/P1 aplicada el 2026-09-20** (pay-stay autenticado, video WS protegido, bloqueo efectivo en `get_current_user`, headers de seguridad, rate-limit de webhook MP). Riesgo recalculado: **MEDIO**. Checklist cerrado en el informe (§3).
+
 ### Objetivo
 Detectar vectores de exposición en autenticación, autorización, transporte y data-at-rest.
 
@@ -31,7 +33,7 @@ Detectar vectores de exposición en autenticación, autorización, transporte y 
 - WebSockets: `routes/parking/status.py` (WS `/v1/parking/ws`), `routes/system/video.py` (WS `/ws/video/{id}`)
 
 ### Pasos
-1. **Headers de seguridad**: confirmar la ausencia de CSP/HSTS/X-Frame-Options/X-Content-Type-Options (grep dio 0) y redactar middleware `SecurityHeadersMiddleware` en `main.py`. Probar con `curl -I`.
+1. **Headers de seguridad**: ~~confirmar la ausencia (grep dio 0) y redactar middleware~~ — **HECHO**: `security_headers_middleware` en `main.py:72-101` (CSP con CDNs, fuentes de Google y APIs de mapas, HSTS tras TLS, XFO, nosniff, Referrer-Policy) + test de regresión `tests/test_security_headers.py`.
 2. **JWT**: revisar claim `sub` (email vs id), expiración, `iat`/`jti` para revocación, algoritmo forzado `HS256` y riesgo del default `SECRET_KEY="tu_super_secreto_para_produccion"` (config.py:17) — exigir error de arranque si es el valor demo.
 3. **Refresh/cierre de sesión**: verificar que UserSession se invalide en logout y si un token sigue siendo válido tras el bloqueo de cuenta (toggle-block).
 4. **CORS**: validar `ALLOWED_ORIGINS` en config; sugerir lista explícita por entorno.
@@ -52,6 +54,8 @@ Detectar vectores de exposición en autenticación, autorización, transporte y 
 ## A2 — Auditoría de Dependencias y Supply Chain
 
 **Prioridad:** Alta · **Esfuerzo:** 0.5–1 día · **Entregable:** `Info proyecto/AUDITORIA_DEPENDENCIAS.md`
+
+> **Estado: HECHO** (informe 2026-09-19) — P1+P2 aplicadas: bump starlette 0.52.1→1.6.0 y cryptography →50.0.1; queda 1 sola vuln (`ecdsa`, sin fix, no explotable). `pip check` limpio.
 
 ### Objetivo
 Identificar CVEs, paquetes obsoletos o de doble versión en el entorno (Python 3.14.7).
@@ -79,11 +83,13 @@ Identificar CVEs, paquetes obsoletos o de doble versión en el entorno (Python 3
 
 **Prioridad:** Alta · **Esfuerzo:** 1 día · **Entregable:** `Info proyecto/AUDITORIA_COBERTURA.md`
 
+> **Estado: HECHO (2026-09-20)** — suite a **66% de cobertura** (7044/2424), **271 tests / 33 archivos en verde**. Se escribieron los ítems #1–#10 (117 tests) + test de regresión de CSP. Umbral sugerido para CI: `--cov-fail-under=65`. Pendiente: A5 y ronda payments/auth.
+
 ### Objetivo
 Medir % de cobertura por capa y detectar las zonas sin tests.
 
 ### Alcance
-- `tests/` (23 archivos, 152 tests) vs `services/`, `routes/`, `repositories/`, `alpr/`, `core/`
+- `tests/` (33 archivos, 271 tests) vs `services/`, `routes/`, `repositories/`, `alpr/`, `core/`
 
 ### Pasos
 1. Instalar `pytest-cov` y `coverage`; ejecutar `pytest --cov=services --cov=routes --cov=repositories --cov=alpr --cov=core --cov-report=html:coverage_html`.
@@ -105,6 +111,8 @@ Medir % de cobertura por capa y detectar las zonas sin tests.
 
 **Prioridad:** Alta · **Esfuerzo:** 1 día · **Entregable:** `Info proyecto/AUDITORIA_DATOS_MIGRACIONES.md`
 
+> **Estado: HECHO (2026-09-19)** — P1 aplicada: flujo único `sync_schema()` (`create_all` de modelos + Alembic al head) en `core/database.py`; eliminados los `ALTER TABLE` manuales de `init_db.py:migrate_db()`. Verificado: BD vacía → 19 tablas + `alembic current == head`.
+
 ### Objetivo
 Garantizar que Alembic `upgrade head` sea reproducible de cero en Neon y SQLite, y que no se registren datos sensibles.
 
@@ -112,15 +120,15 @@ Garantizar que Alembic `upgrade head` sea reproducible de cero en Neon y SQLite,
 - `alembic/` (~40 migraciones), `core/database.py`, `core/seed.py`, Neon (prod) vs SQLite (dev)
 
 ### Pasos
-1. En sandbox: BD SQLite vacía → `alembic upgrade head` → `python core/seed.py`; verificar sin errores.
+1. En sandbox: BD SQLite vacía → `init_db.py` (flujo único `create_all` + Alembic al head) → seed; verificar sin errores.
 2. Comparar `alembic history` entre local y Neon (`alembic current` en cada una); detectar heads duplicados o ramas.
 3. Revisar migraciones con data de usuario: `49a240f0fc25` (dropea `backend_time`), `c9d8e7f6a5b4` (mercadopago), `b7e3a1d2c4f5` (user_sessions) — verificar idempotencia y que no toquen filas sensibles.
 4. Auditar que ningún update legado (ej. limpieza de prefijo `"AUTOPASS "` en promotions) quede como operación manual sin migración.
 5. Confirmar que el código con `backend` DATABASE_URL en `core/config.py` sea solo `sqlite:///./parking.db` para dev y que en prod no se use SQLite.
-6. Duplicados de seed: `core/seed.py` vs `scripts/init_db.py` — unificar.
+6. Duplicados de seed: `core/seed.py` vs `scripts/init_db.py` — unificar (el inicializador real es `init_db.py` en la raíz).
 
 ### Criterios de aceptación
-- `upgrade head` verde desde BD vacía en ambos motores.
+- `upgrade head` verde desde BD vacía en ambos motores **(resuelto: flujo único `create_all` + `alembic current == head`; ver `AUDITORIA_DATOS_MIGRACIONES.md`, remediación P1 aplicada)**.
 - Lista de migraciones pendientes de aplicar en Neon, si las hay.
 
 ### Herramientas
@@ -258,11 +266,11 @@ grep + revisión manual.
 
 ## Orden de ejecución sugerido
 
-1. **A1** Seguridad API (mayor riesgo, base para A9).
-2. **A4** Migraciones (puede romper prod sin aviso).
-3. **A2** Dependencias (CVEs en OCR).
-4. **A3** Cobertura (define dónde escribir tests nuevos).
-5. **A5/A6/A7** en paralelo (sin dependencias entre sí).
+1. ~~**A1** Seguridad API (mayor riesgo, base para A9).~~ — **HECHO** (remediación P0/P1 aplicada).
+2. ~~**A4** Migraciones (puede romper prod sin aviso).~~ — **HECHO** (P1 aplicada).
+3. ~~**A2** Dependencias (CVEs en OCR).~~ — **HECHO** (P1+P2 aplicadas).
+4. ~~**A3** Cobertura (define dónde escribir tests nuevos).~~ — **HECHO** (66%, 271 tests).
+5. **A5/A6/A7** en paralelo (sin dependencias entre sí). ← pendiente
 6. **A8/A9** según disponibilidad.
 
-> Cada auditoría se marca como **HECHO** al dejar su informse en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta").
+> Cada auditoría se marca como **HECHO** al dejar su informe en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta"). A1–A4 cumplido; sigue **A5 (rendimiento)**.

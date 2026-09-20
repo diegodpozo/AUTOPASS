@@ -24,7 +24,10 @@ from core.normalize import normalize_name as normalize_id
 
 GATE_ID = normalize_id(RAW_GATE_ID)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
+ALPR_NODE_SECRET = os.getenv("ALPR_NODE_SECRET", "")
 WS_BACKEND_URL = BACKEND_URL.replace("http", "ws") + f"/v1/system/ws/video/{GATE_ID}"
+if ALPR_NODE_SECRET:
+    WS_BACKEND_URL += f"?node_secret={ALPR_NODE_SECRET}"
 
 # Parámetros sensibles de visión y consenso
 COOLDOWN_SECONDS = int(os.getenv("ALPR_COOLDOWN", 10))

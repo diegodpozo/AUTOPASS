@@ -18,9 +18,9 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~42 depe
 ## Librerías Core (secciones `CORE`/`DATABASE`/`AUTH`/`CV`/`HARDWARE`/`TESTING` de `requirements.txt`)
 
 ### Backend y Servidor
-- **`fastapi`** (0.135.1): Framework ASGI para la API REST.
+- **`fastapi`** (0.141.1): Framework ASGI para la API REST.
 - **`uvicorn`** (0.42.0): Servidor ASGI de alto rendimiento.
-- **`starlette`** (0.52.1): Utilidades ASGI (base de FastAPI).
+- **`starlette`** (1.6.0): Utilidades ASGI (base de FastAPI). ⚠️ Subió desde 0.52.1 a la rama 1.x en la auditoría A2 (P2) para fijar 5 CVEs (BadHost/DoS); verificado con suite completa + WS. El único CVE restante del venv es `ecdsa` (transitorio, sin fix, no explotable).
 - **`python-multipart`**: Soporte para subida de archivos (logos de sucursales).
 - **`python-dotenv`** (1.2.2): Gestión de variables de entorno (archivo `.env`).
 - **`jinja2`** (3.1.6): Motor de plantillas para renderizado de HTML con herencia.
@@ -34,11 +34,11 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~42 depe
 - **`dnspython`**: Resolución DNS para connection strings de Postgres.
 
 ### Seguridad y Autenticación
-- **`python-jose`** (3.5.0): Generación y validación de tokens JWT.
+- **`python-jose`** (3.5.0): Generación y validación de tokens JWT (solo HS256). ⚠️ Su dependencia transitiva `ecdsa` (0.19.2) arrastra CVE-2024-23342 (Minerva, P-256) **sin fix upstream**; no es explotable aquí porque el proyecto nunca usa ES256/ECDSA. A futuro se puede migrar a `PyJWT` para eliminar `ecdsa` de la cadena.
 - **`passlib`** (1.7.4): Hashing seguro de contraseñas.
 - **`bcrypt`** (5.0.0): Backend de hashing para passlib (usado directamente por `core/security.py`).
-- **`slowapi`** (0.1.9): Rate limiting por IP en endpoints públicos de auth (login/register/recuperación) y límite global por defecto 300/min.
-- **`cryptography`** (46.0.5): Dependencia de python-jose.
+- **`slowapi`** (0.1.10): Rate limiting por IP en endpoints públicos de auth (login/register/recuperación) y límite global por defecto 300/min.
+- **`cryptography`** (50.0.1): Dependencia de python-jose. Subido en A2 (P2) para fijar todos los CVEs (incluido el crítico 9.8 de 46.0.5 y los de PKCS#7/wildcard/OpenSSL de ≥46).
 
 ### Visión Artificial (CV)
 - **`opencv-python`** (4.13.0.92): Procesamiento de imágenes y manejo de streams de video.
@@ -57,7 +57,7 @@ Las dependencias se encuentran en un único archivo `requirements.txt` (~42 depe
 ### Utilidades
 - **`pydantic`** (>=2.10.0): Validación y serialización de datos (schemas).
 - **`pydantic_core`** (>=2.27.0): Core en Rust de Pydantic v2.
-- **`requests`** (2.32.5): HTTP client para servicios externos.
+- **`requests`** (2.33.0): HTTP client para servicios externos.
 - **`httpx`** (0.28.1): HTTP client async.
 - **`email-validator`** (2.3.0): Validación de direcciones de email.
 - **`protobuf`** (>=4.25.0): Serialización (dependencia de PaddleOCR).

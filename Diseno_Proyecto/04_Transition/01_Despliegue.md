@@ -69,7 +69,7 @@ MQTT_PORT=1883
 ```powershell
 .\venv\Scripts\python.exe init_db.py
 ```
-Esto crea las tablas y datos iniciales:
+Esto crea las tablas (flujo único: `create_all` de modelos + sincronización de Alembic al head) y los datos iniciales:
 - Usuario admin por defecto (admin@autopass.com / admin123)
 - Sucursal por defecto
 - Tarifas trimodales por defecto

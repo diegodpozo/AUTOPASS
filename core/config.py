@@ -18,6 +18,9 @@ class Settings:
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1440))
     ALLOWED_ORIGINS: list = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    # Secreto compartido de los nodos ALPR para el WS de video y update-frame.
+    # Vacio: solo se aceptan nodos desde red local/loopback (recomendado para ALPR en la misma maquina).
+    ALPR_NODE_SECRET: str = os.getenv("ALPR_NODE_SECRET", "")
     
     # BASE DE DATOS
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./parking.db")
