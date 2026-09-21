@@ -1,7 +1,7 @@
 # Auditoría de Cobertura de Tests — AUTOPASS
 
 > **Fecha:** 2026-09-21 (revisión contra código v9.23.1, rama `main`, Python 3.14.7)
-> **Alcance:** `tests/` (43 archivos, 595 tests) vs `services/`, `routes/`, `repositories/`, `alpr/`, `core/`.
+> **Alcance:** `tests/` (44 archivos, 609 tests) vs `services/`, `routes/`, `repositories/`, `alpr/`, `core/`.
 > **Metodología:** `pytest tests --cov=services --cov=routes --cov=repositories --cov=alpr --cov=core --cov-report=term-missing --cov-report=html` (HTML en `coverage_html/`).
 > **Herramientas:** `pytest-cov`, `coverage`, `pytest`.
 
@@ -9,20 +9,20 @@
 
 ## 1. Resumen Ejecutivo
 
-**Cobertura total: 81%** (7044 stmts / 1312 sin cubrir, −52). La suite pasa completa (**595 passed**). Ronda #1–#6 (38 tests: 55%→60%), ítems #7–#10 (79 tests: 60%→66%), regresión CSP (`test_security_headers.py`, 2), ronda #11 (**pagos y auth a 100%**, 61 tests: 66%→69%), ronda #12 (**preprocessor ALPR a 100%**, 36 tests: 69%→71%), ronda #13 (**streaming y video a 100%**, 47 tests: 71%→73%), ronda #14 (**ocr_engine ALPR a 98%**, 55 tests: 73%→76%), ronda #15 (**gestión de cámaras y common a 100%**, 74 tests: 76%→79%), ronda #16 (**settings admin a 100%**, 15 tests: 79%→80%), ronda #17 (**balance de usuario a 100%**, 16 tests: 80%→81%) y ronda #18 (**promociones admin a 100%**, 22 tests: 81%→81%):
+**Cobertura total: 82%** (7044 stmts / 1261 sin cubrir, −51). La suite pasa completa (**609 passed**). Ronda #1–#6 (38 tests: 55%→60%), ítems #7–#10 (79 tests: 60%→66%), regresión CSP (`test_security_headers.py`, 2), ronda #11 (**pagos y auth a 100%**, 61 tests: 66%→69%), ronda #12 (**preprocessor ALPR a 100%**, 36 tests: 69%→71%), ronda #13 (**streaming y video a 100%**, 47 tests: 71%→73%), ronda #14 (**ocr_engine ALPR a 98%**, 55 tests: 73%→76%), ronda #15 (**gestión de cámaras y common a 100%**, 74 tests: 76%→79%), ronda #16 (**settings admin a 100%**, 15 tests: 79%→80%), ronda #17 (**balance de usuario a 100%**, 16 tests: 80%→81%), ronda #18 (**promociones admin a 100%**, 22 tests: 81%→81%) y ronda #19 (**health del sistema a 100%**, 14 tests: 81%→82%):
 
 | Capa | Cobertura (antes) | Cobertura (ahora) | Nota |
 |---|---|---|---|
 | `alpr/` | 64% (813 stmts) | **95%** (813 stmts) | preprocessor 100%, runner 64%, **ocr_engine 98%**, **video_streamer 100%**, **ws_client 100%** |
-| `routes/` | 57% (2010 stmts) | **81%** (2010 stmts) | auth 100%, **video.py 100%**, **cameras.py 100%**, **common.py 100%**, **settings.py 100%**, **balance.py 100%**, **promotions.py 100%**, webhook MP 90%, branches 76%, status 84% |
+| `routes/` | 57% (2010 stmts) | **83%** (2010 stmts) | auth 100%, **video.py 100%**, **cameras.py 100%**, **common.py 100%**, **settings.py 100%**, **balance.py 100%**, **promotions.py 100%**, **health.py 100%**, webhook MP 90%, branches 76%, status 84% |
 | `services/` | 78% (3109 stmts) | **78%** (3109 stmts) | payments 100%, access_service 89%, occupancy 91%, worker 66%, billing 73% |
 | `repositories/` | 78% (777 stmts) | **78%** (777 stmts) | branch 98%, access_log 85% |
 | `core/` | 75% (335 stmts) | **77%** (335 stmts) | security 85%, database 87% |
 | `routes/views.py` | 74% | 74% | Renderizados base cubiertos |
 
-Zonas por encima del 85%: `access_service` (89), `branch_repository` (98), `oauth_service` (89), `branch_service` (89), `access.py` route (89), `occupancy_service` (91), `time_service` (90), `user_notification_service` (91), `mercadopago.py` route (90), `vehicles.py` (89), `config` ALPR (95), `limiter/mqtt/logger/time` (100), `access_log_repository` (85), **`routes/auth.py` (100)**, **`services/payments.py` (100)**, **`alpr/preprocessor.py` (100)**, **`alpr/video_streamer.py` (100)**, **`alpr/ws_client.py` (100)**, **`alpr/ocr_engine.py` (98)**, **`routes/system/video.py` (100)**, **`routes/system/cameras.py` (100)**, **`routes/system/common.py` (100)**, **`routes/admin/settings.py` (100)**, **`routes/user/balance.py` (100)**, **`routes/admin/promotions.py` (100)**, `session_repository` (100).
+Zonas por encima del 85%: `access_service` (89), `branch_repository` (98), `oauth_service` (89), `branch_service` (89), `access.py` route (89), `occupancy_service` (91), `time_service` (90), `user_notification_service` (91), `mercadopago.py` route (90), `vehicles.py` (89), `config` ALPR (95), `limiter/mqtt/logger/time` (100), `access_log_repository` (85), **`routes/auth.py` (100)**, **`services/payments.py` (100)**, **`alpr/preprocessor.py` (100)**, **`alpr/video_streamer.py` (100)**, **`alpr/ws_client.py` (100)**, **`alpr/ocr_engine.py` (98)**, **`routes/system/video.py` (100)**, **`routes/system/cameras.py` (100)**, **`routes/system/common.py` (100)**, **`routes/admin/settings.py` (100)**, **`routes/user/balance.py` (100)**, **`routes/admin/promotions.py` (100)**, **`routes/system/health.py` (100)**, `session_repository` (100).
 
-**Nivel de riesgo: BAJO.** No queda ningún módulo crítico (<60%) relacionado con dinero ni con seguridad; todo el pipeline ALPR y los flujos de pago/auth están al 90–100%. El CRUD completo de promociones de fidelización quedó a 100% (con `promotion_repository` de bonus a 82%). Restan módulos de operaciones y UI no sensibles: **health (37%), support admin (57%), fidelization (47%), virtual_time (50%), support user (41%)**.
+**Nivel de riesgo: BAJO.** No queda ningún módulo crítico (<60%) de dinero, seguridad ni operación; todo el pipeline ALPR, flujos de pago/auth y el sondeo de salud del sistema están al 90–100%. Restan módulos de negocio (fidelización, soporte) y herramientas de desarrollo. `virtual_time` se **deprioritizó** a propósito (ronda #19): es solo una herramienta de demo/prueba restringida a admins (el gate `get_local_manager` ya está cubierto). Pendientes: **support admin (57%), fidelization (47%), support user (41%)**.
 
 ---
 
@@ -33,13 +33,14 @@ Peor → mejor (post ítems #1–#10):
 | Módulo | Stmts | Miss | Cobert. | Crítico |
 |---|---:|---:|---:|---|
 | `core/seed.py` | 51 | 51 | **0%** | No (utilidades) |
-| `routes/system/health.py` | 67 | 42 | **37%** | Media |
 | `routes/user/support.py` | 56 | 33 | **41%** | Media |
 | `routes/user/fidelization.py` | 118 | 62 | **47%** | Media |
 | `routes/admin/virtual_time.py` | 64 | 32 | **50%** | Media |
 | `repositories/points_repository.py` | 12 | 6 | **50%** | Media |
 | `repositories/system_repository.py` | 12 | 6 | **50%** | Media |
 | `routes/admin/support.py` | 37 | 16 | **57%** | Media |
+
+Módulos que **superaron** el umbral del 60% en la ronda #19: `routes/system/health.py` (37→**100%**), `repositories/system_repository.py` (50→**100%**, bonus al ejercitarse en `/reset`).
 
 Módulos que **superaron** el umbral del 60% en la ronda #18: `routes/admin/promotions.py` (31→**100%**), `repositories/promotion_repository.py` (59→**82%**, bonus).
 
@@ -92,6 +93,9 @@ Sin cambios: `test_oauth.py` (19 tests) cubre roundtrip de state, providers, exc
 ### 3.9 Settings admin (parametrización y aforo) — **[ALTO→BUENO, 100%]**
 `tests/test_admin_settings.py` (15 tests) lleva `routes/admin/settings.py` de 21% a 100%: `GET /settings` (admin global ve settings globales y el aforo global; local_admin ve solo los de su sede con `sucursal_nombre`; sin aforo no hay claves de capacidad; `getattr` fallbacks de un aforo incompleto) y `POST /settings/prices` (claves de capacidad crean `ParkingAforo` con defaults si no existe, actualizan el existente sin duplicar, re-suma `capacidad_reservas` desde autos/motos/camionetas, notificación de ocupación con y sin excepción, settings por sede/global con `ttl_cache.invalidate("rate_")`). El rol se valida con el `get_local_manager` real vía `DependencyOverride` sobre `get_current_user` (staff → 403 "gestión administrativa").
 
+### 3.12 Health del sistema (sondeo de ALPR, reset y tiempo virtual) — **[MEDIA→BUENO, 100%]**
+`tests/test_system_health.py` (14 tests) lleva `routes/system/health.py` de 37% a 100%: `GET /health` ejercita el `get_operational_user` real (override de `get_current_user`; perfil "user" → 403) y el status ALPR por antigüedad <90s — admin global itera los gates de `ALPR_HEARTBEATS` (dict compartido con `routes/system/common`, se limpia en setup/teardown del fixture), staff sin cámaras arma los prefijos `SUCURSAL_ENTRADA/SALIDA` con `normalize_system_name`, staff con cámaras arma `proc_id = f"{norm}_{tipo}_{id}".upper()` y una cámara sin sucursal normaliza a `GLOBAL` (requiere staff global, porque el filtro previo compara `c.sucursal == staff.sucursal`); la DB caída se simula con un fake que lanza en `execute` → "OFFLINE". `POST /heartbeat` normaliza `strip().upper()`. `POST /reset` corre el `get_super_admin` real (staff → 403 "Administrador Global") y `SystemRepository.reset_all_data` real (deja a 100% ese repo de bonus), con `IMAGE_DIR` apuntando a `tmp_path`: con archivos que se borran, con directorio inexistente y con `os.unlink` que falla (rama `except` tolerada); el rate limit `5/minute` se evita con `limiter.reset()` en el fixture.
+
 ### 3.11 Promociones de fidelización (admin) — **[ALTO→BUENO, 100%]**
 `tests/test_admin_promotions.py` (22 tests) lleva `routes/admin/promotions.py` de 31% a 100% con el rol de `local_manager` real (override de `get_current_user`): GET (admin global filtra sin sucursal, local_admin solo su sede, `activa` NULL normalizada a True, staff → 403), POST (sucursal forzada para local_admin y libre para global, `tipo_canje` voucher/descuento_reserva con y sin `valor_descuento`, dirección/coordenadas), toggle (404, 403 por sucursal ajena, activa→desactiva y viceversa), PUT (404, 403, reasignación de sucursal solo para admin global, cambio a voucher que limpia `valor_descuento`) y DELETE (404, 403, `RedemptionRepository.unlink_promotion` que deja el ticket huérfano con `promotion_id=None` antes de borrar). **Gotcha del modelo:** `Promotion.activa` tiene `default=True` Python-side, así que pasar `activa=None` **no** guarda NULL (SQLAlchemy aplica el default); para reproducir la rama defensiva `if p.activa is None` hay que forzar NULL con un update de Core (`db.query(...).update({models.Promotion.activa: None})`). Para leer objetos post-commit fuera del scope de sesión, el `sessionmaker` usa `expire_on_commit=False` (si no, acceder a cualquier atributo `DetachedInstanceError`).
 `tests/test_balance_routes.py` (16 tests) lleva `routes/user/balance.py` de 32% a 100%: `GET /active-stays` (usuario sin vehículos → `[]`, sin ingresos → `[]`, entrada no pagada con deuda vía `BillingService.calculate_debt` patcheado, entrada pagada con deuda 0.0 sin llamar al servicio, salida posterior que excluye el ingreso, múltiples salidas que mantienen la más reciente en el mapa, salida anterior al ingreso que no excluye, varias patentes devolviendo solo las propias), `GET /payment-history` (logs pagados con costo > 0, más recientes primero, sin pagos → `[]`), `GET /rates` (sin seeds devuelve solo defaults, globales + defaults combinados, sucursal que prioriza sobre globales) y `POST /recharge-balance` (monto ≤ 0 → 400 "Monto inválido", recarga exitosa que acredita `saldo` y crea la notificación `BALANCE_RECHARGED`, y notificación que lanza excepción → se loguea y aun así responde ok). El usuario se simula con un FakeUser con `.vehicles` (lista de patentes) y `.saldo`, inyectado vía `DependencyOverride` sobre `get_current_user`; `AccessLog` reales se siembran con `tipo_evento` ENTRADA/SALIDA.
@@ -122,8 +126,9 @@ Sin cambios: `test_oauth.py` (19 tests) cubre roundtrip de state, providers, exc
 | 18 | Alta | Settings admin: parametrización por sede/global, capacidades de aforo con creación automática y re-suma de reservas | `routes/admin/settings.py` | 21% | **100%** ✅ |
 | 19 | Alta | Balance de usuario: estadías activas con deuda, historial de pagos, tarifas por sede y recarga de saldo | `routes/user/balance.py` | 32% | **100%** ✅ |
 | 20 | Alta | Promociones de fidelización: CRUD admin con aislamiento por sede, tipo de canje y desasociación de tickets al borrar | `routes/admin/promotions.py` | 31% | **100%** ✅ |
+| 21 | Media | Health del sistema: sondeo de DB/API/ALPR por rol y por cámara, heartbeat, reset operativo con limpieza de imágenes | `routes/system/health.py` | 37% | **100%** ✅ |
 
-Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seguridad de A1) y quedaron cerrados. Los ítems #7–#10 ya están escritos y en verde (79 tests nuevos). En la ronda #11 se cerraron los ítems #11–#12 (61 tests nuevos: `test_payments.py` 37 + `test_routes_auth.py` 24), en la #12 el ítem #13 (`test_preprocessor.py`, 36 tests), en la #13 los ítems #14–#15 (47 tests nuevos: `test_video_streamer.py` 12 + `test_ws_client.py` 5 + `test_video_routes.py` 30), en la #14 el ítem #16 (`test_ocr_engine_detallado.py`, 55 tests), en la #15 el ítem #17 (`test_cameras_routes.py`, 74 tests), en la #16 el ítem #18 (`test_admin_settings.py`, 15 tests), en la #17 el ítem #19 (`test_balance_routes.py`, 16 tests) y en la #18 el ítem #20 (`test_admin_promotions.py`, 22 tests). Próximos candidatos por impacto: **health (37%), support admin (57%), fidelization (47%), virtual_time (50%)**.
+Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seguridad de A1) y quedaron cerrados. Los ítems #7–#10 ya están escritos y en verde (79 tests nuevos). En la ronda #11 se cerraron los ítems #11–#12 (61 tests nuevos: `test_payments.py` 37 + `test_routes_auth.py` 24), en la #12 el ítem #13 (`test_preprocessor.py`, 36 tests), en la #13 los ítems #14–#15 (47 tests nuevos: `test_video_streamer.py` 12 + `test_ws_client.py` 5 + `test_video_routes.py` 30), en la #14 el ítem #16 (`test_ocr_engine_detallado.py`, 55 tests), en la #15 el ítem #17 (`test_cameras_routes.py`, 74 tests), en la #16 el ítem #18 (`test_admin_settings.py`, 15 tests), en la #17 el ítem #19 (`test_balance_routes.py`, 16 tests), en la #18 el ítem #20 (`test_admin_promotions.py`, 22 tests) y en la #19 el ítem #21 (`test_system_health.py`, 14 tests). `virtual_time` quedó **deprioritizado** por decisión (herramienta de demo/prueba). Próximos candidatos por impacto: **support admin (57%), fidelization (47%), support user (41%)**.
 
 ---
 
@@ -134,10 +139,10 @@ Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seg
 Opciones para reactivar CI:
 - Correr en `ubuntu-latest` con `python 3.14` (venv local es 3.14.7).
 - Reemplazar `patch_bidi.py` por el flujo de inicialización único `init_db.py` (o `sync_schema()`).
-- Agregar `--cov-fail-under=81` (cobertura actual 81%). El umbral puede subir por PR a 85.
+- Agregar `--cov-fail-under=82` (cobertura actual 82%). El umbral puede subir por PR a 85.
 - No correr `alembic upgrade head` desde cero: usar `python init_db.py`.
 
-Recomiendo reactivar CI con `--cov-fail-under=81` al mergear esta ronda.
+Recomiendo reactivar CI con `--cov-fail-under=82` al mergear esta ronda.
 
 ---
 
@@ -146,7 +151,7 @@ Recomiendo reactivar CI con `--cov-fail-under=81` al mergear esta ronda.
 | Ítem | Estado |
 |---|---|
 | `pytest-cov` + `coverage` instalados | ✔ |
-| `pytest --cov=... --cov-report=html` ejecutado (**81% total, 595 passed**) | ✔ |
+| `pytest --cov=... --cov-report=html` ejecutado (**82% total, 609 passed**) | ✔ |
 | Reporte HTML navegable generado (`coverage_html/`) | ✔ |
 | Ranking por módulo (< 60%) documentado | ✔ |
 | Cruce con flujos críticos (ALPR, workers, payments, oauth, WS, admin) | ✔ |
@@ -162,12 +167,13 @@ Recomiendo reactivar CI con `--cov-fail-under=81` al mergear esta ronda.
 | Tests de la lista #18 en verde (settings admin a 100%) | ✔ |
 | Tests de la lista #19 en verde (balance de usuario a 100%) | ✔ |
 | Tests de la lista #20 en verde (promociones admin a 100%) | ✔ |
+| Tests de la lista #21 en verde (health del sistema a 100%) | ✔ |
 
 ---
 
 ## 7. Notas de ejecución
 
-- La suite usa la BD SQLite temporal por test (patrón habitual del repo), 595 passed en 45–55s.
+- La suite usa la BD SQLite temporal por test (patrón habitual del repo), 609 passed en 45–55s.
 - Tests nuevos ronda #1–#6: `test_alpr_pipeline.py` (14), `test_worker_cleanup.py` (7), `test_mercadopago_webhook.py` (10), `test_toggle_block.py` (6), `test_pay_stay.py` (5) → 38 tests.
 - Tests nuevos ronda #7–#10: `test_access_flow.py` (33), `test_admin_branches.py` (21), `test_status_ws.py` (16), `test_core_database.py` (9) → 79 tests.
 - Tests nuevos ronda #11: `test_payments.py` (37) + `test_routes_auth.py` (crecido a 24, antes 2) → 61 tests. `test_payments.py` usa el patrón StaticPool + `sessionmaker` del repo; `test_routes_auth.py` reutiliza el fixture de `test_pay_stay.py` (engine SQLite en memoria por test, `dependency_overrides` guardado/restaurado y `limiter.reset()`).
@@ -178,6 +184,7 @@ Recomiendo reactivar CI con `--cov-fail-under=81` al mergear esta ronda.
 - Tests nuevos ronda #16: `test_admin_settings.py` (15) → 15 tests, `routes/admin/settings.py` 21→100%. Se valida el rol con el `get_local_manager` real (core/security) vía `dependency_overrides` sobre `get_current_user` (lambda que devuelve el usuario global `CURRENT["user"]`), así el 403 "Requiere permisos de gestión administrativa" sale de la lógica productiva. **Ojo con `str` en enums:** `UserRole` es `str, Enum`, así que `isinstance(rol, str)` es True y hay que convertir a `.value` usando `isinstance(rol, UserRole)`; además `str(UserRole.ADMIN)` en Python 3.11+ da `"UserRole.ADMIN"`, no `"admin"` (el FakeUser debe guardar el `.value`). Como `CURRENT["user"]` persiste entre tests, `_reset_user` autouse restaura el admin por defecto (misma causa raíz que la contaminación vista en cameras). Las claves de capacidad (`capacidad_*`) crean/actualizan `ParkingAforo` (con defaults vía `getattr`), re-suman `capacidad_reservas` y disparan `notify_occupancy_change` (classmethod; se monkeypatchea con `classmethod(lambda cls, db, s: ...)` y se cubre la rama que lanza). Los settings por sede se guardan con `sucursal_norm` real (ej. "Centro") y el `ttl_cache.invalidate("rate_")` se ejecuta en cada update.
 - Tests nuevos ronda #17: `test_balance_routes.py` (16) → 16 tests, `routes/user/balance.py` 32→100%. `/active-stays` consulta `AccessLog` reales sembrados con `tipo_evento` ENTRADA/SALIDA y patentes ISO-string comparables por orden lexicográfico (`"2026-09-20T10:00:00"`); `BillingService.calculate_debt` se patchea como `staticmethod` del módulo (`balance.BillingService.calculate_debt`). El FakeUser expone `.vehicles` (lista de objetos con `.patente`), `.id` y `.saldo`; si `.vehicles` está vacío se cubre el early-return `[]`. `/rates` no requiere auth y los defaults solo cubren autos (`{30min, hora, dia, semana, quincena, mes}`), no las claves `_moto`. `recharge_balance` importa `UserNotificationService` dentro de la función, así que para interceptarlo se patchea el classmethod `create_notification` (éxito y excepción tolerada).
 - Tests nuevos ronda #18: `test_admin_promotions.py` (22) → 22 tests, `routes/admin/promotions.py` 31→100% (bonus `promotion_repository.py` 59→82%). Endpoints sin prefijo (app standalone con `promos_mod.router`): `/promotions` GET/POST, `/promotions/{id}/toggle`, `/promotions/{id}` PUT/DELETE. El objeto `promo.activa = not promo.activa` tras `db.commit()` expira atributos, así que el `sessionmaker` usa `expire_on_commit=False` para que las lecturas posteriores del test no revienten (`DetachedInstanceError` si se accede a un objeto detached con atributos expirados). `RedemptionTicket` se siembra con `promotion_id` FK y tras el DELETE el borrado vía `unlink_promotion` deja `promotion_id=None` sin violar la FK.
+- Tests nuevos ronda #19: `test_system_health.py` (14) → 14 tests, `routes/system/health.py` 37→100% (bonus `system_repository.py` 50→100%). `ALPR_HEARTBEATS` es el dict global compartido con `routes/system/common` (health lo importa y lo muta en el mismo objeto): los tests lo siembran y lo limpian en el fixture para no contaminar el resto de la suite. El gate de staff `get_operational_user` y el de reset `get_super_admin` se ejercitan reales vía override de `get_current_user`. Para simular DB caída se overr idea `get_db` con un objeto falso que lanza en `execute`. El prefijo de sucursal usa `normalize_system_name("Centro") = "CENTRO"` (gates `CENTRO_ENTRADA/SALIDA`); el proc_id de cámara es `f"{norm}_{tipo}_{id}".upper()` y una cámara sin sucursal da `GLOBAL_{TIPO}_{id}` — pero solo se alcanza con staff global, ya que el endpoint filtra `c.sucursal == staff.sucursal`. `/reset` tiene `limiter.limit("5/minute")`: se llama `limiter.reset()` en setup y teardown del fixture. Para tapar el `except` defensivo de `os.unlink` se monkeypatchea `health_mod.os.unlink` para que falle.
 - El flujo login multi-dispositivo exige UserSession con `last_login_at` dentro de la ventana (`ACCESS_TOKEN_EXPIRE_MINUTES`, 1440) para que `count_other_devices`/`get_recent_by_user_agent` matcheen; y los redirects OAuth (`303` a `/#fragment`) se prueban con `follow_redirects=False`, decodificando el fragmento con `urllib.parse.unquote`.
 - Detalle importante: en endpoints con `TestClient` hay que usar `create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)` — `sqlite:///:memory:` crea BD por conexión y los requests corren en otro thread (aparece "no such table"). Ya aplicado en los archivos HTTP nuevos.
 - El WebSocket de aforo **sí es testeable** con `TestClient.websocket_connect` en este stack (starlette/CPython 3.14): se parchean `status.decode_access_token`, `status.UserRepository.get_by_email` y `status.get_db` (el endpoint usa `next(get_db())`, no `Depends`, por lo que `dependency_overrides` no aplica).
