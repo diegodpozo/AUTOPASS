@@ -1,7 +1,7 @@
 # Auditoría de Cobertura de Tests — AUTOPASS
 
-> **Fecha:** 2026-09-20 (revisión contra código v9.23.0, rama `main`, Python 3.14.7)
-> **Alcance:** `tests/` (34 archivos, 330 tests) vs `services/`, `routes/`, `repositories/`, `alpr/`, `core/`.
+> **Fecha:** 2026-09-21 (revisión contra código v9.23.1, rama `main`, Python 3.14.7)
+> **Alcance:** `tests/` (35 archivos, 366 tests) vs `services/`, `routes/`, `repositories/`, `alpr/`, `core/`.
 > **Metodología:** `pytest tests --cov=services --cov=routes --cov=repositories --cov=alpr --cov=core --cov-report=term-missing --cov-report=html` (HTML en `coverage_html/`).
 > **Herramientas:** `pytest-cov`, `coverage`, `pytest`.
 
@@ -9,20 +9,20 @@
 
 ## 1. Resumen Ejecutivo
 
-**Cobertura total: 69%** (7044 stmts / 2194 sin cubrir). La suite pasa completa (**330 passed**). Ronda #1–#6 (38 tests: 55%→60%), ítems #7–#10 (79 tests: 60%→66%), regresión CSP (`test_security_headers.py`, 2), y ronda #11 — **pagos y auth a 100%** (61 tests: 66%→69%):
+**Cobertura total: 71%** (7044 stmts / 2072 sin cubrir). La suite pasa completa (**366 passed**). Ronda #1–#6 (38 tests: 55%→60%), ítems #7–#10 (79 tests: 60%→66%), regresión CSP (`test_security_headers.py`, 2), ronda #11 (**pagos y auth a 100%**, 61 tests: 66%→69%) y ronda #12 (**preprocessor ALPR a 100%**, 36 tests: 69%→71%):
 
 | Capa | Cobertura (antes) | Cobertura (ahora) | Nota |
 |---|---|---|---|
-| `alpr/` | 21% (738 stmts) | **49%** (813 stmts) | runner 64%, ocr_engine 56%, config 95% |
-| `routes/` | 35% (2565 stmts) | **57%** (2010 stmts) | auth 100%, webhook MP 90%, branches 76%, status 84%, access 89% |
-| `services/` | 63% (2392 stmts) | **78%** (3109 stmts) | payments 100%, access_service 89%, occupancy 91%, worker 66%, billing 73% |
-| `repositories/` | 77% (816 stmts) | **78%** (777 stmts) | branch 98%, access_log 85% |
-| `core/` | 68% (345 stmts) | **75%** (335 stmts) | security 85%, database 81% |
+| `alpr/` | 49% (813 stmts) | **64%** (813 stmts) | preprocessor 100%, runner 64%, ocr_engine 56%, config 95% |
+| `routes/` | 57% (2010 stmts) | **57%** (2010 stmts) | auth 100%, webhook MP 90%, branches 76%, status 84%, access 89% |
+| `services/` | 78% (3109 stmts) | **78%** (3109 stmts) | payments 100%, access_service 89%, occupancy 91%, worker 66%, billing 73% |
+| `repositories/` | 78% (777 stmts) | **78%** (777 stmts) | branch 98%, access_log 85% |
+| `core/` | 75% (335 stmts) | **75%** (335 stmts) | security 85%, database 81% |
 | `routes/views.py` | 74% | 74% | Renderizados base cubiertos |
 
-Zonas por encima del 85%: `access_service` (89), `branch_repository` (98), `oauth_service` (89), `branch_service` (89), `access.py` route (89), `occupancy_service` (91), `time_service` (90), `user_notification_service` (91), `mercadopago.py` route (90), `vehicles.py` (89), `config` ALPR (95), `limiter/mqtt/logger/time` (100), `access_log_repository` (85), **`routes/auth.py` (100)**, **`services/payments.py` (100)**, `session_repository` (100).
+Zonas por encima del 85%: `access_service` (89), `branch_repository` (98), `oauth_service` (89), `branch_service` (89), `access.py` route (89), `occupancy_service` (91), `time_service` (90), `user_notification_service` (91), `mercadopago.py` route (90), `vehicles.py` (89), `config` ALPR (95), `limiter/mqtt/logger/time` (100), `access_log_repository` (85), **`routes/auth.py` (100)**, **`services/payments.py` (100)**, **`alpr/preprocessor.py` (100)**, `session_repository` (100).
 
-**Nivel de riesgo: MEDIO.** Los flujos de seguridad cobrados en A1 tienen red de protección (webhook MP 90%, pay-stay 89%, toggle-block/users 65%, security 85%, workers 66%, access_service 89%, branches/status 76/84%) y el pipeline ALPR salió de 0%. El grueso que queda sin cubrir es negocio de management y streaming: **admin cameras/settings (17–21%), video WS (`routes/system/video.py` 24%), `alpr/preprocessor` (25%), `video_streamer` (18%), `ws_client` (24%)**.
+**Nivel de riesgo: MEDIO.** Los flujos de seguridad cobrados en A1 tienen red de protección (webhook MP 90%, pay-stay 89%, toggle-block/users 65%, security 85%, workers 66%, access_service 89%, branches/status 76/84%) y el pipeline ALPR salió de 0% (preprocessor a 100%). El grueso que queda sin cubrir es negocio de management y streaming: **admin cameras/settings (17–21%), video WS (`routes/system/video.py` 24%), `video_streamer` (18%), `ws_client` (24%)**.
 
 ---
 
@@ -38,7 +38,6 @@ Peor → mejor (post ítems #1–#10):
 | `routes/admin/settings.py` | 67 | 53 | **21%** | **SÍ** — parametrización |
 | `alpr/ws_client.py` | 25 | 19 | **24%** | Media |
 | `routes/system/video.py` | 121 | 92 | **24%** | **SÍ** — WS video (fix A1 P0-2) |
-| `alpr/preprocessor.py` | 163 | 122 | **25%** | **SÍ** — pipeline ALPR |
 | `routes/admin/promotions.py` | 64 | 44 | **31%** | Media |
 | `routes/user/balance.py` | 62 | 42 | **32%** | **SÍ** — dinero |
 | `routes/system/common.py` | 75 | 50 | **33%** | Media |
@@ -52,6 +51,8 @@ Peor → mejor (post ítems #1–#10):
 | `routes/admin/support.py` | 37 | 16 | **57%** | Media |
 | `repositories/promotion_repository.py` | 22 | 9 | **59%** | Media |
 
+Módulos que **superaron** el umbral del 60% en la ronda #12: `alpr/preprocessor.py` (25→**100%**).
+
 Módulos que **superaron** el umbral del 60% en la ronda #11: `routes/auth.py` (37→**100%**), `services/payments.py` (43→**100%**).
 
 Módulos que **superaron** el umbral del 60% en la ronda #7–#10: `services/access_service.py` (38→**89%**), `routes/admin/branches.py` (19→**76%**), `routes/parking/status.py` (23→**84%**), `core/database.py` (35→**81%**), `services/occupancy_service.py` (90→**91%**), `services/branch_service.py` (→**88%**), `repositories/branch_repository.py` (→**98%**). En la ronda #1–#6: `alpr/runner.py` (0→**64%**), `services/worker_service.py` (44→**66%**), `routes/admin/users.py` (54→**65%**), `routes/user/mercadopago.py` (34→**90%**), `routes/parking/access.py` (→**89%**), `core/security.py` (54→**81%**).
@@ -62,8 +63,8 @@ El HTML navegable completo quedó en `coverage_html/` (índice por archivo, incl
 
 ## 3. Cruce con flujos críticos
 
-### 3.1 ALPR (reconocimiento, consenso, cooldown, hallucination) — **[ALTO→MEDIO, 49%]**
-`test_alpr_pipeline.py` cubre por primera vez el pipeline real: **runner→consenso→cooldown→event_out** (runner 64%, ocr_engine 56%, config 95%): arranque fatal de VideoStreamer, bucle principal en modo ENTRADA, consenso de `CONSENSUS_REQUIRED` votos, descarte de frames en negro, debounce de `send_event`, y corrección posicional `CorregirPatente`. Faltan: `preprocessor.py` (25%, recortes/mercosur), `video_streamer.py` (18%) y `ws_client.py` (24%).
+### 3.1 ALPR (reconocimiento, consenso, cooldown, hallucination) — **[ALTO→MEDIO, 64%]**
+`test_alpr_pipeline.py` cubre por primera vez el pipeline real: **runner→consenso→cooldown→event_out** (runner 64%, ocr_engine 56%, config 95%): arranque fatal de VideoStreamer, bucle principal en modo ENTRADA, consenso de `CONSENSUS_REQUIRED` votos, descarte de frames en negro, debounce de `send_event`, y corrección posicional `CorregirPatente`. En la ronda #12, **`tests/test_preprocessor.py` (36 tests) lleva `alpr/preprocessor.py` a 100%**: `identify_country` (patentes MERCOSUR por país, DESCONOCIDO), `detect_motion` (FORCE_OCR, frames iguales/diferentes), `preprocess_for_screen`, `_iou`/`_is_valid_plate_roi` (área/aspect/ancho), `find_plate_roi` (múltiples ROI fijos, filtros de contorno por área/aspect/ancho, dedupe por IoU, tope de 10 candidatos, fallback al ROI principal, bloque `except` de findContours), `is_mercosur_candidate` (franja azul HSV, ROI vacía/grayscale) y `crop_below_blue` (recorte real, franja en la mitad inferior, resto pequeño, `np.where` vacío, grayscale). Faltan: `video_streamer.py` (18%), `ws_client.py` (24%) y alcanzar >60% en `ocr_engine.py` (56%).
 
 ### 3.2 Workers (limpieza, notificaciones) — **[ALTO→MEDIO, 66%]**
 `test_worker_cleanup.py` agrega los flujos de limpieza: auto-cancelación de sesiones vencidas con notificación y liberación de plaza, cleanup de reservas por hora a las 2 h (con protección si hay AccessLog de ENTRADA), `auto_finalize_all_reservations` y purga de imágenes ALPR viejas (sobre settings). Queda el disparo periódico del tick (startup) y bloques menores.
@@ -98,8 +99,9 @@ Sin cambios: `test_oauth.py` (19 tests) cubre roundtrip de state, providers, exc
 | 10 | Media | `sync_schema()` (fix A4 P1): BD vacía → tablas + alembic head; BD preexistente sin duplicar | `core/database.py` | 35% | **81%** ✅ |
 | 11 | Alta | Pagos trimodales: abono manual/saldo/MP, descuentos por canje, simulación/ejecución de reembolso, cancelaciones | `services/payments.py` | 43% | **100%** ✅ |
 | 12 | Alta | Auth: register/forgot/reset, login multi-dispositivo con sesiones, flujo OAuth completo | `routes/auth.py` | 37% | **100%** ✅ |
+| 13 | Alta | Preprocesamiento ALPR: recognizer de país MERCOSUR, motion, find_plate_roi, mercosur, crop_below_blue | `alpr/preprocessor.py` | 25% | **100%** ✅ |
 
-Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seguridad de A1) y quedaron cerrados. Los ítems #7–#10 ya están escritos y en verde (79 tests nuevos). En la ronda #11 se cerraron los ítems #11–#12 (61 tests nuevos: `test_payments.py` 37 + `test_routes_auth.py` 24). Próximos candidatos por impacto: **preprocessor ALPR (25%), video WS (`routes/system/video.py` 24%), `video_streamer` (18%), admin cameras/settings (17–21%)**.
+Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seguridad de A1) y quedaron cerrados. Los ítems #7–#10 ya están escritos y en verde (79 tests nuevos). En la ronda #11 se cerraron los ítems #11–#12 (61 tests nuevos: `test_payments.py` 37 + `test_routes_auth.py` 24) y en la #12 el ítem #13 (`test_preprocessor.py`, 36 tests). Próximos candidatos por impacto: **video WS (`routes/system/video.py` 24%), `video_streamer` (18%), `ws_client` (24%), admin cameras/settings (17–21%), ocr_engine (56% hacia >60%)**.
 
 ---
 
@@ -110,7 +112,7 @@ Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seg
 Opciones para reactivar CI:
 - Correr en `ubuntu-latest` con `python 3.14` (venv local es 3.14.7).
 - Reemplazar `patch_bidi.py` por el flujo de inicialización único `init_db.py` (o `sync_schema()`).
-- Agregar `--cov-fail-under=65` (cobertura actual 69%). El umbral puede subir por PR a 70.
+- Agregar `--cov-fail-under=65` (cobertura actual 71%). El umbral puede subir por PR a 70.
 - No correr `alembic upgrade head` desde cero: usar `python init_db.py`.
 
 Recomiendo reactivar CI con `--cov-fail-under=70` al mergear esta ronda.
@@ -122,7 +124,7 @@ Recomiendo reactivar CI con `--cov-fail-under=70` al mergear esta ronda.
 | Ítem | Estado |
 |---|---|
 | `pytest-cov` + `coverage` instalados | ✔ |
-| `pytest --cov=... --cov-report=html` ejecutado (**69% total, 330 passed**) | ✔ |
+| `pytest --cov=... --cov-report=html` ejecutado (**71% total, 366 passed**) | ✔ |
 | Reporte HTML navegable generado (`coverage_html/`) | ✔ |
 | Ranking por módulo (< 60%) documentado | ✔ |
 | Cruce con flujos críticos (ALPR, workers, payments, oauth, WS, admin) | ✔ |
@@ -131,15 +133,17 @@ Recomiendo reactivar CI con `--cov-fail-under=70` al mergear esta ronda.
 | Tests de la lista #1–#6 escritos y en verde | ✔ |
 | Tests de la lista #7–#10 escritos y en verde | ✔ |
 | Tests de la lista #11–#12 escritos y en verde (payments y auth a 100%) | ✔ |
+| Tests de la lista #13 en verde (preprocessor ALPR a 100%) | ✔ |
 
 ---
 
 ## 7. Notas de ejecución
 
-- La suite usa la BD SQLite temporal por test (patrón habitual del repo), 330 passed en 24–33s.
+- La suite usa la BD SQLite temporal por test (patrón habitual del repo), 366 passed en 24–33s.
 - Tests nuevos ronda #1–#6: `test_alpr_pipeline.py` (14), `test_worker_cleanup.py` (7), `test_mercadopago_webhook.py` (10), `test_toggle_block.py` (6), `test_pay_stay.py` (5) → 38 tests.
 - Tests nuevos ronda #7–#10: `test_access_flow.py` (33), `test_admin_branches.py` (21), `test_status_ws.py` (16), `test_core_database.py` (9) → 79 tests.
 - Tests nuevos ronda #11: `test_payments.py` (37) + `test_routes_auth.py` (crecido a 24, antes 2) → 61 tests. `test_payments.py` usa el patrón StaticPool + `sessionmaker` del repo; `test_routes_auth.py` reutiliza el fixture de `test_pay_stay.py` (engine SQLite en memoria por test, `dependency_overrides` guardado/restaurado y `limiter.reset()`).
+- Tests nuevos ronda #12: `test_preprocessor.py` (36) → 36 tests. `identify_country` cubre patentes MERCOSUR de Argentina/Brasil/Uruguay/Paraguay/Otros + DESCONOCIDO; `detect_motion` exige parchear `preproc.FORCE_OCR=False` (el `from alpr.config import FORCE_OCR` enlaza el valor a `alpr.config` en el import del módulo, hay que patchear el atributo del módulo); los asserts de `detect_motion`/`is_mercosur_candidate` devuelven `np.True_`/`np.False_` (usar truethiness, no `is True`); `_iou` de contención es `área_interna/área_externa` (0.64), no 1.0; `find_plate_roi` llega al tope `len(merged) >= 10` con un frame de 2200 px (6 segmentos de cinta × 2), y las ramas defensivas (`except` de findContours/cvtColor y `np.where` vacío) se disparan con `monkeypatch` sobre `preproc.cv2.findContours`, `preproc.np.where` y ROIs en escala de grises 2D.
 - El flujo login multi-dispositivo exige UserSession con `last_login_at` dentro de la ventana (`ACCESS_TOKEN_EXPIRE_MINUTES`, 1440) para que `count_other_devices`/`get_recent_by_user_agent` matcheen; y los redirects OAuth (`303` a `/#fragment`) se prueban con `follow_redirects=False`, decodificando el fragmento con `urllib.parse.unquote`.
 - Detalle importante: en endpoints con `TestClient` hay que usar `create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)` — `sqlite:///:memory:` crea BD por conexión y los requests corren en otro thread (aparece "no such table"). Ya aplicado en los archivos HTTP nuevos.
 - El WebSocket de aforo **sí es testeable** con `TestClient.websocket_connect` en este stack (starlette/CPython 3.14): se parchean `status.decode_access_token`, `status.UserRepository.get_by_email` y `status.get_db` (el endpoint usa `next(get_db())`, no `Depends`, por lo que `dependency_overrides` no aplica).
