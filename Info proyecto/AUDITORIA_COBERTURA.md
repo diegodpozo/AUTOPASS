@@ -40,6 +40,10 @@ Peor → mejor (post ítems #1–#10):
 | `repositories/system_repository.py` | 12 | 6 | **50%** | Media |
 | `routes/admin/support.py` | 37 | 16 | **57%** | Media |
 
+Módulos que **superaron** el umbral del 60% en la ronda #20: `routes/admin/support.py` (57→**100%**).
+
+Módulos que **superaron** el umbral del 60% en la ronda #21: `routes/user/support.py` (41→**100%**, crea/lista/detalle/reply con adjunto: extensiones permitidas, tamaño >1MB, Form multipart), con bonus en `services/support_service.py` (→92%) y `repositories/support_repository.py` (→87%).
+
 Módulos que **superaron** el umbral del 60% en la ronda #19: `routes/system/health.py` (37→**100%**), `repositories/system_repository.py` (50→**100%**, bonus al ejercitarse en `/reset`).
 
 Módulos que **superaron** el umbral del 60% en la ronda #18: `routes/admin/promotions.py` (31→**100%**), `repositories/promotion_repository.py` (59→**82%**, bonus).
@@ -127,8 +131,9 @@ Sin cambios: `test_oauth.py` (19 tests) cubre roundtrip de state, providers, exc
 | 19 | Alta | Balance de usuario: estadías activas con deuda, historial de pagos, tarifas por sede y recarga de saldo | `routes/user/balance.py` | 32% | **100%** ✅ |
 | 20 | Alta | Promociones de fidelización: CRUD admin con aislamiento por sede, tipo de canje y desasociación de tickets al borrar | `routes/admin/promotions.py` | 31% | **100%** ✅ |
 | 21 | Media | Health del sistema: sondeo de DB/API/ALPR por rol y por cámara, heartbeat, reset operativo con limpieza de imágenes | `routes/system/health.py` | 37% | **100%** ✅ |
+| 22 | Alta | Fidelización usuario: catálogo de beneficios, canje de puntos (voucher / descuento_reserva), tickets con fallback de ubicación (promo → sucursal → branch) y cancelación con devolución | `routes/user/fidelization.py` | 47% | **88%** ✅ |
 
-Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seguridad de A1) y quedaron cerrados. Los ítems #7–#10 ya están escritos y en verde (79 tests nuevos). En la ronda #11 se cerraron los ítems #11–#12 (61 tests nuevos: `test_payments.py` 37 + `test_routes_auth.py` 24), en la #12 el ítem #13 (`test_preprocessor.py`, 36 tests), en la #13 los ítems #14–#15 (47 tests nuevos: `test_video_streamer.py` 12 + `test_ws_client.py` 5 + `test_video_routes.py` 30), en la #14 el ítem #16 (`test_ocr_engine_detallado.py`, 55 tests), en la #15 el ítem #17 (`test_cameras_routes.py`, 74 tests), en la #16 el ítem #18 (`test_admin_settings.py`, 15 tests), en la #17 el ítem #19 (`test_balance_routes.py`, 16 tests), en la #18 el ítem #20 (`test_admin_promotions.py`, 22 tests) y en la #19 el ítem #21 (`test_system_health.py`, 14 tests). `virtual_time` quedó **deprioritizado** por decisión (herramienta de demo/prueba). Próximos candidatos por impacto: **support admin (57%), fidelization (47%), support user (41%)**.
+Los ítems 5 y 6 eran los más urgentes (regresiones directas sobre fixes de seguridad de A1) y quedaron cerrados. Los ítems #7–#10 ya están escritos y en verde (79 tests nuevos). En la ronda #11 se cerraron los ítems #11–#12 (61 tests nuevos: `test_payments.py` 37 + `test_routes_auth.py` 24), en la #12 el ítem #13 (`test_preprocessor.py`, 36 tests), en la #13 los ítems #14–#15 (47 tests nuevos: `test_video_streamer.py` 12 + `test_ws_client.py` 5 + `test_video_routes.py` 30), en la #14 el ítem #16 (`test_ocr_engine_detallado.py`, 55 tests), en la #15 el ítem #17 (`test_cameras_routes.py`, 74 tests), en la #16 el ítem #18 (`test_admin_settings.py`, 15 tests), en la #17 el ítem #19 (`test_balance_routes.py`, 16 tests), en la #18 el ítem #20 (`test_admin_promotions.py`, 22 tests) y en la #19 el ítem #21 (`test_system_health.py`, 14 tests). `virtual_time` quedó **deprioritizado** por decisión (herramienta de demo/prueba). En la ronda #20 se cerró el ítem #22 (`test_user_fidelization_routes.py`, 19 tests): `routes/user/fidelization.py` pasó de 47% a **88%** ✅. Próximos candidatos por impacto: **support admin (57%), support user (41%)**.
 
 ---
 

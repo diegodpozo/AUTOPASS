@@ -44,7 +44,7 @@ def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_l
 def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE AL ADMINISTRADOR CREAR UN NUEVO USUARIO. LOS LOCALES SOLO CREAN PARA SU SEDE."""
     if str(admin.rol) != UserRole.ADMIN.value:
-        if str(rol) == UserRole.ADMIN.value: 
+        if rol == UserRole.ADMIN: 
             raise HTTPException(status_code=403, detail="No podés crear un Administrador Global")
         user_data.sucursal = admin.sucursal
     
@@ -87,7 +87,7 @@ def change_user_role(request: Request, user_id: int, nuevo_rol: UserRole, db: Se
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     validate_local_admin_user_permission(admin, user)
-    if str(admin.rol) != UserRole.ADMIN.value and str(nuevo_rol) == UserRole.ADMIN.value:
+    if str(admin.rol) != UserRole.ADMIN.value and nuevo_rol == UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="No tenés permisos para asignar o modificar el rol de Administrador Global")
 
     user.rol = nuevo_rol
