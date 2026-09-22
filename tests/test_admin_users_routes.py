@@ -209,6 +209,13 @@ def test_update_user_local_fuera_sucursal(client_local):
     assert r.status_code == 403
 
 
+def test_update_user_local_asigna_admin_403(client_local):
+    c, TestSession = client_local
+    uid = _seed_user(TestSession, email="updateadmin@test.com")
+    r = c.patch(f"{USERS_URL}/{uid}", json={"nombre": "Carlos", "rol": "admin"})
+    assert r.status_code == 403
+
+
 # ---------------------------------------------------------------------------
 # change role
 # ---------------------------------------------------------------------------
@@ -225,6 +232,14 @@ def test_change_user_role_404(client):
     c, _ = client
     r = c.post(f"{USERS_URL}/99999/role", params={"nuevo_rol": "staff"})
     assert r.status_code == 404
+
+
+def test_change_user_role_a_user_notifica(client):
+    c, TestSession = client
+    uid = _seed_user(TestSession, email="userrol@test.com")
+    r = c.post(f"{USERS_URL}/{uid}/role", params={"nuevo_rol": "user"})
+    assert r.status_code == 200
+    assert r.json()["status"] == "ok"
 
 
 def test_change_user_role_local_asigna_admin(client_local):
