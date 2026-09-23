@@ -1,6 +1,14 @@
 # Estado del Proyecto: AUTOPASS (Actualizado 2026-09-20)
 
-### 🚀 Estado actual (2026-09-20) - v9.23.0 + working tree (Auditorías A1–A4 y cobertura 66%)
+### 🚀 Estado actual (2026-09-22) - v9.31.1 + working tree (Auditorías A1–A9: 9/9 desempeño/seguridad/front CERRADAS, suite 675 passed/54.81s con venv)
+
+> **Ronda auditorías (semana del 2026-09-22):** A1 Seguridad API · A2 Dependencias ·
+> A3 Cobertura (users.py 90%) · A4 Datos/Migraciones · A5 Rendimiento · A6 Consistencia
+> front → front de la suite completa **675 tests / 54.81s / 0 N+1** · A7 Errores (12
+> `except Exception:` sin log en services = hallazgo P1 pendiente A7.1 doc) · A8
+> Accesibilidad (`:focus-visible` global ✓ + dorado #C5A059 solo en 2 css) · A9 XSS
+> (`encodeURI` en adjunto_url de tickets ✓). Informes en `Info proyecto/AUDITORIA_*.md`.
+> Cobertura del alcance de tests: **users.py 90%** (ítem #1 A3); suite estable 675.
 - [x] **Auditorías A1–A4 ejecutadas** (informes en `Info proyecto/`): A1 Seguridad API (remediación P0/P1 aplicada), A2 Dependencias (bump starlette 1.6.0 + cryptography 50.0.1), A3 Cobertura (abajo), A4 Migraciones (flujo único `sync_schema()` en `core/database.py`). Pendientes: A5–A9 (ver `Info proyecto/PLAN_AUDITORIAS.md`).
 - [x] **Cobertura de tests al 66%** (7044 stmts / 2424 sin cubrir) — **271 tests / 33 archivos en verde**: ronda #1–#6 (38 tests: `alpr/runner.py` 64%, `worker_service.py` 66%, `routes/admin/users.py` 65%, `routes/user/mercadopago.py` 90%, `routes/parking/access.py` 89%, `core/security.py` 81%) y ronda #7–#10 (79 tests: `access_service.py` 89%, `routes/admin/branches.py` 76%, `routes/parking/status.py` 84%, `core/database.py` 81%). Umbral sugerido para CI: `--cov-fail-under=65`.
 - [x] **Fix CSP de la landing (hoy)**: `font-src` con cdnjs (tipografías Font Awesome) y `connect-src` con Overpass, Nominatim y CDNs autorizados; consola del navegador sin errores. Directivas agrupadas en constantes `CSP_*` en `main.py:72-101` + test de regresión `tests/test_security_headers.py`.
