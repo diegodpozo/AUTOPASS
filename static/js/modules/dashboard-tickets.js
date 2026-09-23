@@ -176,7 +176,7 @@ function renderAdminTicketMessages(messages) {
         let attachHtml = '';
         if (m.adjunto_url) {
             const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);
-            attachHtml = `<div class="ticket-msg-attach"><a href="${m.adjunto_url}" target="_blank" rel="noopener"><i class="fas ${isImage ? 'fa-image' : 'fa-file-pdf'}"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
+            attachHtml = `<div class="ticket-msg-attach"><a href="${encodeURI(m.adjunto_url)}" target="_blank" rel="noopener"><i class="fas ${isImage ? 'fa-image' : 'fa-file-pdf'}"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
         }
         return `
             ${datePill}

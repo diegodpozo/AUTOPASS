@@ -571,6 +571,8 @@
 /* ==========================================================================
    2. RESERVATIONS SECTION
    ========================================================================== */
+:focus-visible { outline: 2px solid #6A4B9B; outline-offset: 2px; }
+
 .reserva-trigger-card { 
     background: linear-gradient(135deg, #C5A059 0%, #a68545 100%); 
     cursor: pointer; 
