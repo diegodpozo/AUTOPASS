@@ -35,5 +35,7 @@ jobs:
           python init_db.py
 
       - name: Run Pytest Suite
+        env:
+          PYTHONPATH: .
         run: |
-          pytest tests/ --verbose
+          python -m pytest tests/ --verbose
