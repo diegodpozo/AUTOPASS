@@ -118,7 +118,7 @@
 - [x] **Avisos en Cámara**: Mensajes de evento de patente/QR en la vista de monitoreo en vivo vía WebSocket.
 - [x] **Unificación de Códigos & Revisión de Patentes**: Refactor del pipeline ALPR (`alpr/config.py`, `alpr/ocr_engine.py`, `alpr/runner.py`, `routes/parking/access.py`, `services/access_service.py`, `services/report_service.py`) para homogeneizar formatos y corregir lecturas.
 - [x] **Ajustes de UX**: Aviso de puntos ganados al pagar una reserva; borrado de vehículos sin bloqueo por estadías históricas; cambio del modo de lectura de patentes.
-- [x] **CI Deshabilitado**: El workflow de GitHub Actions fue renombrado a `.github/workflows/ci.yml.disabled` (pipeline deshabilitado hasta tener una suite de tests estable).
+- [x] **CI Reactivado**: El workflow de GitHub Actions fue reactivado en `.github/workflows/ci.yml` con inicialización `init_db.py`, Python 3.14 y la suite completa de 675 tests automatizados.
 
 ### 🚀 Hitos Recientes (Agosto 2026) - Versión 9.12.0 (Notificaciones de Usuario, Permisos de Sucursal & Soporte Visual Admin)
 - [x] **Visibilidad Permanente & Estados de Botones de Notificaciones**:
@@ -253,7 +253,7 @@
 ### 🚀 Hitos Previos (Agosto 2026) - Versión 9.8.0 (Database Migrations with Alembic & Automated Testing Overhaul)
 - [x] **Framework de Migraciones de DB (`alembic/`)**: Integración completa de Alembic para control de versiones de esquema SQLite/Postgres. Creación de `alembic.ini`, `alembic/env.py` con `render_as_batch=True` para SQLite, y generación de la primera migración inicial `c833a3129266_initial_schema.py`. Estampado del esquema con `alembic stamp head`.
 - [x] **Expansión de la Suite de Pruebas (`tests/`)**: Ampliación de la cobertura de tests unitarios e integración pasando de 6 a 15 pruebas automatizadas (rutas de autenticación con `TestClient`, motor ALPR/patentes, cortesía de 10 min, duplicate entry, control de aforo).
-- [x] **Integración Continua CI/CD (`.github/workflows/ci.yml.disabled`)**: Creación de pipeline de GitHub Actions para verificación automática de dependencias, parches de entorno, migraciones de Alembic y ejecución de Pytest en cada push/PR. **Actualmente deshabilitado** (el workflow está renombrado como `ci.yml.disabled` hasta tener una suite estable).
+- [x] **Integración Continua CI/CD (`.github/workflows/ci.yml`)**: Pipeline de GitHub Actions para verificación automática de dependencias, sincronización de esquema (`init_db.py`) y ejecución de Pytest (suite de 675 tests automatizados) en cada push/PR. **Habilitado**.
 
 ### 🚀 Hitos Previos (Julio 2026) - Versión 9.7.0 (Granular Modularization Overhaul)
 - [x] **Modularización Granular de Reservas JS (`static/js/modules/reservas-*.js`)**: Descomposición del monolito `reservas.js` (903 líneas / 45 KB) en 4 submódulos ES6 especializados: `reservas-form.js` (formularios, validación, tarifas), `reservas-list.js` (renderizado de tarjetas, timeline, historial y paginación), `reservas-actions.js` (pago con saldo y simulación de reembolso) y `reservas-pass.js` (Pase Digital, QR `QRCode.js` y compartir ticket). `reservas.js` actúa como fachada re-exportando todo el API.
