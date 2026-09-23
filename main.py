@@ -128,6 +128,17 @@ def shutdown_event():
     """LIMPIEZA DE RECURSOS AL APAGAR EL SERVIDOR."""
     logger.info("Apagando servidor, limpiando recursos...")
     stop_all_cameras()
+    try:
+        from core.mqtt import mqtt_client
+        mqtt_client.loop_stop()
+        mqtt_client.disconnect()
+    except Exception as e:
+        logger.debug(f"Error al desconectar MQTT: {e}")
+    try:
+        from core.database import engine
+        engine.dispose()
+    except Exception as e:
+        logger.debug(f"Error al disponer engine: {e}")
 
 # --- REGISTRO DE RUTAS ---
 # API V1

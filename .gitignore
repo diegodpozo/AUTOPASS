@@ -21,6 +21,10 @@ data/
 alpr_debug/
 captured_images/
 backlogAUTOPASS/
+static/uploads/support/*.png
+static/uploads/support/*.jpg
+static/uploads/support/*.pdf
+
 
 # Logs del setup
 alembic_output.txt

@@ -26,16 +26,17 @@ class SetTargetRequest(BaseModel):
 
 def _run_all_checks():
     """EJECUTA TODOS LOS WORKERS INMEDIATAMENTE CONTRA LA HORA VIRTUAL."""
+    db = SessionLocal()
     try:
-        db = SessionLocal()
         WorkerService._process_reminders(db)
         WorkerService._process_started_reservations(db)
         WorkerService._process_auto_cancellations(db)
         ReservationService.cleanup_overdue_reservations(db)
         ReservationService.auto_finalize_all_reservations(db)
-        db.close()
     except Exception as e:
         logger.error(f"Error en chequeo inmediato de virtual-time: {e}")
+    finally:
+        db.close()
 
 @router.get("")
 @router.get("/status")

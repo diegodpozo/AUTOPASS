@@ -137,6 +137,8 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
         await websocket.close(code=4008)
         return
 
+    db = None
+    sucursal = None
     try:
         payload = decode_access_token(token)
         db = next(get_db())
@@ -156,13 +158,23 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
         
         # ENVIAR PRIMER ESTADO INMEDIATAMENTE
         await occupancy_manager.broadcast_update(db, sucursal if sucursal != "GLOBAL" else None)
-        
-        try:
-            while True:
-                await websocket.receive_text() #MANTENER VIVA
-        except WebSocketDisconnect:
+    except Exception:
+        await websocket.close(code=4008)
+        return
+    finally:
+        if db:
+            try:
+                db.close()
+            except Exception:
+                pass
+
+    try:
+        while True:
+            await websocket.receive_text() #MANTENER VIVA
+    except WebSocketDisconnect:
+        if sucursal:
             occupancy_manager.disconnect(websocket, sucursal)
-    except:
+    except Exception:
         await websocket.close(code=4008)
 
 @router.get("/parking/branches", response_model=List[schemas.BranchPublicResponse])

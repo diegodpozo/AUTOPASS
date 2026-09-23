@@ -42,12 +42,19 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
     camera_id = camera_id.upper()
     user = None
     if token:
+        db = None
         try:
             payload = decode_access_token(token)
             db = next(get_db())
             user = UserRepository.get_active_by_email(db, payload.get("sub"))
         except Exception:
             pass
+        finally:
+            if db:
+                try:
+                    db.close()
+                except Exception:
+                    pass
 
     if not user:
         peer = websocket.client.host if websocket.client else ""
