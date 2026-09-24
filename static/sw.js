@@ -98,7 +98,7 @@ const PRECACHE = [
   "/static/images/icons/icon-192.png",
   "/static/images/icons/icon-512.png"
 ];
-const CDN_HOSTS = ["unpkg.com", "cdnjs.cloudflare.com", "cdn.jsdelivr.net", "npmcdn.com", "fonts.googleapis.com", "fonts.gstatic.com"];
+const CDN_HOSTS = ["unpkg.com", "cdnjs.cloudflare.com", "cdn.jsdelivr.net", "npmcdn.com"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -139,9 +139,18 @@ function putInCache(cacheName, request, response) {
 async function staleWhileRevalidate(request, cacheName) {
   const cached = await caches.match(request);
   const network = fetch(request)
-    .then(resp => { putInCache(cacheName, request, resp); return resp; })
-    .catch(() => cached);
-  return cached || network;
+    .then(resp => {
+      if (resp) {
+        putInCache(cacheName, request, resp.clone());
+        return resp;
+      }
+      return null;
+    })
+    .catch(() => null);
+
+  if (cached) return cached;
+  const fresh = await network;
+  return fresh || Response.error();
 }
 
 async function networkFirst(request) {
