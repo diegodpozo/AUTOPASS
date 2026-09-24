@@ -1,7 +1,6 @@
 import os
 import base64
 import time
-import ipaddress
 from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect, Query
 from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
@@ -11,6 +10,7 @@ from core.database import get_db
 from core.security import get_operational_user, decode_access_token
 from core.config import settings
 from core.logger import get_logger, mask_email
+from core.alpr_security import is_local_or_private as _is_local_or_private, is_trusted_alpr_node as _is_trusted_alpr_node
 from routes.system.common import manager, normalize_system_name
 from repositories.user_repository import UserRepository
 from repositories.access_log_repository import AccessRepository
@@ -18,21 +18,6 @@ from repositories.access_log_repository import AccessRepository
 logger = get_logger("VideoWS")
 
 router = APIRouter()
-
-def _is_local_or_private(host: str) -> bool:
-    """True si el host es loopback o red privada (nodo ALPR de confianza)."""
-    try:
-        addr = ipaddress.ip_address(host)
-        return addr.is_loopback or addr.is_private
-    except ValueError:
-        return False
-
-def _is_trusted_alpr_node(host: str, node_secret: str) -> bool:
-    """Valida un nodo ALPR: secreto configurado (comparado en tiempo constante) o red local/privada."""
-    if settings.ALPR_NODE_SECRET:
-        import secrets as _secrets
-        return bool(node_secret) and _secrets.compare_digest(node_secret, settings.ALPR_NODE_SECRET)
-    return _is_local_or_private(host)
 
 @router.websocket("/ws/video/{camera_id}")
 async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: str = Query(None), node_secret: str = Query(None)):

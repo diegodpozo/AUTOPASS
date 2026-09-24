@@ -47,7 +47,7 @@ class ReadingStatusNotifier:
 
 from concurrent.futures import ThreadPoolExecutor
 from alpr.config import (
-    GATE_ID, GATE_TYPE, BACKEND_URL, COOLDOWN_SECONDS, OCR_INTERVAL,
+    GATE_ID, GATE_TYPE, BACKEND_URL, ALPR_NODE_SECRET, COOLDOWN_SECONDS, OCR_INTERVAL,
     CONFIDENCE_THRESHOLD, FRAME_QUEUE_MAXSIZE, CONSENSUS_REQUIRED,
     CONSENSUS_WINDOW, LATAM_PLATE_PATTERN, MOTO_PATTERN, MOTO_MIN_CONFIDENCE,
     ENABLE_MOTO_RECOGNITION, AUTO_PLATE_PATTERN, MOTO_PLATE_PATTERN
@@ -635,7 +635,8 @@ class ALPREngine:
             if ocr_time is not None:
                 payload["ocr_time"] = round(ocr_time, 3)
             try:
-                resp = requests.post(f"{BACKEND_URL}{endpoint}", json=payload, timeout=5)
+                resp = requests.post(f"{BACKEND_URL}{endpoint}", json=payload, timeout=5,
+                                     headers={"X-Node-Secret": ALPR_NODE_SECRET} if ALPR_NODE_SECRET else None)
                 elapsed = time.time() - t_dispatch
                 if resp.ok:
                     msg = resp.json().get("message", "")

@@ -5,7 +5,7 @@
 > **Metodología:** análisis estático de código, greps de patrones (headers, SQL crudo, rate limits, logs con PII), revisión manual de `core/security.py`, `core/config.py`, `core/limiter.py`, `main.py`, `routes/auth.py`, `routes/parking/*`, `routes/system/video.py`, `routes/system/common.py`, `routes/admin/users.py`, `routes/user/mercadopago.py`, `repositories/user_repository.py`.
 > **Checklist OWASP API Top 10** aplicado a los vectores del alcance.
 > **Actualización 2026-09-20:** los ítems P0/P1 del plan (§4) quedaron aplicados y verificados: `pay-stay` protegido, video WS autenticado, bloqueo efectivo en `get_current_user`, headers de seguridad y rate-limit del webhook MP. Estado real por ítem en §1.5; checklist cerrado en §3. Riesgo general recalculado: **MEDIO** (era ALTO).
-> **Actualización 2026-09-24:** los ítems P2/P3 (2, 4, 5, 8-parcial y 9) quedaron aplicados y verificados (suite 678 passed). Riesgo general actual: **BAJO-MEDIO**. Detalle en §1.5.
+> **Actualización 2026-09-24:** los ítems P2/P3 (2, 4, 5, 8-parcial y 9) quedaron aplicados y verificados (suite 678 passed). Luego se cerró la deuda de diseño de auth de nodo en `validate-plate`/`exit-plate`/`validate-qr` (ítem 7, suite 694 passed). Riesgo general actual: **BAJO**. Detalle en §1.5.
 
 ---
 
@@ -19,7 +19,7 @@
 | Cierre de sesión / bloqueo | **RESUELTO (2026-09-24)** | `POST /v1/auth/logout` revoca jti + `UserSession` del device; `get_current_user` chequea `is_blocked` y jti |
 | CORS | ~~Débil~~ → **RESUELTO (2026-09-24)** | `ALLOWED_ORIGINS` default explícito `http://localhost:8000,http://127.0.0.1:8000` (sin `*`) |
 | WebSockets | **Defectuoso** | `/ws/video/{id}` acepta nodos anónimos que pueden difundir frames; `POST /update-frame/{id}` público; WS no exige rol STAFF+ (inconsistente con `/video-feed`) |
-| Autorización de acceso ALPR | **Expuesto** | `/access/validate-plate`, `/access/exit-plate`, `/access/pay-stay` **sin autenticación** (pay-stay muta deuda sin validar identidad) |
+| Autorización de acceso ALPR | ~~**Expuesto**~~ → **RESUELTO (2026-09-24)** | `validate-plate`/`exit-plate`/`validate-qr` ahora exigen nodo ALPR autorizado (`X-Node-Secret` o red local/privada); `pay-stay` exige personal operativo |
 | Inyección SQL | **OK** | 0 usos de `text()/exec_driver_sql/raw` en services/routes; todo vía repositorios con binds de SQLAlchemy |
 | Rate limiting | Parcial → **MEJORADO** | Default 300/min global; cobertura fina en `/auth`, `/access`, `pay-stay`, webhook MP y ahora todos los mutadores admin (30/min vía `admin_rate_limit`) |
 | PII en logs | ~~Débil~~ → **RESUELTO (2026-09-24)** | `mask_email()` en WS, workers y email service; MP ya no loguea `resp.text` |
@@ -42,12 +42,12 @@ Los ítems P0/P1 del plan (§4) quedaron aplicados. Estado por ítem del checkli
 | 4 | `POST /v1/auth/logout` revoca sesión | **RESUELTO** | `routes/auth.py`: `POST /v1/auth/logout` revoca el `jti` (`revoke_token`) y borra la `UserSession` del `device_id` indicado en el body (mantiene el resto de dispositivos). `ui.logout` (`static/js/modules/ui.js`) invoca el endpoint antes de limpiar localStorage (best-effort). Tests: `test_routes_auth.py` |
 | 5 | CORS con lista explícita por entorno | **RESUELTO** | `core/config.py`: default `ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"` (lista explícita, sin `*`); sobreescribible por `.env` |
 | 6 | Video WS: nodo ALPR autenticado, `update-frame` protegido, rol STAFF+ en espectador | **RESUELTO** | `routes/system/video.py:37-93` |
-| 7 | `pay-stay` y endpoints ALPR con auth de nodo | **RESUELTO (con excepción de diseño)** | `pay-stay` ✔ (`access.py:31-33`); WS de ocupación ahora usa `UserRepository.get_active_by_email` + rechaza `is_blocked` (`routes/parking/status.py:145-148`). `validate/exit-plate` siguen sin auth por diseño de nodo ALPR interno |
+| 7 | `pay-stay` y endpoints ALPR con auth de nodo | **RESUELTO** | `pay-stay` ✔ (`access.py:31-33`, `get_operational_user`); WS de ocupación usa `UserRepository.get_active_by_email` + rechaza `is_blocked` (`routes/parking/status.py:145-148`). `validate-plate`/`exit-plate`/`validate-qr` (mismo nodo ALPR) ahora exigen `Depends(require_alpr_node)` (`core/alpr_security.py`): header `X-Node-Secret` comparado en tiempo constante con `settings.ALPR_NODE_SECRET`, o red local/privada si no hay secreto configurado. El nodo envía el header en `alpr/ocr_engine.py:_dispatch_request`. Tests: `tests/test_alpr_node_auth.py` |
 | 8 | Rate limits finos en `pay-stay`, webhook MP, admin | **RESUELTO** | webhook MP `60/minute`; `pay-stay` `10/minute`; panel admin: dependency compartida `admin_rate_limit` (`core/limiter.py`, `30/minute` por IP) aplicada a todos los mutadores de `routes/admin/*` (branches, promotions, settings, reservations, support, users, virtual_time, operations) vía `dependencies=[Depends(...)]` sin alterar firmas |
 | 9 | Sin PII de clientes en logs INFO | **RESUELTO** | `core/logger.mask_email()` aplicado en `routes/parking/status.py`, `routes/system/video.py`, `services/worker_service.py`, `services/email_service.py`; `mercadopago_service.py` ya no loguea `resp.text[:500]` (solo `message` del JSON o "solicitud rechazada") |
 
 **Riesgo general recalculado: MEDIO** — los 2 hallazgos críticos (P0.1 `pay-stay`, P0.2 video) y los 2 altos (bloqueo no efectivo, nodo WS anónimo) quedaron resueltos. Deudas abiertas de severidad media/baja: JWT (2), logout (4), CORS (5), rate-limit admin (8 parcial) y PII en logs (9).
-> **2026-09-24:** con los ítems 2, 4, 5, 8 y 9 cerrados, el único punto abierto de tipo "por diseño" es la auth de nodo en `validate-plate`/`exit-plate` (red local ALPR), por eso el riesgo general baja a **BAJO-MEDIO**.
+> **2026-09-24:** con los ítems 2, 4, 5, 8 y 9 cerrados y luego la deuda de diseño de auth de nodo en `validate-plate`/`exit-plate`/`validate-qr` (ítem 7) resuelta con `require_alpr_node` + header `X-Node-Secret`, no quedan puntos abiertos de tipo "por diseño". Riesgo general: **BAJO**.
 
 ---
 
@@ -176,19 +176,17 @@ Los ítems P0/P1 del plan (§4) quedaron aplicados. Estado por ítem del checkli
 
 ---
 
-### A1.8 — Autorización de acceso ALPR y pagos — **[PARCIAL 2026-09-20]** (era EXPUESTO; pay-stay ✔, ALPR sigue público por diseño de nodo)
+### A1.8 — Autorización de acceso ALPR y pagos — **[RESUELTO 2026-09-24]** (era EXPUESTO)
 
-**Hallazgo CRÍTICO: los endpoints de operación de garita/barrera y pago no requieren autenticación.**
+**Hallazgo CRÍTICO (2026-09-19): los endpoints de operación de garita/barrera y pago no requerían autenticación.**
 
-- `routes/parking/access.py:12-22` — `validate-plate`, `exit-plate`, `validate-qr` son públicos (por diseño, los llama el nodo ALPR/garita), pero **cualquiera puede**: fabricar entradas/salidas, falsificar patentes, alterar ocupación y disparar barreras (el servicio publica por MQTT a `parking/barrera/entrada|salida/control`, `config.py:40-41`).
-- `routes/parking/access.py:30-35` — `POST /access/pay-stay?plate=XX&metodo=DIGITAL` es **público y sin auth**: un tercero puede marcar como pagada una estadía ajena sin ningún pago real (`BillingService.process_payment` → `billing_service.py:192-295` genera `pago_confirmado`, asigna puntos de fidelidad y notifica). Impacto: fraude directo sobre deuda y acreditación de puntos.
+- Estado original: `routes/parking/access.py:12-22` — `validate-plate`, `exit-plate`, `validate-qr` públicos (los llama el nodo ALPR/garita), abusables para fabricar entradas/salidas, falsificar patentes y disparar barreras (MQTT a `parking/barrera/entrada|salida/control`, `config.py:40-41`).
+- Estado original: `routes/parking/access.py:30-35` — `POST /access/pay-stay?plate=XX&metodo=DIGITAL` público: un tercero podía marcar pagada una estadía ajena (`BillingService.process_payment` → `billing_service.py:192-295`).
 
-> Nota: el flujo diseñado prevé que ALPR/garita corran en red local; si el servicio se expone a Internet (túnel MP, despliegue en la nube), estos endpoints quedan abiertos al público. Severidad depende del despliegue, pero el **riesgo de configuración es real** y `pay-stay` es abusable en cualquier red alcanzable.
-
-**Recomendación:**
-1. `pay-stay`: exigir autenticación operativa (`get_operational_user`) o un secreto de garita/nodo local; nunca exponerlo sin auth.
-2. Para ALPR (validate/exit/QR): autenticar por token de nodo (device secret) o restricción de IP; idealmente firmar cada lectura.
-3. Auditar `access_service.py` para confirmar que el disparo de barrera dependa de una validación autenticada (actualmente la puerta de entrada es este router público).
+**Remediación (2026-09-20 + 2026-09-24):**
+1. `pay-stay`: `Depends(get_operational_user)` + `@limiter.limit("10/minute")` (`routes/parking/access.py:31-33`).
+2. ALPR (validate/exit/QR): `Depends(require_alpr_node)` en los 3 endpoints — helper compartido `core/alpr_security.py` (misma política que el WS de video): si `ALPR_NODE_SECRET` está configurado exige header `X-Node-Secret` (o query `node_secret`) comparado en tiempo constante; si no, solo red local/privada. El nodo envía el header en `alpr/ocr_engine.py:_dispatch_request`. Tests: `tests/test_alpr_node_auth.py` (403 sin/mal secret, 200 con secret, caída a red local, envío de header del nodo).
+3. `access_service.py`: el disparo de barrera sigue dependiendo de la validación autenticada del router.
 
 ---
 
@@ -221,7 +219,7 @@ Los ítems P0/P1 del plan (§4) quedaron aplicados. Estado por ítem del checkli
 | 4 · `POST /v1/auth/logout` revoca sesión + jti | ✔ [RESUELTO 2026-09-24] `routes/auth.py` + `ui.logout` |
 | 5 · CORS con lista explícita por entorno | ✔ [RESUELTO 2026-09-24] `core/config.py` default sin `*` |
 | 6 · Video WS: nodo ALPR autenticado, `update-frame` protegido, rol STAFF+ en espectador | ✔ [RESUELTO 2026-09-20] `routes/system/video.py:37-93` |
-| 7 · `pay-stay` y endpoints ALPR con auth de nodo | ◐ [2026-09-24] `pay-stay` ✔; `validate/exit-plate` sin auth por diseño (nodo ALPR red local); WS ocupación con repo activo (`get_active_by_email` + `is_blocked`) |
+| 7 · `pay-stay` y endpoints ALPR con auth de nodo | ✔ [RESUELTO 2026-09-24] `pay-stay` con `get_operational_user`; `validate-plate`/`exit-plate`/`validate-qr` con `Depends(require_alpr_node)` (`core/alpr_security.py`); WS ocupación con repo activo (`get_active_by_email` + `is_blocked`) |
 | 8 · Rate limits finos en `pay-stay`, webhook MP, admin | ✔ [RESUELTO 2026-09-24] `pay-stay` 10/min, webhook MP 60/min, admin 30/min (`admin_rate_limit`) |
 | 9 · Sin PII de clientes en logs INFO | ✔ [RESUELTO 2026-09-24] `mask_email()` + MP sin `resp.text` |
 

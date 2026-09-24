@@ -1,5 +1,12 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 24, 2026 - AUTH DE NODO ALPR EN ACCESS + DRY DE HELPERS ALPR (V9.33.0 / comm 505477d)**:
+    *   Cierra la deuda de diseño A1 que quedaba abierta: `validate-plate`, `exit-plate` y `validate-qr` (`routes/parking/access.py`) ahora exigen `Depends(require_alpr_node)`.
+    *   Nuevo módulo compartido `core/alpr_security.py` (DRY): `is_local_or_private`, `is_trusted_alpr_node` y la dependency `require_alpr_node` — misma política que ya usaba el WS de video: si `ALPR_NODE_SECRET` está configurado exige header `X-Node-Secret` (o query `node_secret`) comparado en tiempo constante; si no hay secreto, solo red local/privada. `routes/system/video.py` deja de definir helpers propios y los importa desde ahí.
+    *   El nodo ALPR envía el header en `alpr/ocr_engine.py:_dispatch_request` (`X-Node-Secret` cuando `ALPR_NODE_SECRET` está configurado; sin header si no).
+    *   Tests: `tests/test_alpr_node_auth.py` (16 tests: helpers, 403 sin/mal secret, 200 con secret, fallback red local, envío de header del nodo).
+    *   Suite: **694 tests / 57.64s en verde**. Riesgo A1: **BAJO-MEDIO → BAJO** (sin deudas abiertas de diseño en access).
+
 - **SEPTIEMBRE 24, 2026 - REMEDIACIÓN A1 P2/P3 COMPLETA + AUDITORÍAS A3/A7/A8/A9 CERRADAS (V9.31.1+ / WORKING TREE)**:
     *   **A1 — P2/P3 aplicados**: JWT emite `iat`+`jti`+`token_type` y `revoke_token()` (set en memoria) en `core/security.py`; `decode_access_token`/`get_current_user` rechazan tokens no-access y jti revocados; `POST /v1/auth/logout` revoca jti y borra la `UserSession` del `device_id` (`routes/auth.py`), invocado desde `ui.logout` (`static/js/modules/ui.js`); guard de arranque en `main.py`: `RuntimeError` si `ENVIRONMENT=production` con SECRET_KEY demo; CORS default explícito (`ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000`, sin `*`) en `core/config.py`; rate-limit fino 30/min en todo el panel admin vía dependency compartida `admin_rate_limit` (`core/limiter.py`) sin alterar firmas de endpoints; PII enmascarada con `mask_email()` en status/video/worker/email y MP sin `resp.text[:500]`; WS de ocupación con repo activo (`get_active_by_email` + rechaza `is_blocked`). Riesgo A1: **MEDIO → BAJO-MEDIO**.
     *   **A3 — CI con cobertura**: `pytest-cov` en requirements + `--cov=... --cov-report=term-missing --cov-fail-under=82` en `.github/workflows/ci.yml` (cobertura real medida 85%).
