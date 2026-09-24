@@ -3,7 +3,7 @@
 {% block title %}AUTOPASS - Mi Perfil{% endblock %}
 
 {% block extra_head %}
-    <link rel="stylesheet" href="/static/css/pages/profile.css?v={{ cache_buster }}">
+    {% include "components/css_profile.html" %}
 {% endblock %}
 
 {% block body_class %}layout-with-sidebar{% endblock %}

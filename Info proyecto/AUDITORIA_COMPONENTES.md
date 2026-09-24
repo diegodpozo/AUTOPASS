@@ -55,6 +55,8 @@
 
 `skeleton.css` es el caso modelo de reutilización reciente: **1 definición, 9 consumidores** (6 tablas admin + cards/historial del cliente + grid de reservas). `premium.css` consolida las primitivas del portal (acciones rápidas, estado vacío) que estaban dispersas en CSS de página.
 
+**Entrega de CSS (v9.34.x):** los 3 orquestadores con `@import` (`landing.css`, `dashboard.css`, `profile.css`) fueron reemplazados por partials Jinja (`components/css_landing|css_dashboard|css_profile.html`) cuyos `<link>` llevan `?v={{ cache_buster }}` (timestamp por restart del server) → busteo automático sin versionar a mano cada hoja + descarga en paralelo.
+
 ### 2.4 Módulos JS con rol de componente
 
 | Módulo | Rol | Reutilizado por |
