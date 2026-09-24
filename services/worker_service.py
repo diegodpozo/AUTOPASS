@@ -13,7 +13,6 @@ from models.enums import PaymentStatus, ReservationStatus
 from repositories.access_log_repository import AccessRepository
 from repositories.notification_repository import NotificationRepository
 from repositories.reservation_repository import ReservationRepository
-from repositories.user_repository import UserRepository
 
 logger = get_logger("WorkerService")
 
@@ -233,7 +232,7 @@ class WorkerService:
                 db.commit()
 
                 # NOTIFICAR AL USUARIO
-                user = UserRepository.get_by_id(db, res.user_id)
+                user = res.user
                 if user:
                     UserNotificationService.create_notification(
                         db, user.id, "AUTO_CANCELLED",

@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import and_, func
 import models
 from models.enums import PaymentStatus, ReservationStatus
@@ -61,16 +61,6 @@ class ReservationRepository:
         ).first()
 
     @staticmethod
-    def get_unpaid_overdue(db: Session, cutoff_str: str):
-        """RESERVAS POR HORA IMPAGAS CUYO INICIO YA VENCIO HASTA EL CUTOFF."""
-        return db.query(models.Reservation).filter(
-            models.Reservation.estado_pago == PaymentStatus.PENDIENTE,
-            models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
-            models.Reservation.fecha_inicio <= cutoff_str,
-            models.Reservation.tipo_estadia == "hora"
-        ).all()
-
-    @staticmethod
     def get_expired(db: Session, now_str: str):
         """RESERVAS PENDIENTES/ACTIVAS CUYA FECHA FIN YA PASO."""
         return db.query(models.Reservation).filter(
@@ -97,7 +87,7 @@ class ReservationRepository:
             models.Reservation.fecha_inicio >= inicio_min,
             models.Reservation.fecha_inicio <= inicio_max,
             models.Reservation.recordatorio_confirmado == False
-        ).all()
+        ).options(selectinload(models.Reservation.user)).all()
 
     @staticmethod
     def get_pending_started(db: Session, now_str: str):
@@ -106,7 +96,7 @@ class ReservationRepository:
             models.Reservation.estado_reserva == ReservationStatus.PENDIENTE,
             models.Reservation.fecha_inicio <= now_str,
             models.Reservation.fecha_fin >= now_str
-        ).all()
+        ).options(selectinload(models.Reservation.user)).all()
 
     @staticmethod
     def get_unpaid_overdue(db: Session, fecha_limite: str):
@@ -115,7 +105,7 @@ class ReservationRepository:
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.estado_pago == PaymentStatus.PENDIENTE,
             models.Reservation.fecha_inicio < fecha_limite
-        ).all()
+        ).options(selectinload(models.Reservation.user)).all()
 
     @staticmethod
     def get_active_by_user(db: Session, user_id: int, now_str: str) -> models.Reservation:
@@ -193,7 +183,7 @@ class ReservationRepository:
         """RESERVAS FILTRADAS POR ESTADO Y SUCURSAL (staff_sucursal primero, luego sucursal), ordenadas por id desc."""
         return ReservationRepository._filtered_base_query(
             db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal
-        ).order_by(models.Reservation.id.desc()).all()
+        ).options(selectinload(models.Reservation.user)).order_by(models.Reservation.id.desc()).all()
 
     @staticmethod
     def latest_id_and_count(db: Session, since_id: int = None, staff_sucursal: str = None):
