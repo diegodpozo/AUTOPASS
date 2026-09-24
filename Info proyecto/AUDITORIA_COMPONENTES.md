@@ -136,7 +136,7 @@ Los bloques repetidos con mayor costo de extracción:
 Barrido `class="btn btn-primary…"` → `btn btn--primary…` en templates manteniendo los selectores legacy un commit más antes de retirarlos. (Pendiente)
 
 #### P3 — Guard de CI contra inline
-Script que falla si un template supera N `style="…"` (umbral sugerido 25, emails exceptuados). Preventivo para que la deuda no crezca.
+~~Script que falla si un template supera N `style="…"` (umbral sugerido 25, emails exceptuados)~~ — **[HECHO v9.34.4]:** `_tools/check_inline_styles.py` con baseline (`_tools/inline_styles_baseline.json`, 50 templates). Modo CI: falla si un template existente supera su conteo previo (regresión) o si un template nuevo supera el umbral 25; emails exceptuados. `--update` regenera el baseline tras limpiezas. Integrado a la suite como `tests/test_inline_styles_guard.py` (695 passed).
 
 ---
 
