@@ -128,7 +128,7 @@ Los bloques repetidos con mayor costo de extracción:
 ~~Mover `quick-actions-grid`/`action-btn-premium` y `empty-state-premium` a `components/`~~ — **[HECHO v9.34.0]:** creado `static/css/components/premium.css` (acciones rápidas + estado vacío) incluido en `base.html`; se eliminó la dependencia cruzada con `profile-vehicles.css`/`profile-base.css`.
 
 #### P1 — Adelgazar los tablas del dashboard
-`admin_reservations.html` (59) y `metricas.html` (48): los patrones de acción `action-header`, filtros y celdas con `data-label` se repiten; consolidar "toolbar de filtros" y "celda con label" en componentes CSS. (Pendiente)
+~~`admin_reservations.html` (59) y `metricas.html` (48)~~ — **[HECHO v9.34.2]:** los patrones repetidos se extrajeron a componentes reutilizables: `.card--flush`/`.card-body` (cards.css), `.modal-close-top--inline` (modals.css), `.dynamic-row-premium--period`, `.input-premium--plain` y `.input-premium.flatpickr-input` (forms.css), `.metrica-card-icon--violet`, `.metrica-sub`, `.toolbar-label`, `.input-premium-sm` dentro de toolbar (dashboard-metrics.css). Resultado: admin 59→44, metricas 46→32 (29 estilos inline eliminados + 9 `max-width:180px` redundantes que eran el default de `.form-group-premium`).
 
 #### P2 — Completar la migración BEM
 Barrido `class="btn btn-primary…"` → `btn btn--primary…` en templates manteniendo los selectores legacy un commit más antes de retirarlos. (Pendiente)

@@ -253,3 +253,21 @@ select option {
 .num-btn:hover {
     background: rgba(197, 160, 89, 0.15);
 }
+
+/* --- MODIFICADORES PREMIUM --- */
+/* Los inputs flatpickr no llevan icono a la izquierda: alinean a 15px */
+.input-premium.flatpickr-input {
+    padding-left: 15px !important;
+}
+
+.input-premium--plain {
+    padding-left: 15px !important;
+}
+
+/* Filas de período 2 columnas (semana/quincena/mes/estándar); display lo alterna el JS */
+.dynamic-row-premium.dynamic-row-premium--period {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    justify-content: flex-start;
+}

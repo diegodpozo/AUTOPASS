@@ -89,7 +89,7 @@
                     <h3 class="text-dorado" style="margin: 0;" id="new-res-modal-title">NUEVA RESERVA MANUAL</h3>
                     <p style="margin: 5px 0 0 0;" id="new-res-modal-subtitle">Reserva y pago en la sucursal asignada</p>
                 </div>
-                <button class="modal-close-top" onclick="closeModal('modal-new-reservation')" style="position: static; margin-left: auto;">&times;</button>
+                <button class="modal-close-top modal-close-top--inline" onclick="closeModal('modal-new-reservation')">&times;</button>
             </div>
 
             <div style="padding: 30px;">
@@ -131,7 +131,7 @@
                                     </select>
                                 </div>
                                 <div id="new-res-date-only-group" style="display:none; flex: 0 1 150px; min-width: 120px;">
-                                    <input type="text" id="new-res-date-only" class="input-premium flatpickr-input" placeholder="Día..." style="padding-left: 15px !important; padding-right: 15px !important; text-align: center;">
+                                    <input type="text" id="new-res-date-only" class="input-premium flatpickr-input" placeholder="Día..." style="text-align: center;">
                                 </div>
                             </div>
                         </div>
@@ -146,57 +146,57 @@
 
                             <!-- Daily -->
                             <div id="new-daily-fields" class="dynamic-row-premium" style="display:none; gap: 20px; justify-content: flex-start;">
-                                <div class="form-group-premium" style="max-width: 180px;">
+                                <div class="form-group-premium">
                                     <label>Día de Estadía</label>
-                                    <input type="text" id="new-res-day-only" class="input-premium flatpickr-input" placeholder="Seleccioná día..." style="padding-left: 15px !important;">
+                                    <input type="text" id="new-res-day-only" class="input-premium flatpickr-input" placeholder="Seleccioná día..." >
                                 </div>
                             </div>
 
                             <!-- Weekly -->
-                            <div id="new-weekly-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div id="new-weekly-fields" class="dynamic-row-premium dynamic-row-premium--period">
                                 <div class="form-group-premium">
                                     <label>Inicia el día</label>
-                                    <input type="text" id="new-res-week-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 15px !important;">
+                                    <input type="text" id="new-res-week-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." >
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Finaliza</label>
-                                    <input type="text" id="new-res-week-end" class="input-premium-readonly" readonly style="padding-left: 15px !important;">
+                                    <input type="text" id="new-res-week-end" class="input-premium-readonly" readonly >
                                 </div>
                             </div>
 
                             <!-- Fortnight -->
-                            <div id="new-fortnight-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div id="new-fortnight-fields" class="dynamic-row-premium dynamic-row-premium--period">
                                 <div class="form-group-premium">
                                     <label>Inicia el día</label>
-                                    <input type="text" id="new-res-fortnight-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 15px !important;">
+                                    <input type="text" id="new-res-fortnight-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." >
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Finaliza</label>
-                                    <input type="text" id="new-res-fortnight-end" class="input-premium-readonly" readonly style="padding-left: 15px !important;">
+                                    <input type="text" id="new-res-fortnight-end" class="input-premium-readonly" readonly >
                                 </div>
                             </div>
 
                             <!-- Month -->
-                            <div id="new-month-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div id="new-month-fields" class="dynamic-row-premium dynamic-row-premium--period">
                                 <div class="form-group-premium">
                                     <label>Inicia el día</label>
-                                    <input type="text" id="new-res-month-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." style="padding-left: 15px !important;">
+                                    <input type="text" id="new-res-month-start" class="input-premium flatpickr-input" placeholder="Fecha inicio..." >
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Finaliza</label>
-                                    <input type="text" id="new-res-month-end" class="input-premium-readonly" readonly style="padding-left: 15px !important;">
+                                    <input type="text" id="new-res-month-end" class="input-premium-readonly" readonly >
                                 </div>
                             </div>
 
                             <!-- Standard -->
-                            <div id="new-standard-fields" class="dynamic-row-premium" style="display:none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div id="new-standard-fields" class="dynamic-row-premium dynamic-row-premium--period">
                                 <div class="form-group-premium">
                                     <label>Inicio</label>
-                                    <input type="datetime-local" id="new-res-inicio" class="input-premium" style="padding-left: 15px !important;">
+                                    <input type="datetime-local" id="new-res-inicio" class="input-premium input-premium--plain">
                                 </div>
                                 <div class="form-group-premium">
                                     <label>Fin</label>
-                                    <input type="datetime-local" id="new-res-fin" class="input-premium" style="padding-left: 15px !important;">
+                                    <input type="datetime-local" id="new-res-fin" class="input-premium input-premium--plain">
                                 </div>
                             </div>
                         </div>
@@ -256,7 +256,7 @@
                 <h3 style="margin: 0; font-size: 1.15rem; letter-spacing: 0.5px;">CONFIRMAR EDICIÓN</h3>
                 <p style="margin: 3px 0 0 0; font-size: 0.78rem; color: #aaa;">Revisá los datos antes de guardar los cambios</p>
             </div>
-            <button class="modal-close-top" onclick="cancelEditResumo()" style="position: static; margin-left: auto; flex-shrink: 0;">&times;</button>
+            <button class="modal-close-top modal-close-top--inline" onclick="cancelEditResumo()" style="flex-shrink: 0;">&times;</button>
         </div>
         <div style="padding: 18px 0 0 0;">
             <div id="edit-confirm-resumo" style="display: flex; flex-direction: column; gap: 9px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 16px; font-size: 0.83rem;"></div>

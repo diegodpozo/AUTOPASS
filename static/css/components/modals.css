@@ -330,3 +330,8 @@
     opacity: 1;
     transform: rotate(90deg);
 }
+
+.modal-close-top--inline {
+    position: static;
+    margin-left: auto;
+}

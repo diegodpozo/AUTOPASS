@@ -156,3 +156,33 @@
     line-height: 1.6;
     text-align: center;
 }
+
+/* --- MODIFICADORES COMPONENTIZADOS --- */
+.metrica-card-icon--violet {
+    background: var(--violet-glow);
+    color: var(--violet-brand);
+}
+
+.metrica-sub {
+    font-size: 0.68rem;
+    color: #8e95a5;
+    margin-top: 3px;
+}
+
+.metricas-controls-row .toolbar-label {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.metricas-controls-row .input-premium-sm {
+    color-scheme: dark;
+    width: 150px;
+}
+
+#kpi-primer-dato,
+#kpi-ultima-hora {
+    font-size: 1.1rem;
+    color: #fff;
+}

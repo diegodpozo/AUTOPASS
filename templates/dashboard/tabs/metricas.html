@@ -2,7 +2,7 @@
 <div id="tab-metricas" class="tab-view" style="display: none;">
     <!-- VISTA: LISTA DE MÉTRICAS -->
     <div id="metricas-list">
-        <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="card card--flush">
             <div class="card-header-premium" style="padding: 18px 25px;">
                 <div class="header-info-group">
                     <i class="fas fa-chart-simple"></i>
@@ -14,34 +14,34 @@
                     <span class="badge badge-success" style="font-size: 0.7rem;"><i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 4px;"></i> MÉTRICAS EN VIVO</span>
                 </div>
             </div>
-            <div style="padding: 25px;">
+            <div class="card-body">
                 <p style="color: #9ca3af; font-size: 0.85rem; margin: 0;">Indicadores del sistema. Elegí una métrica para visualizar su gráfico en vivo.</p>
                 <div class="metricas-grid">
                     <button type="button" class="metrica-card" onclick="abrirMetrica('accesos')">
                         <div class="metrica-card-icon"><i class="fas fa-right-left"></i></div>
                         <div>
                             <div class="metrica-card-title">ACTIVIDAD DE ACCESOS</div>
-                            <div style="font-size: 0.68rem; color: #8e95a5; margin-top: 3px;">ENTRADAS Y SALIDAS POR HORA</div>
+                            <div class="metrica-sub">ENTRADAS Y SALIDAS POR HORA</div>
                         </div>
                         <div class="metrica-card-desc">Movimientos registrados por hora desde el primer dato hasta ahora. El gráfico avanza solo con el tiempo; deslizá para volver hasta el inicio.</div>
                         <div class="metrica-card-badge disponible"><i class="fas fa-circle" style="font-size: 0.4rem; margin-right: 4px;"></i> DISPONIBLE</div>
                     </button>
 
                     <button type="button" class="metrica-card" disabled>
-                        <div class="metrica-card-icon" style="background: var(--violet-glow); color: var(--violet-brand);"><i class="fas fa-microchip"></i></div>
+                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-microchip"></i></div>
                         <div>
                             <div class="metrica-card-title">TIEMPOS OCR &amp; ALPR</div>
-                            <div style="font-size: 0.68rem; color: #8e95a5; margin-top: 3px;">LATENCIA DE PROCESAMIENTO</div>
+                            <div class="metrica-sub">LATENCIA DE PROCESAMIENTO</div>
                         </div>
                         <div class="metrica-card-desc">Rendimiento del motor de reconocimiento de patentes en el tiempo.</div>
                         <div class="metrica-card-badge proximamente"><i class="fas fa-lock" style="margin-right: 4px; font-size: 0.6rem;"></i> PRÓXIMAMENTE</div>
                     </button>
 
                     <button type="button" class="metrica-card" disabled>
-                        <div class="metrica-card-icon" style="background: var(--violet-glow); color: var(--violet-brand);"><i class="fas fa-money-bill-trend-up"></i></div>
+                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-money-bill-trend-up"></i></div>
                         <div>
                             <div class="metrica-card-title">RECAUDACIÓN</div>
-                            <div style="font-size: 0.68rem; color: #8e95a5; margin-top: 3px;">INGRESOS EN EL TIEMPO</div>
+                            <div class="metrica-sub">INGRESOS EN EL TIEMPO</div>
                         </div>
                         <div class="metrica-card-desc">Evolución de la recaudación y métodos de pago utilizados.</div>
                         <div class="metrica-card-badge proximamente"><i class="fas fa-lock" style="margin-right: 4px; font-size: 0.6rem;"></i> PRÓXIMAMENTE</div>
@@ -69,14 +69,14 @@
                 <div class="kpi-icon"><i class="fas fa-hourglass-start"></i></div>
                 <div class="kpi-data">
                     <span class="label">PRIMER DATO</span>
-                    <span class="value" id="kpi-primer-dato" style="font-size: 1.1rem; color: #fff;">--</span>
+                    <span class="value" id="kpi-primer-dato">--</span>
                 </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="fas fa-hourglass-end"></i></div>
                 <div class="kpi-data">
                     <span class="label">ÚLTIMA HORA</span>
-                    <span class="value" id="kpi-ultima-hora" style="font-size: 1.1rem; color: #fff;">--</span>
+                    <span class="value" id="kpi-ultima-hora">--</span>
                 </div>
             </div>
             <div class="kpi-card">
@@ -103,7 +103,7 @@
         </div>
 
         <!-- GRÁFICO MÓVIL -->
-        <div class="card channel-card" style="padding: 0;">
+        <div class="card channel-card card--flush">
             <div class="channel-header web-channel" style="justify-content: space-between;">
                 <span><i class="fas fa-chart-line"></i> MOVIMIENTOS POR HORA</span>
                 <span class="metricas-chart-legend">
@@ -118,11 +118,11 @@
 
                 <div class="metricas-controls">
                     <div class="metricas-controls-row" style="justify-content: flex-start; gap: 10px;">
-                        <span style="font-size: 0.72rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;"><i class="fas fa-calendar-days" style="margin-right: 4px;"></i> DESDE:</span>
-                        <input type="date" id="metricas-desde" class="input-premium-sm" style="color-scheme: dark; width: 150px;" title="Fecha inicial del rango">
+                        <span class="toolbar-label"><i class="fas fa-calendar-days" style="margin-right: 4px;"></i> DESDE:</span>
+                        <input type="date" id="metricas-desde" class="input-premium-sm" title="Fecha inicial del rango">
                         <span style="color: #6b7280;">→</span>
-                        <span style="font-size: 0.72rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">HASTA:</span>
-                        <input type="date" id="metricas-hasta" class="input-premium-sm" style="color-scheme: dark; width: 150px;" title="Fecha final del rango">
+                        <span class="toolbar-label">HASTA:</span>
+                        <input type="date" id="metricas-hasta" class="input-premium-sm" title="Fecha final del rango">
                         <button class="btn btn-primary sm" onclick="aplicarFiltroMetricas()"><i class="fas fa-magnifying-glass" style="margin-right: 4px;"></i>APLICAR</button>
                         <button class="btn btn-outline sm" onclick="limpiarFiltroMetricas()"><i class="fas fa-eraser" style="margin-right: 4px;"></i>LIMPIAR</button>
                     </div>
@@ -132,7 +132,7 @@
                             <span>SEGUIR EN VIVO</span>
                         </label>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 0.72rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">VENTANA:</span>
+                            <span class="toolbar-label">VENTANA:</span>
                             <select id="metricas-ventana" class="input-premium" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
                                 <option value="6">6 HORAS</option>
                                 <option value="12">12 HORAS</option>
