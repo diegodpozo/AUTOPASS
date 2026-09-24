@@ -217,9 +217,10 @@ function renderTicketMessages(messages) {
         let attachHtml = '';
         if (m.adjunto_url) {
             const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);
+            const adjUrl = encodeURI(m.adjunto_url);
             attachHtml = isImage
-                ? `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-image"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`
-                : `<div style="margin-top:8px;font-size:0.8rem;"><a href="${m.adjunto_url}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-file-pdf"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
+                ? `<div style="margin-top:8px;font-size:0.8rem;"><a href="${adjUrl}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-image"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`
+                : `<div style="margin-top:8px;font-size:0.8rem;"><a href="${adjUrl}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-file-pdf"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
         }
         return `
             <div style="display:flex;align-self:${align};flex-direction:column;max-width:75%;margin-left:${isMine?'8px':'0'};margin-right:${isMine?'0':'8px'};">

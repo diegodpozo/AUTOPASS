@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 import models, schemas
 from core.database import get_db
-from core.security import authenticate_user, create_access_token, get_password_hash
+from core.security import get_current_user, authenticate_user, create_access_token, get_password_hash, revoke_token, oauth2_scheme
 from core.config import settings
 from services.email_service import EmailService
 from services.user_service import UserService
@@ -185,6 +185,30 @@ def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(
         "sucursal": user.sucursal,
         "nuevo_dispositivo": nuevo_dispositivo
     }
+
+@router.post("/logout")
+@limiter.limit("30/minute")
+def logout(
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    body: dict = None,
+):
+    """CIERRA LA SESION DE UN DISPOSITIVO: REVOCA EL jti DEL TOKEN
+    Y ELIMINA LA UserSession DEL DEVICE_ID INDICADO."""
+    revoke_token(token)
+    device_id = ((body or {}).get("device_id") or "").strip()
+    if device_id:
+        try:
+            db.query(models.UserSession).filter(
+                models.UserSession.user_id == current_user.id,
+                models.UserSession.device_id == device_id,
+            ).delete()
+            db.commit()
+        except Exception:
+            db.rollback()
+    return {"status": "ok"}
 
 @router.get("/oauth/providers")
 @limiter.limit("30/minute")

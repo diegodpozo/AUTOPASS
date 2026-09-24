@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models
 from models.enums import UserRole
 from core.database import get_db
+from core.limiter import admin_rate_limit
 from core.security import get_local_manager
 from repositories.settings_repository import SettingsRepository
 from repositories.branch_repository import BranchRepository
@@ -40,7 +41,7 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
     
     return config_dict
 
-@router.post("/settings/prices")
+@router.post("/settings/prices", dependencies=[Depends(admin_rate_limit)])
 def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR."""
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None

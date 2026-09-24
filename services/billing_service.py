@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models
 
 from core.config import settings
+from core.logger import get_logger
 from services.time_service import TimeService
 from repositories.access_log_repository import AccessRepository
 from repositories.reservation_repository import ReservationRepository
@@ -13,6 +14,8 @@ from repositories.vehicle_repository import VehicleRepository
 # --- SERVICIO DE FACTURACION Y PUNTOS ---
 
 from models.enums import VehicleType
+
+logger = get_logger("BillingService")
 
 class BillingService:
     @staticmethod
@@ -184,7 +187,7 @@ class BillingService:
                         mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar tu estadía ({log.patente_detectada})!"
                     )
             except Exception:
-                pass
+                logger.warning("[BILLING] Error notificando puntos ganados en estadía", exc_info=True)
 
         db.commit()
         return {"status": "ok", "monto_cobrado": monto, "puntos_ganados": puntos_ganados, "aplicado": True}
@@ -289,7 +292,7 @@ class BillingService:
                         mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar tu estadía ({plate})!"
                     )
             except Exception:
-                pass
+                logger.warning("[BILLING] Error notificando puntos ganados en estadía digital", exc_info=True)
         
         db.commit()
         return {"status": "ok", "monto_cobrado": monto_real, "puntos_ganados": puntos_ganados}

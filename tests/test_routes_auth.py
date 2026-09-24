@@ -488,3 +488,64 @@ def test_oauth_complete_crea_usuario(client):
     assert user is not None
     assert user.nombre == "Jane"
     db.close()
+
+
+# --- LOGOUT (P2 A1) ---
+
+def test_logout_revoca_token_y_borra_sesion(client):
+    from core.security import revoke_token, _revoked_jtis
+    tc, TestSession = client
+    email = "logout@test.com"
+    user = _usuario(TestSession, email=email)
+
+    db = TestSession()
+    db.add(models.UserSession(
+        user_id=user.id, device_id="dev-logout",
+        user_agent="Mozilla-Logout", ip_address="9.9.9.9",
+        created_at=datetime.datetime.now(), last_login_at=datetime.datetime.now(),
+    ))
+    db.commit()
+    db.close()
+
+    login = tc.post("/v1/auth/login", json=_login_body(email, "Password123!", device_id="dev-logout"))
+    assert login.status_code == 200
+    token = login.json()["access_token"]
+
+    _revoked_jtis.clear()
+    response = tc.post("/v1/auth/logout",
+                       headers={"Authorization": f"Bearer {token}"},
+                       json={"device_id": "dev-logout"})
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+    # 1) El jti del token debe estar revocado -> el mismo token ya no autentica
+    protected = tc.get("/v1/user/me", headers={"Authorization": f"Bearer {token}"})
+    assert protected.status_code in (401, 403)
+
+    # 2) La UserSession del device fue eliminada
+    db = TestSession()
+    still = db.query(models.UserSession).filter(
+        models.UserSession.user_id == user.id,
+        models.UserSession.device_id == "dev-logout",
+    ).first()
+    assert still is None
+    db.close()
+
+
+def test_logout_requiere_auth(client):
+    tc, _ = client
+    response = tc.post("/v1/auth/logout", json={"device_id": "nope"})
+    assert response.status_code == 401
+
+
+def test_token_recuperacion_no_es_accesso(client):
+    """Un token con purpose='recovery' debe rechazarse como token de acceso (A1.2)."""
+    from core.security import decode_access_token
+    tc, TestSession = client
+    email = "reco@test.com"
+    _usuario(TestSession, email=email)
+    recovery = create_access_token({"sub": email, "purpose": "recovery"},
+                                   expires_delta=datetime.timedelta(minutes=10))
+    assert decode_access_token(recovery) is None
+    protected = tc.get("/v1/user/me", headers={"Authorization": f"Bearer {recovery}"})
+    assert protected.status_code == 401

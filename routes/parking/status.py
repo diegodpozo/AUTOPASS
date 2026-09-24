@@ -6,7 +6,7 @@ import models, schemas
 from models.enums import UserRole
 from core.database import get_db
 from core.security import get_operational_user, decode_access_token
-from core.logger import get_logger
+from core.logger import get_logger, mask_email
 from services.notification_service import NotificationService
 from services.occupancy_service import OccupancyService
 from repositories.branch_repository import BranchRepository
@@ -31,7 +31,7 @@ class OccupancyManager:
             self.active_connections[sucursal] = []
         self.active_connections[sucursal].append(websocket)
         try:
-            logger.info(f"Conexión establecida: user={user.email} sucursal={sucursal}")
+            logger.info(f"Conexión establecida: user={mask_email(user.email)} sucursal={sucursal}")
         except Exception:
             pass
         return sucursal
@@ -142,8 +142,8 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
     try:
         payload = decode_access_token(token)
         db = next(get_db())
-        user = UserRepository.get_by_email(db, payload.get("sub"))
-        if not user:
+        user = UserRepository.get_active_by_email(db, payload.get("sub"))
+        if not user or (getattr(user, "is_blocked", False)):
             await websocket.close(code=4008)
             return
             

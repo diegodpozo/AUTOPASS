@@ -5,6 +5,7 @@
 > **Metodología:** análisis estático de código, greps de patrones (headers, SQL crudo, rate limits, logs con PII), revisión manual de `core/security.py`, `core/config.py`, `core/limiter.py`, `main.py`, `routes/auth.py`, `routes/parking/*`, `routes/system/video.py`, `routes/system/common.py`, `routes/admin/users.py`, `routes/user/mercadopago.py`, `repositories/user_repository.py`.
 > **Checklist OWASP API Top 10** aplicado a los vectores del alcance.
 > **Actualización 2026-09-20:** los ítems P0/P1 del plan (§4) quedaron aplicados y verificados: `pay-stay` protegido, video WS autenticado, bloqueo efectivo en `get_current_user`, headers de seguridad y rate-limit del webhook MP. Estado real por ítem en §1.5; checklist cerrado en §3. Riesgo general recalculado: **MEDIO** (era ALTO).
+> **Actualización 2026-09-24:** los ítems P2/P3 (2, 4, 5, 8-parcial y 9) quedaron aplicados y verificados (suite 678 passed). Riesgo general actual: **BAJO-MEDIO**. Detalle en §1.5.
 
 ---
 
@@ -13,15 +14,15 @@
 | Dimensión | Estado | Hallazgos |
 |---|---|---|
 | Headers de seguridad | ~~**OMISO**~~ → **RESUELTO (2026-09-20)** | 0 headers de seguridad al auditarlo (sin CSP, HSTS, X-Frame-Options, X-Content-Type-Options). Solo CORS + GZip (`main.py:57-63`). **Hoy:** `security_headers_middleware` en `main.py:72-101` (CSP/HSTS/XFO/nosniff/Referrer-Policy) |
-| JWT | Aceptable c/ deudas | `sub`=email (PII en claims), sin `iat`/`jti`, TTL 24h sin revocación, SECRET_KEY demo sin guard de arranque |
+| JWT | ~~Aceptable c/ deudas~~ → **RESUELTO (2026-09-24)** | emite `iat`/`jti`/`token_type`, revocación en memoria (`revoke_token`/`POST /auth/logout`), guard de arranque para SECRET_KEY demo en producción |
 | Recuperación (reset) | Correcto | Token con `purpose="recovery"` validado (`auth.py:85-93`); TTL 30 min |
-| Cierre de sesión / bloqueo | **Defectuoso** | No hay endpoint de logout en backend (solo front). `toggle-block` NO invalida tokens activos; `get_current_user` no chequea `is_blocked` |
-| CORS | Débil | `ALLOWED_ORIGINS="*"` por defecto con `allow_methods/headers=["*"]` (`config.py:20`) |
+| Cierre de sesión / bloqueo | **RESUELTO (2026-09-24)** | `POST /v1/auth/logout` revoca jti + `UserSession` del device; `get_current_user` chequea `is_blocked` y jti |
+| CORS | ~~Débil~~ → **RESUELTO (2026-09-24)** | `ALLOWED_ORIGINS` default explícito `http://localhost:8000,http://127.0.0.1:8000` (sin `*`) |
 | WebSockets | **Defectuoso** | `/ws/video/{id}` acepta nodos anónimos que pueden difundir frames; `POST /update-frame/{id}` público; WS no exige rol STAFF+ (inconsistente con `/video-feed`) |
 | Autorización de acceso ALPR | **Expuesto** | `/access/validate-plate`, `/access/exit-plate`, `/access/pay-stay` **sin autenticación** (pay-stay muta deuda sin validar identidad) |
 | Inyección SQL | **OK** | 0 usos de `text()/exec_driver_sql/raw` en services/routes; todo vía repositorios con binds de SQLAlchemy |
-| Rate limiting | Parcial | Default 300/min global; cobertura fina solo en `/auth` y `/access`; faltan `pay-stay`, webhook MP, admin |
-| PII en logs | Débil | Emails de usuarios en logs INFO (WS, workers, email); sin enmascarado |
+| Rate limiting | Parcial → **MEJORADO** | Default 300/min global; cobertura fina en `/auth`, `/access`, `pay-stay`, webhook MP y ahora todos los mutadores admin (30/min vía `admin_rate_limit`) |
+| PII en logs | ~~Débil~~ → **RESUELTO (2026-09-24)** | `mask_email()` en WS, workers y email service; MP ya no loguea `resp.text` |
 
 **Nivel de riesgo general: ALTO** — 2 hallazgos críticos (`pay-stay` sin auth y broadcast de video anónimo), 2 altos (bloqueo no efectivo y nodo WS anónimo) y varios medios. La base JWT/BCrypt/parametrización está bien puesta; las mutaciones críticas de negocio (pagos, video, barreras) carecen de autenticación.
 
@@ -33,19 +34,20 @@
 
 Los ítems P0/P1 del plan (§4) quedaron aplicados. Estado por ítem del checklist (§3):
 
-| # | Ítem | Estado (2026-09-20) | Evidencia |
+| # | Ítem | Estado (2026-09-24) | Evidencia |
 |---|---|---|---|
 | 1 | Headers de seguridad | **RESUELTO** | `main.py:72-101` `security_headers_middleware`: `Content-Security-Policy` con `default-src 'self'`, `script/style/font-src` con CDNs (cdnjs, jsdelivr, unpkg, npmcdn) y fuentes de Google, `img-src` con tiles de Google, `connect-src` con `ws:/wss:`, Overpass, Nominatim y CDNs; HSTS (solo tras TLS), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`. Directivas agrupadas en constantes `CSP_CDNS`/`CSP_GOOGLE_FONTS`/`CSP_MAP_APIS`/`CSP_HEADER`. Test de regresión: `tests/test_security_headers.py` |
-| 2 | JWT `iat`+`jti`, guard SECRET_KEY, `token_type` | PENDIENTE | `core/security.py:32-48` sin `iat`/`jti`; `core/config.py:17` mantiene el default demo `tu_super_secreto_para_produccion` sin guard de arranque |
+| 2 | JWT `iat`+`jti`, guard SECRET_KEY, `token_type` | **RESUELTO** | `core/security.py` emite `iat`/`jti`/`token_type` (`access` o `purpose`); `decode_access_token`/`get_current_user` rechazan tokens no-access y jti revocados (set en memoria `_revoked_jtis` + `revoke_token()`). Guard de arranque en `main.py`: `RuntimeError` si `ENVIRONMENT=production` y el SECRET_KEY es el demo; warning si queda demo fuera de producción |
 | 3 | `get_current_user` rechaza `is_blocked` | **RESUELTO** | `core/security.py:71,107` (`hasattr(user,'is_blocked') and user.is_blocked` → 403); login bloqueado en `routes/auth.py:235`; mercadopago/reservas también validan (`routes/user/mercadopago.py:20`, `routes/user/reservations.py:89`) |
-| 4 | `POST /v1/auth/logout` revoca sesión | PENDIENTE | grep `logout` en `routes/**` → 0 matches; el cierre de sesión sigue siendo solo frontend |
-| 5 | CORS con lista explícita | PENDIENTE | `core/config.py:20` `os.getenv("ALLOWED_ORIGINS", "*")` — default abierto |
-| 6 | Video WS: nodo autenticado + STAFF+ | **RESUELTO** | `routes/system/video.py:37-74`: WS acepta `token`/`node_secret`, decodifica el token y rechaza espectadores que no sean ADMIN/LOCAL_ADMIN/STAFF (cierre `4403`, `:69-71`); `POST /ws/video/{id}/update-frame` exige `node_secret` (`:84`); nodo ALPR verificado por `_is_trusted_alpr_node` (`:30`) |
-| 7 | `pay-stay` (+ALPR) | **PARCIAL** | `pay-stay` protegido: `routes/parking/access.py:31-33` `Depends(get_operational_user)` + `@limiter.limit("10/minute")`. `validate-plate`/`exit-plate` siguen sin auth (nodo ALPR interno, mismo patrón que `notify_camera_reading` en `routes/system/cameras.py:326`) |
-| 8 | Rate limits finos | **PARCIAL (mejorado)** | webhook MP `60/minute` (`routes/user/mercadopago.py:69-70`); `pay-stay` `10/minute`; falta el límite fino en endpoints admin |
-| 9 | PII en logs INFO | PENDIENTE | sin enmascarado de emails/`payment_id`/`resp.text[:500]` de MP |
+| 4 | `POST /v1/auth/logout` revoca sesión | **RESUELTO** | `routes/auth.py`: `POST /v1/auth/logout` revoca el `jti` (`revoke_token`) y borra la `UserSession` del `device_id` indicado en el body (mantiene el resto de dispositivos). `ui.logout` (`static/js/modules/ui.js`) invoca el endpoint antes de limpiar localStorage (best-effort). Tests: `test_routes_auth.py` |
+| 5 | CORS con lista explícita por entorno | **RESUELTO** | `core/config.py`: default `ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"` (lista explícita, sin `*`); sobreescribible por `.env` |
+| 6 | Video WS: nodo ALPR autenticado, `update-frame` protegido, rol STAFF+ en espectador | **RESUELTO** | `routes/system/video.py:37-93` |
+| 7 | `pay-stay` y endpoints ALPR con auth de nodo | **RESUELTO (con excepción de diseño)** | `pay-stay` ✔ (`access.py:31-33`); WS de ocupación ahora usa `UserRepository.get_active_by_email` + rechaza `is_blocked` (`routes/parking/status.py:145-148`). `validate/exit-plate` siguen sin auth por diseño de nodo ALPR interno |
+| 8 | Rate limits finos en `pay-stay`, webhook MP, admin | **RESUELTO** | webhook MP `60/minute`; `pay-stay` `10/minute`; panel admin: dependency compartida `admin_rate_limit` (`core/limiter.py`, `30/minute` por IP) aplicada a todos los mutadores de `routes/admin/*` (branches, promotions, settings, reservations, support, users, virtual_time, operations) vía `dependencies=[Depends(...)]` sin alterar firmas |
+| 9 | Sin PII de clientes en logs INFO | **RESUELTO** | `core/logger.mask_email()` aplicado en `routes/parking/status.py`, `routes/system/video.py`, `services/worker_service.py`, `services/email_service.py`; `mercadopago_service.py` ya no loguea `resp.text[:500]` (solo `message` del JSON o "solicitud rechazada") |
 
 **Riesgo general recalculado: MEDIO** — los 2 hallazgos críticos (P0.1 `pay-stay`, P0.2 video) y los 2 altos (bloqueo no efectivo, nodo WS anónimo) quedaron resueltos. Deudas abiertas de severidad media/baja: JWT (2), logout (4), CORS (5), rate-limit admin (8 parcial) y PII en logs (9).
+> **2026-09-24:** con los ítems 2, 4, 5, 8 y 9 cerrados, el único punto abierto de tipo "por diseño" es la auth de nodo en `validate-plate`/`exit-plate` (red local ALPR), por eso el riesgo general baja a **BAJO-MEDIO**.
 
 ---
 
@@ -214,14 +216,14 @@ Los ítems P0/P1 del plan (§4) quedaron aplicados. Estado por ítem del checkli
 | Ítem | Estado |
 |---|---|
 | 1 · Headers de seguridad CSP/HSTS/XFO/nosniff en `main.py` | ✔ [RESUELTO 2026-09-20] `main.py:72-101` + `tests/test_security_headers.py` |
-| 2 · JWT `iat`+`jti`, guard de SECRET_KEY demo, validar `token_type` | [ ] pendiente |
+| 2 · JWT `iat`+`jti`, guard de SECRET_KEY demo, validar `token_type` | ✔ [RESUELTO 2026-09-24] `core/security.py` + guard en `main.py` |
 | 3 · `get_current_user` rechaza `is_blocked` | ✔ [RESUELTO 2026-09-20] `core/security.py:71,107` |
-| 4 · `POST /v1/auth/logout` revoca sesión + jti | [ ] pendiente |
-| 5 · CORS con lista explícita por entorno | [ ] pendiente |
+| 4 · `POST /v1/auth/logout` revoca sesión + jti | ✔ [RESUELTO 2026-09-24] `routes/auth.py` + `ui.logout` |
+| 5 · CORS con lista explícita por entorno | ✔ [RESUELTO 2026-09-24] `core/config.py` default sin `*` |
 | 6 · Video WS: nodo ALPR autenticado, `update-frame` protegido, rol STAFF+ en espectador | ✔ [RESUELTO 2026-09-20] `routes/system/video.py:37-93` |
-| 7 · `pay-stay` y endpoints ALPR con auth de nodo | ◐ [PARCIAL 2026-09-20] `pay-stay` ✔ (`access.py:31-33`); `validate/exit-plate` sin auth (nodo interno) |
-| 8 · Rate limits finos en `pay-stay`, webhook MP, admin | ◐ [PARCIAL 2026-09-20] `pay-stay` 10/min ✔, webhook MP 60/min ✔; falta admin |
-| 9 · Sin PII de clientes en logs INFO | [ ] pendiente |
+| 7 · `pay-stay` y endpoints ALPR con auth de nodo | ◐ [2026-09-24] `pay-stay` ✔; `validate/exit-plate` sin auth por diseño (nodo ALPR red local); WS ocupación con repo activo (`get_active_by_email` + `is_blocked`) |
+| 8 · Rate limits finos en `pay-stay`, webhook MP, admin | ✔ [RESUELTO 2026-09-24] `pay-stay` 10/min, webhook MP 60/min, admin 30/min (`admin_rate_limit`) |
+| 9 · Sin PII de clientes en logs INFO | ✔ [RESUELTO 2026-09-24] `mask_email()` + MP sin `resp.text` |
 
 ---
 
@@ -232,9 +234,9 @@ Los ítems P0/P1 del plan (§4) quedaron aplicados. Estado por ítem del checkli
 3. **[P1]** `get_current_user`: rechazar `is_blocked` — hace efectivo el toggle-block de inmediato. — **APLICADO (2026-09-20):** `core/security.py:71,107`.
 4. **[P1]** Header middleware de seguridad (`main.py`). — **APLICADO (2026-09-20):** `security_headers_middleware` con CSP/HSTS/XFO/nosniff/Referrer-Policy (`main.py:72-101`).
 5. **[P1]** Rate limits finos en webhook MP y admin. — **APLICADO PARCIAL (2026-09-20):** webhook MP `60/min` (`routes/user/mercadopago.py:70`); falta el fino en admin.
-6. **[P2]** Endpoint de logout + revocación (`UserSession`, `jti`/blacklist).
-7. **[P2]** `iat`/`jti` en JWT y guard de arranque para SECRET_KEY demo.
-8. **[P2]** CORS y WS: lista explícita, rol STAFF+ en espectador, repositorios activos (is_deleted/is_blocked) en WS.
-9. **[P3]** Enmascarar PII en logs INFO.
+6. **[P2]** Endpoint de logout + revocación (`UserSession`, `jti`/blacklist). — **APLICADO (2026-09-24):** `routes/auth.py` `POST /v1/auth/logout` + `revoke_token` en `core/security.py`; `ui.logout` lo invoca.
+7. **[P2]** `iat`/`jti` en JWT y guard de arranque para SECRET_KEY demo. — **APLICADO (2026-09-24):** `core/security.py` emite `iat`/`jti`/`token_type`; `main.py` lanza `RuntimeError` si `ENVIRONMENT=production` con SECRET_KEY demo.
+8. **[P2]** CORS y WS: lista explícita, rol STAFF+ en espectador, repositorios activos (is_deleted/is_blocked) en WS. — **APLICADO (2026-09-24):** CORS default explícito en `core/config.py`; repositorios activos ya vigentes en video y ahora en `status.py` (`get_active_by_email` + `is_blocked`).
+9. **[P3]** Enmascarar PII en logs INFO. — **APLICADO (2026-09-24):** `mask_email()` en status/video/worker/email; MP loguea solo `message`.
 
 > Los ítems P0–P1 son de bajo costo y alto impacto (cambios de 1–15 líneas c/u). Las auditorías A4 (migración) y A2 (deps) siguen al cierre de estos.

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
 from core.database import get_db
+from core.limiter import admin_rate_limit
 from core.security import get_operational_user
 from services.reservation_service import ReservationService
 from repositories.redemption_repository import RedemptionRepository
@@ -29,22 +30,22 @@ def list_reservations(estado: Optional[str] = Query(None), sucursal: Optional[st
     """LISTA TODAS LAS RESERVAS. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
     return ReservationService.list_admin_reservations(db, staff, estado, sucursal)
 
-@router.post("/reservations")
+@router.post("/reservations", dependencies=[Depends(admin_rate_limit)])
 def create_admin_reservation(data: schemas.AdminReservationCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """PERMITE AL ADMINISTRADOR O EMPLEADO CREAR UNA RESERVA MANUAL."""
     return ReservationService.create_admin_reservation(db, staff, data)
 
-@router.put("/reservations/{res_id}")
+@router.put("/reservations/{res_id}", dependencies=[Depends(admin_rate_limit)])
 def update_admin_reservation(res_id: int, data: schemas.AdminReservationCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """EDITA UNA RESERVA CREADA POR ADMINISTRADOR O EMPLEADO (NO LAS CREADAS POR CLIENTES)."""
     return ReservationService.update_admin_reservation(db, staff, res_id, data)
 
-@router.post("/reservations/{res_id}/confirm-payment")
+@router.post("/reservations/{res_id}/confirm-payment", dependencies=[Depends(admin_rate_limit)])
 def confirm_reservation_payment(res_id: int, data: schemas.ConfirmPaymentRequest = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """CONFIRMACION MANUAL DE PAGO."""
     return ReservationService.confirm_reservation_payment(db, staff, res_id, data)
 
-@router.post("/reservations/{res_id}/cancel")
+@router.post("/reservations/{res_id}/cancel", dependencies=[Depends(admin_rate_limit)])
 def cancel_reservation_admin(res_id: int, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """CANCELACION MANUAL."""
     ReservationService.get_permissioned_reservation(db, staff, res_id)

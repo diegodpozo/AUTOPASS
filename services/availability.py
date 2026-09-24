@@ -6,6 +6,7 @@ import time
 from sqlalchemy.orm import Session
 
 from core.config import settings
+from core.logger import get_logger
 from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
 from repositories.vehicle_repository import VehicleRepository
@@ -14,6 +15,8 @@ from services.time_service import TimeService
 
 _CACHE_AVAILABILITY = {}
 _CACHE_AVAILABILITY_TTL_SECONDS = 30
+
+logger = get_logger("Availability")
 
 
 def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehiculo: str) -> int:
@@ -168,6 +171,7 @@ def obtener_fechas_deshabilitadas(
         else:
             desde_dt = TimeService.now().replace(hour=0, minute=0, second=0, microsecond=0)
     except Exception:
+        logger.warning("[AVAILABILITY] Fecha_desde inválida, usando hoy", exc_info=True)
         desde_dt = TimeService.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     cache_key = ("fechas", sucursal_nombre, tipo_vehiculo, tipo_estadia, desde_dt.strftime("%Y-%m-%d"), dias_evaluar)
@@ -337,6 +341,7 @@ def _calcular_horas_deshabilitadas(
             start_dt = datetime.datetime.fromisoformat(f"{fecha_clean} {h:02d}:{m:02d}")
             end_dt = start_dt + datetime.timedelta(seconds=duracion_sec)
         except Exception:
+            logger.warning("[AVAILABILITY] Slot con fecha/hora inválida, omitido", exc_info=True)
             continue
 
         # HOY: BLOQUEAR SLOTS QUE YA PASARON O FALTAN MENOS DE LA ANTICIPACION MINIMA (MINIMO EL SLOT ACTUAL)

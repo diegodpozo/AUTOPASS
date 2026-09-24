@@ -6,7 +6,8 @@ load_dotenv()
 class Settings:
     PROJECT_NAME: str = "AUTOPASS Professional"
     VERSION: str = "9.14.0"
-    
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+
     # CONTACTO
     CONTACT_SUPPORT: str = "soporte@autopass.com.ar"
     CONTACT_EXPANSION: str = "expansion@autopass.com.ar"
@@ -17,7 +18,9 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "tu_super_secreto_para_produccion")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1440))
-    ALLOWED_ORIGINS: list = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    ALLOWED_ORIGINS: list = [o.strip() for o in os.getenv(
+        "ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"
+    ).split(",") if o.strip()]
     # Secreto compartido de los nodos ALPR para el WS de video y update-frame.
     # Vacio: solo se aceptan nodos desde red local/loopback (recomendado para ALPR en la misma maquina).
     ALPR_NODE_SECRET: str = os.getenv("ALPR_NODE_SECRET", "")

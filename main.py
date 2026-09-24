@@ -31,6 +31,16 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.mqtt_client = mqtt_client #INYECCION PARA ACCESO GLOBAL
 
+# --- GUARD DE SEGURIDAD: SECRET_KEY DEMO (SOLO FALLA EN PRODUCCION) ---
+if settings.ENVIRONMENT == "production" and settings.SECRET_KEY == "tu_super_secreto_para_produccion":
+    raise RuntimeError(
+        "SECRET_KEY sigue siendo el valor demo. Configurá SECRET_KEY en el entorno antes de entrar a producción."
+    )
+if settings.SECRET_KEY == "tu_super_secreto_para_produccion":
+    logger.warning(
+        "SECRET_KEY usa el valor demo. Configurá SECRET_KEY por entorno (solo crítico en producción)."
+    )
+
 # DIRECTORIO PARA IMAGENES Y UPLOADS
 for path in [settings.IMAGE_DIR, os.path.join("static", "uploads", "branches")]:
     if not os.path.exists(path):

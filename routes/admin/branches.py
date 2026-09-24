@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
 from core.database import get_db
+from core.limiter import admin_rate_limit
 from core.security import get_super_admin, get_local_manager
 from services.branch_service import BranchService
 from repositories.branch_repository import BranchRepository
@@ -20,7 +21,7 @@ def list_branches(db: Session = Depends(get_db)):
 
 # --- GESTION DE PISOS ---
 
-@router.post("/{branch_id}/floors", response_model=schemas.FloorResponse)
+@router.post("/{branch_id}/floors", response_model=schemas.FloorResponse, dependencies=[Depends(admin_rate_limit)])
 def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """AGREGA UN NUEVO PISO A LA SUCURSAL."""
     branch = BranchRepository.get_by_id(db, branch_id)
@@ -53,7 +54,7 @@ def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(g
         pass
     return new_floor
 
-@router.delete("/floors/{floor_id}")
+@router.delete("/floors/{floor_id}", dependencies=[Depends(admin_rate_limit)])
 def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ELIMINA UN PISO DE LA SUCURSAL TRAS VALIDAR QUE NO HAYA VEHICULOS ESTACIONADOS."""
     floor = BranchRepository.get_floor_by_id(db, floor_id)
@@ -75,7 +76,7 @@ def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.Use
             pass
     return {"status": "ok"}
 
-@router.patch("/floors/{floor_id}", response_model=schemas.FloorResponse)
+@router.patch("/floors/{floor_id}", response_model=schemas.FloorResponse, dependencies=[Depends(admin_rate_limit)])
 def update_floor_capacity(
     floor_id: int, 
     cap_autos: int, 
@@ -132,7 +133,7 @@ def update_floor_capacity(
             pass
     return floor
 
-@router.post("/branches")
+@router.post("/branches", dependencies=[Depends(admin_rate_limit)])
 async def create_branch(
     nombre: str = Form(...),
     direccion: str = Form(...),
@@ -175,7 +176,7 @@ async def create_branch(
     db.commit()
     return {"status": "ok", "message": f"Sucursal '{new_branch.nombre}' creada"}
 
-@router.delete("/branches/{branch_id}")
+@router.delete("/branches/{branch_id}", dependencies=[Depends(admin_rate_limit)])
 def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS."""
     import datetime
@@ -207,7 +208,7 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.U
     db.commit()
     return {"status": "ok", "message": "Sucursal eliminada"}
 
-@router.patch("/branches/{branch_id}")
+@router.patch("/branches/{branch_id}", dependencies=[Depends(admin_rate_limit)])
 async def update_branch(
     branch_id: int,
     nombre: str = Form(...),
@@ -266,7 +267,7 @@ async def update_branch(
     db.commit()
     return {"status": "ok", "message": "Sucursal actualizada"}
 
-@router.post("/branches/{branch_id}/toggle")
+@router.post("/branches/{branch_id}/toggle", dependencies=[Depends(admin_rate_limit)])
 def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
     """ACTIVA O SUSPENDE UNA SUCURSAL VALIDANDO QUE NO HAYA VEHICULOS EN SU INTERIOR AL DESACTIVAR."""
     branch = BranchRepository.get_by_id(db, branch_id)

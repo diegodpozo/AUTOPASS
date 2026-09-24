@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import models, schemas
 from core.database import get_db
+from core.limiter import admin_rate_limit
 from core.security import get_operational_user
 from services.support_service import SupportService
 from repositories.notification_repository import NotificationRepository
@@ -21,7 +22,7 @@ def get_admin_support_pending_count(
     count = SupportService.get_admin_pending_count(db, current_user)
     return {"count": count}
 
-@router.patch("/support-tickets/{ticket_id}/read-notifs")
+@router.patch("/support-tickets/{ticket_id}/read-notifs", dependencies=[Depends(admin_rate_limit)])
 def mark_ticket_notifications_read(
     ticket_id: int,
     db: Session = Depends(get_db),
@@ -68,7 +69,7 @@ def get_admin_support_tickets(
     """RETORNA TODOS LOS TICKETS DE SOPORTE FILTRADOS SEGUN ROL Y PARAMETROS."""
     return SupportService.get_admin_tickets(db, current_user, sucursal_filter=sucursal, estado_filter=estado)
 
-@router.patch("/support-tickets/{ticket_id}")
+@router.patch("/support-tickets/{ticket_id}", dependencies=[Depends(admin_rate_limit)])
 def update_support_ticket(
     ticket_id: int,
     ticket_data: schemas.SupportTicketUpdate,

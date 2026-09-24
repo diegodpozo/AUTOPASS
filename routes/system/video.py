@@ -10,7 +10,7 @@ from models.enums import UserRole
 from core.database import get_db
 from core.security import get_operational_user, decode_access_token
 from core.config import settings
-from core.logger import get_logger
+from core.logger import get_logger, mask_email
 from routes.system.common import manager, normalize_system_name
 from repositories.user_repository import UserRepository
 from repositories.access_log_repository import AccessRepository
@@ -74,17 +74,17 @@ async def websocket_video_endpoint(websocket: WebSocket, camera_id: str, token: 
             logger.error(f"Error en nodo ALPR {camera_id}: {e}")
     else:
         if str(user.rol) not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
-            logger.warning(f"Conexión rechazada a video: role {user.rol} ({user.email})")
+            logger.warning(f"Conexión rechazada a video: role {user.rol} ({mask_email(user.email)})")
             await websocket.close(code=4403)
             return
-        logger.info(f"Espectador conectado: {user.email} -> {camera_id}")
+        logger.info(f"Espectador conectado: {mask_email(user.email)} -> {camera_id}")
         success = await manager.connect(websocket, camera_id, user)
         if success:
             try:
                 while True:
                     await websocket.receive_text()
             except WebSocketDisconnect:
-                logger.info(f"Espectador desconectado: {user.email} -> {camera_id}")
+                logger.info(f"Espectador desconectado: {mask_email(user.email)} -> {camera_id}")
                 manager.disconnect(websocket, camera_id)
 
 @router.post("/update-frame/{camera_id}")

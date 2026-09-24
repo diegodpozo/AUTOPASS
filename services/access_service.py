@@ -53,7 +53,7 @@ class AccessService(AccessOccupancyMixin):
                     if normalize_name(b.nombre) == suc_short:
                         return b.nombre
             except Exception:
-                pass
+                logger.warning("[ACCESS] Error buscando sucursal por gate_id", exc_info=True)
         return None
 
     @staticmethod
@@ -90,7 +90,7 @@ class AccessService(AccessOccupancyMixin):
         try:
             logger.debug(f"validate_plate called. gate_id={getattr(data, 'gate_id', None)} plate_present={'plate' in data.__dict__}")
         except Exception:
-            pass
+            logger.warning("[ACCESS] Error logueando validate_plate", exc_info=True)
         p = normalize_plate(data.plate)
         sucursal = cls._branch_from_gate_id(db, data.gate_id)
         
@@ -197,7 +197,7 @@ class AccessService(AccessOccupancyMixin):
         try:
             logger.debug(f"validate_qr called. gate_id={getattr(data, 'gate_id', None)} qr_len={len(getattr(data, 'qr_data',''))}")
         except Exception:
-            pass
+            logger.warning("[ACCESS] Error logueando validate_qr", exc_info=True)
         sucursal = None
         try:
             if data.gate_id and '_' in data.gate_id:
@@ -210,7 +210,7 @@ class AccessService(AccessOccupancyMixin):
                     if branch:
                         sucursal = branch.nombre
                 except Exception:
-                    pass
+                    logger.warning("[ACCESS] Error resolviendo sucursal por nombre", exc_info=True)
             parts = data.qr_data.split('|')
             if len(parts) < 3 or parts[0] != "AUTOPASS":
                 return {"status": "error", "message": "Formato de QR inválido"}
@@ -492,6 +492,6 @@ class AccessService(AccessOccupancyMixin):
                         mensaje=f"Un administrador canceló tu estadía en {sucursal} para la patente {plate}."
                     )
         except Exception:
-            pass
+            logger.warning("[ACCESS] Error notificando cancelación de estadía", exc_info=True)
 
         return {"status": "ok", "message": msg}

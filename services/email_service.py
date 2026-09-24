@@ -6,7 +6,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from jinja2 import Environment, FileSystemLoader
 from core.config import settings
-from core.logger import get_logger
+from core.logger import get_logger, mask_email
 import threading
 import os
 
@@ -51,9 +51,9 @@ class EmailService:
                 if settings.SMTP_USER and settings.SMTP_PASSWORD:
                     server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 server.sendmail(settings.SMTP_FROM, to_email, msg.as_string())
-            logger.info(f"Correo enviado exitosamente a {to_email}")
+            logger.info(f"Correo enviado exitosamente a {mask_email(to_email)}")
         except Exception as e:
-            logger.error(f"No se pudo enviar el correo a {to_email}: {e}")
+            logger.error(f"No se pudo enviar el correo a {mask_email(to_email)}: {e}")
 
     @staticmethod
     def send_async_email(to_email: str, subject: str, html_content: str):

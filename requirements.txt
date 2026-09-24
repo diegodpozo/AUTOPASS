@@ -48,6 +48,7 @@ paddlepaddle==3.2.2; python_version < '3.14'
 
 # === TESTING ===
 pytest>=8.0.0
+pytest-cov>=6.0.0
 pytest-timeout>=2.3.0
 
 # === MISC ===

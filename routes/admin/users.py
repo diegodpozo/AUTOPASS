@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
 from core.database import get_db
-from core.limiter import limiter
+from core.limiter import limiter, admin_rate_limit
 from core.security import get_local_manager, get_super_admin, get_password_hash
 from core.normalize import normalize_branch_name
 from models.enums import UserRole, NotificationType
@@ -40,7 +40,7 @@ def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_l
     return all_users
 
 
-@router.post("/users")
+@router.post("/users", dependencies=[Depends(admin_rate_limit)])
 def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE AL ADMINISTRADOR CREAR UN NUEVO USUARIO. LOS LOCALES SOLO CREAN PARA SU SEDE."""
     if str(admin.rol) != UserRole.ADMIN.value:
@@ -51,7 +51,7 @@ def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.US
     return UserService.create_user(db, user_data, rol, user_data.sucursal)
 
 
-@router.patch("/users/{user_id}")
+@router.patch("/users/{user_id}", dependencies=[Depends(admin_rate_limit)])
 def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA LA INFORMACION DE UN USUARIO DESDE EL PANEL ADMINISTRATIVO."""
     user = UserRepository.get_active_by_id(db, user_id)

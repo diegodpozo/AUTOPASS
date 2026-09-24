@@ -130,6 +130,8 @@ export function toggleHistorial() {
  * CIERRA LA SESION DEL USUARIO.
  */
 export function logout() {
+    const token = localStorage.getItem('token');
+
     // Preservar flags de tour y device_id antes de limpiar localStorage
     const savedKeys = {};
     const keepPrefixes = ['autopass_tour_seen_'];
@@ -141,6 +143,20 @@ export function logout() {
         if (keepExact.includes(key) || keepPrefixes.some(p => key.startsWith(p))) {
             savedKeys[key] = localStorage.getItem(key);
         }
+    }
+
+    // REVOCAR SESION EN EL BACKEND (best-effort, no bloquea el logout local)
+    if (token) {
+        try {
+            fetch('/v1/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ device_id: savedKeys['autopass_device_id'] || '' }),
+            }).catch(() => {});
+        } catch (e) { /* ignora fallos de red */ }
     }
 
     localStorage.clear();

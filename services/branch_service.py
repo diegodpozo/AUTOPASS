@@ -5,9 +5,12 @@ from sqlalchemy.orm import Session
 import models
 from services.billing_service import BillingService
 from models.enums import VehicleType
+from core.logger import get_logger
 from repositories.branch_repository import BranchRepository
 from repositories.settings_repository import SettingsRepository
 from repositories.user_repository import UserRepository
+
+logger = get_logger("BranchService")
 
 class BranchService:
     @staticmethod
@@ -151,7 +154,7 @@ class BranchService:
                         else:
                             proc.terminate()
                     except Exception:
-                        pass
+                        logger.warning("[BRANCH] Error deteniendo proceso de cámara", exc_info=True)
                 CAMERA_PROCESSES.pop(gate_id, None)
 
         branch.nombre = new_nombre

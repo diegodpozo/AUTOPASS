@@ -4,7 +4,7 @@ import time
 import datetime
 from core.database import SessionLocal
 from core.config import settings
-from core.logger import get_logger
+from core.logger import get_logger, mask_email
 from services.reservation_service import ReservationService
 from services.user_notification_service import UserNotificationService
 from services.email_service import EmailService
@@ -156,7 +156,7 @@ class WorkerService:
                     "pagada": pagada
                 }
                 EmailService.send_reservation_reminder(user.email, user.nombre, res_data)
-                logger.info(f"Recordatorio enviado a {user.email} para reserva #{res.id}")
+                logger.info(f"Recordatorio enviado a {mask_email(user.email)} para reserva #{res.id}")
             except Exception as e:
                 logger.error(f"Procesando recordatorio reserva #{res.id}: {e}")
 

@@ -86,7 +86,7 @@ def _mock_ws(monkeypatch, TestSession, user):
     monkeypatch.setattr(status_mod, "get_db", lambda: iter([TestSession()]))
     monkeypatch.setattr(status_mod, "decode_access_token", lambda t: {"sub": user.email})
     monkeypatch.setattr(status_mod, "UserRepository",
-                        type("UR", (), {"get_by_email": staticmethod(_fake_user_repo)}))
+                        type("UR", (), {"get_active_by_email": staticmethod(_fake_user_repo)}))
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +179,7 @@ def test_ws_token_invalido_cierra_4008(client, monkeypatch):
     monkeypatch.setattr(status_mod, "decode_access_token",
                         lambda t: (_ for _ in ()).throw(Exception("bad")))
     monkeypatch.setattr(status_mod, "UserRepository",
-                        type("UR", (), {"get_by_email": staticmethod(lambda db, sub: None)}))
+                        type("UR", (), {"get_active_by_email": staticmethod(lambda db, sub: None)}))
     with pytest.raises(WebSocketDisconnect) as ei:
         with tc.websocket_connect(f"{WS_URL}?token=bad") as ws:
             ws.receive_json()

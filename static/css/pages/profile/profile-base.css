@@ -574,7 +574,7 @@
 :focus-visible { outline: 2px solid #6A4B9B; outline-offset: 2px; }
 
 .reserva-trigger-card { 
-    background: linear-gradient(135deg, #C5A059 0%, #a68545 100%); 
+    background: linear-gradient(135deg, #F2E3BF 0%, #a68545 100%); 
     cursor: pointer; 
     margin-bottom: 30px; 
     border-radius: 16px; 

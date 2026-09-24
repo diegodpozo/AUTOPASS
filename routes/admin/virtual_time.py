@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from core.database import get_db, SessionLocal
+from core.limiter import admin_rate_limit
 from core.logger import get_logger
 from services.time_service import TimeService
 from services.worker_service import WorkerService
@@ -43,14 +44,14 @@ def _run_all_checks():
 def get_virtual_time(user=Depends(get_local_manager)):
     return TimeService.get_info()
 
-@router.post("/advance")
+@router.post("/advance", dependencies=[Depends(admin_rate_limit)])
 def advance_virtual_time(req: TimeAdjustmentRequest, user=Depends(get_local_manager)):
     if req.days or req.hours or req.minutes:
         TimeService.advance(days=req.days, hours=req.hours, minutes=req.minutes)
     _run_all_checks()
     return TimeService.get_info()
 
-@router.post("/rewind")
+@router.post("/rewind", dependencies=[Depends(admin_rate_limit)])
 def rewind_virtual_time(req: TimeAdjustmentRequest, user=Depends(get_local_manager)):
     """RETRASAR EL RELOJ VIRTUAL DEL SISTEMA."""
     if req.days or req.hours or req.minutes:
@@ -58,7 +59,7 @@ def rewind_virtual_time(req: TimeAdjustmentRequest, user=Depends(get_local_manag
     _run_all_checks()
     return TimeService.get_info()
 
-@router.post("/set-target")
+@router.post("/set-target", dependencies=[Depends(admin_rate_limit)])
 def set_target_virtual_time(req: SetTargetRequest, user=Depends(get_local_manager)):
     """FIJAR LA FECHA Y HORA VIRTUAL A UN VALOR ESPECIFICO (EJ: '2026-10-15T14:30:00')."""
     try:
@@ -70,13 +71,13 @@ def set_target_virtual_time(req: SetTargetRequest, user=Depends(get_local_manage
     _run_all_checks()
     return TimeService.get_info()
 
-@router.post("/set")
+@router.post("/set", dependencies=[Depends(admin_rate_limit)])
 def set_virtual_time(req: SetOffsetRequest, user=Depends(get_local_manager)):
     TimeService.set_offset(req.offset_seconds)
     _run_all_checks()
     return TimeService.get_info()
 
-@router.post("/reset")
+@router.post("/reset", dependencies=[Depends(admin_rate_limit)])
 def reset_virtual_time(user=Depends(get_local_manager)):
     TimeService.reset()
     _run_all_checks()

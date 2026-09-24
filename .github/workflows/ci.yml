@@ -38,4 +38,4 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          python -m pytest tests/ --verbose
+          python -m pytest tests/ --verbose --cov=services --cov=routes --cov=repositories --cov=alpr --cov=core --cov-report=term-missing --cov-fail-under=82

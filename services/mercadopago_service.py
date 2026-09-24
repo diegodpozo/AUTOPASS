@@ -46,7 +46,8 @@ def _mp_request(method: str, path: str, payload: dict = None):
         logger.error(f"[MP] Error de red en {path}: {e}")
         raise HTTPException(status_code=502, detail="No se pudo conectar con Mercado Pago. Intentá de nuevo.")
     if resp.status_code >= 400:
-        logger.error(f"[MP] Error {resp.status_code} en {path}: {resp.text[:500]}")
+        error_code = resp.json().get("message", "") if resp.headers.get("content-type", "").startswith("application/json") else ""
+        logger.error(f"[MP] Error {resp.status_code} en {path}: {error_code or 'solicitud rechazada'}")
         raise HTTPException(
             status_code=502,
             detail="Mercado Pago rechazó la operación. Verificá que las credenciales de prueba estén configuradas en el .env.",
@@ -194,6 +195,7 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
     try:
         pref = _mp_request("POST", "/checkout/preferences", preference_payload)
     except Exception:
+        logger.exception("[MP] Error creando preferencia de pago")
         pago.estado = _FALLIDO
         db.commit()
         raise

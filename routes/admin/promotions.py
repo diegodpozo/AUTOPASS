@@ -4,6 +4,7 @@ from typing import List
 import models, schemas
 from models.enums import UserRole
 from core.database import get_db
+from core.limiter import admin_rate_limit
 from core.security import get_local_manager
 from repositories.promotion_repository import PromotionRepository
 from repositories.redemption_repository import RedemptionRepository
@@ -22,7 +23,7 @@ def list_promotions_admin(db: Session = Depends(get_db), admin: models.User = De
             
     return promos
 
-@router.post("/promotions")
+@router.post("/promotions", dependencies=[Depends(admin_rate_limit)])
 def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """CREA UNA NUEVA PROMOCION VINCULADA A LA SEDE DEL ADMINISTRADOR."""
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else data.sucursal
@@ -44,7 +45,7 @@ def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db
     db.commit()
     return {"status": "ok", "message": f"Promoción '{data.titulo}' creada para {sucursal or 'Global'}"}
 
-@router.post("/promotions/{promo_id}/toggle")
+@router.post("/promotions/{promo_id}/toggle", dependencies=[Depends(admin_rate_limit)])
 def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTIVA O DESACTIVA UNA PROMOCION."""
     promo = PromotionRepository.get_by_id(db, promo_id)
@@ -57,7 +58,7 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     db.commit()
     return {"status": "ok", "activa": promo.activa}
 
-@router.put("/promotions/{promo_id}")
+@router.put("/promotions/{promo_id}", dependencies=[Depends(admin_rate_limit)])
 def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA UNA PROMOCION EXISTENTE. EL ADMIN GLOBAL PUEDE REASIGNAR LA SUCURSAL."""
     promo = PromotionRepository.get_by_id(db, promo_id)
@@ -82,7 +83,7 @@ def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session =
     db.commit()
     return {"status": "ok", "message": f"Promoción '{data.titulo}' actualizada"}
 
-@router.delete("/promotions/{promo_id}")
+@router.delete("/promotions/{promo_id}", dependencies=[Depends(admin_rate_limit)])
 def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ELIMINA UNA PROMOCION PERMANENTEMENTE.
     Antes de borrar desasocia los tickets de canje (FK) poniendo promotion_id = NULL,

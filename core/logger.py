@@ -29,3 +29,12 @@ def get_logger(name: str) -> logging.Logger:
     """RETORNA UN LOGGER CON EL NOMBRE DEL MODULO."""
     return logging.getLogger(name)
 
+def mask_email(email: str) -> str:
+    """ENMASCARA UN EMAIL EN LOGS: 'juan.perez@mail.com' -> 'jua***@mail.com'."""
+    if not email or "@" not in email:
+        return str(email or "")
+    local, _, domain = email.partition("@")
+    if len(local) <= 3:
+        return f"***@{domain}"
+    return f"{local[:3]}***@{domain}"
+

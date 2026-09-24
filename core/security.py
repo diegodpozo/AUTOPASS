@@ -1,4 +1,5 @@
 import bcrypt
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -18,6 +19,19 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="v1/auth/login")
 
+# JTIS REVOCADOS (LOGOUT): IN-MEMORY, SE LIMPIA AL REINICIAR
+_revoked_jtis = set()
+
+def revoke_token(token: str) -> None:
+    """AGREGA EL jti DE UN TOKEN A LA LISTA DE REVOCADOS (LOGOUT)."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return
+    jti = payload.get("jti")
+    if jti:
+        _revoked_jtis.add(jti)
+
 def verify_password(plain_password, hashed_password):
     """VERIFICA SI UNA CONTRASENA EN TEXTO PLANO COINCIDE CON SU HASH."""
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
@@ -36,16 +50,29 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = utcnow() + expires_delta
     else:
         expire = utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
+    now = utcnow()
+    to_encode.update({
+        "exp": expire,
+        "iat": now,
+        "jti": uuid.uuid4().hex,
+        "token_type": to_encode.get("purpose") or "access",
+    })
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 def decode_access_token(token: str):
-    """DECODIFICA UN TOKEN JWT Y DEVUELVE EL PAYLOAD SI ES VALIDO."""
+    """DECODIFICA UN TOKEN JWT Y DEVUELVE EL PAYLOAD SI ES VALIDO.
+    SOLO ACEPTA TOKENS DE ACCESO (NO recovery/oauth_signup) Y NO REVOCADOS."""
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
+    if payload.get("token_type", "access") != "access":
+        return None
+    jti = payload.get("jti")
+    if jti and jti in _revoked_jtis:
+        return None
+    return payload
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """
@@ -59,6 +86,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("token_type", "access") != "access":
+            raise credentials_exception
+        jti = payload.get("jti")
+        if jti and jti in _revoked_jtis:
+            raise credentials_exception
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
