@@ -1,0 +1,116 @@
+/* --- COMPONENTE PREMIUM: PRIMITIVAS REUTILIZABLES (portal + dashboard) --- */
+/* Extraído de profile-base.css / profile-vehicles.css (AUDITORIA_COMPONENTES P1) */
+
+/* ACCIONES RÁPIDAS (grid de botones cuadrados con ícono + etiqueta) */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 35px;
+}
+
+.action-btn-premium {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(197, 160, 89, 0.1);
+    border-radius: 16px;
+    padding: 18px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+}
+
+.action-btn-premium:hover {
+    background: rgba(197, 160, 89, 0.05);
+    border-color: var(--dorado);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.action-btn-premium i {
+    font-size: 1.2rem;
+    color: var(--dorado);
+    transition: 0.3s;
+}
+
+.action-btn-premium:hover i {
+    transform: scale(1.2);
+}
+
+.action-btn-premium span {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--dorado);
+    opacity: 0.8;
+}
+
+/* ESTADO VACÍO (icono pulsante + título + CTA) */
+.empty-state-premium {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+}
+
+.empty-icon-box {
+    width: 80px;
+    height: 80px;
+    background: rgba(197, 160, 89, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.25s ease, background 0.25s ease, border 0.25s ease;
+}
+
+.empty-icon-box .main-icon {
+    font-size: 2rem;
+    color: var(--dorado);
+    z-index: 2;
+}
+
+.empty-icon-box:hover {
+    background: rgba(197, 160, 89, 0.18);
+    border: 1px solid var(--dorado);
+    transform: translateY(-2px);
+}
+
+.empty-icon-box:focus-visible {
+    outline: 2px solid var(--dorado);
+    outline-offset: 3px;
+}
+
+.icon-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--dorado);
+    border-radius: 50%;
+    opacity: 0.15;
+    animation: iconPulse 2s infinite;
+}
+
+@keyframes iconPulse {
+    0% { transform: scale(1); opacity: 0.2; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+.empty-state-premium h4 {
+    color: #fff;
+    font-family: 'Montserrat';
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.empty-state-premium p {
+    color: #888;
+    font-size: 0.9rem;
+    max-width: 250px;
+}

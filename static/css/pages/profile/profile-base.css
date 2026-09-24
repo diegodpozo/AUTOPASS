@@ -141,54 +141,6 @@
     font-size: 0.81rem;
 }
 
-/* QUICK ACTIONS */
-.quick-actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 35px;
-}
-
-.action-btn-premium {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(197, 160, 89, 0.1);
-    border-radius: 16px;
-    padding: 18px 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-align: center;
-}
-
-.action-btn-premium:hover {
-    background: rgba(197, 160, 89, 0.05);
-    border-color: var(--dorado);
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-
-.action-btn-premium i {
-    font-size: 1.2rem;
-    color: var(--dorado);
-    transition: 0.3s;
-}
-
-.action-btn-premium:hover i {
-    transform: scale(1.2);
-}
-
-.action-btn-premium span {
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--dorado);
-    opacity: 0.8;
-}
-
 /* PROFILE GRID & LAYOUTS */
 .profile-main-grid {
     display: grid;
