@@ -58,6 +58,7 @@ export function initReservationForm() {
             updateReservationPrice();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
+            updateReservationStepper();
         }
     };
 
@@ -101,6 +102,7 @@ export function initReservationForm() {
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
+            updateReservationStepper();
         });
     }
 
@@ -112,6 +114,7 @@ export function initReservationForm() {
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
+            updateReservationStepper();
         });
     }
 
@@ -124,6 +127,7 @@ export function initReservationForm() {
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
+            updateReservationStepper();
         });
     }
 
@@ -149,6 +153,49 @@ export function initReservationForm() {
     }
 
     initHourlySlotDrag();
+
+    // P2.5 UX/UI: stepper global disponible para el sincronizador de precio
+    window.updateReservationStepper = updateReservationStepper;
+    updateReservationStepper();
+}
+
+// P2.5 UX/UI: refleja el progreso de la reserva en el stepper.
+// Calcula el estado según los datos ya completados en el formulario.
+export function updateReservationStepper() {
+    const stepper = document.getElementById('reservation-stepper');
+    if (!stepper) return;
+    const steps = Array.from(stepper.querySelectorAll('.stepper-step'));
+    const lines = Array.from(stepper.querySelectorAll('.stepper-line'));
+
+    const vehicle = document.querySelector('.res-vehicle')?.value;
+    const sucursal = document.querySelector('.res-sucursal')?.value;
+    const type = document.querySelector('.res-type')?.value;
+    const dateMap = {
+        'hora': '.res-date-only',
+        'dia': '.res-day-only',
+        'semana': '.res-week-start',
+        'quincena': '.res-fortnight-start',
+        'mes': '.res-month-start',
+        '': '.res-date-only'
+    };
+    const dateSel = dateMap[type] || '.res-start';
+    const hasDate = Boolean(document.querySelector(dateSel)?.value);
+    const totalEl = document.getElementById('reserva-total-est');
+    const hasTotal = totalEl ? totalEl.innerText.replace(/\s/g, '') !== '$---' : false;
+
+    let active = 1;
+    if (vehicle) active = 2;
+    if (vehicle && sucursal) active = 3;
+    if (vehicle && sucursal && hasDate) active = 4;
+    const complete = active >= 4 && hasTotal;
+
+    steps.forEach((s, i) => {
+        const idx = i + 1;
+        s.classList.remove('is-active', 'is-done');
+        if (complete || idx < active) s.classList.add('is-done');
+        else if (idx === active) s.classList.add('is-active');
+    });
+    lines.forEach((l, i) => l.classList.toggle('is-done', complete || i + 1 < active));
 }
 
 export function updatePeriodEnd(startDateStr, days, targetSelector) {
@@ -284,6 +331,7 @@ export async function refreshReservationFormState() {
 
     // YA CON LAS SUCURSALES CARGADAS: consulta tarifas + descuento para la sucursal seleccionada
     await fetchRates();
+    updateReservationStepper();
 }
 
 export function resetReservaForm() {
@@ -294,6 +342,7 @@ export function resetReservaForm() {
         form.reset();
         updateFormGroups("");
     }
+    updateReservationStepper();
     const btnSpan = document.querySelector('.btn-confirm-premium span');
     if (btnSpan) btnSpan.innerText = 'CONTINUAR';
     const headerTitle = document.querySelector('.header-text h3');

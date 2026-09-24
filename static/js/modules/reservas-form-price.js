@@ -156,4 +156,7 @@ export function updateReservationPrice() {
     // GARANTIZA QUE EL DESCUENTO DE LA SUCURSAL ESTÉ CARGADO (carga lazy + re-render cuando llega)
     const selBranch = document.querySelector('.res-sucursal')?.value || '';
     if (total > 0) lazyLoadDiscount(selBranch);
+
+    // P2.5 UX/UI: sincroniza el stepper con el estado del total calculado
+    if (typeof window.updateReservationStepper === 'function') window.updateReservationStepper();
 }

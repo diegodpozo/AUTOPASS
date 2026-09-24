@@ -24,8 +24,11 @@ export function openModal(id) {
         }
     }
 
-    const emailInput = el.querySelector('input[type="email"]');
-    if (emailInput) setTimeout(() => emailInput.focus(), 100);
+    // P2.6 UX/UI: autofocus al primer campo editable visible (input/select/textarea),
+    // con fallback al input de email si no se encuentra ninguno.
+    const focusable = el.querySelector('input:not([type="hidden"]):not([type="submit"]):not([disabled]), select:not([disabled]), textarea:not([disabled])');
+    const target = focusable || el.querySelector('input[type="email"]');
+    if (target) setTimeout(() => target.focus(), 100);
 }
 
 /**

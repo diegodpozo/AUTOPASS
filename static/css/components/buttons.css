@@ -1,63 +1,75 @@
 /* --- BOTONES BASE --- */
+/* P3.8 UX/UI: convención BEM (.btn--modificador) agrupada con clases legacy (.btn-modificador)
+   para uso gradual en los templates sin romper los selectores históricos. */
 .btn {
-    padding: 15px 35px; 
-    border-radius: 50px; 
+    padding: 15px 35px;
+    border-radius: 50px;
     border: none;
-    font-weight: 700; 
-    text-transform: uppercase; 
+    font-weight: 700;
+    text-transform: uppercase;
     letter-spacing: 1px;
-    cursor: pointer; 
-    transition: all 0.3s; 
-    text-decoration: none; 
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
     display: inline-block;
     font-size: var(--text-sm);
 }
 
-.btn-primary { 
-    background: var(--dorado); 
-    color: var(--negro); 
+.btn-primary,
+.btn--primary {
+    background: var(--dorado);
+    color: var(--negro);
 }
 
-.btn-primary:hover { 
-    background: var(--dorado-dark); 
-    transform: translateY(-3px); 
-    box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3); 
+.btn-primary:hover,
+.btn--primary:hover {
+    background: var(--dorado-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
 }
 
-.btn-outline { 
-    background: rgba(0,0,0,0.3); 
-    color: var(--blanco); 
-    border: 2px solid rgba(255,255,255,0.2); 
-    backdrop-filter: blur(5px); 
+.btn-outline,
+.btn--outline {
+    background: rgba(0,0,0,0.3);
+    color: var(--blanco);
+    border: 2px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(5px);
 }
 
-.btn-outline:hover { 
-    border-color: var(--dorado); 
-    color: var(--dorado); 
+.btn-outline:hover,
+.btn--outline:hover {
+    border-color: var(--dorado);
+    color: var(--dorado);
 }
 
-.btn-outline.btn-danger { 
-    color: var(--danger); 
-    border-color: var(--danger); 
+.btn-outline.btn-danger,
+.btn-outline.btn--danger {
+    color: var(--danger);
+    border-color: var(--danger);
 }
 
-.btn-outline.btn-danger:hover { 
-    background: var(--danger); 
-    color: #fff; 
-    border-color: var(--danger); 
+.btn-outline.btn-danger:hover,
+.btn-outline.btn--danger:hover {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
 }
 
-.btn-sm { padding: 8px 18px; font-size: 0.75rem; border-radius: 8px; }
-.btn-warning { border-color: var(--warning); color: var(--warning); }
-.btn-full { width: 100%; justify-content: center; }
+.btn-sm,
+.btn--sm { padding: 8px 18px; font-size: 0.75rem; border-radius: 8px; }
+.btn-warning,
+.btn--warning { border-color: var(--warning); color: var(--warning); }
+.btn-full,
+.btn--full { width: 100%; justify-content: center; }
 
 /* --- BOTONES PREMIUM --- */
-.btn-premium {
+.btn-premium,
+.btn--premium {
     background: linear-gradient(135deg, var(--dorado) 0%, var(--dorado-dark) 100%);
     color: var(--negro);
     border: none;
     padding: 14px 28px;
-    border-radius: 50px; 
+    border-radius: 50px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -71,32 +83,39 @@
     box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
 }
 
-.btn-premium:hover {
+.btn-premium:hover,
+.btn--premium:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(197, 160, 89, 0.4);
     filter: brightness(1.1);
 }
 
-.btn-premium:active {
+.btn-premium:active,
+.btn--premium:active {
     transform: translateY(0);
 }
 
-.btn-premium.sm {
+.btn-premium.sm,
+.btn--premium.sm,
+.btn--premium--sm {
     padding: 8px 18px;
     font-size: 0.7rem;
-    border-radius: 30px; 
+    border-radius: 30px;
 }
 
-.btn-premium i {
+.btn-premium i,
+.btn--premium i {
     font-size: 0.9rem;
 }
 
-.btn-premium.sm i {
+.btn-premium.sm i,
+.btn--premium.sm i {
     font-size: 0.75rem;
 }
 
-.btn-icon-premium {
-    width: 40px; height: 40px; border-radius: 50%; 
+.btn-icon-premium,
+.btn--icon {
+    width: 40px; height: 40px; border-radius: 50%;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
     color: var(--dorado);
@@ -104,14 +123,16 @@
     display: flex; align-items: center; justify-content: center;
 }
 
-.btn-icon-premium:hover {
+.btn-icon-premium:hover,
+.btn--icon:hover {
     background: var(--dorado);
     color: var(--negro);
     transform: scale(1.1);
 }
 
 /* --- BOTONES DE ACCIÓN MINI (TABLAS Y MONITOREO) --- */
-.btn-action-mini {
+.btn-action-mini,
+.btn--mini {
     width: 32px;
     height: 32px;
     border-radius: 8px;
@@ -126,7 +147,8 @@
     font-size: 0.85rem;
 }
 
-.btn-action-mini:hover {
+.btn-action-mini:hover,
+.btn--mini:hover {
     background: rgba(197, 160, 89, 0.15);
     border-color: var(--dorado);
     color: var(--dorado);
@@ -134,26 +156,34 @@
     box-shadow: 0 4px 12px rgba(197, 160, 89, 0.2);
 }
 
-.btn-action-mini.success {
+.btn-action-mini.success,
+.btn--mini.success,
+.btn--mini--success {
     background: rgba(16, 185, 129, 0.1);
     color: #10b981;
     border-color: rgba(16, 185, 129, 0.25);
 }
 
-.btn-action-mini.success:hover {
+.btn-action-mini.success:hover,
+.btn--mini.success:hover,
+.btn--mini--success:hover {
     background: #10b981;
     color: #000;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     transform: translateY(-2px);
 }
 
-.btn-action-mini.danger {
+.btn-action-mini.danger,
+.btn--mini.danger,
+.btn--mini--danger {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.25);
 }
 
-.btn-action-mini.danger:hover {
+.btn-action-mini.danger:hover,
+.btn--mini.danger:hover,
+.btn--mini--danger:hover {
     background: #ef4444;
     color: #fff;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);

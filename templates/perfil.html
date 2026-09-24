@@ -96,17 +96,21 @@
 
     <!-- BARRA DE NAVEGACION INFERIOR -->
     <nav class="user-footer-nav">
-        <button class="uf-btn uf-btn-reserva" onclick="showSection('inicio')">
-            <i class="fas fa-plus-circle"></i>
-            <span>NUEVA RESERVA</span>
+        <button class="uf-btn" onclick="showSection('inicio', document.querySelector('.nav-item[onclick*=\'inicio\']'))">
+            <i class="fas fa-house-user"></i>
+            <span>INICIO</span>
         </button>
-        <button class="uf-btn uf-btn-mapa" onclick="openFullMap()">
-            <i class="fas fa-map"></i>
-            <span>MOSTRAR MAPA</span>
-        </button>
-        <button class="uf-btn uf-btn-reservas" onclick="showSection('reservas')">
+        <button class="uf-btn" onclick="showSection('reservas', document.querySelector('.nav-item[onclick*=\'reservas\']'))">
             <i class="fas fa-calendar-check"></i>
-            <span>MIS RESERVAS</span>
+            <span>RESERVAS</span>
+        </button>
+        <button class="uf-btn uf-btn-reserva" onclick="openCurrentPass()">
+            <i class="fas fa-qrcode"></i>
+            <span>PASE QR</span>
+        </button>
+        <button class="uf-btn" onclick="showSection('notificaciones', document.querySelector('.notification-nav-item')); loadNotifications()">
+            <i class="fas fa-bell"></i>
+            <span>NOTIF.</span>
         </button>
     </nav>
 </main>

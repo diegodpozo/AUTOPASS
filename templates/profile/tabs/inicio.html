@@ -7,12 +7,34 @@
 
     {% include "profile/modals/onboarding_modal.html" %}
 
+    <!-- P2.5 UX/UI: PASOS DE LA RESERVA -->
+    <div class="reservation-stepper" id="reservation-stepper" aria-label="Progreso de la reserva" role="group">
+        <div class="stepper-step" data-step="1">
+            <span class="stepper-dot"><i class="fas fa-car"></i></span>
+            <span class="stepper-label">Vehículo</span>
+        </div>
+        <span class="stepper-line" aria-hidden="true"></span>
+        <div class="stepper-step" data-step="2">
+            <span class="stepper-dot"><i class="fas fa-location-dot"></i></span>
+            <span class="stepper-label">Sucursal</span>
+        </div>
+        <span class="stepper-line" aria-hidden="true"></span>
+        <div class="stepper-step" data-step="3">
+            <span class="stepper-dot"><i class="fas fa-clock"></i></span>
+            <span class="stepper-label">Horario</span>
+        </div>
+        <span class="stepper-line" aria-hidden="true"></span>
+        <div class="stepper-step" data-step="4">
+            <span class="stepper-dot"><i class="fas fa-circle-check"></i></span>
+            <span class="stepper-label">Confirmación</span>
+        </div>
+    </div>
+
     <div class="portal-home-grid">
         <!-- LADO IZQUIERDO: ACCIONES RÁPIDAS Y RESERVA -->
         <div class="grid-col booking-side">
-            <div class="section-title-premium" style="text-align: center; margin-bottom: 15px; width: 100%;">
-                <h3 style="font-family: 'Montserrat'; font-weight: 900; font-size: 1.08rem; letter-spacing: 2px; color: #fff; margin-bottom: 5px;"><i class="fas fa-pen" style="color: var(--dorado); margin-right: 10px;"></i>HACÉ TU RESERVA MANUALMENTE</h3>
-                <div style="width: 54px; height: 2px; background: var(--dorado); margin: 0 auto; opacity: 0.5;"></div>
+            <div class="section-title-premium section-title-premium--center">
+                <h3><i class="fas fa-pen"></i>HACÉ TU RESERVA MANUALMENTE</h3>
             </div>
             <div id="reserva-form-container" class="open" style="display: block; opacity: 1; max-width: 675px; margin: 0 auto;">
                 <div class="modern-reservation-card">
@@ -37,7 +59,7 @@
                             <div id="quick-add-info" style="display: none;">
                                 <h4>¡UPS! NO TENÉS VEHÍCULOS</h4>
                                 <p>Para reservar, primero vinculá una patente a tu cuenta.</p>
-                                <button class="btn btn-primary btn-sm mt-15" onclick="showQuickAddVehicle()">
+                                <button class="btn btn--primary btn--sm mt-15" onclick="showQuickAddVehicle()">
                                     <i class="fas fa-plus-circle"></i> AGREGAR
                                 </button>
                             </div>
@@ -224,9 +246,8 @@
         </div>
 
         <div class="grid-col map-and-stats-side">
-            <div class="section-title-premium" style="text-align: center; margin-bottom: 15px; width: 100%;">
-                <h3 style="font-family: 'Montserrat'; font-weight: 900; font-size: 1.08rem; letter-spacing: 2px; color: #fff; margin-bottom: 5px;"><i class="fas fa-map-location-dot" style="color: var(--dorado); margin-right: 10px;"></i>SELECCIONÁ LA SUCURSAL DESDE EL MAPA</h3>
-                <div style="width: 54px; height: 2px; background: var(--dorado); margin: 0 auto; opacity: 0.5;"></div>
+            <div class="section-title-premium section-title-premium--center">
+                <h3><i class="fas fa-map-location-dot"></i>SELECCIONÁ LA SUCURSAL DESDE EL MAPA</h3>
             </div>
             <div class="card portal-map-card">
                 <div id="portal-map" class="portal-map-container">

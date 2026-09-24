@@ -236,6 +236,22 @@ window.openRechargeModal = () => {
     if (m) { m.style.display = 'block'; document.getElementById('recharge-amount').focus(); }
 };
 
+// P1.4 UX/UI: atajo "PASE QR" del bottom nav. Abre el Pase Digital de la reserva en curso,
+// si no hay ninguna, carga la lista y reintenta; en último caso informa al usuario.
+window.openCurrentPass = async () => {
+    const findId = () => {
+        const el = document.querySelector('#reservation-featured-list [data-reserva-id]') ||
+                   document.querySelector('#reservation-list-active [data-reserva-id]');
+        return el ? parseInt(el.dataset.reservaId, 10) : null;
+    };
+    let id = findId();
+    if (id) { await res.showDigitalPass(id); return; }
+    await res.loadReservations();
+    id = findId();
+    if (id) { await res.showDigitalPass(id); return; }
+    showToast('No tenés una reserva activa. Hacé una reserva para generar tu Pase Digital QR.', 'info');
+};
+
 window.setRechargeAmount = (a) => {
     const i = document.getElementById('recharge-amount'); if (i) i.value = a;
 };

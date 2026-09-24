@@ -31,7 +31,11 @@
 
         <div class="section-subtitle" style="justify-content: center; margin-left: 0;"><i class="fas fa-calendar-list"></i> TUS PRÓXIMAS RESERVAS</div>
         <div id="reservation-list-active" class="reserva-grid-modern">
-            <p class="text-bold">Cargando reservas...</p>
+            <div class="skeleton-grid" aria-hidden="true">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            </div>
         </div>
 
         <div class="section-subtitle" style="justify-content: center; margin-left: 0; margin-top: 50px;">
@@ -55,7 +59,11 @@
                     </div>
                 </div>
                 <div id="reservation-list-history" class="flex-col" style="gap: 0;">
-                    <p class="text-bold" style="padding: 30px;">Cargando historial...</p>
+                    <div aria-hidden="true">
+                        <div class="skeleton skeleton-list-item"></div>
+                        <div class="skeleton skeleton-list-item"></div>
+                        <div class="skeleton skeleton-list-item"></div>
+                    </div>
                 </div>
                 <div id="historial-pagination" class="pagination" style="margin: 0; padding: 20px;">
                     <button class="btn-pagination" onclick="historialPage(-1)" id="historial-prev">
