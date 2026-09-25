@@ -375,7 +375,7 @@
 <div class="ocr-page-container">
     <!-- NAVEGACION SUPERIOR -->
     <div class="ocr-top-nav">
-        <a href="/dashboard" onclick="event.preventDefault(); window.close(); setTimeout(function(){ window.location.href = '/dashboard'; }, 120);" class="btn btn-outline sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        <a href="/dashboard" onclick="event.preventDefault(); window.close(); setTimeout(function(){ window.location.href = '/dashboard'; }, 120);" class="btn btn--outline sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
             <i class="fas fa-arrow-left"></i> VOLVER AL DASHBOARD
         </a>
         <div style="display: flex; align-items: center; gap: 15px;">
@@ -400,7 +400,7 @@
                 <input type="checkbox" id="ocr-autorefresh" checked style="accent-color: var(--dorado); width: 16px; height: 16px;">
                 <span>Auto-refresco (5s)</span>
             </label>
-            <button id="btn-manual-refresh" class="btn btn-primary sm" onclick="actualizarEstadisticasOcr()" style="display: inline-flex; align-items: center; gap: 6px;">
+            <button id="btn-manual-refresh" class="btn btn--primary sm" onclick="actualizarEstadisticasOcr()" style="display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fas fa-sync-alt" id="refresh-icon"></i> ACTUALIZAR
             </button>
         </div>

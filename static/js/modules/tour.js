@@ -94,8 +94,8 @@ function createTourElements() {
         <div id="tour-title" class="tour-tooltip-title-premium"></div>
         <div id="tour-text" class="tour-tooltip-text-premium"></div>
         <div id="tour-buttons" class="tour-tooltip-buttons-premium">
-            <button id="tour-prev" class="btn btn-outline">Anterior</button>
-            <button id="tour-next" class="btn btn-primary">Siguiente</button>
+            <button id="tour-prev" class="btn btn--outline">Anterior</button>
+            <button id="tour-next" class="btn btn--primary">Siguiente</button>
             <button id="tour-end" class="btn btn-plain">Omitir</button>
         </div>
     `;

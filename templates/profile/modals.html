@@ -18,7 +18,7 @@
                 <textarea id="modal-ticket-reply-input" class="form-control-custom" rows="2" placeholder="Escribí tu respuesta..."></textarea>
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <label for="modal-ticket-attach" class="btn btn-outline" style="margin:0;padding:8px 12px;cursor:pointer;">
+                <label for="modal-ticket-attach" class="btn btn--outline" style="margin:0;padding:8px 12px;cursor:pointer;">
                     <i class="fas fa-paperclip"></i> Adjuntar archivo
                 </label>
                 <input type="file" id="modal-ticket-attach" style="display:none;" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" onchange="handleTicketAttach(this)">
@@ -28,8 +28,8 @@
                 Permitidos: imágenes (PNG, JPG, GIF, WEBP) o PDF · Tamaño máximo: <b>1 MB</b>
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-outline" onclick="closeSupportTicketModal()">Cerrar</button>
-                <button id="modal-ticket-reply-btn" class="btn btn-primary" onclick="submitTicketReply()">
+                <button class="btn btn--outline" onclick="closeSupportTicketModal()">Cerrar</button>
+                <button id="modal-ticket-reply-btn" class="btn btn--primary" onclick="submitTicketReply()">
                     <i class="fas fa-reply"></i> ENVIAR RESPUESTA
                 </button>
             </div>
@@ -146,11 +146,11 @@
                 <div class="input-with-icon"><i class="fas fa-dollar-sign"></i><input type="number" id="recharge-amount" placeholder="0.00" min="100" step="100" required autofocus></div>
             </div>
             <div class="quick-amounts" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 25px;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="setRechargeAmount(1000)">$1000</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="setRechargeAmount(5000)">$5000</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="setRechargeAmount(10000)">$10000</button>
+                <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(1000)">$1000</button>
+                <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(5000)">$5000</button>
+                <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(10000)">$10000</button>
             </div>
-            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-bolt"></i> ACREDITAR SALDO</button>
+            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-bolt"></i> ACREDITAR SALDO</button>
         </form>
         <div class="modal-text" style="font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 25px;"><i class="fas fa-shield-halved"></i> Tu saldo se acredita al instante. Próximamente vas a poder cargarlo con Mercado Pago.</div>
     </div>

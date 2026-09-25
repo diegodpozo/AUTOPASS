@@ -61,7 +61,7 @@ export async function loadProfile() {
         if (headerRight && !document.getElementById('btn-go-admin')) {
             const btn = document.createElement('button');
             btn.id = 'btn-go-admin';
-            btn.className = 'btn-premium';
+            btn.className = 'btn--premium';
             btn.style.marginRight = '15px';
             btn.innerHTML = `<i class="fas fa-gauge-high"></i> ${rol === 'admin' ? 'PANEL ADMIN' : 'PANEL CONTROL'}`;
             btn.onclick = () => window.location.href = '/dashboard';

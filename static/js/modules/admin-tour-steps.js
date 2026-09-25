@@ -207,7 +207,7 @@ export const adminFinanceTourSteps = [
         beforeShow: () => { if (window.switchTab) window.switchTab('finance'); }
     },
     {
-        selector: 'button[onclick*="exportFinanceData"], #tab-finance .btn-outline',
+        selector: 'button[onclick*="exportFinanceData"], #tab-finance .btn--outline',
         title: 'Exportación de Reportes a CSV',
         text: 'Descargá la plantilla de datos auditados en formato CSV para conciliar con sistemas contables o exportar a Microsoft Excel.',
         align: 'left',

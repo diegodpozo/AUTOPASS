@@ -28,7 +28,7 @@
                 </table>
             </div>
             <div class="flex-row justify-center mt-20">
-                <button class="btn btn-outline" onclick="closeModal('modal-branch-floors')">CERRAR</button>
+                <button class="btn btn--outline" onclick="closeModal('modal-branch-floors')">CERRAR</button>
             </div>
         </div>
     </div>
@@ -79,7 +79,7 @@
                                     <i class="fas fa-map-location-dot"></i>
                                     <input type="text" id="branch-direccion" placeholder="Ej: Av. del Libertador 1200, CABA" required>
                                 </div>
-                                <button type="button" class="btn btn-secondary sm" onclick="searchAddress()" style="min-width: 80px; padding: 0 10px;">
+                                <button type="button" class="btn btn--secondary sm" onclick="searchAddress()" style="min-width: 80px; padding: 0 10px;">
                                     <i class="fas fa-search-location"></i>
                                 </button>
                             </div>
@@ -107,7 +107,7 @@
                                     <button type="button" id="btn-clear-logo" onclick="clearBranchLogo()" title="Eliminar logo" style="display: none; position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: #ef4444; color: #fff; border: 2px solid #000; cursor: pointer; font-size: 0.65rem; line-height: 1; padding: 0; z-index: 5;"><i class="fas fa-xmark"></i></button>
                                 </div>
                                 <div class="flex-col flex-1">
-                                    <label for="branch-logo-file" class="btn btn-outline sm" style="width: 100%; cursor: pointer; font-size: 0.7rem;">
+                                    <label for="branch-logo-file" class="btn btn--outline sm" style="width: 100%; cursor: pointer; font-size: 0.7rem;">
                                         <i class="fas fa-upload"></i> SUBIR IMAGEN
                                     </label>
                                     <input type="file" id="branch-logo-file" accept="image/*" style="display: none;" onchange="previewBranchLogo(this)">
@@ -142,8 +142,8 @@
                 </div>
 
                 <div class="flex-row justify-center mt-25 gap-20">
-                    <button type="button" class="btn btn-outline" style="min-width: 120px;" onclick="closeModal('modal-add-branch')">CANCELAR</button>
-                    <button type="submit" class="btn btn-primary" style="min-width: 160px;">
+                    <button type="button" class="btn btn--outline" style="min-width: 120px;" onclick="closeModal('modal-add-branch')">CANCELAR</button>
+                    <button type="submit" class="btn btn--primary" style="min-width: 160px;">
                         <i class="fas fa-save"></i> GUARDAR SUCURSAL
                     </button>
                 </div>
