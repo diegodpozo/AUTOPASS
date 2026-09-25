@@ -98,7 +98,7 @@ function arrangeCctvGrid() {
         grid.style.gridTemplateRows = '1fr';
         grid.innerHTML = `
             <div class="no-cameras-screen">
-                <i class="fas fa-video-slash" style="font-size: 3rem; color: #ef4444;"></i>
+                <i class="fas fa-video-slash" style="font-size: 3rem; color: #f43f5e;"></i>
                 <div class="no-cameras-title">NO SE ENCONTRARON CÁMARAS CONFIGURADAS</div>
                 <div style="font-size: 0.8rem; color: #888;">Configura tus cámaras IP desde Ajustes > Monitoreo</div>
             </div>

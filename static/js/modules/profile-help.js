@@ -209,8 +209,8 @@ function renderTicketMessages(messages) {
         // - los mensajes del SOPORTE/ADMIN van a la IZQUIERDA
         const isMine = !m.is_admin;
         const align = isMine ? 'flex-end' : 'flex-start';
-        const bgColor = isMine ? 'rgba(223, 186, 107, 0.10)' : 'rgba(76, 175, 80, 0.12)';
-        const borderColor = isMine ? 'var(--dorado)' : '#4caf50';
+        const bgColor = isMine ? 'rgba(223, 186, 107, 0.10)' : 'rgba(16, 185, 129, 0.12)';
+        const borderColor = isMine ? 'var(--dorado)' : '#10b981';
         const borderSide = isMine ? 'border-left' : 'border-right';
         const label = isMine ? 'Vos' : 'Soporte';
         const time = m.created_at ? formatDayTime(new Date(m.created_at)) : '';

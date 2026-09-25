@@ -100,7 +100,7 @@
 .leyenda-carrusel {
     position: relative;
     z-index: 2;
-    font-family: 'Montserrat';
+    
     font-size: 2.2rem;
     font-weight: 800;
     color: var(--blanco);
@@ -139,7 +139,7 @@
 }
 
 .hero h1 {
-    font-family: 'Montserrat'; 
+    
     font-size: 4rem; 
     margin: 0;
     letter-spacing: 10px; 
@@ -170,7 +170,7 @@
 }
 
 .frase-parpadeante {
-    font-family: 'Montserrat';
+    
     font-size: 1.5rem;
     font-weight: 800;
     color: var(--dorado);

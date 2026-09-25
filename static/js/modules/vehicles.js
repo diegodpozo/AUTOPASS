@@ -33,8 +33,8 @@ export async function loadVehicles() {
                     <i class="fas fa-car-rear" style="font-size: 2.5rem; color: #444;"></i>
                     <i class="fas fa-truck-pickup" style="font-size: 1.5rem; color: #444;"></i>
                 </div>
-                <h4 style="color: #fff; font-family: 'Montserrat'; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px;">¡UPS! NO TENÉS VEHÍCULOS</h4>
-                <p style="color: #666; font-size: 0.95rem; max-width: 300px; line-height: 1.5;">Agregá tu primer vehículo para empezar a operar en la red AutoPass.</p>
+                <h4 style="color: #fff; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px;">¡UPS! NO TENÉS VEHÍCULOS</h4>
+                <p style="color: #888; font-size: 0.95rem; max-width: 300px; line-height: 1.5;">Agregá tu primer vehículo para empezar a operar en la red AutoPass.</p>
             </div>`;
         return vehicles;
     }

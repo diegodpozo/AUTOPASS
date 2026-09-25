@@ -168,7 +168,7 @@
     font-weight: 800;
     letter-spacing: 2px;
     margin-top: 5px;
-    color: #666;
+    color: #888;
 }
 
 .level-main-content {
@@ -368,23 +368,23 @@
 
 #cam-actions-entrada .btn.danger,
 #cam-actions-salida .btn.danger {
-    background: rgba(239, 68, 68, 0.1) !important;
-    color: #ef4444 !important;
-    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    background: rgba(244, 63, 94, 0.1) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(244, 63, 94, 0.2) !important;
 }
 
 #cam-actions-entrada .btn.danger:hover,
 #cam-actions-salida .btn.danger:hover {
-    background: #ef4444 !important;
+    background: var(--danger) !important;
     color: #fff !important;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3) !important;
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.3) !important;
     transform: scale(1.05);
 }
 
 /* DANGER ZONE REFINEMENT */
 .danger-zone-card {
-    border: 1px solid rgba(239, 68, 68, 0.2) !important;
-    background: linear-gradient(180deg, rgba(239, 68, 68, 0.02) 0%, transparent 100%);
+    border: 1px solid rgba(244, 63, 94, 0.2) !important;
+    background: linear-gradient(180deg, rgba(244, 63, 94, 0.02) 0%, transparent 100%);
 }
 
 .danger-zone-text {

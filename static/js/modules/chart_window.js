@@ -1,4 +1,5 @@
 import { formatTime, formatDateTime, formatDayTime } from './utils.js';
+import { THEME } from './theme.js';
 
 const HOUR_MS = 3600000;
 
@@ -198,10 +199,10 @@ export class WindowedChart {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0a0a0a',
-                        titleColor: '#dfba6b',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(223, 186, 107, 0.3)',
+                        backgroundColor: THEME.bgSoft,
+                        titleColor: THEME.gold,
+                        bodyColor: THEME.textPrimary,
+                        borderColor: THEME.goldBorder,
                         borderWidth: 1,
                         displayColors: true,
                         boxWidth: 8,
@@ -224,9 +225,9 @@ export class WindowedChart {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        title: { display: false, text: '', color: '#666', font: { size: 10 } },
-                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-                        ticks: { color: '#666', font: { size: 10 } },
+                        title: { display: false, text: '', color: THEME.textMuted, font: { size: 10 } },
+                        grid: { color: THEME.grid, drawBorder: false },
+                        ticks: { color: THEME.textMuted, font: { size: 10 } },
                         ...this.yExtra
                     },
                     x: {
@@ -235,7 +236,7 @@ export class WindowedChart {
                         max: xMax + padMs,
                         grid: { display: false },
                         ticks: {
-                            color: '#666',
+                            color: THEME.textMuted,
                             font: { size: 9 },
                             maxRotation: 0,
                             autoSkip: true,

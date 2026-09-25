@@ -1,0 +1,21 @@
+export const THEME = {
+    gold: '#dfba6b',
+    goldDark: '#b89047',
+    goldHover: '#edd193',
+    goldGlow: 'rgba(223, 186, 107, 0.15)',
+    goldBorder: 'rgba(223, 186, 107, 0.25)',
+    bgCard: '#11141b',
+    bgInput: '#1a1e26',
+    bgSoft: '#0a0a0a',
+    textPrimary: '#f5f6f8',
+    textSecondary: '#9ca3af',
+    textMuted: '#888',
+    success: '#10b981',
+    danger: '#f43f5e',
+    warning: '#f59e0b',
+    info: '#3b82f6',
+    accent: '#38bdf8',
+    monoFont: "'JetBrains Mono', monospace",
+    grid: 'rgba(255,255,255,0.05)',
+    pointDark: '#000'
+};

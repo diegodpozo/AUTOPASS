@@ -1,6 +1,6 @@
 # Plan de Auditorías — AUTOPASS
 
-> Documento de planificación. Estado: **en ejecución** — **A1–A4 HECHO** (informes en `Info proyecto/`), pendientes **A5–A9**. Además se ejecutó `Info proyecto/AUDITORIA_MODULARIZACION.md` (resuelta, 10/10), fuera del plan.
+> Documento de planificación. Estado: **en ejecución** — **A1–A4 HECHO** (informes en `Info proyecto/`), pendientes **A5–A9**. Además se ejecutaron `AUDITORIA_MODULARIZACION.md` (resuelta, 10/10), `AUDITORIA_COLORES_FUENTES.md` y `AUDITORIA_TAMANOS_PROPORCIONES.md`. Propuesta de extensión para la capa CSS detallada en `Info proyecto/PROPUESTA_AUDITORIAS_CSS.md`.
 
 ## Resumen
 

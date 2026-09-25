@@ -43,9 +43,9 @@
 }
 
 .balance-badge {
-    background: rgba(46, 204, 113, 0.1);
-    border: 1px solid rgba(46, 204, 113, 0.2);
-    color: #2ecc71;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: var(--success);
 }
 
 .points-badge {
@@ -127,7 +127,7 @@
 }
 
 .greeting-premium h2 {
-    font-family: 'Montserrat';
+    
     font-weight: 800;
     font-size: 1.44rem;
     color: #fff;
@@ -194,7 +194,7 @@
 }
 
 #user-initials {
-    font-family: 'Montserrat';
+    
     font-weight: 900;
     font-size: 2.5rem;
     color: #000;
@@ -232,7 +232,7 @@
 }
 
 .account-stat-item .stat-val {
-    font-family: 'Montserrat';
+    
     font-weight: 900;
     font-size: 1.4rem;
     color: var(--dorado);
@@ -364,7 +364,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 12px 20px;
     font-size: 0.65rem;
-    color: #666;
+    color: #888;
     margin: 10px 0;
     padding: 15px;
     background: rgba(255,255,255,0.02);
@@ -397,7 +397,7 @@
     transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.strength-weak { background: #ef4444; width: 33.33%; }
+.strength-weak { background: var(--danger); width: 33.33%; }
 .strength-medium { background: #f59e0b; width: 66.66%; }
 .strength-strong { background: #10b981; width: 100%; }
 
@@ -424,7 +424,7 @@
 /* TITULOS DE TARJETAS */
 .card-title {
     color: var(--dorado);
-    font-family: 'Montserrat';
+    
     font-weight: 800;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -496,7 +496,7 @@
 
 .welcome-msg h1 {
     color: var(--dorado);
-    font-family: 'Montserrat';
+    
     font-weight: 900;
     letter-spacing: 2px;
     font-size: 1.4rem;
@@ -600,7 +600,7 @@
 }
 
 .stay-item-premium .stay-plate {
-    font-family: 'Consolas', 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-weight: 800;
     letter-spacing: 1.5px;
     color: #fff;
@@ -742,7 +742,7 @@
 }
 
 .section-title-premium--center h3 {
-    font-family: 'Montserrat', sans-serif;
+    
     font-weight: 900;
     font-size: 1.08rem;
     letter-spacing: 2px;
@@ -856,7 +856,7 @@
 .info-item-content label {
     display: block;
     font-size: 0.65rem;
-    color: #666;
+    color: #888;
     text-transform: uppercase;
     font-weight: 800;
     margin-bottom: 4px;
@@ -946,7 +946,7 @@
 }
 
 .stat-card .value {
-    font-family: 'Montserrat';
+    
     font-size: 1.5rem;
     font-weight: 900;
     color: var(--dorado);

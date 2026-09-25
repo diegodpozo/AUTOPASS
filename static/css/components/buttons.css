@@ -161,17 +161,17 @@
 .btn-action-mini.danger,
 .btn--mini.danger,
 .btn--mini--danger {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--danger);
+    border-color: rgba(244, 63, 94, 0.25);
 }
 
 .btn-action-mini.danger:hover,
 .btn--mini.danger:hover,
 .btn--mini--danger:hover {
-    background: #ef4444;
+    background: var(--danger);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
     transform: translateY(-2px);
 }
 

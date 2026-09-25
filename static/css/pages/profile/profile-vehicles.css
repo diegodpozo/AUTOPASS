@@ -64,7 +64,7 @@
 }
 
 .select-vehicle-type option:disabled {
-    color: #666 !important;
+    color: #888 !important;
 }
 
 .register-trigger-card.active {

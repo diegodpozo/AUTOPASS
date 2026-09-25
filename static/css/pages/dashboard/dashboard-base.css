@@ -41,7 +41,7 @@ body:not(.role-local_admin) .local-admin-only {
         border: 1px solid rgba(223, 186, 107, 0.2);
         border-radius: 14px;
         color: var(--dorado);
-        font-family: 'Montserrat', sans-serif;
+        
         font-weight: 800;
         font-size: 0.75rem;
         letter-spacing: 1px;

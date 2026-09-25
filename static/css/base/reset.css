@@ -8,3 +8,8 @@ body {
     overflow-x: hidden;
     font-size: var(--text-sm);
 }
+
+/* FORM CONTROLS HEREDAN LA FUENTE RAIZ (SIN REDEFINIR EN CADA COMPONENTE) */
+button, input, select, textarea, option {
+    font-family: inherit;
+}

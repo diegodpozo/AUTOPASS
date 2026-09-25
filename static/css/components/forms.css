@@ -14,7 +14,7 @@ input, select, textarea {
 }
 input:focus, select:focus { border-color: var(--dorado); background: #050505; }
 
-.error-msg { background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); margin-bottom: 20px; font-size: 0.85rem; display: none; text-align: center; }
+.error-msg { background: rgba(244, 63, 94, 0.1); color: var(--danger); padding: 12px; border-radius: 8px; border: 1px solid rgba(244, 63, 94, 0.2); margin-bottom: 20px; font-size: 0.85rem; display: none; text-align: center; }
 
 /* --- FORMULARIOS PREMIUM (DASHBOARD) --- */
 .form-group-premium {
@@ -180,7 +180,7 @@ select option {
 }
 
 .flatpickr-time-separator {
-    color: #666 !important;
+    color: #888 !important;
     font-weight: 700;
     font-size: 1.1rem;
 }

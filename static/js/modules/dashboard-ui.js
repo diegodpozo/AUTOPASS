@@ -3,6 +3,7 @@ import { normalizeSystemName, formatTimeSeconds } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService } from './dashboard-cameras.js';
 import { toggleMobileNav, closeMobileNav } from './ui.js';
+import { THEME } from './theme.js';
 
 export { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService };
 
@@ -29,7 +30,7 @@ export async function checkSystemHealth() {
         const data = res.data;
         if (mainDot) {
             const isOnline = data.database === 'ONLINE' && data.api === 'ONLINE';
-            mainDot.style.background = isOnline ? '#10b981' : '#ef4444';
+            mainDot.style.background = isOnline ? THEME.success : THEME.danger;
             if (isOnline) mainDot.classList.add('online');
             else mainDot.classList.remove('online');
         }
@@ -57,14 +58,14 @@ function updateHealthNode(id, isOnline) {
     const label = node.querySelector('.health-label');
     
     if (dot) {
-        dot.style.background = isOnline ? '#10b981' : '#ef4444';
+        dot.style.background = isOnline ? THEME.success : THEME.danger;
         if (isOnline) dot.classList.add('online');
         else dot.classList.remove('online');
     }
     
     if (label) {
         label.innerText = isOnline ? 'ONLINE' : 'OFFLINE';
-        label.style.color = isOnline ? '#10b981' : '#ef4444';
+        label.style.color = isOnline ? THEME.success : THEME.danger;
     }
 }
 

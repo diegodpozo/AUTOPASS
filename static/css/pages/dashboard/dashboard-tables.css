@@ -4,23 +4,23 @@
 
 /* REEMBOLSOS & FILAS ESPECIALES */
 .row-refund {
-    background: rgba(239, 68, 68, 0.03) !important;
+    background: rgba(244, 63, 94, 0.03) !important;
 }
 
 .row-refund:hover {
-    background: rgba(239, 68, 68, 0.06) !important;
+    background: rgba(244, 63, 94, 0.06) !important;
 }
 
-.text-danger { color: #ef4444 !important; }
+.text-danger { color: var(--danger) !important; }
 
 .badge-danger-light {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--danger);
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 0.65rem;
     font-weight: 800;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(244, 63, 94, 0.2);
     display: inline-block;
 }
 
@@ -200,7 +200,7 @@
 
 .info-item label {
     font-size: 0.6rem;
-    color: #666;
+    color: #888;
     display: block;
     text-transform: uppercase;
 }
@@ -234,7 +234,7 @@
     background: rgba(255,255,255,0.03);
     border: 1px solid transparent;
     border-radius: 8px;
-    color: #666;
+    color: #888;
     font-size: 1.1rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -267,15 +267,15 @@ tr:hover .btn-delete-promo {
 }
 
 .btn-icon-premium.sm.danger {
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+    border-color: rgba(244, 63, 94, 0.2);
 }
 
 .btn-icon-premium.sm.danger:hover {
-    background: #ef4444;
+    background: var(--danger);
     color: #fff;
-    border-color: #ef4444;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    border-color: var(--danger);
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
 }
 
 /* LOGOS DE SUCURSAL EN TABLA */
@@ -448,8 +448,8 @@ tr:hover .btn-delete-promo {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: rgba(244, 63, 94, 0.08);
+    border: 1px solid rgba(244, 63, 94, 0.25);
     border-radius: 10px;
     color: var(--danger);
     font-size: 0.78rem;

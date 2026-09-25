@@ -65,7 +65,7 @@
 .text-dorado { color: var(--dorado); }
 .text-danger { color: var(--danger); }
 .text-success { color: var(--secondary); }
-.text-muted { color: #666; }
+.text-muted { color: #888; }
 
 .uppercase { text-transform: uppercase; }
 

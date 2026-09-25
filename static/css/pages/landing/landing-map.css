@@ -10,7 +10,7 @@
 }
 
 .map-section h2 { 
-    font-family: 'Montserrat'; 
+    
     font-size: 2.5rem; 
     margin-bottom: 20px; 
     color: var(--dorado); 
@@ -259,7 +259,7 @@
 }
 
 .branch-title-text {
-    font-family: 'Montserrat';
+    
     font-size: 1.3rem;
     font-weight: 800;
     color: #fff;
@@ -273,7 +273,7 @@
     border-radius: 50%;
 }
 .branch-status-dot.active { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-.branch-status-dot.inactive { background: #ef4444; }
+.branch-status-dot.inactive { background: var(--danger); }
 
 .branch-info-content {
     display: flex;
@@ -425,8 +425,8 @@
 }
 
 .search-clear-btn:hover {
-    color: #ef4444 !important;
-    background: rgba(239, 68, 68, 0.2) !important;
+    color: var(--danger) !important;
+    background: rgba(244, 63, 94, 0.2) !important;
 }
 
 /* DESPLEGABLE DE RESULTADOS OBSIDIANA ULTRA-CONTRASTE (SÓLIDO OSCURO CON BORDE DORADO) */

@@ -72,7 +72,7 @@ export function renderCameraSettingsTable(cameras) {
                     <button class="btn-tab-sub btn-edit-cam" id="settings-cam-btn-edit-${cam.id}" style="padding: 6px 14px; font-size: 0.7rem;">
                         <i class="fas fa-pen-to-square mr-5"></i> EDITAR
                     </button>
-                    <button class="btn-tab-sub danger" onclick="deleteCamera(${cam.id})" style="padding: 6px 14px; font-size: 0.7rem; border-color: rgba(239, 68, 68, 0.4); color: #ef4444;">
+                    <button class="btn-tab-sub danger" onclick="deleteCamera(${cam.id})" style="padding: 6px 14px; font-size: 0.7rem; border-color: rgba(244, 63, 94, 0.4); color: #f43f5e;">
                         <i class="fas fa-trash-alt mr-5"></i> ELIMINAR
                     </button>
                 </div>

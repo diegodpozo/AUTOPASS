@@ -5,6 +5,7 @@
 import api from './api.js';
 import { formatTimeSeconds, formatDateTime } from './utils.js';
 import { WindowedChart } from './chart_window.js';
+import { THEME } from './theme.js';
 
 let todosLosLogs = [];
 let intervaloAutoRefresh = null;
@@ -27,22 +28,22 @@ function buildOCRDatasets(pts) {
         {
             label: 'Tiempo OCR',
             data: pts,
-            borderColor: '#dfba6b',
+            borderColor: THEME.gold,
             backgroundColor: 'rgba(223, 186, 107, 0.12)',
             borderWidth: 2.5,
             fill: true,
             tension: 0.35,
             pointRadius: 3,
             pointHoverRadius: 6,
-            pointBackgroundColor: '#dfba6b',
-            pointBorderColor: '#000',
+            pointBackgroundColor: THEME.gold,
+            pointBorderColor: THEME.pointDark,
             pointBorderWidth: 1.5,
             hitRadius: 30
         },
         {
             label: 'Promedio',
             data: flat(avg !== null ? avg : 0),
-            borderColor: '#38bdf8',
+            borderColor: THEME.accent,
             borderWidth: 1.5,
             borderDash: [6, 4],
             pointRadius: 0,
@@ -53,7 +54,7 @@ function buildOCRDatasets(pts) {
         {
             label: 'Máximo',
             data: flat(max !== null ? max : 0),
-            borderColor: '#ef4444',
+            borderColor: THEME.danger,
             borderWidth: 1.5,
             borderDash: [2, 3],
             pointRadius: 0,
@@ -64,7 +65,7 @@ function buildOCRDatasets(pts) {
         {
             label: 'Mínimo',
             data: flat(min !== null ? min : 0),
-            borderColor: '#10b981',
+            borderColor: THEME.success,
             borderWidth: 1.5,
             borderDash: [2, 3],
             pointRadius: 0,
@@ -76,8 +77,8 @@ function buildOCRDatasets(pts) {
 }
 
 const yExtraOcr = {
-    title: { display: true, text: 'Segundos', color: '#666', font: { size: 10 } },
-    ticks: { color: '#666', font: { size: 10 }, callback: (v) => v + 's' }
+    title: { display: true, text: 'Segundos', color: THEME.textMuted, font: { size: 10 } },
+    ticks: { color: THEME.textMuted, font: { size: 10 }, callback: (v) => v + 's' }
 };
 
 const chartOcr = new WindowedChart({
@@ -164,7 +165,7 @@ export async function actualizarEstadisticasOcr() {
         } else {
             document.getElementById('ocr-table-body').innerHTML = `
                 <tr>
-                    <td colspan="6" style="text-align: center; color: #ef4444; padding: 30px;">
+                    <td colspan="6" style="text-align: center; color: #f43f5e; padding: 30px;">
                         <i class="fas fa-exclamation-circle mr-8"></i> No se pudieron obtener las estadísticas OCR. Verificá tu sesión de administrador.
                     </td>
                 </tr>

@@ -1,6 +1,7 @@
 import api from './api.js';
 import * as utils from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
+import { THEME } from './theme.js';
 
 /**
  * Módulo de Analítica Financiera y Gráficos del Dashboard
@@ -234,14 +235,14 @@ export function renderRevenueChart(data, period) {
                 datasets: [{
                     label: 'Ingresos',
                     data: values.length > 0 ? values : [0],
-                    borderColor: '#dfba6b',
+                    borderColor: THEME.gold,
                     backgroundColor: 'rgba(223, 186, 107, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointRadius: 4,
-                    pointBackgroundColor: '#dfba6b',
-                    pointBorderColor: '#000',
+                    pointBackgroundColor: THEME.gold,
+                    pointBorderColor: THEME.pointDark,
                     pointBorderWidth: 2
                 }]
             },
@@ -251,10 +252,10 @@ export function renderRevenueChart(data, period) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0a0a0a',
-                        titleColor: '#dfba6b',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(223, 186, 107, 0.3)',
+                        backgroundColor: THEME.bgSoft,
+                        titleColor: THEME.gold,
+                        bodyColor: THEME.textPrimary,
+                        borderColor: THEME.goldBorder,
                         borderWidth: 1,
                         displayColors: false,
                         callbacks: {
@@ -268,16 +269,16 @@ export function renderRevenueChart(data, period) {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                        grid: { color: THEME.grid, drawBorder: false },
                         ticks: { 
-                            color: '#666',
+                            color: THEME.textMuted,
                             font: { size: 10 },
                             callback: (value) => '$' + utils.formatNum(value)
                         }
                     },
                     x: {
                         grid: { display: false },
-                        ticks: { color: '#666', font: { size: 10 } }
+                        ticks: { color: THEME.textMuted, font: { size: 10 } }
                     }
                 }
             }

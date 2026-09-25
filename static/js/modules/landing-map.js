@@ -14,6 +14,7 @@ import { loadTheaters, loadStadiums } from './landing-map-pois.js';
 import { findNearestBranch } from './landing-map-geo.js';
 import { filterMapByLocality } from './landing-map-locality.js';
 import { lmState } from './landing-map-state.js';
+import { THEME } from './theme.js';
 
 export { getDirectionsTo };
 export { findNearestBranch };
@@ -59,11 +60,11 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
         
         div.onmouseover = () => { 
             const btn = div.querySelector('button');
-            if (btn) { btn.style.background = '#dfba6b'; btn.style.color = '#000'; }
+            if (btn) { btn.style.background = THEME.gold; btn.style.color = THEME.pointDark; }
         };
         div.onmouseout = () => { 
             const btn = div.querySelector('button');
-            if (btn) { btn.style.background = '#111'; btn.style.color = '#dfba6b'; }
+            if (btn) { btn.style.background = '#111'; btn.style.color = THEME.gold; }
         };
         
         div.onclick = function(e) {
@@ -90,11 +91,11 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                 </button>`;
             div.onmouseover = () => {
                 const btn = div.querySelector('button');
-                if (btn) { btn.style.background = '#dfba6b'; btn.style.color = '#000'; }
+                if (btn) { btn.style.background = THEME.gold; btn.style.color = THEME.pointDark; }
             };
             div.onmouseout = () => {
                 const btn = div.querySelector('button');
-                if (btn) { btn.style.background = '#111'; btn.style.color = '#dfba6b'; }
+                if (btn) { btn.style.background = '#111'; btn.style.color = THEME.gold; }
             };
             div.onclick = function(e) {
                 e.stopPropagation();
@@ -124,7 +125,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
             newMapInstance.on('zoomend', () => {
                 const z = newMapInstance.getZoom();
                 branchMarkers.forEach(m => {
-                    const col = m.options.color || '#dfba6b';
+                    const col = m.options.color || THEME.gold;
                     m.setIcon(makeBranchIcon(z, col));
                 });
             });
@@ -297,12 +298,12 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                                 // ADJUNTAR EVENTOS DE HOVER Y CLICK A CADA ITEM DE RESULTADO
                                 dropdownEl.querySelectorAll('.locality-result-item').forEach(item => {
                                     item.onmouseenter = () => {
-                                        item.style.background = 'rgba(223, 186, 107, 0.3) !important';
-                                        item.style.borderColor = '#dfba6b !important';
+                                        item.style.background = THEME.goldGlow;
+                                        item.style.borderColor = THEME.gold;
                                     };
                                     item.onmouseleave = () => {
                                         item.style.background = '#131622 !important';
-                                        item.style.borderColor = 'rgba(223, 186, 107, 0.3) !important';
+                                        item.style.borderColor = THEME.goldBorder;
                                     };
 
                                     item.onclick = (e) => {

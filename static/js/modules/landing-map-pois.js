@@ -6,6 +6,7 @@
 
 import { ESTADIOS_FIJOS } from './landing-data.js';
 import { formatPoiAddress, getPoiCache, setPoiCache } from './landing-map-data.js';
+import { THEME } from './theme.js';
 
 const _poiControllers = {};
 const _poiLayers = {};
@@ -43,7 +44,7 @@ export function loadTheaters(mapObj, containerId) {
         }),
         cinema: L.divIcon({
             className: 'poi-marker',
-            html: `<div style="width:28px;height:28px;background:#E74C3C;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(231,76,60,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-film"></i></div>`,
+            html: `<div style="width:28px;height:28px;background:${THEME.danger};border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(244, 63, 94,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-film"></i></div>`,
             iconSize: [28, 28], iconAnchor: [14, 14]
         })
     };
@@ -144,7 +145,7 @@ export function loadStadiums(mapObj, containerId) {
 
     const stadiumIcon = L.divIcon({
         className: 'poi-marker',
-        html: `<div style="width:28px;height:28px;background:#27AE60;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(39,174,96,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-futbol"></i></div>`,
+        html: `<div style="width:28px;height:28px;background:${THEME.success};border:2px solid #fff;border-radius:8px;box-shadow:0 2px 10px rgba(16, 185, 129,0.6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;"><i class="fas fa-futbol"></i></div>`,
         iconSize: [28, 28], iconAnchor: [14, 14]
     });
 
@@ -152,7 +153,7 @@ export function loadStadiums(mapObj, containerId) {
         L.marker([d.lat, d.lng], { icon: stadiumIcon })
             .bindPopup(`
                 <div style="text-align:center; min-width:170px; padding:10px 12px; background:#0a0a0a; border-radius:14px; box-sizing:border-box;">
-                    <div style="font-size:0.65rem; color:#27AE60; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:800;">
+                    <div style="font-size:0.65rem; color:#10b981; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:800;">
                         Estadio
                     </div>
                     <b style="font-size:0.92rem; color:#fff; font-family:'Montserrat',sans-serif; display:block; line-height:1.3;">
@@ -222,7 +223,7 @@ function addPoiLegend(mapObj, containerId) {
     const legend = L.control({ position: 'bottomleft' });
     legend.onAdd = function() {
         const div = L.DomUtil.create('div', 'map-poi-legend');
-        const stadiumHtml = _stadiumsLoaded ? `<span id="legend-stadium" style="display:flex;align-items:center;gap:4px;color:#ccc;cursor:pointer;"><span style="width:18px;height:18px;background:#27AE60;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-futbol"></i></span> Estadio</span>` : '';
+        const stadiumHtml = _stadiumsLoaded ? `<span id="legend-stadium" style="display:flex;align-items:center;gap:4px;color:#ccc;cursor:pointer;"><span style="width:18px;height:18px;background:#10b981;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-futbol"></i></span> Estadio</span>` : '';
         div.innerHTML = `
             <div style="background:rgba(10,10,10,0.9);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);font-size:0.65rem;">
                 <div style="color:#fff;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:6px;letter-spacing:0.5px;">
@@ -233,7 +234,7 @@ function addPoiLegend(mapObj, containerId) {
                         <span style="width:18px;height:18px;background:#9B59B6;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-theater-masks"></i></span> Teatro/Museo
                     </span>
                     <span id="legend-cinema" style="display:flex;align-items:center;gap:4px;color:#ccc;cursor:pointer;">
-                        <span style="width:18px;height:18px;background:#E74C3C;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-film"></i></span> Cine
+                        <span style="width:18px;height:18px;background:#f43f5e;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;"><i class="fas fa-film"></i></span> Cine
                     </span>
                     ${stadiumHtml}
                 </div>

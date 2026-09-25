@@ -4,6 +4,8 @@
  * logica de posicionamiento, navegacion entre pasos y resolucion de targets.
  */
 
+import { THEME } from './theme.js';
+
 let activeTourSteps = [];
 let currentAdminStepIndex = 0;
 let adminTourOverlay = null;
@@ -39,7 +41,7 @@ function createAdminTourElements() {
     const highlightRect = document.createElementNS(svgNS, 'rect');
     highlightRect.id = 'autopass-admin-tour-highlight-rect';
     highlightRect.setAttribute('fill', 'none');
-    highlightRect.setAttribute('stroke', '#dfba6b');
+    highlightRect.setAttribute('stroke', THEME.gold);
     highlightRect.setAttribute('stroke-width', '2');
     highlightRect.setAttribute('rx', '10');
     highlightRect.setAttribute('ry', '10');

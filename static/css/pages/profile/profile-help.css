@@ -115,8 +115,8 @@
 }
 
 .help-search-clear:hover {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    background: rgba(244, 63, 94, 0.15);
 }
 
 /* Pills de Categorías */

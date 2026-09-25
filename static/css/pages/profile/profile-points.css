@@ -162,7 +162,7 @@
     color: #fff;
     font-weight: 700;
     font-size: 1.1rem;
-    font-family: 'Montserrat';
+    
     letter-spacing: 0.5px;
 }
 
@@ -223,7 +223,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: #ef4444;
+    background: var(--danger);
     border: none;
     color: #fff;
     display: flex;
@@ -233,7 +233,7 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0.9;
     transform: scale(1);
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 4px 10px rgba(244, 63, 94, 0.4);
 }
 
 .vehicle-card:hover .delete-btn-modern {
@@ -262,7 +262,7 @@
 .delete-btn-modern:hover {
     background: #dc2626;
     transform: scale(1.15);
-    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.6);
+    box-shadow: 0 6px 15px rgba(244, 63, 94, 0.6);
 }
 
 .delete-btn-modern i {
@@ -302,7 +302,7 @@
     justify-content: center;
     gap: 10px;
     font-size: 0.75rem;
-    color: #666;
+    color: #888;
 }
 
 .points-info-footer i {
@@ -336,7 +336,7 @@
 }
 
 .p-val {
-    font-family: 'Montserrat';
+    
     font-size: 1.2rem;
     font-weight: 900;
     color: #fff;
@@ -393,7 +393,7 @@
 
 .progress-footer-text {
     font-size: 0.7rem;
-    color: #666;
+    color: #888;
     margin: 0;
     font-style: italic;
 }
@@ -431,7 +431,7 @@
 }
 
 .pts-amount {
-    font-family: 'Montserrat';
+    
     font-weight: 900;
     font-size: 1.1rem;
 }
@@ -453,7 +453,7 @@
     color: #888;
     padding: 8px 18px;
     border-radius: 30px;
-    font-family: 'Montserrat', sans-serif;
+    
     font-weight: 800;
     font-size: 0.74rem;
     letter-spacing: 0.8px;
@@ -564,10 +564,10 @@
 }
 
 .voucher-status-badge.status-vigente {
-    background: rgba(46, 204, 113, 0.15);
-    color: #2ecc71;
-    border: 1px solid rgba(46, 204, 113, 0.3);
-    box-shadow: 0 0 10px rgba(46, 204, 113, 0.15);
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
 }
 
 .voucher-status-badge.status-usado {
@@ -577,9 +577,9 @@
 }
 
 .voucher-status-badge.status-cancelado {
-    background: rgba(231, 76, 60, 0.12);
-    color: #e74c3c;
-    border: 1px solid rgba(231, 76, 60, 0.25);
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--danger);
+    border: 1px solid rgba(244, 63, 94, 0.25);
 }
 
 .voucher-type-badge {
@@ -601,9 +601,9 @@
 }
 
 .voucher-type-badge.discount {
-    background: rgba(46, 204, 113, 0.12);
-    color: #2ecc71;
-    border: 1px solid rgba(46, 204, 113, 0.25);
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .voucher-branch-badge {
@@ -624,9 +624,9 @@
 }
 
 .voucher-branch-badge.global {
-    background: rgba(46, 204, 113, 0.1);
-    color: #2ecc71;
-    border-color: rgba(46, 204, 113, 0.25);
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border-color: rgba(16, 185, 129, 0.25);
 }
 
 .voucher-address-link {
@@ -695,7 +695,7 @@
 
 .voucher-code-tag {
     display: inline-block;
-    font-family: var(--font-mono, 'Courier New', monospace);
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: 800;
     color: var(--dorado);
@@ -708,7 +708,7 @@
 }
 
 .voucher-card-title {
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 1.05rem;
     font-weight: 800;
     color: #fff;
@@ -796,7 +796,7 @@
 .btn-voucher-action {
     height: 38px;
     border-radius: 10px;
-    font-family: 'Montserrat', sans-serif;
+    
     font-weight: 800;
     cursor: pointer;
     display: inline-flex;
@@ -824,17 +824,17 @@
 
 .btn-voucher-cancel {
     padding: 0 14px;
-    background: rgba(231, 76, 60, 0.12);
-    color: #e74c3c;
-    border: 1px solid rgba(231, 76, 60, 0.25);
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--danger);
+    border: 1px solid rgba(244, 63, 94, 0.25);
     font-size: 0.7rem;
     letter-spacing: 0.5px;
     white-space: nowrap;
 }
 
 .btn-voucher-cancel:hover {
-    background: rgba(231, 76, 60, 0.25);
-    border-color: #e74c3c;
+    background: rgba(244, 63, 94, 0.25);
+    border-color: var(--danger);
     transform: translateY(-1px);
 }
 
@@ -965,7 +965,7 @@
 }
 
 .discount-pct {
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 1.35rem;
     font-weight: 900;
     color: #c084fc;

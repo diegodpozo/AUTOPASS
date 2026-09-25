@@ -2,6 +2,7 @@ import api from './api.js';
 import { showToast, showConfirm, formatDate, formatPlate, formatNum, metodoPagoReport } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadFloors } from './dashboard-admin-branches.js';
+import { THEME } from './theme.js';
 
 /**
  * Módulo de Ajustes de Sistema, Tarifas, Diagnósticos, Barreras y Exportación
@@ -176,8 +177,8 @@ export function toggleRateEdit(type) {
         inputs.forEach(input => input.disabled = false);
         group.classList.add('editing');
         btn.innerHTML = '<i class="fas fa-check mr-8"></i> APLICAR';
-        btn.style.borderColor = '#4CAF50';
-        btn.style.color = '#4CAF50';
+        btn.style.borderColor = THEME.success;
+        btn.style.color = THEME.success;
         if (inputs.length > 0) inputs[0].focus();
     } else {
         saveRateGroup(type);

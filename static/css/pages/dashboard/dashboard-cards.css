@@ -394,13 +394,13 @@
 }
 
 .kpi-card.danger-light {
-    border-color: rgba(239, 68, 68, 0.2);
+    border-color: rgba(244, 63, 94, 0.2);
 }
 
 .kpi-card.danger-light .kpi-icon i {
-    color: #ef4444 !important;
+    color: var(--danger) !important;
 }
 
 .kpi-card.danger-light .value {
-    color: #ef4444;
+    color: var(--danger);
 }

@@ -154,9 +154,9 @@ function showVTFeedback(msg, ok) {
     if (!fb) return;
     fb.textContent = msg;
     fb.style.display = 'block';
-    fb.style.background = ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
-    fb.style.color = ok ? '#10b981' : '#ef4444';
-    fb.style.border = '1px solid ' + (ok ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)');
+    fb.style.background = ok ? 'rgba(16,185,129,0.15)' : 'rgba(244, 63, 94,0.15)';
+    fb.style.color = ok ? '#10b981' : 'var(--danger)';
+    fb.style.border = '1px solid ' + (ok ? 'rgba(16,185,129,0.3)' : 'rgba(244, 63, 94,0.3)');
     setTimeout(() => { fb.style.display = 'none'; }, 3000);
 }
 

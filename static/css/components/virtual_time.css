@@ -26,9 +26,9 @@
 
 .vt-fab.active {
     background: linear-gradient(135deg, #2a1a1a, #3e1a1a);
-    border-color: #ef4444;
-    color: #ef4444;
-    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+    border-color: var(--danger);
+    color: var(--danger);
+    box-shadow: 0 4px 20px rgba(244, 63, 94, 0.3);
     animation: vt-pulse 2s infinite;
 }
 
@@ -36,7 +36,7 @@
     position: absolute;
     top: -6px;
     right: -6px;
-    background: #ef4444;
+    background: var(--danger);
     color: #fff;
     font-size: 8px;
     font-weight: 700;
@@ -46,8 +46,8 @@
 }
 
 @keyframes vt-pulse {
-    0%, 100% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); }
-    50% { box-shadow: 0 4px 30px rgba(239, 68, 68, 0.6); }
+    0%, 100% { box-shadow: 0 4px 20px rgba(244, 63, 94, 0.3); }
+    50% { box-shadow: 0 4px 30px rgba(244, 63, 94, 0.6); }
 }
 
 /* MODAL BODY STYLES */
@@ -63,7 +63,7 @@
 .vt-big-time {
     font-size: 42px;
     font-weight: 700;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     color: #fff;
     letter-spacing: 3px;
 }
@@ -99,7 +99,7 @@
 }
 
 .vt-info-value {
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     color: #ccc;
 }
@@ -112,7 +112,7 @@
 
 .vt-actions-label {
     font-size: 11px;
-    color: #666;
+    color: #888;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -151,9 +151,9 @@
 }
 
 .vt-btn-danger:hover {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: #ef4444;
-    color: #ef4444;
+    background: rgba(244, 63, 94, 0.15);
+    border-color: var(--danger);
+    color: var(--danger);
 }
 
 .vt-feedback {

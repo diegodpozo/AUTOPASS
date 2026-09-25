@@ -3,6 +3,7 @@ import * as utils from './utils.js';
 import * as baseUi from './ui.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadAdminReservations, getAllReservations } from './reservations-admin-list.js';
+import { THEME } from './theme.js';
 
 // ==========================================================================
 // NUEVA RESERVA MANUAL (PANEL ADMIN / STAFF) - CREAR + PAGAR EN UN PASO
@@ -102,7 +103,7 @@ async function lookupNewResPatente() {
         newResLinkedUserId = res.data.user_id;
         badgeIcon.className = 'fas fa-user-check';
         badgeText.textContent = `${res.data.nombre} ${res.data.apellido} (${res.data.tipo_vehiculo})`;
-        badge.style.color = '#27ae60';
+        badge.style.color = THEME.success;
         badge.style.background = 'transparent';
         badge.style.display = 'inline-flex';
         const tipo = document.getElementById('new-res-tipo-vehiculo');
@@ -114,7 +115,7 @@ async function lookupNewResPatente() {
         newResLinkedUserId = null;
         badgeIcon.className = 'fas fa-user-slash';
         badgeText.textContent = 'Patente no registrada';
-        badge.style.color = '#e74c3c';
+        badge.style.color = THEME.danger;
         badge.style.background = 'transparent';
         badge.style.display = 'inline-flex';
     }
@@ -286,7 +287,7 @@ export async function openEditReservationModal(resId) {
             if (span) span.textContent = `${r.usuario_nombre || 'Cliente'} ${r.usuario_apellido || ''}`;
             const icon = badge.querySelector('i');
             if (icon) icon.className = 'fas fa-user-check';
-            badge.style.color = '#27ae60';
+            badge.style.color = THEME.success;
             badge.style.display = 'inline-flex';
         }
     }
@@ -715,13 +716,13 @@ async function updateNewHourlySlotsUI() {
         if (resto > 0) for (let i = 0; i < 6 - resto; i++) html += `<span class="hourly-chip-premium placeholder"></span>`;
 
         html += `</div>`;
-        if (countLibres === 0) html += `<div style="width:100%; text-align:center; font-size:0.78rem; color:#e74c3c; margin-top:8px;"><i class="fas fa-triangle-exclamation"></i> Sin horarios libres para este día</div>`;
+        if (countLibres === 0) html += `<div style="width:100%; text-align:center; font-size:0.78rem; color:#f43f5e; margin-top:8px;"><i class="fas fa-triangle-exclamation"></i> Sin horarios libres para este día</div>`;
 
         grid.innerHTML = html;
         badge.style.display = 'none';
     } catch (e) {
         console.warn('[NUEVA RESERVA] Error cargando disponibilidad horaria:', e);
-        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:#e74c3c; padding:8px;"><i class="fas fa-triangle-exclamation"></i> Error al consultar disponibilidad</div>';
+        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:#f43f5e; padding:8px;"><i class="fas fa-triangle-exclamation"></i> Error al consultar disponibilidad</div>';
     }
 }
 
@@ -921,10 +922,10 @@ export async function handleAdminNewReservation(event) {
         if (diffEl) {
             if (diferencia > 0) {
                 diffEl.innerHTML = `<i class="fas fa-arrow-up" style="margin-right:6px;"></i>Se cobran $ ${utils.formatNum(diferencia)} por la diferencia`;
-                diffEl.style.color = '#27ae60';
+                diffEl.style.color = THEME.success;
             } else if (diferencia < 0) {
                 diffEl.innerHTML = `<i class="fas fa-arrow-down" style="margin-right:6px;"></i>Se reembolsan $ ${utils.formatNum(Math.abs(diferencia))}`;
-                diffEl.style.color = '#e74c3c';
+                diffEl.style.color = THEME.danger;
             } else {
                 diffEl.innerHTML = '<i class="fas fa-equals" style="margin-right:6px;"></i>Sin diferencias de importe';
                 diffEl.style.color = '#aaa';

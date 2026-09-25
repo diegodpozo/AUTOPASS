@@ -50,7 +50,7 @@
 }
 
 .legal-body h2 {
-    font-family: 'Montserrat';
+    
     color: var(--dorado);
     font-size: 1.5rem;
     margin: 40px 0 20px;
@@ -105,7 +105,7 @@
 }
 
 .legal-footer p {
-    color: #666;
+    color: #888;
     font-size: 0.9rem;
 }
 

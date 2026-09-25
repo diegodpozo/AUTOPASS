@@ -582,32 +582,32 @@ export async function createReservation(e) {
             <div style="padding-top: 25px; border-top: 2px solid rgba(223, 186, 107,0.2);">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
-                    <b style="color: #777; font-size: 1.15rem; text-decoration: line-through; font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
+                    <b style="color: #777; font-size: 1.15rem; text-decoration: line-through; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
                     <span style="color: #c084fc; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px;"><i class="fas fa-percent"></i> DESCUENTO ${discountValue}%${discountSucursal ? ` · ${discountSucursal}` : ''}</span>
-                    <b style="color: #c084fc; font-size: 1rem; font-family: 'Montserrat'; white-space: nowrap;">- $ ${formatNum(discountAmount)}</b>
+                    <b style="color: #c084fc; font-size: 1rem; white-space: nowrap;">- $ ${formatNum(discountAmount)}</b>
                 </div>
                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(223, 186, 107,0.35); display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL A PAGAR</span>
-                    <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(223, 186, 107,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalFinal)}</b>
+                    <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(223, 186, 107,0.3); white-space: nowrap;">$ ${formatNum(totalFinal)}</b>
                 </div>
                 <p style="margin: 10px 0 0 auto; text-align: right; color: #888; font-size: 0.7rem; max-width: 330px;"><i class="fas fa-bolt" style="color: var(--dorado); margin-right: 4px;"></i>El descuento se aplica automáticamente al abonar la reserva.</p>
             </div>` : `
             <div style="padding-top: 25px; border-top: 2px solid rgba(223, 186, 107,0.2); display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
-                <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(223, 186, 107,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
+                <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(223, 186, 107,0.3); white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
             </div>`;
 
     const resumenHtml = `
-        <div style="text-align: left; padding: 5px; font-family: 'Montserrat', sans-serif;">
+        <div style="text-align: left; padding: 5px; ">
             <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 35px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <i class="fas fa-car" style="color: var(--dorado); font-size: 1.1rem; width: 25px; text-align: center;"></i>
                         <span style="color: #aaa; font-size: 0.95rem;">Vehículo</span>
                     </div>
-                    <b style="color: #fff; font-size: 1.1rem; letter-spacing: 1px; font-family: 'Montserrat';">${formatPlate(patente)}</b>
+                    <b style="color: #fff; font-size: 1.1rem; letter-spacing: 1px; ">${formatPlate(patente)}</b>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
                     <div style="display: flex; align-items: center; gap: 15px;">

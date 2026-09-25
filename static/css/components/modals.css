@@ -50,7 +50,7 @@
     justify-content: center; 
     align-items: center; 
     cursor: pointer; 
-    color: #666; 
+    color: #888; 
     transition: 0.3s;
 }
 
@@ -82,7 +82,7 @@
 }
 
 .forgot-link { 
-    color: #666; 
+    color: #888; 
     text-decoration: none; 
     font-size: 0.8rem; 
     transition: 0.3s; 
@@ -90,7 +90,7 @@
 
 .modal-subtitle { 
     font-size: 0.85rem; 
-    color: #666; 
+    color: #888; 
 }
 
 .toggle-password { 
@@ -99,7 +99,7 @@
     right: 15px; 
     top: 50%; 
     transform: translateY(-50%); 
-    color: #666; 
+    color: #888; 
     transition: 0.3s;
     z-index: 10;
 }
@@ -172,7 +172,7 @@
 }
 
 .confirm-modal-content h3 {
-    font-family: 'Montserrat';
+    
     font-weight: 900;
     letter-spacing: 1px;
     margin-bottom: 15px;
@@ -224,7 +224,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
     color: #fff;
-    font-family: 'Montserrat';
+    
     font-weight: 700;
     font-size: 0.85rem;
     letter-spacing: 1px;

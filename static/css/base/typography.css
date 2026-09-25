@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@500&display=swap');
 
-h1 { font-size: var(--text-xl); }
+h1 { font-size: var(--text-3xl); }
 h2 { font-size: 1.8rem; }
 h3 { font-size: var(--text-md); }
 

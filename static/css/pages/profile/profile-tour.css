@@ -16,7 +16,7 @@
 }
 
 .points-count {
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 4rem;
     font-weight: 800;
     color: var(--dorado);
@@ -80,7 +80,7 @@
 }
 
 .voucher-card.promo-card .promo-title {
-    font-family: 'Montserrat', sans-serif;
+    
     font-weight: 800;
     color: #fff;
     font-size: 0.95rem;
@@ -116,7 +116,7 @@
 }
 
 .voucher-card.promo-card .voucher-card-meta span {
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 1.5rem;
     font-weight: 900;
     color: var(--dorado);
@@ -139,7 +139,7 @@
 }
 
 .promo-filter-label {
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 1px;
@@ -159,7 +159,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     color: #ddd;
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 0.78rem;
     font-weight: 700;
     padding: 8px 14px;
@@ -210,9 +210,9 @@
 }
 
 .branch-badge.global {
-    background: rgba(46, 204, 113, 0.12);
-    color: #2ecc71;
-    border-color: rgba(46, 204, 113, 0.25);
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    border-color: rgba(16, 185, 129, 0.25);
 }
 
 .promo-type-badge {
@@ -236,9 +236,9 @@
 }
 
 .promo-type-badge.discount {
-    background: rgba(46, 204, 113, 0.12);
-    color: #2ecc71;
-    border: 1px solid rgba(46, 204, 113, 0.25);
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 /* Fallback defensivo para tarjetas sin wrapper .promo-card-badges */
@@ -277,7 +277,7 @@
 }
 
 .promo-title {
-    font-family: 'Montserrat', sans-serif;
+    
     font-weight: 800;
     color: #fff;
     font-size: 0.95rem;
@@ -303,7 +303,7 @@
 }
 
 .promo-cost {
-    font-family: 'Montserrat', sans-serif;
+    
     font-weight: 900;
     font-size: 1.4rem;
     color: var(--dorado);
@@ -330,7 +330,7 @@
     background: var(--dorado);
     color: #000;
     border: none;
-    font-family: 'Montserrat';
+    
     font-weight: 900;
     font-size: 0.75rem;
     letter-spacing: 1px;
@@ -569,7 +569,7 @@
    ========================================================================== */
 
 .notif-badge {
-    background: #e74c3c;
+    background: var(--danger);
     color: #fff;
     font-size: 0.6rem;
     font-weight: 900;
@@ -672,7 +672,7 @@
 
 .notif-time {
     font-size: 0.65rem;
-    color: #666;
+    color: #888;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -989,7 +989,7 @@
     border-radius: 16px;
     padding: 22px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    
     transform: scale(0.94) translate3d(0, 8px, 0);
     opacity: 0;
     visibility: hidden;
@@ -1188,7 +1188,7 @@
     margin: 0 0 8px 0;
     letter-spacing: 0.5px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    
 }
 
 .onboarding-card-premium p.subtitle {
@@ -1258,7 +1258,7 @@
     text-align: center;
     margin-top: 15px;
     font-size: 0.82rem;
-    color: #666;
+    color: #888;
 }
 
 .onboarding-skip-link a {
@@ -1442,7 +1442,7 @@
 }
 
 .map-fs-title {
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 0.85rem;
     font-weight: 800;
     color: var(--dorado);
@@ -1501,7 +1501,7 @@
 }
 
 .map-overlay-fullscreen h4 {
-    font-family: 'Montserrat', sans-serif;
+    
     font-size: 0.85rem;
     color: var(--dorado);
     margin: 0 0 4px 0;

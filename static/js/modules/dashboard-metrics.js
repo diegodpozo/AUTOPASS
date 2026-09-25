@@ -1,5 +1,6 @@
 import api from './api.js';
 import { formatDateTime, formatDayTime } from './utils.js';
+import { THEME } from './theme.js';
 
 /**
  * Módulo de Métricas del Sistema (Gráfico de Accesos en Vivo)
@@ -113,30 +114,30 @@ function renderGrafico() {
                 {
                     label: 'Entradas',
                     data: entradas,
-                    borderColor: '#10b981',
+                    borderColor: THEME.success,
                     backgroundColor: 'rgba(16, 185, 129, 0.10)',
                     borderWidth: 2.5,
                     fill: true,
                     tension: 0.3,
                     pointRadius: 0,
                     pointHoverRadius: 5,
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: '#000',
+                    pointBackgroundColor: THEME.success,
+                    pointBorderColor: THEME.pointDark,
                     pointBorderWidth: 1.5,
                     hitRadius: 30
                 },
                 {
                     label: 'Salidas',
                     data: salidas,
-                    borderColor: '#f43f5e',
+                    borderColor: THEME.danger,
                     backgroundColor: 'rgba(244, 63, 94, 0.10)',
                     borderWidth: 2.5,
                     fill: true,
                     tension: 0.3,
                     pointRadius: 0,
                     pointHoverRadius: 5,
-                    pointBackgroundColor: '#f43f5e',
-                    pointBorderColor: '#000',
+                    pointBackgroundColor: THEME.danger,
+                    pointBorderColor: THEME.pointDark,
                     pointBorderWidth: 1.5,
                     hitRadius: 30
                 }
@@ -149,10 +150,10 @@ function renderGrafico() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#0a0a0a',
-                    titleColor: '#dfba6b',
-                    bodyColor: '#fff',
-                    borderColor: 'rgba(223, 186, 107, 0.3)',
+                    backgroundColor: THEME.bgSoft,
+                    titleColor: THEME.gold,
+                    bodyColor: THEME.textPrimary,
+                    borderColor: THEME.goldBorder,
                     borderWidth: 1,
                     displayColors: true,
                     boxWidth: 8,
@@ -174,14 +175,14 @@ function renderGrafico() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: 'Movimientos', color: '#666', font: { size: 10 } },
-                    grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-                    ticks: { color: '#666', font: { size: 10 }, precision: 0 }
+                    title: { display: true, text: 'Movimientos', color: THEME.textMuted, font: { size: 10 } },
+                    grid: { color: THEME.grid, drawBorder: false },
+                    ticks: { color: THEME.textMuted, font: { size: 10 }, precision: 0 }
                 },
                 x: {
                     grid: { display: false },
                     ticks: {
-                        color: '#666',
+                        color: THEME.textMuted,
                         font: { size: 9 },
                         maxRotation: 0,
                         autoSkip: true,
