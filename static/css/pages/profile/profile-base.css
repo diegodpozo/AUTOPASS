@@ -64,7 +64,7 @@
 
 .modal-content-wide {
     width: 90%;
-    max-width: 800px;
+    max-width: var(--modal-lg);
 }
 
 .info-item-content .display-mode .flex-row {
@@ -297,7 +297,7 @@
     color: #fff !important;
     padding: 10px 15px !important;
     font-size: 0.85rem !important;
-    border-radius: 10px !important;
+    border-radius: var(--radius-sm) !important;
     width: 100%;
     transition: 0.3s;
 }

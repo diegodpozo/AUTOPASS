@@ -7,14 +7,22 @@
 .input-with-icon i:not(.toggle-password) { position: absolute; left: 15px; color: var(--dorado); font-size: 0.85rem; pointer-events: none; }
 .input-with-icon input { padding-left: 45px !important; }
 
-input, select, textarea {
+input, select {
     width: 100%; background: #000; border: 1px solid #333;
-    padding: 15px; border-radius: 12px; color: #fff; outline: none; transition: 0.3s;
+    padding: 15px; border-radius: var(--radius-md); color: #fff; outline: none; transition: 0.3s;
+    height: var(--control-height-md);
     font-family: 'Inter', sans-serif;
 }
+
+textarea {
+    width: 100%; background: #000; border: 1px solid #333;
+    padding: 15px; border-radius: var(--radius-md); color: #fff; outline: none; transition: 0.3s;
+    font-family: 'Inter', sans-serif;
+}
+
 input:focus, select:focus { border-color: var(--dorado); background: #050505; }
 
-.error-msg { background: rgba(244, 63, 94, 0.1); color: var(--danger); padding: 12px; border-radius: 8px; border: 1px solid rgba(244, 63, 94, 0.2); margin-bottom: 20px; font-size: 0.85rem; display: none; text-align: center; }
+.error-msg { background: rgba(244, 63, 94, 0.1); color: var(--danger); padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(244, 63, 94, 0.2); margin-bottom: 20px; font-size: 0.85rem; display: none; text-align: center; }
 
 /* --- FORMULARIOS PREMIUM (DASHBOARD) --- */
 .form-group-premium {
@@ -33,10 +41,11 @@ input:focus, select:focus { border-color: var(--dorado); background: #050505; }
 
 .input-premium {
     width: 100%;
+    height: var(--control-height-md);
     padding: 12px 15px 12px 42px;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border-light);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     color: #ffffff;
     font-family: var(--font-mono);
     font-size: 1rem;
@@ -64,10 +73,11 @@ input::-webkit-calendar-picker-indicator:hover {
 
 .select-premium {
     width: 100%;
+    height: var(--control-height-md);
     padding: 12px 45px 12px 42px;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border-light);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     color: #ffffff;
     font-weight: 600;
     cursor: pointer;

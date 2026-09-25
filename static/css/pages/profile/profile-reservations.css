@@ -73,13 +73,13 @@
     border: 1.5px solid #222;
     color: #fff !important;
     padding: 12px 15px !important;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem !important;
     font-weight: 600;
     transition: 0.3s;
     width: 100%;
     text-align: center !important;
-    height: 48px;
+    height: var(--control-height-md);
     box-sizing: border-box;
 }
 

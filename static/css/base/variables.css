@@ -54,6 +54,37 @@
     --text-2xl: 2rem;     /* 32px   - Encabezados principales */
     --text-3xl: 2.5rem;   /* 40px   - KPIs grandes y héroe */
 
+    /* ESCALA DE RADIOS (BORDER-RADIUS) */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+
+    /* ALTURAS ESTANDAR DE CONTROLES */
+    --control-height-sm: 36px;  /* Botones compactos, inputs de tabla */
+    --control-height-md: 46px;  /* Altura estandar (inputs, selects, botones base) */
+    --control-height-lg: 54px;  /* Buscadores hero, CTA principales */
+
+    /* SISTEMA DE CAPAS (Z-INDEX) - VALORES REALES DEL SISTEMA (preservan orden actual) */
+    --z-base: 1;
+    --z-dropdown: 100;
+    --z-sticky: 500;
+    --z-sidebar: 2000;          /* Sidebar movil y navbar sticky (sidebar.css:91, landing-nav.css:11) */
+    --z-nav-dropdown: 2100;     /* Dropdowns del navbar (landing-nav.css:41,222,447) */
+    --z-modal: 3000;            /* Backdrop + contenido de modales (modals.css) */
+    --z-premium: 9999;          /* Modales premium y overlays de pagina */
+    --z-toast: 10000;           /* Toast container (style.css:39) */
+    --z-tour: 10003;            /* Overlays de tour guiado (profile-tour.css:951,1088) */
+    --z-fab: 99999;             /* FAB reloj virtual (virtual_time.css:17) y admin tour */
+
+    /* ANCHOS DE MODALES */
+    --modal-sm: 420px;   /* Confirmaciones, alertas */
+    --modal-md: 520px;   /* Formularios estandar (login, vehiculo) */
+    --modal-lg: 680px;   /* Formularios complejos (sucursal, tickets) */
+    --modal-xl: 900px;   /* Ayuda admin, monitoreo extendido */
+
     /* COMPATIBILIDAD CON CODIGO ANTERIOR - MAPEO DE VARIABLES ANTIGUAS */
     --blanco: #FFFFFF;
     --negro: #000000;

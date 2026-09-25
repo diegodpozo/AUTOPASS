@@ -88,7 +88,7 @@
         height: 100vh;
         height: 100dvh;
         max-height: 100dvh;
-        z-index: 2000;
+        z-index: var(--z-sidebar);
         box-shadow: 10px 0 30px rgba(0,0,0,0.8);
         overflow-x: hidden !important;
         overflow-y: auto;

@@ -6,6 +6,22 @@
 
 ---
 
+## 0. Estado de Implementación (v9.34.9)
+
+| Fase | Descripción | Estado | Notas |
+|---:|---|:---:|---|
+| **1** | Tokens volumétricos en `variables.css` | ✅ Aplicada | `--radius-*`, `--control-height-*`, `--z-*`, `--modal-*`. La escala z-index se tokenizó **con los valores reales del sistema** para preservar el orden de apilamiento actual (ver §5). |
+| **2** | Unificación de Modales e Inputs | ✅ Aplicada | Modales tokenizados a `--modal-*` + `--radius-xl` + `max-height/overflow` gobernado; inputs base y variantes unificados a `--control-height-md` / `--radius-md`; suprimido `height: 2.625rem !important`. |
+| **3** | Coherencia en Botones y Badges | ⏳ Pendiente | Requiere decisión de diseño: píldora vs rectangular (ver §2.3). |
+| **4** | Consolidación de Breakpoints | ⏳ Pendiente | 17 breakpoints actuales aún vigentes (ver §4). |
+
+**Hallazgos extra corregidos durante la Fase 2:**
+- `var(--azul)` y `var(--text)` referenciados en `profile-tour.css:881` y `dashboard-live.css:486` **no estaban definidos** en `variables.css` → reemplazados por `var(--info)` y `var(--text-secondary)`.
+- `z-index` del `.modal` pasó a token respetando el valor real **3000** (la primera propuesta de `2010` habría dejado el modal *debajo* del dropdown del navbar en `2100`, rompiendo el stacking).
+- El backdrop del spotlight del tour usa `z-index: 10002` (intermedio intencional entre toast `10000` y tour `10003`); se mantiene literal.
+
+---
+
 ## 1. Resumen Ejecutivo y Diagnóstico Global
 
 El sistema de diseño visual de AUTOPASS posee una identidad estética definida (**Dark Luxury / Glassmorphic Obsidian**), pero adolece de una severa falta de gobernanza en sus dimensiones físicas. Al no existir un sistema de rejilla base (4px / 8px) ni variables para dimensiones y espaciados en `variables.css`, cada componente fue estilizado con valores manuales ad-hoc.
@@ -259,18 +275,15 @@ Añadir a `static/css/base/variables.css`:
 }
 ```
 
-### Fase 2: Unificación de Modales e Inputs
+### Fase 2: Unificación de Modales e Inputs ✅ (Aplicada en v9.34.9)
 1. **Modales:**
-   - Estandarizar `.modal-content` con `--radius-xl` (20px), padding responsive (`30px` desktop / `20px` mobile).
-   - Eliminar la sobrescritura accidental de `.modal-content-wide` en `profile-base.css:67` unificándola con la variable `--modal-lg`.
-   - Incorporar a todos los modales el patrón:
-     ```css
-     .modal-content { max-height: calc(100vh - 80px); display: flex; flex-direction: column; }
-     .modal-body { overflow-y: auto; flex: 1; }
-     ```
+   - `.modal-content` → `--radius-xl`, `max-width: var(--modal-md)`; `.modal-content-wide` → `--modal-lg`; `.modal-content-large` → `--modal-lg`; confirm/choice → `--modal-sm`; admin-help → `--modal-xl`.
+   - Sobrescritura accidental de `profile-base.css` (800px) eliminada → unificada en `--modal-lg`.
+   - Gobernanza de altura: `.modal-content` con `max-height: calc(100vh - 80px); overflow-y: auto` (en lugar de `display:flex` global, preservando el patrón flex solo donde ya existía: `#modal-ticket-answer`).
 2. **Inputs:**
-   - Unificar `.input-premium`, `.select-premium` y campos base con `height: var(--control-height-md); border-radius: var(--radius-md);`.
-   - Suprimir `height: 2.625rem !important;` en `profile-tour.css`.
+   - `.input-premium`, `.select-premium` y `input/select` base → `height: var(--control-height-md); border-radius: var(--radius-md);`.
+   - `.help-search-input` (54px) → `var(--control-height-lg)`; `.admin-help-search-input` (46px) → `var(--control-height-md)`; `.input-premium-sm` radios → `--radius-sm`/`--radius-xs`.
+   - Suprimido `height: 2.625rem !important;` en `profile-tour.css` (heredó `--control-height-md`).
 
 ### Fase 3: Coherencia en Botones y Badges
 1. **Botones:**

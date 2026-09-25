@@ -361,7 +361,7 @@ tr:hover .btn-delete-promo {
 
 /* CHAT DEL TICKET DE SOPORTE */
 #modal-ticket-answer .modal-content {
-    max-width: 680px;
+    max-width: var(--modal-lg);
     width: 94%;
     display: flex;
     flex-direction: column;

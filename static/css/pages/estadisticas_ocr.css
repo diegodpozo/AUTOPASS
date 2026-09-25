@@ -209,7 +209,7 @@
         visibility: hidden;
         pointer-events: none;
         transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-        z-index: 9999;
+        z-index: var(--z-premium);
     }
 
     .ocr-header-tooltip::before {
@@ -225,7 +225,7 @@
         visibility: hidden;
         pointer-events: none;
         transition: opacity 0.2s ease, visibility 0.2s;
-        z-index: 9999;
+        z-index: var(--z-premium);
     }
 
     .ocr-header-tooltip:hover::after {
@@ -267,7 +267,7 @@
         visibility: hidden;
         pointer-events: none;
         transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-        z-index: 9999;
+        z-index: var(--z-premium);
     }
 
     .kpi-tooltip::before {
@@ -283,7 +283,7 @@
         visibility: hidden;
         pointer-events: none;
         transition: opacity 0.2s ease, visibility 0.2s;
-        z-index: 9999;
+        z-index: var(--z-premium);
     }
 
     .kpi-tooltip:hover::after {

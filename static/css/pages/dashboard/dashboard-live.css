@@ -483,7 +483,7 @@
     font-size: 0.6rem;
     font-weight: 800;
     letter-spacing: 0.8px;
-    color: var(--text);
+    color: var(--text-secondary);
 }
 
 .vehicle-type-grid .grid-empty {
