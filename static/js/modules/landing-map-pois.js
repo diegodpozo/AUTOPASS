@@ -23,7 +23,7 @@ export function loadTheaters(mapObj, containerId) {
         return L.marker([lat, lng], { icon: cfg.icon })
             .bindPopup(`
                 <div style="text-align:center; min-width:170px; padding:10px 12px; background:#0a0a0a; border-radius:14px; box-sizing:border-box;">
-                    <div style="font-size:0.65rem; color:#C5A059; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:800;">
+                    <div style="font-size:0.65rem; color:#dfba6b; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:800;">
                         ${cfg.label}
                     </div>
                     <b style="font-size:0.92rem; color:#fff; font-family:'Montserrat',sans-serif; display:block; line-height:1.3;">

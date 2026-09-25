@@ -63,12 +63,12 @@ function createTourElements() {
     const highlightRect = document.createElementNS(svgNS, 'rect');
     highlightRect.id = 'autopass-tour-highlight-rect';
     highlightRect.setAttribute('fill', 'none');
-    highlightRect.setAttribute('stroke', '#C5A059');
+    highlightRect.setAttribute('stroke', '#dfba6b');
     highlightRect.setAttribute('stroke-width', '2');
     highlightRect.setAttribute('rx', '10');
     highlightRect.setAttribute('ry', '10');
     highlightRect.style.display = 'none';
-    highlightRect.style.filter = 'drop-shadow(0 0 8px rgba(197, 160, 89, 0.45))';
+    highlightRect.style.filter = 'drop-shadow(0 0 8px rgba(223, 186, 107, 0.45))';
     highlightRect.style.transition = 'all 0.25s ease';
 
     svg.appendChild(path);

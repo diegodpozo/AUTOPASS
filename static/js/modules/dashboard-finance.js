@@ -234,13 +234,13 @@ export function renderRevenueChart(data, period) {
                 datasets: [{
                     label: 'Ingresos',
                     data: values.length > 0 ? values : [0],
-                    borderColor: '#C5A059',
-                    backgroundColor: 'rgba(197, 160, 89, 0.1)',
+                    borderColor: '#dfba6b',
+                    backgroundColor: 'rgba(223, 186, 107, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointRadius: 4,
-                    pointBackgroundColor: '#C5A059',
+                    pointBackgroundColor: '#dfba6b',
                     pointBorderColor: '#000',
                     pointBorderWidth: 2
                 }]
@@ -252,9 +252,9 @@ export function renderRevenueChart(data, period) {
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: '#0a0a0a',
-                        titleColor: '#C5A059',
+                        titleColor: '#dfba6b',
                         bodyColor: '#fff',
-                        borderColor: 'rgba(197, 160, 89, 0.3)',
+                        borderColor: 'rgba(223, 186, 107, 0.3)',
                         borderWidth: 1,
                         displayColors: false,
                         callbacks: {

@@ -46,7 +46,7 @@ function updateBranchMarker(lat, lng) {
     } else {
         const goldIcon = window.L.divIcon({
             className: 'custom-div-icon',
-            html: `<div style="background-color: #C5A059; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #C5A059;"></div>`,
+            html: `<div style="background-color: #dfba6b; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #dfba6b;"></div>`,
             iconSize: [15, 15],
             iconAnchor: [7, 7]
         });

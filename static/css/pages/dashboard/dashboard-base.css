@@ -37,8 +37,8 @@ body:not(.role-local_admin) .local-admin-only {
         justify-content: space-between;
         width: 100%;
         padding: 12px 18px;
-        background: rgba(197, 160, 89, 0.08);
-        border: 1px solid rgba(197, 160, 89, 0.2);
+        background: rgba(223, 186, 107, 0.08);
+        border: 1px solid rgba(223, 186, 107, 0.2);
         border-radius: 14px;
         color: var(--dorado);
         font-family: 'Montserrat', sans-serif;
@@ -52,7 +52,7 @@ body:not(.role-local_admin) .local-admin-only {
     }
 
     .user-stats-trigger:hover {
-        background: rgba(197, 160, 89, 0.15);
+        background: rgba(223, 186, 107, 0.15);
     }
 
     .user-stats-trigger .trigger-icon {

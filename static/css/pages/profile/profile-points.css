@@ -12,7 +12,7 @@
 
 .form-compact-row-static {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(197, 160, 89, 0.2);
+    border: 1px solid rgba(223, 186, 107, 0.2);
     border-radius: 20px;
     padding: 20px 30px;
     display: flex;
@@ -42,7 +42,7 @@
 
 .btn-add-vehicle:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(197, 160, 89, 0.3);
+    box-shadow: 0 5px 15px rgba(223, 186, 107, 0.3);
 }
 
 .btn-add-vehicle i {
@@ -130,7 +130,7 @@
 .vehicle-card:hover { 
     border-color: var(--dorado) !important; 
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(197, 160, 89, 0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(223, 186, 107, 0.1);
 }
 
 .plate-badge-modern {
@@ -203,7 +203,7 @@
 .fav-btn-modern.active {
     color: var(--dorado);
     border-color: var(--dorado);
-    background: rgba(197, 160, 89, 0.2);
+    background: rgba(223, 186, 107, 0.2);
     opacity: 1;
     transform: scale(1);
 }
@@ -211,12 +211,12 @@
 .fav-btn-modern:hover {
     border-color: var(--dorado);
     color: var(--dorado);
-    background: rgba(197, 160, 89, 0.25);
+    background: rgba(223, 186, 107, 0.25);
     transform: scale(1.1);
 }
 
 .fav-btn-modern.active:hover {
-    background: rgba(197, 160, 89, 0.35);
+    background: rgba(223, 186, 107, 0.35);
 }
 
 .delete-btn-modern {
@@ -348,7 +348,7 @@
 /* --- POINTS PROGRESS CARD --- */
 .points-progress-card {
     background: linear-gradient(135deg, #111 0%, #050505 100%);
-    border: 1px solid rgba(197, 160, 89, 0.1);
+    border: 1px solid rgba(223, 186, 107, 0.1);
     padding: 25px;
     border-radius: 20px;
     margin-bottom: 20px;
@@ -388,7 +388,7 @@
     background: linear-gradient(90deg, var(--dorado-dark) 0%, var(--dorado) 100%);
     width: 0%;
     transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 15px rgba(197, 160, 89, 0.3);
+    box-shadow: 0 0 15px rgba(223, 186, 107, 0.3);
 }
 
 .progress-footer-text {
@@ -466,16 +466,16 @@
 
 .voucher-tab-btn:hover {
     color: #fff;
-    border-color: rgba(197, 160, 89, 0.3);
+    border-color: rgba(223, 186, 107, 0.3);
     background: rgba(255, 255, 255, 0.06);
     transform: translateY(-1px);
 }
 
 .voucher-tab-btn.active {
-    background: rgba(197, 160, 89, 0.15);
+    background: rgba(223, 186, 107, 0.15);
     border-color: var(--dorado);
     color: var(--dorado);
-    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.15);
+    box-shadow: 0 4px 15px rgba(223, 186, 107, 0.15);
 }
 
 .voucher-tab-count {
@@ -607,14 +607,14 @@
 }
 
 .voucher-branch-badge {
-    background: rgba(197, 160, 89, 0.1);
+    background: rgba(223, 186, 107, 0.1);
     color: var(--dorado);
     padding: 3px 8px;
     border-radius: 6px;
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.5px;
-    border: 1px solid rgba(197, 160, 89, 0.25);
+    border: 1px solid rgba(223, 186, 107, 0.25);
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -699,10 +699,10 @@
     font-size: 0.72rem;
     font-weight: 800;
     color: var(--dorado);
-    background: rgba(197, 160, 89, 0.08);
+    background: rgba(223, 186, 107, 0.08);
     padding: 2px 8px;
     border-radius: 5px;
-    border: 1px dashed rgba(197, 160, 89, 0.35);
+    border: 1px dashed rgba(223, 186, 107, 0.35);
     margin-bottom: 6px;
     letter-spacing: 1px;
 }
@@ -819,7 +819,7 @@
 .btn-voucher-qr:hover {
     background: #fff;
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.35);
+    box-shadow: 0 4px 15px rgba(223, 186, 107, 0.35);
 }
 
 .btn-voucher-cancel {

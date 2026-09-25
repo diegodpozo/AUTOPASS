@@ -15,7 +15,7 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: rgba(197, 160, 89, 0.1);
+    background: rgba(223, 186, 107, 0.1);
     color: var(--dorado);
     padding: 8px 16px;
     border-radius: 50px;
@@ -67,7 +67,7 @@
 .contact-icon-box {
     width: 60px;
     height: 60px;
-    background: rgba(197, 160, 89, 0.1);
+    background: rgba(223, 186, 107, 0.1);
     border: 1px solid var(--border-light);
     border-radius: 15px;
     display: flex;
@@ -144,7 +144,7 @@
 
 .premium-form select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C5A059'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23dfba6b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 15px center;
     background-size: 20px;

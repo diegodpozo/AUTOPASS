@@ -38,7 +38,7 @@ function updatePromoMarker(lat, lng) {
     } else {
         const goldIcon = window.L.divIcon({
             className: 'custom-div-icon',
-            html: `<div style="background-color: #C5A059; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #C5A059;"></div>`,
+            html: `<div style="background-color: #dfba6b; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #dfba6b;"></div>`,
             iconSize: [15, 15],
             iconAnchor: [7, 7]
         });
@@ -158,7 +158,7 @@ export async function loadPromotionsAdmin() {
             <tr class="row-premium">
                 <td data-label="Beneficio">
                     <div class="flex-row items-center gap-10">
-                        <div class="header-icon-box xs" style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2);">
+                        <div class="header-icon-box xs" style="background: rgba(223, 186, 107, 0.1); border: 1px solid rgba(223, 186, 107, 0.2);">
                             <i class="${p.icono || 'fas fa-gift'} text-dorado" style="font-size: 0.8rem;"></i>
                         </div>
                         <div class="flex-col">

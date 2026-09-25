@@ -71,7 +71,7 @@ nav a {
 
 .toast:hover {
     transform: translateY(-2px);
-    border-color: rgba(197, 160, 89, 0.35);
+    border-color: rgba(223, 186, 107, 0.35);
     box-shadow: 0 14px 35px rgba(0, 0, 0, 0.55);
 }
 
@@ -90,7 +90,7 @@ nav a {
 .toast.warning .toast-icon { color: #f59e0b; }
 .toast.warning { border-color: rgba(245, 158, 11, 0.3); }
 .toast.default .toast-icon { color: var(--dorado); }
-.toast.default { border-color: rgba(197, 160, 89, 0.3); }
+.toast.default { border-color: rgba(223, 186, 107, 0.3); }
 
 @keyframes toast-entrance {
     0% { transform: translateX(120%) scale(0.9); opacity: 0; }
@@ -133,7 +133,7 @@ nav a {
 .branch-marker-logo {
     background: none !important;
     border: none !important;
-    filter: drop-shadow(0 0 6px rgba(197, 160, 89, 0.7));
+    filter: drop-shadow(0 0 6px rgba(223, 186, 107, 0.7));
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -142,7 +142,7 @@ nav a {
 .branch-marker-logo > div {
     border-radius: 50%;
     background-color: rgba(0, 0, 0, 0.6) !important;
-    border: 2px solid rgba(197, 160, 89, 0.6);
+    border: 2px solid rgba(223, 186, 107, 0.6);
 }
 
 /* DISEÑO RESPONSIVO */

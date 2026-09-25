@@ -37,7 +37,7 @@
     background: var(--dorado);
     color: #000;
     transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 0 25px rgba(197, 160, 89, 0.4);
+    box-shadow: 0 0 25px rgba(223, 186, 107, 0.4);
 }
 
 .carrusel-arrow-prev {

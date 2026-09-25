@@ -156,7 +156,7 @@ export async function addVehicle(e, isQuickAdd = false) {
     }
 
     const resumenHtml = `
-        <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid rgba(197, 160, 89, 0.2); margin-top: 10px;">
+        <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid rgba(223, 186, 107, 0.2); margin-top: 10px;">
             <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
                 <i class="fas fa-id-card" style="color: var(--dorado);"></i>
                 <span>Patente: <b style="color: #fff;">${formatPlate(patente)}</b></span>

@@ -24,7 +24,7 @@
     display: inline-block;
 }
 
-.role-badge.admin { background: rgba(197, 160, 89, 0.2); color: var(--dorado); border: 1px solid rgba(197, 160, 89, 0.3); }
+.role-badge.admin { background: rgba(223, 186, 107, 0.2); color: var(--dorado); border: 1px solid rgba(223, 186, 107, 0.3); }
 .role-badge.local_admin { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
 .role-badge.staff { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.2); }
 .role-badge.user { background: rgba(255, 255, 255, 0.05); color: #aaa; border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -41,7 +41,7 @@
 }
 
 .badge-pagado, .badge-completada, .badge-active { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.2); }
-.badge-pendiente, .badge-activa { background: rgba(197, 160, 89, 0.1); color: var(--dorado); border: 1px solid rgba(197, 160, 89, 0.2); }
+.badge-pendiente, .badge-activa { background: rgba(223, 186, 107, 0.1); color: var(--dorado); border: 1px solid rgba(223, 186, 107, 0.2); }
 .badge-cancelada, .badge-cancelado, .badge-inactive { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
 .badge-reembolsado { background: rgba(255, 255, 255, 0.05); color: #aaa; border: 1px solid rgba(255, 255, 255, 0.1); }
 
@@ -59,7 +59,7 @@
     white-space: nowrap;
 }
 
-.badge-warning { background: rgba(197, 160, 89, 0.1); color: var(--dorado); border: 1px solid rgba(197, 160, 89, 0.25); }
+.badge-warning { background: rgba(223, 186, 107, 0.1); color: var(--dorado); border: 1px solid rgba(223, 186, 107, 0.25); }
 .badge-info    { background: rgba(59, 130, 246, 0.1); color: var(--info);   border: 1px solid rgba(59, 130, 246, 0.25); }
 .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.25); }
 .badge-outline { background: transparent; color: #aaa; border: 1px solid rgba(255, 255, 255, 0.15); }

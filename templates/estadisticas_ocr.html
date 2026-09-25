@@ -24,7 +24,7 @@
     .ocr-hero-card {
         background: rgba(17, 20, 36, 0.7);
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(197, 160, 89, 0.2);
+        border: 1px solid rgba(223, 186, 107, 0.2);
         border-radius: 16px;
         padding: 25px 30px;
         margin-bottom: 25px;
@@ -56,7 +56,7 @@
 
     .ocr-kpi-card:hover {
         transform: translateY(-2px);
-        border-color: rgba(197, 160, 89, 0.4);
+        border-color: rgba(223, 186, 107, 0.4);
     }
 
     .ocr-kpi-label {
@@ -129,7 +129,7 @@
     }
 
     .ocr-table tr:hover td {
-        background: rgba(197, 160, 89, 0.04);
+        background: rgba(223, 186, 107, 0.04);
     }
 
     .perf-badge {
@@ -203,7 +203,7 @@
         transform: translateX(-50%) translateY(-4px);
         background: #0d111a;
         color: #f3f4f6;
-        border: 1px solid var(--dorado, #c5a059);
+        border: 1px solid var(--dorado, var(--dorado));
         padding: 6px 12px;
         border-radius: 8px;
         font-size: 0.68rem;
@@ -211,7 +211,7 @@
         letter-spacing: 0.5px;
         white-space: nowrap;
         text-transform: uppercase;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 10px rgba(197, 160, 89, 0.25);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 10px rgba(223, 186, 107, 0.25);
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -227,7 +227,7 @@
         transform: translateX(-50%);
         border-width: 5px;
         border-style: solid;
-        border-color: transparent transparent var(--dorado, #c5a059) transparent;
+        border-color: transparent transparent var(--dorado, var(--dorado)) transparent;
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -261,7 +261,7 @@
         transform: translateX(-50%) translateY(4px);
         background: #0d111a;
         color: #f3f4f6;
-        border: 1px solid var(--dorado, #c5a059);
+        border: 1px solid var(--dorado, var(--dorado));
         padding: 6px 12px;
         border-radius: 8px;
         font-size: 0.68rem;
@@ -269,7 +269,7 @@
         letter-spacing: 0.5px;
         white-space: nowrap;
         text-transform: uppercase;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 10px rgba(197, 160, 89, 0.25);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 10px rgba(223, 186, 107, 0.25);
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -285,7 +285,7 @@
         transform: translateX(-50%);
         border-width: 5px;
         border-style: solid;
-        border-color: var(--dorado, #c5a059) transparent transparent transparent;
+        border-color: var(--dorado, var(--dorado)) transparent transparent transparent;
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -388,7 +388,7 @@
     <div class="ocr-hero-card">
         <div>
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(197, 160, 89, 0.15); display: flex; align-items: center; justify-content: center;">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(223, 186, 107, 0.15); display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-microchip" style="color: var(--dorado); font-size: 1.2rem;"></i>
                 </div>
                 <h1 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.5px;">ESTADÍSTICAS OCR & ALPR</h1>
@@ -473,7 +473,7 @@
                 <i class="fas fa-chart-line text-dorado"></i> CURVA DE LATENCIA OCR
             </h3>
             <div class="ocr-chart-legend">
-                <span><span class="dot" style="background:#C5A059;"></span>Tiempo OCR</span>
+                <span><span class="dot" style="background:var(--dorado);"></span>Tiempo OCR</span>
                 <span><span class="dot" style="background:#38bdf8;"></span>Promedio</span>
                 <span><span class="dot" style="background:#ef4444;"></span>Máximo</span>
                 <span><span class="dot" style="background:#10b981;"></span>Mínimo</span>

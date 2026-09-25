@@ -156,7 +156,7 @@
     color: #fff !important;
     border-radius: 18px !important;
     padding: 0 !important;
-    border: 1px solid rgba(197, 160, 89, 0.3) !important;
+    border: 1px solid rgba(223, 186, 107, 0.3) !important;
     box-shadow: 0 15px 45px rgba(0,0,0,0.6) !important;
 }
 
@@ -167,7 +167,7 @@
 
 .leaflet-popup-tip {
     background: #0a0a0a !important;
-    border: 1px solid rgba(197, 160, 89, 0.3) !important;
+    border: 1px solid rgba(223, 186, 107, 0.3) !important;
 }
 
 .leaflet-popup-close-button {
@@ -189,7 +189,7 @@
 
 .leaflet-popup-close-button:hover {
     color: #fff !important;
-    background: rgba(197, 160, 89, 0.4) !important;
+    background: rgba(223, 186, 107, 0.4) !important;
 }
 
 /* LISTA DE SUCURSALES (2 COLUMNAS LOGO-CENTRIC) */
@@ -207,7 +207,7 @@
 
 .branch-item-modern {
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(197, 160, 89, 0.1);
+    border: 1px solid rgba(223, 186, 107, 0.1);
     border-radius: 20px;
     display: grid;
     grid-template-columns: 140px 1fr 60px;
@@ -217,7 +217,7 @@
 }
 
 .branch-item-modern:hover {
-    background: rgba(197, 160, 89, 0.04);
+    background: rgba(223, 186, 107, 0.04);
     border-color: var(--dorado);
     transform: translateY(-5px);
 }
@@ -316,7 +316,7 @@
 .btn-minimal-locate {
     width: 45px;
     height: 45px;
-    border: 1px solid rgba(197, 160, 89, 0.3);
+    border: 1px solid rgba(223, 186, 107, 0.3);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -381,7 +381,7 @@
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.85), 0 0 15px rgba(197, 160, 89, 0.25) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.85), 0 0 15px rgba(223, 186, 107, 0.25) !important;
     transition: all 0.3s ease !important;
 }
 
@@ -440,7 +440,7 @@
     background: #090b0e !important;
     border: 2px solid var(--dorado) !important;
     border-radius: 14px !important;
-    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.98), 0 0 25px rgba(197, 160, 89, 0.35) !important;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.98), 0 0 25px rgba(223, 186, 107, 0.35) !important;
     padding: 8px !important;
     z-index: 2000 !important;
 }
@@ -455,7 +455,7 @@
     display: flex !important;
     flex-direction: column !important;
     gap: 4px !important;
-    border: 1px solid rgba(197, 160, 89, 0.25) !important;
+    border: 1px solid rgba(223, 186, 107, 0.25) !important;
     margin-bottom: 6px !important;
 }
 
@@ -464,7 +464,7 @@
 }
 
 .locality-result-item:hover {
-    background: rgba(197, 160, 89, 0.25) !important;
+    background: rgba(223, 186, 107, 0.25) !important;
     border-color: var(--dorado) !important;
     transform: translateX(3px) !important;
 }

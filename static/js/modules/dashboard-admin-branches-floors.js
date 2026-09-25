@@ -36,7 +36,7 @@ export function showBranchFloors(id) {
     const pbCapReservas = (b.capacidad_reservas_total || 0) - floorsCapReservas;
 
     let rows = `
-        <tr class="row-premium" style="background: rgba(197,160,89,0.05);">
+        <tr class="row-premium" style="background: rgba(223, 186, 107,0.05);">
             <td>
                 <div class="flex-col">
                     <b class="text-dorado">PLANTA BAJA (PB)</b>

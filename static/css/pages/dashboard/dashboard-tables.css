@@ -36,13 +36,13 @@
 }
 
 .badge-warning-light {
-    background: rgba(197, 160, 89, 0.1);
+    background: rgba(223, 186, 107, 0.1);
     color: var(--dorado);
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 0.65rem;
     font-weight: 800;
-    border: 1px solid rgba(197, 160, 89, 0.2);
+    border: 1px solid rgba(223, 186, 107, 0.2);
     display: inline-block;
 }
 
@@ -95,7 +95,7 @@
     cursor: pointer;
     outline: none;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C5A059'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23dfba6b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
     background-size: 14px;
@@ -241,15 +241,15 @@
 }
 
 .icon-option:hover {
-    background: rgba(197, 160, 89, 0.1);
+    background: rgba(223, 186, 107, 0.1);
     color: var(--dorado);
-    border-color: rgba(197, 160, 89, 0.3);
+    border-color: rgba(223, 186, 107, 0.3);
 }
 
 .icon-option.active {
     background: var(--dorado);
     color: #000;
-    box-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+    box-shadow: 0 0 15px rgba(223, 186, 107, 0.4);
 }
 
 @media (max-width: 400px) {
@@ -331,7 +331,7 @@ tr:hover .btn-delete-promo {
 
 /* TICKETS DESTACADOS (PENDIENTES O SIN LEER) */
 .ticket-unread-tag {
-    background: linear-gradient(135deg, rgba(197, 160, 89, 0.3), rgba(197, 160, 89, 0.15));
+    background: linear-gradient(135deg, rgba(223, 186, 107, 0.3), rgba(223, 186, 107, 0.15));
     border: 1px solid var(--dorado);
     color: var(--dorado);
     font-size: 0.65rem;
@@ -342,7 +342,7 @@ tr:hover .btn-delete-promo {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    box-shadow: 0 0 10px rgba(197, 160, 89, 0.2);
+    box-shadow: 0 0 10px rgba(223, 186, 107, 0.2);
 }
 
 .btn-gold-glow {
@@ -350,13 +350,13 @@ tr:hover .btn-delete-promo {
     color: #000 !important;
     font-weight: 800 !important;
     border: none !important;
-    box-shadow: 0 0 12px rgba(197, 160, 89, 0.4) !important;
+    box-shadow: 0 0 12px rgba(223, 186, 107, 0.4) !important;
 }
 
 .btn-gold-glow:hover {
     background: #d4af37 !important;
     transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(197, 160, 89, 0.6) !important;
+    box-shadow: 0 0 20px rgba(223, 186, 107, 0.6) !important;
 }
 
 /* CHAT DEL TICKET DE SOPORTE */
@@ -432,8 +432,8 @@ tr:hover .btn-delete-promo {
 
 #modal-ticket-answer .textarea-premium:focus {
     border-color: var(--dorado);
-    background: rgba(197, 160, 89, 0.05);
-    box-shadow: 0 0 20px rgba(197, 160, 89, 0.1);
+    background: rgba(223, 186, 107, 0.05);
+    box-shadow: 0 0 20px rgba(223, 186, 107, 0.1);
 }
 
 #modal-ticket-answer .ticket-chat {
@@ -485,8 +485,8 @@ tr:hover .btn-delete-promo {
 }
 
 .ticket-msg-bubble {
-    background: rgba(197, 160, 89, 0.06);
-    border: 1px solid rgba(197, 160, 89, 0.25);
+    background: rgba(223, 186, 107, 0.06);
+    border: 1px solid rgba(223, 186, 107, 0.25);
     border-radius: 12px;
     padding: 8px 12px;
 }

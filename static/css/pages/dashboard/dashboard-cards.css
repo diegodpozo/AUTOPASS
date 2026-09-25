@@ -22,7 +22,7 @@
 
 .stat-card-mini:hover {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(197, 160, 89, 0.3);
+    border-color: rgba(223, 186, 107, 0.3);
 }
 
 .stat-card-mini .stat-header {
@@ -259,9 +259,9 @@
 }
 
 .channel-header.web-channel {
-    background: linear-gradient(90deg, rgba(197, 160, 89, 0.1) 0%, transparent 100%);
+    background: linear-gradient(90deg, rgba(223, 186, 107, 0.1) 0%, transparent 100%);
     color: var(--dorado);
-    border-bottom: 1px solid rgba(197, 160, 89, 0.15);
+    border-bottom: 1px solid rgba(223, 186, 107, 0.15);
 }
 
 .channel-body {
@@ -335,8 +335,8 @@
 
 .method-tab.active {
     color: var(--dorado);
-    background: rgba(197, 160, 89, 0.12);
-    border-color: rgba(197, 160, 89, 0.4);
+    background: rgba(223, 186, 107, 0.12);
+    border-color: rgba(223, 186, 107, 0.4);
 }
 
 .method-panels {

@@ -29,15 +29,15 @@
 .header-icon-box {
     width: 48px;
     height: 48px;
-    background: rgba(197, 160, 89, 0.1);
-    border: 1px solid rgba(197, 160, 89, 0.2);
+    background: rgba(223, 186, 107, 0.1);
+    border: 1px solid rgba(223, 186, 107, 0.2);
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--dorado);
     font-size: 1.3rem;
-    box-shadow: 0 0 20px rgba(197, 160, 89, 0.1);
+    box-shadow: 0 0 20px rgba(223, 186, 107, 0.1);
 }
 
 .header-icon-box.sm {
@@ -159,7 +159,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
+    box-shadow: 0 4px 15px rgba(223, 186, 107, 0.3);
 }
 
 @keyframes pulseStatus {

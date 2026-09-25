@@ -57,8 +57,8 @@ input::-webkit-calendar-picker-indicator:hover {
 
 .input-premium:focus {
     border-color: var(--dorado);
-    background: rgba(197, 160, 89, 0.05);
-    box-shadow: 0 0 20px rgba(197, 160, 89, 0.1);
+    background: rgba(223, 186, 107, 0.05);
+    box-shadow: 0 0 20px rgba(223, 186, 107, 0.1);
     outline: none;
 }
 
@@ -76,7 +76,7 @@ input::-webkit-calendar-picker-indicator:hover {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C5A059'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23dfba6b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 15px center;
     background-size: 16px;
@@ -84,7 +84,7 @@ input::-webkit-calendar-picker-indicator:hover {
 
 .select-premium:focus {
     border-color: var(--dorado);
-    background: rgba(197, 160, 89, 0.05);
+    background: rgba(223, 186, 107, 0.05);
 }
 
 /* Fix para opciones de select en temas oscuros */
@@ -251,7 +251,7 @@ select option {
 }
 
 .num-btn:hover {
-    background: rgba(197, 160, 89, 0.15);
+    background: rgba(223, 186, 107, 0.15);
 }
 
 /* --- MODIFICADORES PREMIUM --- */

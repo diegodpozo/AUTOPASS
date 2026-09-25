@@ -227,7 +227,7 @@ export function renderLogsTable() {
         const statusBadge = log.pago_confirmado 
             ? `<span class="badge badge-success-light">PAGADO</span>` 
             : log.tipo_evento === 'SALIDA'
-                ? `<span class="badge" style="background: rgba(197,160,89,0.15); color: var(--dorado); border: 1px solid rgba(197,160,89,0.3); font-size:0.65rem; font-weight:800; padding:4px 10px; border-radius:8px; letter-spacing:0.5px;">CORTESÍA</span>`
+                ? `<span class="badge" style="background: rgba(223, 186, 107,0.15); color: var(--dorado); border: 1px solid rgba(223, 186, 107,0.3); font-size:0.65rem; font-weight:800; padding:4px 10px; border-radius:8px; letter-spacing:0.5px;">CORTESÍA</span>`
                 : `<span class="badge badge-danger-light">PENDIENTE</span>`;
 
         return `

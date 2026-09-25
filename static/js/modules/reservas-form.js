@@ -579,7 +579,7 @@ export async function createReservation(e) {
     const hasDiscount = discountAmount > 0;
 
     const totalBlock = hasDiscount ? `
-            <div style="padding-top: 25px; border-top: 2px solid rgba(197,160,89,0.2);">
+            <div style="padding-top: 25px; border-top: 2px solid rgba(223, 186, 107,0.2);">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
                     <b style="color: #777; font-size: 1.15rem; text-decoration: line-through; font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
@@ -588,15 +588,15 @@ export async function createReservation(e) {
                     <span style="color: #c084fc; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px;"><i class="fas fa-percent"></i> DESCUENTO ${discountValue}%${discountSucursal ? ` · ${discountSucursal}` : ''}</span>
                     <b style="color: #c084fc; font-size: 1rem; font-family: 'Montserrat'; white-space: nowrap;">- $ ${formatNum(discountAmount)}</b>
                 </div>
-                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(197,160,89,0.35); display: flex; justify-content: space-between; align-items: center;">
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(223, 186, 107,0.35); display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL A PAGAR</span>
-                    <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(197,160,89,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalFinal)}</b>
+                    <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(223, 186, 107,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalFinal)}</b>
                 </div>
                 <p style="margin: 10px 0 0 auto; text-align: right; color: #888; font-size: 0.7rem; max-width: 330px;"><i class="fas fa-bolt" style="color: var(--dorado); margin-right: 4px;"></i>El descuento se aplica automáticamente al abonar la reserva.</p>
             </div>` : `
-            <div style="padding-top: 25px; border-top: 2px solid rgba(197,160,89,0.2); display: flex; justify-content: space-between; align-items: center;">
+            <div style="padding-top: 25px; border-top: 2px solid rgba(223, 186, 107,0.2); display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: 900; letter-spacing: 1.5px; color: #fff; font-size: 0.9rem; text-transform: uppercase;">TOTAL</span>
-                <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(197,160,89,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
+                <b style="color: var(--dorado); font-size: 1.8rem; text-shadow: 0 0 15px rgba(223, 186, 107,0.3); font-family: 'Montserrat'; white-space: nowrap;">$ ${formatNum(totalOriginal)}</b>
             </div>`;
 
     const resumenHtml = `

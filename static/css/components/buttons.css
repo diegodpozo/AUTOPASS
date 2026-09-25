@@ -22,7 +22,7 @@
 .btn--primary:hover {
     background: var(--dorado-dark);
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
+    box-shadow: 0 10px 20px rgba(223, 186, 107, 0.3);
 }
 
 .btn--outline {
@@ -70,12 +70,12 @@
     justify-content: center;
     gap: 10px;
     font-size: 0.85rem;
-    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
+    box-shadow: 0 4px 15px rgba(223, 186, 107, 0.2);
 }
 
 .btn--premium:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(197, 160, 89, 0.4);
+    box-shadow: 0 8px 25px rgba(223, 186, 107, 0.4);
     filter: brightness(1.1);
 }
 
@@ -134,11 +134,11 @@
 
 .btn-action-mini:hover,
 .btn--mini:hover {
-    background: rgba(197, 160, 89, 0.15);
+    background: rgba(223, 186, 107, 0.15);
     border-color: var(--dorado);
     color: var(--dorado);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(197, 160, 89, 0.2);
+    box-shadow: 0 4px 12px rgba(223, 186, 107, 0.2);
 }
 
 .btn-action-mini.success,

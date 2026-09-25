@@ -49,7 +49,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
         const div = L.DomUtil.create('div', 'leaflet-control-geolocation');
         div.innerHTML = `
             <button title="Buscar sucursal más cercana" 
-                    style="background: #000; border: 1.5px solid #C5A059; color: #C5A059; 
+                    style="background: #000; border: 1.5px solid #dfba6b; color: #dfba6b; 
                            width: 34px; height: 34px; cursor: pointer; display: flex; 
                            align-items: center; justify-content: center; 
                            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
@@ -59,11 +59,11 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
         
         div.onmouseover = () => { 
             const btn = div.querySelector('button');
-            if (btn) { btn.style.background = '#C5A059'; btn.style.color = '#000'; }
+            if (btn) { btn.style.background = '#dfba6b'; btn.style.color = '#000'; }
         };
         div.onmouseout = () => { 
             const btn = div.querySelector('button');
-            if (btn) { btn.style.background = '#111'; btn.style.color = '#C5A059'; }
+            if (btn) { btn.style.background = '#111'; btn.style.color = '#dfba6b'; }
         };
         
         div.onclick = function(e) {
@@ -81,7 +81,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
             const div = L.DomUtil.create('div', 'leaflet-control-fullscreen');
             div.innerHTML = `
                 <button title="Ver mapa completo" 
-                        style="background: #000; border: 1.5px solid #C5A059; color: #C5A059; 
+                        style="background: #000; border: 1.5px solid #dfba6b; color: #dfba6b; 
                                width: 34px; height: 34px; cursor: pointer; display: flex; 
                                align-items: center; justify-content: center; 
                                border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
@@ -90,11 +90,11 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                 </button>`;
             div.onmouseover = () => {
                 const btn = div.querySelector('button');
-                if (btn) { btn.style.background = '#C5A059'; btn.style.color = '#000'; }
+                if (btn) { btn.style.background = '#dfba6b'; btn.style.color = '#000'; }
             };
             div.onmouseout = () => {
                 const btn = div.querySelector('button');
-                if (btn) { btn.style.background = '#111'; btn.style.color = '#C5A059'; }
+                if (btn) { btn.style.background = '#111'; btn.style.color = '#dfba6b'; }
             };
             div.onclick = function(e) {
                 e.stopPropagation();
@@ -124,7 +124,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
             newMapInstance.on('zoomend', () => {
                 const z = newMapInstance.getZoom();
                 branchMarkers.forEach(m => {
-                    const col = m.options.color || '#C5A059';
+                    const col = m.options.color || '#dfba6b';
                     m.setIcon(makeBranchIcon(z, col));
                 });
             });
@@ -147,17 +147,17 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                 const popupContent = `
                     <div style="text-align: center; width: 250px; padding: 14px 16px; background: #0a0a0a; border-radius: 18px; box-sizing: border-box;">
                         <!-- LOGO Y TITULO -->
-                        <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 52px; height: 52px; border-radius: 50%; margin-bottom: 8px; border: 2px solid #C5A059; padding: 2px; background: #000; object-fit: cover;">
+                        <img src="${p.logo_url || '/static/images/logo.png'}" style="width: 52px; height: 52px; border-radius: 50%; margin-bottom: 8px; border: 2px solid #dfba6b; padding: 2px; background: #000; object-fit: cover;">
                         <br><b style="font-size: 1.08rem; color: #fff; font-family: 'Montserrat', sans-serif; letter-spacing: 0.4px; line-height: 1.3;">${p.nombre}</b>
                         <br><span style="color: #888; font-size: 0.78rem; display: block; margin-top: 3px; text-transform: capitalize; line-height: 1.3;">${formattedAddr}</span>
                         <span style="color: var(--dorado); font-size: 0.75rem; display: inline-block; margin-top: 5px; margin-bottom: 10px; font-weight: 600;"><i class="fas fa-clock" style="margin-right: 5px;"></i>${horarioText}</span>
                         
                         <!-- BOTON RESERVAR -->
                         <a href="javascript:void(0)" onclick="irAReserva('${p.nombre}')" 
-                           style="background: #C5A059; color: #000; padding: 10px 18px; font-size: 0.72rem; 
+                           style="background: #dfba6b; color: #000; padding: 10px 18px; font-size: 0.72rem; 
                                   font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
                                   width: 100%; display: block; border-radius: 10px;
-                                  text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.25); box-sizing: border-box;">
+                                  text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(223, 186, 107, 0.25); box-sizing: border-box;">
                            RESERVÁ AQUÍ
                         </a>
 
@@ -223,8 +223,8 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
             searchCtrl.onAdd = function() {
                 const div = L.DomUtil.create('div', 'leaflet-control-locality-search');
                 div.innerHTML = `
-                    <div class="locality-search-box" style="background: #090b0f !important; border: 2px solid #C5A059 !important; border-radius: 12px; padding: 0 12px; height: 38px; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.9); box-sizing: border-box;">
-                        <i class="fas fa-search search-icon" style="color: #C5A059 !important; font-size: 0.9rem;"></i>
+                    <div class="locality-search-box" style="background: #090b0f !important; border: 2px solid #dfba6b !important; border-radius: 12px; padding: 0 12px; height: 38px; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.9); box-sizing: border-box;">
+                        <i class="fas fa-search search-icon" style="color: #dfba6b !important; font-size: 0.9rem;"></i>
                         <input type="text" 
                                id="locality-search-input-${containerId}" 
                                placeholder="Escribí localidad o sucursal..." 
@@ -234,7 +234,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <div id="locality-results-${containerId}" class="locality-results-dropdown" style="display:none; position: absolute; top: 46px; left: 0; width: 100%; max-height: 280px; overflow-y: auto; background: #090b0e !important; border: 2px solid #C5A059 !important; border-radius: 14px; box-shadow: 0 15px 45px rgba(0,0,0,0.98), 0 0 25px rgba(197,160,89,0.35); padding: 8px; z-index: 2000; box-sizing: border-box;"></div>
+                    <div id="locality-results-${containerId}" class="locality-results-dropdown" style="display:none; position: absolute; top: 46px; left: 0; width: 100%; max-height: 280px; overflow-y: auto; background: #090b0e !important; border: 2px solid #dfba6b !important; border-radius: 14px; box-shadow: 0 15px 45px rgba(0,0,0,0.98), 0 0 25px rgba(223, 186, 107,0.35); padding: 8px; z-index: 2000; box-sizing: border-box;"></div>
                 `;
 
                 div.onclick = (e) => e.stopPropagation();
@@ -282,13 +282,13 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                                     const formattedAddr = formatAddress(b.direccion);
                                     return `
                                         <div class="locality-result-item" data-lat="${b.latitude}" data-lng="${b.longitude}" data-nombre="${b.nombre}"
-                                             style="background: #131622 !important; padding: 10px 12px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; border: 1px solid rgba(197, 160, 89, 0.3) !important; margin-bottom: 6px; transition: all 0.2s ease;">
+                                             style="background: #131622 !important; padding: 10px 12px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; border: 1px solid rgba(223, 186, 107, 0.3) !important; margin-bottom: 6px; transition: all 0.2s ease;">
                                             <div class="result-item-header" style="display: flex; align-items: center; gap: 8px; color: #ffffff !important; font-size: 0.88rem; font-weight: 800;">
-                                                <i class="fas fa-building-circle-check" style="color: #C5A059 !important; font-size: 0.85rem;"></i>
+                                                <i class="fas fa-building-circle-check" style="color: #dfba6b !important; font-size: 0.85rem;"></i>
                                                 <strong style="color: #ffffff !important;">${b.nombre}</strong>
                                             </div>
                                             <div class="result-item-address" style="font-size: 0.78rem; color: #e2e8f0 !important; display: flex; align-items: center; gap: 6px; font-weight: 500;">
-                                                <i class="fas fa-location-dot" style="color: #C5A059 !important; font-size: 0.72rem;"></i> ${formattedAddr}
+                                                <i class="fas fa-location-dot" style="color: #dfba6b !important; font-size: 0.72rem;"></i> ${formattedAddr}
                                             </div>
                                         </div>
                                     `;
@@ -297,12 +297,12 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                                 // ADJUNTAR EVENTOS DE HOVER Y CLICK A CADA ITEM DE RESULTADO
                                 dropdownEl.querySelectorAll('.locality-result-item').forEach(item => {
                                     item.onmouseenter = () => {
-                                        item.style.background = 'rgba(197, 160, 89, 0.3) !important';
-                                        item.style.borderColor = '#C5A059 !important';
+                                        item.style.background = 'rgba(223, 186, 107, 0.3) !important';
+                                        item.style.borderColor = '#dfba6b !important';
                                     };
                                     item.onmouseleave = () => {
                                         item.style.background = '#131622 !important';
-                                        item.style.borderColor = 'rgba(197, 160, 89, 0.3) !important';
+                                        item.style.borderColor = 'rgba(223, 186, 107, 0.3) !important';
                                     };
 
                                     item.onclick = (e) => {

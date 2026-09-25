@@ -107,7 +107,7 @@
     background: var(--dorado);
     color: var(--negro);
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
+    box-shadow: 0 10px 20px rgba(223, 186, 107, 0.3);
     border-color: var(--dorado);
 }
 
@@ -144,7 +144,7 @@
 
 .app-btn:hover {
     border-color: var(--dorado);
-    background: rgba(197, 160, 89, 0.05);
+    background: rgba(223, 186, 107, 0.05);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     transform: translateX(5px);
 }

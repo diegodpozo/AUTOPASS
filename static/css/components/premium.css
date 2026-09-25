@@ -11,7 +11,7 @@
 
 .action-btn-premium {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(197, 160, 89, 0.1);
+    border: 1px solid rgba(223, 186, 107, 0.1);
     border-radius: 16px;
     padding: 18px 15px;
     display: flex;
@@ -24,7 +24,7 @@
 }
 
 .action-btn-premium:hover {
-    background: rgba(197, 160, 89, 0.05);
+    background: rgba(223, 186, 107, 0.05);
     border-color: var(--dorado);
     transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
@@ -61,7 +61,7 @@
 .empty-icon-box {
     width: 80px;
     height: 80px;
-    background: rgba(197, 160, 89, 0.05);
+    background: rgba(223, 186, 107, 0.05);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -77,7 +77,7 @@
 }
 
 .empty-icon-box:hover {
-    background: rgba(197, 160, 89, 0.18);
+    background: rgba(223, 186, 107, 0.18);
     border: 1px solid var(--dorado);
     transform: translateY(-2px);
 }

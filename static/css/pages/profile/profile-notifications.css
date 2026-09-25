@@ -39,17 +39,17 @@
 }
 
 .notif-chip:hover {
-    background: rgba(197, 160, 89, 0.12);
-    border-color: rgba(197, 160, 89, 0.4);
+    background: rgba(223, 186, 107, 0.12);
+    border-color: rgba(223, 186, 107, 0.4);
     color: #fff;
     transform: translateY(-1px);
 }
 
 .notif-chip.active {
-    background: linear-gradient(135deg, rgba(197, 160, 89, 0.25), rgba(197, 160, 89, 0.1));
+    background: linear-gradient(135deg, rgba(223, 186, 107, 0.25), rgba(223, 186, 107, 0.1));
     border-color: var(--dorado);
     color: var(--dorado);
-    box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
+    box-shadow: 0 0 15px rgba(223, 186, 107, 0.2);
     font-weight: 700;
 }
 
@@ -112,7 +112,7 @@
 
 .notif-item:hover {
     background: rgba(25, 25, 25, 0.9);
-    border-color: rgba(197, 160, 89, 0.3);
+    border-color: rgba(223, 186, 107, 0.3);
     transform: translateY(-2px);
     box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
 }
@@ -120,7 +120,7 @@
 /* --- ESTADOS NO LEIDO --- */
 .notif-item.notif-unread {
     background: rgba(30, 26, 18, 0.75);
-    border-color: rgba(197, 160, 89, 0.35);
+    border-color: rgba(223, 186, 107, 0.35);
     cursor: pointer;
 }
 
@@ -133,8 +133,8 @@
 }
 
 .btn-notif-mark-read {
-    background: rgba(197, 160, 89, 0.12);
-    border: 1px solid rgba(197, 160, 89, 0.35);
+    background: rgba(223, 186, 107, 0.12);
+    border: 1px solid rgba(223, 186, 107, 0.35);
     color: var(--dorado);
     padding: 8px 18px;
     border-radius: 30px;
@@ -152,7 +152,7 @@
     background: var(--dorado);
     border-color: var(--dorado);
     color: #000;
-    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
+    box-shadow: 0 4px 15px rgba(223, 186, 107, 0.4);
     transform: translateY(-1px);
 }
 
@@ -218,7 +218,7 @@
 .notif-icon-box.notif-cat-warning { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #f59e0b; }
 .notif-icon-box.notif-cat-danger  { background: rgba(239, 68, 68, 0.15);  border-color: rgba(239, 68, 68, 0.3);  color: #ef4444; }
 .notif-icon-box.notif-cat-support { background: rgba(6, 182, 212, 0.15);  border-color: rgba(6, 182, 212, 0.3);  color: #06b6d4; }
-.notif-icon-box.notif-cat-gold    { background: rgba(197, 160, 89, 0.15); border-color: rgba(197, 160, 89, 0.3); color: var(--dorado); }
+.notif-icon-box.notif-cat-gold    { background: rgba(223, 186, 107, 0.15); border-color: rgba(223, 186, 107, 0.3); color: var(--dorado); }
 
 /* --- CONTENIDO --- */
 .notif-content {
@@ -298,9 +298,9 @@
 }
 
 .notif-btn-balance {
-    background: rgba(197, 160, 89, 0.18);
+    background: rgba(223, 186, 107, 0.18);
     color: var(--dorado);
-    border: 1px solid rgba(197, 160, 89, 0.35);
+    border: 1px solid rgba(223, 186, 107, 0.35);
 }
 .notif-btn-balance:hover {
     background: var(--dorado);
@@ -325,7 +325,7 @@
 .notif-btn-voucher:hover {
     background: var(--dorado);
     color: #000;
-    box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4);
+    box-shadow: 0 4px 14px rgba(223, 186, 107, 0.4);
 }
 
 .notif-btn-profile {
@@ -388,9 +388,9 @@
 }
 
 @keyframes pulseBadge {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.6); }
-    70% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(197, 160, 89, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(197, 160, 89, 0); }
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(223, 186, 107, 0.6); }
+    70% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(223, 186, 107, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(223, 186, 107, 0); }
 }
 
 /* --- BANNER ALERTA FLOTANTE EN VIVO --- */
@@ -404,7 +404,7 @@
     border: 1px solid var(--dorado);
     border-radius: 16px;
     padding: 16px 20px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(197, 160, 89, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(223, 186, 107, 0.2);
     opacity: 0;
     transform: translateY(30px) scale(0.95);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -426,7 +426,7 @@
 .notif-alert-icon {
     width: 40px;
     height: 40px;
-    background: rgba(197, 160, 89, 0.15);
+    background: rgba(223, 186, 107, 0.15);
     border: 1px solid var(--dorado);
     border-radius: 12px;
     display: flex;

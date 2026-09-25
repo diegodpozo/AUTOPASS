@@ -5,7 +5,7 @@
 /* NAVEGACIÓN Y BOTONES SUB-TABS */
 .btn-tab-mini {
     background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(197,160,89,0.2);
+    border: 1px solid rgba(223, 186, 107,0.2);
     color: #aaa;
     padding: 8px 20px;
     border-radius: 8px;
@@ -17,20 +17,20 @@
 }
 
 .btn-tab-mini:hover {
-    background: rgba(197,160,89,0.1);
+    background: rgba(223, 186, 107,0.1);
     color: #fff;
 }
 
 .btn-tab-mini.active {
     background: var(--dorado);
     color: #000;
-    box-shadow: 0 0 15px rgba(197,160,89,0.3);
+    box-shadow: 0 0 15px rgba(223, 186, 107,0.3);
     border-color: var(--dorado);
 }
 
 .btn-tab-sub {
     background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(197,160,89,0.2);
+    border: 1px solid rgba(223, 186, 107,0.2);
     color: #aaa;
     padding: 8px 25px;
     border-radius: 8px;
@@ -43,14 +43,14 @@
 }
 
 .btn-tab-sub:hover {
-    background: rgba(197,160,89,0.1);
+    background: rgba(223, 186, 107,0.1);
     color: #fff;
 }
 
 .btn-tab-sub.active {
     background: var(--dorado);
     color: #000;
-    box-shadow: 0 0 15px rgba(197,160,89,0.3);
+    box-shadow: 0 0 15px rgba(223, 186, 107,0.3);
     border-color: var(--dorado);
 }
 
@@ -134,7 +134,7 @@
 
 .level-block:hover {
     background: rgba(255,255,255,0.04);
-    border-color: rgba(197,160,89,0.2);
+    border-color: rgba(223, 186, 107,0.2);
     transform: scale(1.01);
 }
 
@@ -149,7 +149,7 @@
 }
 
 .level-block.pb .level-indicator {
-    background: linear-gradient(135deg, rgba(197,160,89,0.2) 0%, rgba(0,0,0,0.5) 100%);
+    background: linear-gradient(135deg, rgba(223, 186, 107,0.2) 0%, rgba(0,0,0,0.5) 100%);
 }
 
 .level-code {
@@ -238,7 +238,7 @@
 
 .stat-val-input:focus {
     border-color: var(--dorado);
-    box-shadow: 0 0 10px rgba(197,160,89,0.2);
+    box-shadow: 0 0 10px rgba(223, 186, 107,0.2);
 }
 
 .stat-unit {
@@ -258,12 +258,12 @@
 
 .level-block.editing {
     border-color: var(--dorado);
-    background: rgba(197,160,89,0.03);
+    background: rgba(223, 186, 107,0.03);
 }
 
 .rate-group.editing {
-    background: rgba(197,160,89,0.02);
-    border: 1px solid rgba(197,160,89,0.2);
+    background: rgba(223, 186, 107,0.02);
+    border: 1px solid rgba(223, 186, 107,0.2);
     border-radius: 12px;
     padding: 15px;
     transition: all 0.3s ease;
@@ -330,8 +330,8 @@
 }
 
 .camera-card-premium:hover {
-    background: rgba(197, 160, 89, 0.01);
-    border-color: rgba(197, 160, 89, 0.35);
+    background: rgba(223, 186, 107, 0.01);
+    border-color: rgba(223, 186, 107, 0.35);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     transform: translateY(-2px);
 }
@@ -396,8 +396,8 @@
 
 .level-block.pb {
     grid-template-columns: 1fr auto;
-    background: rgba(197, 160, 89, 0.03);
-    border: 1px solid rgba(197, 160, 89, 0.15);
+    background: rgba(223, 186, 107, 0.03);
+    border: 1px solid rgba(223, 186, 107, 0.15);
 }
 
 .rate-group.editing .rates-form-grid .form-group-premium {

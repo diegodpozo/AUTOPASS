@@ -27,14 +27,14 @@ function buildOCRDatasets(pts) {
         {
             label: 'Tiempo OCR',
             data: pts,
-            borderColor: '#C5A059',
-            backgroundColor: 'rgba(197, 160, 89, 0.12)',
+            borderColor: '#dfba6b',
+            backgroundColor: 'rgba(223, 186, 107, 0.12)',
             borderWidth: 2.5,
             fill: true,
             tension: 0.35,
             pointRadius: 3,
             pointHoverRadius: 6,
-            pointBackgroundColor: '#C5A059',
+            pointBackgroundColor: '#dfba6b',
             pointBorderColor: '#000',
             pointBorderWidth: 1.5,
             hitRadius: 30

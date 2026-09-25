@@ -8,8 +8,8 @@ HTML_CONTENT = """<!DOCTYPE html>
     <style>
         @page { size: A4; margin: 15mm; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 20px; text-align: center; }
-        .no-print-bar { background: rgba(197, 160, 89, 0.15); border: 1px solid #C5A059; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-print { background: #C5A059; color: #000; font-weight: bold; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        .no-print-bar { background: rgba(223, 186, 107, 0.15); border: 1px solid #dfba6b; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-print { background: #dfba6b; color: #000; font-weight: bold; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .plates-grid { display: flex; flex-direction: column; gap: 30px; align-items: center; }
         .plate-card { background: #fff; color: #000; border-radius: 12px; padding: 0; width: 420px; height: 180px; box-shadow: 0 8px 25px rgba(0,0,0,0.5); position: relative; overflow: hidden; border: 4px solid #000; display: flex; flex-direction: column; }
         .plate-header { background: #002244; color: #fff; height: 42px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-weight: 800; font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase; }
@@ -26,7 +26,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 <body>
     <div class="no-print-bar">
         <div>
-            <h2 style="margin:0; color:#C5A059;">AUTOPASS - GENERADOR DE PATENTES DE PRUEBA</h2>
+            <h2 style="margin:0; color:#dfba6b;">AUTOPASS - GENERADOR DE PATENTES DE PRUEBA</h2>
             <p style="margin:4px 0 0 0; font-size:0.9rem; color:#ccc;">Hojas de prueba A4 para probar la cámara ALPR con patentes impresas en papel o en pantalla.</p>
         </div>
         <button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR EN PAPEL A4</button>

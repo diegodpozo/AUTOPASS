@@ -209,7 +209,7 @@ function renderTicketMessages(messages) {
         // - los mensajes del SOPORTE/ADMIN van a la IZQUIERDA
         const isMine = !m.is_admin;
         const align = isMine ? 'flex-end' : 'flex-start';
-        const bgColor = isMine ? 'rgba(197, 160, 89, 0.10)' : 'rgba(76, 175, 80, 0.12)';
+        const bgColor = isMine ? 'rgba(223, 186, 107, 0.10)' : 'rgba(76, 175, 80, 0.12)';
         const borderColor = isMine ? 'var(--dorado)' : '#4caf50';
         const borderSide = isMine ? 'border-left' : 'border-right';
         const label = isMine ? 'Vos' : 'Soporte';

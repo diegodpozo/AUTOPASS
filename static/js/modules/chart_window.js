@@ -199,9 +199,9 @@ export class WindowedChart {
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: '#0a0a0a',
-                        titleColor: '#C5A059',
+                        titleColor: '#dfba6b',
                         bodyColor: '#fff',
-                        borderColor: 'rgba(197, 160, 89, 0.3)',
+                        borderColor: 'rgba(223, 186, 107, 0.3)',
                         borderWidth: 1,
                         displayColors: true,
                         boxWidth: 8,
