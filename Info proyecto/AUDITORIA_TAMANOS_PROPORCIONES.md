@@ -12,9 +12,10 @@
 |---:|---|:---:|---|
 | **1** | Tokens volumétricos en `variables.css` | ✅ Aplicada | `--radius-*`, `--control-height-*`, `--z-*`, `--modal-*`. La escala z-index se tokenizó **con los valores reales del sistema** para preservar el orden de apilamiento actual (ver §5). |
 | **2** | Unificación de Modales e Inputs | ✅ Aplicada | Modales tokenizados a `--modal-*` + `--radius-xl` + `max-height/overflow` gobernado; inputs base y variantes unificados a `--control-height-md` / `--radius-md`; suprimido `height: 2.625rem !important`. |
-| **3** | Coherencia en Botones y Badges | ⏳ Pendiente | Requiere decisión de diseño: píldora vs rectangular (ver §2.3). |
+| **3** | Coherencia en Botones y Badges | ✅ Aplicada (decisión: **píldora**) | Se adoptó el lenguaje **píldora** (`--radius-full`) para todos los botones del sistema; badges informativos/rol a `--radius-sm`; píldora reservada a medidores numéricos (saldo/puntos/FAB). Touch target de `.btn--mini` elevado a 40px vía `::before` (WCAG 2.5.5). |
 | **4** | Consolidación de Breakpoints | ⏳ Pendiente | 17 breakpoints actuales aún vigentes (ver §4). |
 
+**Edición v9.34.10:** se completó **Fase 3** con la decisión de diseño **píldora** (ver §5). Botones → `--radius-full`; badges informativos/rol → `--radius-sm`; píldora solo para medidores numéricos; touch target 40px en `.btn--mini`. Pendiente Fase 4 (breakpoints) y la normalización de tarjetas (radios 15/16/30px a `--radius-lg`).
 **Hallazgos extra corregidos durante la Fase 2:**
 - `var(--azul)` y `var(--text)` referenciados en `profile-tour.css:881` y `dashboard-live.css:486` **no estaban definidos** en `variables.css` → reemplazados por `var(--info)` y `var(--text-secondary)`.
 - `z-index` del `.modal` pasó a token respetando el valor real **3000** (la primera propuesta de `2010` habría dejado el modal *debajo* del dropdown del navbar en `2100`, rompiendo el stacking).
@@ -285,15 +286,16 @@ Añadir a `static/css/base/variables.css`:
    - `.help-search-input` (54px) → `var(--control-height-lg)`; `.admin-help-search-input` (46px) → `var(--control-height-md)`; `.input-premium-sm` radios → `--radius-sm`/`--radius-xs`.
    - Suprimido `height: 2.625rem !important;` en `profile-tour.css` (heredó `--control-height-md`).
 
-### Fase 3: Coherencia en Botones y Badges
-1. **Botones:**
-   - Definir si los botones estándar son **píldora** o **rectangulares con radio**:
-     - Si se adopta la píldora: `.btn`, `.btn--sm`, `.btn--premium` deben usar `--radius-full`.
-     - Si se adopta el estilo glassmorphic moderno: usar `--radius-md` (12px) de forma homogénea en toda la app.
-   - Elevar el área de toque de `.btn--mini` agregando un pseudo-elemento `::before` de 40px para accesibilidad táctil.
+### Fase 3: Coherencia en Botones y Badges ✅ (Aplicada en v9.34.10 — decisión: píldora)
+1. **Botones** → lenguaje **píldora** adoptado:
+   - `.btn`, `.btn--sm`, `.btn--premium`, `.btn--premium--sm`, `.btn-oauth`, `.btn-nav`, `.btn-logout`, `.btn-confirm-premium`, `.btn-notif-mark-read`, `.btn-notif-clear-read`, `.notif-chip`, `.voucher-tab-btn`, `.notif-header-bell` → `border-radius: var(--radius-full)`.
+   - `.btn--mini` / `.btn-action-mini` (iconos): se mantienen compactos con `--radius-sm` y **área de toque elevada a 40px** vía pseudo-elemento `::before { inset: -4px }` (WCAG 2.5.5), sin alterar el tamaño visual.
+   - `.action-btn-premium` (tarjeta-acción del grid de accesos rápidos): `--radius-lg` (16px), tratado como tarjeta, no botón.
 2. **Badges:**
-   - Unificar todos los badges informativos y de rol en `--radius-sm` (8px) con `padding: 4px 10px;`.
-   - Reservar el estilo píldora (`--radius-full`) exclusivamente para medidores numéricos (puntos, saldo).
+   - Informativos y de rol → `--radius-sm` (8px) con `padding: 4px 10px`: `.role-badge`, `.badge-status`, `.badge`, `.status-badge-ultra`, `.status-pill`, `.onboarding-badge-premium`, `.admin-badge` (header dorado), `.plate-style`, badges `*-light` de dashboard, `.notif-header-*`.
+   - Píldora (`--radius-full`) reservada exclusivamente a mediadares numéricos: `.balance-badge`/`.points-badge` (saldo/puntos) y contador del FAB (`.vt-fab-badge`, `--radius-xs`).
+   - Chips informativos del landing (`.feature-list-horizontal li`, contacto) → `--radius-sm`.
+   - Contenedores-tarjeta con radios 15/16/30px (`.contact-form-container`, `card-vehicle-list-wrapper`, etc.) **quedan fuera de Fase 3** (se normalizarán a `--radius-lg` en una pasada de tarjetas).
 
 ### Fase 4: Consolidación de Breakpoints
 Reducir los 17 breakpoints a los **4 estándares universales**:

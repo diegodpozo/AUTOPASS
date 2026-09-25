@@ -18,7 +18,7 @@
     background: rgba(223, 186, 107, 0.1);
     color: var(--dorado);
     padding: 8px 16px;
-    border-radius: 50px;
+    border-radius: var(--radius-sm);
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 1px;

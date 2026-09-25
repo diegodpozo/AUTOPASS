@@ -148,7 +148,7 @@
     color: #000;
     border: none;
     padding: 15px 40px;
-    border-radius: 15px;
+    border-radius: var(--radius-full);
     font-weight: 900;
     
     display: flex;
@@ -262,7 +262,7 @@
 
 .status-badge-ultra {
     padding: 5px 12px;
-    border-radius: 50px;
+    border-radius: var(--radius-sm);
     font-size: 0.65rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -1489,7 +1489,7 @@
     font-weight: 800;
     text-transform: uppercase;
     padding: 3px 10px;
-    border-radius: 50px;
+    border-radius: var(--radius-sm);
     letter-spacing: 0.5px;
 }
 

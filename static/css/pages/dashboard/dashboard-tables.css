@@ -17,7 +17,7 @@
     background: rgba(244, 63, 94, 0.1);
     color: var(--danger);
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.65rem;
     font-weight: 800;
     border: 1px solid rgba(244, 63, 94, 0.2);
@@ -28,7 +28,7 @@
     background: rgba(16, 185, 129, 0.1);
     color: #10b981;
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.65rem;
     font-weight: 800;
     border: 1px solid rgba(16, 185, 129, 0.2);
@@ -39,7 +39,7 @@
     background: rgba(223, 186, 107, 0.1);
     color: var(--dorado);
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.65rem;
     font-weight: 800;
     border: 1px solid rgba(223, 186, 107, 0.2);

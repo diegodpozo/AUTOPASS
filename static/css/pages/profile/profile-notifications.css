@@ -27,7 +27,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #aaa;
     padding: 8px 16px;
-    border-radius: 30px;
+    border-radius: var(--radius-full);
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
@@ -137,7 +137,7 @@
     border: 1px solid rgba(223, 186, 107, 0.35);
     color: var(--dorado);
     padding: 8px 18px;
-    border-radius: 30px;
+    border-radius: var(--radius-full);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -161,7 +161,7 @@
     border: 1px solid rgba(244, 63, 94, 0.35);
     color: #f87171;
     padding: 8px 18px;
-    border-radius: 30px;
+    border-radius: var(--radius-full);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.5px;

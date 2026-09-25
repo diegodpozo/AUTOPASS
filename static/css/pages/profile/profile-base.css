@@ -35,7 +35,7 @@
 
 .balance-badge, .points-badge {
     padding: 10px 20px;
-    border-radius: 50px;
+    border-radius: var(--radius-full);
     display: flex;
     align-items: center;
     gap: 10px;

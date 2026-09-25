@@ -700,7 +700,7 @@
     position: relative;
     cursor: pointer;
     padding: 8px 12px;
-    border-radius: 50px;
+    border-radius: var(--radius-full);
     transition: 0.3s;
     display: flex;
     align-items: center;
@@ -1178,7 +1178,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 2px;
-    border-radius: 50px;
+    border-radius: var(--radius-sm);
     margin-bottom: 12px;
 }
 
