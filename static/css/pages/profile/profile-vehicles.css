@@ -73,7 +73,7 @@
     box-shadow: 0 0 15px rgba(223, 186, 107, 0.4);
 }
 
-@media (max-width: 500px) {
+@media (max-width: 640px) {
     .flex-wrap-mobile {
         flex-direction: column !important;
         align-items: center !important;

@@ -625,7 +625,7 @@
     color: #fff;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 768px) {
     .stay-item-premium {
         grid-template-columns: 1fr 1fr;
         gap: 12px;
@@ -722,7 +722,7 @@
     opacity: 0.6;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
     .reservation-stepper { max-width: 100%; padding: 8px 4px; }
     .stepper-dot { width: 26px; height: 26px; font-size: 0.7rem; }
     .stepper-label { font-size: 0.5rem; }
@@ -878,7 +878,7 @@
     border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
     .account-hub-body { 
         grid-template-columns: 1fr; 
         gap: 35px; 

@@ -68,7 +68,7 @@ tr:hover .user-actions {
 }
 
 /* --- RESPONSIVE TABLES (Card Layout) --- */
-@media (max-width: 992px) { /* Aumentamos el breakpoint para que en tablets ya sea tarjeta */
+@media (max-width: 1024px) { /* Aumentamos el breakpoint para que en tablets ya sea tarjeta */
     table, thead, tbody, th, td, tr {
         display: block;
         width: 100%;

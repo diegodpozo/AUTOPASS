@@ -13,7 +13,7 @@
 | **1** | Tokens volumétricos en `variables.css` | ✅ Aplicada | `--radius-*`, `--control-height-*`, `--z-*`, `--modal-*`. La escala z-index se tokenizó **con los valores reales del sistema** para preservar el orden de apilamiento actual (ver §5). |
 | **2** | Unificación de Modales e Inputs | ✅ Aplicada | Modales tokenizados a `--modal-*` + `--radius-xl` + `max-height/overflow` gobernado; inputs base y variantes unificados a `--control-height-md` / `--radius-md`; suprimido `height: 2.625rem !important`. |
 | **3** | Coherencia en Botones y Badges | ✅ Aplicada (decisión: **píldora**) | Se adoptó el lenguaje **píldora** (`--radius-full`) para todos los botones del sistema; badges informativos/rol a `--radius-sm`; píldora reservada a medidores numéricos (saldo/puntos/FAB). Touch target de `.btn--mini` elevado a 40px vía `::before` (WCAG 2.5.5). |
-| **4** | Consolidación de Breakpoints | ⏳ Pendiente | 17 breakpoints actuales aún vigentes (ver §4). |
+| **4** | Consolidación de Breakpoints | ✅ Aplicada | 17 breakpoints → **4 estándares** (`640/768/1024/1280px`); 38 media queries absorbidas en 17 archivos. Excepción única: `min-width:769px` (complemento del `max-width:768px` del stepper sticky). |
 
 **Edición v9.34.10:** se completó **Fase 3** con la decisión de diseño **píldora** (ver §5). Botones → `--radius-full`; badges informativos/rol → `--radius-sm`; píldora solo para medidores numéricos; touch target 40px en `.btn--mini`. Pendiente Fase 4 (breakpoints) y la normalización de tarjetas (radios 15/16/30px a `--radius-lg`).
 **Hallazgos extra corregidos durante la Fase 2:**
@@ -297,9 +297,20 @@ Añadir a `static/css/base/variables.css`:
    - Chips informativos del landing (`.feature-list-horizontal li`, contacto) → `--radius-sm`.
    - Contenedores-tarjeta con radios 15/16/30px (`.contact-form-container`, `card-vehicle-list-wrapper`, etc.) **quedan fuera de Fase 3** (se normalizarán a `--radius-lg` en una pasada de tarjetas).
 
-### Fase 4: Consolidación de Breakpoints
-Reducir los 17 breakpoints a los **4 estándares universales**:
-- **Mobile (`sm`):** `640px` (absorbe 400, 480, 500, 560, 580, 600)
-- **Tablet (`md`):** `768px` (absorbe 650, 680, 769, 800)
-- **Laptop (`lg`):** `1024px` (absorbe 992, 1100)
-- **Desktop Wide (`xl`):** `1280px` (absorbe 1200, 1400)
+### Fase 4: Consolidación de Breakpoints ✅ (Aplicada en v9.34.11)
+
+Reducción de los 17 breakpoints a los **4 estándares universales**, con absorción de 38 media queries en 17 archivos:
+
+| Estándar | Nuevo valor | Absorbe (valores previos) |
+|---:|:---:|:---|
+| **Mobile `sm`** | `640px` | 400, 480, 500, 560, 580, 600 |
+| **Tablet `md`** | `768px` | 650, 680, 800 |
+| **Laptop `lg`** | `1024px` | 992, 1100 |
+| **Desktop Wide `xl`** | `1280px` | 1200 (max) y 1400 (min) |
+
+- Resultado: `max-width: 640px` (21), `768px` (27), `1024px` (13), `1280px` (4) y `min-width: 1280px` (1).
+- **Excepción justificada:** `min-width: 769px` en `profile-base.css` — es el complemento exacto del `max-width: 768px` del stepper sticky (`top: 100px` sobre header sticky en escritorio); se conserva como par, no como breakpoint adicional.
+- **Efecto buscado:** los rangos intermedios (401-639px, 651-767px, 993-1023px, 1025-1100px, 1201-1279px) adoptan el layout del estándar correspondiente, eliminando saltos de diseño fragmentados.
+- `standalone.css` conserva `@media (display-mode: standalone) and (min-width: 700px)` porque no es un breakpoint de layout sino de contexto PWA.
+
+**Estado global de la auditoría:** Fases 1-4 **completas** ✅. Pendientes menores fuera de fases: tarjetas y modales KPI del dashboard (radios 15/16/30px → normalizar a `--radius-lg`), gap vertical de 16px a 24px en grids/flex, y tokenizar `#60a5fa`/info (12 usos).

@@ -333,7 +333,7 @@
     transform: rotate(45deg);
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
     .branches-list-minimal {
         grid-template-columns: 1fr;
     }

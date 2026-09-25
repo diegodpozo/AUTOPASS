@@ -241,7 +241,7 @@
     transform: scale(1.1);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
     .vehicle-card {
         width: 100% !important;
         max-width: 340px;

@@ -155,7 +155,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
     .page-hero h1 { font-size: 1.8rem; letter-spacing: 2px; }
     .page-hero p { font-size: 0.95rem; }
 

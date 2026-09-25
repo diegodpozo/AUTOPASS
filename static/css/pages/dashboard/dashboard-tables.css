@@ -211,7 +211,7 @@
     font-weight: 600;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 768px) {
     .capture-audit-grid { grid-template-columns: 1fr; }
 }
 
@@ -252,7 +252,7 @@
     box-shadow: 0 0 15px rgba(223, 186, 107, 0.4);
 }
 
-@media (max-width: 400px) {
+@media (max-width: 640px) {
     .icon-picker-grid { grid-template-columns: repeat(4, 1fr); }
 }
 

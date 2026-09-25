@@ -185,13 +185,13 @@
     min-width: 0;
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1280px) {
     .kpi-grid:not(.kpi-grid-6):not(.kpi-grid-4):not(.kpi-grid-3) {
         grid-template-columns: repeat(5, 1fr);
     }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
     .kpi-grid-4 {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -206,7 +206,7 @@
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
     .kpi-grid-4, .kpi-grid-3, .kpi-grid-6 {
         grid-template-columns: 1fr !important;
         gap: 12px !important;
@@ -381,7 +381,7 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
     .method-panel.active { flex-direction: column; gap: 20px; }
 }
 
