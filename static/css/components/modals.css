@@ -272,6 +272,21 @@
     min-width: 180px;
 }
 
+/* BARRA DE ACCIONES STICKY EN MODALES LARGOS (UX/UI P3) */
+.modal-actions-sticky {
+    position: sticky;
+    bottom: 12px;
+    z-index: 5;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(17, 20, 27, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
 /* DISEÑO RESPONSIVO */
 @media (max-width: 640px) {
     .modal-content { 
