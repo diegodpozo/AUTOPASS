@@ -71,7 +71,7 @@
     transition: max-height 0.5s ease, opacity 0.4s ease, margin 0.3s ease;
     margin: 0 auto;
     background: var(--gris-card);
-    border-radius: 15px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-light);
     border-top: 2px solid var(--dorado);
     padding: 25px;

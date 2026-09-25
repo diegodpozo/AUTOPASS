@@ -341,7 +341,7 @@
 
 .notif-btn-vehicles {
     background: rgba(59, 130, 246, 0.18);
-    color: #60a5fa;
+    color: var(--info);
     border: 1px solid rgba(59, 130, 246, 0.35);
 }
 .notif-btn-vehicles:hover {
