@@ -1043,34 +1043,29 @@
     transition: all 0.25s ease;
 }
 
-.tour-tooltip-buttons-premium .btn-outline,
 .tour-tooltip-buttons-premium .btn--outline {
     border: 1px solid rgba(255, 255, 255, 0.15);
     background: transparent;
     color: #ccc;
 }
 
-.tour-tooltip-buttons-premium .btn-outline:hover:not(:disabled),
 .tour-tooltip-buttons-premium .btn--outline:hover:not(:disabled) {
     border-color: #fff;
     color: #fff;
     background: rgba(255, 255, 255, 0.05);
 }
 
-.tour-tooltip-buttons-premium .btn-outline:disabled,
 .tour-tooltip-buttons-premium .btn--outline:disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }
 
-.tour-tooltip-buttons-premium .btn-primary,
 .tour-tooltip-buttons-premium .btn--primary {
     background: linear-gradient(135deg, var(--dorado) 0%, #a88444 100%);
     border: none;
     color: #000;
 }
 
-.tour-tooltip-buttons-premium .btn-primary:hover,
 .tour-tooltip-buttons-premium .btn--primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(197, 160, 89, 0.3);

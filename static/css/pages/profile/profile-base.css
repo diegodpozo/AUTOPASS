@@ -89,7 +89,6 @@
     flex-shrink: 0; /* Evita que el botón se achique */
 }
 
-.btn-primary.btn-compact,
 .btn--primary.btn--compact {
     width: auto;
     min-width: 200px;

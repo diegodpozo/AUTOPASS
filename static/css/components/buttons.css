@@ -1,6 +1,5 @@
 /* --- BOTONES BASE --- */
-/* P3.8 UX/UI: convención BEM (.btn--modificador) agrupada con clases legacy (.btn-modificador)
-   para uso gradual en los templates sin romper los selectores históricos. */
+/* P3.8 UX/UI: convención BEM (.btn--modificador). Selectores legacy retirados en v9.34.6. */
 .btn {
     padding: 15px 35px;
     border-radius: 50px;
@@ -15,20 +14,17 @@
     font-size: var(--text-sm);
 }
 
-.btn-primary,
 .btn--primary {
     background: var(--dorado);
     color: var(--negro);
 }
 
-.btn-primary:hover,
 .btn--primary:hover {
     background: var(--dorado-dark);
     transform: translateY(-3px);
     box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
 }
 
-.btn-outline,
 .btn--outline {
     background: rgba(0,0,0,0.3);
     color: var(--blanco);
@@ -36,34 +32,28 @@
     backdrop-filter: blur(5px);
 }
 
-.btn-outline:hover,
 .btn--outline:hover {
     border-color: var(--dorado);
     color: var(--dorado);
 }
 
-.btn-outline.btn-danger,
-.btn-outline.btn--danger {
+.btn--outline.btn--danger {
     color: var(--danger);
     border-color: var(--danger);
 }
 
-.btn-outline.btn-danger:hover,
-.btn-outline.btn--danger:hover {
+.btn--outline.btn--danger:hover {
     background: var(--danger);
     color: #fff;
     border-color: var(--danger);
 }
 
-.btn-sm,
 .btn--sm { padding: 8px 18px; font-size: 0.75rem; border-radius: 8px; }
 .btn-warning,
 .btn--warning { border-color: var(--warning); color: var(--warning); }
-.btn-full,
 .btn--full { width: 100%; justify-content: center; }
 
 /* --- BOTONES PREMIUM --- */
-.btn-premium,
 .btn--premium {
     background: linear-gradient(135deg, var(--dorado) 0%, var(--dorado-dark) 100%);
     color: var(--negro);
@@ -83,19 +73,16 @@
     box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
 }
 
-.btn-premium:hover,
 .btn--premium:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(197, 160, 89, 0.4);
     filter: brightness(1.1);
 }
 
-.btn-premium:active,
 .btn--premium:active {
     transform: translateY(0);
 }
 
-.btn-premium.sm,
 .btn--premium.sm,
 .btn--premium--sm {
     padding: 8px 18px;
@@ -103,12 +90,10 @@
     border-radius: 30px;
 }
 
-.btn-premium i,
 .btn--premium i {
     font-size: 0.9rem;
 }
 
-.btn-premium.sm i,
 .btn--premium.sm i {
     font-size: 0.75rem;
 }

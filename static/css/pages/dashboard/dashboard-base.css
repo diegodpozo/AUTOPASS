@@ -116,7 +116,6 @@ body:not(.role-local_admin) .local-admin-only {
     }
 
     .header-actions .btn,
-    .header-actions .btn-premium,
     .header-actions .btn--premium,
     .header-actions .filter-group-premium,
     .header-actions .search-box-premium {
