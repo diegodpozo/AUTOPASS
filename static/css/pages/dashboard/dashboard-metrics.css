@@ -186,3 +186,60 @@
     font-size: 1.1rem;
     color: #fff;
 }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.23 (estilos extraídos de dashboard/tabs/metricas.html)
+   ========================================================================== */
+
+/* Cabecera de la card de métricas */
+#tab-metricas .card-header-premium { padding: 18px 25px; }
+#tab-metricas .header-actions .badge { font-size: 0.7rem; }
+#tab-metricas .header-actions .badge .fa-circle { font-size: 0.5rem; margin-right: 4px; }
+
+/* Introducción de la card */
+#tab-metricas .card-body > p { color: #9ca3af; font-size: 0.85rem; margin: 0; }
+
+/* Badges de estado de las tarjetas de métrica */
+.metrica-card-badge .fa-circle { font-size: 0.4rem; margin-right: 4px; }
+.metrica-card-badge .fa-lock { margin-right: 4px; font-size: 0.6rem; }
+
+/* Vistas lista/detalle (JS alterna display inline) */
+#metricas-detail { display: none; }
+
+/* Barra superior del detalle (botón volver) */
+.metricas-detail-top { margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+.metricas-back-btn { display: inline-flex; align-items: center; gap: 8px; }
+#metricas-detail > p { color: #9ca3af; font-size: 0.85rem; margin-bottom: 20px; }
+#metricas-detail strong { color: #fff; }
+
+/* Colores de KPIs particulares de métricas */
+#kpi-entradas { color: var(--success); }
+#kpi-salidas { color: var(--danger); }
+.kpi-icon--success { color: var(--success); }
+.kpi-icon--danger { color: var(--danger); }
+
+/* Gráfico: cabecera y cuerpo (bloque para los controles) */
+#metricas-detail .channel-header.web-channel { justify-content: space-between; }
+#metricas-detail .channel-body { display: block; }
+
+/* Leyenda del gráfico */
+#metricas-detail .metricas-chart-legend .dot-success { background: var(--success); }
+#metricas-detail .metricas-chart-legend .dot-danger { background: var(--danger); }
+
+/* Fila de filtros (DESDE / HASTA / APLICAR) */
+.metricas-filters-row { justify-content: flex-start; gap: 10px; }
+.metricas-filters-row .fa-calendar-days { margin-right: 4px; }
+.metricas-filters-row .btn i { margin-right: 4px; }
+.metricas-arrow { color: #6b7280; }
+
+/* Grupo ventana + checkbox de seguimiento en vivo */
+.metricas-live-toggle input { accent-color: var(--dorado); width: 16px; height: 16px; }
+.metricas-ventana-group { display: flex; align-items: center; gap: 8px; }
+#metricas-ventana { width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424; }
+
+/* Botones navegación INICIO / FINAL */
+.metricas-nav-buttons { display: flex; gap: 8px; }
+.metricas-nav-buttons .btn i { margin-right: 4px; }
+
+/* Icono del texto de ayuda */
+.metricas-helper .fa-circle-info { color: var(--dorado); margin-right: 6px; }

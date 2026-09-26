@@ -1,9 +1,9 @@
 <!-- PESTAÑA: MÉTRICAS -->
-<div id="tab-metricas" class="tab-view" style="display: none;">
+<div id="tab-metricas" class="tab-view">
     <!-- VISTA: LISTA DE MÉTRICAS -->
     <div id="metricas-list">
         <div class="card card--flush">
-            <div class="card-header-premium" style="padding: 18px 25px;">
+            <div class="card-header-premium">
                 <div class="header-info-group">
                     <i class="fas fa-chart-simple"></i>
                     <div class="header-text">
@@ -11,11 +11,11 @@
                     </div>
                 </div>
                 <div class="header-actions">
-                    <span class="badge badge-success" style="font-size: 0.7rem;"><i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 4px;"></i> MÉTRICAS EN VIVO</span>
+                    <span class="badge badge-success"><i class="fas fa-circle"></i> MÉTRICAS EN VIVO</span>
                 </div>
             </div>
             <div class="card-body">
-                <p style="color: #9ca3af; font-size: 0.85rem; margin: 0;">Indicadores del sistema. Elegí una métrica para visualizar su gráfico en vivo.</p>
+                <p>Indicadores del sistema. Elegí una métrica para visualizar su gráfico en vivo.</p>
                 <div class="metricas-grid">
                     <button type="button" class="metrica-card" onclick="abrirMetrica('accesos')">
                         <div class="metrica-card-icon"><i class="fas fa-right-left"></i></div>
@@ -24,7 +24,7 @@
                             <div class="metrica-sub">ENTRADAS Y SALIDAS POR HORA</div>
                         </div>
                         <div class="metrica-card-desc">Movimientos registrados por hora desde el primer dato hasta ahora. El gráfico avanza solo con el tiempo; deslizá para volver hasta el inicio.</div>
-                        <div class="metrica-card-badge disponible"><i class="fas fa-circle" style="font-size: 0.4rem; margin-right: 4px;"></i> DISPONIBLE</div>
+                        <div class="metrica-card-badge disponible"><i class="fas fa-circle"></i> DISPONIBLE</div>
                     </button>
 
                     <button type="button" class="metrica-card" disabled>
@@ -34,7 +34,7 @@
                             <div class="metrica-sub">LATENCIA DE PROCESAMIENTO</div>
                         </div>
                         <div class="metrica-card-desc">Rendimiento del motor de reconocimiento de patentes en el tiempo.</div>
-                        <div class="metrica-card-badge proximamente"><i class="fas fa-lock" style="margin-right: 4px; font-size: 0.6rem;"></i> PRÓXIMAMENTE</div>
+                        <div class="metrica-card-badge proximamente"><i class="fas fa-lock"></i> PRÓXIMAMENTE</div>
                     </button>
 
                     <button type="button" class="metrica-card" disabled>
@@ -44,7 +44,7 @@
                             <div class="metrica-sub">INGRESOS EN EL TIEMPO</div>
                         </div>
                         <div class="metrica-card-desc">Evolución de la recaudación y métodos de pago utilizados.</div>
-                        <div class="metrica-card-badge proximamente"><i class="fas fa-lock" style="margin-right: 4px; font-size: 0.6rem;"></i> PRÓXIMAMENTE</div>
+                        <div class="metrica-card-badge proximamente"><i class="fas fa-lock"></i> PRÓXIMAMENTE</div>
                     </button>
                 </div>
             </div>
@@ -52,15 +52,15 @@
     </div>
 
     <!-- VISTA: DETALLE DE MÉTRICA -->
-    <div id="metricas-detail" style="display: none;">
-        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-            <button class="btn btn--outline sm" onclick="volverMetricas()" style="display: inline-flex; align-items: center; gap: 8px;">
+    <div id="metricas-detail">
+        <div class="metricas-detail-top">
+            <button class="btn btn--outline sm metricas-back-btn" onclick="volverMetricas()">
                 <i class="fas fa-arrow-left"></i> VOLVER
             </button>
         </div>
 
-        <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 20px;">
-            Ingresos y egresos por hora, desde el <strong id="det-primer-dato" style="color: #fff;">primer dato registrado</strong> hasta la hora actual.
+        <p>
+            Ingresos y egresos por hora, desde el <strong id="det-primer-dato">primer dato registrado</strong> hasta la hora actual.
         </p>
 
         <!-- KPIS -->
@@ -80,17 +80,17 @@
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon" style="color: var(--success);"><i class="fas fa-sign-in-alt"></i></div>
+                <div class="kpi-icon kpi-icon--success"><i class="fas fa-sign-in-alt"></i></div>
                 <div class="kpi-data">
                     <span class="label">ENTRADAS</span>
-                    <span class="value" id="kpi-entradas" style="color: var(--success);">--</span>
+                    <span class="value" id="kpi-entradas">--</span>
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i></div>
+                <div class="kpi-icon kpi-icon--danger"><i class="fas fa-sign-out-alt"></i></div>
                 <div class="kpi-data">
                     <span class="label">SALIDAS</span>
-                    <span class="value" id="kpi-salidas" style="color: var(--danger);">--</span>
+                    <span class="value" id="kpi-salidas">--</span>
                 </div>
             </div>
             <div class="kpi-card highlight">
@@ -104,36 +104,36 @@
 
         <!-- GRÁFICO MÓVIL -->
         <div class="card channel-card card--flush">
-            <div class="channel-header web-channel" style="justify-content: space-between;">
+            <div class="channel-header web-channel">
                 <span><i class="fas fa-chart-line"></i> MOVIMIENTOS POR HORA</span>
                 <span class="metricas-chart-legend">
-                    <span><span class="dot" style="background: var(--success);"></span>Entradas</span>
-                    <span><span class="dot" style="background: var(--danger);"></span>Salidas</span>
+                    <span><span class="dot dot-success"></span>Entradas</span>
+                    <span><span class="dot dot-danger"></span>Salidas</span>
                 </span>
             </div>
-            <div class="channel-body" style="display: block;">
+            <div class="channel-body">
                 <div class="metricas-chart-body">
                     <canvas id="metricasChart"></canvas>
                 </div>
 
                 <div class="metricas-controls">
-                    <div class="metricas-controls-row" style="justify-content: flex-start; gap: 10px;">
-                        <span class="toolbar-label"><i class="fas fa-calendar-days" style="margin-right: 4px;"></i> DESDE:</span>
+                    <div class="metricas-controls-row metricas-filters-row">
+                        <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
                         <input type="date" id="metricas-desde" class="input-premium-sm" title="Fecha inicial del rango">
-                        <span style="color: #6b7280;">→</span>
+                        <span class="metricas-arrow">→</span>
                         <span class="toolbar-label">HASTA:</span>
                         <input type="date" id="metricas-hasta" class="input-premium-sm" title="Fecha final del rango">
-                        <button class="btn btn--primary sm" onclick="aplicarFiltroMetricas()"><i class="fas fa-magnifying-glass" style="margin-right: 4px;"></i>APLICAR</button>
-                        <button class="btn btn--outline sm" onclick="limpiarFiltroMetricas()"><i class="fas fa-eraser" style="margin-right: 4px;"></i>LIMPIAR</button>
+                        <button class="btn btn--primary sm" onclick="aplicarFiltroMetricas()"><i class="fas fa-magnifying-glass"></i>APLICAR</button>
+                        <button class="btn btn--outline sm" onclick="limpiarFiltroMetricas()"><i class="fas fa-eraser"></i>LIMPIAR</button>
                     </div>
                     <div class="metricas-controls-row">
                         <label class="metricas-live-toggle">
-                            <input type="checkbox" id="metricas-live" checked style="accent-color: var(--dorado); width: 16px; height: 16px;">
+                            <input type="checkbox" id="metricas-live" checked>
                             <span>SEGUIR EN VIVO</span>
                         </label>
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="metricas-ventana-group">
                             <span class="toolbar-label">VENTANA:</span>
-                            <select id="metricas-ventana" class="input-premium" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
+                            <select id="metricas-ventana" class="input-premium">
                                 <option value="6">6 HORAS</option>
                                 <option value="12">12 HORAS</option>
                                 <option value="24">24 HORAS</option>
@@ -142,9 +142,9 @@
                                 <option value="0">TODA LA HISTORIA</option>
                             </select>
                         </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button id="btn-ir-inicio" class="btn btn--outline sm" onclick="irAlInicio()"><i class="fas fa-backward-fast" style="margin-right: 4px;"></i>INICIO</button>
-                            <button id="btn-ir-final" class="btn btn--primary sm" onclick="irAlFinal()"><i class="fas fa-forward-fast" style="margin-right: 4px;"></i>FINAL</button>
+                        <div class="metricas-nav-buttons">
+                            <button id="btn-ir-inicio" class="btn btn--outline sm" onclick="irAlInicio()"><i class="fas fa-backward-fast"></i>INICIO</button>
+                            <button id="btn-ir-final" class="btn btn--primary sm" onclick="irAlFinal()"><i class="fas fa-forward-fast"></i>FINAL</button>
                         </div>
                     </div>
 
@@ -155,7 +155,7 @@
                     </div>
 
                     <div class="metricas-helper">
-                        <i class="fas fa-circle-info" style="color: var(--dorado); margin-right: 6px;"></i>
+                        <i class="fas fa-circle-info"></i>
                         El gráfico avanza solo a medida que pasa el tiempo. Si querés recorrer hasta el primer dato, desactivá el seguimiento o mové el deslizador; luego presioná <strong>FINAL</strong> para volver a seguirlo en vivo.
                     </div>
                 </div>

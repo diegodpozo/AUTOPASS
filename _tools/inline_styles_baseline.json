@@ -22,7 +22,7 @@
     "templates/dashboard/tabs/branches.html": 4,
     "templates/dashboard/tabs/finance.html": 8,
     "templates/dashboard/tabs/live.html": 0,
-    "templates/dashboard/tabs/metricas.html": 33,
+    "templates/dashboard/tabs/metricas.html": 0,
     "templates/dashboard/tabs/occupancy.html": 8,
     "templates/dashboard/tabs/promotions.html": 4,
     "templates/dashboard/tabs/settings/settings_floors.html": 3,
