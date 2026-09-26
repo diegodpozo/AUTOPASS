@@ -502,6 +502,11 @@
     font-size: 1.4rem;
 }
 
+.welcome-card {
+    text-align: center;
+    padding: 14px 20px;
+}
+
 .price-summary-premium .total-label {
     color: var(--dorado);
     opacity: 0.8;

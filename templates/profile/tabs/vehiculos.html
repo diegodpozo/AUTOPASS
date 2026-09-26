@@ -1,27 +1,27 @@
 <!-- SECCIÓN: MIS VEHÍCULOS -->
 <div id="section-vehiculos" class="profile-section">
-    <div class="card welcome-card" style="text-align: center; padding: 14px 20px;">
+    <div class="card welcome-card">
         <div class="welcome-msg">
-            <h1 style="justify-content: center; margin-bottom: 0;"><i class="fas fa-car-side"></i> MIS VEHÍCULOS</h1>
+            <h1><i class="fas fa-car-side"></i> MIS VEHÍCULOS</h1>
         </div>
         <div class="btn-group-header">
             <button class="btn-new-reserva" id="vehicle-form-trigger" onclick="toggleVehicleForm()"><i class="fas fa-plus-circle"></i> NUEVO VEHÍCULO</button>
         </div>
     </div>
-    <div class="flex-col items-center" style="margin-top: 10px;">
+    <div class="flex-col items-center mt-10">
 
         <!-- Form Container (Hidden by default, will swap with button) -->
-        <div id="vehicle-form-container" style="width: 100%; max-width: 450px; display: none; margin-top: 15px; animation: fadeIn 0.4s ease;">
-            <div class="card form-compact-premium" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(223, 186, 107, 0.2); padding: 30px; border-radius: 20px; margin-bottom: 30px;">
-                <h4 class="text-dorado" style="text-align: center; margin-bottom: 25px; font-weight: 800; letter-spacing: 1px; font-size: 1rem;">NUEVO VEHÍCULO</h4>
+        <div id="vehicle-form-container">
+            <div class="card form-compact-premium">
+                <h4 class="text-dorado vehicle-form-title">NUEVO VEHÍCULO</h4>
                 <form id="add-vehicle-form" onsubmit="addVehicle(event)">
                     <div class="flex-col gap-15">
                         <!-- Selector de Tipo -->
-                        <div class="form-group-premium" style="gap: 4px; margin-bottom: 5px;">
-                            <label style="font-size: 0.65rem; text-align: center; width: 100%; display: block;">Tipo de Vehículo</label>
-                            <div class="select-wrapper-premium" style="width: 100%; max-width: 250px; margin: 0 auto;">
-                                <i id="vehicle-type-icon" class="fas fa-car-side" style="left: 10px; color: var(--dorado); position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0.8; z-index: 5;"></i>
-                                <select name="tipo" class="input-premium-sm" style="padding-left: 35px !important; text-align: center;" onchange="updateVehicleTypeIcon(this.value, '', this.form)">
+                        <div class="form-group-premium">
+                            <label>Tipo de Vehículo</label>
+                            <div class="select-wrapper-premium fg-auto">
+                                <i id="vehicle-type-icon" class="fas fa-car-side vehicle-type-icon"></i>
+                                <select name="tipo" class="input-premium-sm fg-pad-left" onchange="updateVehicleTypeIcon(this.value, '', this.form)">
                                     <option value="Auto">Auto</option>
                                     <option value="Moto">Moto</option>
                                     <option value="Camioneta">Camioneta</option>
@@ -30,25 +30,25 @@
                         </div>
 
                         <!-- Patente y Marca -->
-                        <div class="flex-row gap-10 flex-wrap-mobile" style="justify-content: center;">
-                            <div class="form-group-premium" style="gap: 4px; flex: 0 0 35%;">
-                                <label style="font-size: 0.65rem; text-align: center; width: 100%; display: block;">Patente</label>
-                                <div class="input-wrapper-premium" style="width: 100%; position: relative;">
-                                    <i id="vehicle-type-icon" class="fas fa-car-side" style="left: 10px; display: none; color: var(--dorado); position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0.8; z-index: 5;"></i>
-                                    <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase" style="padding: 10px !important; width: 100%; text-align: center; font-size: 0.9rem;">
+                        <div class="flex-row gap-10 flex-wrap-mobile">
+                            <div class="form-group-premium">
+                                <label>Patente</label>
+                                <div class="input-wrapper-premium">
+                                    <i id="vehicle-type-icon" class="fas fa-car-side vehicle-type-icon"></i>
+                                    <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase">
                                 </div>
                             </div>
-                            <div class="form-group-premium" style="gap: 4px; flex: 0 0 55%;">
-                                <label style="font-size: 0.65rem; text-align: center; width: 100%; display: block;">Marca / Modelo</label>
-                                <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm" style="padding: 10px !important; text-align: center; width: 100%; font-size: 0.9rem;">
+                            <div class="form-group-premium">
+                                <label>Marca / Modelo</label>
+                                <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm">
                             </div>
                         </div>
                     </div>
-                    <div style="margin-top: 30px; display: flex; justify-content: center; gap: 15px;">
-                        <button type="button" class="btn btn--outline btn--sm" onclick="toggleVehicleForm()" style="padding: 8px 20px; font-size: 0.75rem; letter-spacing: 0.5px; border-radius: 10px; background: #000; border-color: rgba(255,255,255,0.1);">
+                    <div class="vehicle-form-actions">
+                        <button type="button" class="btn btn--outline btn--sm" onclick="toggleVehicleForm()">
                             CANCELAR
                         </button>
-                        <button type="submit" class="btn btn--primary btn--sm" style="padding: 8px 25px; font-size: 0.75rem; letter-spacing: 0.5px; border-radius: 10px;">
+                        <button type="submit" class="btn btn--primary btn--sm">
                             CONTINUAR
                         </button>
                     </div>

@@ -89,3 +89,107 @@
     }
 }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.26 - profile/tabs/vehiculos.html
+   ========================================================================== */
+#section-vehiculos .welcome-msg h1 {
+    justify-content: center;
+    margin-bottom: 0;
+}
+
+#vehicle-form-container {
+    width: 100%;
+    max-width: 450px;
+    display: none;
+    margin-top: 15px;
+    animation: fadeIn 0.4s ease;
+}
+
+#section-vehiculos .form-compact-premium {
+    border-color: rgba(223, 186, 107, 0.2);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.vehicle-form-title {
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 1rem;
+}
+
+#add-vehicle-form > .flex-col > .form-group-premium {
+    gap: 4px;
+    margin-bottom: 5px;
+}
+
+#add-vehicle-form .form-group-premium label {
+    font-size: 0.65rem;
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+
+#add-vehicle-form .flex-row .form-group-premium {
+    gap: 4px;
+}
+
+#add-vehicle-form .flex-row .form-group-premium:first-of-type {
+    flex: 0 0 35%;
+}
+
+#add-vehicle-form .flex-row .form-group-premium:last-of-type {
+    flex: 0 0 55%;
+}
+
+#add-vehicle-form .flex-row {
+    justify-content: center;
+}
+
+#add-vehicle-form .vehicle-type-icon {
+    left: 10px;
+    color: var(--dorado);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    opacity: 0.8;
+    z-index: 5;
+}
+
+#add-vehicle-form .input-wrapper-premium .vehicle-type-icon {
+    display: none;
+}
+
+#add-vehicle-form input[name="patente"],
+#add-vehicle-form input[name="marca_modelo"] {
+    padding: 10px !important;
+    width: 100%;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.vehicle-form-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+#add-vehicle-form .btn--outline {
+    padding: 8px 20px;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-radius: 10px;
+    background: #000;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+#add-vehicle-form .btn--primary {
+    padding: 8px 25px;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-radius: 10px;
+}
+
