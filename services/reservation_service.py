@@ -75,7 +75,7 @@ class ReservationService(ReservationPaymentsMixin):
             from services.notification_service import NotificationService
             NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
         except Exception:
-            pass
+            logger.warning(f"[RESERVATION] Error notificando cambio de ocupación al crear reserva #{new_res.id}", exc_info=True)
         return new_res
 
     @staticmethod
@@ -401,7 +401,7 @@ class ReservationService(ReservationPaymentsMixin):
             try:
                 db.commit()
             except Exception:
-                pass
+                logger.warning("[RESERVATION] Error persistiendo sucursal_info de listado de reservas", exc_info=True)
         return reservations
 
     @staticmethod

@@ -51,7 +51,7 @@ class WorkerService:
                     try:
                         db.close()
                     except Exception:
-                        pass
+                        logger.warning("[WORKER] Error cerrando sesión en mantenedor de reservas", exc_info=True)
             time.sleep(settings.MAINTENANCE_INTERVAL_SECONDS)
 
     @staticmethod
@@ -99,7 +99,7 @@ class WorkerService:
                     try:
                         db.close()
                     except Exception:
-                        pass
+                        logger.warning("[WORKER] Error cerrando sesión en trabajador de notificaciones", exc_info=True)
             time.sleep(NOTIFICATION_CHECK_INTERVAL)
 
     @staticmethod

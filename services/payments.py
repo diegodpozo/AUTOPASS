@@ -6,12 +6,15 @@ import re
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from core.logger import get_logger
 import models
 from models.enums import PaymentStatus, ReservationStatus
 from repositories.access_log_repository import AccessRepository
 from repositories.redemption_repository import RedemptionRepository
 from repositories.reservation_repository import ReservationRepository
 from services.availability import _liberar_plaza_en_aforo, _reservar_plaza_en_aforo
+
+logger = get_logger("Payments")
 from services.billing_service import BillingService
 from services.branch_service import BranchService
 from services.email_service import EmailService
@@ -80,7 +83,7 @@ class ReservationPaymentsMixin:
                         reserva_id=res.id
                     )
                 except Exception:
-                    pass
+                    logger.warning(f"[PAYMENTS] Error notificando puntos ganados en reserva #{res.id}", exc_info=True)
 
         db.commit()
         db.refresh(res)

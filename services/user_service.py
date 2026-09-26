@@ -3,12 +3,15 @@ from fastapi import HTTPException
 import models
 import schemas
 from core.security import get_password_hash
+from core.logger import get_logger
 from core.normalize import normalize_user_name as normalize_name, normalize_dni, normalize_plate, format_plate
 from models.enums import UserRole
 from repositories.user_repository import UserRepository
 from repositories.vehicle_repository import VehicleRepository
 from repositories.access_log_repository import AccessRepository
 from repositories.reservation_repository import ReservationRepository
+
+logger = get_logger("UserService")
 
 class UserService:
     @staticmethod
@@ -173,7 +176,7 @@ class UserService:
                 mensaje=f"Se vinculó exitosamente el vehículo {new_vehicle.marca_modelo} ({new_vehicle.patente}) a tu flota."
             )
         except Exception:
-            pass
+            logger.warning(f"[USERS] Error notificando alta de vehículo {new_vehicle.patente}", exc_info=True)
 
         return {"status": "ok"}
 
@@ -248,6 +251,6 @@ class UserService:
                 mensaje=f"Se eliminó el vehículo con patente {patente_borrada} de tu flota."
             )
         except Exception:
-            pass
+            logger.warning(f"[USERS] Error notificando baja de vehículo {patente_borrada}", exc_info=True)
 
         return {"status": "ok"}

@@ -77,7 +77,20 @@ Scan de `static/js/*` (patrones `toast.error(`/`showToast(`):
 
 ## Cierre
 
-- **A7 ✓** con fixes de logging pendientes de **UNA** edición por archivo (5×2 líneas):
-  agregar `logger.exception` en los 10 bloques ciegos, reusando
-  `core/logger.py` (patrón `occupancy_service.py`).
-- Suite tras fixes: esperado 675 passed (sin cambios de comportamiento).
+- **A7 ✓ aplicado (v9.34.14).** Los 10 bloques ciegos del informe base (access,
+  availability, billing, branch, mercadopago) ya estaban logueados con
+  `logger.X(..., exc_info=True)` al re-escanear — el informe quedó desactualizado
+  pero el criterio se cumple.
+- **Scan completo de `services/`** (no solo los 5 archivos del alcance) detectó y
+  corrigió **7 bloques `except Exception: pass`** realmente ciegos fuera del
+  alcance original: `payments.py` (notificación de puntos en reserva),
+  `reservation_service.py` (notify_occupancy_change al crear; commit de
+  `sucursal_info` en listado), `user_service.py` (notificación alta/baja de
+  vehículo), `worker_service.py` (close de sesión en mantenedor de reservas y en
+  trabajador de notificaciones). Se agregó `core/logger.py` + `logger` a
+  `payments.py` y `user_service.py` (no tenían). Patrón: `logger.warning(msj, exc_info=True)`.
+- Los `except HTTPException`/`ValueError`/`JWTError`/`RuntimeError`/`ImportError`
+  restantes son control de flujo intencional (retorno/continue/fallback) → **no** son ciegos.
+- Verificación: scan propio de `except` sin `logger/raise/continue/return` → **0 ciegos**;
+  `py_compile` OK en los 4 archivos tocados; **suite 695 passed / 59.01s con venv**
+  (base del informe: 675 → el delta es de auditorías posteriores).
