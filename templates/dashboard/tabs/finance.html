@@ -1,5 +1,5 @@
 <!-- PESTAÑA: REPORTE FINANCIERO -->
-<div id="tab-finance" class="tab-view" style="display: none;">
+<div id="tab-finance" class="tab-view">
     <div class="finance-layout">
         <!-- KPIS Y MÉTRICAS FINANCIERAS (COLAPSIBLE EN MÓVIL) -->
         <div class="finance-stats-collapsible">
@@ -21,18 +21,18 @@
                         <div class="kpi-icon"><i class="fas fa-money-bill"></i></div>
                         <div class="kpi-data">
                             <span class="label">Recaudación en Efectivo</span>
-                            <span class="value" id="fin-cash" style="color: #34c77b;">$0</span>
+                            <span class="value" id="fin-cash">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-icon"><i class="fas fa-credit-card"></i></div>
                         <div class="kpi-data">
                             <span class="label">Recaudación Digital</span>
-                            <span class="value" id="fin-digital" style="color: var(--dorado);">$0</span>
+                            <span class="value" id="fin-digital">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card danger-light">
-                        <div class="kpi-icon"><i class="fas fa-hand-holding-dollar" style="transform: rotate(180deg);"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-hand-holding-dollar"></i></div>
                         <div class="kpi-data">
                             <span class="label">Total Reembolsado</span>
                             <span class="value" id="fin-refunded">$0</span>
@@ -237,12 +237,12 @@
                             </select>
                         </div>
 
-                        <div id="fin-date-group" class="flex-row items-center gap-8" style="display: none;">
+                        <div id="fin-date-group" class="flex-row items-center gap-8">
                             <span class="text-xs text-dorado font-bold">FECHA:</span>
-                            <input type="date" id="fin-date" class="input-premium-sm" onchange="loadFinanceData()" title="Seleccionar fecha exacta" style="width: 150px; color-scheme: dark;">
+                            <input type="date" id="fin-date" class="input-premium-sm" onchange="loadFinanceData()" title="Seleccionar fecha exacta">
                         </div>
                         <div class="filter-group-premium">
-                            <i class="fas fa-calendar-alt" style="z-index: 5;"></i>
+                            <i class="fas fa-calendar-alt"></i>
                             <select id="fin-period" class="select-premium-sm" onchange="toggleFinanceDateFilter()" title="Seleccionar período del reporte">
                                 <option value="day">HOY</option>
                                 <option value="specific">FECHA EXACTA</option>
@@ -291,7 +291,7 @@
             </div>
 
             <!-- PAGINACIÓN -->
-            <div class="pagination-premium flex-row items-center justify-center gap-20 py-20" style="border-top: 1px solid rgba(255,255,255,0.05);">
+            <div class="pagination-premium flex-row items-center justify-center gap-20 py-20">
                 <button class="btn--icon sm" onclick="prevFinancePage()" id="prev-fin-btn" disabled title="Página anterior">
                     <i class="fas fa-chevron-left"></i>
                 </button>

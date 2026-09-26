@@ -404,3 +404,14 @@
 .kpi-card.danger-light .value {
     color: var(--danger);
 }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.34 - dashboard/tabs/finance.html
+   ========================================================================== */
+#tab-finance #fin-cash { color: #34c77b; }
+#tab-finance #fin-digital { color: var(--dorado); }
+#tab-finance .kpi-card.danger-light .kpi-icon i { transform: rotate(180deg); }
+#tab-finance #fin-date-group { display: none; }
+#tab-finance #fin-date { width: 150px; color-scheme: dark; }
+#tab-finance .filter-group-premium i.fa-calendar-alt { z-index: 5; }
+#tab-finance .pagination-premium { border-top: 1px solid rgba(255,255,255,0.05); }
