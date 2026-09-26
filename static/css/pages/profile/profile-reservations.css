@@ -1792,5 +1792,68 @@
 /* Estados de precio ocultos (JS los muestra) */
 #reserva-total-original { display: none; color: #777; font-size: 1.05rem; text-decoration: line-through; font-weight: 700; }
 #reserva-discount-line { display: none; margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: #c084fc; letter-spacing: 0.4px; }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.20 (estilos extraídos de admin_reservations.html)
+   ========================================================================== */
+
+/* Tab admin-reservations: grid de KPIs amplios */
+#tab-admin-reservations .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+/* Modal nueva reserva: contenido sin fondo propio (usa la card premium) */
+#modal-new-reservation .modal-content { max-width: 700px; padding: 0; background: transparent; border: none; }
+#modal-new-reservation .card-header-premium p { margin: 5px 0 0 0; }
+
+/* Cuerpo del formulario de reserva */
+.reservation-form-body-premium { padding: 30px; }
+
+/* Patente + badge de propietario vinculado */
+#new-res-patente { height: 43px; }
+#new-res-patente-owner-badge { display: none; align-items: center; gap: 7px; margin-top: 6px; font-size: 0.74rem; font-weight: 600; cursor: pointer; line-height: 1.3; }
+#new-res-patente-owner-badge .fa-times { opacity: 0.6; font-size: 0.65rem; }
+
+/* Tipo de estadía: fila select + fecha (JS alterna display) */
+#new-res-estadia-row { display: flex; gap: 12px; align-items: stretch; }
+#new-res-estadia-row .select-wrapper-premium { flex: 1 1 auto; min-width: 0; }
+#new-res-date-only-group { display: none; flex: 0 1 150px; min-width: 120px; }
+#new-res-date-only { text-align: center; }
+
+/* Campos dinámicos por tipo (JS les setea display inline) */
+#new-hourly-fields, #new-daily-fields { display: none; gap: 20px; justify-content: flex-start; }
+
+/* Disponibilidad horaria: contenedor, badge y grilla (JS arma contenido) */
+#new-availability-status-container { margin-top: -5px; display: none; flex-direction: column; align-items: center; gap: 10px; }
+#new-hourly-slots-grid { width: 100%; }
+
+/* Fila método de pago + total */
+#new-res-metodo-total-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+#new-res-metodo-pago-group { align-items: flex-start; flex: 1 1 auto; min-width: 220px; }
+#new-res-metodo-pago-group .select-wrapper-premium { max-width: 380px; }
+#new-res-metodo-pago { text-align-last: left; }
+#new-res-metodo-total-row .price-summary-premium { align-items: center; text-align: center; }
+#new-res-discount-line { display: none; flex-direction: row; align-items: center; gap: 8px; margin-bottom: 2px; font-size: 0.85rem; }
+
+/* Footer del formulario alineado a la derecha */
+#modal-new-reservation .reservation-footer-premium { justify-content: flex-end; }
+
+/* Botones de acción de los modales de reserva */
+#modal-new-reservation .btn--outline,
+#modal-edit-resumo .btn--outline { border-radius: 12px; padding: 12px 25px; }
+
+/* Modal confirmar edición de reserva */
+#modal-edit-resumo .modal-content { max-width: 500px; padding: 30px; }
+#modal-edit-resumo .edit-resumo-header { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+#modal-edit-resumo .edit-resumo-icon { width: 46px; height: 46px; border-radius: 12px; background: rgba(212,175,55,0.15); color: var(--dorado); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+#modal-edit-resumo .edit-resumo-text { text-align: left; }
+#modal-edit-resumo .edit-resumo-text h3 { margin: 0; font-size: 1.15rem; letter-spacing: 0.5px; }
+#modal-edit-resumo .edit-resumo-text p { margin: 3px 0 0 0; font-size: 0.78rem; color: #aaa; }
+#modal-edit-resumo .edit-resumo-body { padding: 18px 0 0 0; }
+#edit-confirm-resumo { display: flex; flex-direction: column; gap: 9px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 16px; font-size: 0.83rem; }
+#edit-confirm-diff { margin: 14px 0 4px 0; font-weight: 700; font-size: 0.95rem; text-align: center; }
+#edit-confirm-method-group { margin-top: 12px; }
+#edit-confirm-method-group .select-wrapper-premium { max-width: 100%; }
+#edit-confirm-metodo { text-align-last: left; }
+#modal-edit-resumo .edit-resumo-actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+#modal-edit-resumo .btn-confirm-premium { min-width: 200px; }
 #reserva-rates-detail { display: none; margin-top: 8px; font-size: 0.72rem; color: var(--text-secondary, #9ca3af); line-height: 1.5; }
 

@@ -25,6 +25,10 @@ body:not(.role-local_admin) .local-admin-only {
     display: none !important;
 }
 
+/* NAVEGACIÓN POR PESTAÑAS (switchTab) */
+.tab-view { display: none; }
+.tab-view.active { display: block; }
+
 /* USER STATS COLLAPSIBLE & RESPONSIVE HEADER FIX */
 .user-stats-trigger {
     display: none;

@@ -1,7 +1,7 @@
 <!-- PESTAÑA: RESERVAS DE USUARIOS -->
-<div id="tab-admin-reservations" class="tab-view" style="display: none;">
+<div id="tab-admin-reservations" class="tab-view">
     <!-- KPIS DE RESERVAS -->
-    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-icon"><i class="fas fa-calendar-check"></i></div>
             <div class="kpi-data">
@@ -27,7 +27,7 @@
 
     <div class="card">
         <div class="card-header-premium">
-            <div class="header-info-group" style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <div class="header-info-group">
                 <div class="header-icon"><i class="fas fa-list-check"></i></div>
                 <div class="header-text">
                     <h3>REGISTRO DE RESERVAS</h3>
@@ -81,29 +81,29 @@
 
 <!-- MODAL: NUEVA RESERVA MANUAL -->
 <div id="modal-new-reservation" class="modal">
-    <div class="modal-content" style="max-width: 700px; padding: 0; background: transparent; border: none;">
+    <div class="modal-content">
         <div class="modern-reservation-card">
             <div class="card-header-premium">
-                <div class="header-icon" style="color: var(--dorado);"><i class="fas fa-calendar-plus"></i></div>
+                <div class="header-icon"><i class="fas fa-calendar-plus"></i></div>
                 <div class="header-text">
-                    <h3 class="text-dorado" style="margin: 0;" id="new-res-modal-title">NUEVA RESERVA MANUAL</h3>
-                    <p style="margin: 5px 0 0 0;" id="new-res-modal-subtitle">Reserva y pago en la sucursal asignada</p>
+                    <h3 class="text-dorado" id="new-res-modal-title">NUEVA RESERVA MANUAL</h3>
+                    <p id="new-res-modal-subtitle">Reserva y pago en la sucursal asignada</p>
                 </div>
                 <button class="modal-close-top modal-close-top--inline" onclick="closeModal('modal-new-reservation')">&times;</button>
             </div>
 
-            <div style="padding: 30px;">
+            <div class="reservation-form-body-premium">
                 <form id="form-new-reservation" onsubmit="handleAdminNewReservation(event)">
                     <div class="form-grid-premium">
                         <!-- SUCURSAL (valor interno, no editable) -->
                         <input type="hidden" id="new-res-sucursal">
                         <div class="form-group-premium">
                             <label>Patente</label>
-                            <input type="text" id="new-res-patente" class="input-premium uppercase" placeholder="ABC 123" required maxlength="10" autocomplete="off" style="height: 43px;">
-                            <div id="new-res-patente-owner-badge" style="display: none; align-items: center; gap: 7px; margin-top: 6px; font-size: 0.74rem; font-weight: 600; cursor: pointer; line-height: 1.3;" onclick="clearNewResPatenteLookup()" title="Hacer clic para desvincular">
+                            <input type="text" id="new-res-patente" class="input-premium uppercase" placeholder="ABC 123" required maxlength="10" autocomplete="off">
+                            <div id="new-res-patente-owner-badge" onclick="clearNewResPatenteLookup()" title="Hacer clic para desvincular">
                                 <i class="fas fa-user-check"></i>
                                 <span></span>
-                                <i class="fas fa-times" style="opacity: 0.6; font-size: 0.65rem;"></i>
+                                <i class="fas fa-times"></i>
                             </div>
                         </div>
                         <div class="form-group-premium">
@@ -119,8 +119,8 @@
                         </div>
                         <div class="form-group-premium">
                             <label>Tipo de Estadía</label>
-                            <div style="display: flex; gap: 12px; align-items: stretch;">
-                                <div class="select-wrapper-premium" style="flex: 1 1 auto; min-width: 0;">
+                            <div id="new-res-estadia-row">
+                                <div class="select-wrapper-premium">
                                     <i class="fas fa-clock"></i>
                                     <select id="new-res-tipo" required onchange="updateNewFormGroups(this.value)">
                                         <option value="hora">HORA</option>
@@ -130,8 +130,8 @@
                                         <option value="mes">MENSUAL</option>
                                     </select>
                                 </div>
-                                <div id="new-res-date-only-group" style="display:none; flex: 0 1 150px; min-width: 120px;">
-                                    <input type="text" id="new-res-date-only" class="input-premium flatpickr-input" placeholder="Día..." style="text-align: center;">
+                                <div id="new-res-date-only-group">
+                                    <input type="text" id="new-res-date-only" class="input-premium flatpickr-input" placeholder="Día...">
                                 </div>
                             </div>
                         </div>
@@ -139,13 +139,13 @@
                         <!-- CAMPOS DINÁMICOS -->
                         <div id="new-dynamic-fields" class="full-width-premium">
                             <!-- Hourly -->
-                            <div id="new-hourly-fields" class="dynamic-row-premium" data-display="flex" style="display:none; gap: 20px; justify-content: flex-start;">
+                            <div id="new-hourly-fields" class="dynamic-row-premium" data-display="flex">
                                 <input type="hidden" id="new-res-time-only">
                                 <input type="hidden" id="new-res-hours-qty" value="1">
                             </div>
 
                             <!-- Daily -->
-                            <div id="new-daily-fields" class="dynamic-row-premium" style="display:none; gap: 20px; justify-content: flex-start;">
+                            <div id="new-daily-fields" class="dynamic-row-premium">
                                 <div class="form-group-premium">
                                     <label>Día de Estadía</label>
                                     <input type="text" id="new-res-day-only" class="input-premium flatpickr-input" placeholder="Seleccioná día..." >
@@ -202,18 +202,18 @@
                         </div>
 
                         <!-- DISPONIBILIDAD HORARIA -->
-                        <div id="new-availability-status-container" class="full-width-premium" style="width: 100%; margin-top: -5px; display: none; flex-direction: column; align-items: center; gap: 10px;">
-                            <div id="new-availability-badge" class="availability-badge-premium" style="display: none; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;"></div>
-                            <div id="new-hourly-slots-grid" class="hourly-slots-grid-premium" style="display: none; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 520px; width: 100%;"></div>
+                        <div id="new-availability-status-container" class="full-width-premium">
+                            <div id="new-availability-badge" class="availability-badge-premium"></div>
+                            <div id="new-hourly-slots-grid" class="hourly-slots-grid-premium"></div>
                         </div>
 
                         <!-- MÉTODO DE PAGO + TOTAL -->
-                        <div id="new-res-metodo-total-row" class="full-width-premium" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
-                            <div class="form-group-premium" id="new-res-metodo-pago-group" style="align-items: flex-start; flex: 1 1 auto; min-width: 220px;">
+                        <div id="new-res-metodo-total-row" class="full-width-premium">
+                            <div class="form-group-premium" id="new-res-metodo-pago-group">
                                 <label>Método de Pago</label>
-                                <div class="select-wrapper-premium" style="max-width: 380px;">
+                                <div class="select-wrapper-premium">
                                     <i class="fas fa-money-bill-transfer"></i>
-                                    <select id="new-res-metodo-pago" required style="text-align-last: left;">
+                                    <select id="new-res-metodo-pago" required>
                                         <option value="Efectivo">EFECTIVO</option>
                                         <option value="Mercado Pago">MERCADO PAGO</option>
                                         <option value="Transferencia">TRANSFERENCIA</option>
@@ -222,17 +222,17 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="price-summary-premium" style="align-items: center; text-align: center;">
-                                <div id="new-res-discount-line" style="display: none; flex-direction: row; align-items: center; gap: 8px; margin-bottom: 2px; font-size: 0.85rem;"></div>
+                            <div class="price-summary-premium">
+                                <div id="new-res-discount-line"></div>
                                 <span class="total-label">TOTAL A PAGAR</span>
                                 <span class="total-amount" id="new-res-monto-total">$ ---</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="reservation-footer-premium" style="justify-content: flex-end;">
+                    <div class="reservation-footer-premium">
                         <div class="flex-row gap-15">
-                            <button type="button" class="btn btn--outline" onclick="closeModal('modal-new-reservation')" style="border-radius: 12px; padding: 12px 25px;">DESCARTAR</button>
+                            <button type="button" class="btn btn--outline" onclick="closeModal('modal-new-reservation')">DESCARTAR</button>
                             <button type="submit" class="btn-confirm-premium" id="new-res-submit-btn">
                                 <span>CREAR Y PAGAR</span>
                                 <i class="fas fa-check"></i>
@@ -247,26 +247,26 @@
 
 <!-- MODAL DE CONFIRMACIÓN DE EDICIÓN DE RESERVA (DIFERENCIA FINANCIERA) -->
 <div id="modal-edit-resumo" class="modal">
-    <div class="modal-content" style="max-width: 500px; padding: 30px;">
-        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-            <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(212,175,55,0.15); color: var(--dorado); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0;">
+    <div class="modal-content">
+        <div class="edit-resumo-header">
+            <div class="edit-resumo-icon">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <div style="text-align: left;">
-                <h3 style="margin: 0; font-size: 1.15rem; letter-spacing: 0.5px;">CONFIRMAR EDICIÓN</h3>
-                <p style="margin: 3px 0 0 0; font-size: 0.78rem; color: #aaa;">Revisá los datos antes de guardar los cambios</p>
+            <div class="edit-resumo-text">
+                <h3>CONFIRMAR EDICIÓN</h3>
+                <p>Revisá los datos antes de guardar los cambios</p>
             </div>
-            <button class="modal-close-top modal-close-top--inline" onclick="cancelEditResumo()" style="flex-shrink: 0;">&times;</button>
+            <button class="modal-close-top modal-close-top--inline" onclick="cancelEditResumo()">&times;</button>
         </div>
-        <div style="padding: 18px 0 0 0;">
-            <div id="edit-confirm-resumo" style="display: flex; flex-direction: column; gap: 9px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 16px; font-size: 0.83rem;"></div>
-            <div id="edit-confirm-diff" style="margin: 14px 0 4px 0; font-weight: 700; font-size: 0.95rem; text-align: center;"></div>
+        <div class="edit-resumo-body">
+            <div id="edit-confirm-resumo"></div>
+            <div id="edit-confirm-diff"></div>
 
-            <div id="edit-confirm-method-group" class="form-group-premium full-width-premium" style="margin-top: 12px;">
+            <div id="edit-confirm-method-group" class="form-group-premium full-width-premium">
                 <label>Método</label>
-                <div class="select-wrapper-premium" style="max-width: 100%;">
+                <div class="select-wrapper-premium">
                     <i class="fas fa-money-bill-transfer"></i>
-                    <select id="edit-confirm-metodo" style="text-align-last: left;">
+                    <select id="edit-confirm-metodo">
                         <option value="Efectivo">EFECTIVO</option>
                         <option value="Mercado Pago">MERCADO PAGO</option>
                         <option value="Transferencia">TRANSFERENCIA</option>
@@ -278,9 +278,9 @@
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07);">
-                <button type="button" class="btn btn--outline" onclick="cancelEditResumo()" style="border-radius: 12px; padding: 12px 25px;">CANCELAR</button>
-                <button type="button" class="btn-confirm-premium" onclick="confirmEditResumoProceed()" style="min-width: 200px;">
+            <div class="edit-resumo-actions">
+                <button type="button" class="btn btn--outline" onclick="cancelEditResumo()">CANCELAR</button>
+                <button type="button" class="btn-confirm-premium" onclick="confirmEditResumoProceed()">
                     <span>CONFIRMAR EDICIÓN</span>
                     <i class="fas fa-check"></i>
                 </button>

@@ -351,4 +351,5 @@
 .modal-close-top--inline {
     position: static;
     margin-left: auto;
+    flex-shrink: 0;
 }
