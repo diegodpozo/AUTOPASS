@@ -12,32 +12,32 @@
 <div class="ocr-page-container">
     <!-- NAVEGACION SUPERIOR -->
     <div class="ocr-top-nav">
-        <a href="/dashboard" onclick="event.preventDefault(); window.close(); setTimeout(function(){ window.location.href = '/dashboard'; }, 120);" class="btn btn--outline sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        <a href="/dashboard" onclick="event.preventDefault(); window.close(); setTimeout(function(){ window.location.href = '/dashboard'; }, 120);" class="btn btn--outline sm ocr-back-btn">
             <i class="fas fa-arrow-left"></i> VOLVER AL DASHBOARD
         </a>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span id="ocr-live-clock" style="font-family: var(--font-mono); font-size: 0.85rem; color: #9ca3af;">--:--:--</span>
-            <span class="badge badge-success" style="font-size: 0.7rem;"><i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 4px;"></i> MOTOR OCR ACTIVO</span>
+        <div class="ocr-top-actions">
+            <span id="ocr-live-clock">--:--:--</span>
+            <span class="badge badge-success ocr-status-badge"><i class="fas fa-circle"></i> MOTOR OCR ACTIVO</span>
         </div>
     </div>
 
     <!-- HERO HEADER -->
     <div class="ocr-hero-card">
         <div>
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(223, 186, 107, 0.15); display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-microchip" style="color: var(--dorado); font-size: 1.2rem;"></i>
+            <div class="ocr-hero-title-row">
+                <div class="ocr-hero-icon">
+                    <i class="fas fa-microchip"></i>
                 </div>
-                <h1 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.5px;">ESTADÍSTICAS OCR & ALPR</h1>
+                <h1>ESTADÍSTICAS OCR & ALPR</h1>
             </div>
-            <p style="color: #9ca3af; font-size: 0.85rem; margin: 0;">Métricas de rendimiento, latencia de inferencia y tiempos de reconocimiento de patentes en tiempo real.</p>
+            <p>Métricas de rendimiento, latencia de inferencia y tiempos de reconocimiento de patentes en tiempo real.</p>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="ocr-hero-actions">
             <label class="auto-refresh-toggle">
-                <input type="checkbox" id="ocr-autorefresh" checked style="accent-color: var(--dorado); width: 16px; height: 16px;">
+                <input type="checkbox" id="ocr-autorefresh" checked>
                 <span>Auto-refresco (5s)</span>
             </label>
-            <button id="btn-manual-refresh" class="btn btn--primary sm" onclick="actualizarEstadisticasOcr()" style="display: inline-flex; align-items: center; gap: 6px;">
+            <button id="btn-manual-refresh" class="btn btn--primary sm" onclick="actualizarEstadisticasOcr()">
                 <i class="fas fa-sync-alt" id="refresh-icon"></i> ACTUALIZAR
             </button>
         </div>
@@ -50,50 +50,50 @@
             <div class="ocr-kpi-value" id="kpi-avg">--</div>
             <div class="ocr-kpi-sub">Promedio de reconocimiento</div>
         </div>
-        <div class="ocr-kpi-card">
-            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="MENOR TIEMPO REGISTRADO EN RECONOCER UNA PATENTE"><i class="fas fa-bolt mr-6" style="color: #10b981;"></i> TIEMPO MÍNIMO</div>
-            <div class="ocr-kpi-value" id="kpi-min" style="color: #10b981;">--</div>
+        <div class="ocr-kpi-card ocr-kpi--min">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="MENOR TIEMPO REGISTRADO EN RECONOCER UNA PATENTE"><i class="fas fa-bolt mr-6"></i> TIEMPO MÍNIMO</div>
+            <div class="ocr-kpi-value" id="kpi-min">--</div>
             <div class="ocr-kpi-sub">Lectura más rápida</div>
         </div>
-        <div class="ocr-kpi-card">
-            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="MAYOR TIEMPO REGISTRADO EN RECONOCER UNA PATENTE"><i class="fas fa-triangle-exclamation mr-6" style="color: var(--danger);"></i> TIEMPO MÁXIMO</div>
-            <div class="ocr-kpi-value" id="kpi-max" style="color: var(--danger);">--</div>
+        <div class="ocr-kpi-card ocr-kpi--max">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="MAYOR TIEMPO REGISTRADO EN RECONOCER UNA PATENTE"><i class="fas fa-triangle-exclamation mr-6"></i> TIEMPO MÁXIMO</div>
+            <div class="ocr-kpi-value" id="kpi-max">--</div>
             <div class="ocr-kpi-sub">Pico de latencia máximo</div>
         </div>
-        <div class="ocr-kpi-card">
-            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="TIEMPO MAXIMO DEL 90 POR CIENTO DE LECTURAS"><i class="fas fa-chart-line mr-6" style="color: #f59e0b;"></i> PERCENTIL 90 (P90)</div>
-            <div class="ocr-kpi-value" id="kpi-p90" style="color: #f59e0b;">--</div>
+        <div class="ocr-kpi-card ocr-kpi--p90">
+            <div class="ocr-kpi-label kpi-tooltip" data-tooltip="TIEMPO MAXIMO DEL 90 POR CIENTO DE LECTURAS"><i class="fas fa-chart-line mr-6"></i> PERCENTIL 90 (P90)</div>
+            <div class="ocr-kpi-value" id="kpi-p90">--</div>
             <div class="ocr-kpi-sub">90% de lecturas por debajo</div>
         </div>
         <div class="ocr-kpi-card">
             <div class="ocr-kpi-label kpi-tooltip" data-tooltip="CANTIDAD TOTAL DE PATENTES PROCESADAS EN MUESTRA"><i class="fas fa-camera mr-6 text-dorado"></i> TOTAL LECTURAS</div>
-            <div class="ocr-kpi-value" id="kpi-count" style="color: #fff;">--</div>
+            <div class="ocr-kpi-value" id="kpi-count">--</div>
             <div class="ocr-kpi-sub">Muestras analizadas</div>
         </div>
     </div>
 
     <!-- TOOLBAR DE FILTROS -->
     <div class="ocr-toolbar">
-        <div style="display: flex; gap: 12px; align-items: center; flex: 1; min-width: 260px; max-width: 450px;">
-            <div class="input-with-icon" style="width: 100%;">
+        <div class="ocr-toolbar-search">
+            <div class="input-with-icon">
                 <i class="fas fa-search"></i>
-                <input type="text" id="ocr-search-input" class="input-premium" placeholder="Buscar por patente o sede..." oninput="filtrarTablaOcr()" style="font-size: 0.85rem; padding: 10px 15px 10px 42px;">
+                <input type="text" id="ocr-search-input" class="input-premium" placeholder="Buscar por patente o sede..." oninput="filtrarTablaOcr()">
             </div>
         </div>
 
-        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 0.75rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">EVENTO:</span>
-                <select id="ocr-filter-evento" class="input-premium" onchange="filtrarTablaOcr()" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
+        <div class="ocr-toolbar-filters">
+            <div class="ocr-filter-group">
+                <span class="ocr-filter-label">EVENTO:</span>
+                <select id="ocr-filter-evento" class="input-premium" onchange="filtrarTablaOcr()">
                     <option value="">TODOS</option>
                     <option value="ENTRADA">ENTRADA</option>
                     <option value="SALIDA">SALIDA</option>
                 </select>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 0.75rem; color: #9ca3af; font-weight: 700; text-transform: uppercase;">MOSTRAR:</span>
-                <select id="ocr-limit-select" class="input-premium" onchange="actualizarEstadisticasOcr()" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424;">
+            <div class="ocr-filter-group">
+                <span class="ocr-filter-label">MOSTRAR:</span>
+                <select id="ocr-limit-select" class="input-premium" onchange="actualizarEstadisticasOcr()">
                     <option value="50">50 REGISTROS</option>
                     <option value="100" selected>100 REGISTROS</option>
                     <option value="250">250 REGISTROS</option>
@@ -105,15 +105,15 @@
 
     <!-- GRAFICO DE LATENCIA OCR -->
     <div class="ocr-chart-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <h3 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <div class="ocr-chart-header">
+            <h3 class="ocr-section-title">
                 <i class="fas fa-chart-line text-dorado"></i> CURVA DE LATENCIA OCR
             </h3>
             <div class="ocr-chart-legend">
-                <span><span class="dot" style="background:var(--dorado);"></span>Tiempo OCR</span>
-                <span><span class="dot" style="background:#38bdf8;"></span>Promedio</span>
-                <span><span class="dot" style="background:var(--danger);"></span>Máximo</span>
-                <span><span class="dot" style="background:#10b981;"></span>Mínimo</span>
+                <span><span class="dot dot-dorado"></span>Tiempo OCR</span>
+                <span><span class="dot dot-azul"></span>Promedio</span>
+                <span><span class="dot dot-peligro"></span>Máximo</span>
+                <span><span class="dot dot-emerald"></span>Mínimo</span>
             </div>
         </div>
         <div class="ocr-chart-body">
@@ -128,28 +128,28 @@
 
     <!-- TABLA DE DETALLE -->
     <div class="ocr-table-card">
-        <div style="padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <div class="ocr-table-header">
+            <h3 class="ocr-section-title">
                 <i class="fas fa-list-check text-dorado"></i> HISTORIAL DE LECTURAS OCR
             </h3>
-            <span id="ocr-table-count" style="font-size: 0.75rem; color: #9ca3af; font-family: var(--font-mono);">Cargando registros...</span>
+            <span id="ocr-table-count">Cargando registros...</span>
         </div>
 
-        <div style="overflow-x: auto; max-height: 600px;">
+        <div class="ocr-table-scroll">
             <table class="ocr-table">
                 <thead>
                     <tr>
-                        <th class="ocr-header-tooltip tooltip-left" data-tooltip="NUMERO IDENTIFICADOR UNICO DEL REGISTRO DE ACCESO" style="width: 80px;">ID</th>
+                        <th class="ocr-header-tooltip tooltip-left col-id" data-tooltip="NUMERO IDENTIFICADOR UNICO DEL REGISTRO DE ACCESO">ID</th>
                         <th class="ocr-header-tooltip" data-tooltip="MOMENTO EXACTO EN QUE SE DETECTO EL VEHICULO">FECHA Y HORA</th>
                         <th class="ocr-header-tooltip" data-tooltip="DOMINIO VEHICULAR IDENTIFICADO POR EL MOTOR OCR">PATENTE</th>
                         <th class="ocr-header-tooltip" data-tooltip="TIPO DE MOVIMIENTO REGISTRADO INGRESO O EGRESO">EVENTO</th>
                         <th class="ocr-header-tooltip" data-tooltip="UBICACION O ESTACIONAMIENTO DONDE OCURRIO EL ACCESO">SEDE / SUCURSAL</th>
-                        <th class="ocr-header-tooltip" data-tooltip="DURACION DEL PROCESAMIENTO DE VISION ARTIFICIAL" style="text-align: right;">TIEMPO OCR</th>
+                        <th class="ocr-header-tooltip text-right" data-tooltip="DURACION DEL PROCESAMIENTO DE VISION ARTIFICIAL">TIEMPO OCR</th>
                     </tr>
                 </thead>
                 <tbody id="ocr-table-body">
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
+                        <td colspan="6" class="ocr-empty-state">
                             <i class="fas fa-spinner fa-spin mr-8"></i> Cargando estadísticas del sistema ALPR...
                         </td>
                     </tr>
