@@ -185,7 +185,7 @@ export async function loadFloors() {
                 </div>
             </div>
             <div class="level-actions">
-                <button class="btn-icon-premium sm btn-edit-level" onclick="toggleLevelEdit('pb')" title="Editar Plazas">
+                <button class="btn--icon sm btn-edit-level" onclick="toggleLevelEdit('pb')" title="Editar Plazas">
                     <i class="fas fa-pen-to-square"></i>
                 </button>
                 <button class="btn btn--primary sm btn-save-level" onclick="savePBCapacity()" style="display:none; height: 32px; border-radius: 8px;">
@@ -256,16 +256,16 @@ export async function loadFloors() {
                     </div>
                 </div>
                 <div class="level-actions">
-                    <button class="btn-icon-premium sm btn-edit-level" onclick="toggleLevelEdit(${f.id})" title="Editar Plazas">
+                    <button class="btn--icon sm btn-edit-level" onclick="toggleLevelEdit(${f.id})" title="Editar Plazas">
                         <i class="fas fa-pen-to-square"></i>
                     </button>
                     <button class="btn btn--primary sm btn-save-level" onclick="updateFloorCapacity(${f.id})" style="display:none; height: 32px; border-radius: 8px;">
                         APLICAR
                     </button>
-                    <button class="btn-icon-premium sm" onclick="openEditFloorModal(${f.id})" title="Configuración Avanzada" style="display: none;">
+                    <button class="btn--icon sm" onclick="openEditFloorModal(${f.id})" title="Configuración Avanzada" style="display: none;">
                         <i class="fas fa-gear"></i>
                     </button>
-                    <button class="btn-icon-premium sm danger" onclick="deleteFloor(${f.id})" title="Remover Nivel" style="display: none;">
+                    <button class="btn--icon sm danger" onclick="deleteFloor(${f.id})" title="Remover Nivel" style="display: none;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

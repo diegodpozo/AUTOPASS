@@ -154,7 +154,7 @@ tr:hover .user-actions {
         max-width: 100%;
     }
 
-    td[data-label="Acciones"] .btn-icon-premium.sm {
+    td[data-label="Acciones"] .btn--icon.sm {
         width: 34px !important;
         height: 34px !important;
         font-size: 0.85rem !important;

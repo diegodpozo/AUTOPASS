@@ -66,16 +66,16 @@ allReservations = res.data;
                     <div class="flex-row gap-8 justify-center actions-reveal">
                         ${r.estado_reserva !== 'Completada' && r.estado_reserva !== 'Cancelada' ? `
                         ${r.origen === 'manual' ? `
-                        <button class="btn-icon-premium sm" onclick="editReservationAdmin(${r.id})" title="Editar Reserva">
+                        <button class="btn--icon sm" onclick="editReservationAdmin(${r.id})" title="Editar Reserva">
                             <i class="fas fa-pen"></i>
                         </button>
                         ` : ''}
                         ${r.estado_pago === 'Pendiente' ? `
-                        <button class="btn-icon-premium sm btn-confirm-payment" onclick="payReservationAdmin(${r.id})" title="Pago Manual">
+                        <button class="btn--icon sm btn-confirm-payment" onclick="payReservationAdmin(${r.id})" title="Pago Manual">
                             <i class="fas fa-money-bill-wave"></i>
                         </button>
                         ` : ''}
-                        <button class="btn-icon-premium sm danger" onclick="cancelReservationAdmin(${r.id})" title="Cancelar Reserva">
+                        <button class="btn--icon sm danger" onclick="cancelReservationAdmin(${r.id})" title="Cancelar Reserva">
                             <i class="fas fa-xmark"></i>
                         </button>
                         ` : `<span class="text-xs text-muted">—</span>`}

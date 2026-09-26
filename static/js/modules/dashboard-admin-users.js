@@ -117,16 +117,16 @@ export function renderUserTable(filteredData = null) {
                 <td data-label="Saldo" class="text-bold text-center">${saldoDisplay}</td>
                 <td data-label="Acciones">
                     <div class="flex-row gap-5 user-actions justify-center">
-                        <button class="btn-icon-premium sm" onclick="openEditUserModal(${u.id})" title="Editar Información">
+                        <button class="btn--icon sm" onclick="openEditUserModal(${u.id})" title="Editar Información">
                             <i class="fas fa-user-pen"></i>
                         </button>
-                        <button class="btn-icon-premium sm" onclick="openPasswordModal(${u.id}, '${u.nombre} ${u.apellido}')" title="Cambiar Contraseña">
+                        <button class="btn--icon sm" onclick="openPasswordModal(${u.id}, '${u.nombre} ${u.apellido}')" title="Cambiar Contraseña">
                             <i class="fas fa-key"></i>
                         </button>
-                        <button class="btn-icon-premium sm" onclick="toggleUserBlock(${u.id}, '${u.nombre}', ${u.is_blocked})" title="${u.is_blocked ? 'Desbloquear' : 'Bloquear'}">
+                        <button class="btn--icon sm" onclick="toggleUserBlock(${u.id}, '${u.nombre}', ${u.is_blocked})" title="${u.is_blocked ? 'Desbloquear' : 'Bloquear'}">
                             <i class="fas ${u.is_blocked ? 'fa-user-check' : 'fa-user-slash'}"></i>
                         </button>
-                        <button class="btn-icon-premium sm danger" onclick="deleteUserAdmin(${u.id})" title="Eliminar">
+                        <button class="btn--icon sm danger" onclick="deleteUserAdmin(${u.id})" title="Eliminar">
                             <i class="fas fa-trash-can"></i>
                         </button>
                     </div>

@@ -266,12 +266,12 @@ tr:hover .btn-delete-promo {
     opacity: 1;
 }
 
-.btn-icon-premium.sm.danger {
+.btn--icon.sm.danger {
     color: var(--danger);
     border-color: rgba(244, 63, 94, 0.2);
 }
 
-.btn-icon-premium.sm.danger:hover {
+.btn--icon.sm.danger:hover {
     background: var(--danger);
     color: #fff;
     border-color: var(--danger);

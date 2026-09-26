@@ -137,10 +137,10 @@ export async function loadPromotionsAdmin() {
             const actionCell = isStaff
                 ? `<span class="text-xs text-muted font-bold">SOLO LECTURA</span>`
                 : `<div class="flex-row gap-8 justify-center actions-reveal">
-                        <button class="btn-icon-premium sm btn-edit-promo" onclick="editPromotion(${p.id})" title="Editar">
+                        <button class="btn--icon sm btn-edit-promo" onclick="editPromotion(${p.id})" title="Editar">
                             <i class="fas fa-pen"></i>
                         </button>
-                        <button class="btn-icon-premium sm danger btn-delete-promo" onclick="deletePromotion(${p.id})" title="Eliminar">
+                        <button class="btn--icon sm danger btn-delete-promo" onclick="deletePromotion(${p.id})" title="Eliminar">
                             <i class="fas fa-xmark"></i>
                         </button>
                    </div>`;

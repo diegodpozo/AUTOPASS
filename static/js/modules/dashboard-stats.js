@@ -259,11 +259,11 @@ function renderLogsPagination() {
     }
 
     let html = `
-        <button class="btn-icon-premium sm" ${currentPageLogs === 1 ? 'disabled' : ''} onclick="changePageLogs(${currentPageLogs - 1})">
+        <button class="btn--icon sm" ${currentPageLogs === 1 ? 'disabled' : ''} onclick="changePageLogs(${currentPageLogs - 1})">
             <i class="fas fa-chevron-left"></i>
         </button>
         <span class="text-xs text-light flex items-center px-10">Página ${currentPageLogs} de ${totalPages}</span>
-        <button class="btn-icon-premium sm" ${currentPageLogs === totalPages ? 'disabled' : ''} onclick="changePageLogs(${currentPageLogs + 1})">
+        <button class="btn--icon sm" ${currentPageLogs === totalPages ? 'disabled' : ''} onclick="changePageLogs(${currentPageLogs + 1})">
             <i class="fas fa-chevron-right"></i>
         </button>
     `;
@@ -448,9 +448,9 @@ function buildOccupancyRows() {
             <td data-label="Deuda" class="text-center">${statusBadge}</td>
             <td data-label="Acciones" class="text-center">
                 <div class="flex-row gap-5 justify-center">
-                    ${(!occ.ya_pago && !occ.en_cortesia) ? `<button class="btn-icon-premium sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-dollar-sign"></i></button>` : ''}
-                    <button class="btn-icon-premium sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-arrow-right-from-bracket"></i></button>
-                    ${(!(occ.reserva && occ.reserva.tipo_estadia && occ.reserva.estado_pago) || !(occ.reserva.tipo_estadia !== 'hora' && occ.reserva.estado_pago === 'Pagado')) ? `<button class="btn-icon-premium sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${formatNum(occ.deuda)}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>` : ''}
+                    ${(!occ.ya_pago && !occ.en_cortesia) ? `<button class="btn--icon sm" onclick="payOccupancy('${occ.patente}', ${occ.deuda})" title="Registrar pago de estadía"><i class="fas fa-dollar-sign"></i></button>` : ''}
+                    <button class="btn--icon sm warning" onclick="manualExit('${occ.patente}', '${occ.tipo_vehiculo}')" title="Registrar salida manual de vehículo"><i class="fas fa-arrow-right-from-bracket"></i></button>
+                    ${(!(occ.reserva && occ.reserva.tipo_estadia && occ.reserva.estado_pago) || !(occ.reserva.tipo_estadia !== 'hora' && occ.reserva.estado_pago === 'Pagado')) ? `<button class="btn--icon sm danger" onclick="cancelStay('${occ.patente}', '${occ.tipo_vehiculo}', ${formatNum(occ.deuda)}, '${occ.ingreso}')" title="Cancelar estadía (Cortesía 10 min)"><i class="fas fa-times"></i></button>` : ''}
                 </div>
             </td>
         </tr>`;
@@ -469,11 +469,11 @@ function renderOccupancyPagination() {
         }
 
         let html = `
-            <button class="btn-icon-premium sm" ${currentPageOcc === 1 ? 'disabled' : ''} onclick="changePageOcc(${currentPageOcc - 1})">
+            <button class="btn--icon sm" ${currentPageOcc === 1 ? 'disabled' : ''} onclick="changePageOcc(${currentPageOcc - 1})">
                 <i class="fas fa-chevron-left"></i>
             </button>
             <span class="text-xs text-light flex items-center px-10">Página ${currentPageOcc} de ${totalPages}</span>
-            <button class="btn-icon-premium sm" ${currentPageOcc === totalPages ? 'disabled' : ''} onclick="changePageOcc(${currentPageOcc + 1})">
+            <button class="btn--icon sm" ${currentPageOcc === totalPages ? 'disabled' : ''} onclick="changePageOcc(${currentPageOcc + 1})">
                 <i class="fas fa-chevron-right"></i>
             </button>
         `;

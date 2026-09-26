@@ -178,7 +178,7 @@ export async function loadBranches() {
                     </td>`;
 
                 const levelsAction = isAdmin ? '' : `
-                    <button class="btn-icon-premium sm" onclick="showBranchFloors(${b.id})" title="Ver Niveles / Pisos">
+                    <button class="btn--icon sm" onclick="showBranchFloors(${b.id})" title="Ver Niveles / Pisos">
                         <i class="fas fa-layer-group"></i>
                     </button>`;
 
@@ -218,10 +218,10 @@ export async function loadBranches() {
                     <td data-label="Acciones">
                         <div class="flex-row gap-8 justify-center actions-reveal">
                             ${levelsAction}
-                            <button class="btn-icon-premium sm" onclick="editBranch(${b.id})" title="Editar Configuración">
+                            <button class="btn--icon sm" onclick="editBranch(${b.id})" title="Editar Configuración">
                                 <i class="fas fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-icon-premium sm danger" onclick="deleteBranch(${b.id})" title="Eliminar Sucursal">
+                            <button class="btn--icon sm danger" onclick="deleteBranch(${b.id})" title="Eliminar Sucursal">
                                 <i class="fas fa-xmark"></i>
                             </button>
                         </div>
