@@ -16,7 +16,7 @@
     "templates/contacto.html": 6,
     "templates/dashboard/modals/admin_help_modal.html": 1,
     "templates/dashboard/modals/branch_modals.html": 0,
-    "templates/dashboard/modals/promotion_modal.html": 17,
+    "templates/dashboard/modals/promotion_modal.html": 0,
     "templates/dashboard/modals/user_modals.html": 0,
     "templates/dashboard/tabs/admin_reservations.html": 0,
     "templates/dashboard/tabs/branches.html": 4,

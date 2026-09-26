@@ -778,3 +778,71 @@ tr:hover .btn-delete-promo {
 /* ACCIONES DEL FORMULARIO DE SUCURSAL */
 #modal-add-branch .branch-actions .btn--outline { min-width: 120px; }
 #modal-add-branch .branch-actions .btn--primary { min-width: 160px; }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.27 (estilos extraídos de dashboard/modals/promotion_modal.html)
+   ========================================================================== */
+
+/* ANCHO DEL MODAL DE PROMOCIONES */
+#modal-create-promotion .modal-content { max-width: 580px; }
+
+/* TEXTAREA DE DESCRIPCIÓN CON ÍCONO */
+#form-create-promotion .input-with-icon i.fa-align-left {
+    top: 15px;
+    transform: none;
+}
+#promo-descripcion { padding-left: 45px; }
+
+/* SELECTS OSCUROS DENTRO DEL MODAL DE PROMOCIONES */
+#promo-tipo-canje,
+#promo-sucursal {
+    width: 100%;
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 12px;
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+#promo-tipo-canje { padding: 14px 15px 14px 45px; }
+#promo-sucursal { padding: 15px 15px 15px 45px; }
+#form-create-promotion select option { background-color: #111; }
+#form-create-promotion .select-caret {
+    position: absolute;
+    right: 15px;
+    left: auto;
+    color: #888;
+    font-size: 0.7rem;
+    pointer-events: none;
+}
+
+/* CAMPO DE DESCUENTO OCULTO POR DEFECTO (JS lo alterna) */
+#promo-descuento-field { display: none; }
+
+/* DIRECCIÓN + BOTÓN BUSCAR */
+#form-create-promotion .flex-row > .input-with-icon { flex: 1; }
+#form-create-promotion .btn--secondary {
+    min-width: 80px;
+    padding: 0 10px;
+    white-space: nowrap;
+}
+.promo-form-hint {
+    color: #888;
+    font-size: 0.7rem;
+}
+
+/* COORDENADAS OCULTAS (solo reciben valor) */
+#promo-latitude,
+#promo-longitude { display: none; }
+
+/* MAPA DE UBICACIÓN */
+#promo-map-picker {
+    height: 300px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(223, 186, 107, 0.2);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+/* BOTONES DE ACCIÓN */
+#form-create-promotion .modal-actions-sticky .btn { min-width: 140px; }
