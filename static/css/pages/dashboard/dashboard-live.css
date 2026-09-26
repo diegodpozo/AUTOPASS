@@ -571,8 +571,139 @@
     .metric-label {
         font-size: 0.65rem;
     }
-
-    .metric-value {
+.metric-value {
         font-size: 0.9rem;
     }
+
+}
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.19 (estilos extraídos de live.html)
+   ========================================================================== */
+
+/* Barra de acciones superiores (OCR / Monitor multi-cámara) */
+.monitor-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn--premium.btn-monitor-link {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    letter-spacing: 0.5px;
+}
+
+/* Card headers compactos del monitor */
+.card-header-premium.card-header--compact {
+    padding: 15px 20px;
+}
+.card-header-premium.card-header--compact h3 {
+    font-size: 0.85rem;
+}
+.card-header-premium.card-header--compact .header-icon i {
+    font-size: 0.9rem;
+}
+
+/* Span de datos ocultos (estadísticas) */
+.stat-hidden { display: none; }
+
+/* Contenedor de operaciones manuales */
+#manual-ops-content { background: rgba(0, 0, 0, 0.1); }
+
+/* Grupo piso/sector del ingreso manual */
+#manual-floor-group { display: none; margin-top: 5px; }
+.manual-floor-label {
+    font-size: 0.6rem;
+    color: #888;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+.select-premium-sm.manual-floor-select {
+    width: 100%;
+    height: 36px;
+    margin-top: 4px;
+}
+
+/* Input de patente + botón ENTRAR */
+.input-premium.manual-plate-input {
+    height: 42px;
+    font-size: 0.9rem;
+    text-align: center;
+    flex: 0 1 120px;
+    width: 120px;
+    max-width: 120px;
+}
+.btn--premium.manual-entry-btn {
+    height: 42px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Divisor del panel manual */
+.manual-divider {
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Barreras físicas (entrada / salida) */
+.barrier-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 2px;
+}
+.barrier-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+.barrier-label-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 110px;
+}
+.barrier-label-group--offset { transform: translateX(-6px); }
+.barrier-btn-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 88px;
+}
+.barrier-icon { width: 24px; filter: brightness(0) invert(1); }
+.barrier-text {
+    font-size: 0.7rem;
+    color: var(--text);
+    font-weight: 800;
+}
+.btn--mini.barrier-btn {
+    padding: 6px 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+/* Pestañas de listados */
+.tabs-buttons-group { display: flex; gap: 5px; }
+.tabs-actions-group { padding-right: 15px; }
+.pagination-premium.table-pagination {
+    padding: 10px 25px 20px;
+    gap: 10px;
 }

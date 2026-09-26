@@ -1,21 +1,21 @@
 <!-- PESTAÑA: MONITOREO -->
 <div id="tab-live" class="tab-view">
-    <div style="display: flex; justify-content: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
-        <a href="/estadisticas-ocr" onclick="event.preventDefault(); window.open('/estadisticas-ocr','_blank');" class="btn btn--premium sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 8px 12px; letter-spacing: 0.5px;">
-            <i class="fas fa-microchip" style="color: var(--negro);"></i> ESTADÍSTICAS OCR
+    <div class="monitor-actions">
+        <a href="/estadisticas-ocr" onclick="event.preventDefault(); window.open('/estadisticas-ocr','_blank');" class="btn btn--premium sm btn-monitor-link">
+            <i class="fas fa-microchip"></i> ESTADÍSTICAS OCR
         </a>
-        <a href="/monitoreo" target="_blank" class="btn btn--premium sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 8px 12px; letter-spacing: 0.5px;">
-            <i class="fas fa-tower-observation" style="color: var(--negro);"></i> MONITOR MULTI-CÁMARA
+        <a href="/monitoreo" target="_blank" class="btn btn--premium sm btn-monitor-link">
+            <i class="fas fa-tower-observation"></i> MONITOR MULTI-CÁMARA
         </a>
     </div>
 
     <!-- DISPONIBILIDAD POR TIPO DE VEHÍCULO (GRILLA ÚNICA) -->
     <div class="vehicle-stats-grid">
         <div class="card mt-0">
-            <div class="card-header-premium" style="padding: 15px 20px;">
+            <div class="card-header-premium card-header--compact">
                 <div class="header-info-group">
                     <div class="header-text">
-                        <h3 style="font-size: 0.85rem;">DISPONIBILIDAD</h3>
+                        <h3>DISPONIBILIDAD</h3>
                     </div>
                 </div>
             </div>
@@ -49,72 +49,72 @@
                 <div class="vehicle-type-cell cell-reservas" id="stat-res-camionetas-val">-- / --</div>
             </div>
 
-            <span id="stat-free" style="display:none"></span>
-            <span id="stat-total" style="display:none"></span>
-            <span id="stat-free-motos" style="display:none"></span>
-            <span id="stat-total-motos" style="display:none"></span>
-            <span id="stat-free-camionetas" style="display:none"></span>
-            <span id="stat-total-camionetas" style="display:none"></span>
+            <span id="stat-free" class="stat-hidden"></span>
+            <span id="stat-total" class="stat-hidden"></span>
+            <span id="stat-free-motos" class="stat-hidden"></span>
+            <span id="stat-total-motos" class="stat-hidden"></span>
+            <span id="stat-free-camionetas" class="stat-hidden"></span>
+            <span id="stat-total-camionetas" class="stat-hidden"></span>
         </div>
 
         <!-- CARD DE INGRESO MANUAL (AL LADO DE DISPONIBILIDAD) -->
         <div class="card mt-0 manual-card">
-            <div class="card-header-premium" style="padding: 15px 20px;">
+            <div class="card-header-premium card-header--compact">
                 <div class="header-info-group">
-                    <div class="header-icon" style="font-size: 0.9rem;"><i class="fas fa-keyboard"></i></div>
+                    <div class="header-icon"><i class="fas fa-keyboard"></i></div>
                     <div class="header-text">
-                        <h3 style="font-size: 0.85rem;">INGRESO MANUAL</h3>
+                        <h3>INGRESO MANUAL</h3>
                     </div>
                 </div>
             </div>
 
-            <div id="manual-ops-content" style="background: rgba(0,0,0,0.1);">
-                <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+            <div id="manual-ops-content">
+                <div class="flex-col p-20 gap-20">
                     <!-- Ingreso Manual -->
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <div style="display: flex; gap: 10px; align-items: center; justify-content: center;">
-                            <input type="text" id="manual-plate" placeholder="ABC-123" class="input-premium uppercase" style="height: 42px; font-size: 0.9rem; text-align: center; flex: 0 1 120px; width: 120px; max-width: 120px;">
-                            <button class="btn btn--premium sm" onclick="manualEntry()" style="height: 42px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;" title="Registrar ingreso de vehículo sin ALPR">
+                    <div class="flex-col gap-8">
+                        <div class="flex-row gap-10 items-center justify-center">
+                            <input type="text" id="manual-plate" placeholder="ABC-123" class="input-premium uppercase manual-plate-input">
+                            <button class="btn btn--premium sm manual-entry-btn" onclick="manualEntry()" title="Registrar ingreso de vehículo sin ALPR">
                                 <i class="fas fa-sign-in-alt"></i> ENTRAR
                             </button>
                         </div>
-                        <div id="manual-floor-group" style="display: none; margin-top: 5px;">
-                            <label style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 700;">PISO / SECTOR</label>
-                            <select id="manual-floor" class="select-premium-sm" style="width: 100%; height: 36px; margin-top: 4px;"></select>
+                        <div id="manual-floor-group">
+                            <label class="manual-floor-label">PISO / SECTOR</label>
+                            <select id="manual-floor" class="select-premium-sm manual-floor-select"></select>
                         </div>
                     </div>
 
-                    <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.05);"></div>
+                    <div class="manual-divider"></div>
 
                     <!-- BARRERAS FÍSICAS (ENTRADA Y SALIDA) -->
-                    <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 2px;">
+                    <div class="barrier-block">
                         <!-- BARRERA ENTRADA -->
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 110px;">
-                                <img id="icon-barrier-entry" src="/static/images/barrera baja.png" style="width: 24px; filter: brightness(0) invert(1);">
-                                <span style="font-size: 0.7rem; color: var(--text); font-weight: 800;">ENTRADA</span>
+                        <div class="barrier-row">
+                            <div class="barrier-label-group">
+                                <img id="icon-barrier-entry" src="/static/images/barrera baja.png" class="barrier-icon">
+                                <span class="barrier-text">ENTRADA</span>
                             </div>
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 7px; width: 88px;">
-                                <button class="btn btn--mini success" onclick="openBarrier('ENTRADA', 'OPEN')" title="Abrir Barrera de Entrada" style="padding: 6px 10px; font-size: 0.65rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                            <div class="barrier-btn-group">
+                                <button class="btn btn--mini success barrier-btn" onclick="openBarrier('ENTRADA', 'OPEN')" title="Abrir Barrera de Entrada">
                                     <i class="fas fa-lock-open"></i>
                                 </button>
-                                <button class="btn btn--mini danger" onclick="openBarrier('ENTRADA', 'CLOSE')" title="Cerrar Barrera de Entrada" style="padding: 6px 10px; font-size: 0.65rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                <button class="btn btn--mini danger barrier-btn" onclick="openBarrier('ENTRADA', 'CLOSE')" title="Cerrar Barrera de Entrada">
                                     <i class="fas fa-lock"></i>
                                 </button>
                             </div>
                         </div>
 
                         <!-- BARRERA SALIDA -->
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 110px; transform: translateX(-6px);">
-                                <img id="icon-barrier-exit" src="/static/images/barrera baja.png" style="width: 24px; filter: brightness(0) invert(1);">
-                                <span style="font-size: 0.7rem; color: var(--text); font-weight: 800;">SALIDA</span>
+                        <div class="barrier-row">
+                            <div class="barrier-label-group barrier-label-group--offset">
+                                <img id="icon-barrier-exit" src="/static/images/barrera baja.png" class="barrier-icon">
+                                <span class="barrier-text">SALIDA</span>
                             </div>
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 7px; width: 88px;">
-                                <button class="btn btn--mini success" onclick="openBarrier('SALIDA', 'OPEN')" title="Abrir Barrera de Salida" style="padding: 6px 10px; font-size: 0.65rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                            <div class="barrier-btn-group">
+                                <button class="btn btn--mini success barrier-btn" onclick="openBarrier('SALIDA', 'OPEN')" title="Abrir Barrera de Salida">
                                     <i class="fas fa-lock-open"></i>
                                 </button>
-                                <button class="btn btn--mini danger" onclick="openBarrier('SALIDA', 'CLOSE')" title="Cerrar Barrera de Salida" style="padding: 6px 10px; font-size: 0.65rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                <button class="btn btn--mini danger barrier-btn" onclick="openBarrier('SALIDA', 'CLOSE')" title="Cerrar Barrera de Salida">
                                     <i class="fas fa-lock"></i>
                                 </button>
                             </div>
@@ -131,8 +131,8 @@
 
             <!-- CONTENEDOR DE PESTAÑAS PARA LISTADOS -->
             <div class="card mt-10">
-                <div class="card-header-premium" style="padding: 15px 20px;">
-                    <div class="tabs-buttons-group" style="display: flex; gap: 5px;">
+                <div class="card-header-premium card-header--compact">
+                    <div class="tabs-buttons-group">
                         <button class="tab-btn active" onclick="switchMonitorTab('occ', this)">
                             <i class="fas fa-car-side"></i> VEHÍCULOS ESTACIONADOS
                         </button>
@@ -142,7 +142,7 @@
                     </div>
 
                     <!-- BUSCADORES INTEGRADOS EN LA CABECERA -->
-                    <div class="tabs-actions-group" style="padding-right: 15px;">
+                    <div class="tabs-actions-group">
                         <!-- Buscador Ocupación -->
                         <div id="search-container-occ" class="monitor-tab-content active">
                             <div class="search-box-premium sm" title="Filtrar vehículos por patente">
@@ -181,7 +181,7 @@
                         </table>
                     </div>
                     <!-- Paginación Ocupación -->
-                    <div id="occ-pagination" class="pagination-premium" style="padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px;"></div>
+                    <div id="occ-pagination" class="pagination-premium table-pagination"></div>
                 </div>
 
                 <!-- SUB-PESTAÑA: ÚLTIMOS MOVIMIENTOS -->
@@ -197,7 +197,7 @@
                         </table>
                     </div>
                     <!-- Paginación Movimientos -->
-                    <div id="logs-pagination" class="pagination-premium" style="padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px;"></div>
+                    <div id="logs-pagination" class="pagination-premium table-pagination"></div>
                 </div>
             </div>
         </div>
