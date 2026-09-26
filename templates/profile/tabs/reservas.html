@@ -1,12 +1,12 @@
 <!-- SECCIÓN: MIS RESERVAS -->
 <div id="section-reservas" class="profile-section">
-    <div class="card welcome-card" style="text-align: center; padding: 14px 20px;">
+    <div class="card welcome-card">
         <div class="welcome-msg">
-            <h1 style="justify-content: center; margin-bottom: 8px;"><i class="fas fa-calendar-days"></i> MIS RESERVAS</h1>
+            <h1><i class="fas fa-calendar-days"></i> MIS RESERVAS</h1>
         </div>
     </div>
 
-    <div class="reserva-stats-grid" style="justify-content: center;">
+    <div class="reserva-stats-grid">
         <div class="res-stat-card">
             <div class="res-stat-value-wrap">
                 <i class="fas fa-car-side"></i>
@@ -24,12 +24,12 @@
     </div>
 
     <div class="flex-col">
-        <div id="container-res-featured" style="display: none; text-align: center;">
-            <div class="section-subtitle" style="justify-content: center; margin-left: 0;"><i class="fas fa-star"></i> ESTADÍA ACTUAL</div>
-            <div id="reservation-featured-list" style="display: flex; justify-content: center;"></div>
+        <div id="container-res-featured">
+            <div class="section-subtitle"><i class="fas fa-star"></i> ESTADÍA ACTUAL</div>
+            <div id="reservation-featured-list"></div>
         </div>
 
-        <div class="section-subtitle" style="justify-content: center; margin-left: 0;"><i class="fas fa-calendar-list"></i> TUS PRÓXIMAS RESERVAS</div>
+        <div class="section-subtitle"><i class="fas fa-calendar-list"></i> TUS PRÓXIMAS RESERVAS</div>
         <div id="reservation-list-active" class="reserva-grid-modern">
             <div class="skeleton-grid" aria-hidden="true">
                 <div class="skeleton skeleton-card"></div>
@@ -38,13 +38,13 @@
             </div>
         </div>
 
-        <div class="section-subtitle" style="justify-content: center; margin-left: 0; margin-top: 50px;">
+        <div class="section-subtitle subtitle-spaced">
             <i class="fas fa-clock-rotate-left"></i> HISTORIAL DE ESTADÍAS
         </div>
 
-        <div id="historial-container" style="opacity: 1; margin-top: 0;">
-            <div class="card card-narrow" style="padding: 0; overflow: hidden; margin: 0 auto;">
-                <div class="history-filters-premium no-print" style="justify-content: center;">
+        <div id="historial-container">
+            <div class="card card-narrow">
+                <div class="history-filters-premium no-print">
                     <div class="filter-group-premium">
                         <label>Desde</label>
                         <input type="date" id="history-filter-from" class="filter-input-premium">
@@ -58,14 +58,14 @@
                         <button class="btn btn--outline btn--sm" onclick="resetHistoryFilters()" title="Limpiar"><i class="fas fa-rotate-left"></i></button>
                     </div>
                 </div>
-                <div id="reservation-list-history" class="flex-col" style="gap: 0;">
+                <div id="reservation-list-history" class="flex-col">
                     <div aria-hidden="true">
                         <div class="skeleton skeleton-list-item"></div>
                         <div class="skeleton skeleton-list-item"></div>
                         <div class="skeleton skeleton-list-item"></div>
                     </div>
                 </div>
-                <div id="historial-pagination" class="pagination" style="margin: 0; padding: 20px;">
+                <div id="historial-pagination" class="pagination">
                     <button class="btn-pagination" onclick="historialPage(-1)" id="historial-prev">
                         <i class="fas fa-chevron-left"></i> ANTERIOR
                     </button>

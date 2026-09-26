@@ -47,7 +47,7 @@
     "templates/profile/tabs/inicio.html": 0,
     "templates/profile/tabs/notificaciones.html": 4,
     "templates/profile/tabs/puntos.html": 12,
-    "templates/profile/tabs/reservas.html": 13,
+    "templates/profile/tabs/reservas.html": 0,
     "templates/profile/tabs/vehiculos.html": 0,
     "templates/reset_password.html": 4,
     "templates/terminos.html": 0

@@ -1857,3 +1857,17 @@
 #modal-edit-resumo .btn-confirm-premium { min-width: 200px; }
 #reserva-rates-detail { display: none; margin-top: 8px; font-size: 0.72rem; color: var(--text-secondary, #9ca3af); line-height: 1.5; }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.29 - profile/tabs/reservas.html
+   ========================================================================== */
+#section-reservas .welcome-msg h1 { justify-content: center; margin-bottom: 8px; }
+#section-reservas .reserva-stats-grid { justify-content: center; }
+#container-res-featured { display: none; text-align: center; }
+#section-reservas .section-subtitle { justify-content: center; margin-left: 0; }
+#section-reservas .subtitle-spaced { margin-top: 50px; }
+#reservation-featured-list { display: flex; justify-content: center; }
+#historial-container { opacity: 1; margin-top: 0; }
+#historial-container .card-narrow { padding: 0; overflow: hidden; margin: 0 auto; }
+#reservation-list-history { gap: 0; }
+#historial-pagination { margin: 0; padding: 20px; }
+
