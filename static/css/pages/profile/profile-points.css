@@ -1049,4 +1049,18 @@
     }
 }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.32 - profile/tabs/puntos.html
+   ========================================================================== */
+#section-puntos .welcome-msg h1 { justify-content: center; margin-bottom: 8px; }
+#section-puntos #vouchers-section-wrapper .section-subtitle { justify-content: center; margin-left: 0; margin-top: 34px; }
+#section-puntos > .section-subtitle { justify-content: center; margin-left: 0; margin-top: 50px; }
+#section-puntos #vouchers-container { margin-top: 0; }
+#section-puntos #vouchers-grid .loading-spinner { grid-column: 1 / -1; text-align: center; padding: 30px; color: #888; }
+#section-puntos #promo-filter-bar { display: none; }
+#section-puntos #pts-history-container { opacity: 1; margin-top: 0; }
+#section-puntos #pts-history-container .card-narrow { padding: 0; overflow: hidden; margin: 0 auto; }
+#section-puntos #points-history-list .text-bold { padding: 30px; text-align: center; }
+#section-puntos #pts-pagination { display: none; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); }
+
 
