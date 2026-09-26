@@ -590,6 +590,7 @@
 
 .notification-nav-item {
     position: relative;
+    overflow: visible;
 }
 
 .notif-list {

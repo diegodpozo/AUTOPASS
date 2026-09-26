@@ -32,7 +32,7 @@
     "templates/dashboard/tabs/settings.html": 3,
     "templates/dashboard/tabs/tickets.html": 12,
     "templates/dashboard/tabs/users.html": 2,
-    "templates/dashboard.html": 14,
+    "templates/dashboard.html": 0,
     "templates/estadisticas_ocr.html": 0,
     "templates/index.html": 1,
     "templates/instalar.html": 1,

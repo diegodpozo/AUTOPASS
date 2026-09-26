@@ -45,6 +45,15 @@
 .nav-item.active { background: linear-gradient(135deg, var(--dorado) 0%, var(--dorado-dark) 100%); color: var(--negro); box-shadow: 0 8px 25px rgba(223, 186, 107, 0.25); }
 .nav-item:hover:not(.active) { background: rgba(223, 186, 107, 0.06); color: var(--dorado); border-color: var(--border-light); }
 
+/* NAV ITEM DE AYUDA OPERATIVA (LIMPIEZA INLINE v9.34.28) */
+.nav-item-help {
+    margin-top: 10px;
+    border-top: 1px solid rgba(223, 186, 107, 0.2);
+    padding-top: 10px;
+}
+.nav-item-help i { color: var(--dorado); }
+.nav-item-help .nav-text { color: var(--dorado); font-weight: 600; }
+
 /* --- SIDEBAR FOOTER --- */
 .sidebar-footer { 
     padding: 12px 16px; border-top: 1px solid var(--border-light); font-size: 0.85rem; color: var(--danger); 

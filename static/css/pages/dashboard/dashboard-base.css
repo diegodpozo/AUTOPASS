@@ -166,3 +166,27 @@ body:not(.role-local_admin) .local-admin-only {
     opacity: 1; 
     transform: translateX(0); 
 }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.28 (estilos extraídos de dashboard.html)
+   ========================================================================== */
+
+/* OCULTAR BADGES SIDEBAR HASTA QUE JS PINTA UN CONTADOR */
+#reservation-badge-sidebar,
+#notif-badge-sidebar { display: none; }
+
+/* PLACEHOLDER DE CAPTURA (siempre oculto por defecto) */
+#audit-placeholder { display: none; }
+
+/* MODAL DE DETALLE DE RESERVA */
+#modal-res-detail .modal-content { max-width: 500px; }
+#modal-res-detail .res-summary-box {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(223, 186, 107, 0.2);
+}
+#res-detail-amount { margin: 0; }
+#res-detail-amount-refund {
+    display: none;
+    margin-top: 4px;
+}
