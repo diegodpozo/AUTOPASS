@@ -1,10 +1,10 @@
 <div id="vt-fab" class="vt-fab" onclick="toggleVTModal()" title="Control de tiempo virtual">
     <i class="fas fa-clock"></i>
-    <span class="vt-fab-badge" id="vt-fab-badge" style="display:none;">ON</span>
+    <span class="vt-fab-badge" id="vt-fab-badge">ON</span>
 </div>
 
-<div id="vt-modal" class="modal" style="display:none;">
-    <div class="modal-content glass-premium" style="max-width:420px;padding:24px;">
+<div id="vt-modal" class="modal">
+    <div class="modal-content glass-premium">
         <div class="modal-header">
             <div class="flex-row items-center gap-10">
                 <div class="header-icon-box sm">
@@ -33,7 +33,7 @@
 
             <div class="vt-divider"></div>
 
-            <div class="vt-actions-label" style="font-size:0.75rem; color:var(--dorado); font-weight:700; margin-bottom:6px;">ADELANTAR TIEMPO</div>
+            <div class="vt-actions-label vt-label-dorado">ADELANTAR TIEMPO</div>
             <div class="vt-actions" id="vt-panel-controls">
                 <button class="vt-btn" onclick="advanceVirtualTime(5)">+5 min</button>
                 <button class="vt-btn" onclick="advanceVirtualTime(15)">+15 min</button>
@@ -41,7 +41,7 @@
                 <button class="vt-btn" onclick="advanceVirtualTime(1440)">+1 día</button>
             </div>
 
-            <div class="vt-actions-label" style="font-size:0.75rem; color:#f59e0b; font-weight:700; margin-top:12px; margin-bottom:6px;">RETRASAR TIEMPO</div>
+            <div class="vt-actions-label vt-label-amber">RETRASAR TIEMPO</div>
             <div class="vt-actions">
                 <button class="vt-btn" onclick="rewindVirtualTime(5)">-5 min</button>
                 <button class="vt-btn" onclick="rewindVirtualTime(15)">-15 min</button>
@@ -49,17 +49,17 @@
                 <button class="vt-btn" onclick="rewindVirtualTime(1440)">-1 día</button>
             </div>
 
-            <div class="vt-actions-label" style="font-size:0.75rem; color:#3b82f6; font-weight:700; margin-top:12px; margin-bottom:6px;">FIJAR FECHA Y HORA EXACTA</div>
-            <div style="display:flex; gap:8px; margin-bottom:12px;">
-                <input type="datetime-local" id="vt-target-dt" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:6px 10px; border-radius:6px; font-size:0.85rem;" />
-                <button class="vt-btn" onclick="setTargetVirtualTime()" style="background:var(--dorado); color:#000; font-weight:600;">FIJAR</button>
+            <div class="vt-actions-label vt-label-blue">FIJAR FECHA Y HORA EXACTA</div>
+            <div class="vt-target-row">
+                <input type="datetime-local" id="vt-target-dt" />
+                <button class="vt-btn vt-btn-fijar" onclick="setTargetVirtualTime()">FIJAR</button>
             </div>
 
-            <div style="margin-top:12px;">
+            <div class="vt-reset-row">
                 <button class="vt-btn vt-btn-full vt-btn-danger" onclick="resetVirtualTime()"><i class="fas fa-undo"></i> RESTAURAR TIEMPO REAL</button>
             </div>
 
-            <div id="vt-feedback" class="vt-feedback" style="display:none;"></div>
+            <div id="vt-feedback" class="vt-feedback"></div>
         </div>
     </div>
 </div>

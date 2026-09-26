@@ -12,7 +12,7 @@
     "templates/components/monitoreo_controls.html": 0,
     "templates/components/navbar.html": 1,
     "templates/components/sidebar_user.html": 1,
-    "templates/components/virtual_time_banner.html": 11,
+    "templates/components/virtual_time_banner.html": 0,
     "templates/contacto.html": 6,
     "templates/dashboard/modals/admin_help_modal.html": 1,
     "templates/dashboard/modals/branch_modals.html": 0,
