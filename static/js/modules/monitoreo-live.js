@@ -1,5 +1,5 @@
 import api from './api.js';
-import { normalizeSystemName } from './utils.js';
+import { normalizeSystemName, escapeHtml } from './utils.js';
 
 /**
  * Módulo de Monitoreo CCTV DVR Live (Surveillance Pro)
@@ -41,7 +41,7 @@ async function loadBranchesSelect() {
     if (res.ok) {
         const select = document.getElementById('monitoring-branch-select');
         if (!select) return;
-        select.innerHTML = res.data.map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
+        select.innerHTML = res.data.map(b => `<option value="${escapeHtml(b.nombre)}">${escapeHtml(b.nombre)}</option>`).join('');
         
         const activeBranch = localStorage.getItem('activeMonitoringBranch') || res.data[0]?.nombre || '';
         if (activeBranch) {
@@ -370,10 +370,6 @@ function showCameraGreeting(box, type, plate) {
 function hideCameraGreeting(box) {
     const greeting = box.querySelector('.cctv-greeting');
     if (greeting) greeting.remove();
-}
-
-function escapeHtml(s) {
-    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // --- LOG EN VIVO DE LA CONSOLA DEL SUBPROCESO ALPR (ruta paralela a los mensajes actuales) ---

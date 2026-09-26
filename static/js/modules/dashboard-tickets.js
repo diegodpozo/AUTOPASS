@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, formatDate, toTitle, formatTime } from './utils.js';
+import { showToast, formatDate, toTitle, formatTime, escapeHtml } from './utils.js';
 import { openModal, closeModal } from './ui.js';
 import { updateNotifBadge } from './notifications.js';
 
@@ -166,7 +166,7 @@ function renderAdminTicketMessages(messages) {
         const autor = toTitle(m.autor || (isMine ? 'Soporte' : 'Usuario'));
         const label = isMine ? `Soporte — ${autor}` : autor;
         const dt = m.created_at ? new Date(m.created_at) : null;
-        const time = dt ? formatTime(dt) : '';
+        const time = formatTime(dt);
         const dayKey = dt ? `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}` : '';
         let datePill = '';
         if (dt && dayKey !== lastDay) {
@@ -176,17 +176,17 @@ function renderAdminTicketMessages(messages) {
         let attachHtml = '';
         if (m.adjunto_url) {
             const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);
-            attachHtml = `<div class="ticket-msg-attach"><a href="${encodeURI(m.adjunto_url)}" target="_blank" rel="noopener"><i class="fas ${isImage ? 'fa-image' : 'fa-file-pdf'}"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
+            attachHtml = `<div class="ticket-msg-attach"><a href="${escapeHtml(encodeURI(m.adjunto_url))}" target="_blank" rel="noopener"><i class="fas ${isImage ? 'fa-image' : 'fa-file-pdf'}"></i> ${escapeHtml(m.adjunto_nombre || 'Adjunto')}</a></div>`;
         }
         return `
             ${datePill}
             <div class="ticket-msg ${isMine ? 'mine' : ''}">
                 <div class="ticket-msg-bubble">
                     <div class="ticket-msg-meta">
-                        <span><i class="fas ${isMine ? 'fa-headset' : 'fa-user'}"></i> ${label}</span>
+                        <span><i class="fas ${isMine ? 'fa-headset' : 'fa-user'}"></i> ${escapeHtml(label)}</span>
                         <span>${time}</span>
                     </div>
-                    <div class="ticket-msg-text">${m.mensaje}</div>
+                    <div class="ticket-msg-text">${escapeHtml(m.mensaje)}</div>
                     ${attachHtml}
                 </div>
             </div>`;

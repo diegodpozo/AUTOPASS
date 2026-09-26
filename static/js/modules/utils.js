@@ -364,3 +364,10 @@ export function metodoPagoReport(metodo, tipo) {
     if (tipo === 'Reembolso') return 'REEMBOLSO DIGITAL';
     return 'PAGO DIGITAL';
 }
+
+/**
+ * ESCAPA HTML PARA INTERPOLAR DATOS DEL BACKEND EN innerHTML (XSS).
+ */
+export function escapeHtml(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}

@@ -81,13 +81,26 @@ archivo L296, verificado en la ronda A7 §username).
 3. **No bloquear release:** ambos fixes son puramente `static/js` (no tocan routes
    ni models) → la suite 675 no se ve afectada (AGENTS: los tests cubren backend).
 
+> **[HECHO v9.34.16]:** `escapeHtml` centralizado y exportado en `modules/utils.js`
+> (variante que también escapa `'`), reemplaza 3 usos locales/inseguros:
+> - `dashboard-tickets.js:179` — `href` de `adjunto_url` → `escapeHtml(encodeURI(...))`
+>   (fix-1 MEDIO aplicado); además `m.mensaje`, `label` y `adjunto_nombre` escapados
+>   al renderizar el mensaje del ticket.
+> - `landing-map.js:203` — `p.nombre` en `innerHTML` del overlay → `escapeHtml` (fix-2).
+> - `monitoreo-live.js:44` — `b.nombre` en `<option>` → `escapeHtml` (fix-2);
+>   se eliminó el `escapeHtml` local duplicado (DRY) al consolidarse en utils.
+
 ---
 
 ## Cierre
 
-**Sin XSS explotable** en el front del scoped A9. Riesgo residual: MEDIO-BAJO en
-`adjunto_url` con fix de 1 línea propuesto. El resto de las 39 rutas `static/js`
-no interpolan datos no-estáticos en `innerHTML` (verificado por grep §1).
+**Sin XSS explotable** en el front del scoped A9. Riesgo residual MEDIO-BAJO en
+`adjunto_url` **cerrado (v9.34.16)** con `escapeHtml` + `encodeURI` en el `href` y
+en los campos de texto del mensaje; `landing-map`/`monitoreo-live` con `escapeHtml`
+en los nombres interpolados. El resto de las 39 rutas `static/js` no interpolan
+datos no-estáticos en `innerHTML` (verificado por grep §1). Suite **695 passed /
+54.75s con venv** (los tests cubren backend; los módulos JS validados con
+`node --check`).
 
 > **Herramienta reutilizable:** el grep de §1 está en
 > `Info proyecto/_tools/auditoria_xss.ps1` (add-only, sin ejecutar en CI — 0.5 día

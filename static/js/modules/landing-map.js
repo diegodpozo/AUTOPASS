@@ -10,6 +10,7 @@
  */
 
 import { getDirectionsTo, extractLocality, formatAddress } from './landing-map-data.js';
+import { escapeHtml } from './utils.js';
 import { loadTheaters, loadStadiums } from './landing-map-pois.js';
 import { findNearestBranch } from './landing-map-geo.js';
 import { filterMapByLocality } from './landing-map-locality.js';
@@ -200,7 +201,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                     if (overlaySelector) {
                         const overlay = document.querySelector(overlaySelector);
                         if (overlay) {
-                            overlay.querySelector('h4').innerHTML = `<i class="fas fa-building"></i> ${p.nombre}`;
+                            overlay.querySelector('h4').innerHTML = `<i class="fas fa-building"></i> ${escapeHtml(p.nombre)}`;
                             overlay.querySelector('p').innerText = formattedAddr;
                             overlay.classList.add('active');
                         }
