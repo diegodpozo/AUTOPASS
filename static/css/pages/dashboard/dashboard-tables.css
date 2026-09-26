@@ -367,10 +367,13 @@ tr:hover .btn-delete-promo {
     flex-direction: column;
     max-height: calc(100vh - 40px);
     margin: 20px auto;
+    padding: 0;
+    overflow: hidden;
 }
 
 #modal-ticket-answer .modal-header {
     flex-shrink: 0;
+    padding: 16px 25px;
 }
 
 #modal-ticket-answer .modal-header .close-btn {
@@ -379,6 +382,17 @@ tr:hover .btn-delete-promo {
     height: 34px;
     margin-right: -4px;
 }
+
+#modal-ticket-answer .modal-footer-buttons {
+    flex-shrink: 0;
+}
+
+/* LIMPIEZA INLINE v9.34.31 - dashboard/tabs/tickets.html */
+#tab-tickets .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+#ticket-modal-nro { margin: 4px 0 0; }
+#modal-ticket-answer .ticket-subject-info { padding-top: 0; }
+#ticket-modal-subject { white-space: normal; }
+#modal-ticket-answer .ticket-status-field { max-width: 150px; flex-shrink: 0; }
 
 #modal-ticket-answer .modal-body {
     flex: 1;
@@ -445,7 +459,7 @@ tr:hover .btn-delete-promo {
 }
 
 #modal-ticket-answer .ticket-answer-locked {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 8px;
     background: rgba(244, 63, 94, 0.08);
