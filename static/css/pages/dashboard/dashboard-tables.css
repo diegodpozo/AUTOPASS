@@ -686,3 +686,95 @@ tr:hover .btn-delete-promo {
     font-size: 0.75rem;
     min-width: 140px;
 }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.24 (estilos extraídos de dashboard/modals/branch_modals.html)
+   ========================================================================== */
+
+/* ANCHO DE LOS MODALES DE SUCURSALES */
+#modal-branch-floors .modal-content { max-width: 700px; }
+#modal-add-branch .modal-content { max-width: 850px; }
+
+/* CUERPO DE LOS MODALES DE SUCURSALES */
+#modal-branch-floors .modal-body,
+#modal-add-branch .modal-body { padding: 20px; }
+
+/* FORMULARIO DE SUCURSAL: dos columnas */
+#modal-add-branch .branch-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+#modal-add-branch .branch-form-grid h4 { letter-spacing: 1px; }
+
+/* FILA DIRECCIÓN + BOTÓN GEO */
+#modal-add-branch .branch-address-row .input-with-icon { flex: 1; }
+#modal-add-branch .btn--geo { min-width: 80px; padding: 0 10px; }
+
+/* COORDENADAS Y MAPA DE LA SUCURSAL (el mapa lo renderiza Leaflet) */
+#branch-latitude,
+#branch-longitude { display: none; }
+#branch-map-picker {
+    height: 350px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(223, 186, 107, 0.2);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+/* SELECTOR DE LOGO */
+#modal-add-branch .branch-logo-row {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+#modal-add-branch .branch-logo-wrap { position: relative; }
+#branch-logo-preview {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--dorado);
+}
+#branch-logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+#btn-clear-logo {
+    display: none;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #fff;
+    border: 2px solid #000;
+    cursor: pointer;
+    font-size: 0.65rem;
+    line-height: 1;
+    padding: 0;
+    z-index: 5;
+}
+#modal-add-branch .branch-logo-upload { width: 100%; cursor: pointer; font-size: 0.7rem; }
+#branch-logo-file { display: none; }
+
+/* HORARIO OPERATIVO */
+#modal-add-branch .branch-horario-card {
+    background: rgba(223, 186, 107, 0.05);
+    border: 1px solid rgba(223, 186, 107, 0.1);
+    border-radius: 12px;
+}
+#branch-horario { font-size: 0.85rem; }
+#modal-add-branch .branch-24h-row {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 15px;
+    border-radius: 10px;
+}
+#modal-add-branch .branch-24h-label { color: var(--dorado); }
+
+/* AYUDA DE GEOLOCALIZACIÓN */
+#modal-add-branch .branch-geo-hint { line-height: 1.4; }
+
+/* ACCIONES DEL FORMULARIO DE SUCURSAL */
+#modal-add-branch .branch-actions .btn--outline { min-width: 120px; }
+#modal-add-branch .branch-actions .btn--primary { min-width: 160px; }

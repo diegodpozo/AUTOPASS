@@ -1,6 +1,6 @@
 <!-- MODAL: VER NIVELES DE SUCURSAL -->
-<div id="modal-branch-floors" class="modal" style="display: none;">
-    <div class="modal-content glass-premium" style="max-width: 700px;">
+<div id="modal-branch-floors" class="modal">
+    <div class="modal-content glass-premium">
         <div class="modal-header">
             <div class="flex-row items-center gap-10">
                 <div class="header-icon-box sm">
@@ -10,7 +10,7 @@
             </div>
             <span class="close-btn" onclick="closeModal('modal-branch-floors')"><i class="fas fa-xmark"></i></span>
         </div>
-        <div class="modal-body" style="padding: 20px;">
+        <div class="modal-body">
             <div class="table-container">
                 <table class="table-premium">
                     <thead>
@@ -35,8 +35,8 @@
 </div>
 
 <!-- MODAL: AGREGAR SUCURSAL -->
-<div id="modal-add-branch" class="modal" style="display: none;">
-    <div class="modal-content glass-premium" style="max-width: 850px;">
+<div id="modal-add-branch" class="modal">
+    <div class="modal-content glass-premium">
         <div class="modal-header">
             <div class="flex-row items-center gap-10">
                 <div class="header-icon-box sm">
@@ -46,15 +46,15 @@
             </div>
             <span class="close-btn" onclick="closeModal('modal-add-branch')"><i class="fas fa-xmark"></i></span>
         </div>
-        <div class="modal-body" style="padding: 20px;">
+        <div class="modal-body">
             <form id="form-add-branch">
                 <input type="hidden" id="branch-id-edit">
                 <input type="hidden" id="branch-logo-clear" value="false">
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div class="branch-form-grid">
                     <!-- COLUMNA IZQUIERDA: IDENTIDAD Y UBICACIÓN -->
                     <div class="flex-col gap-15">
-                        <h4 class="text-dorado text-xs mb-5" style="letter-spacing: 1px;">DATOS PRINCIPALES</h4>
+                        <h4 class="text-dorado text-xs mb-5">DATOS PRINCIPALES</h4>
                         
                         <div class="form-group">
                             <label>Nombre de Sucursal</label>
@@ -74,24 +74,24 @@
 
                         <div class="form-group">
                             <label>Dirección</label>
-                            <div class="flex-row gap-10">
-                                <div class="input-with-icon" style="flex: 1;">
+                            <div class="flex-row gap-10 branch-address-row">
+                                <div class="input-with-icon">
                                     <i class="fas fa-map-location-dot"></i>
                                     <input type="text" id="branch-direccion" placeholder="Ej: Av. del Libertador 1200, CABA" required>
                                 </div>
-                                <button type="button" class="btn btn--secondary sm" onclick="searchAddress()" style="min-width: 80px; padding: 0 10px;">
+                                <button type="button" class="btn btn--secondary sm btn--geo" onclick="searchAddress()">
                                     <i class="fas fa-search-location"></i>
                                 </button>
                             </div>
                         </div>
 
                         <!-- Campos ocultos de coordenadas -->
-                        <input type="number" step="any" id="branch-latitude" style="display:none;" required>
-                        <input type="number" step="any" id="branch-longitude" style="display:none;" required>
+                        <input type="number" step="any" id="branch-latitude" required>
+                        <input type="number" step="any" id="branch-longitude" required>
 
                         <div class="form-group">
                             <label>Mapa de Ubicación</label>
-                            <div id="branch-map-picker" style="height: 350px; border-radius: 20px; border: 1.5px solid rgba(223, 186, 107, 0.2); box-shadow: inset 0 0 20px rgba(0,0,0,0.4);"></div>
+                            <div id="branch-map-picker"></div>
                         </div>
                     </div>
 
@@ -99,33 +99,33 @@
                     <div class="flex-col gap-15">
                         <div class="form-group">
                             <label>Logo de la Sucursal</label>
-                            <div class="flex-row gap-15 items-center mt-5" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="position: relative;">
-                                    <div id="branch-logo-preview" style="width: 65px; height: 65px; border-radius: 50%; overflow: hidden; background: #000; border: 1px solid var(--dorado);">
-                                        <img src="/static/images/logo.png" style="width: 100%; height: 100%; object-fit: cover;">
+                            <div class="flex-row gap-15 items-center mt-5 branch-logo-row">
+                                <div class="branch-logo-wrap">
+                                    <div id="branch-logo-preview">
+                                        <img src="/static/images/logo.png">
                                     </div>
-                                    <button type="button" id="btn-clear-logo" onclick="clearBranchLogo()" title="Eliminar logo" style="display: none; position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: var(--danger); color: #fff; border: 2px solid #000; cursor: pointer; font-size: 0.65rem; line-height: 1; padding: 0; z-index: 5;"><i class="fas fa-xmark"></i></button>
+                                    <button type="button" id="btn-clear-logo" onclick="clearBranchLogo()" title="Eliminar logo"><i class="fas fa-xmark"></i></button>
                                 </div>
                                 <div class="flex-col flex-1">
-                                    <label for="branch-logo-file" class="btn btn--outline sm" style="width: 100%; cursor: pointer; font-size: 0.7rem;">
+                                    <label for="branch-logo-file" class="btn btn--outline sm branch-logo-upload">
                                         <i class="fas fa-upload"></i> SUBIR IMAGEN
                                     </label>
-                                    <input type="file" id="branch-logo-file" accept="image/*" style="display: none;" onchange="previewBranchLogo(this)">
+                                    <input type="file" id="branch-logo-file" accept="image/*" onchange="previewBranchLogo(this)">
                                 </div>
                             </div>
                         </div>
 
-                        <div class="form-group p-15" style="background: rgba(223, 186, 107, 0.05); border: 1px solid rgba(223, 186, 107, 0.1); border-radius: 12px;">
+                        <div class="form-group p-15 branch-horario-card">
                             <label class="mb-10">Horario Operativo</label>
                             <div class="flex-col gap-10">
                                 <div id="horario-input-container">
                                     <div class="input-with-icon">
                                         <i class="fas fa-clock"></i>
-                                        <input type="text" id="branch-horario" placeholder="07:00 a 23:00" style="padding-left: 40px; font-size: 0.85rem;">
+                                        <input type="text" id="branch-horario" placeholder="07:00 a 23:00">
                                     </div>
                                 </div>
-                                <div class="flex-row items-center justify-between" style="background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 10px;">
-                                    <span class="text-xs font-bold" style="color: var(--dorado);">¿ABIERTO 24 HS?</span>
+                                <div class="flex-row items-center justify-between branch-24h-row">
+                                    <span class="text-xs font-bold branch-24h-label">¿ABIERTO 24 HS?</span>
                                     <label class="switch-premium">
                                         <input type="checkbox" id="branch-is-24h" onchange="toggleBranchHorario(this)">
                                         <span class="slider-premium"></span>
@@ -134,16 +134,16 @@
                             </div>
                         </div>
                         
-                        <p class="text-xs text-muted" style="line-height: 1.4;">
+                        <p class="text-xs text-muted branch-geo-hint">
                             <i class="fas fa-info-circle text-dorado"></i> 
                             Asegurate de que la ubicación en el mapa sea exacta para los reportes de geolocalización.
                         </p>
                     </div>
                 </div>
 
-                <div class="flex-row justify-center gap-20 modal-actions-sticky">
-                    <button type="button" class="btn btn--outline" style="min-width: 120px;" onclick="closeModal('modal-add-branch')">CANCELAR</button>
-                    <button type="submit" class="btn btn--primary" style="min-width: 160px;">
+                <div class="flex-row justify-center gap-20 modal-actions-sticky branch-actions">
+                    <button type="button" class="btn btn--outline" onclick="closeModal('modal-add-branch')">CANCELAR</button>
+                    <button type="submit" class="btn btn--primary">
                         <i class="fas fa-save"></i> GUARDAR SUCURSAL
                     </button>
                 </div>
