@@ -627,3 +627,62 @@ tr:hover .btn-delete-promo {
         justify-content: center;
     }
 }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.22 (estilos extraídos de dashboard/modals/user_modals.html)
+   ========================================================================== */
+
+/* CONTENEDOR DE SELECCIÓN DE SUCURSAL (JS alterna display inline) */
+#branch-selection-row,
+#edit-branch-selection-row { display: none; margin-top: 10px; }
+
+/* ANCHO FIJO DE LOS MODALES ADMIN DE USUARIOS */
+#modal-create-user .modal-content,
+#modal-edit-user .modal-content { max-width: 500px; }
+#modal-change-password-admin .modal-content { max-width: 400px; }
+
+/* SELECTS OSCUROS DENTRO DE LOS MODALES DE USUARIOS */
+#modal-create-user .select-premium,
+#modal-edit-user .select-premium {
+    width: 100%;
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 15px 15px 15px 45px;
+    border-radius: 12px;
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+#modal-create-user select option,
+#modal-edit-user select option { background-color: #111; }
+#modal-create-user .select-caret,
+#modal-edit-user .select-caret {
+    position: absolute;
+    right: 15px;
+    left: auto;
+    color: #888;
+    font-size: 0.7rem;
+    pointer-events: none;
+}
+
+/* ESPACIADO DEL FORM-ROW DE AYUDA DE CONTRASEÑA */
+#modal-create-user .form-row-tight { margin-top: -15px; margin-bottom: 15px; }
+
+/* TEXTO DE AYUDA DENTRO DE LOS MODALES DE USUARIOS */
+#modal-create-user .modal-hint,
+#modal-change-password-admin .modal-hint {
+    color: #888;
+    display: block;
+    font-size: 0.65rem;
+}
+#modal-create-user .modal-hint { line-height: 1.2; }
+#modal-change-password-admin .modal-hint { margin-top: 5px; }
+
+/* BOTONES DE ACCIÓN DE LOS MODALES DE USUARIOS */
+#modal-create-user .btn-modal-action,
+#modal-edit-user .btn-modal-action {
+    padding: 12px 30px;
+    font-size: 0.75rem;
+    min-width: 140px;
+}
