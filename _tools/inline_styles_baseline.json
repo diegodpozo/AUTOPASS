@@ -41,7 +41,7 @@
     "templates/perfil.html": 3,
     "templates/privacidad.html": 0,
     "templates/profile/modals/onboarding_modal.html": 4,
-    "templates/profile/modals.html": 27,
+    "templates/profile/modals.html": 0,
     "templates/profile/tabs/ayuda.html": 2,
     "templates/profile/tabs/cuenta.html": 2,
     "templates/profile/tabs/inicio.html": 0,
