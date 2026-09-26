@@ -67,7 +67,17 @@
     align-items: center;
     justify-content: center;
     position: relative;
+    cursor: pointer;
     transition: transform 0.25s ease, background 0.25s ease, border 0.25s ease;
+}
+
+.empty-icon-box--sm {
+    width: 60px;
+    height: 60px;
+}
+
+.empty-icon-box--sm .main-icon {
+    font-size: 1.5rem;
 }
 
 .empty-icon-box .main-icon {

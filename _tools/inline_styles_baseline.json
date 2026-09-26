@@ -44,7 +44,7 @@
     "templates/profile/modals.html": 27,
     "templates/profile/tabs/ayuda.html": 2,
     "templates/profile/tabs/cuenta.html": 2,
-    "templates/profile/tabs/inicio.html": 83,
+    "templates/profile/tabs/inicio.html": 0,
     "templates/profile/tabs/notificaciones.html": 4,
     "templates/profile/tabs/puntos.html": 12,
     "templates/profile/tabs/reservas.html": 13,

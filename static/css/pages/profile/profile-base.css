@@ -556,7 +556,8 @@
 #reserva-form-container.open {
     max-height: 2000px;
     opacity: 1;
-    margin: 0 auto 40px;
+    max-width: 675px;
+    margin: 0 auto;
 }
 
 /* --- MERCADO PAGO: ESTADÍAS EN CURSO (v9.14.0) --- */

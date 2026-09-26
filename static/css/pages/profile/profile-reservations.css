@@ -1512,6 +1512,13 @@
 
 /* --- DISPONIBILIDAD HORARIA Y BADGES DE RESERVA --- */
 .availability-badge-premium {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
     transition: all 0.3s ease;
     border: 1px solid rgba(255,255,255,0.1);
     backdrop-filter: blur(8px);
@@ -1533,6 +1540,11 @@
 }
 
 .hourly-slots-grid-premium {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    max-width: 520px;
     padding: 10px;
     background: rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(223, 186, 107, 0.15);
@@ -1701,4 +1713,84 @@
 .hsum-dur {
     color: #f3d9a0;
 }
+
+/* --- LIMPIEZA INLINE v9.34.18 (estilos extraídos de inicio.html) --- */
+/* Contenedores ocultos por defecto que el JS muestra por inline display */
+#reserva-no-vehicles { display: none; padding: 40px 30px; }
+#reserva-form-content { display: none; padding: 40px; }
+#quick-add-info { display: none; }
+#quick-add-form-container { width: 100%; max-width: 450px; margin: 5px auto 0; }
+#dynamic-fields-premium { width: 100%; display: flex; justify-content: center; }
+#availability-status-container { width: 100%; margin-top: 15px; display: none; flex-direction: column; align-items: center; gap: 10px; }
+
+/* Icono absoluto de selects simples (tipo de vehículo) */
+#quick-vehicle-type-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 10px;
+    color: var(--dorado);
+    font-size: 0.8rem;
+    opacity: 0.8;
+    z-index: 5;
+}
+
+/* Filas dinámicas del formulario: ocultas por defecto, JS les setea display inline */
+.dynamic-row-premium--hidden { display: none; }
+.dynamic-row-premium--center { justify-content: center; }
+
+/* Labels centrados del formulario premium */
+.form-group-premium label.fg-label { text-align: center; width: 100%; display: block; }
+.form-group-premium label.fg-label-xs { font-size: 0.65rem; }
+.form-group-premium label.fg-label-sm { font-size: 0.75rem; }
+.form-group-premium label.fg-label-md { font-size: 0.9rem; }
+
+/* Grid del formulario premium */
+.form-group-premium.fg-center { align-items: center; }
+.form-group-premium.fg-170 { max-width: 170px; align-items: center; }
+.form-group-premium.fg-200 { max-width: 200px; align-items: center; }
+.form-group-premium.fg-280 { width: 100%; max-width: 280px; align-items: center; }
+.form-group-premium.fg-330 { margin-bottom: 0; flex: 1; max-width: 330px; align-items: center; }
+.form-group-premium.fg-144 { margin-bottom: 0; flex: 1; max-width: 144px; align-items: center; }
+.form-group-premium.fg-col { display: flex; flex-direction: column; width: 100%; max-width: 350px; align-items: center; }
+
+/* Form directo (quick add) */
+.form-compact-premium.fg-bare { padding: 0; background: transparent; border: none; box-shadow: none; }
+.input-wrapper-premium { width: 100%; position: relative; }
+.input-premium-sm.fg-sm { padding: 8px 10px !important; width: 100%; text-align: center; }
+.select-wrapper-premium select.fg-pad-left { padding-left: 35px !important; text-align: center; }
+.btn.fg-continue { padding: 8px 25px; font-size: 0.75rem; letter-spacing: 0.5px; }
+
+/* Contenedor del form (fila) */
+.fg-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; width: 100%; }
+
+/* Selects largos centrados */
+.select-wrapper-premium.fg-full { width: 100%; }
+.select-wrapper-premium.fg-auto { width: 100%; max-width: 250px; margin: 0 auto; }
+.select-wrapper-premium select.fg-select { font-size: 0.9rem; text-align-last: center; }
+
+/* Footer de confirmación en columna */
+.reservation-footer-premium.fg-column {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    padding-top: 20px;
+}
+.fg-total-label { display: block; margin-bottom: 5px; }
+.reservation-footer-premium .fa-chevron-right { margin-left: 15px; }
+
+/* Precios */
+.total-amount.fg-lg { font-size: 2rem; }
+.btn-confirm-premium.fg-full-xl {
+    width: 100%;
+    max-width: 350px;
+    justify-content: center;
+    height: 55px;
+    font-size: 1.1rem;
+}
+
+/* Estados de precio ocultos (JS los muestra) */
+#reserva-total-original { display: none; color: #777; font-size: 1.05rem; text-decoration: line-through; font-weight: 700; }
+#reserva-discount-line { display: none; margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: #c084fc; letter-spacing: 0.4px; }
+#reserva-rates-detail { display: none; margin-top: 8px; font-size: 0.72rem; color: var(--text-secondary, #9ca3af); line-height: 1.5; }
 
