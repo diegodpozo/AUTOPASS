@@ -78,11 +78,12 @@ verificado por mrge en la ronda de consistencia (ítem #2 A6 entregado).
 | Criterio | Estado |
 |---|---|
 | Informe por plantilla con elementos OK/NO | ✓ (tablas #1–#4) |
-| Fixes de alto impacto (contraste + foco + labels) | ✅ **LISTOS para aplicar**: 1 línea en `base.css` (foco) + 2 atributos en CSS profile (dorado→texto) + `autofocus` en 3 modales |
+| Fixes de alto impacto (contraste + foco + labels) | ✅ **APLICADOS** — contraste: `#C5A059` sin uso en texto (0 residuos, migrado a `#F2E3BF` en P0.1 v9.33.0); foco global: `:focus-visible { outline: 2px solid #6A4B9B; outline-offset: 2px; }` en `profile-base.css:526` (criterio 2.4.7 con branding); autofocus: `ui.js:27-31` (P2.6) enfoca el primer campo editable visible al abrir cualquier modal + `autofocus` HTML en login (`auth_modals.html:23`) y recarga saldo (`modals.html:146`) como refuerzo. Confirmado por grep: 0 `#C5A059` en CSS, foco global presente, 2 `autofocus` en modales. |
 
 **Riesgo:** BAJO. La suite 675 no toca CSS (solo HTML/JS via TestClient de
-templates), por lo que **ningún fix A8 puede romper tests** — se aplican en la
-ronda de UI sin regresión posible con el runner actual.
+templates), por lo que ningún fix A8 pudo romper tests. **Cierre A8 (v9.34.15):**
+verificación por grep en la ronda de UI — sin cambios de código necesarios porque
+los tres fixes ya estaban aplicados en versiones previas (P0.1/P0.2/P2.6 de UX/UI).
 
 ### Evidencia técnica (para el macro informe)
 - scan contraste: `#C5A059` presente solo en 2 de 42 CSS.
