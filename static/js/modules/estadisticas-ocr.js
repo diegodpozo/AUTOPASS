@@ -29,7 +29,7 @@ function buildOCRDatasets(pts) {
             label: 'Tiempo OCR',
             data: pts,
             borderColor: THEME.gold,
-            backgroundColor: 'rgba(223, 186, 107, 0.12)',
+            backgroundColor: THEME.goldSoft,
             borderWidth: 2.5,
             fill: true,
             tension: 0.35,

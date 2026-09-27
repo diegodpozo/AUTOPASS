@@ -4,6 +4,7 @@ export const THEME = {
     goldHover: '#edd193',
     goldGlow: 'rgba(223, 186, 107, 0.15)',
     goldBorder: 'rgba(223, 186, 107, 0.25)',
+    goldSoft: 'rgba(223, 186, 107, 0.1)',
     bgCard: '#11141b',
     bgInput: '#1a1e26',
     bgSoft: '#0a0a0a',

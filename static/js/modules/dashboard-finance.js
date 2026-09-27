@@ -236,7 +236,7 @@ export function renderRevenueChart(data, period) {
                     label: 'Ingresos',
                     data: values.length > 0 ? values : [0],
                     borderColor: THEME.gold,
-                    backgroundColor: 'rgba(223, 186, 107, 0.1)',
+                    backgroundColor: THEME.goldSoft,
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,

@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-09-24 (diagnóstico) · actualizado 2026-09-27 (verificación P0 cerrada)  
 **Alcance:** 41 archivos CSS (`static/css/`), 54 plantillas HTML (`templates/`), 62 módulos JavaScript (`static/js/`).  
-**Estado:** Diagnóstico completo. **P0 (marca y tipografía) CERRADO** ✅ (verificación 2026-09-27) · **P1 (paleta de estados + contraste) CERRADO** ✅ (2026-09-27, ver §5) · **P2 (escala tipográfica) CERRADO** ✅ (2026-09-27, ver §5) · P3 pendiente (ver §5).
+**Estado:** Diagnóstico completo. **P0 (marca y tipografía) CERRADO** ✅ (verificación 2026-09-27) · **P1 (paleta de estados + contraste) CERRADO** ✅ (2026-09-27, ver §5) · **P2 (escala tipográfica) CERRADO** ✅ (2026-09-27, ver §5) · **P3 (inline styles HTML/JS + theme.js) CERRADO** ✅ (2026-09-27, ver §5).
 
 ---
 
@@ -210,20 +210,10 @@ flowchart TD
   - Reemplazado `'Montserrat', monospace` por `var(--font-mono)`.
   - Verificación 2026-09-27: `'Courier New'`/`'Consolas'` → 0. Residuales intencionales que se conservan: `reset.css:5` (raíz), `variables.css:44` y `utilities.css:65` (definiciones de token), `forms.css:142,162` (override `!important` de flatpickr, librería de terceros) y `profile-vehicles.css:54,60` (select con iconos FontAwesome: la `option` declara Montserrat para no heredar FA).
 
-### Prioridad P3: Desacoplamiento de Estilos Inline en HTML y JS (Medio Plazo)
-- [ ] **Refactorizar `estadisticas_ocr.html` y `monitoreo_live.html`**:
+### Prioridad P3: Desacoplamiento de Estilos Inline en HTML y JS (Medio Plazo) — ✅ **CERRADO (2026-09-27)**
+- [x] **Refactorizar `estadisticas_ocr.html` y `monitoreo_live.html`**:
   - Extraer estilos inline a sus respectivos archivos CSS (`static/css/pages/estadisticas-ocr.css` y `monitoreo-live.css`).
-- [ ] **Módulo `theme.js` para JavaScript**:
-  - Crear un módulo helper `static/js/modules/theme.js` que exponga la paleta de tokens a Chart.js y Leaflet:
-    ```javascript
-    export const THEME = {
-        gold: '#dfba6b',
-        goldGlow: 'rgba(223, 186, 107, 0.15)',
-        goldBorder: 'rgba(223, 186, 107, 0.25)',
-        bgCard: '#11141b',
-        success: '#10b981',
-        danger: '#ef4444',
-        monoFont: "'JetBrains Mono', monospace"
-    };
-    ```
-    Evitando strings mágicos de color en la lógica JS.
+  - Verificación 2026-09-27: **0 atributos `style=`** en ambos templates (las 170 líneas de `estadisticas_ocr.html` y las 27 de `monitoreo_live.html` delegaron todo el estilo a sus CSS de página). El guard `_tools/check_inline_styles.py` se mantiene en 50 templates / 0 inline.
+- [x] **Módulo `theme.js` para JavaScript**:
+  - Existe `static/js/modules/theme.js` con la paleta de tokens (dorado, semánticos, mono, grid) y lo importan **11 módulos**: chart-window, dashboard-finance, dashboard-metrics, dashboard-ui, dashboard-admin-settings, estadisticas-ocr, landing-map, landing-map-pois, reservations-admin-form, admin-tour-engine y tour — evitando strings mágicos de color.
+  - Verificación 2026-09-27: los strings residuales de Chart.js unificados al token (ej. `rgba(223,186,107,0.1)`/`0.12` → `THEME.goldSoft`, grid `rgba(255,255,255,0.05)` → `THEME.grid`); `node --check` OK en los 4 módulos tocados.

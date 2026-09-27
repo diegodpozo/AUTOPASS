@@ -171,7 +171,7 @@ export class WindowedChart {
                     plugins: { legend: { display: false } },
                     scales: {
                         x: { type: 'linear', min: 0, max: 1, grid: { display: false }, ticks: { display: false } },
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }
+                        y: { beginAtZero: true, grid: { color: THEME.grid }, ticks: { display: false } }
                     }
                 }
             });
