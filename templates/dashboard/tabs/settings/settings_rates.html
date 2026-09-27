@@ -1,7 +1,7 @@
                 <div id="set-section-rates" class="settings-section">
                     
                     <!-- SUB-TABS AUTOS/MOTOS/CAMIONETAS -->
-                    <div class="flex-row flex-wrap justify-center gap-10 mb-30" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                    <div class="flex-row flex-wrap justify-center gap-10 mb-30 rates-tabs-bar">
                         <button class="btn-tab-sub active" onclick="switchRatesTab('autos', this)">
                             <i class="fas fa-car mr-8"></i> AUTOS
                         </button>
@@ -16,7 +16,7 @@
                     <!-- GRUPO AUTOS -->
                     <div id="rate-group-autos" class="rate-group">
                         <div class="flex-row justify-end mb-15">
-                            <button id="btn-edit-rates-autos" class="btn-tab-sub" onclick="toggleRateEdit('autos')" style="border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem;">
+                            <button id="btn-edit-rates-autos" class="btn-tab-sub btn-edit-rate" onclick="toggleRateEdit('autos')">
                                 <i class="fas fa-edit mr-8"></i> EDITAR
                             </button>
                         </div>
@@ -60,9 +60,9 @@
                     </div>
 
                     <!-- GRUPO MOTOS -->
-                    <div id="rate-group-motos" class="rate-group" style="display: none;">
+                    <div id="rate-group-motos" class="rate-group">
                         <div class="flex-row justify-end mb-15">
-                            <button id="btn-edit-rates-motos" class="btn-tab-sub" onclick="toggleRateEdit('motos')" style="border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem;">
+                            <button id="btn-edit-rates-motos" class="btn-tab-sub btn-edit-rate" onclick="toggleRateEdit('motos')">
                                 <i class="fas fa-edit mr-8"></i> EDITAR
                             </button>
                         </div>
@@ -106,9 +106,9 @@
                     </div>
 
                     <!-- GRUPO CAMIONETAS -->
-                    <div id="rate-group-camionetas" class="rate-group" style="display: none;">
+                    <div id="rate-group-camionetas" class="rate-group">
                         <div class="flex-row justify-end mb-15">
-                            <button id="btn-edit-rates-camionetas" class="btn-tab-sub" onclick="toggleRateEdit('camionetas')" style="border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem;">
+                            <button id="btn-edit-rates-camionetas" class="btn-tab-sub btn-edit-rate" onclick="toggleRateEdit('camionetas')">
                                 <i class="fas fa-edit mr-8"></i> EDITAR
                             </button>
                         </div>

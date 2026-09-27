@@ -545,10 +545,16 @@
 }
 
 /* ==========================================================================
-   LIMPIEZA INLINE v9.34.30 - dashboard/tabs/settings/settings_system.html
-   (incluye estilos diag-* que estaban embebidos en <style> del template)
+   LIMPIEZA INLINE v9.34.37 - dashboard/tabs/settings/settings_rates.html
    ========================================================================== */
+#set-section-rates .rates-tabs-bar { border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; }
+#set-section-rates .btn-edit-rate { border: 1px solid var(--dorado); padding: 5px 15px; font-size: 0.7rem; }
+#set-section-rates #rate-group-motos,
+#set-section-rates #rate-group-camionetas { display: none; }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.30 - dashboard/tabs/settings/settings_system.html
+   ========================================================================== */
 /* SECCIÓN SISTEMA OCULTA POR DEFECTO (JS switchSettingsTab la alterna) */
 #set-section-system { display: none; }
 

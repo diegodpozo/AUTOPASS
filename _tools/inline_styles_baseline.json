@@ -27,7 +27,7 @@
     "templates/dashboard/tabs/promotions.html": 4,
     "templates/dashboard/tabs/settings/settings_floors.html": 3,
     "templates/dashboard/tabs/settings/settings_monitoring.html": 3,
-    "templates/dashboard/tabs/settings/settings_rates.html": 6,
+    "templates/dashboard/tabs/settings/settings_rates.html": 0,
     "templates/dashboard/tabs/settings/settings_system.html": 0,
     "templates/dashboard/tabs/settings.html": 3,
     "templates/dashboard/tabs/tickets.html": 0,
