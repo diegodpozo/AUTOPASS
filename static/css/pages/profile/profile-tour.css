@@ -727,7 +727,8 @@
    LIMPIEZA INLINE v9.34.39 - perfil.html
    ========================================================================== */
 /* Badge oculto por defecto (JS updateNotifBadge lo alterna) */
-#notif-badge-header { display: none; }
+#notif-badge-header,
+#notif-badge-sidebar-user { display: none; }
 #map-fullscreen-overlay { display: none; }
 
 .notification-nav-item .notif-badge {
