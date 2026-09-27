@@ -1,6 +1,6 @@
 # Plan de Auditorías — AUTOPASS
 
-> Documento de planificación. Estado: **en ejecución** — **A1–A4 HECHO** (informes en `Info proyecto/`), pendientes **A5–A9**. Además se ejecutaron `AUDITORIA_MODULARIZACION.md` (resuelta, 10/10), `AUDITORIA_COLORES_FUENTES.md` y `AUDITORIA_TAMANOS_PROPORCIONES.md`. Propuesta de extensión para la capa CSS detallada en `Info proyecto/PROPUESTA_AUDITORIAS_CSS.md`.
+> Documento de planificación. Estado: **A1–A4 HECHO** (informes en `Info proyecto/`), **A5 pendiente** (requiere Neon/profiling en vivo), **A6–A9 HECHO** con verificaciones formales del 2026-09-27. Auditorías transversales resueltas: `AUDITORIA_MODULARIZACION.md` (10/10), `AUDITORIA_COLORES_FUENTES.md` (P0 cerrado), `AUDITORIA_TAMANOS_PROPORCIONES.md` (fases 1–4 + bloque de cierre aplicado), `AUDITORIA_NOMENCLATURA_ARCHIVOS.md`, `AUDITORIA_COMPONENTES.md` (DRY) y `AUDITORIA_UX_UI.md`. Propuesta de extensión para la capa CSS detallada en `Info proyecto/PROPUESTA_AUDITORIAS_CSS.md`.
 
 ## Resumen
 
@@ -166,6 +166,8 @@ Detectar N+1 y latencias en los agregados más usados del dashboard admin y port
 
 **Prioridad:** Media · **Esfuerzo:** 1 día · **Entregable:** `Info proyecto/AUDITORIA_CONSISTENCIA_FRONT.md`
 
+> **Estado: HECHO (2026-09-27, CERRADA ✓)** — entregable `_tools/check_consistencia_frontend.py` (extractor ejecutable) + `_tools/_a6_openapi.json` (dump OpenAPI, 128 paths). Resultado: 13 ocurrencias / 11 rutas únicas, **0 faltantes**, 128 rutas backend registradas. Verificaciones formales en el informe.
+
 ### Objetivo
 Que todo endpoint que llama el JS exista con ese método/path, y que los campos leídos estén en los response models.
 
@@ -192,6 +194,8 @@ Script de extracción de rutas, `app.openapi()`, grep.
 
 **Prioridad:** Media · **Esfuerzo:** 0.5 día · **Entregable:** `Info proyecto/AUDITORIA_ERRORES.md`
 
+> **Estado: HECHO (2026-09-22)** + **verificación formal 2026-09-27**: grep `^\s*except\s*:` en `*.py` (excl. venv/.git) → **0 ocurrencias**. Checklist y verificación en el informe (§Verificación formal).
+
 ### Objetivo
 Eliminar excepciones cegadas, logs sin contexto y mensajes que filtren internals.
 
@@ -216,6 +220,8 @@ grep + revisión manual.
 ## A8 — Auditoría de Accesibilidad / UX
 
 **Prioridad:** Baja · **Esfuerzo:** 1 día · **Entregable:** `Info proyecto/AUDITORIA_ACCESIBILIDAD.md`
+
+> **Estado: HECHO (2026-09-22)** — informe con checklist OK/NO por plantilla y fixes de alto impacto; evidencia en `AUDITORIA_ACCESIBILIDAD.md`.
 
 ### Objetivo
 Cumplir un nivel WCAG 2.1 AA razonable sin romper el design system.
@@ -242,6 +248,8 @@ Lighthouse (Chrome), axe-core, contraste manual.
 ## A9 — Auditoría de Seguridad Frontend (XSS)
 
 **Prioridad:** Baja · **Esfuerzo:** 0.5 día · **Entregable:** `Info proyecto/AUDITORIA_XSS.md`
+
+> **Estado: HECHO (2026-09-22)** + **verificación formal 2026-09-27**: `_tools/check_xss_innerhtml.ps1` (scan automatizado): 177 innerHTML/insertAdjacentHTML, 25 interpoladas, 23 sin escape en la misma línea → todas datos server-side (BAJO). Evidencia en el informe (§Verificación).
 
 ### Objetivo
 Verificar que el uso de `innerHTML` con datos del backend esté sanitizado.
@@ -270,7 +278,8 @@ grep + revisión manual.
 2. ~~**A4** Migraciones (puede romper prod sin aviso).~~ — **HECHO** (P1 aplicada).
 3. ~~**A2** Dependencias (CVEs en OCR).~~ — **HECHO** (P1+P2 aplicadas).
 4. ~~**A3** Cobertura (define dónde escribir tests nuevos).~~ — **HECHO** (66%, 271 tests).
-5. **A5/A6/A7** en paralelo (sin dependencias entre sí). ← pendiente
-6. **A8/A9** según disponibilidad.
+5. ~~**A6/A7** (consistencia y errores).~~ — **HECHO** (2026-09-27, verificaciones formales incluidas).
+6. ~~**A8/A9** según disponibilidad.~~ — **HECHO** (A8 2026-09-22; A9 2026-09-22 + verificación automática 2026-09-27).
+7. **A5** Rendimiento (profiling) — **única pendiente**; requiere datos de Neon / entorno con volumen y medición en vivo (`py-spy`, query count).
 
-> Cada auditoría se marca como **HECHO** al dejar su informe en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta"). A1–A4 cumplido; sigue **A5 (rendimiento)**.
+> Cada auditoría se marca como **HECHO** al dejar su informe en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta"). A1–A4, A6–A9 cumplido; queda **A5 (rendimiento, requiere Neon)**.

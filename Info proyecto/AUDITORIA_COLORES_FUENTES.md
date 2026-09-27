@@ -1,8 +1,8 @@
 # Auditoría de Colores y Tipografía (Design System & Tokens) — AUTOPASS
 
-**Fecha:** 2026-09-24  
+**Fecha:** 2026-09-24 (diagnóstico) · actualizado 2026-09-27 (verificación P0 cerrada)  
 **Alcance:** 41 archivos CSS (`static/css/`), 54 plantillas HTML (`templates/`), 62 módulos JavaScript (`static/js/`).  
-**Estado:** Diagnóstico completo y plan de remediación priorizado.
+**Estado:** Diagnóstico completo. **P0 (marca y tipografía) CERRADO** ✅ · P1–P3 con avance parcial (ver §5).
 
 ---
 
@@ -183,13 +183,9 @@ flowchart TD
 ```
 
 ### Prioridad P0: Unificación de Marca e Identidad Visual (Inmediato)
-- [ ] **Erradicar el dorado viejo `#C5A059` y `rgba(197, 160, 89, ...)`**:
-  - Reemplazar en los 41 archivos CSS las variantes fijas por `var(--dorado)`, `var(--dorado-glow)` o `rgba(223, 186, 107, ...)`.
-  - Actualizar los scripts JS (`landing-map.js`, `chart_window.js`, `dashboard-finance.js`, `estadisticas_ocr.js`, `reservas-form.js`).
-- [ ] **Eliminar el cian legado `#00bcd4`**:
-  - En `templates/monitoreo_live.html`, reemplazar los acentos cian por `var(--dorado)` o `var(--info)` según corresponda.
-- [ ] **Unificar la tipografía monoespaciada**:
-  - Eliminar `<link href="...Share+Tech+Mono...">` en `monitoreo_live.html` y configurar `var(--font-mono)` (`JetBrains Mono`) para todos los cronómetros, slots ALPR y patentes.
+- [x] **Erradicar el dorado viejo `#C5A059` y `rgba(197, 160, 89, ...)`**: 0 residuales en código de producto (CSS/JS/HTML); reemplazo completo por `var(--dorado)`, `var(--dorado-glow)` y `rgba(223, 186, 107, ...)`. Verificación 2026-09-27: barrido en `static/css/**`, `static/js/**`, `templates/**` → 0. Únicos `#C5A059` que quedan: 55 en documentación/maquetas (49 `Diseno_Proyecto/diseno_completo.html`, 6 `Info proyecto/FUNCIONALIDADES.html`), fuera del alcance de producto.
+- [x] **Eliminar el cian legado `#00bcd4`**: 0 residuales. Verificación: barrido global → 0; `templates/monitoreo_live.html` ya no declara ningún acento cian ni color hardcodeado.
+- [x] **Unificar la tipografía monoespaciada**: eliminado el `<link>` de Google Fonts de Share Tech Mono; 0 residuales de "Share Tech Mono". Todos los cronómetros, slots ALPR, patentes y monotablas usan `var(--font-mono)` = `'JetBrains Mono', monospace` (36 usos en CSS + 3 en `estadisticas_ocr.js`). `monitoreo_live.html` verificado sin `fonts.googleapis`, sin `font-family` literal (hereda de `monitoreo-live.css`).
 
 ### Prioridad P1: Consistencia Semántica y Accesibilidad WCAG (Corto Plazo)
 - [ ] **Normalizar la paleta de estados**:
