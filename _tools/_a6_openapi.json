@@ -1,0 +1,6267 @@
+{
+  "/sw.js": {
+    "get": {
+      "summary": "Service Worker",
+      "operationId": "service_worker_sw_js_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/manifest.webmanifest": {
+    "get": {
+      "summary": "Manifest",
+      "operationId": "manifest_manifest_webmanifest_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/register": {
+    "post": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Register",
+      "description": "REGISTRA UN NUEVO USUARIO EN EL SISTEMA.",
+      "operationId": "register_v1_auth_register_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserCreate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/forgot-password": {
+    "post": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Forgot Password",
+      "description": "GENERA UN TOKEN DE RECUPERACION Y ENVIA UN CORREO AL USUARIO.",
+      "operationId": "forgot_password_v1_auth_forgot_password_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ForgotPasswordRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/reset-password": {
+    "post": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Reset Password",
+      "description": "VALIDA EL TOKEN Y ACTUALIZA LA CONTRASENA DEL USUARIO.",
+      "operationId": "reset_password_v1_auth_reset_password_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ResetPasswordRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/login": {
+    "post": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Login",
+      "description": "AUTENTICA AL USUARIO Y RETORNA UN TOKEN JWT DE ACCESO.",
+      "operationId": "login_v1_auth_login_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserLogin"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/logout": {
+    "post": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Logout",
+      "description": "CIERRA LA SESION DE UN DISPOSITIVO: REVOCA EL jti DEL TOKEN\nY ELIMINA LA UserSession DEL DEVICE_ID INDICADO.",
+      "operationId": "logout_v1_auth_logout_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Body"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/auth/oauth/providers": {
+    "get": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Oauth Providers",
+      "description": "LISTA LOS PROVEEDORES DE LOGIN SOCIAL HABILITADOS (CON CREDENCIALES).",
+      "operationId": "oauth_providers_v1_auth_oauth_providers_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/oauth/{provider}/authorize": {
+    "get": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Oauth Authorize",
+      "description": "INICIA EL FLUJO OAUTH: REDIRIGE AL NAVEGADOR HACIA EL PROVEEDOR.",
+      "operationId": "oauth_authorize_v1_auth_oauth__provider__authorize_get",
+      "parameters": [
+        {
+          "name": "provider",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Provider"
+          }
+        },
+        {
+          "name": "redirect",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Redirect"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/oauth/{provider}/callback": {
+    "get": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Oauth Callback",
+      "description": "RECIBE EL RETORNO DEL PROVEEDOR Y RESUELVE LOGIN O REGISTRO SOCIAL.",
+      "operationId": "oauth_callback_v1_auth_oauth__provider__callback_get",
+      "parameters": [
+        {
+          "name": "provider",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Provider"
+          }
+        },
+        {
+          "name": "code",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "State"
+          }
+        },
+        {
+          "name": "error",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Error"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/auth/oauth/complete": {
+    "post": {
+      "tags": [
+        "Authentication"
+      ],
+      "summary": "Oauth Complete",
+      "description": "COMPLETA EL REGISTRO SOCIAL: VALIDA DNI/TELEFONO Y LOGUEA AL USUARIO.",
+      "operationId": "oauth_complete_v1_auth_oauth_complete_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OAuthComplete"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/parking/branches": {
+    "get": {
+      "tags": [
+        "Parking & Access"
+      ],
+      "summary": "List Public Branches",
+      "description": "RETORNA LA LISTA DE SUCURSALES ACTIVAS CON SU OCUPACION REAL PARA EL MAPA PUBLICO.",
+      "operationId": "list_public_branches_v1_parking_branches_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/BranchPublicResponse"
+                },
+                "type": "array",
+                "title": "Response List Public Branches V1 Parking Branches Get"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/parking/status": {
+    "get": {
+      "tags": [
+        "Parking & Access"
+      ],
+      "summary": "Get Parking Status",
+      "description": "RETORNA LA DISPONIBILIDAD ACTUAL DE PLAZAS. AISLAMIENTO POR SEDE Y SOPORTE PARA PISOS.",
+      "operationId": "get_parking_status_v1_parking_status_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParkingStatus"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/parking/current-occupancy": {
+    "get": {
+      "tags": [
+        "Parking & Access"
+      ],
+      "summary": "Current Occupancy",
+      "description": "LISTA VEHICULOS ESTACIONADOS EN LA SEDE DEL USUARIO CON DEUDA CALCULADA.",
+      "operationId": "current_occupancy_v1_parking_current_occupancy_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/access/validate-plate": {
+    "post": {
+      "tags": [
+        "Parking & Access"
+      ],
+      "summary": "Validate Plate",
+      "description": "VALIDA UNA PATENTE DETECTADA (SOLO NODO ALPR AUTORIZADO).",
+      "operationId": "validate_plate_v1_access_validate_plate_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PlateValidation"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/access/exit-plate": {
+    "post": {
+      "tags": [
+        "Parking & Access"
+      ],
+      "summary": "Exit Plate",
+      "description": "VALIDA LA SALIDA DE UN VEHICULO (SOLO NODO ALPR AUTORIZADO).",
+      "operationId": "exit_plate_v1_access_exit_plate_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PlateValidation"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/access/validate-qr": {
+    "post": {
+      "tags": [
+        "Parking & Access"
+      ],
+      "summary": "Validate Qr",
+      "description": "VALIDA UN PASE DIGITAL (QR) (SOLO NODO ALPR AUTORIZADO).",
+      "operationId": "validate_qr_v1_access_validate_qr_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QRValidation"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/access/pay-stay": {
+    "post": {
+      "tags": [
+        "Parking & Access"
+      ],
+      "summary": "Pay Stay",
+      "description": "PROCESA EL PAGO DE UNA ESTADIA EN CURSO (SOLO PERSONAL OPERATIVO).",
+      "operationId": "pay_stay_v1_access_pay_stay_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "plate",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Plate"
+          }
+        },
+        {
+          "name": "metodo",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "DIGITAL",
+            "title": "Metodo"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/reports/financial-summary": {
+    "get": {
+      "tags": [
+        "Reports & Analytics"
+      ],
+      "summary": "Get Financial Summary",
+      "description": "Calcula el resumen de recaudación unificado delegando en ReportService.",
+      "operationId": "get_financial_summary_v1_reports_financial_summary_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "total",
+            "title": "Period"
+          }
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Start"
+          }
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "End"
+          }
+        },
+        {
+          "name": "vehicle_type",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "all",
+            "title": "Vehicle Type"
+          }
+        },
+        {
+          "name": "payment_method",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "all",
+            "title": "Payment Method"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/reports/payment-history": {
+    "get": {
+      "tags": [
+        "Reports & Analytics"
+      ],
+      "summary": "Get Payment History",
+      "description": "Lista el historial de transacciones delegando en ReportService.",
+      "operationId": "get_payment_history_v1_reports_payment_history_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "total",
+            "title": "Period"
+          }
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Start"
+          }
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "End"
+          }
+        },
+        {
+          "name": "vehicle_type",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "all",
+            "title": "Vehicle Type"
+          }
+        },
+        {
+          "name": "payment_method",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "all",
+            "title": "Payment Method"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 1,
+            "title": "Page"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 20,
+            "title": "Limit"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/reports/access": {
+    "get": {
+      "tags": [
+        "Reports & Analytics"
+      ],
+      "summary": "Get Reports Access",
+      "description": "Consulta el historial de eventos ALPR delegando en ReportService.",
+      "operationId": "get_reports_access_v1_reports_access_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "patente",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Patente"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/reports/ocr-stats": {
+    "get": {
+      "tags": [
+        "Reports & Analytics"
+      ],
+      "summary": "Get Ocr Stats",
+      "description": "Estadísticas de tiempos de procesamiento OCR.",
+      "operationId": "get_ocr_stats_v1_reports_ocr_stats_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 100,
+            "title": "Limit"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/reports/metrics/access-activity": {
+    "get": {
+      "tags": [
+        "Reports & Analytics"
+      ],
+      "summary": "Get Metrics Access Activity",
+      "description": "Serie temporal horaria de accesos (ENTRADA/SALIDA) con filtro opcional de rango (desde/hasta).",
+      "operationId": "get_metrics_access_activity_v1_reports_metrics_access_activity_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "desde",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Desde"
+          }
+        },
+        {
+          "name": "hasta",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Hasta"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/reports/ocr-activity": {
+    "get": {
+      "tags": [
+        "Reports & Analytics"
+      ],
+      "summary": "Get Ocr Activity",
+      "description": "Serie cronológica completa de tiempos OCR para el gráfico móvil.",
+      "operationId": "get_ocr_activity_v1_reports_ocr_activity_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/system/health": {
+    "get": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Get Health",
+      "operationId": "get_health_v1_system_health_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/system/heartbeat": {
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Alpr Heartbeat",
+      "operationId": "alpr_heartbeat_v1_system_heartbeat_post",
+      "parameters": [
+        {
+          "name": "gate_id",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Gate Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/reset": {
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Reset System",
+      "operationId": "reset_system_v1_system_reset_post",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/system/virtual-time": {
+    "get": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Get Virtual Time Public",
+      "operationId": "get_virtual_time_public_v1_system_virtual_time_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/camera-config/{gate_id}": {
+    "get": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Get Camera Config",
+      "operationId": "get_camera_config_v1_system_camera_config__gate_id__get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "gate_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Gate Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/camera-config": {
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Set Camera Config",
+      "operationId": "set_camera_config_v1_system_camera_config_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CameraConfig"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/system/camera-service/{gate_id}/{action}": {
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Control Camera Service",
+      "operationId": "control_camera_service_v1_system_camera_service__gate_id___action__post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "gate_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Gate Id"
+          }
+        },
+        {
+          "name": "action",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Action"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/cameras": {
+    "get": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Get Cameras",
+      "operationId": "get_cameras_v1_system_cameras_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/CameraResponse"
+                },
+                "type": "array",
+                "title": "Response Get Cameras V1 System Cameras Get"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    },
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Create Camera",
+      "operationId": "create_camera_v1_system_cameras_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CameraCreate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CameraResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/system/cameras/{camera_id}": {
+    "put": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Update Camera",
+      "operationId": "update_camera_v1_system_cameras__camera_id__put",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Camera Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CameraCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CameraResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Delete Camera",
+      "operationId": "delete_camera_v1_system_cameras__camera_id__delete",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Camera Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/cameras/{camera_id}/control/{action}": {
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Control Dynamic Camera Service",
+      "operationId": "control_dynamic_camera_service_v1_system_cameras__camera_id__control__action__post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Camera Id"
+          }
+        },
+        {
+          "name": "action",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Action"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/camera-reading/{gate_id}": {
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Notify Camera Reading",
+      "description": "NOTIFICA AL DASHBOARD QUE LA CAMARA ESTA LEYENDO ACTIVAMENTE UNA PATENTE.",
+      "operationId": "notify_camera_reading_v1_system_camera_reading__gate_id__post",
+      "parameters": [
+        {
+          "name": "gate_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Gate Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/update-frame/{camera_id}": {
+    "post": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Update Frame Http",
+      "description": "Actualiza el frame de una camara. Solo acepta nodos ALPR autorizados.",
+      "operationId": "update_frame_http_v1_system_update_frame__camera_id__post",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Camera Id"
+          }
+        },
+        {
+          "name": "node_secret",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Node Secret"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/video-feed/{camera_id}": {
+    "get": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Video Feed Legacy",
+      "description": "Streaming de video MJPEG fallback.",
+      "operationId": "video_feed_legacy_v1_system_video_feed__camera_id__get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Camera Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/system/capture/{log_id}": {
+    "get": {
+      "tags": [
+        "System & Health"
+      ],
+      "summary": "Get Capture",
+      "description": "Imagen capturada de un log. Acepta el token por query (para <img>) o por header Bearer.",
+      "operationId": "get_capture_v1_system_capture__log_id__get",
+      "parameters": [
+        {
+          "name": "log_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Log Id"
+          }
+        },
+        {
+          "name": "token",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Token"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/users": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "List Users",
+      "description": "RETORNA LA LISTA DE USUARIOS. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES REGISTRADOS.",
+      "operationId": "list_users_v1_admin_users_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Create User Admin",
+      "description": "PERMITE AL ADMINISTRADOR CREAR UN NUEVO USUARIO. LOS LOCALES SOLO CREAN PARA SU SEDE.",
+      "operationId": "create_user_admin_v1_admin_users_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "rol",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "$ref": "#/components/schemas/UserRole",
+            "default": "user"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/users/{user_id}": {
+    "patch": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Update User Admin",
+      "description": "ACTUALIZA LA INFORMACION DE UN USUARIO DESDE EL PANEL ADMINISTRATIVO.",
+      "operationId": "update_user_admin_v1_admin_users__user_id__patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserAdminUpdate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Delete User",
+      "description": "PERMITE A UN ADMINISTRADOR BORRAR CUENTAS DE SU SUCURSAL O CLIENTES.",
+      "operationId": "delete_user_v1_admin_users__user_id__delete",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/users/{user_id}/role": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Change User Role",
+      "description": "PERMITE CAMBIAR EL ROL DE UN USUARIO. LOS LOCALES SOLO GESTIONAN ROLES DE SU SUCURSAL.",
+      "operationId": "change_user_role_v1_admin_users__user_id__role_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        },
+        {
+          "name": "nuevo_rol",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/users/{user_id}/toggle-block": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Toggle User Block",
+      "description": "ALTERNA EL ESTADO DE BLOQUEO. LOS LOCALES SOLO BLOQUEAN A SU GENTE O CLIENTES.",
+      "operationId": "toggle_user_block_v1_admin_users__user_id__toggle_block_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/users/{user_id}/balance": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Adjust User Balance",
+      "description": "AJUSTA EL SALDO DE UN USUARIO.",
+      "operationId": "adjust_user_balance_v1_admin_users__user_id__balance_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        },
+        {
+          "name": "monto",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "title": "Monto"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/users/{user_id}/password": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Change User Password",
+      "description": "PERMITE AL ADMINISTRADOR CAMBIAR LA CONTRASENA DE UN USUARIO.",
+      "operationId": "change_user_password_v1_admin_users__user_id__password_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserPasswordChange"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/users/{user_id}/delete": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Delete User",
+      "description": "PERMITE A UN ADMINISTRADOR BORRAR CUENTAS DE SU SUCURSAL O CLIENTES.",
+      "operationId": "delete_user_v1_admin_users__user_id__delete_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations/patente-lookup": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Patente Lookup",
+      "description": "BUSCA SI UNA PATENTE ESTA REGISTRADA A UN USUARIO PARA VINCULARLA A UNA RESERVA MANUAL.",
+      "operationId": "patente_lookup_v1_admin_reservations_patente_lookup_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "patente",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Patente"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations/new-count": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Get New Reservations Count",
+      "description": "RETORNA LA CANTIDAD DE RESERVAS NUEVAS DESDE since_id Y EL ULTIMO ID REGISTRADO.\nAlimenta la burbuja de notificación en la pestaña de Reservas del Dashboard.",
+      "operationId": "get_new_reservations_count_v1_admin_reservations_new_count_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "since_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "List Reservations",
+      "description": "LISTA TODAS LAS RESERVAS. LOS LOCALES SOLO VEN LAS DE SU SEDE.",
+      "operationId": "list_reservations_v1_admin_reservations_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "estado",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado"
+          }
+        },
+        {
+          "name": "sucursal",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sucursal"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UserReservationResponse"
+                },
+                "title": "Response List Reservations V1 Admin Reservations Get"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Create Admin Reservation",
+      "description": "PERMITE AL ADMINISTRADOR O EMPLEADO CREAR UNA RESERVA MANUAL.",
+      "operationId": "create_admin_reservation_v1_admin_reservations_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AdminReservationCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations/{res_id}": {
+    "put": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Update Admin Reservation",
+      "description": "EDITA UNA RESERVA CREADA POR ADMINISTRADOR O EMPLEADO (NO LAS CREADAS POR CLIENTES).",
+      "operationId": "update_admin_reservation_v1_admin_reservations__res_id__put",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AdminReservationCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations/{res_id}/confirm-payment": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Confirm Reservation Payment",
+      "description": "CONFIRMACION MANUAL DE PAGO.",
+      "operationId": "confirm_reservation_payment_v1_admin_reservations__res_id__confirm_payment_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ConfirmPaymentRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations/{res_id}/cancel": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Cancel Reservation Admin",
+      "description": "CANCELACION MANUAL.",
+      "operationId": "cancel_reservation_admin_v1_admin_reservations__res_id__cancel_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations/{res_id}/redemptions": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Reservation Available Redemptions",
+      "description": "LISTA LOS DESCUENTOS DE RESERVA (%) VIGENTES DEL USUARIO VINCULADO A UNA RESERVA Y APLICABLES A SU SUCURSAL.\nSe usa antes de registrar un pago en caja para informar y aplicar el descuento.",
+      "operationId": "reservation_available_redemptions_v1_admin_reservations__res_id__redemptions_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/reservations/{res_id}/redemption-info": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Reservation Redemption Info",
+      "description": "INFORMA SI A UNA RESERVA APLICA DESCUENTO PARA MOSTRARLO EN LA EDICIÓN DEL PANEL.\n- fuente 'vigente': el usuario tiene un canje descuento_reserva VIGENTE aplicable (aún no consumido).\n- fuente 'aplicado': la reserva ya se pagó en caja con un descuento (ticket consumido en esta reserva).",
+      "operationId": "reservation_redemption_info_v1_admin_reservations__res_id__redemption_info_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/redemptions/available": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Admin Available Redemptions",
+      "description": "LISTA LOS DESCUENTOS DE RESERVA (%) VIGENTES DE UN USUARIO APLICABLES A UNA SUCURSAL.\nSe usa en el flujo de nueva reserva manual en caja para ofrecer el descuento antes de crear y pagar.",
+      "operationId": "admin_available_redemptions_v1_admin_redemptions_available_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        },
+        {
+          "name": "sucursal",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Sucursal"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/settings": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Get Admin Settings",
+      "description": "RETORNA LAS CONFIGURACIONES VIGENTES. LOS LOCALES SOLO VEN LAS DE SU SEDE.",
+      "operationId": "get_admin_settings_v1_admin_settings_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/settings/prices": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Update Price",
+      "description": "ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR.",
+      "operationId": "update_price_v1_admin_settings_prices_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "clave",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Clave"
+          }
+        },
+        {
+          "name": "valor",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "title": "Valor"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/branches": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "List Branches",
+      "description": "RETORNA LA LISTA DE TODAS LAS SUCURSALES CON RESUMEN DE CAPACIDAD Y OCUPACION.",
+      "operationId": "list_branches_v1_admin_branches_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/BranchResponse"
+                },
+                "type": "array",
+                "title": "Response List Branches V1 Admin Branches Get"
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Create Branch",
+      "operationId": "create_branch_v1_admin_branches_post",
+      "requestBody": {
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "$ref": "#/components/schemas/Body_create_branch_v1_admin_branches_post"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/{branch_id}/floors": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Add Floor",
+      "description": "AGREGA UN NUEVO PISO A LA SUCURSAL.",
+      "operationId": "add_floor_v1_admin__branch_id__floors_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "branch_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Branch Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FloorCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FloorResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/floors/{floor_id}": {
+    "delete": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Delete Floor",
+      "description": "ELIMINA UN PISO DE LA SUCURSAL TRAS VALIDAR QUE NO HAYA VEHICULOS ESTACIONADOS.",
+      "operationId": "delete_floor_v1_admin_floors__floor_id__delete",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "floor_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Floor Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Update Floor Capacity",
+      "description": "ACTUALIZA LA CAPACIDAD DE UN PISO VALIDANDO QUE SEA MAYOR O IGUAL A LA OCUPACION ACTUAL.",
+      "operationId": "update_floor_capacity_v1_admin_floors__floor_id__patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "floor_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Floor Id"
+          }
+        },
+        {
+          "name": "cap_autos",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Cap Autos"
+          }
+        },
+        {
+          "name": "cap_motos",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Cap Motos"
+          }
+        },
+        {
+          "name": "cap_camionetas",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 5,
+            "title": "Cap Camionetas"
+          }
+        },
+        {
+          "name": "cap_reservas",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 0,
+            "title": "Cap Reservas"
+          }
+        },
+        {
+          "name": "cap_reservas_autos",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cap Reservas Autos"
+          }
+        },
+        {
+          "name": "cap_reservas_motos",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cap Reservas Motos"
+          }
+        },
+        {
+          "name": "cap_reservas_camionetas",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cap Reservas Camionetas"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FloorResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/branches/{branch_id}": {
+    "delete": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Delete Branch",
+      "description": "ELIMINA UNA SUCURSAL TRAS VALIDAR QUE NO TENGA VEHICULOS EN SU INTERIOR NI RESERVAS ACTIVAS.",
+      "operationId": "delete_branch_v1_admin_branches__branch_id__delete",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "branch_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Branch Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Update Branch",
+      "description": "ACTUALIZA LA INFORMACION DE UNA SUCURSAL CON SOPORTE PARA NUEVO LOGO.",
+      "operationId": "update_branch_v1_admin_branches__branch_id__patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "branch_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Branch Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "$ref": "#/components/schemas/Body_update_branch_v1_admin_branches__branch_id__patch"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/branches/{branch_id}/toggle": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Toggle Branch Status",
+      "description": "ACTIVA O SUSPENDE UNA SUCURSAL VALIDANDO QUE NO HAYA VEHICULOS EN SU INTERIOR AL DESACTIVAR.",
+      "operationId": "toggle_branch_status_v1_admin_branches__branch_id__toggle_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "branch_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Branch Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/promotions": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "List Promotions Admin",
+      "description": "LISTA TODAS LAS PROMOCIONES. LOS LOCALES SOLO VEN LAS DE SU SEDE.",
+      "operationId": "list_promotions_admin_v1_admin_promotions_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/PromotionResponse"
+                },
+                "type": "array",
+                "title": "Response List Promotions Admin V1 Admin Promotions Get"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    },
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Create Promotion",
+      "description": "CREA UNA NUEVA PROMOCION VINCULADA A LA SEDE DEL ADMINISTRADOR.",
+      "operationId": "create_promotion_v1_admin_promotions_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PromotionCreate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/promotions/{promo_id}/toggle": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Toggle Promotion",
+      "description": "ACTIVA O DESACTIVA UNA PROMOCION.",
+      "operationId": "toggle_promotion_v1_admin_promotions__promo_id__toggle_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "promo_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Promo Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/promotions/{promo_id}": {
+    "put": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Update Promotion",
+      "description": "ACTUALIZA UNA PROMOCION EXISTENTE. EL ADMIN GLOBAL PUEDE REASIGNAR LA SUCURSAL.",
+      "operationId": "update_promotion_v1_admin_promotions__promo_id__put",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "promo_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Promo Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PromotionCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Delete Promotion",
+      "description": "ELIMINA UNA PROMOCION PERMANENTEMENTE.\nAntes de borrar desasocia los tickets de canje (FK) poniendo promotion_id = NULL,\nya que los tickets guardan un snapshot del beneficio y no dependen de la promoción.",
+      "operationId": "delete_promotion_v1_admin_promotions__promo_id__delete",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "promo_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Promo Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/open-barrier": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Open Barrier",
+      "description": "ENVIA UN COMANDO DE APERTURA O CIERRE DE BARRERA VIA MQTT Y SERIAL (ARDUINO).",
+      "operationId": "open_barrier_v1_admin_open_barrier_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "gate_id",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Gate Id"
+          }
+        },
+        {
+          "name": "command",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "OPEN",
+            "title": "Command"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/manual-entry": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Manual Entry",
+      "description": "REGISTRA UN INGRESO FORZADO AL PREDIO DE LA SEDE.",
+      "operationId": "manual_entry_v1_admin_manual_entry_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "plate",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Plate"
+          }
+        },
+        {
+          "name": "tipo_vehiculo",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "Auto",
+            "title": "Tipo Vehiculo"
+          }
+        },
+        {
+          "name": "floor_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "title": "Floor Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/manual-exit": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Manual Exit",
+      "description": "REGISTRA UNA SALIDA MANUAL DE LA SEDE.",
+      "operationId": "manual_exit_v1_admin_manual_exit_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "plate",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Plate"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/cancel-stay": {
+    "post": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Cancel Stay",
+      "description": "CANCELA UNA ESTADIA ACTUAL. SI ESTA DENTRO DE LOS 10 MIN DE CORTESIA, NO COBRA.",
+      "operationId": "cancel_stay_v1_admin_cancel_stay_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "plate",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Plate"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/virtual-time/status": {
+    "get": {
+      "tags": [
+        "Administration",
+        "Virtual Time"
+      ],
+      "summary": "Get Virtual Time",
+      "operationId": "get_virtual_time_v1_admin_virtual_time_status_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/virtual-time": {
+    "get": {
+      "tags": [
+        "Administration",
+        "Virtual Time"
+      ],
+      "summary": "Get Virtual Time",
+      "operationId": "get_virtual_time_v1_admin_virtual_time_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/virtual-time/advance": {
+    "post": {
+      "tags": [
+        "Administration",
+        "Virtual Time"
+      ],
+      "summary": "Advance Virtual Time",
+      "operationId": "advance_virtual_time_v1_admin_virtual_time_advance_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimeAdjustmentRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/virtual-time/rewind": {
+    "post": {
+      "tags": [
+        "Administration",
+        "Virtual Time"
+      ],
+      "summary": "Rewind Virtual Time",
+      "description": "RETRASAR EL RELOJ VIRTUAL DEL SISTEMA.",
+      "operationId": "rewind_virtual_time_v1_admin_virtual_time_rewind_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimeAdjustmentRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/virtual-time/set-target": {
+    "post": {
+      "tags": [
+        "Administration",
+        "Virtual Time"
+      ],
+      "summary": "Set Target Virtual Time",
+      "description": "FIJAR LA FECHA Y HORA VIRTUAL A UN VALOR ESPECIFICO (EJ: '2026-10-15T14:30:00').",
+      "operationId": "set_target_virtual_time_v1_admin_virtual_time_set_target_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SetTargetRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/virtual-time/set": {
+    "post": {
+      "tags": [
+        "Administration",
+        "Virtual Time"
+      ],
+      "summary": "Set Virtual Time",
+      "operationId": "set_virtual_time_v1_admin_virtual_time_set_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SetOffsetRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/virtual-time/reset": {
+    "post": {
+      "tags": [
+        "Administration",
+        "Virtual Time"
+      ],
+      "summary": "Reset Virtual Time",
+      "operationId": "reset_virtual_time_v1_admin_virtual_time_reset_post",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/support-tickets/pending-count": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Get Admin Support Pending Count",
+      "description": "RETORNA LA CANTIDAD DE TICKETS DE SOPORTE PENDIENTES (NO RESUELTOS)\nQUE PUEDE VER EL ADMIN ACTUAL. Alimenta la burbuja de 'Soporte & Tickets'.",
+      "operationId": "get_admin_support_pending_count_v1_admin_support_tickets_pending_count_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/support-tickets/{ticket_id}/read-notifs": {
+    "patch": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Mark Ticket Notifications Read",
+      "description": "MARCA COMO LEIDAS LAS NOTIFICACIONES DE UN TICKET PARA EL ADMIN ACTUAL.",
+      "operationId": "mark_ticket_notifications_read_v1_admin_support_tickets__ticket_id__read_notifs_patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ticket_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Ticket Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/support-tickets/{ticket_id}": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Get Admin Support Ticket",
+      "description": "RETORNA UN TICKET ESPECIFICO CON TODOS SUS MENSAJES.",
+      "operationId": "get_admin_support_ticket_v1_admin_support_tickets__ticket_id__get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ticket_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Ticket Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Update Support Ticket",
+      "description": "PERMITE A UN ADMINISTRADOR ACTUALIZAR EL ESTADO O RESPONDER UN TICKET.",
+      "operationId": "update_support_ticket_v1_admin_support_tickets__ticket_id__patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ticket_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Ticket Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SupportTicketUpdate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/admin/support-tickets": {
+    "get": {
+      "tags": [
+        "Administration"
+      ],
+      "summary": "Get Admin Support Tickets",
+      "description": "RETORNA TODOS LOS TICKETS DE SOPORTE FILTRADOS SEGUN ROL Y PARAMETROS.",
+      "operationId": "get_admin_support_tickets_v1_admin_support_tickets_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "sucursal",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sucursal"
+          }
+        },
+        {
+          "name": "estado",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/me": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Me",
+      "description": "RETORNA LA INFORMACION DEL PERFIL DEL USUARIO AUTENTICADO.",
+      "operationId": "get_me_v1_user_me_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserBase"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    },
+    "put": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Update Me",
+      "description": "ACTUALIZA LOS DATOS PERSONALES DEL USUARIO.",
+      "operationId": "update_me_v1_user_me_put",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserUpdate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserBase"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/change-password": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Change Password",
+      "description": "PROCESA EL CAMBIO DE CONTRASENA VALIDANDO LA ANTERIOR.",
+      "operationId": "change_password_v1_user_change_password_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePassword"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/vehicles": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get User Vehicles",
+      "description": "LISTA TODOS LOS VEHICULOS VINCULADOS A LA CUENTA.",
+      "operationId": "get_user_vehicles_v1_user_vehicles_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Add User Vehicle",
+      "description": "VINCULA UN NUEVO VEHICULO VALIDANDO EL FORMATO DE PATENTE ARGENTINA/MERCOSUR.",
+      "operationId": "add_user_vehicle_v1_user_vehicles_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "patente",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Patente"
+          }
+        },
+        {
+          "name": "marca_modelo",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Marca Modelo"
+          }
+        },
+        {
+          "name": "tipo",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "Auto",
+            "title": "Tipo"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/vehicles/{patente}/favorite": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Set Favorite Vehicle",
+      "description": "MARCA UN VEHICULO COMO FAVORITO (SOLO UNO POR USUARIO). SI YA ESTA MARCADO, LO DESMARCA.",
+      "operationId": "set_favorite_vehicle_v1_user_vehicles__patente__favorite_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "patente",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Patente"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/vehicles/{patente}": {
+    "delete": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Delete User Vehicle",
+      "description": "DESVINCULA UN VEHICULO DE LA CUENTA DEL USUARIO VALIDANDO RESERVAS Y ESTADIAS ACTIVAS.",
+      "operationId": "delete_user_vehicle_v1_user_vehicles__patente__delete",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "patente",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Patente"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/active-stays": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get User Active Stays",
+      "description": "LISTA LAS ESTADIAS ACTUALES (DENTRO DEL PREDIO) PARA LOS VEHICULOS DEL USUARIO.",
+      "operationId": "get_user_active_stays_v1_user_active_stays_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/payment-history": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get User Payment History",
+      "description": "HISTORIAL CRONOLOGICO DE PAGOS REALIZADOS POR EL USUARIO.",
+      "operationId": "get_user_payment_history_v1_user_payment_history_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/rates": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Current Rates",
+      "description": "RETORNA LAS TARIFAS VIGENTES. SI HAY SEDE, PRIORIZA SUS PRECIOS Y COMPLETA CON GLOBALES.",
+      "operationId": "get_current_rates_v1_user_rates_get",
+      "parameters": [
+        {
+          "name": "sucursal",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Sucursal"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/recharge-balance": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Recharge Balance",
+      "description": "SIMULA LA CARGA DE SALDO EN LA CUENTA DEL USUARIO.",
+      "operationId": "recharge_balance_v1_user_recharge_balance_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RechargeBalance"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/reservations/check-availability": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Check Availability",
+      "description": "VERIFICA SI HAY LUGARES DISPONIBLES EN LA SUCURSAL PARA EL RANGO SOLICITADO.",
+      "operationId": "check_availability_v1_user_reservations_check_availability_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "sucursal_nombre",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Sucursal Nombre"
+          }
+        },
+        {
+          "name": "fecha_inicio",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Fecha Inicio"
+          }
+        },
+        {
+          "name": "fecha_fin",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Fecha Fin"
+          }
+        },
+        {
+          "name": "exclude_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "title": "Exclude Id"
+          }
+        },
+        {
+          "name": "tipo_vehiculo",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "Auto",
+            "title": "Tipo Vehiculo"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/reservations/disabled-dates": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Disabled Dates",
+      "description": "DEVUELVE LA LISTA DE FECHAS (YYYY-MM-DD) DESHABILITADAS POR CAPACIDAD COMPLETA.",
+      "operationId": "get_disabled_dates_v1_user_reservations_disabled_dates_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "sucursal_nombre",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Sucursal Nombre"
+          }
+        },
+        {
+          "name": "tipo_vehiculo",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "Auto",
+            "title": "Tipo Vehiculo"
+          }
+        },
+        {
+          "name": "tipo_estadia",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "dia",
+            "title": "Tipo Estadia"
+          }
+        },
+        {
+          "name": "fecha_desde",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Fecha Desde"
+          }
+        },
+        {
+          "name": "dias",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 90,
+            "title": "Dias"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/reservations/disabled-hours": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Disabled Hours",
+      "description": "DEVUELVE LA LISTA DE SLOTS HORARIOS (HH:MM) DESHABILITADOS PARA UN DÍA ESPECÍFICO\nY LOS RANGOS REALMENTE RESERVADOS PARA DISTINGUIR OCUPACIÓN DE MARGEN DE SOLAPAMIENTO.\nexclude_id: AL EDITAR UNA RESERVA, EXCLUYE SU PROPIO RANGO PARA NO MOSTRARLA COMO OCUPADA.",
+      "operationId": "get_disabled_hours_v1_user_reservations_disabled_hours_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "sucursal_nombre",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Sucursal Nombre"
+          }
+        },
+        {
+          "name": "fecha",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Fecha"
+          }
+        },
+        {
+          "name": "tipo_vehiculo",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "Auto",
+            "title": "Tipo Vehiculo"
+          }
+        },
+        {
+          "name": "duracion_horas",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "number",
+            "default": 1.0,
+            "title": "Duracion Horas"
+          }
+        },
+        {
+          "name": "paso_minutos",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 30,
+            "title": "Paso Minutos"
+          }
+        },
+        {
+          "name": "exclude_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclude Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/reservations": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get User Reservations",
+      "description": "LISTA TODAS LAS RESERVAS DEL USUARIO, ACTUALIZANDO ESTADOS AUTOMATICAMENTE.",
+      "operationId": "get_user_reservations_v1_user_reservations_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/UserReservationResponse"
+                },
+                "type": "array",
+                "title": "Response Get User Reservations V1 User Reservations Get"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    },
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Create User Reservation",
+      "description": "CREA UNA NUEVA RESERVA Y PROCESA EL COBRO SI EL SALDO ES SUFICIENTE.",
+      "operationId": "create_user_reservation_v1_user_reservations_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserReservationCreate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/reservations/{res_id}": {
+    "patch": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Modify Reservation",
+      "description": "PERMITE MODIFICAR UNA RESERVA EXISTENTE AJUSTANDO SALDO Y PUNTOS SI CORRESPONDE.",
+      "operationId": "modify_reservation_v1_user_reservations__res_id__patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReservationUpdate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/reservations/{res_id}/pay": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Pay Reservation",
+      "description": "ABONA UNA RESERVA PENDIENTE CON EL SALDO DE LA CUENTA.\nOpcionalmente aplica un descuento (%) de un canje previo (redemption_ticket_id).",
+      "operationId": "pay_reservation_v1_user_reservations__res_id__pay_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        },
+        {
+          "name": "redemption_ticket_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "title": "Redemption Ticket Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/reservations/{res_id}/confirm-reminder": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Confirm Reservation Reminder",
+      "description": "CONFIRMA EL RECORDATORIO DE UNA RESERVA, DETIENE AVISOS Y PREPARA AUTO-CANCELACION.",
+      "operationId": "confirm_reservation_reminder_v1_user_reservations__res_id__confirm_reminder_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/reservations/{res_id}/cancel-simulation": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Simulate Reservation Cancel",
+      "description": "SIMULA LA CANCELACION PARA PREVISUALIZAR EL MONTO DE REEMBOLSO.",
+      "operationId": "simulate_reservation_cancel_v1_user_reservations__res_id__cancel_simulation_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/reservations/{res_id}/cancel": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Cancel Reservation",
+      "description": "CANCELA UNA RESERVA Y REEMBOLSA EL MONTO SI YA FUE PAGADA.",
+      "operationId": "cancel_reservation_v1_user_reservations__res_id__cancel_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "res_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Res Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/promotions": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Promotions",
+      "description": "LISTA LAS PROMOCIONES Y BENEFICIOS VIGENTES FILTRADOS POR LA SEDE DEL USUARIO.",
+      "operationId": "get_promotions_v1_user_promotions_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/PromotionResponse"
+                },
+                "type": "array",
+                "title": "Response Get Promotions V1 User Promotions Get"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/redeem/{promo_id}": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Redeem Points",
+      "description": "PROCESA EL CANJE DE PUNTOS POR UN BENEFICIO DEL CATALOGO.\n- tipo_canje == 'descuento_reserva': genera un descuento (%) aplicable al pagar una reserva de su sucursal.\n- tipo_canje == 'voucher': genera un ticket con QR persistente (válido por 30 días), sin validación automática.",
+      "operationId": "redeem_points_v1_user_redeem__promo_id__post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "promo_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Promo Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/redemption-tickets": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get User Redemption Tickets",
+      "description": "LISTA LOS TICKETS/VOUCHERS DE CANJE DEL USUARIO.\nSI UN TICKET NO GUARDÓ UBICACIÓN (ej. canjeado antes de que la promo tuviera dirección),\nse resuelve la dirección de SU PROMO actual, o la de la sucursal asignada como último recurso.\nNo se reescribe la BD: es solo enriquecimiento de la respuesta.",
+      "operationId": "get_user_redemption_tickets_v1_user_redemption_tickets_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/RedemptionTicketResponse"
+                },
+                "type": "array",
+                "title": "Response Get User Redemption Tickets V1 User Redemption Tickets Get"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/redemptions/available": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Available Redemptions",
+      "description": "LISTA LOS DESCUENTOS DE RESERVA (%). CANJEADOS Y AUN VIGENTES, APLICABLES A UNA SUCURSAL.",
+      "operationId": "get_available_redemptions_v1_user_redemptions_available_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "sucursal",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Sucursal"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/redemptions/{ticket_id}/cancel": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Cancel Redemption Ticket",
+      "description": "CANCELA UN TICKET/USADO NO USADO Y DEVUELVE LOS PUNTOS AL USUARIO.",
+      "operationId": "cancel_redemption_ticket_v1_user_redemptions__ticket_id__cancel_post",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ticket_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Ticket Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/points-history": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Points History",
+      "description": "RETORNA EL HISTORIAL DE MOVIMIENTOS DE PUNTOS DEL USUARIO CON PAGINACION Y TOTALES.",
+      "operationId": "get_points_history_v1_user_points_history_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 1,
+            "title": "Page"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 10,
+            "title": "Limit"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/profile/notifications": {
+    "get": {
+      "tags": [
+        "User Actions",
+        "User Notifications"
+      ],
+      "summary": "Get Notifications",
+      "description": "LISTA LAS NOTIFICACIONES DEL USUARIO LOGUEADO.",
+      "operationId": "get_notifications_v1_user_profile_notifications_get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "maximum": 200,
+            "minimum": 1,
+            "default": 50,
+            "title": "Limit"
+          }
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "title": "Offset"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationListResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/profile/notifications/unread": {
+    "get": {
+      "tags": [
+        "User Actions",
+        "User Notifications"
+      ],
+      "summary": "Get Unread Count",
+      "description": "DEVUELVE LA CANTIDAD DE NOTIFICACIONES NO LEIDAS.",
+      "operationId": "get_unread_count_v1_user_profile_notifications_unread_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnreadCountResponse"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/profile/notifications/{notif_id}/read": {
+    "patch": {
+      "tags": [
+        "User Actions",
+        "User Notifications"
+      ],
+      "summary": "Mark As Read",
+      "description": "MARCA UNA NOTIFICACION COMO LEIDA.",
+      "operationId": "mark_as_read_v1_user_profile_notifications__notif_id__read_patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "notif_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Notif Id"
+          }
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Successful Response"
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/profile/notifications/read-all": {
+    "post": {
+      "tags": [
+        "User Actions",
+        "User Notifications"
+      ],
+      "summary": "Mark All As Read",
+      "description": "MARCA TODAS LAS NOTIFICACIONES COMO LEIDAS.",
+      "operationId": "mark_all_as_read_v1_user_profile_notifications_read_all_post",
+      "responses": {
+        "204": {
+          "description": "Successful Response"
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/profile/notifications/clear-read": {
+    "delete": {
+      "tags": [
+        "User Actions",
+        "User Notifications"
+      ],
+      "summary": "Clear Read Notifications",
+      "description": "ELIMINA TODAS LAS NOTIFICACIONES MARCADAS COMO LEIDAS.",
+      "operationId": "clear_read_notifications_v1_user_profile_notifications_clear_read_delete",
+      "responses": {
+        "204": {
+          "description": "Successful Response"
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/profile/notifications/{notif_id}": {
+    "delete": {
+      "tags": [
+        "User Actions",
+        "User Notifications"
+      ],
+      "summary": "Delete Notification",
+      "description": "ELIMINA UNA NOTIFICACION ESPECIFICA.",
+      "operationId": "delete_notification_v1_user_profile_notifications__notif_id__delete",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "notif_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Notif Id"
+          }
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Successful Response"
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/support-tickets": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get My Support Tickets",
+      "description": "RETORNA LOS TICKETS DE SOPORTE DEL USUARIO AUTENTICADO.",
+      "operationId": "get_my_support_tickets_v1_user_support_tickets_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    },
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Create Support Ticket",
+      "description": "PERMITE A UN CLIENTE CREAR UN TICKET DE SOPORTE.",
+      "operationId": "create_support_ticket_v1_user_support_tickets_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SupportTicketCreate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "201": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/support-tickets/{ticket_id}": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Get Support Ticket",
+      "description": "RETORNA UN TICKET DE SOPORTE ESPECIFICO DEL USUARIO CON TODOS LOS MENSAJES.",
+      "operationId": "get_support_ticket_v1_user_support_tickets__ticket_id__get",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ticket_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Ticket Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/support-tickets/{ticket_id}/reply": {
+    "patch": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Reply To Support Ticket",
+      "description": "PERMITE AL USUARIO RESPONDER A UN TICKET DE SOPORTE.\nOPCIONALMENTE PUEDE ADJUNTAR UN ARCHIVO (png/jpg/jpeg/gif/webp/pdf de maximo 1 MB)\nque se guarda en el servidor y se referencia en la BD.",
+      "operationId": "reply_to_support_ticket_v1_user_support_tickets__ticket_id__reply_patch",
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ticket_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Ticket Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "$ref": "#/components/schemas/Body_reply_to_support_ticket_v1_user_support_tickets__ticket_id__reply_patch"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/mercadopago/checkout": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Create Mp Checkout",
+      "description": "CREA UNA PREFERENCIA DE CHECKOUT PRO PARA PAGAR UNA RESERVA O ESTADIA.",
+      "operationId": "create_mp_checkout_v1_user_mercadopago_checkout_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MercadoPagoCheckout"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MercadoPagoCheckoutResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "OAuth2PasswordBearer": []
+        }
+      ]
+    }
+  },
+  "/v1/user/mercadopago/success": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Mp Success",
+      "description": "RETORNO DE MERCADO PAGO - PAGO EXITOSO.",
+      "operationId": "mp_success_v1_user_mercadopago_success_get",
+      "parameters": [
+        {
+          "name": "external_reference",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "External Reference"
+          }
+        },
+        {
+          "name": "payment_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Payment Id"
+          }
+        },
+        {
+          "name": "collection_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Collection Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/mercadopago/pending": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Mp Pending",
+      "description": "RETORNO DE MERCADO PAGO - PAGO PENDIENTE.",
+      "operationId": "mp_pending_v1_user_mercadopago_pending_get",
+      "parameters": [
+        {
+          "name": "external_reference",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "External Reference"
+          }
+        },
+        {
+          "name": "payment_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Payment Id"
+          }
+        },
+        {
+          "name": "collection_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Collection Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/mercadopago/failure": {
+    "get": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Mp Failure",
+      "description": "RETORNO DE MERCADO PAGO - PAGO DECLINADO/CANCELADO.",
+      "operationId": "mp_failure_v1_user_mercadopago_failure_get",
+      "parameters": [
+        {
+          "name": "external_reference",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "External Reference"
+          }
+        },
+        {
+          "name": "payment_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Payment Id"
+          }
+        },
+        {
+          "name": "collection_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Collection Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/user/mercadopago/webhook": {
+    "post": {
+      "tags": [
+        "User Actions"
+      ],
+      "summary": "Mp Webhook",
+      "description": "WEBHOOK DE NOTIFICACIONES DE MERCADO PAGO (para producción / túnel / acceso remoto).",
+      "operationId": "mp_webhook_v1_user_mercadopago_webhook_post",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/instalar": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Instalar",
+      "operationId": "get_instalar_instalar_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Index",
+      "operationId": "get_index__get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/dashboard": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Dashboard",
+      "operationId": "get_dashboard_dashboard_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/perfil": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Perfil",
+      "operationId": "get_perfil_perfil_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/nuestra-red": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Nuestra Red",
+      "operationId": "get_nuestra_red_nuestra_red_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/contacto": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Contacto",
+      "operationId": "get_contacto_contacto_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/terminos": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Terminos",
+      "operationId": "get_terminos_terminos_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/privacidad": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Privacidad",
+      "operationId": "get_privacidad_privacidad_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/reset-password": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Reset Password",
+      "operationId": "get_reset_password_reset_password_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/monitoreo": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Monitoreo",
+      "operationId": "get_monitoreo_monitoreo_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/estadisticas-ocr": {
+    "get": {
+      "tags": [
+        "Frontend Views"
+      ],
+      "summary": "Get Estadisticas Ocr",
+      "operationId": "get_estadisticas_ocr_estadisticas_ocr_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "text/html": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

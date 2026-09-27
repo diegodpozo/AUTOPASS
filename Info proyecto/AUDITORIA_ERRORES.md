@@ -94,3 +94,10 @@ Scan de `static/js/*` (patrones `toast.error(`/`showToast(`):
 - Verificación: scan propio de `except` sin `logger/raise/continue/return` → **0 ciegos**;
   `py_compile` OK en los 4 archivos tocados; **suite 695 passed / 59.01s con venv**
   (base del informe: 675 → el delta es de auditorías posteriores).
+
+## Verificación formal (fecha cierre con `_tools/check_consistencia_frontend.py`)
+
+- **Grep formal `except\s*:` (sin tipo) en TODO *.py del proyecto** (excl. `venv/`, `.git/`):
+  **0 ocurrencias.** No existe ningún `except:` desnudo en producción (solo `except Exception`, `except HTTPException`, etc.). Criterio A7 (cero `except:` sin log con contexto) cerrado por instrumentación.
+- Confirmado además por `_tools/check_consistencia_frontend.py` (A6): el foco de riesgo real
+  del front (11 rutas /v1) responde HTTP mapeado; sin 500 sin mapear en el scope.

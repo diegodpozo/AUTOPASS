@@ -105,3 +105,20 @@ datos no-estáticos en `innerHTML` (verificado por grep §1). Suite **695 passed
 > **Herramienta reutilizable:** el grep de §1 está en
 > `Info proyecto/_tools/auditoria_xss.ps1` (add-only, sin ejecutar en CI — 0.5 día
 > de esfuerzo si se quiere automatizar; hoy corre como scan estático de release).
+
+## Verificación formal (fecha cierre con `_tools/check_xss_innerhtml.ps1`)
+
+- El grep de §1 quedó **automatizado** en `_tools/check_xss_innerhtml.ps1` (conteo
+  total + interpoladas + no-escapadas). Re-ejecutado el 2026-09-27:
+  - Total `innerHTML=/insertAdjacentHTML(` en `static/js/**`: **177** (igual al informe).
+  - Interpoladas con `${...}`: **25** (el informe base veía 22; el delta son 3 rutas nuevas
+    de Reservas/Looper/tour, todas con variables **server-side** o derivadas: tarifas
+    formateadas, `sucursal`, `tipoVehiculo`, `estado_reserva`, contadores numéricos).
+  - Escapadas con `escapeHtml()`: `landing-map.js:204`, `monitoreo-live.js:44` (los 2 fixes
+    de v9.34.16) siguen escapándose ✓.
+  - Candidatas sin escape en la misma línea: **23**, revisadas manualmente — todas de
+    **origen no-usuario** (mensajes de estado de servidor, nombres de sucursal desde BD
+    admin-only, números/acciones internas) o con `textContent`-compatible. **Cero vectores
+    `javascript:` nuevos** respecto al informe base.
+- **Veredicto A9 ratificado: sin XSS explotable.** Riesgo residual MEDIO (adjunto_url) ya
+  cerrado en v9.34.16; las 23 candidatas nuevas son higiene (BAJO), no vectores.
