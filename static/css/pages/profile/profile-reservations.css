@@ -1559,7 +1559,7 @@
     border-radius: 7px;
     font-size: 0.68rem;
     font-weight: 700;
-    font-family: 'Montserrat', monospace;
+    font-family: var(--font-mono);
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;

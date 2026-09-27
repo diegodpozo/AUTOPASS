@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-09-24 (diagnóstico) · actualizado 2026-09-27 (verificación P0 cerrada)  
 **Alcance:** 41 archivos CSS (`static/css/`), 54 plantillas HTML (`templates/`), 62 módulos JavaScript (`static/js/`).  
-**Estado:** Diagnóstico completo. **P0 (marca y tipografía) CERRADO** ✅ (verificación 2026-09-27) · **P1 (paleta de estados + contraste) CERRADO** ✅ (2026-09-27, ver §5) · P2–P3 pendientes (ver §5).
+**Estado:** Diagnóstico completo. **P0 (marca y tipografía) CERRADO** ✅ (verificación 2026-09-27) · **P1 (paleta de estados + contraste) CERRADO** ✅ (2026-09-27, ver §5) · **P2 (escala tipográfica) CERRADO** ✅ (2026-09-27, ver §5) · P3 pendiente (ver §5).
 
 ---
 
@@ -191,8 +191,8 @@ flowchart TD
 - [x] **Normalizar la paleta de estados**: 0 residuales de `#ef4444`, `#e74c3c`, `#2ecc71`, `#27ae60`, `#4caf50` en CSS/JS/HTML (verificación 2026-09-27). Todo el código usa los tokens `--danger` (#f43f5e), `--success` (#10b981), `--warning` (#f59e0b), `--info` (#3b82f6) definidos en `variables.css`.
 - [x] **Corregir ratios de contraste deficientes**: 21 sustituciones de texto gris `#444`/`#555` → `var(--text-muted)` (11 archivos CSS + 2 módulos JS con iconos de estados vacíos). Verificación: 0 `color:#444/#555/#666` residuales en app (los únicos `#444/#555` restantes son footers inline de `templates/emails/*` sobre fondo claro, válidos por ser transaccionales). Ningún `var(--dorado)` como texto sobre fondo claro (verificado: 0). Queda pendiente el `background: #444` en `header.css:112` (no es texto, no aplica contraste de texto).
 
-### Prioridad P2: Estandarización de la Escala Tipográfica (Medio Plazo)
-- [ ] **Expandir la escala oficial en `variables.css`**:
+### Prioridad P2: Estandarización de la Escala Tipográfica (Medio Plazo) — ✅ **CERRADO (2026-09-27)**
+- [x] **Expandir la escala oficial en `variables.css`**:
   Definir una escala tipo Tailwind/Radix completa y semántica:
   ```css
   --text-2xs: 0.65rem;  /* 10.4px - Badges diminutos, timestamps secundarios */
@@ -205,9 +205,10 @@ flowchart TD
   --text-2xl: 2rem;     /* 32px   - Encabezados principales */
   --text-3xl: 2.5rem;   /* 40px   - KPIs grandes y héroe */
   ```
-- [ ] **Limpiar las declaraciones redundantes de `font-family`**:
-  - Retirar los 68 `font-family: 'Montserrat'` dispersos, dejando que los contenedores hereden la fuente raíz declarada en `reset.css`.
-  - Reemplazar `'Courier New'` y `'Consolas'` por `var(--font-mono)`.
+- [x] **Limpiar las declaraciones redundantes de `font-family`**:
+  - Retirados los `font-family: 'Montserrat'`/'Inter' redundantes dispersos (inputs, textareas, botones Leaflet, `level-code`, textarea de filtro, etc.), dejando que los contenedores hereden la fuente raíz declarada en `reset.css`.
+  - Reemplazado `'Montserrat', monospace` por `var(--font-mono)`.
+  - Verificación 2026-09-27: `'Courier New'`/`'Consolas'` → 0. Residuales intencionales que se conservan: `reset.css:5` (raíz), `variables.css:44` y `utilities.css:65` (definiciones de token), `forms.css:142,162` (override `!important` de flatpickr, librería de terceros) y `profile-vehicles.css:54,60` (select con iconos FontAwesome: la `option` declara Montserrat para no heredar FA).
 
 ### Prioridad P3: Desacoplamiento de Estilos Inline en HTML y JS (Medio Plazo)
 - [ ] **Refactorizar `estadisticas_ocr.html` y `monitoreo_live.html`**:

@@ -11,13 +11,11 @@ input, select {
     width: 100%; background: #000; border: 1px solid #333;
     padding: 15px; border-radius: var(--radius-md); color: #fff; outline: none; transition: 0.3s;
     height: var(--control-height-md);
-    font-family: 'Inter', sans-serif;
 }
 
 textarea {
     width: 100%; background: #000; border: 1px solid #333;
     padding: 15px; border-radius: var(--radius-md); color: #fff; outline: none; transition: 0.3s;
-    font-family: 'Inter', sans-serif;
 }
 
 input:focus, select:focus { border-color: var(--dorado); background: #050505; }

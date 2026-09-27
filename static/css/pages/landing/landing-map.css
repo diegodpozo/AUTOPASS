@@ -143,7 +143,6 @@
 }
 
 .leaflet-control-geolocation button {
-    font-family: 'Montserrat', sans-serif;
     font-weight: 900 !important;
     font-size: 0.7rem !important;
     letter-spacing: 1px;
@@ -369,7 +368,6 @@
     position: relative;
     width: 310px;
     max-width: calc(100vw - 120px);
-    font-family: 'Montserrat', sans-serif;
 }
 
 .locality-search-box {

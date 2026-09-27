@@ -1,6 +1,6 @@
 # Plan de Auditorías — AUTOPASS
 
-> Documento de planificación. Estado: **A1–A4 HECHO** (informes en `Info proyecto/`), **A5 pendiente** (requiere Neon/profiling en vivo), **A6–A9 HECHO** con verificaciones formales del 2026-09-27. Auditorías transversales resueltas: `AUDITORIA_MODULARIZACION.md` (10/10), `AUDITORIA_COLORES_FUENTES.md` (P0 cerrado), `AUDITORIA_TAMANOS_PROPORCIONES.md` (fases 1–4 + bloque de cierre aplicado), `AUDITORIA_NOMENCLATURA_ARCHIVOS.md` (8.2/10, diagnóstico + plan de normalización, ver §AN), `AUDITORIA_COMPONENTES.md` (DRY) y `AUDITORIA_UX_UI.md`. Propuesta de extensión para la capa CSS detallada en `Info proyecto/PROPUESTA_AUDITORIAS_CSS.md`.
+> Documento de planificación. Estado: **A1–A4 HECHO** (informes en `Info proyecto/`), **A5 pendiente** (requiere Neon/profiling en vivo), **A6–A9 HECHO** con verificaciones formales del 2026-09-27. Auditorías transversales resueltas: `AUDITORIA_MODULARIZACION.md` (10/10), `AUDITORIA_COLORES_FUENTES.md` (P0/P1/P2 cerrados, P3 pendiente — ver §5), `AUDITORIA_TAMANOS_PROPORCIONES.md` (fases 1–4 + bloque de cierre aplicado), `AUDITORIA_NOMENCLATURA_ARCHIVOS.md` (8.2→9.0/10, remediación P0/P1 aplicada, ver §AN), `AUDITORIA_COMPONENTES.md` (DRY) y `AUDITORIA_UX_UI.md`. Propuesta de extensión para la capa CSS detallada en `Info proyecto/PROPUESTA_AUDITORIAS_CSS.md`.
 
 ## Resumen
 
