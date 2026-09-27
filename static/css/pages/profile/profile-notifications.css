@@ -144,7 +144,7 @@
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     transition: all 0.25s ease;
 }
 
@@ -168,7 +168,7 @@
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     transition: all 0.25s ease;
 }
 
@@ -271,7 +271,7 @@
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     transition: all 0.2s ease;
 }
 
@@ -420,7 +420,7 @@
 .notif-alert-content {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
 .notif-alert-icon {
@@ -440,7 +440,7 @@
 .notif-alert-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .notif-alert-text strong {

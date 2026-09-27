@@ -37,7 +37,7 @@
 .footer-logo {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     margin-bottom: 25px;
     
     font-weight: 800;
@@ -86,7 +86,7 @@
 
 .footer-social {
     display: flex;
-    gap: 15px;
+    gap: 16px;
 }
 
 .social-link {

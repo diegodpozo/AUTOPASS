@@ -59,7 +59,7 @@
     display: grid;
     grid-template-columns: auto auto;
     justify-content: center;
-    gap: 25px;
+    gap: 24px;
     margin-top: 10px;
     align-items: start;
 }
@@ -80,7 +80,7 @@
 .rates-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 25px;
+    gap: 24px;
     justify-items: center;
     max-width: 400px;
     margin: 30px auto 0 auto;
@@ -114,7 +114,7 @@
 .building-grid {
     display: flex;
     flex-direction: column-reverse;
-    gap: 15px;
+    gap: 16px;
     max-width: 800px;
     margin: 0 auto;
     padding: 10px;
@@ -200,7 +200,7 @@
 
 .level-stats-grid {
     display: flex;
-    gap: 30px;
+    gap: 32px;
 }
 
 .stat-item {
@@ -286,7 +286,7 @@
     background: transparent !important;
     border-color: transparent !important;
     justify-content: center;
-    gap: 2px;
+    gap: 4px;
 }
 
 .rate-group:not(.editing) .input-with-icon i {
@@ -502,7 +502,7 @@
     }
     .rates-form-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 15px 10px;
+        gap: 16px 10px;
         max-width: 100%;
         margin-top: 20px;
     }
@@ -511,7 +511,7 @@
     }
     .diag-grid-premium {
         grid-template-columns: 1fr !important;
-        gap: 15px !important;
+        gap: 16px !important;
     }
     .diag-card-premium {
         padding: 20px 15px !important;

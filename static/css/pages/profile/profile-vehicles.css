@@ -22,7 +22,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 16px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 10;
@@ -174,7 +174,7 @@
     margin-top: 30px;
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 16px;
 }
 
 #add-vehicle-form .btn--outline {

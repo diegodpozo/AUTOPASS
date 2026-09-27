@@ -106,6 +106,16 @@
     display: flex; align-items: center; justify-content: center;
 }
 
+/* Touch target >= 44px en móvil (WCAG 2.5.5) sin cambiar el tamaño visual */
+@media (max-width: 640px) {
+    .btn--icon::before {
+        content: "";
+        position: absolute;
+        inset: -4px;
+        border-radius: inherit;
+    }
+}
+
 .btn--icon:hover {
     background: var(--dorado);
     color: var(--negro);

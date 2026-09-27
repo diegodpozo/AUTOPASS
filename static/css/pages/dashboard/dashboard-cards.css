@@ -90,7 +90,7 @@
 .header-info-group {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     flex: 1;
 }
 
@@ -113,7 +113,7 @@
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
 }
 
 /* --- FINANCE LAYOUT & KPI GRID --- */
@@ -121,7 +121,7 @@
 .kpi-grid-3 .kpi-card,
 .kpi-grid-6 .kpi-card {
     padding: 20px;
-    gap: 14px;
+    gap: 16px;
     align-items: center;
 }
 
@@ -236,7 +236,7 @@
 
 .channel-card:hover {
     border-color: rgba(255, 255, 255, 0.12);
-    transform: translateY(-5px);
+    transform: translateY(-2px);
     background: rgba(255, 255, 255, 0.03);
     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
@@ -246,7 +246,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 16px;
     font-size: 0.75rem;
     font-weight: 900;
     letter-spacing: 2px;
@@ -268,7 +268,7 @@
     padding: 25px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
+    gap: 16px;
 }
 
 .channel-stat {

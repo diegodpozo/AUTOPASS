@@ -18,12 +18,12 @@
 
 /* --- SPACING UTILITIES (GAP) --- */
 .gap-4 { gap: 4px; }
-.gap-5 { gap: 5px; }
+.gap-5 { gap: 4px; }
 .gap-8 { gap: 8px; }
 .gap-10 { gap: 10px; }
-.gap-15 { gap: 15px; }
+.gap-15 { gap: 16px; }
 .gap-20 { gap: 20px; }
-.gap-30 { gap: 30px; }
+.gap-30 { gap: 32px; }
 
 /* --- SPACING UTILITIES (MARGIN/PADDING) --- */
 .mt-5 { margin-top: 5px; }

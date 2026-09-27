@@ -202,7 +202,7 @@
 .branches-list-minimal {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
+    gap: 32px;
 }
 
 .branch-item-modern {
@@ -488,7 +488,7 @@
     color: #e2e8f0 !important;
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 8px !important;
     font-weight: 500 !important;
 }
 

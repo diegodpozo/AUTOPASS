@@ -64,7 +64,7 @@
 #vehicle-list { 
     display: flex;
     flex-wrap: wrap;
-    gap: 30px; 
+    gap: 32px; 
     margin-top: 10px;
     justify-content: center;
 }
@@ -124,7 +124,7 @@
     z-index: 5;
     display: flex;
     flex-direction: column;
-    gap: 35px; 
+    gap: 32px; 
 }
 
 .vehicle-card:hover { 
@@ -274,14 +274,14 @@
 .points-overview-grid {
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
-    gap: 25px;
+    gap: 24px;
     margin-bottom: 30px;
 }
 
 .points-display {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     align-items: center;
     text-align: center;
 }
@@ -312,7 +312,7 @@
 .points-stats-mini {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
 }
 
 .p-stat {
@@ -501,7 +501,7 @@
 .vouchers-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 22px;
+    gap: 24px;
     margin-top: 15px;
 }
 
@@ -547,7 +547,7 @@
 .voucher-badges-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -559,7 +559,7 @@
     letter-spacing: 0.8px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     white-space: nowrap;
 }
 
@@ -590,7 +590,7 @@
     letter-spacing: 0.8px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     white-space: nowrap;
 }
 
@@ -632,7 +632,7 @@
 .voucher-address-link {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     color: var(--dorado);
     font-size: 0.78rem;
     font-weight: 700;
@@ -648,7 +648,7 @@
 .voucher-card-body {
     padding: 16px 18px 14px 18px;
     display: flex;
-    gap: 14px;
+    gap: 16px;
     align-items: flex-start;
     flex-grow: 1;
 }
@@ -665,7 +665,7 @@
 .voucher-tags-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -739,7 +739,7 @@
 .voucher-card-meta span {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
 }
 
 .voucher-card-meta span i {
@@ -802,7 +802,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
+    gap: 8px;
     transition: all 0.25s ease;
     box-sizing: border-box;
 }
@@ -955,7 +955,7 @@
     color: #b59bd0;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     font-weight: 600;
 }
 
@@ -979,13 +979,13 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .discount-meta-pct .discount-pct-row {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .discount-meta-pct .discount-pct-suffix {
@@ -1007,7 +1007,7 @@
     color: #7d8390;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .discount-meta-pct .discount-vencimiento i {

@@ -174,7 +174,7 @@
     padding: 10px 16px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 
@@ -229,7 +229,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     margin-top: 15px;
 }
 
@@ -467,7 +467,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     padding: 10px 6px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -537,7 +537,7 @@
 @media (max-width: 1280px) {
     .vehicle-stats-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
+        gap: 16px;
     }
 }
 
@@ -594,7 +594,7 @@
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-size: 0.75rem;
     padding: 8px 12px;
     letter-spacing: 0.5px;
@@ -681,7 +681,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
+    gap: 8px;
     width: 88px;
 }
 .barrier-icon { width: 24px; filter: brightness(0) invert(1); }
@@ -701,7 +701,7 @@
 }
 
 /* Pestañas de listados */
-.tabs-buttons-group { display: flex; gap: 5px; }
+.tabs-buttons-group { display: flex; gap: 4px; }
 .tabs-actions-group { padding-right: 15px; }
 .pagination-premium.table-pagination {
     padding: 10px 25px 20px;
@@ -711,8 +711,8 @@
 /* ==========================================================================
    LIMPIEZA INLINE v9.34.35 - dashboard/tabs/occupancy.html
    ========================================================================== */
-#tab-occupancy .monitoring-grid { gap: 25px; }
-#tab-occupancy .manual-ops-row { display: flex; gap: 15px; align-items: flex-end; padding: 0 25px 25px; }
+#tab-occupancy .monitoring-grid { gap: 24px; }
+#tab-occupancy .manual-ops-row { display: flex; gap: 16px; align-items: flex-end; padding: 0 25px 25px; }
 #tab-occupancy .manual-ops-row > .form-group-premium:first-child { flex: 1; max-width: none; }
 #tab-occupancy .manual-ops-row > .form-group-premium:nth-child(2) { width: 150px; }
 #manual-floor-group { width: 180px; display: none; }

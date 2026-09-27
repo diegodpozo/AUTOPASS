@@ -22,7 +22,7 @@
 .modal-content { 
     background: #111; 
     margin: 5% auto; 
-    padding: 40px; 
+    padding: 32px; 
     border-radius: var(--radius-xl); 
     border: 1px solid var(--border); 
     width: 90%; 
@@ -49,10 +49,10 @@
 
 .close-btn { 
     position: absolute; 
-    top: 15px; 
-    right: 15px; 
-    width: 35px; 
-    height: 35px; 
+    top: 12px; 
+    right: 12px; 
+    width: 44px; 
+    height: 44px; 
     border-radius: 50%; 
     display: flex; 
     justify-content: center; 
@@ -169,7 +169,7 @@
 .confirm-modal-content {
     text-align: center;
     max-width: var(--modal-sm);
-    padding: 40px 30px;
+    padding: 32px 24px;
 }
 
 .confirm-icon {
@@ -196,7 +196,7 @@
 .confirm-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 16px;
 }
 
 .confirm-actions .btn {
@@ -225,7 +225,7 @@
 .choice-option {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     width: 100%;
     padding: 13px 18px;
     border-radius: 12px;
@@ -331,13 +331,13 @@
 
 .modal-close-top {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 12px;
+    right: 12px;
     background: rgba(255, 255, 255, 0.05);
     border: none;
     color: #fff;
-    width: 35px;
-    height: 35px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     font-size: 1.2rem;
     display: flex;

@@ -121,7 +121,7 @@
 .vt-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
 }
 
 .vt-btn {

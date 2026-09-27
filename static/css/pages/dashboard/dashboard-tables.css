@@ -70,10 +70,33 @@
     padding: 15px 10px;
 }
 
-/* Columna de Vehículo en Ocupación */
-#occupancy-content table th:nth-child(1),
-#occupancy-content table td:nth-child(1) {
+/* Columna de Vehículo en Ocupación (tab: #tab-occupancy) */
+#tab-occupancy table th:nth-child(1),
+#tab-occupancy table td:nth-child(1) {
     min-width: 110px;
+}
+
+/* Columna de acciones en tablas admin (última columna con botones) */
+#tab-users table th:last-child,
+#tab-users table td:last-child,
+#tab-tickets table th:last-child,
+#tab-tickets table td:last-child,
+#tab-promotions table th:last-child,
+#tab-promotions table td:last-child,
+#tab-occupancy table th:last-child,
+#tab-occupancy table td:last-child,
+#tab-admin-reservations table th:last-child,
+#tab-admin-reservations table td:last-child,
+#tab-live table th:last-child,
+#tab-live table td:last-child {
+    min-width: 140px;
+    white-space: nowrap;
+}
+
+/* Columna Estado de tickets (nth-child 5) y acciones no colapsan en angosto */
+#tab-tickets table th:nth-child(5),
+#tab-tickets table td:nth-child(5) {
+    min-width: 120px;
 }
 
 #tab-admin-reservations table th:nth-child(3),
@@ -155,7 +178,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 16px;
     color: #444;
     border: 2px dashed #222;
     border-radius: 12px;
@@ -182,7 +205,7 @@
 .info-grid-compact {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 16px;
 }
 
 .info-item {
@@ -727,7 +750,7 @@ tr:hover .btn-delete-promo {
 #modal-add-branch .branch-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    gap: 32px;
 }
 #modal-add-branch .branch-form-grid h4 { letter-spacing: 1px; }
 

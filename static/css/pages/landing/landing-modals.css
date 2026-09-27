@@ -92,7 +92,7 @@
     .page-hero h1 { font-size: 2.2rem; }
     .page-hero { min-height: 35vh; padding: 120px 20px 40px; }
     
-    .feature-grid { grid-template-columns: 1fr; gap: 30px; }
+    .feature-grid { grid-template-columns: 1fr; gap: 32px; }
     
     header { 
         padding: 15px 5%; 
@@ -106,7 +106,7 @@
     .seccion-carrusel { height: 500px; }
     .hero { height: 500px; }
     
-    .footer-grid { grid-template-columns: 1fr; gap: 30px; text-align: center; }
+    .footer-grid { grid-template-columns: 1fr; gap: 32px; text-align: center; }
     .footer-col { display: flex; flex-direction: column; align-items: center; }
     .footer-social { justify-content: center; }
     .footer-logo { justify-content: center; }
@@ -115,7 +115,7 @@
     .cta-group {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 16px;
         width: 100%;
         max-width: 300px;
     }
@@ -131,7 +131,7 @@
     }
 
     .feature-list-horizontal {
-        gap: 15px;
+        gap: 16px;
     }
 
     .feature-list-horizontal li {

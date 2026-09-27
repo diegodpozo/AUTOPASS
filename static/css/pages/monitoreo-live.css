@@ -60,7 +60,7 @@
         pointer-events: none;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
     }
 
     .cctv-video-feed.loaded {
@@ -161,7 +161,7 @@
         height: 100%;
         background: #050505;
         border: 1px solid #222222;
-        gap: 15px;
+        gap: 16px;
     }
 
     .no-cameras-title {

@@ -11,7 +11,7 @@
         align-items: center;
         margin-bottom: 25px;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 16px;
     }
 
     .ocr-hero-card {
@@ -86,7 +86,7 @@
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 16px;
     }
 
     .ocr-table-card {
@@ -129,7 +129,7 @@
     .perf-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         padding: 4px 10px;
         border-radius: 20px;
         font-size: 0.75rem;
@@ -344,7 +344,7 @@
 
     .ocr-chart-legend {
         display: flex;
-        gap: 18px;
+        gap: 20px;
         align-items: center;
         flex-wrap: wrap;
         font-size: 0.72rem;
@@ -369,7 +369,7 @@
 
     /* Navegación superior */
     .ocr-back-btn { text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-    .ocr-top-actions { display: flex; align-items: center; gap: 15px; }
+    .ocr-top-actions { display: flex; align-items: center; gap: 16px; }
     #ocr-live-clock { font-family: var(--font-mono); font-size: 0.85rem; color: #9ca3af; }
     .ocr-status-badge { font-size: 0.7rem; }
     .ocr-status-badge .fa-circle { font-size: 0.5rem; margin-right: 4px; }
@@ -381,7 +381,7 @@
     .ocr-hero-card h1 { font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.5px; }
     .ocr-hero-card p { color: #9ca3af; font-size: 0.85rem; margin: 0; }
     .ocr-hero-actions { display: flex; gap: 10px; align-items: center; }
-    .ocr-hero-actions .btn { display: inline-flex; align-items: center; gap: 6px; }
+    .ocr-hero-actions .btn { display: inline-flex; align-items: center; gap: 8px; }
     .auto-refresh-toggle input { accent-color: var(--dorado); width: 16px; height: 16px; }
 
     /* Colores de KPIs particulares */
@@ -394,7 +394,7 @@
     .ocr-toolbar-search { display: flex; gap: 12px; align-items: center; flex: 1; min-width: 260px; max-width: 450px; }
     .ocr-toolbar-search .input-with-icon { width: 100%; }
     #ocr-search-input { font-size: 0.85rem; padding: 10px 15px 10px 42px; }
-    .ocr-toolbar-filters { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+    .ocr-toolbar-filters { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
     .ocr-filter-group { display: flex; align-items: center; gap: 8px; }
     .ocr-filter-label { font-size: 0.75rem; color: #9ca3af; font-weight: 700; text-transform: uppercase; }
     #ocr-filter-evento, #ocr-limit-select { width: auto; padding: 8px 14px; font-size: 0.8rem; background: #111424; }

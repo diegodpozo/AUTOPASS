@@ -146,7 +146,7 @@
 .profile-main-grid {
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
-    gap: 30px;
+    gap: 32px;
     align-items: flex-start;
     margin-top: 25px;
     width: 100%;
@@ -155,14 +155,14 @@
 .grid-col {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 24px;
     min-width: 0;
 }
 
 .profile-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px; 
+    gap: 24px; 
     align-items: flex-start;
 }
 
@@ -408,7 +408,7 @@
     margin: 20px 0;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
     align-items: center;
 }
 
@@ -597,7 +597,7 @@
     display: grid;
     grid-template-columns: 160px 1fr 1fr auto;
     align-items: center;
-    gap: 18px;
+    gap: 20px;
     padding: 14px 6px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -617,7 +617,7 @@
 .stay-item-premium .stay-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .stay-item-premium .stay-label {
@@ -665,7 +665,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex: 0 0 auto;
     position: relative;
 }
@@ -835,7 +835,7 @@
 .info-list-premium {
     display: flex;
     flex-direction: column;
-    gap: 30px; /* Incrementado para dar más aire entre filas */
+    gap: 32px; /* Incrementado para dar más aire entre filas */
     align-items: center;
     width: 100%;
     margin: auto 0; /* Centra la lista verticalmente respetando el título */
@@ -845,7 +845,7 @@
     display: flex;
     flex-direction: row;
     align-items: flex-start; /* Alínea al tope para que no se mueva al editar */
-    gap: 15px;
+    gap: 16px;
     width: 100%;
     max-width: 380px;
 }
@@ -898,7 +898,7 @@
 @media (max-width: 1024px) {
     .account-hub-body { 
         grid-template-columns: 1fr; 
-        gap: 35px; 
+        gap: 32px; 
     }
     .hub-section {
         padding: 24px 20px;
@@ -936,7 +936,7 @@
 .grid-stats-compact {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 16px;
 }
 
 .stat-card {

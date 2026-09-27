@@ -85,7 +85,7 @@ body:not(.role-local_admin) .local-admin-only {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 15px !important;
+        gap: 16px !important;
         padding: 18px 15px !important;
         text-align: center !important;
     }

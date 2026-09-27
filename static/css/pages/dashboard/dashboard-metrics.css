@@ -6,7 +6,7 @@
 .metricas-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 14px;
+    gap: 16px;
     margin-top: 16px;
 }
 
@@ -77,7 +77,7 @@
 .metricas-chart-legend {
     display: inline-flex;
     align-items: center;
-    gap: 18px;
+    gap: 20px;
     flex-wrap: wrap;
     font-size: 0.72rem;
     color: #9ca3af;
@@ -107,7 +107,7 @@
     border-top: 1px solid var(--border-card);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 }
 
 .metricas-controls-row {
@@ -131,7 +131,7 @@
 .metricas-range-wrap {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     flex: 1;
     min-width: 260px;
 }
@@ -207,7 +207,7 @@
 #metricas-detail { display: none; }
 
 /* Barra superior del detalle (botón volver) */
-.metricas-detail-top { margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+.metricas-detail-top { margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .metricas-back-btn { display: inline-flex; align-items: center; gap: 8px; }
 #metricas-detail > p { color: #9ca3af; font-size: 0.85rem; margin-bottom: 20px; }
 #metricas-detail strong { color: #fff; }

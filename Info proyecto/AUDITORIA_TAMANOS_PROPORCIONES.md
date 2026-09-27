@@ -314,3 +314,19 @@ Reducción de los 17 breakpoints a los **4 estándares universales**, con absorc
 - `standalone.css` conserva `@media (display-mode: standalone) and (min-width: 700px)` porque no es un breakpoint de layout sino de contexto PWA.
 
 **Estado global de la auditoría:** Fases 1-4 **completas** ✅ y pendientes menores **aplicados** ✅ (v9.34.13): tarjetas/containers de tarjeta con radios 15/16/30px normalizados a `--radius-lg` (`.kpi-icon`, `.card`/`.stat-card`, tarjetas OCR hero/table/chart, `.help-quick-card`/`.contact-card`/`.faq-category-group` de ayuda, `.contact-icon-box`/`.contact-form-container`, `.card-vehicle-list-wrapper`, grid de reservas, `.camera-view-container`/`.vehicle-stat-card`, `.admin-tour-tooltip`, `.level-block`, `.p-stat`, `#reserva-form-container`, `.reserva-trigger-card`, `.reserva-details-ultra`); gap vertical unitario 16→24px en grids/flex de tarjetas (KPI OCR, ayuda, tickets, vouchers-mobile, contact, promo-card body); `#60a5fa` (12 usos) unificado al token semántico `--info` (#3b82f6), quedando 0 residuales. Elementos no-tarjeta con radio 16px (chips de estado, tooltips, toasts, iconos QR) se conservan literal por no ser parte del alcance.
+
+## Bloque de cierre (aplicado 2026-09-27 · ronda de retorno auditorías)
+
+7 hallazgos residuales de proporción corregidos en una sola pasada (36 archivos CSS):
+
+| Hallazgo | Fix |
+|---|---|
+| `.modal-content` `padding: 40px` excesivo | base 40→**32px**; `.confirm-modal-content` 40×30→**32×24px** (móvil ya gobernaba por media query) |
+| `.close-btn` 35px < 44px (WCAG 2.5.5) | 35→**44×44px** (+ `.modal-close-top` 35→44px, top/right 15→12px para compensar) |
+| `.btn--icon` 40px al límite en móvil | área táctil ≥44px en `@media ≤640px` vía `::before { inset: -4px }` (mismo patrón que `.btn--mini`, DRY) |
+| Hovers de tarjeta divergentes (sin movimiento / `translateY(-2)` / `translateY(-5)` / `translateX(5)`) | unificados a **`translateY(-2px)`** en `.stat-card-premium` (era horizontal X), `.kpi-card`, `.channel-card`, `.feature-card` (era -10), `.action-btn-premium` (era -5). Gesto de tarjeta = elevación vertical única |
+| Densidad de tabla ~65px/fila | `th` 15→**12/14px**, `td` 20×15→**14×14px** (`tables.css`); las filas con variantes propias (`#tab-branches .row-premium`) intactas |
+| Tablas admin sin `min-width` en acciones/estado | bloque en `dashboard-tables.css`: columna Acciones (`:last-child`) con `min-width:140px; white-space:nowrap` en users/tickets/promotions/occupancy/reservations/live; estado tickets (nth-5) `min-width:120px`; corregido selector muerto `#occupancy-content`→`#tab-occupancy` (el tab real) |
+| Escala de espaciado 4/8px (gaps) | 167 gaps disonantes normalizados: 2/3/5→4px, 6/7/9→8px, 14/15→16px, 18/19→20px, 22/25→24px, 30/35→32px. Resultado: gaps 4/8/12/16/20/24/32/40px. **Excepción documentada:** `10px` (72 usos) se conserva — es el espaciado de aire fino entre icono/texto y no rompe la escala (entre 8 y 12); no es un salto visual |
+
+Verificación: `check_inline_styles.py` continua 50/50 templates en 0 (sin regresiones inline); los cambios son puramente CSS (sin tocar JS/rutas → suite backend no afectada).

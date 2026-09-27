@@ -23,7 +23,7 @@
 .header-title-premium {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 20px;
 }
 
 .header-icon-box {
@@ -83,7 +83,7 @@
 .header-right {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 32px;
 }
 
 .system-status-group {
@@ -190,7 +190,7 @@
         flex-direction: column; 
         align-items: center;
         text-align: center;
-        gap: 15px;
+        gap: 16px;
         position: relative;
     }
 

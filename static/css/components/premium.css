@@ -26,7 +26,7 @@
 .action-btn-premium:hover {
     background: rgba(223, 186, 107, 0.05);
     border-color: var(--dorado);
-    transform: translateY(-5px);
+    transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 
