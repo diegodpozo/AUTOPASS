@@ -2,10 +2,10 @@
 <div class="chart-window-controls">
     <div class="chart-window-row">
         <label class="chart-window-live">
-            <input type="checkbox" id="{{ prefix }}-chart-live" checked style="accent-color: var(--dorado); width: 16px; height: 16px;">
+            <input type="checkbox" id="{{ prefix }}-chart-live" checked>
             <span>SEGUIR EN VIVO</span>
         </label>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="chart-window-field-group">
             <span class="chart-window-label">VENTANA:</span>
             <select id="{{ prefix }}-chart-ventana" class="input-premium chart-window-select">
                 {% for horas in [6, 12, 24, 48, 168] %}
@@ -14,9 +14,9 @@
                 <option value="0">TODA LA HISTORIA</option>
             </select>
         </div>
-        <div style="display: flex; gap: 8px;">
-            <button type="button" id="{{ prefix }}-chart-ir-inicio" class="btn btn--outline sm"><i class="fas fa-backward-fast" style="margin-right: 4px;"></i>INICIO</button>
-            <button type="button" id="{{ prefix }}-chart-ir-final" class="btn btn--primary sm"><i class="fas fa-forward-fast" style="margin-right: 4px;"></i>FINAL</button>
+        <div class="chart-window-nav-group">
+            <button type="button" id="{{ prefix }}-chart-ir-inicio" class="btn btn--outline sm"><i class="fas fa-backward-fast"></i>INICIO</button>
+            <button type="button" id="{{ prefix }}-chart-ir-final" class="btn btn--primary sm"><i class="fas fa-forward-fast"></i>FINAL</button>
         </div>
     </div>
 
@@ -27,7 +27,7 @@
     </div>
 
     <div class="chart-window-helper">
-        <i class="fas fa-circle-info mr-6" style="color: var(--dorado);"></i>
+        <i class="fas fa-circle-info mr-6"></i>
         El gráfico avanza solo con el paso del tiempo. Desactivá el seguimiento o mové el deslizador para recorrer hasta el primer dato; presioná <strong>FINAL</strong> para volver a seguirlo en vivo.
     </div>
 </div>

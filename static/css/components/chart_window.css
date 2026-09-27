@@ -68,3 +68,12 @@
     line-height: 1.6;
     text-align: center;
 }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.36 - components/chart_window_controls.html
+   ========================================================================== */
+.chart-window-live input[type="checkbox"] { accent-color: var(--dorado); width: 16px; height: 16px; }
+.chart-window-field-group { display: flex; align-items: center; gap: 8px; }
+.chart-window-nav-group { display: flex; gap: 8px; }
+.chart-window-nav-group .btn i { margin-right: 4px; }
+.chart-window-helper i { color: var(--dorado); }
