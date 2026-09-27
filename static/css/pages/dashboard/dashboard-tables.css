@@ -394,6 +394,16 @@ tr:hover .btn-delete-promo {
 #ticket-modal-subject { white-space: normal; }
 #modal-ticket-answer .ticket-status-field { max-width: 150px; flex-shrink: 0; }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.38 - dashboard/tabs/branches.html + promotions.html
+   ========================================================================== */
+#tab-branches .content-wrapper .card { max-width: 1200px; }
+#tab-branches .header-info-group { flex: 1; }
+#tab-branches .table-container { padding: 0 10px 20px 10px; }
+#tab-promotions .content-wrapper .card { max-width: 800px; overflow: hidden; }
+#tab-promotions .header-info-group { flex: 1; }
+#tab-promotions .table-container { padding: 0 10px 20px 10px; }
+
 #modal-ticket-answer .modal-body {
     flex: 1;
     min-height: 0;
