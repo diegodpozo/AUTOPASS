@@ -7,7 +7,7 @@ table {
 th { 
     text-align: center; 
     padding: 12px 14px; 
-    color: #555; 
+    color: var(--text-muted); 
     font-size: 0.75rem; 
     text-transform: uppercase; 
     border-bottom: 1px solid var(--border-light); 

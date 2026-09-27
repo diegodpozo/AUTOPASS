@@ -130,7 +130,7 @@
 
 .req-item { 
     font-size: 0.75rem; 
-    color: #555; 
+    color: var(--text-muted); 
     display: flex; 
     align-items: center; 
     gap: 8px; 

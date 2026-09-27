@@ -154,7 +154,7 @@
     border-top: 1px solid #1a1a1a;
     padding-top: 40px;
     font-size: 0.8rem;
-    color: #444;
+    color: var(--text-muted);
     letter-spacing: 1px;
 }
 

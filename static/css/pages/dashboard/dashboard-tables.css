@@ -179,7 +179,7 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
-    color: #444;
+    color: var(--text-muted);
     border: 2px dashed #222;
     border-radius: 12px;
 }

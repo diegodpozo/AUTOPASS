@@ -144,7 +144,7 @@ export function renderVouchers() {
     if (cachedUserTickets.length === 0) {
         grid.innerHTML = `
             <div class="empty-state-minimal" style="grid-column: 1 / -1; padding: 35px 20px; text-align: center;">
-                <i class="fas fa-ticket" style="font-size: 2.2rem; color: #444; margin-bottom: 12px; display: block;"></i>
+                <i class="fas fa-ticket" style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 12px; display: block;"></i>
                 <p style="color: #888; font-size: 0.85rem; margin: 0;">Aún no tenés vouchers canjeados. ¡Canjeá tus puntos por los beneficios disponibles abajo!</p>
             </div>`;
         return;
@@ -156,13 +156,13 @@ export function renderVouchers() {
         if (currentVoucherTab === 'VIGENTES') {
             grid.innerHTML = `
                 <div class="empty-state-minimal" style="grid-column: 1 / -1; padding: 35px 20px; text-align: center;">
-                    <i class="fas fa-ticket-simple" style="font-size: 2rem; color: #444; margin-bottom: 10px; display: block;"></i>
+                    <i class="fas fa-ticket-simple" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 10px; display: block;"></i>
                     <p style="color: #888; font-size: 0.85rem; margin: 0;">No tenés vouchers vigentes en este momento. ¡Canjeá tus puntos por beneficios abajo!</p>
                 </div>`;
         } else {
             grid.innerHTML = `
                 <div class="empty-state-minimal" style="grid-column: 1 / -1; padding: 35px 20px; text-align: center;">
-                    <i class="fas fa-history" style="font-size: 2rem; color: #444; margin-bottom: 10px; display: block;"></i>
+                    <i class="fas fa-history" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 10px; display: block;"></i>
                     <p style="color: #888; font-size: 0.85rem; margin: 0;">No tenés vouchers finalizados o utilizados en tu historial.</p>
                 </div>`;
         }

@@ -29,9 +29,9 @@ export async function loadVehicles() {
         list.innerHTML = `
             <div class="empty-state-card" style="display: flex; flex-direction: column; align-items: center; grid-column: 1 / -1; text-align: center; padding: 40px 0;">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 25px; margin-bottom: 25px;">
-                    <i class="fas fa-motorcycle" style="font-size: 1.5rem; color: #444;"></i>
-                    <i class="fas fa-car-rear" style="font-size: 2.5rem; color: #444;"></i>
-                    <i class="fas fa-truck-pickup" style="font-size: 1.5rem; color: #444;"></i>
+                    <i class="fas fa-motorcycle" style="font-size: 1.5rem; color: var(--text-muted);"></i>
+                    <i class="fas fa-car-rear" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+                    <i class="fas fa-truck-pickup" style="font-size: 1.5rem; color: var(--text-muted);"></i>
                 </div>
                 <h4 style="color: #fff; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px;">¡UPS! NO TENÉS VEHÍCULOS</h4>
                 <p style="color: #888; font-size: 0.95rem; max-width: 300px; line-height: 1.5;">Agregá tu primer vehículo para empezar a operar en la red AutoPass.</p>

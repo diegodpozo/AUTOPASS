@@ -426,7 +426,7 @@
 
 .pts-item-date {
     font-size: 0.7rem;
-    color: #555;
+    color: var(--text-muted);
     font-weight: 600;
 }
 

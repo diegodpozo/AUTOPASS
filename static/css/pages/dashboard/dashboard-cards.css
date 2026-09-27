@@ -280,7 +280,7 @@
 
 .channel-stat .stat-label {
     font-size: 0.6rem;
-    color: #555;
+    color: var(--text-muted);
     text-transform: uppercase;
     font-weight: 800;
     letter-spacing: 1px;
@@ -363,7 +363,7 @@
 
 .method-stat .stat-label {
     font-size: 0.6rem;
-    color: #555;
+    color: var(--text-muted);
     text-transform: uppercase;
     font-weight: 800;
     letter-spacing: 1px;

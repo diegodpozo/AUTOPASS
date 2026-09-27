@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-09-24 (diagnóstico) · actualizado 2026-09-27 (verificación P0 cerrada)  
 **Alcance:** 41 archivos CSS (`static/css/`), 54 plantillas HTML (`templates/`), 62 módulos JavaScript (`static/js/`).  
-**Estado:** Diagnóstico completo. **P0 (marca y tipografía) CERRADO** ✅ · P1–P3 con avance parcial (ver §5).
+**Estado:** Diagnóstico completo. **P0 (marca y tipografía) CERRADO** ✅ (verificación 2026-09-27) · **P1 (paleta de estados + contraste) CERRADO** ✅ (2026-09-27, ver §5) · P2–P3 pendientes (ver §5).
 
 ---
 
@@ -188,12 +188,8 @@ flowchart TD
 - [x] **Unificar la tipografía monoespaciada**: eliminado el `<link>` de Google Fonts de Share Tech Mono; 0 residuales de "Share Tech Mono". Todos los cronómetros, slots ALPR, patentes y monotablas usan `var(--font-mono)` = `'JetBrains Mono', monospace` (36 usos en CSS + 3 en `estadisticas-ocr.js`). `monitoreo_live.html` verificado sin `fonts.googleapis`, sin `font-family` literal (hereda de `monitoreo-live.css`).
 
 ### Prioridad P1: Consistencia Semántica y Accesibilidad WCAG (Corto Plazo)
-- [ ] **Normalizar la paleta de estados**:
-  - Alinear el color de peligro / error a `--danger` (`#ef4444` o `#f43f5e`), suprimiendo los `#e74c3c`.
-  - Alinear el color de éxito a `--success: #10b981`, eliminando `#2ecc71` y `#27ae60`.
-- [ ] **Corregir ratios de contraste deficientes**:
-  - Elevar cualquier texto gris `#666` en fondos oscuros a `--text-muted: #9ca3af` o `#888` para superar el umbral WCAG 2.1 AA (4.5:1).
-  - Asegurar que nunca se use texto con `color: var(--dorado)` sobre fondos blancos o claros (usar fondos oscuros o texto negro/oscuro sobre contenedor dorado).
+- [x] **Normalizar la paleta de estados**: 0 residuales de `#ef4444`, `#e74c3c`, `#2ecc71`, `#27ae60`, `#4caf50` en CSS/JS/HTML (verificación 2026-09-27). Todo el código usa los tokens `--danger` (#f43f5e), `--success` (#10b981), `--warning` (#f59e0b), `--info` (#3b82f6) definidos en `variables.css`.
+- [x] **Corregir ratios de contraste deficientes**: 21 sustituciones de texto gris `#444`/`#555` → `var(--text-muted)` (11 archivos CSS + 2 módulos JS con iconos de estados vacíos). Verificación: 0 `color:#444/#555/#666` residuales en app (los únicos `#444/#555` restantes son footers inline de `templates/emails/*` sobre fondo claro, válidos por ser transaccionales). Ningún `var(--dorado)` como texto sobre fondo claro (verificado: 0). Queda pendiente el `background: #444` en `header.css:112` (no es texto, no aplica contraste de texto).
 
 ### Prioridad P2: Estandarización de la Escala Tipográfica (Medio Plazo)
 - [ ] **Expandir la escala oficial en `variables.css`**:
