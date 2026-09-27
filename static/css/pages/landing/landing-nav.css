@@ -113,6 +113,12 @@ nav#nav-menu {
     align-items: center;
 }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.41 - components/navbar.html
+   ========================================================================== */
+/* Acciones de usuario ocultas por defecto (JS checkAuthState les pone display) */
+#auth-user-actions.user-nav-hidden { display: none; }
+
 .btn-nav {
     border: none;
     padding: 10px 22px;
@@ -377,7 +383,8 @@ nav#nav-menu {
     #auth-guest-actions[style*="display:none"],
     #auth-guest-actions[style*="display: none"],
     #auth-user-actions[style*="display:none"],
-    #auth-user-actions[style*="display: none"] {
+    #auth-user-actions[style*="display: none"],
+    #auth-user-actions.user-nav-hidden {
         display: none !important;
     }
 
