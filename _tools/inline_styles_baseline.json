@@ -3,7 +3,7 @@
   "files": {
     "templates/base.html": 0,
     "templates/components/auth_modals.html": 1,
-    "templates/components/chart_window_controls.html": 6,
+    "templates/components/chart_window_controls.html": 0,
     "templates/components/css_dashboard.html": 0,
     "templates/components/css_landing.html": 0,
     "templates/components/css_profile.html": 0,
@@ -13,7 +13,7 @@
     "templates/components/navbar.html": 1,
     "templates/components/sidebar_user.html": 1,
     "templates/components/virtual_time_banner.html": 0,
-    "templates/contacto.html": 6,
+    "templates/contacto.html": 0,
     "templates/dashboard/modals/admin_help_modal.html": 1,
     "templates/dashboard/modals/branch_modals.html": 0,
     "templates/dashboard/modals/promotion_modal.html": 0,
