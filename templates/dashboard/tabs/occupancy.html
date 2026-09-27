@@ -1,5 +1,5 @@
 <!-- PESTAÑA: OCUPACIÓN ACTUAL -->
-<div id="tab-occupancy" class="tab-view" style="display: none;">
+<div id="tab-occupancy" class="tab-view">
     <!-- KPIS DE OCUPACIÓN -->
     <div class="kpi-grid">
         <div class="kpi-card">
@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <div class="monitoring-grid" style="grid-template-columns: 1fr; gap: 25px;">
+    <div class="monitoring-grid">
         <!-- OPERACIONES MANUALES -->
         <div class="card">
             <div class="card-header-premium">
@@ -42,15 +42,15 @@
                     <p>Registrá ingresos de vehículos que no posean patente legible o requieran carga manual.</p>
                 </div>
             </div>
-            <div class="manual-ops-row mt-20" style="display: flex; gap: 15px; align-items: flex-end; padding: 0 25px 25px;">
-                <div class="form-group-premium" style="flex: 1; max-width: none;">
+            <div class="manual-ops-row mt-20">
+                <div class="form-group-premium">
                     <label>PATENTE DEL VEHÍCULO</label>
                     <div class="input-with-icon">
                         <i class="fas fa-car"></i>
                         <input type="text" id="manual-plate" placeholder="Ej: AA123BB" class="input-premium uppercase">
                     </div>
                 </div>
-                <div class="form-group-premium" style="width: 150px;">
+                <div class="form-group-premium">
                     <label>TIPO</label>
                     <select id="manual-type" class="input-premium">
                         <option value="Auto">Auto</option>
@@ -58,13 +58,13 @@
                         <option value="Moto">Moto</option>
                     </select>
                 </div>
-                <div id="manual-floor-group" class="form-group-premium" style="width: 180px; display: none;">
+                <div id="manual-floor-group" class="form-group-premium">
                     <label>PISO / NIVEL</label>
                     <select id="manual-floor" class="input-premium">
                         <option value="">Seleccioná piso...</option>
                     </select>
                 </div>
-                <button class="btn btn--primary" onclick="manualEntry()" style="height: 48px; padding: 0 25px;">
+                <button class="btn btn--primary" onclick="manualEntry()">
                     <i class="fas fa-sign-in-alt"></i> REGISTRAR INGRESO
                 </button>
             </div>
@@ -105,7 +105,7 @@
                 </table>
             </div>
             <!-- Paginación Ocupación (Copia de live por consistencia) -->
-            <div id="occ-pagination-tab" class="pagination-premium" style="padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px;"></div>
+            <div id="occ-pagination-tab" class="pagination-premium"></div>
         </div>
     </div>
 </div>
