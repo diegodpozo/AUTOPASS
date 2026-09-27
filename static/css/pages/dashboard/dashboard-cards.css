@@ -415,3 +415,8 @@
 #tab-finance #fin-date { width: 150px; color-scheme: dark; }
 #tab-finance .filter-group-premium i.fa-calendar-alt { z-index: 5; }
 #tab-finance .pagination-premium { border-top: 1px solid rgba(255,255,255,0.05); }
+
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.40 - dashboard/tabs/users.html
+   ========================================================================== */
+#tab-users .pagination-premium { border-top: 1px solid rgba(255,255,255,0.05); }
