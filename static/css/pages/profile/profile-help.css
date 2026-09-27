@@ -367,6 +367,12 @@
     margin-bottom: 30px;
 }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.40 - profile/tabs/ayuda.html
+   ========================================================================== */
+#help-empty-search { display: none; }
+#help-support-form .form-group { margin-bottom: 16px; }
+
 .help-empty-search i {
     font-size: 2.8rem;
     color: #64748b;
