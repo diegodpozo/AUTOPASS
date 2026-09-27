@@ -38,7 +38,7 @@
             <div class="header-right">
                 <div class="notif-header-bell" onclick="toggleNotifDropdown(event)" title="Notificaciones">
                     <i class="fas fa-bell"></i>
-                    <span id="notif-badge-header" class="notif-badge" style="display:none;">0</span>
+                    <span id="notif-badge-header" class="notif-badge">0</span>
                     <div class="notif-dropdown" id="notif-dropdown">
                         <div class="notif-dropdown-header">
                             <span>Notificaciones</span>
@@ -49,7 +49,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="balance-badge" onclick="openRechargeModal()" style="cursor: pointer;" title="Hacé click para cargar saldo">
+                <div class="balance-badge" onclick="openRechargeModal()" title="Hacé click para cargar saldo">
                     <i class="fas fa-wallet"></i>
                     <span id="balance-val" class="text-bold">$0.00</span>
                     <span class="text-label">Mi Saldo</span>
@@ -74,7 +74,7 @@
             </div>
         </div>
     <!-- OVERLAY MAPA EN PANTALLA COMPLETA -->
-    <div id="map-fullscreen-overlay" class="map-fullscreen-overlay" style="display:none;">
+    <div id="map-fullscreen-overlay" class="map-fullscreen-overlay">
         <div class="map-fullscreen-header">
             <span class="map-fs-title"><i class="fas fa-map-marked-alt"></i> MAPA DE SUCURSALES</span>
             <div class="map-fs-actions">
