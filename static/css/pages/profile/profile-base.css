@@ -798,6 +798,16 @@
     padding-bottom: 40px;
 }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.40 - profile/tabs/cuenta.html
+   ========================================================================== */
+#container-active-stays { display: none; }
+.hub-divider {
+    width: 1px;
+    align-self: stretch;
+    background: linear-gradient(180deg, transparent 0%, rgba(223, 186, 107, 0.2) 50%, transparent 100%);
+}
+
 .hub-section {
     padding: 20px 30px; /* Padding reducido para ganar espacio interno */
     display: flex;
