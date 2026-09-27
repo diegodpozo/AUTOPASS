@@ -13,6 +13,12 @@
     overflow-y: auto; 
 }
 
+/* ==========================================================================
+   LIMPIEZA INLINE v9.34.40 - components/modals_global.html
+   ========================================================================== */
+#modal-confirm { z-index: 3000; }
+#modal-choice { z-index: 3200; }
+
 .modal-content { 
     background: #111; 
     margin: 5% auto; 
