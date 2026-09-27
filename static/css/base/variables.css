@@ -77,7 +77,7 @@
     --z-premium: 9999;          /* Modales premium y overlays de pagina */
     --z-toast: 10000;           /* Toast container (style.css:39) */
     --z-tour: 10003;            /* Overlays de tour guiado (profile-tour.css:951,1088) */
-    --z-fab: 99999;             /* FAB reloj virtual (virtual_time.css:17) y admin tour */
+    --z-fab: 99999;             /* FAB reloj virtual (virtual-time.css:17) y admin tour */
 
     /* ANCHOS DE MODALES */
     --modal-sm: 420px;   /* Confirmaciones, alertas */

@@ -2,7 +2,7 @@
 
 > **Fecha:** 2026-09-22  
 > **Versión auditada:** v9.32.2 (rama `main`)  
-> **Alcance:** Todas las interfaces web del sistema: Landing (`index.html`, `nuestra-red.html`, `contacto.html`), Portal del Cliente (`perfil.html`, 7 tabs), Panel Administrativo (`dashboard.html`, 10 tabs), Monitoreo CCTV (`monitoreo_live.html`), Modales (`auth_modals.html`, `modals.html`), Estilos (`static/css/**`) y Módulos de Interacción (`static/js/modules/**`).  
+> **Alcance:** Todas las interfaces web del sistema: Landing (`index.html`, `nuestra_red.html`, `contacto.html`), Portal del Cliente (`perfil.html`, 7 tabs), Panel Administrativo (`dashboard.html`, 10 tabs), Monitoreo CCTV (`monitoreo_live.html`), Modales (`auth_modals.html`, `modals.html`), Estilos (`static/css/**`) y Módulos de Interacción (`static/js/modules/**`).  
 > **Metodología:** Evaluación Heurística de Jakob Nielsen (10 principios), WCAG 2.1 (Niveles A / AA), Inspección de Arquitectura de Información, Flujos de Tarea (User Journeys) y Responsive Design.
 
 ---

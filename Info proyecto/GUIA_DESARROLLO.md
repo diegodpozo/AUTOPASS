@@ -47,7 +47,7 @@ Para modificar la UI, seguí la nueva estructura de componentes y módulos:
 - **Módulos ES6**: `static/js/modules/`. Toda nueva función lógica debe ir aquí y exportarse como ES6 module.
 - **Scripts Puente**: `static/js/*.js`. Actúan como puentes entre módulos y handlers inline, importando módulos y exponiendo funciones al ámbito global (`window.*`) si es necesario.
 - **Mapa Interactivo**: Usa Leaflet.js (CDN) para selector de coordenadas en creación de sucursales.
-- **Tour de Usuario**: Archivos `tour.js` y `onboarding_helpers.js` para guía interactiva.
+- **Tour de Usuario**: Archivos `tour.js` y `onboarding-helpers.js` para guía interactiva.
 - **Sidebar**: Colapsable con persistencia en localStorage (`sidebar-collapsed`).
 - **Pase Digital**: Vista de pase con QR renderizada como sección/modal dentro de `perfil.html` (módulo `reservas-pass.js`), no como template separado.
 - **Puntos**: Barra de progreso con metas escalonadas (500/1000/2500/5000/10000).

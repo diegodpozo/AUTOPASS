@@ -120,7 +120,7 @@ uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir ser
 
 ##  Frontend Features No Documentadas Anteriormente
 - **Estadísticas OCR**: Página `/estadisticas-ocr` (`templates/estadisticas_ocr.html`) con métricas de rendimiento del motor de lectura de patentes (`ocr_timing_ms` en `AccessLog`).
-- **Sistema de Tour**: `tour.js` y `onboarding_helpers.js` para guiar nuevos usuarios.
+- **Sistema de Tour**: `tour.js` y `onboarding-helpers.js` para guiar nuevos usuarios.
 - **Sidebar Toggle**: Sidebar colapsable con persistencia en localStorage.
 - **Mapa Interactivo**: Selector de coordenadas con Leaflet.js para sucursales.
 - **Auto-detección de Tipo**: Frontend detecta Moto vs Auto según formato de patente.
@@ -181,7 +181,7 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
 | `tour.js` | Tour guiado interactivo (lanzadores `startAddVehicleTour`, `startCreateReservationTour`, etc.) |
 | `tour-steps.js` | Definición de pasos de los tours del portal (`mainTourSteps`, etc.) |
-| `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
+| `onboarding-helpers.js` | Helpers para onboarding de nuevos usuarios |
 | `api.js` | Cliente HTTP centralizado con manejo de tokens y errores |
 | `utils.js` | Utilidades: formatNum, formatDate, showToast, showConfirm, validatePlate, detectVehicleType |
 | `ui.js` | UI base: modales, sidebar, toggle password, logout |
@@ -196,7 +196,7 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `notifications-dropdown.js` | Dropdown del panel (registra listener de cierre al hacer click fuera) |
 | `notifications-polling.js` | Polling de notificaciones (30s) y arranque (`startNotifPolling`) |
 | `auth.js` | Validación de forms, login, registro, recuperación |
-| `reset_password.js` | Reset de contraseña (validación en vivo de nueva clave + token) |
+| `reset-password.js` | Reset de contraseña (validación en vivo de nueva clave + token) |
 | `profile.js` | Portal de usuario: perfil, puntos, promociones, historial |
 | `reservas.js` | Fachada de reservas (re-exporta `form`, `list`, `actions`, `pass`) |
 | `reservas-form.js` | Formulario de reserva, datepickers, estimador dinámico de tarifas, validaciones |
@@ -216,8 +216,8 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `landing-map-pois.js` | POIs del mapa: cines y estadios (escenario nocturno) |
 | `landing-map-geo.js` | Geocoding y sucursal más cercana (`findNearestBranch`) |
 | `landing-map-locality.js` | Filtro y búsqueda por localidad (`filterMapByLocality`) |
-| `chart_window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
-| `estadisticas_ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
+| `chart-window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
+| `estadisticas-ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
 
 ### Scripts Puente (Orquestadores)
 

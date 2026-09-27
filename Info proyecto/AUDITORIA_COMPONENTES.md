@@ -2,7 +2,7 @@
 
 > **Fecha:** 2026-09-24
 > **Versión auditada:** v9.34.0 (rama `main`, incluye remediación UX/UI P1–P3)
-> **Alcance:** Inventario y grado de reutilización de componentes en `templates/`, `static/css/components/` y módulos JS con rol de componente (`ui.js`, `api.js`, `utils.js`, `chart_window.js`, skeleton). Foco: **DRY de marcado y estilos** (mandato de `AGENTS.md`). No audita funcionalidad ni seguridad.
+> **Alcance:** Inventario y grado de reutilización de componentes en `templates/`, `static/css/components/` y módulos JS con rol de componente (`ui.js`, `api.js`, `utils.js`, `chart-window.js`, skeleton). Foco: **DRY de marcado y estilos** (mandato de `AGENTS.md`). No audita funcionalidad ni seguridad.
 > **Metodología:** conteo estático de `{% include %}`, inventario de partials/CSS, medición de estilos inline por template (`style="…"`), detección de bloques duplicados y verificación de extracciones recientes (skeleton, BEM, `section-title-premium--center`).
 
 ---
@@ -14,7 +14,7 @@
 | Componentes de página (`templates/components/`) | 🟢 Sólido | 8 partials: `navbar`, `footer`, `auth_modals`, `sidebar_user`, `modals_global`, `virtual_time_banner`, `monitoreo_controls`, `chart_window_controls` |
 | Modales compartidos | 🟢 Sólido | 6 packs reutilizados por tab/área (`onboarding_modal`, `profile/modals`, `branch_modals`, `promotion_modal`, `user_modals`, `admin_help_modal`) |
 | CSS componentizado (`static/css/components/`) | 🟢 Sólido | 10 archivos (buttons, cards, forms, tables, badges, modals, chart_window, footer, virtual_time, skeleton) |
-| JS como componente reutilizable | 🟢 Sólido | `ui.js` (modales únicos), `api.js` (único cliente HTTP), `utils.js` (formateadores/toasts), `chart_window.js` (`WindowedChart`), virtual-time |
+| JS como componente reutilizable | 🟢 Sólido | `ui.js` (modales únicos), `api.js` (único cliente HTTP), `utils.js` (formateadores/toasts), `chart-window.js` (`WindowedChart`), virtual-time |
 | Reutilización real de partials | 🟢 Alto | 46 `{% include %}`. `navbar`+`footer`+`auth_modals` usados en 5 páginas públicas; `sidebar_user` en portal; 9 tabs en dashboard; 7 tabs en perfil |
 | Estilos inline por template | 🟡 Deuda | `inicio.html` 83, `admin_reservations.html` 59, `metricas.html` 48, `live.html` 46, `estadisticas_ocr.html` 43 |
 | Botones (BEM vs legacy) | 🟡 En transición | BEM `.btn--*` agrupado con legacy (v9.34.0); faltan migrar usos en templates |
@@ -51,7 +51,7 @@
 
 ### 2.3 CSS (`static/css/components/`)
 
-`buttons.css`, `cards.css`, `forms.css`, `tables.css`, `badges.css`, `modals.css`, `chart_window.css`, `footer.css`, `virtual_time.css`, `skeleton.css` (v9.34.0), `premium.css` (v9.34.0).
+`buttons.css`, `cards.css`, `forms.css`, `tables.css`, `badges.css`, `modals.css`, `chart-window.css`, `footer.css`, `virtual-time.css`, `skeleton.css` (v9.34.0), `premium.css` (v9.34.0).
 
 `skeleton.css` es el caso modelo de reutilización reciente: **1 definición, 9 consumidores** (6 tablas admin + cards/historial del cliente + grid de reservas). `premium.css` consolida las primitivas del portal (acciones rápidas, estado vacío) que estaban dispersas en CSS de página.
 
@@ -64,7 +64,7 @@
 | `ui.js` | openModal/closeModal/switchModal/toasts | puentes perfil, dashboard, main, auth |
 | `api.js` | único cliente HTTP | todos los módulos |
 | `utils.js` | formateadores + showToast | todos los módulos |
-| `chart_window.js` | `WindowedChart` (gráfico) | dashboards de métricas |
+| `chart-window.js` | `WindowedChart` (gráfico) | dashboards de métricas |
 | `virtual-time.js` | hora virtual | dashboard y monitoreo |
 
 Jaula: **0 asignaciones `window.*` en módulos** (mandato Bridge, A2) — los componentes se consumen por import y se exponen solo en puentes.

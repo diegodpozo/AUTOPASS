@@ -39,7 +39,7 @@ AUTOPASS/
 │   ├── components/     # 7 componentes reutilizables (navbar, footer, modales globales, monitoreo_controls, etc.)
 │   └── emails/         # 4 templates de email transaccional
 ├── Info proyecto/
-│   └── Hardware/       # Firmware ESP32 (firmware_esp32.ino) + documentación
+│   └── hardware/       # Firmware ESP32 (firmware_esp32.ino) + documentación
 └── main.py             # Orquestador FastAPI
 ```
 
@@ -124,7 +124,7 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 | `profile-help.js` | Centro de ayuda al cliente, envío de tickets y FAQ acordeón |
 | `tour.js` | Tour guiado interactivo (lanzadores `startAddVehicleTour`, `startCreateReservationTour`, etc.) |
 | `tour-steps.js` | Definición de pasos de los tours del portal (`mainTourSteps`, etc.) |
-| `onboarding_helpers.js` | Helpers para onboarding de nuevos usuarios |
+| `onboarding-helpers.js` | Helpers para onboarding de nuevos usuarios |
 | `api.js` | Cliente HTTP centralizado (GET/POST/PUT/PATCH/DELETE) con manejo de tokens y errores |
 | `utils.js` | Utilidades: `formatNum`, `toTitle`, `formatDate`, `showToast`, `showConfirm`, `validatePlate`, `detectVehicleType` |
 | `ui.js` | UI base: modales, sidebar, toggle password, logout |
@@ -139,7 +139,7 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 | `notifications-dropdown.js` | Dropdown del panel (registra listener de cierre al hacer click fuera) |
 | `notifications-polling.js` | Polling de notificaciones (30s) y arranque (`startNotifPolling`) |
 | `auth.js` | Validación de forms, login, registro, recuperación |
-| `reset_password.js` | Reset de contraseña (validación en vivo de nueva clave + token) |
+| `reset-password.js` | Reset de contraseña (validación en vivo de nueva clave + token) |
 | `profile.js` | Portal de usuario: perfil, puntos, promociones, historial |
 | `reservas.js` | Fachada de reservas (re-exporta `form`, `list`, `actions`, `pass`) |
 | `reservas-form.js` | Formulario de reserva, datepickers, estimador dinámico de tarifas, validaciones |
@@ -159,8 +159,8 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 | `landing-map-pois.js` | POIs del mapa: cines y estadios (escenario nocturno) |
 | `landing-map-geo.js` | Geocoding y sucursal más cercana (`findNearestBranch`) |
 | `landing-map-locality.js` | Filtro y búsqueda por localidad (`filterMapByLocality`) |
-| `chart_window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
-| `estadisticas_ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
+| `chart-window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
+| `estadisticas-ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
 
 #### Scripts Puente del Dashboard (`static/js/dashboard.js`)
 El orquestador centraliza todas las asignaciones `window.*`:
@@ -202,7 +202,7 @@ Servicio independiente de visión artificial modularizado en el paquete `alpr/` 
 - **Modos de Operación:** Configurado via `GATE_TYPE`: `entrada`, `salida`, `patente`, `qr`, `predio`. Fuente de video via `VIDEO_SOURCE` (webcam, RTSP, HTTP MJPEG).
 
 ### 5. Capa de Hardware (ESP32 / Arduino Uno)
-- **Firmware:** `Info proyecto/Hardware/firmware_esp32.ino` y `Info proyecto/Hardware/firmware_arduino_uno.ino`.
+- **Firmware:** `Info proyecto/hardware/firmware_esp32.ino` y `Info proyecto/hardware/firmware_arduino_uno.ino`.
 - **Comunicación:** MQTT con CallbackAPIVersion.VERSION2 (ESP32) y Serie USB vía pyserial (Arduino Uno, auto-detección de puerto con `arduino_bridge.py`).
 - **Tópicos configurables vía .env:** `MQTT_TOPIC_ENTRADA`, `MQTT_TOPIC_SALIDA`.
 - **Componentes:** Servomotor (barrera), sensor ultrasónico (detección de paso), pantalla LCD (mensajes al conductor).

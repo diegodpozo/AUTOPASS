@@ -1,6 +1,6 @@
 # Plan de Auditorías — AUTOPASS
 
-> Documento de planificación. Estado: **A1–A4 HECHO** (informes en `Info proyecto/`), **A5 pendiente** (requiere Neon/profiling en vivo), **A6–A9 HECHO** con verificaciones formales del 2026-09-27. Auditorías transversales resueltas: `AUDITORIA_MODULARIZACION.md` (10/10), `AUDITORIA_COLORES_FUENTES.md` (P0 cerrado), `AUDITORIA_TAMANOS_PROPORCIONES.md` (fases 1–4 + bloque de cierre aplicado), `AUDITORIA_NOMENCLATURA_ARCHIVOS.md`, `AUDITORIA_COMPONENTES.md` (DRY) y `AUDITORIA_UX_UI.md`. Propuesta de extensión para la capa CSS detallada en `Info proyecto/PROPUESTA_AUDITORIAS_CSS.md`.
+> Documento de planificación. Estado: **A1–A4 HECHO** (informes en `Info proyecto/`), **A5 pendiente** (requiere Neon/profiling en vivo), **A6–A9 HECHO** con verificaciones formales del 2026-09-27. Auditorías transversales resueltas: `AUDITORIA_MODULARIZACION.md` (10/10), `AUDITORIA_COLORES_FUENTES.md` (P0 cerrado), `AUDITORIA_TAMANOS_PROPORCIONES.md` (fases 1–4 + bloque de cierre aplicado), `AUDITORIA_NOMENCLATURA_ARCHIVOS.md` (8.2/10, diagnóstico + plan de normalización, ver §AN), `AUDITORIA_COMPONENTES.md` (DRY) y `AUDITORIA_UX_UI.md`. Propuesta de extensión para la capa CSS detallada en `Info proyecto/PROPUESTA_AUDITORIAS_CSS.md`.
 
 ## Resumen
 
@@ -269,6 +269,33 @@ Verificar que el uso de `innerHTML` con datos del backend esté sanitizado.
 
 ### Herramientas
 grep + revisión manual.
+
+---
+
+## AN — Auditoría de Nomenclatura de Archivos
+
+**Prioridad:** Media · **Esfuerzo:** 1 día · **Entregable:** `Info proyecto/AUDITORIA_NOMENCLATURA_ARCHIVOS.md`
+
+> **Estado: HECHO (2026-09-27)** — calificación **8.2→9.0/10**. Remediación **P0/P1 APLICADA** (v9.34.42): renames de assets con espacios (barrera alta/baja), docs (`LINK_BACKLOG`, `EXPLICACION_CODIGO`, `README`, `hardware/`), 4 módulos JS a kebab-case, 3 CSS a kebab-case y `nuestra_red.html` (template) + todas las referencias funcionales y documentales actualizadas; baseline inline regenerado, `node --check` OK, suite 695 passed. Queda **P2 spanglish como deuda técnica aceptada** (ver §5/§6 del informe).
+
+### Objetivo
+Uniformar nombres de archivos, carpetas y assets para garantizar portabilidad (Linux/Docker/CI), URLs sin encoding y coherencia por capa.
+
+### Alcance
+- 334 archivos de código, configuración, plantillas, documentación y assets (excl: venv, `.git`, cachés, uploads)
+
+### Pasos
+1. Inventario de nombres por capa (Python, JS, CSS, templates, docs, scripts) y detección de espacios.
+2. Detectar `snake_case`/`kebab-case` anomalos en JS/CSS/templates frente a la convención predominante de cada capa.
+3. Detectar hibridación lingüística (backend inglés ↔ frontend español, Spanglish) y asimetrías semánticas.
+4. Producir plan de normalización priorizado (P0 assets críticos → P1 unificación de convención → P2 regla de estilo en `AGENTS.md`).
+
+### Criterios de aceptación
+- Matriz de discordancias por nivel de severidad con ubicación exacta.
+- Plan de remediación con renames concretos (origen → destino) y referencias a actualizar.
+
+### Herramientas
+grep/ls por capa, revisión manual del árbol.
 
 ---
 

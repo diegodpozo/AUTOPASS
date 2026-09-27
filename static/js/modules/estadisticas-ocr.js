@@ -4,14 +4,14 @@
  */
 import api from './api.js';
 import { formatTimeSeconds, formatDateTime } from './utils.js';
-import { WindowedChart } from './chart_window.js';
+import { WindowedChart } from './chart-window.js';
 import { THEME } from './theme.js';
 
 let todosLosLogs = [];
 let intervaloAutoRefresh = null;
 let serieOcr = [];
 
-// --- GRÁFICO MÓVIL (controles comunes en chart_window.js) ---
+// --- GRÁFICO MÓVIL (controles comunes en chart-window.js) ---
 function buildOCRDatasets(pts) {
     const values = pts.map(p => p.y);
     let avg = null;

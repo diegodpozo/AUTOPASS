@@ -2,8 +2,8 @@
 
 > **Fecha:** 2026-09-27  
 > **Alcance:** 334 archivos de código, configuración, plantillas, documentación y recursos estáticos (excluyendo entornos virtuales, `.git`, cachés y uploads dinámicos).  
-> **Calificación General de Nomenclatura:** **8.2 / 10**  
-> **Estado:** Diagnóstico completo, matriz de discordancias y plan de remediación.
+> **Calificación General de Nomenclatura:** 8.2 / 10 → **9.0 / 10**  
+> **Estado:** Diagnóstico completo + **remediación P0/P1 APLICADA (2026-09-27, v9.34.42)** — ver §6. Queda P2 (spanglish/UI lingüística) como deuda técnica funcional aceptada, documentada en §5.
 
 ---
 
@@ -38,22 +38,22 @@ Los espacios en nombres de archivos generan problemas de escape en scripts de te
 #### A. Módulos JavaScript (`static/js/modules/`)
 * **Regla predominante:** `kebab-case` (48 módulos, ej: `dashboard-ui.js`, `reservas-form.js`, `landing-map.js`, `admin-tour.js`).
 * **Anomalías en `snake_case` (4 módulos):**
-  - `chart_window.js` *(debería ser `chart-window.js`)*
-  - `estadisticas_ocr.js` *(debería ser `estadisticas-ocr.js`)*
-  - `onboarding_helpers.js` *(debería ser `onboarding-helpers.js`)*
-  - `reset_password.js` *(debería ser `reset-password.js`)*
+  - `chart-window.js` *(debería ser `chart-window.js`)*
+  - `estadisticas-ocr.js` *(debería ser `estadisticas-ocr.js`)*
+  - `onboarding-helpers.js` *(debería ser `onboarding-helpers.js`)*
+  - `reset-password.js` *(debería ser `reset-password.js`)*
 
 #### B. Estilos CSS (`static/css/`)
 * **Regla predominante:** `kebab-case` en todas las páginas compuestas (ej: `dashboard-cards.css`, `landing-hero.css`, `profile-reservations.css`, `monitoreo-live.css`).
 * **Anomalías en `snake_case` (3 archivos):**
-  - `components/virtual_time.css` *(debería ser `virtual-time.css`, como su par `virtual-time.js`)*
-  - `components/chart_window.css` *(debería ser `chart-window.css`)*
-  - `pages/estadisticas_ocr.css` *(debería ser `estadisticas-ocr.css`)*
+  - `components/virtual-time.css` *(debería ser `virtual-time.css`, como su par `virtual-time.js`)*
+  - `components/chart-window.css` *(debería ser `chart-window.css`)*
+  - `pages/estadisticas-ocr.css` *(debería ser `estadisticas-ocr.css`)*
 
 #### C. Plantillas HTML (`templates/`)
 * **Regla predominante:** `snake_case` en componentes y modales (ej: `auth_modals.html`, `admin_reservations.html`, `user_modals.html`).
 * **Anomalías de formato:**
-  - `templates/nuestra-red.html`: Es la **única** plantilla de todo el proyecto nombrada en `kebab-case`. Todas las demás vistas multi-palabra usan `snake_case` (`monitoreo_live.html`, `estadisticas_ocr.html`, `reset_password.html`).
+  - `templates/nuestra_red.html`: Es la **única** plantilla de todo el proyecto nombrada en `kebab-case`. Todas las demás vistas multi-palabra usan `snake_case` (`monitoreo_live.html`, `estadisticas_ocr.html`, `reset_password.html`).
 
 #### D. Documentación (`Info proyecto/`)
 * **Regla predominante:** `SCREAMING_SNAKE_CASE.md` (24 documentos, ej: `ARQUITECTURA_DETALLADA.md`, `ESTADO_PROYECTO.md`, todas las `AUDITORIA_*.md`).
@@ -100,7 +100,7 @@ El subsistema de **Tiempo Virtual** ilustra cómo un mismo concepto se nombra de
 |---|---|---|
 | **Backend API** | `routes/admin/virtual_time.py` | `snake_case` |
 | **Backend Tests** | `tests/test_virtual_time.py` | `snake_case` |
-| **CSS Component** | `static/css/components/virtual_time.css` | `snake_case` |
+| **CSS Component** | `static/css/components/virtual-time.css` | `snake_case` |
 | **HTML Component** | `templates/components/virtual_time_banner.html` | `snake_case` |
 | **JS Module** | ⚡ `static/js/modules/virtual-time.js` | ⚡ **`kebab-case`** |
 
@@ -130,7 +130,7 @@ Frontend CSS (41 archivos):
 Templates Jinja2 (48 archivos):
   ├── snake_case: 54.2% (26 archivos)
   ├── simple_lower: 43.7% (21 archivos)
-  └── kebab-case anómalo: 2.1% (1 archivo: nuestra-red.html)
+  └── kebab-case anómalo: 2.1% (1 archivo: nuestra_red.html)
 
 Documentación e Info (31 archivos):
   ├── SCREAMING_SNAKE_CASE: 77.4% (24 archivos)
@@ -156,16 +156,16 @@ Documentación e Info (31 archivos):
 
 ### Paso 2: Unificación de Convención en Frontend (Cero Deuda Técnica)
 1. **Módulos JS a `kebab-case` unificado:**
-   - `chart_window.js` ➔ `chart-window.js`
-   - `estadisticas_ocr.js` ➔ `estadisticas-ocr.js`
-   - `onboarding_helpers.js` ➔ `onboarding-helpers.js`
-   - `reset_password.js` ➔ `reset-password.js`
+   - `chart-window.js` ➔ `chart-window.js`
+   - `estadisticas-ocr.js` ➔ `estadisticas-ocr.js`
+   - `onboarding-helpers.js` ➔ `onboarding-helpers.js`
+   - `reset-password.js` ➔ `reset-password.js`
 2. **CSS a `kebab-case` unificado:**
-   - `virtual_time.css` ➔ `virtual-time.css`
-   - `chart_window.css` ➔ `chart-window.css`
-   - `estadisticas_ocr.css` ➔ `estadisticas-ocr.css`
+   - `virtual-time.css` ➔ `virtual-time.css`
+   - `chart-window.css` ➔ `chart-window.css`
+   - `estadisticas-ocr.css` ➔ `estadisticas-ocr.css`
 3. **Plantillas a `snake_case` unificado:**
-   - `nuestra-red.html` ➔ `nuestra_red.html` *(actualizando el render en `routes/views.py`)*.
+   - `nuestra_red.html` ➔ `nuestra_red.html` *(actualizando el render en `routes/views.py`)*.
 
 ### Paso 3: Regla de Estilo a Incorporar en `AGENTS.md`
 - **Python / Backend:** Siempre `snake_case` en inglés (`{dominio}_{subdominio}.py`).
@@ -173,3 +173,35 @@ Documentación e Info (31 archivos):
 - **Templates Jinja2:** Siempre `snake_case` (`{vista}_{variante}.html`).
 - **Documentación:** Siempre `SCREAMING_SNAKE_CASE.md` en español.
 - **Sin espacios:** Prohibido el uso de espacios o caracteres especiales en nombres de archivos o carpetas.
+
+---
+
+## 6. Remediación Aplicada (2026-09-27, v9.34.42)
+
+P0 y P1 ejecutados en su totalidad con `git mv` + actualización de todas las referencias funcionales y documentales:
+
+| Renombre (P0) | Referencias actualizadas |
+|---|---|
+| `static/images/barrera alta.png` → `barrera-alta.png` | `dashboard-admin-settings.js` (2), `live.html` (2), `settings_system.html` (1) |
+| `static/images/barrera baja.png` → `barrera-baja.png` | Ídem |
+| `Info proyecto/Link Backlog.md` → `LINK_BACKLOG.md` | — (sin referencias externas) |
+| `Info proyecto/explicacionCodigo.md` → `EXPLICACION_CODIGO.md` | — |
+| `Info proyecto/Readme.md` → `README.md` | `ESTADO_PROYECTO.md` |
+| `Info proyecto/Hardware/` → `hardware/` | `ARQUITECTURA_DETALLADA.md` (2) |
+
+| Renombre (P1) | Referencias actualizadas |
+|---|---|
+| `js/modules/chart_window.js` → `chart-window.js` | `estadisticas-ocr.js` (import) |
+| `js/modules/estadisticas_ocr.js` → `estadisticas-ocr.js` | `estadisticas_ocr.html` (import), informe colores/fuentes |
+| `js/modules/onboarding_helpers.js` → `onboarding-helpers.js` | `perfil.js` (import) |
+| `js/modules/reset_password.js` → `reset-password.js` | `reset_password.html` (script tag) |
+| `css/components/virtual_time.css` → `virtual-time.css` | `base.html`, `sw.js` (precache) |
+| `css/components/chart_window.css` → `chart-window.css` | `base.html` |
+| `css/pages/estadisticas_ocr.css` → `estadisticas-ocr.css` | `estadisticas_ocr.html` |
+| `templates/nuestra-red.html` → `nuestra_red.html` | `routes/views.py` (render); URL `/nuestra-red` y navbar/footer/index intactos (la ruta no cambia) |
+
+**Verificaciones post-remediación:**
+- `check_inline_styles.py --update` → baseline regenerado y guard en verde (50 templates, incluye `nuestra_red.html`).
+- Grep residual en `templates/`, `static/`, `tests/`, `routes/`: 0 referencias rotas a los nombres viejos (los únicos `virtual_time`/`reset_password` restantes son módulos Python backend — convención correcta — y `chart_window_controls.html`, template no incluido en el alcance).
+- `AGENTS.md` → añadida regla de estilo de nomenclatura (§ Estilo de código).
+- **P2 (spanglish lingüístico) NO se renombra**: `perfil.html`, `reservas*.js`, `vehiculos.html`, `monitoreo_live*` son módulos vivos con imports internos; su renombrado implica refactor de todos los enlaces import/URL y riesgo alto de regresión. Se documenta como deuda técnica aceptada (criterio funcional sobre cosmetico).

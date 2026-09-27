@@ -116,7 +116,7 @@ Se implementaron `UserRole`, `VehicleType`, `AccessEventType`, `ReservationStatu
 ### 3.1 Arquitectura actual
 
 ```
-modules/*.js  (62 módulos ES6, lógica real; +16 submódulos temáticos en v9.23.0 — ver §3.5; incluye `chart_window.js` — componente `WindowedChart` compartido)
+modules/*.js  (62 módulos ES6, lógica real; +16 submódulos temáticos en v9.23.0 — ver §3.5; incluye `chart-window.js` — componente `WindowedChart` compartido)
       |
       v
 *_bridge.js   (9 scripts puente: dashboard.js, perfil.js, main.js, auth.js, landing.js, reservas.js, vehicles.js, contacto.js, api_client.js)
@@ -131,7 +131,7 @@ window.*  ->  handlers inline (onclick en templates)
 
 ### 3.2 ~~VIOLACIÓN ALTA: `window.*` asignado DENTRO de los módulos~~ **[RESUELTO v9.21.0 — working tree, sin commitear]**
 
-El mandato V9.6.0 dice: "No modificar `window.*` desde módulos ES6. Solo los scripts puente asignan al scope global." En la revisión v9.20.0 se detectaban **~88 matches en 16 módulos** (2 lecturas `typeof window.Chart` en `chart_window.js` y `dashboard-metrics.js` no eran asignaciones); el conteo real de asignaciones a descontar quedó en **76** (excluye lecturas `typeof window.X ===` y grabados muertos):
+El mandato V9.6.0 dice: "No modificar `window.*` desde módulos ES6. Solo los scripts puente asignan al scope global." En la revisión v9.20.0 se detectaban **~88 matches en 16 módulos** (2 lecturas `typeof window.Chart` en `chart-window.js` y `dashboard-metrics.js` no eran asignaciones); el conteo real de asignaciones a descontar quedó en **76** (excluye lecturas `typeof window.X ===` y grabados muertos):
 
 | Módulo | Asignaciones `window.*` |
 |---|---|
@@ -147,16 +147,16 @@ El mandato V9.6.0 dice: "No modificar `window.*` desde módulos ES6. Solo los sc
 | `reservas-form.js` | 3 |
 | `dashboard-ui.js` | 3 |
 | `dashboard-tickets.js` | 3 |
-| `onboarding_helpers.js` | 3 |
+| `onboarding-helpers.js` | 3 |
 | `virtual-time.js` | 1 |
 | `dashboard-metrics.js` | 0 (solo `typeof window.Chart` read) |
-| `chart_window.js` | 0 (solo `typeof window.Chart` reads, nuevo módulo v9.20.0) |
+| `chart-window.js` | 0 (solo `typeof window.Chart` reads, nuevo módulo v9.20.0) |
 
 **Caso peor (revisión v9.20.0):** `notifications.js` — además de 22 asignaciones, registra listeners globales al importar (clic del dropdown en línea 709, `DOMContentLoaded` en línea 735), generando efectos colaterales por el simple hecho de importarlo. Ese efecto colateral se mantiene por diseño (se importa como side-effect desde `dashboard.js:14`, que se carga solo en el dashboard), pero ya no escribe `window.*`.
 
 **Resolución (v9.21.0):** se eliminaron las **76 asignaciones reales** de los 14 módulos y la exposición global quedó solo en los puentes:
 
-- **Módulos limpiados:** `notifications.js` (22 → 19 exports), `admin-tour.js` (11), `tour.js` (9; quedan 10 exports), `utils.js` (7; quedan los formatadores exportados), `dashboard-stats.js` (4), `dashboard-reservations.js` (4), `profile-help.js` (4), `landing-map.js` (5), `dashboard-tickets.js` (3), `dashboard-ui.js` (2), `onboarding_helpers.js` (2), `reservas-form.js` (1), `virtual-time.js` (1), `vehicles.js` (1). El grep `^\s*window\.\w+\s*=` (sin ampliar) sobre `static/js/modules/*.js` devuelve **0 asignaciones**; solo quedan lecturas `typeof window.X === 'function'` y llamadas `window.x(...)`, permitidas porque los puentes proveen esos globals.
+- **Módulos limpiados:** `notifications.js` (22 → 19 exports), `admin-tour.js` (11), `tour.js` (9; quedan 10 exports), `utils.js` (7; quedan los formatadores exportados), `dashboard-stats.js` (4), `dashboard-reservations.js` (4), `profile-help.js` (4), `landing-map.js` (5), `dashboard-tickets.js` (3), `dashboard-ui.js` (2), `onboarding-helpers.js` (2), `reservas-form.js` (1), `virtual-time.js` (1), `vehicles.js` (1). El grep `^\s*window\.\w+\s*=` (sin ampliar) sobre `static/js/modules/*.js` devuelve **0 asignaciones**; solo quedan lecturas `typeof window.X === 'function'` y llamadas `window.x(...)`, permitidas porque los puentes proveen esos globals.
 - **Estado interno a variables de módulo** (deja de usar `window` como estado): `pollInterval` (notifications), `_toastsClickBound` (utils), `allReservations` (dashboard-reservations, interno; también se quitó `window.allReservations`), `_resBadgeInterval → resBadgeInterval`, `_diagInterval → diagInterval` (dashboard-ui), `allBranchesMap`/`_userMarker`/`_userCircle` (landing-map).
 - **Globals eliminados por duplicación o por estar muertos:** `window.selectHourRange` (muerto, solo definición), `window.filterMapByLocality` (QUEDA como export y se usa intra-módulo en 323/416, sin refs en templates), `window.getVirtualNow` (lo define la plantilla `virtual_time_banner.html` inline), `window.updateTicketBadge` (se usa `tickets.updateTicketBadge()` desde `dashboard.js`, single point of truth), `window.userVehicles` (lo escribe `perfil.js` tras `loadVehicles()`; lector único `tour.js`).
 - **Asignaciones añadidas a los puentes:** `perfil.js` (+17 notif, +3 tours con alias `window.endReservationTour = endTour`, +4 support-help, +2 legal, +6 formatadores, `getDirectionsTo`, `userVehicles`); `dashboard.js` (+`filterAdminHelpCategory/Search`, `changePageLogs/filterLogs/changePageOcc/filterOccupancy`, +6 formatadores); `main.js` (+6 formatadores, cubre toda página vía `base.html`); `landing.js` (+`getDirectionsTo`).
@@ -181,7 +181,7 @@ Con versionado distinto (`?v=9.10.1` vs `?v=9.8.6`) el navegador creaba **dos in
 - ~~**`templates/estadisticas_ocr.html`**: ~269 líneas de script inline (líneas 527-796 de 797 totales) con lógica de la página — una reducción respecto a versiones previas pero sigue sin ser un módulo externo.~~
 - **`templates/monitoreo_live.html`**: bridge inline de 16 líneas (aceptable, cumple el patrón de forma liviana).
 
-**Resolución (v9.22.0):** `reset_password.html` pasó a cargar `static/js/modules/reset_password.js` (reutiliza `auth.evaluatePassword`/`initPasswordValidation` y `api.js`; se eliminó la reasignación redundante de `window.togglePasswordVisibility`, ya global vía `main.js`, y el `fetch` directo a `/v1`). `estadisticas_ocr.html` extrajo su lógica a `static/js/modules/estadisticas_ocr.js` (módulo sin `window.*`), con un bridge inline de 5 líneas en el template que expone `window.actualizarEstadisticasOcr`/`window.filtrarTablaOcr` (exigidos por los handlers inline) e inicia el dashboard vía `initEstadisticasOcr()`, siguiendo el precedente aceptado de `monitoreo_live.html`. `node --check` OK y **152 tests en verde**.
+**Resolución (v9.22.0):** `reset_password.html` pasó a cargar `static/js/modules/reset-password.js` (reutiliza `auth.evaluatePassword`/`initPasswordValidation` y `api.js`; se eliminó la reasignación redundante de `window.togglePasswordVisibility`, ya global vía `main.js`, y el `fetch` directo a `/v1`). `estadisticas_ocr.html` extrajo su lógica a `static/js/modules/estadisticas-ocr.js` (módulo sin `window.*`), con un bridge inline de 5 líneas en el template que expone `window.actualizarEstadisticasOcr`/`window.filtrarTablaOcr` (exigidos por los handlers inline) e inicia el dashboard vía `initEstadisticasOcr()`, siguiendo el precedente aceptado de `monitoreo_live.html`. `node --check` OK y **152 tests en verde**.
 
 ### 3.5 Megamódulos frontend
 
@@ -208,7 +208,7 @@ La superficie exportada se mantuvo **100% compatible** (grep de imports en `modu
 - ~~`notifications.js` cargado directo con `?v=9.10.1` pero importado con `?v=9.8.6` en `perfil.js` (causa directa del bug 3.3).~~
 - ~~`dashboard.html` usa `?v={{ cache_buster }}` (correcto) mientras otros templates no.~~
 
-**Resolución:** todos los templates (`base.html`, `dashboard.html`, `index.html`, `nuestra-red.html`, `perfil.html`) usan `?v={{ cache_buster }}`; los imports intra-módulo se quitaron `?v=` (evita instancias duplicadas).
+**Resolución:** todos los templates (`base.html`, `dashboard.html`, `index.html`, `nuestra_red.html`, `perfil.html`) usan `?v={{ cache_buster }}`; los imports intra-módulo se quitaron `?v=` (evita instancias duplicadas).
 
 ---
 
@@ -237,8 +237,8 @@ La superficie exportada se mantuvo **100% compatible** (grep de imports en `modu
 8. ~~Descomponer `reservation_service.py` en `availability.py` + `payments.py` (fachada) y evaluar lo mismo para `access_service.py` y `report_service.py`.~~ — **[HECHO]** en v9.21.0 (working tree): fachada de 687 líneas + `availability.py` (382) + `payments.py` (422) vía mixin; 152 tests en verde. Incluye la evaluación pendiente: `access_service.py` (607) y `report_service.py` (581) resueltos en working tree — `access_service.py` descompuesto con `AccessOccupancyMixin` en `access_occupancy.py` (fachada 499 líneas, 2 queries directas), `report_service.py` evaluado como cohesivo (no se descompone; se extrajo el helper `_branch_filter`). Ver §2.3.
 
 ### Prioridad 4 — Templates y megamódulos
-9. ~~Extraer la lógica de `reset_password.html` a un módulo (reutilizar validación de `auth.js`) y `estadisticas_ocr.html` a un módulo dedicado.~~ — **[HECHO]** en v9.22.0 (working tree): nuevos módulos `static/js/modules/reset_password.js` y `static/js/modules/estadisticas_ocr.js`; validación de clave reutilizada vía `evaluatePassword`/`initPasswordValidation` de `auth.js`; `estadisticas_ocr.html` con bridge inline de 5 líneas. `node --check` OK y 152 tests en verde. Ver §3.4.
-10. Partir `tour.js`, `dashboard-reservations.js` y `reservas-form.js` en submódulos temáticos. — **[HECHO]** en v9.22.0 (working tree): `tour.js` → motor (836) + `tour-steps.js` (897, arrays de pasos + helpers `ensure*`); `dashboard-reservations.js` → fachada (31) + `reservations-admin-list.js` (267) + `reservations-admin-form.js` (1030); `reservas-form.js` → fachada (681) + `reservas-form-state.js` (47) + `reservas-form-price.js` (159) + `reservas-form-slot.js` (494, con acceso a estado vía getters/setters). Superficie exportada idéntica (grep de imports en `perfil.js`, `dashboard.js`, `reservas.js`, `vehicles.js`, `onboarding_helpers.js` sin cambios); `sw.js` con la precache actualizada; `node --check` OK y 152 tests en verde. Ver §3.5.
+9. ~~Extraer la lógica de `reset_password.html` a un módulo (reutilizar validación de `auth.js`) y `estadisticas_ocr.html` a un módulo dedicado.~~ — **[HECHO]** en v9.22.0 (working tree): nuevos módulos `static/js/modules/reset-password.js` y `static/js/modules/estadisticas-ocr.js`; validación de clave reutilizada vía `evaluatePassword`/`initPasswordValidation` de `auth.js`; `estadisticas_ocr.html` con bridge inline de 5 líneas. `node --check` OK y 152 tests en verde. Ver §3.4.
+10. Partir `tour.js`, `dashboard-reservations.js` y `reservas-form.js` en submódulos temáticos. — **[HECHO]** en v9.22.0 (working tree): `tour.js` → motor (836) + `tour-steps.js` (897, arrays de pasos + helpers `ensure*`); `dashboard-reservations.js` → fachada (31) + `reservations-admin-list.js` (267) + `reservations-admin-form.js` (1030); `reservas-form.js` → fachada (681) + `reservas-form-state.js` (47) + `reservas-form-price.js` (159) + `reservas-form-slot.js` (494, con acceso a estado vía getters/setters). Superficie exportada idéntica (grep de imports en `perfil.js`, `dashboard.js`, `reservas.js`, `vehicles.js`, `onboarding-helpers.js` sin cambios); `sw.js` con la precache actualizada; `node --check` OK y 152 tests en verde. Ver §3.5.
 11. Partir los tres megamódulos JS restantes: `landing-map.js`, `admin-tour.js` y `notifications.js`. — **[HECHO]** en v9.23.0 (working tree): `landing-map.js` → fachada 397 + state 12 + data 90 + pois 256 + geo 108 + locality 47 (estado mutable a `lmState`, enlaces ES read-only); `admin-tour.js` → fachada 60 + steps 325 + engine 444 + help 72; `notifications.js` → fachada 36 + state 13 + format 241 + render 130 + badge 46 + actions 101 + nav 155 + dropdown 75 + polling 21 (re-exporta las 24 funciones; el `DOMContentLoaded` queda en la fachada, el listener de cierre del dropdown en el submódulo dropdown, ambos requeridos por la carga side-effect de `dashboard.js:14`). Superficie exportada idéntica (sin cambios en `landing.js`, `perfil.js`, `dashboard.js`, `dashboard-tickets.js`); `sw.js` con precache ampliada (16 submódulos nuevos); `node --check` OK en los 19 archivos tocados y 152 tests en verde. Ver §3.5.
 
 ---

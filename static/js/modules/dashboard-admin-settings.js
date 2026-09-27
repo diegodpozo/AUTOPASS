@@ -25,17 +25,17 @@ export async function openBarrier(gateId, command = 'OPEN') {
 
     const iconId = gateId === 'ENTRADA' ? 'icon-barrier-entry' : 'icon-barrier-exit';
     const iconEl = document.getElementById(iconId);
-    if (iconEl) iconEl.src = command === 'CLOSE' ? '/static/images/barrera baja.png' : '/static/images/barrera alta.png';
+    if (iconEl) iconEl.src = command === 'CLOSE' ? '/static/images/barrera-baja.png' : '/static/images/barrera-alta.png';
 
     const res = await api.post(`/admin/open-barrier?gate_id=${gateId}&command=${command}`);
     if (res && res.ok) {
         showToast(`Barrera ${gateId} -> Comando: ${actionText}`, 'success');
         if (command === 'OPEN') {
-            setTimeout(() => { if (iconEl) iconEl.src = '/static/images/barrera baja.png'; }, 5000);
+            setTimeout(() => { if (iconEl) iconEl.src = '/static/images/barrera-baja.png'; }, 5000);
         }
     } else {
         showToast(`Error: ${res?.error || 'Desconocido'}`, 'error');
-        if (iconEl) iconEl.src = '/static/images/barrera baja.png';
+        if (iconEl) iconEl.src = '/static/images/barrera-baja.png';
     }
 }
 

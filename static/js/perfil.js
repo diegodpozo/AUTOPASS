@@ -7,7 +7,7 @@ import { showToast, formatNum, formatTime, formatTimeSeconds, formatDateTime, fo
 import { initMap } from './modules/landing.js';
 import { getDirectionsTo } from './modules/landing-map.js';
 import * as notif from './modules/notifications.js';
-import * as onboarding from './modules/onboarding_helpers.js';
+import * as onboarding from './modules/onboarding-helpers.js';
 import { startReservationTour, startAddVehicleTour, startCreateReservationTour, startRechargeBalanceTour, startRedeemPointsTour, startQrPassTour, startPostAddReservationTour, startReservationTourAtReservations, endTour } from './modules/tour.js';
 import * as help from './modules/profile-help.js';
 

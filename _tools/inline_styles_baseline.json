@@ -37,7 +37,7 @@
     "templates/index.html": 0,
     "templates/instalar.html": 0,
     "templates/monitoreo_live.html": 0,
-    "templates/nuestra-red.html": 0,
+    "templates/nuestra_red.html": 0,
     "templates/perfil.html": 0,
     "templates/privacidad.html": 0,
     "templates/profile/modals/onboarding_modal.html": 0,

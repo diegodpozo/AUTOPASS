@@ -8,6 +8,14 @@
 - Preferir patrones reutilizables (prefijos de ids, clases/helpers) sobre copiar código.
 - Antes de implementar algo nuevo, verificar si ya existe una función, módulo o componente que lo cubra y reutilizarlo en vez de reimplementarlo.
 
+## Nomenclatura de archivos
+
+- **Python / Backend:** siempre `snake_case` en inglés (`{dominio}_{subdominio}.py`).
+- **Módulos CSS y JS:** siempre `kebab-case` (`{modulo}-{submodulo}.js` / `.css`).
+- **Templates Jinja2:** siempre `snake_case` (`{vista}_{variante}.html`).
+- **Documentación:** siempre `SCREAMING_SNAKE_CASE.md` en español.
+- **Prohibido usar espacios o caracteres especiales** en nombres de archivos o carpetas (rompe URLs, precache de sw.js y scripts CLI).
+
 ## Control de versiones (git)
 
 - Antes de hacer `git push`, verificar que no haya conflictos de merge sin resolver (marcas `<<<<<<<`, `=======`, `>>>>>>>`) en ningún archivo del proyecto.

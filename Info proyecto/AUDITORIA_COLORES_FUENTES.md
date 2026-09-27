@@ -46,7 +46,7 @@ En **264 lugares de CSS**, **29 lugares de JavaScript** y **13 de HTML** se sigu
 1. **Badges institucionales** (`static/css/components/badges.css:27, 44, 62`): Roles admin, badges de estado pendiente/activa, warning.
 2. **Botones** (`static/css/components/buttons.css:25, 74, 80`): Sombras y resplandores `box-shadow: rgba(197, 160, 89, ...)`.
 3. **Toasts y alertas** (`static/css/style.css:74, 93, 136, 145`): Bordes, fondos y resplandores.
-4. **Gráficos Chart.js** (`chart_window.js:202-204`, `dashboard-finance.js:237-257`, `estadisticas_ocr.js:30-37`): Líneas, puntos y fondos de gráficos usando `#C5A059` y `rgba(197, 160, 89, ...)`.
+4. **Gráficos Chart.js** (`chart-window.js:202-204`, `dashboard-finance.js:237-257`, `estadisticas-ocr.js:30-37`): Líneas, puntos y fondos de gráficos usando `#C5A059` y `rgba(197, 160, 89, ...)`.
 5. **Mapa Leaflet** (`landing-map.js:52, 62, 127, 157, 226, 300`, `landing-map-pois.js:26`): Botones de interacción, pins, buscador de localidades y bordes.
 6. **Formulario de Reservas** (`reservas-form.js:582, 591, 593, 597`): HTML dinámico inyectado con `border-top: 2px solid rgba(197,160,89,0.2)` y `text-shadow: rgba(197,160,89,...)`.
 
@@ -185,7 +185,7 @@ flowchart TD
 ### Prioridad P0: Unificación de Marca e Identidad Visual (Inmediato)
 - [x] **Erradicar el dorado viejo `#C5A059` y `rgba(197, 160, 89, ...)`**: 0 residuales en código de producto (CSS/JS/HTML); reemplazo completo por `var(--dorado)`, `var(--dorado-glow)` y `rgba(223, 186, 107, ...)`. Verificación 2026-09-27: barrido en `static/css/**`, `static/js/**`, `templates/**` → 0. Únicos `#C5A059` que quedan: 55 en documentación/maquetas (49 `Diseno_Proyecto/diseno_completo.html`, 6 `Info proyecto/FUNCIONALIDADES.html`), fuera del alcance de producto.
 - [x] **Eliminar el cian legado `#00bcd4`**: 0 residuales. Verificación: barrido global → 0; `templates/monitoreo_live.html` ya no declara ningún acento cian ni color hardcodeado.
-- [x] **Unificar la tipografía monoespaciada**: eliminado el `<link>` de Google Fonts de Share Tech Mono; 0 residuales de "Share Tech Mono". Todos los cronómetros, slots ALPR, patentes y monotablas usan `var(--font-mono)` = `'JetBrains Mono', monospace` (36 usos en CSS + 3 en `estadisticas_ocr.js`). `monitoreo_live.html` verificado sin `fonts.googleapis`, sin `font-family` literal (hereda de `monitoreo-live.css`).
+- [x] **Unificar la tipografía monoespaciada**: eliminado el `<link>` de Google Fonts de Share Tech Mono; 0 residuales de "Share Tech Mono". Todos los cronómetros, slots ALPR, patentes y monotablas usan `var(--font-mono)` = `'JetBrains Mono', monospace` (36 usos en CSS + 3 en `estadisticas-ocr.js`). `monitoreo_live.html` verificado sin `fonts.googleapis`, sin `font-family` literal (hereda de `monitoreo-live.css`).
 
 ### Prioridad P1: Consistencia Semántica y Accesibilidad WCAG (Corto Plazo)
 - [ ] **Normalizar la paleta de estados**:
@@ -215,7 +215,7 @@ flowchart TD
 
 ### Prioridad P3: Desacoplamiento de Estilos Inline en HTML y JS (Medio Plazo)
 - [ ] **Refactorizar `estadisticas_ocr.html` y `monitoreo_live.html`**:
-  - Extraer estilos inline a sus respectivos archivos CSS (`static/css/pages/estadisticas_ocr.css` y `monitoreo-live.css`).
+  - Extraer estilos inline a sus respectivos archivos CSS (`static/css/pages/estadisticas-ocr.css` y `monitoreo-live.css`).
 - [ ] **Módulo `theme.js` para JavaScript**:
   - Crear un módulo helper `static/js/modules/theme.js` que exponga la paleta de tokens a Chart.js y Leaflet:
     ```javascript

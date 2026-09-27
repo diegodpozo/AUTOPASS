@@ -21,7 +21,7 @@ const PRECACHE = [
   "/static/css/components/badges.css",
   "/static/css/components/modals.css",
   "/static/css/components/footer.css",
-  "/static/css/components/virtual_time.css",
+  "/static/css/components/virtual-time.css",
   "/static/css/layout/grid.css",
   "/static/css/layout/sidebar.css",
   "/static/css/layout/header.css",

@@ -33,7 +33,7 @@ async def get_perfil(request: Request):
 @router.get("/nuestra-red", response_class=HTMLResponse)
 async def get_nuestra_red(request: Request, db: Session = Depends(get_db)):
     branches = BranchRepository.get_all(db)
-    return templates.TemplateResponse(request=request, name="nuestra-red.html", context={"branches": branches})
+    return templates.TemplateResponse(request=request, name="nuestra_red.html", context={"branches": branches})
 
 @router.get("/contacto", response_class=HTMLResponse)
 async def get_contacto(request: Request):

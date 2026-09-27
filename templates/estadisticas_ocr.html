@@ -5,7 +5,7 @@
 {% block body_class %}bg-blur{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="/static/css/pages/estadisticas_ocr.css?v={{ cache_buster }}">
+<link rel="stylesheet" href="/static/css/pages/estadisticas-ocr.css?v={{ cache_buster }}">
 {% endblock %}
 
 {% block content %}
@@ -162,7 +162,7 @@
 
 {% block extra_scripts %}
 <script type="module">
-    import { actualizarEstadisticasOcr, filtrarTablaOcr, initEstadisticasOcr } from '/static/js/modules/estadisticas_ocr.js?v={{ cache_buster }}';
+    import { actualizarEstadisticasOcr, filtrarTablaOcr, initEstadisticasOcr } from '/static/js/modules/estadisticas-ocr.js?v={{ cache_buster }}';
     window.actualizarEstadisticasOcr = actualizarEstadisticasOcr;
     window.filtrarTablaOcr = filtrarTablaOcr;
     initEstadisticasOcr();
