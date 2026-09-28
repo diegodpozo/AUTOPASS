@@ -6,8 +6,8 @@ class MercadoPagoPayment(Base):
     """REGISTRO DE INTENCIONES Y CONFIRMACIONES DE PAGO MERCADO PAGO (CHECKOUT PRO)."""
     __tablename__ = "mercadopago_payments"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     tipo = Column(String, nullable=False)          # 'reserva' | 'estadia'
     reserva_id = Column(Integer, ForeignKey("reservations.id"), nullable=True)
     access_log_id = Column(Integer, ForeignKey("access_logs.id"), nullable=True)

@@ -6,7 +6,7 @@ from core.time import localnow
 class UserSession(Base):
     __tablename__ = "user_sessions"
 
-    id             = Column(Integer, primary_key=True, index=True)
+    id             = Column(Integer, primary_key=True)
     user_id        = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     device_id      = Column(String, nullable=False, index=True)
     user_agent     = Column(String, nullable=True)

@@ -6,7 +6,7 @@ from core.time import localnow
 class UserNotification(Base):
     __tablename__ = "user_notifications"
 
-    id             = Column(Integer, primary_key=True, index=True)
+    id             = Column(Integer, primary_key=True)
     user_id        = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     tipo           = Column(String, nullable=False)        # 'REMINDER_PAID', 'REMINDER_UNPAID', 'AUTO_CANCELLED'
     titulo         = Column(String, nullable=False)

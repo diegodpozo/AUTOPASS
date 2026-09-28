@@ -51,7 +51,7 @@ class NotificationService:
             # Si hay un loop registrado (p.ej. el loop de Uvicorn), usalo con run_coroutine_threadsafe
             if cls._loop and cls._loop.is_running():
                 try:
-                    asyncio.run_coroutine_threadsafe(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm), cls._loop)
+                    asyncio.run_coroutine_threadsafe(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm, force_refresh=True), cls._loop)
                     logger.debug(f"Scheduled broadcast_update for sucursal={sucursal_norm}")
                 except Exception as e:
                     logger.error(f"Error scheduling broadcast: {e}")
@@ -66,7 +66,7 @@ class NotificationService:
 
             if loop and loop.is_running():
                 try:
-                    loop.create_task(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm))
+                    loop.create_task(cls._occupancy_manager.broadcast_update(sucursal_norm=sucursal_norm, force_refresh=True))
                     logger.debug(f"Created task broadcast_update for sucursal={sucursal_norm} in current loop")
                 except Exception as e:
                     logger.error(f"Error creating task in current loop: {e}")

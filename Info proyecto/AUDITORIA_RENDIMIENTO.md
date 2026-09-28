@@ -97,26 +97,30 @@ hace exactamente eso) y sólo consultar el primer acceso por reserva saliente.
 |---|---|---|---|---|
 | P1 | — | ~~`GET /v1/reports/access` explota: `access_logs_history` no pagina y luego `get_by_patentes` arma `IN (60k patentes)`~~ | `report_repository.py:369` / `report_service.py:222` | **REMEDIADO (2026-09-27, v9.34.48):** límite server-side (`limit`, default 300) en `access_logs_history` + dedupe de patentes (`dict.fromkeys`) previo al `IN`. Mantiene el contrato array del front. Medido post-fix: 200 OK, **104ms, 4 queries (vs. crash SQLite / IN de 60k)**, sin límite el IN de Postgres bordea 65535 params. |
 | P1 | — | ~~N+1 cleanup de vencidas persistente (1 query/reserva)~~ | `reservation_service.py:82` / `worker_service.py:207` | **REMEDIADO (2026-09-27, v9.34.48):** `AccessRepository.get_reserva_ids_with_entry` (batch, 1 query) reemplaza `get_entry_for_reserva` por fila en `cleanup_overdue_reservations` y `_process_auto_cancellations`; método por-fila eliminado (DRY). Medido con 2.500 vencidas: **4 queries / 179ms (vs. 2.003 queries / 1.314ms pre-fix)**. |
-| P2 | Baja | Broadcast WS GLOBAL sin caché (per-sucursal en cada push) | `status.py::_get_global_status` | Reusar resultado cacheado de branches/ocupación global (TTL 1-3s). |
-| P2 | Baja | `ix_access_logs_id` desfase preexistente modelo↔alembic | `models/parking.py:8` vs `c833` | La migración inicial no crea el índice del PK que declara el modelo (`index=True`). Pre-existente a esta ronda; alinearlo en próxima migración si se toca el modelo. |
+| P2 | Baja | ~~Broadcast WS GLOBAL sin caché (recomputaba branches + ocupación reservas por cada push)~~ | `status.py::_get_global_status` / `_get_branch_status` | **REMEDIADO (2026-09-27, v9.34.49):** caché TTL 3s del payload GLOBAL (`occupancy_ws_global`) y por sucursal (`occupancy_ws_branch_{norm}`) en `core/cache.py`; `broadcast_update(force_refresh=True)` desde `NotificationService.notify_occupancy_change` para invalidar solo ante cambios reales (`invalidate("occupancy_*")`); conexiones nuevas y pushes repetidos reusan el payload. Medido con 50 broadcasts GLOBAL: **19 queries / 50 pushes = 1 compute + 49 cache hits (antes ~950, 50× menos)**, 71ms total. |
+| P2 | Baja | ~~`ix_access_logs_id` y demás `ix_{tabla}_id` redundantes sobre el PK~~ | modelos (18 tablas) vs alembic | **REMEDIADO (2026-09-27, v9.34.49):** se quita `index=True` del `id` PK en los 18 modelos (la PK ya indexa id) y migración `8b3e9e815c78` DROP de los 2 índices que sí había creado la cadena (`ix_redemption_tickets_id`, `ix_support_ticket_messages_id`). Bonus: `ix_mercadopago_payments_user_id` ahora declarado en el modelo (`index=True`) — era índice REAL (FK) creado por alembic pero ausente del modelo. Resultado: **paridad create_all ↔ alembic head = 0 diffs de índices**, verificado por `tests/test_schema_parity_p2.py`. |
 
 ## 7. Verificación de cierre
 
-- Migración `cdb7d130c856` reproducible desde BD vacía (`alembic upgrade head`).
-- Paridad modelo↔create_all: OK para los 2 índices nuevos (el único desfase
-  restante es `ix_access_logs_id`, pre-existente, ver §6 P2).
-- Suite completa en verde: **700 passed** (695 base + 5 regresión P1 en
-  `tests/test_report_access_p1.py`), 7 warnings.
-- Medición POST-P1 (2026-09-27, misma DB de volumen sintético):
+- Migración `cdb7d130c856` y `8b3e9e815c78` reproducibles desde BD vacía (`alembic upgrade head`).
+- Paridad índice modelo↔alembic: **0 diffs** (verificado por
+  `tests/test_schema_parity_p2.py`), tras quitar el `index=True` redundante de
+  los 18 PK y declarar `ix_mercadopago_payments_user_id` en el modelo.
+- Suite completa en verde: **702 passed** (695 base + 5 regresión P1 +
+  2 paridad P2), 7 warnings.
+- Cierre total de P1+P2, con mediciones:
 
 | Fix | Antes | Después |
 |---|---|---|
 | `GET /v1/reports/access` | **CRASH** (SQLite `too many SQL variables`, IN 60k) | **200, 104ms, 4 queries**, 300 items + patentes deduped |
 | `cleanup_overdue_reservations` (2.500 vencidas) | 2.003 queries / 1.314ms | **4 queries / 179ms** |
 | `_process_auto_cancellations` (worker) | N+1 por reserva | 1 query batch `IN` |
+| Broadcast WS GLOBAL (50 pushes) | ~950 queries (recompute por push) | **19 queries** (1 compute + 49 cache hits) |
+| Paridad índices modelo↔alembic | 18 PK con `index=True` redundantes + 1 FK índice no declarado | **0 diffs** |
 
-- Query-count por endpoint documentado en §2; N+1 detectados anotados (§§4-6).
+- Query-count por endpoint documentado en §2; N+1 detectados anotados (§§4-6) y
+  los pendientes P2 cerrados en esta ronda.
 
 **Criterio A5 cumplido:** reporte con tiempos y query-count por endpoint ✓ ·
-sin N+1 de listado sin anotar ✓ (todos anotados y priorizados; los P1 ya
+sin N+1 de listado sin anotar ✓ (todos anotados y priorizados; P1 y P2
 remediados y medidos) · hot spot de agregados corregido y medido ✓.

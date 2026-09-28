@@ -42,13 +42,17 @@ class OccupancyManager:
                 self.active_connections[sucursal].remove(websocket)
             except ValueError: pass
 
-    async def broadcast_update(self, db: Session = None, sucursal_norm: str = None):
+    async def broadcast_update(self, db: Session = None, sucursal_norm: str = None, force_refresh: bool = False):
         """ENVIA EL ESTADO ACTUAL DE AFORO A TODOS LOS INTERESADOS.
         Crea su propia sesión de DB si no se provee una, para evitar
-        usar una sesión cerrada cuando se llama asincrónicamente."""
+        usar una sesión cerrada cuando se llama asincrónicamente.
+        force_refresh=True (cambio real de ocupación) invalida el caché
+        TTL de occupancy_*; si es False (cambio de evento ALPR minoritario o
+        conexión inicial) reutiliza los payloads cacheados hasta 3s."""
         from core.database import SessionLocal
         from core.cache import ttl_cache
-        ttl_cache.invalidate("occupancy_")
+        if force_refresh:
+            ttl_cache.invalidate("occupancy_")
         close_session = False
         if db is None:
             db = SessionLocal()
@@ -85,6 +89,10 @@ class OccupancyManager:
                 db.close()
 
     def _get_global_status(self, db: Session):
+        from core.cache import ttl_cache
+        cached = ttl_cache.get("occupancy_ws_global")
+        if cached is not None:
+            return cached
         branches = BranchRepository.get_all_active(db)
         res = []
         for b in branches:
@@ -97,16 +105,22 @@ class OccupancyManager:
                 "capacidad_reservas_motos": caps["capacidad_reservas_motos"], "ocupacion_reservas_motos": caps["ocupacion_reservas_motos"],
                 "capacidad_reservas_camionetas": caps["capacidad_reservas_camionetas"], "ocupacion_reservas_camionetas": caps["ocupacion_reservas_camionetas"]
             })
-        return {"type": "GLOBAL_UPDATE", "branches": res}
+        data = {"type": "GLOBAL_UPDATE", "branches": res}
+        ttl_cache.set("occupancy_ws_global", data, ttl=3.0)
+        return data
 
     def _get_branch_status(self, db: Session, sucursal_norm: str):
+        from core.cache import ttl_cache
+        cached = ttl_cache.get(f"occupancy_ws_branch_{sucursal_norm}")
+        if cached is not None:
+            return cached
         # BUSCAR SUCURSAL POR NOMBRE NORMALIZADO
         branch = OccupancyService.branch_by_normalized_name(db, sucursal_norm)
         
         if branch:
             data = OccupancyService.calculate_branch_capacities(db, branch)
             data["last_event"] = NotificationService.get_last_event(sucursal_norm)
-            return {
+            payload = {
                 "type": "BRANCH_UPDATE",
                 "data": data
             }
@@ -116,17 +130,19 @@ class OccupancyManager:
             if not a:
                 data = OccupancyService.default_capacities()
                 data["last_event"] = NotificationService.get_last_event(sucursal_norm)
-                return {
+                payload = {
                     "type": "BRANCH_UPDATE", 
                     "data": data
                 }
-            
-            data = OccupancyService.capacities_from_aforo(a)
-            data["last_event"] = NotificationService.get_last_event(sucursal_norm)
-            return {
-                "type": "BRANCH_UPDATE",
-                "data": data
-            }
+            else:
+                data = OccupancyService.capacities_from_aforo(a)
+                data["last_event"] = NotificationService.get_last_event(sucursal_norm)
+                payload = {
+                    "type": "BRANCH_UPDATE",
+                    "data": data
+                }
+        ttl_cache.set(f"occupancy_ws_branch_{sucursal_norm}", payload, ttl=3.0)
+        return payload
 
 occupancy_manager = OccupancyManager()
 NotificationService.set_occupancy_manager(occupancy_manager)

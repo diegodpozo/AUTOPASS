@@ -11,7 +11,7 @@ def datetime_now_iso():
 class User(Base):
     """MODELO PARA LA GESTION DE USUARIOS Y ADMINISTRADORES."""
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String)
     apellido = Column(String)
     dni = Column(String, unique=True, index=True)
@@ -36,7 +36,7 @@ class User(Base):
 class Vehicle(Base):
     """ENTIDAD PARA LA GESTION DE FLOTA POR USUARIO."""
     __tablename__ = "vehicles"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     patente = Column(String, unique=True, index=True)
     marca_modelo = Column(String)
@@ -48,7 +48,7 @@ class Vehicle(Base):
 class PointsLog(Base):
     """HISTORIAL DE MOVIMIENTOS DEL SISTEMA DE FIDELIZACION."""
     __tablename__ = "points_log"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     cantidad = Column(Integer)
     motivo = Column(String)
@@ -59,7 +59,7 @@ class PointsLog(Base):
 class Promotion(Base):
     """CATALOGO DE BENEFICIOS CANJEABLES POR PUNTOS."""
     __tablename__ = "promotions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     titulo = Column(String)
     descripcion = Column(String)
     costo_puntos = Column(Integer)
@@ -80,7 +80,7 @@ class Promotion(Base):
 class RedemptionTicket(Base):
     """VOUCHER/TICKET PERSISTENTE GENERADO AL CANJEAR PUNTOS POR UN BENEFICIO."""
     __tablename__ = "redemption_tickets"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     promotion_id = Column(Integer, ForeignKey("promotions.id"), nullable=True)
     codigo = Column(String, unique=True, index=True)  # TOKEN UNICO PARA EL QR

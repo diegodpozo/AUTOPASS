@@ -5,7 +5,7 @@ from core.database import Base
 class Reservation(Base):
     """REGISTRO DE ESTADIAS PROGRAMADAS O RECURRENTES."""
     __tablename__ = "reservations"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     patente = Column(String, index=True)
     fecha_inicio = Column(String)
@@ -32,7 +32,7 @@ class Reservation(Base):
 class Coupon(Base):
     """GESTION DE CUPONES DE DESCUENTO PARA RESERVAS."""
     __tablename__ = "coupons"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     codigo = Column(String, unique=True, index=True)
     descuento_porcentaje = Column(Integer)
     fecha_expiracion = Column(String)

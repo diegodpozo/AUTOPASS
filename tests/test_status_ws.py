@@ -44,6 +44,8 @@ def client():
     saved = dict(app.dependency_overrides)
     app.dependency_overrides[get_db] = override_get_db
     occupancy_manager.active_connections.clear()
+    from core.cache import ttl_cache
+    ttl_cache.invalidate("occupancy_")
     limiter.reset()
     yield TestClient(app), TestSession
     app.dependency_overrides.clear()

@@ -5,7 +5,7 @@ from core.database import Base
 class ParkingAforo(Base):
     """CONTROL DE CAPACIDAD Y OCUPACION EN TIEMPO REAL."""
     __tablename__ = "parking_aforo"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     capacidad_total = Column(Integer, default=20) # PARA AUTOS
     ocupacion_actual = Column(Integer, default=0) # PARA AUTOS
     capacidad_motos = Column(Integer, default=10)
@@ -26,7 +26,7 @@ class ParkingAforo(Base):
 class Settings(Base):
     """CONFIGURACIONES GLOBALES DEL SISTEMA (PRECIOS, PARAMETROS)."""
     __tablename__ = "settings"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     clave = Column(String) # REMOVIDO UNIQUE=TRUE PARA PERMITIR VARIANTES POR SEDE
     valor = Column(Float, nullable=True)
     valor_str = Column(String, nullable=True) # PARA CONFIGURACIONES DE TEXTO (IPS, ETC)
@@ -35,7 +35,7 @@ class Settings(Base):
 class ParkingCamera(Base):
     """CONFIGURACION DE CAMARAS DE MONITOREO DEL ESTACIONAMIENTO."""
     __tablename__ = "parking_cameras"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String, nullable=False)
     tipo = Column(String, nullable=False) # 'ENTRADA', 'SALIDA', 'PREDIO', 'PATENTE', 'QR'
     source = Column(String, nullable=False) # IP de camara, path de video o id de camara web (ej. "0")
@@ -51,7 +51,7 @@ class AccessLog(Base):
               "sucursal", "fecha_hora"),
         Index("ix_access_logs_reserva_id", "reserva_id", "tipo_evento"),
     )
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     patente_detectada = Column(String)
     normalized_patente = Column(String, index=True, nullable=True)
     tipo_evento = Column(String, index=True) # 'ENTRADA' O 'SALIDA'
@@ -73,7 +73,7 @@ class AccessLog(Base):
 class ParkingBranch(Base):
     """PUNTOS AUTOPASS (SEDES/SUCURSALES)"""
     __tablename__ = "parking_branches"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String, unique=True, index=True)
     direccion = Column(String)
     telefono = Column(String)
@@ -89,7 +89,7 @@ class ParkingBranch(Base):
 class ParkingFloor(Base):
     """PISOS O NIVELES DENTRO DE UNA SUCURSAL."""
     __tablename__ = "parking_floors"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     branch_id = Column(Integer, ForeignKey("parking_branches.id"))
     nombre = Column(String) # EJ: "PISO 1", "SUBSUELO"
     capacidad_total = Column(Integer, default=20)
