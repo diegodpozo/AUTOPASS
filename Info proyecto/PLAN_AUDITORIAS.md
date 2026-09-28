@@ -313,6 +313,6 @@ grep/ls por capa, revisión manual del árbol.
 4. ~~**A3** Cobertura (define dónde escribir tests nuevos).~~ — **HECHO** (66%, 271 tests).
 5. ~~**A6/A7** (consistencia y errores).~~ — **HECHO** (2026-09-27, verificaciones formales incluidas).
 6. ~~**A8/A9** según disponibilidad.~~ — **HECHO** (A8 2026-09-22; A9 2026-09-22 + verificación automática 2026-09-27).
-7. **A5** Rendimiento (profiling) — **única pendiente**; requiere datos de Neon / entorno con volumen y medición en vivo (`py-spy`, query count).
+7. ~~**A5** Rendimiento (profiling).~~ — **HECHO (2026-09-27, CERRADA ✓)** — profiling con volumen sintético (SQLite sandbox + hook `before_cursor_execute`): O(N²) de `financial-summary` resuelto (217s→1.9s), cleanup de vencidas acelerado con índice, N+1 anotados y priorizados. Mediciones con volumen real de Neon quedan como pendiente explícito del informe.
 
-> Cada auditoría se marca como **HECHO** al dejar su informe en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta"). A1–A4, A6–A9 cumplido; queda **A5 (rendimiento, requiere Neon)**.
+> Cada auditoría se marca como **HECHO** al dejar su informe en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta"). **A1–A9 cumplidas (todas CERRADAS).** Pendientes de remediación anotados: A5-P1 (paginado de historial de accesos, batch cleanup de vencidas) y A5-P2 (caché broadcast WS) en `AUDITORIA_RENDIMIENTO.md` §6.
