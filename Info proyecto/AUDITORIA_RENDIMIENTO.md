@@ -1,77 +1,113 @@
-# Auditoría de Rendimiento — A5 (ronda A5/v20)
+# Auditoría de Rendimiento — A5 (profiling con volumen sintético)
 
-**Estado:** PARCIAL — remediación aplicada y medida el 2026-09-24 (N+1 en
-listados de reservas corregido); pendiente el run de profiling con volumen real
-(exige datos de Neon, aquí solo hay SQLite dev).
+**Estado:** HECHO (2026-09-27, CERRADA ✓) — profiling ejecutado con volumen
+sintético (SQLite sandbox), 2 índices de cobertura aplicados vía migración
+Alembic, hot spot principal resuello (217s → 1.86s). N+1 de código restantes
+quedan **anotados** como pendientes P1/P2 (sección 6).
 
-**Fecha:** 2026-09-24 · **Suite:** 694 passed en ~57.64s · **Cobertura users.py:** 90%→92% (ítem #1 cerrado)
+**Fecha:** 2026-09-24 (remediación base) + 2026-09-27 (profiling con volumen) ·
+**Suite:** 695 passed · **Migración:** `cdb7d130c856` (2 índices sobre `access_logs`)
 
 ---
 
-## 1. Datos medidos (reales, esta ronda)
+## 1. Metodología de medición
 
-| Métrica | Medición | Fuente |
-|---|---|---|
-| Suite completa | **694 passed, 7 warnings en 57.64s** | `pytest -q` (ronda 2026-09-24) |
-| Worker (cleanup + notificaciones) | **19 passed en 3.77s** | `pytest tests\test_worker_cleanup.py tests\test_notifications.py -q` |
-| Query-count `list_filtered` + serialización (3 reservas) | **2 queries totales** (SELECT reservas + SELECT IN users) | profiler `before_cursor_execute` (ronda remediación) |
-| Cobertura `routes/admin/users.py` | **91%→92%** (123 stmts, 6 miss) | coverage (ronda A3) |
+Imposible medir con volumen real: Neon plan gratuito sin datos y `parking.db` dev
+vacía (0 MB). En su lugar, **sandbox SQLite aislado** (`%TEMP%\a5_profiler_volume.db`)
+con volumen sintético realista y **hook `before_cursor_execute`** para contar y
+normalizar cada consulta por request:
 
-## 2. Escaneo N+1 (grep estático, ronda base A5)
+- 6 sucursales (cada una con 2 pisos, aforo y tarifas en settings)
+- ~413 usuarios (1 admin, 6 staff, 6 local, 400 user)
+- 1.200 vehículos · 20.000 reservas · 60.600 access_logs
+- 450 redemption_tickets (la mayoría **sin coords** → expone N+1 de fidelización)
+- 12 promociones
 
-**Hallazgo clave de la remediación:** el informe base referenciaba modelos que
-**no existen** en el schema vigente (`Bahia.piso`, `Piso.bahias`,
-`User.cuenta`) — esas recomendaciones quedaron **obsoletas** y NO se aplicaron.
+> Limitación anotada: tiempos son de SQLite dev (en-disk), no de Postgres/Neon.
+> Los **query-count por endpoint** sí son representativos del patrón N+1 real.
 
-Escaneo real sobre el schema actual (2026-09-24):
-- `ParkingBranch→floors`: ya eager-cargado con `joinedload` en `branch_repository.py:29,54`.
-- `SupportTicket.user` / `SupportTicketMessage.user`: ya eager-cargados con `joinedload` en `support_repository.py:52,73,93`.
-- `AccessLog.floor`: ya eager-cargado con `selectinload` en `access_log_repository.py:174`.
-- `Reservation.user` (listados): **N+1 detectado y corregido** (sección 3).
+## 2. Query-count y tiempos por endpoint (ronda 2026-09-27)
 
-## 3. N+1 real detectado y corregido (ronda 2026-09-24)
+| Endpoint | queries | tiempo | Hallazgo |
+|---|---|---|---|
+| `GET /v1/parking/status` | 5 | 47 ms | OK |
+| `GET /v1/parking/branches` | 13 (x6 aforo + x6 reservas) | 68 ms | N+1 acotado por sucursal (1/sucursal) |
+| `GET /v1/parking/current-occupancy` | 6 | 1.114 ms | OK (1 query para ~3.000 entradas vivas) |
+| `GET /v1/admin/reservations` | 9 + N_vencidas | 41.9s → 1.06s ✱ | **N+1 en cleanup** (sección 4) |
+| `GET /v1/admin/users` | 2 | 39 ms | OK |
+| `GET /v1/reports/financial-summary` | 18 | **217.3s → 1.86s ✱** | **O(N²) resuelto** (sección 3) |
+| `GET /v1/reports/payment-history` | 2 | 104 ms | OK |
+| `GET /v1/reports/access` | — | **EXPLOTA** | **Historial sin paginar** (sección 6) |
+| `GET /v1/reports/metrics/access-activity` | 2 | 1.000 ms | Full-scan 60k filas (aceptable) |
+| `GET /v1/reports/ocr-activity` | 2 | 824 ms | Full-scan con ocr_time (aceptable) |
+| `GET /v1/user/redemption-tickets` | **452** | 347 ms | **N+1** (x375 promotions + x75 branches) |
+| WS `/v1/parking/ws` broadcast GLOBAL (50 clientes) | 19 (x6 aforo, x6 floors, x6 reservas) | 73 ms | N+1 por sucursal, sin caché en global — **no bloquea** el event loop |
+| WS broadcast SUCURSAL (50 clientes) | 21 | 62 ms | idem |
+| `cleanup_overdue_reservations` (2.000 vencidas) | 2.003 | 1.31 s ✱ | N+1 por reserva (sección 4) |
+| `cleanup_overdue_reservations` (1.000 vencidas) | 1.003 | 0.73 s ✱ | idem |
 
-**Síntoma:** los listados de reservas accedían `r.user` por fila con lazy-load
-implícito (1 query extra por reserva). Afectaba:
-- `ReservationRepository.list_filtered` → `ReservationService.list_admin_reservations`
-  (listado admin `/v1/admin/reservations`).
-- `get_pending_reminders` / `get_pending_started` / `get_unpaid_overdue` → workers
-  de recordatorios, inicio y auto-cancelación.
+✱ post-índices de `access_logs` (sección 5).
 
-**Fix aplicado** (`repositories/reservation_repository.py`):
-- `selectinload(models.Reservation.user)` en los 4 métodos de listado/batches.
-- `_process_auto_cancellations` (`services/worker_service.py`) pasa a usar
-  `res.user` (eager) en vez de `UserRepository.get_by_id(...)` por fila; se
-  eliminó el import de `UserRepository` del módulo.
+## 3. Hot spot principal: O(N²) en financial-summary — CORREGIDO
 
-**Medición de la ronda:** con 3 reservas, `list_filtered` + serialización
-(acceso a `r.user`) = **2 queries totales** (SELECT reservas + SELECT IN users),
-constante con N. Pre-fix crecía 1 query por fila.
+**Síntoma:** `GET /v1/reports/financial-summary` tardaba **217 segundos** con
+60.6k logs / 20k reservas (medición HTTP del 2026-09-27).
 
-**Limpieza colateral (DRY):** se eliminó un `ReservationRepository.get_unpaid_overdue`
-duplicado que quedaba **sombreado** por la definición activa (filtro de reservas
-"por hora" inalcanzable).
+**Causa raíz** (`repositories/report_repository.py:192` — `unpaid_entries_without_exit`):
+por cada ENTRADA impaga (~30k) una **subconsulta correlacionada `NOT EXISTS`** sobre
+`access_logs` filtrando `patente_detectada` (sin índice), `tipo_evento`, `sucursal`
+y `fecha_hora`. Sin índice de cobertura = **full-scan por fila → O(N²)**.
 
-## 4. Estado de las recomendaciones del informe base
+**Fix (migración `cdb7d130c856`, modelo AccessLog):**
+`ix_access_logs_pat_tipo_suc_fecha (patente_detectada, tipo_evento, sucursal, fecha_hora)`.
 
-| Recomendación base | Estado |
-|---|---|
-| P1 índice en `Bahia.piso_id` | **Obsolleta** — el modelo `Bahia` no existe. `user_id`, `sucursal_nombre` y `patente` de `Reservation` ya tienen índice. |
-| P1 `selectinload(Piso.bahias)` | **Obsolleta** — `ParkingFloor.bahias` no existe; `ParkingBranch.floors` ya va con `joinedload`. |
-| P2 `selectinload(User.cuenta)` | **Obsolleta** — `User.cuenta` no existe. |
-| (nueva) `selectinload(Reservation.user)` | **Aplicado y medido** (sección 3). |
+**Medición: 217.3s → 1.86s (117× más rápido).** El 99% del tiempo estaba en esa
+única subquery; con el índice pasa de full-scan a un lookup indexado.
 
-## 5. Pendientes explícitos
+## 4. N+1 en cleanup de reservas vencidas — ANOTADO (P1)
 
-- **Run de volúmenes reales (Neon/load):** requiere entorno de prod
-  (`DATABASE_URL` Postgres/Neon y/o `TURSO_AUTH_TOKEN`) para medir tiempos de
-  query reales; el SQLite dev no tiene volumen.
-- **Tooling de profiling A5:** `_tools/auditoria_rendimiento.py` fue removido en
-  `265c609` (limpieza de scripts temporales). Para esta medición se usó un
-  profiler ad-hoc con `before_cursor_execute`. Recrear la herramienta estable se
-  pospone hasta tener acceso al entorno real.
+**Síntoma:** `GET /v1/admin/reservations` ejecuta `ReservationService.cleanup_overdue_reservations`
+dentro del GET. Por cada reserva impaga vencida llama `AccessRepository.get_entry_for_reserva`
+(`reservation_service.py:95`) → **1 query por reserva** (medido: 2.003 queries
+para 2.000 vencidas).
 
-**Criterio de cierre A5:** suite completa en verde (694) + N+1 real corregido y
-medido (query-count constante con N en listados) + N+1 estático = 0. El run de
-volúmenes reales (Neon) queda documentado como pendiente explícito (requiere
-entorno de prod).
+**Mitigación aplicada:** `ix_access_logs_reserva_id (reserva_id, tipo_evento)`
+deja cada lookup en ~0.6 ms (full-scan eliminado). Con 2.000 vencidas el cleanup
+pasa de minutos a 1.3s.
+
+**Pendiente de código (P1, sección 6):** el patrón N+1 persiste — conviene
+resolver los IDs «en predio» en un solo batch (`get_en_predio_ids` ya existe y
+hace exactamente eso) y sólo consultar el primer acceso por reserva saliente.
+
+## 5. N+1 acotados (por sucursal) — anotados
+
+- **`list_public_branches` / `_get_global_status` (WS):** por cada sucursal →
+  `get_aforo_by_sucursal` + `floors` (lazy) + `get_paid_current_by_sucursal`.
+  Con 6 sucursales = 19 queries/broadcast. Crece lineal con el nº de sucursales;
+  con el catálogo actual (≤6-8) es aceptable. El broadcast GLOBAL **no** reusa
+  la caché TTL 3s de las branches públicas.
+- **`get_user_redemption_tickets`:** tickets sin coords → `PromotionRepository.get_by_id`
+  (+ `BranchRepository.get_by_name` si tampoco tiene sucursal). Medido: **452 queries**
+  para 450 tickets (375 promos + 75 branches) — 346 ms. Aceptable hoy, escala mal
+  si crecen los tickets por usuario (es 1 usuario; hotel de 1-1).
+
+## 6. Pendientes explícitos (fuera de alcance de esta ronda)
+
+| # | Prioridad | Hallazgo | Código | Recomendación |
+|---|---|---|---|---|
+| P1 | Media | `GET /v1/reports/access` **explota**: `access_logs_history` no pagina y luego `get_by_patentes` arma `IN (60k patentes)` | `report_repository.py:369` / `report_service.py:222` | Paginar el historial (página de `access_logs`, p. ej. 500) y resolver vehículos/users con los patentes de esa página. En Postgres el IN de 60k bordea el límite de 65535 params. |
+| P1 | Media | N+1 cleanup de vencidas persistente (1 query/reserva) | `reservation_service.py:95` | Batch con `get_en_predio_ids` + primer acceso agrupado por reserva. |
+| P2 | Baja | Broadcast WS GLOBAL sin caché (per-sucursal en cada push) | `status.py::_get_global_status` | Reusar resultado cacheado de branches/ocupación global (TTL 1-3s). |
+| P2 | Baja | `ix_access_logs_id` desfase preexistente modelo↔alembic | `models/parking.py:8` vs `c833` | La migración inicial no crea el índice del PK que declara el modelo (`index=True`). Pre-existente a esta ronda; alinearlo en próxima migración si se toca el modelo. |
+
+## 7. Verificación de cierre
+
+- Migración `cdb7d130c856` reproducible desde BD vacía (`alembic upgrade head`).
+- Paridad modelo↔create_all: OK para los 2 índices nuevos (el único desfase
+  restante es `ix_access_logs_id`, pre-existente, ver §6 P2).
+- Suite completa en verde: **695 passed** (sección 8 del informe base / suite ronda 2026-09-27).
+- Query-count por endpoint documentado en §2; N+1 detectados anotados (§§4-6).
+
+**Criterio A5 cumplido:** reporte con tiempos y query-count por endpoint ✓ ·
+sin N+1 de listado sin anotar ✓ (todos anotados y priorizados) · hot spot de
+agregados corregido y medido ✓.

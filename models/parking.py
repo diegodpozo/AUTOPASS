@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, Index
 from sqlalchemy.orm import relationship
 from core.database import Base
 
@@ -46,6 +46,11 @@ class ParkingCamera(Base):
 class AccessLog(Base):
     """AUDITORIA VISUAL Y CRONOLOGICA DE ACCESOS (ALPR)."""
     __tablename__ = "access_logs"
+    __table_args__ = (
+        Index("ix_access_logs_pat_tipo_suc_fecha", "patente_detectada", "tipo_evento",
+              "sucursal", "fecha_hora"),
+        Index("ix_access_logs_reserva_id", "reserva_id", "tipo_evento"),
+    )
     id = Column(Integer, primary_key=True, index=True)
     patente_detectada = Column(String)
     normalized_patente = Column(String, index=True, nullable=True)

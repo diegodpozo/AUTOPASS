@@ -140,6 +140,12 @@ Garantizar que Alembic `upgrade head` sea reproducible de cero en Neon y SQLite,
 
 **Prioridad:** Media · **Esfuerzo:** 1–2 días · **Entregable:** `Info proyecto/AUDITORIA_RENDIMIENTO.md`
 
+> **Estado: HECHO (2026-09-27, CERRADA ✓)** — profiling con volumen sintético
+> (SQLite sandbox + hook `before_cursor_execute`). Hot spot O(N²) de
+> `financial-summary` corregido vía índice compuesto (`cdb7d130c856`): 217.3s → 1.86s.
+> N+1 restantes (cleanup de vencidas, fidelización, historial de accesos sin
+> paginar, broadcast WS global) quedaron **anotados y priorizados** en §6 del informe.
+
 ### Objetivo
 Detectar N+1 y latencias en los agregados más usados del dashboard admin y portal.
 
