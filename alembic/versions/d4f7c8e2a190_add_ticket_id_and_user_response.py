@@ -18,10 +18,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('user_notifications', sa.Column('ticket_id', sa.Integer(), sa.ForeignKey('support_tickets.id'), nullable=True))
-    op.add_column('support_tickets', sa.Column('user_response', sa.Text(), nullable=True))
+    with op.batch_alter_table('user_notifications', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('ticket_id', sa.Integer(), sa.ForeignKey('support_tickets.id', name='fk_user_notifications_ticket_id'), nullable=True))
+    with op.batch_alter_table('support_tickets', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('user_response', sa.Text(), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column('support_tickets', 'user_response')
-    op.drop_column('user_notifications', 'ticket_id')
+    with op.batch_alter_table('support_tickets', schema=None) as batch_op:
+        batch_op.drop_column('user_response')
+    with op.batch_alter_table('user_notifications', schema=None) as batch_op:
+        batch_op.drop_column('ticket_id')

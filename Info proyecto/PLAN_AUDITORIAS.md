@@ -111,7 +111,7 @@ Medir % de cobertura por capa y detectar las zonas sin tests.
 
 **Prioridad:** Alta · **Esfuerzo:** 1 día · **Entregable:** `Info proyecto/AUDITORIA_DATOS_MIGRACIONES.md`
 
-> **Estado: HECHO (2026-09-19)** — P1 aplicada: flujo único `sync_schema()` (`create_all` de modelos + Alembic al head) en `core/database.py`; eliminados los `ALTER TABLE` manuales de `init_db.py:migrate_db()`. Verificado: BD vacía → 19 tablas + `alembic current == head`.
+> **Estado: HECHO (2026-09-19, P1; 2026-09-27, P2)** — P1 aplicada: flujo único `sync_schema()` (`create_all` de modelos + Alembic al head) en `core/database.py`; eliminados los `ALTER TABLE` manuales de `init_db.py:migrate_db()`. **P2 aplicada (2026-09-27):** baseline auténtico en `alembic/versions/c833a3129266_initial_schema.py` (16 tablas base + índices), `d4f7c8e2a190` y `e6f7a8b9c0d1` ajustadas a batch-mode/`nullable` para que `alembic upgrade head` sea reproducible desde BD vacía; deuda A4.6 liquidada (2 parches de datos removidos de `core/seed.py`). Verificado: BD vacía → `upgrade head` EXIT 0, 18 tablas, schema **idéntico** a `create_all` (0 diffs), `alembic current == head`. Detalle en `AUDITORIA_DATOS_MIGRACIONES.md`.
 
 ### Objetivo
 Garantizar que Alembic `upgrade head` sea reproducible de cero en Neon y SQLite, y que no se registren datos sensibles.
@@ -128,7 +128,7 @@ Garantizar que Alembic `upgrade head` sea reproducible de cero en Neon y SQLite,
 6. Duplicados de seed: `core/seed.py` vs `scripts/init_db.py` — unificar (el inicializador real es `init_db.py` en la raíz).
 
 ### Criterios de aceptación
-- `upgrade head` verde desde BD vacía en ambos motores **(resuelto: flujo único `create_all` + `alembic current == head`; ver `AUDITORIA_DATOS_MIGRACIONES.md`, remediación P1 aplicada)**.
+- `upgrade head` verde desde BD vacía en ambos motores **(resuelto P2: baseline real en `c833a3129266`; verificado `upgrade head` desde SQLite vacía = schema de `create_all`, 0 diffs; ver `AUDITORIA_DATOS_MIGRACIONES.md`, §4.2)**.
 - Lista de migraciones pendientes de aplicar en Neon, si las hay.
 
 ### Herramientas
@@ -302,7 +302,7 @@ grep/ls por capa, revisión manual del árbol.
 ## Orden de ejecución sugerido
 
 1. ~~**A1** Seguridad API (mayor riesgo, base para A9).~~ — **HECHO** (remediación P0/P1 aplicada).
-2. ~~**A4** Migraciones (puede romper prod sin aviso).~~ — **HECHO** (P1 aplicada).
+2. ~~**A4** Migraciones (puede romper prod sin aviso).~~ — **HECHO** (P1 y P2 aplicadas).
 3. ~~**A2** Dependencias (CVEs en OCR).~~ — **HECHO** (P1+P2 aplicadas).
 4. ~~**A3** Cobertura (define dónde escribir tests nuevos).~~ — **HECHO** (66%, 271 tests).
 5. ~~**A6/A7** (consistencia y errores).~~ — **HECHO** (2026-09-27, verificaciones formales incluidas).

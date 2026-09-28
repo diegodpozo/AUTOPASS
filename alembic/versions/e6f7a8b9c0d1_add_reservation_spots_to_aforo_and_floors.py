@@ -21,24 +21,24 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     with op.batch_alter_table('parking_aforo', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('capacidad_reservas_autos', sa.Integer(), server_default='5', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas_autos', sa.Integer(), server_default='0', nullable=False))
-        batch_op.add_column(sa.Column('capacidad_reservas_motos', sa.Integer(), server_default='3', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas_motos', sa.Integer(), server_default='0', nullable=False))
-        batch_op.add_column(sa.Column('capacidad_reservas_camionetas', sa.Integer(), server_default='2', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas_camionetas', sa.Integer(), server_default='0', nullable=False))
-        batch_op.add_column(sa.Column('capacidad_reservas', sa.Integer(), server_default='10', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas', sa.Integer(), server_default='0', nullable=False))
+        batch_op.add_column(sa.Column('capacidad_reservas_autos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas_autos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('capacidad_reservas_motos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas_motos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('capacidad_reservas_camionetas', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas_camionetas', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('capacidad_reservas', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas', sa.Integer(), nullable=True))
 
     with op.batch_alter_table('parking_floors', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('capacidad_reservas_autos', sa.Integer(), server_default='5', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas_autos', sa.Integer(), server_default='0', nullable=False))
-        batch_op.add_column(sa.Column('capacidad_reservas_motos', sa.Integer(), server_default='3', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas_motos', sa.Integer(), server_default='0', nullable=False))
-        batch_op.add_column(sa.Column('capacidad_reservas_camionetas', sa.Integer(), server_default='2', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas_camionetas', sa.Integer(), server_default='0', nullable=False))
-        batch_op.add_column(sa.Column('capacidad_reservas', sa.Integer(), server_default='10', nullable=False))
-        batch_op.add_column(sa.Column('ocupacion_reservas', sa.Integer(), server_default='0', nullable=False))
+        batch_op.add_column(sa.Column('capacidad_reservas_autos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas_autos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('capacidad_reservas_motos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas_motos', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('capacidad_reservas_camionetas', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas_camionetas', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('capacidad_reservas', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('ocupacion_reservas', sa.Integer(), nullable=True))
 
 
 def downgrade() -> None:

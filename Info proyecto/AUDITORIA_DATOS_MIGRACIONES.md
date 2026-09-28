@@ -1,6 +1,6 @@
 # Auditoría de Datos y Migraciones — AUTOPASS
 
-> **Fecha:** 2026-09-19 (revisión contra código v9.23.0, rama `main`)
+> **Fecha:** 2026-09-19 (revisión contra código v9.23.0, rama `main`) — **actualizado 2026-09-27 (P2 aplicado).**
 > **Alcance:** `alembic/` (14 migraciones), `core/database.py`, `core/seed.py`, `init_db.py`, `scripts/setup.ps1`, Neon (prod) vs SQLite (dev).
 > **Metodología:** sandbox sobre BD SQLite vacía ejecutando los flujos reales de arranque (`setup.ps1` y `main.py`), comparación de `alembic history/current/heads`, revisión manual de cada migración (grep de `op.execute`/data/DDL), verificación de consistencia modelos ↔ migraciones y de seeds.
 > **Referencia:** `Info proyecto/PLAN_AUDITORIAS.md` § A4.
@@ -11,8 +11,8 @@
 
 | Dimensión | Estado | Hallazgo |
 |---|---|---|
-| `alembic upgrade head` desde BD vacía | **ROTO** | La migración inicial `c833a3129266` es un `pass` (no crea tablas) → el `ALTER TABLE user_notifications` de `d4f7c8e2a190` falla con `no such table`. El esquema base NO lo construyen las migraciones. |
-| Reproducibilidad en Neon | En riesgo | El único flujo que funciona es `create_all` (modelos) + `stamp head`, que esconde el bug. Un `upgrade head` real en Neon desde vacío fallaría igual si se corre sin `create_all` previo. |
+| `alembic upgrade head` desde BD vacía | **REPRODUCIBLE (P2)** | La migración inicial `c833a3129266` ahora es un **baseline auténtico** que materializa el schema del punto de partida (16 tablas base + índices). La cadena completa `upgrade head` corre desde BD vacía sin `create_all` previo. |
+| Reproducibilidad en Neon | **OK** | `alembic upgrade head` desde vacío es posible en cualquier motor. En Neon se sigue usando el flujo `sync_schema()` (create_all + current==head), pero ya no esconde un bug: la cadena completa es válida y verificada. |
 | Ramas / heads | **OK** | Cadena lineal de 14 migraciones, single head `ce7d1e2f3a5b` (termina en `ce7d1e2f3a5b`). `alembic current` sobre Neon reporta head: sin pendientes ni divergencias. |
 | Migraciones con data de usuario | **OK** | 0 `op.execute` / inserts / updates en todo `alembic/`. Las 3 señaladas en el plan (`49a240f0fc25`, `c9d8e7f6a5b4`, `b7e3a1d2c4f5`) son DDL puro; no tocan filas sensibles. |
 | Updates legacy sin migración | **OK** | El prefijo "AUTOPASS " se normaliza en tiempo de lectura (`core/normalize.py:7`, `report_repository.py:59`, `reservation_repository.py:183`), no con operaciones manuales de datos. Los `scripts/_*.py` son tooling de refactor (A2/A3), no migraciones. |
@@ -20,7 +20,7 @@
 | Duplicado de init/seed | **OK** | `scripts/init_db.py` no existe (plan desactualizado). Existe `init_db.py` (raíz) que delega el seeding en `core/seed.py`. Un solo orquestador de seed. |
 | **Consistencia models ↔ migraciones** | **DEFECTUOSO → RESUELTO (P1)** | `init_db.py:migrate_db()` hacía `ALTER TABLE` manuales (columnas `is_blocked`, `capacidad_motos`, etc.) sin equivalente Alembic — dos fuentes de verdad del esquema. **Eliminado:** el esquema lo define solo `create_all` de modelos dentro de `sync_schema()`. |
 
-**Nivel de riesgo general: MEDIO-ALTO por operación** — no hay pérdida de datos hoy (las migraciones son DDL puro) y el arranque en prod funciona, pero la verdad del esquema está dividida entre 3 mecanismos (modelos via `create_all`, migraciones Alembic parciales, y ALTERs manuales en `init_db.py`). El `upgrade head` no es reproducible desde cero, que es el criterio de aceptación del plan.
+**Nivel de riesgo general: BAJO** — el `upgrade head` es reproducible desde cero (P2), las migraciones son DDL puro sin data de usuario, `DATABASE_URL` dev/prod está saneada, y el arranque en prod usa un único flujo (`sync_schema`). Pendiente menor: custodia de CI para autogenerate (P3, opcional).
 
 ---
 
@@ -47,11 +47,13 @@ sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: user_
 
 > **Actualización (P1 aplicada):** ambos flujos se reemplazaron por `sync_schema()` (`core/database.py`) — flujo único `create_all` + Alembic al head con warning explícito si la cadena no es reproducible. Ver §4.1.
 
-**Riesgo:** cualquier entorno nuevo que ejecute `alembic upgrade head` sin `create_all` previo (CI/CD, instancia adicional, sandbox) falla; peor, si se intentara remover el fallback, el arranque se rompería. Un `upgrade head` correcto desde vacío es imposible hoy.
+> **Actualización (P2 aplicada, 2026-09-27):** `c833a3129266_initial_schema.py` ya NO es `pass`: ahora crea el schema del punto de partida (16 tablas base: `users`, `vehicles`, `points_log`, `promotions`, `coupons`, `reservations`, `parking_aforo`, `settings`, `parking_branches`, `parking_cameras`, `parking_floors`, `access_logs`, `support_tickets`, `user_notifications` + sus índices). Se ajustó `d4f7c8e2a190` (batch mode + FK con nombre obligatorio para SQLite) y `e6f7a8b9c0d1` (columnas de reservas `nullable`, sin `server_default`, alineadas al modelo). **Verificado en sandbox:** BD vacía → `alembic upgrade head` → EXIT 0, 18 tablas, schema final **idéntico** a `Base.metadata.create_all()` (0 diffs orden-insensible). Ver §4.2.
 
-**Recomendación (para el fix):**
-1. Materializar un **baseline real** en Alembic: o bien generar `c833a3129266` con el schema completo del punto de partida (historizado), o —más simple y seguro para este repo— usar el patrón `init_db` actual + `alembic stamp` como único flujo documentado, y bloquear el `upgrade` salvo migraciones incrementales.
-2. Si se quiere reproducibilidad real, configurar Alembic para comparar contra `Base.metadata` (`CHECK_TYPE/autogenerate` en CI) en vez de depender de `create_all` silencioso.
+**Riesgo:** (SUPERADO en P2) — cualquier entorno nuevo puede ejecutar `alembic upgrade head` desde vacío sin depender de `create_all` ni del fallback `stamp`.
+
+**Recomendación (para el fix) — IMPLEMENTADA en P2 (§4.2):**
+1. **Materializar un baseline real en Alembic:** generado `c833a3129266` con el schema completo del punto de partida (historizado). Opción "más simple de stamp" descartada: se priorizó reproducibilidad real.
+2. Reproducibilidad garantizada: la cadena `upgrade head` desde vacío produce el mismo schema que `create_all` (comparado en sandbox). Queda opcional configurar CI con `--check-type`/autogenerate como custodia extra (P3).
 
 ### A4.2 — `alembic history/current`: local vs Neon — **[OK]**
 
@@ -87,11 +89,12 @@ Grep sobre `alembic/versions/*.py` de `op.execute|sa.table|insert|update|delete|
 - `.env` real (productive) = `postgresql://…neon.tech/neondb…` (Neon con `sslmode=require&channel_binding=require`).
 - `core/database.py:9-15` normaliza `postgresql://` → `postgresql+psycopg://`. No se detecta SQLite en prod.
 
-### A4.6 — Duplicados de init/seed — **[OK + deuda]**
+### A4.6 — Duplicados de init/seed — **[OK — deuda liquidada]**
 
 - `scripts/init_db.py`: **no existe** (el plan A4 quedó con la ruta vieja). El inicializador real es `init_db.py` (raíz), invocado por `setup.ps1:110` y `README`.
 - Seeding: **un solo orquestador** — `core/seed.py:seed_initial_data()`, llamado por `init_db.py:seed_data()`. Sin duplicación.
 - **Deuda RESUELTA en P1:** los `ALTER TABLE … ADD COLUMN` manuales de `init_db.py:migrate_db()` (que definían columnas sin equivalente Alembic como `is_blocked` en `users` o `capacidad_motos` en aforo) fueron **eliminados**. El esquema lo define una sola fuente: los modelos vía `create_all` dentro de `sync_schema()`.
+- **Deuda de seed RESUELTA en P2 (2026-09-27):** eliminados los 2 "parches" de datos de `core/seed.py` — (a) `else` de aforo global con `getattr(..., None)` para columnas viejas (`capacidad_motos`, `capacidad_camionetas`, `capacidad_reservas`) y (b) `else` de sucursales que hacía `update()` masivo de `logo_url` + coords por nombre. El `seed` ahora solo inserta datos maestros puros (las columnas ya existen por schema); sin data-fixes disfrazados de seed.
 
 ---
 
@@ -99,12 +102,12 @@ Grep sobre `alembic/versions/*.py` de `op.execute|sa.table|insert|update|delete|
 
 | Ítem del criterio | Estado |
 |---|---|
-| `upgrade head` verde desde BD vacía en ambos motores | **[x] CORREGIDO (P1)** — flujo único `create_all` + `alembic current == head`; verificado en sandbox SQLite (19 tablas + head) |
+| `upgrade head` verde desde BD vacía en ambos motores | **[x] CORREGIDO (P2)** — baseline real en `c833a3129266`; verificado en sandbox SQLite: `upgrade head` EXIT 0 + schema idéntico a `create_all` (18 tablas, 0 diffs) + `current == head` |
 | Lista de migraciones pendientes en Neon | Encontrada: **ninguna** (current = head) |
 | Migraciones con data de usuario idempotentes y seguras | [x] Sí — DDL puro |
 | Updates legacy cubiertos por migración | [x] Sí — normalización en lectura / tooling fuera de runtime |
 | `DATABASE_URL` dev=SQLite, prod≠SQLite | [x] Sí |
-| Seeds unificados | [x] Sí (deuda de `init_db.py:migrate_db` + parches en seed eliminada en P1) |
+| Seeds unificados | [x] Sí — `init_db.py:migrate_db` eliminado (P1) y los 2 parches de `core/seed.py` eliminados (P2); seed solo datos maestros |
 
 ---
 
@@ -115,7 +118,13 @@ Grep sobre `alembic/versions/*.py` de `op.execute|sa.table|insert|update|delete|
    - `main.py`: el arranque usa `sync_schema()` (antes: `upgrade` + fallback `stamp` + `init_db()` duplicado).
    - `init_db.py`: eliminado `migrate_db()` (los ALTERs manuales paralelos: `is_blocked`, `capacidad_motos`, etc.) y su llamada; ya no hay segunda fuente de definición de columnas.
    - **Verificado:** SQLite vacía → `init_db.py` → 19 tablas completas (incl. `is_blocked`, `ticket_id`) + `alembic current == head`. `pytest tests` → 152 passed.
-2. **[P2]** Reproducibilidad **real** de Alembic desde cero: generar un baseline auténtico para `c833a3129266` (schema del punto de partida) si se quiere `upgrade head` sin `create_all` previo. Por ahora el flujo documentado y soportado es `create_all` + `stamp/current==head`.
+2. **[P2] APLICADO — Reproducibilidad real de Alembic desde cero (baseline auténtico + deuda de seed).**
+   - `alembic/versions/c833a3129266_initial_schema.py`: de `pass` a **baseline real** con el schema del punto de partida (16 tablas base + índices). El criterio: el resultado final de `upgrade head` debe ser idéntico al `create_all` actual de los modelos.
+   - `alembic/versions/d4f7c8e2a190_add_ticket_id_and_user_response.py`: convertido a `batch_alter_table` con FK nombrada (SQLite no soporta `op.add_column` con FK directa).
+   - `alembic/versions/e6f7a8b9c0d1_add_reservation_spots_to_aforo_and_floors.py`: columnas de reservas `nullable=True` sin `server_default`, alineadas al modelo (`default` a nivel ORM).
+   - `core/seed.py`: eliminados los 2 parches de datos (aforo `getattr` legacy y `update()` masivo de sucursales); seed = solo datos maestros.
+   - **Verificado (sandbox SQLite):** BD vacía → `alembic upgrade head` → EXIT 0, 18 tablas; schema final comparado contra `Base.metadata.create_all()` → **0 diffs** (nombre+type+nullable por tabla, orden-insensible); `alembic current == head`; `sync_schema()` sigue OK.
+   - **Nota de compatibilidad:** la cadena final es idéntica al `create_all`; una BD ya creada por `create_all` y sellada en head no necesita re-ejecución de migraciones. El baseline NO altera tablas/columnas existentes en prod.
 3. **[P3]** Agregar a CI (cuando se habilite `ci.yml`) un paso de "BD vacía → `init_db` → `alembic current` == head → pytest" que atrape este tipo de regresión.
 
 ---

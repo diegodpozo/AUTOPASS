@@ -107,17 +107,6 @@ def seed_initial_data(db: Session):
             ultima_actualizacion=datetime.datetime.now().isoformat(),
             sucursal=None
         ))
-    else:
-        # PARCHE PARA BASES EXISTENTES SIN COLUMNAS
-        if getattr(aforo, 'capacidad_motos', None) is None:
-            aforo.capacidad_motos = 10
-            aforo.ocupacion_motos = 0
-        if getattr(aforo, 'capacidad_camionetas', None) is None:
-            aforo.capacidad_camionetas = 5
-            aforo.ocupacion_camionetas = 0
-        if getattr(aforo, 'capacidad_reservas', None) is None:
-            aforo.capacidad_reservas = 5
-            aforo.ocupacion_reservas = 0
 
     # 3. TARIFAS GLOBALES
     for clave, valor in DEFAULT_PRICES.items():
@@ -142,17 +131,6 @@ def seed_initial_data(db: Session):
         for s in red_inicial:
             logger.info(f"Agregando sucursal: {s['nombre']}")
             db.add(models.ParkingBranch(**s, logo_url="/static/images/logo.png"))
-    else:
-        # PARCHES PARA DATOS EXISTENTES
-        db.query(models.ParkingBranch).filter(models.ParkingBranch.logo_url == None).update({models.ParkingBranch.logo_url: "/static/images/logo.png"})
-        coords_patch = {
-            'AUTOPASS Central': (-34.5888, -58.3900),
-            'AUTOPASS Ituzaingó': (-34.6585, -58.6685),
-            'AUTOPASS Castelar': (-34.6485, -58.6350),
-            'AUTOPASS Morón': (-34.6508, -58.6228)
-        }
-        for nombre, (lat, lng) in coords_patch.items():
-            db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == nombre, models.ParkingBranch.latitude == None).update({models.ParkingBranch.latitude: lat, models.ParkingBranch.longitude: lng})
 
     db.commit()
     logger.info("Seeding completado.")
