@@ -40,16 +40,19 @@ class AccessRepository:
         )
 
     @staticmethod
-    def get_entry_for_reserva(db: Session, reserva_id: int) -> models.AccessLog:
-        """OBTIENE EL PRIMER REGISTRO DE INGRESO VINCULADO A UNA RESERVA."""
-        return (
-            db.query(models.AccessLog)
-            .filter(
-                models.AccessLog.reserva_id == reserva_id,
-                models.AccessLog.tipo_evento == AccessEventType.ENTRADA
-            )
-            .first()
-        )
+    def get_reserva_ids_with_entry(db: Session, reserva_ids) -> set:
+        """IDS DE RESERVAS QUE TIENEN ALGUN INGRESO FISICO.
+
+        Alternativa batch a un get_entry_for_reserva por fila (patron N+1
+        eliminado en rutas A5): 1 query total en vez de 1 query por reserva.
+        """
+        if not reserva_ids:
+            return set()
+        rows = db.query(models.AccessLog.reserva_id).filter(
+            models.AccessLog.reserva_id.in_(list(reserva_ids)),
+            models.AccessLog.tipo_evento == AccessEventType.ENTRADA
+        ).all()
+        return {row[0] for row in rows}
 
     @staticmethod
     def get_en_predio_ids(db: Session, reserva_ids) -> set:

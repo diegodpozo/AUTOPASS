@@ -1,12 +1,12 @@
 # Auditoría de Rendimiento — A5 (profiling con volumen sintético)
 
-**Estado:** HECHO (2026-09-27, CERRADA ✓) — profiling ejecutado con volumen
-sintético (SQLite sandbox), 2 índices de cobertura aplicados vía migración
-Alembic, hot spot principal resuello (217s → 1.86s). N+1 de código restantes
-quedan **anotados** como pendientes P1/P2 (sección 6).
+**Estado:** HECHO (2026-09-27, CERRADA ✓) — profiling con volumen sintético
+corregido y medido. Hot spot O(N²) resuelto (217s → 1.86s) vía índice compuesto;
+**pendientes P1 remediados** (historial de accesos con límite+dedupe, cleanup con
+batch) y anotados en §6.
 
-**Fecha:** 2026-09-24 (remediación base) + 2026-09-27 (profiling con volumen) ·
-**Suite:** 695 passed · **Migración:** `cdb7d130c856` (2 índices sobre `access_logs`)
+**Fecha:** 2026-09-24 (remediación base) + 2026-09-27 (profiling + P1 con volumen) ·
+**Suite:** 700 passed · **Migración:** `cdb7d130c856` (2 índices sobre `access_logs`)
 
 ---
 
@@ -95,8 +95,8 @@ hace exactamente eso) y sólo consultar el primer acceso por reserva saliente.
 
 | # | Prioridad | Hallazgo | Código | Recomendación |
 |---|---|---|---|---|
-| P1 | Media | `GET /v1/reports/access` **explota**: `access_logs_history` no pagina y luego `get_by_patentes` arma `IN (60k patentes)` | `report_repository.py:369` / `report_service.py:222` | Paginar el historial (página de `access_logs`, p. ej. 500) y resolver vehículos/users con los patentes de esa página. En Postgres el IN de 60k bordea el límite de 65535 params. |
-| P1 | Media | N+1 cleanup de vencidas persistente (1 query/reserva) | `reservation_service.py:95` | Batch con `get_en_predio_ids` + primer acceso agrupado por reserva. |
+| P1 | — | ~~`GET /v1/reports/access` explota: `access_logs_history` no pagina y luego `get_by_patentes` arma `IN (60k patentes)`~~ | `report_repository.py:369` / `report_service.py:222` | **REMEDIADO (2026-09-27, v9.34.48):** límite server-side (`limit`, default 300) en `access_logs_history` + dedupe de patentes (`dict.fromkeys`) previo al `IN`. Mantiene el contrato array del front. Medido post-fix: 200 OK, **104ms, 4 queries (vs. crash SQLite / IN de 60k)**, sin límite el IN de Postgres bordea 65535 params. |
+| P1 | — | ~~N+1 cleanup de vencidas persistente (1 query/reserva)~~ | `reservation_service.py:82` / `worker_service.py:207` | **REMEDIADO (2026-09-27, v9.34.48):** `AccessRepository.get_reserva_ids_with_entry` (batch, 1 query) reemplaza `get_entry_for_reserva` por fila en `cleanup_overdue_reservations` y `_process_auto_cancellations`; método por-fila eliminado (DRY). Medido con 2.500 vencidas: **4 queries / 179ms (vs. 2.003 queries / 1.314ms pre-fix)**. |
 | P2 | Baja | Broadcast WS GLOBAL sin caché (per-sucursal en cada push) | `status.py::_get_global_status` | Reusar resultado cacheado de branches/ocupación global (TTL 1-3s). |
 | P2 | Baja | `ix_access_logs_id` desfase preexistente modelo↔alembic | `models/parking.py:8` vs `c833` | La migración inicial no crea el índice del PK que declara el modelo (`index=True`). Pre-existente a esta ronda; alinearlo en próxima migración si se toca el modelo. |
 
@@ -105,9 +105,18 @@ hace exactamente eso) y sólo consultar el primer acceso por reserva saliente.
 - Migración `cdb7d130c856` reproducible desde BD vacía (`alembic upgrade head`).
 - Paridad modelo↔create_all: OK para los 2 índices nuevos (el único desfase
   restante es `ix_access_logs_id`, pre-existente, ver §6 P2).
-- Suite completa en verde: **695 passed** (sección 8 del informe base / suite ronda 2026-09-27).
+- Suite completa en verde: **700 passed** (695 base + 5 regresión P1 en
+  `tests/test_report_access_p1.py`), 7 warnings.
+- Medición POST-P1 (2026-09-27, misma DB de volumen sintético):
+
+| Fix | Antes | Después |
+|---|---|---|
+| `GET /v1/reports/access` | **CRASH** (SQLite `too many SQL variables`, IN 60k) | **200, 104ms, 4 queries**, 300 items + patentes deduped |
+| `cleanup_overdue_reservations` (2.500 vencidas) | 2.003 queries / 1.314ms | **4 queries / 179ms** |
+| `_process_auto_cancellations` (worker) | N+1 por reserva | 1 query batch `IN` |
+
 - Query-count por endpoint documentado en §2; N+1 detectados anotados (§§4-6).
 
 **Criterio A5 cumplido:** reporte con tiempos y query-count por endpoint ✓ ·
-sin N+1 de listado sin anotar ✓ (todos anotados y priorizados) · hot spot de
-agregados corregido y medido ✓.
+sin N+1 de listado sin anotar ✓ (todos anotados y priorizados; los P1 ya
+remediados y medidos) · hot spot de agregados corregido y medido ✓.

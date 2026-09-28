@@ -212,12 +212,13 @@ class WorkerService:
 
         candidatas = ReservationRepository.get_unpaid_overdue(db, fmt_grace)
 
+        # BATCH: una sola query con todos los ids (rutas A5) en vez de 1 query por reserva
+        ingresaron = AccessRepository.get_reserva_ids_with_entry(db, [res.id for res in candidatas])
+
         for res in candidatas:
             try:
                 # VERIFICAR SI EL VEHICULO INGRESO
-                entry = AccessRepository.get_entry_for_reserva(db, res.id)
-
-                if entry:
+                if res.id in ingresaron:
                     continue  # YA INGRESO, NO CANCELAR
 
                 # CANCELAR LA RESERVA

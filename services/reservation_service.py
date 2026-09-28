@@ -90,10 +90,11 @@ class ReservationService(ReservationPaymentsMixin):
         
         if overdue:
             logger.info(f"Cancelando {len(overdue)} reservas impagas vencidas. Cutoff: {cutoff_str}")
+            # BATCH: una sola query con todos los ids (rutas A5) en vez de 1 query por reserva
+            ingresaron = AccessRepository.get_reserva_ids_with_entry(db, [r.id for r in overdue])
             for r in overdue:
                 # SI EL VEHICULO YA INGRESO AL PREDIO CON SU RESERVA, NO CANCELAR
-                entry = AccessRepository.get_entry_for_reserva(db, r.id)
-                if entry:
+                if r.id in ingresaron:
                     continue
                 r.estado_reserva = ReservationStatus.CANCELADA
                 r.estado_pago = PaymentStatus.FALLIDO

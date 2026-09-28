@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 import models
 from core.database import get_db
@@ -56,11 +56,12 @@ def get_payment_history(
 @router.get("/access")
 def get_reports_access(
     patente: str = None,
+    limit: int = Query(300, ge=1, le=1000),
     db: Session = Depends(get_db),
     staff: models.User = Depends(get_operational_user)
 ):
     """Consulta el historial de eventos ALPR delegando en ReportService."""
-    return ReportService.get_access_logs(db=db, staff=staff, patente=patente)
+    return ReportService.get_access_logs(db=db, staff=staff, patente=patente, limit=limit)
 
 @router.get("/ocr-stats")
 def get_ocr_stats(

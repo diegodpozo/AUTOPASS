@@ -143,8 +143,10 @@ Garantizar que Alembic `upgrade head` sea reproducible de cero en Neon y SQLite,
 > **Estado: HECHO (2026-09-27, CERRADA ✓)** — profiling con volumen sintético
 > (SQLite sandbox + hook `before_cursor_execute`). Hot spot O(N²) de
 > `financial-summary` corregido vía índice compuesto (`cdb7d130c856`): 217.3s → 1.86s.
-> N+1 restantes (cleanup de vencidas, fidelización, historial de accesos sin
-> paginar, broadcast WS global) quedaron **anotados y priorizados** en §6 del informe.
+> **Pendientes P1 remediados (2026-09-27):** historial de accesos con límite
+> server-side + dedupe (crash de IN 60k → 200 OK/104ms) y cleanup de vencidas
+> en batch (`get_reserva_ids_with_entry`, 2.003 queries → 4). Restan P2 anotados
+> en §6 del informe.
 
 ### Objetivo
 Detectar N+1 y latencias en los agregados más usados del dashboard admin y portal.
@@ -315,4 +317,4 @@ grep/ls por capa, revisión manual del árbol.
 6. ~~**A8/A9** según disponibilidad.~~ — **HECHO** (A8 2026-09-22; A9 2026-09-22 + verificación automática 2026-09-27).
 7. ~~**A5** Rendimiento (profiling).~~ — **HECHO (2026-09-27, CERRADA ✓)** — profiling con volumen sintético (SQLite sandbox + hook `before_cursor_execute`): O(N²) de `financial-summary` resuelto (217s→1.9s), cleanup de vencidas acelerado con índice, N+1 anotados y priorizados. Mediciones con volumen real de Neon quedan como pendiente explícito del informe.
 
-> Cada auditoría se marca como **HECHO** al dejar su informe en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta"). **A1–A9 cumplidas (todas CERRADAS).** Pendientes de remediación anotados: A5-P1 (paginado de historial de accesos, batch cleanup de vencidas) y A5-P2 (caché broadcast WS) en `AUDITORIA_RENDIMIENTO.md` §6.
+> Cada auditoría se marca como **HECHO** al dejar su informe en `Info proyecto/` y actualizar este `PLAN_AUDITORIAS.md` (estado → "resuelta"). **A1–A9 cumplidas (todas CERRADAS).** Pendientes P1 de A5 remediados (2026-09-27); restan **A5-P2** (paginado server-side del historial si el front crece, caché broadcast WS) y **A5-P2** del desfase `ix_access_logs_id`, anotados en `AUDITORIA_RENDIMIENTO.md` §6.

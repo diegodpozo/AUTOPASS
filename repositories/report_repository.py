@@ -366,14 +366,19 @@ class ReportRepository:
         return results
 
     @staticmethod
-    def access_logs_history(db: Session, sucursal=None, patente=None) -> list:
-        """HISTORIAL DE ACCESOS ALPR FILTRADO POR SUCURSAL Y PATENTE OPCIONAL."""
+    def access_logs_history(db: Session, sucursal=None, patente=None, limit: int = 300) -> list:
+        """HISTORIAL DE ACCESOS ALPR FILTRADO POR SUCURSAL Y PATENTE OPCIONAL.
+
+        Limite server-side (default 300): evita traer la tabla completa en el
+        dashboard operativo (rutas A5) — el `IN ()` de patentes resultante
+        explota en SQLite (>999 vars) y bordea el limite de Postgres (65535).
+        """
         q = db.query(models.AccessLog)
         if sucursal:
             q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
         if patente:
             q = q.filter(models.AccessLog.patente_detectada.like(f"%{patente.upper()}%"))
-        return q.order_by(models.AccessLog.id.desc()).all()
+        return q.order_by(models.AccessLog.id.desc()).limit(limit).all()
 
     @staticmethod
     def logs_with_ocr(db: Session, sucursal=None, limit=100, ascending=False) -> list:

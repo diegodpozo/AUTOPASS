@@ -213,13 +213,13 @@ class ReportService:
         return [{"id": r.id, "fecha_pago": r.fecha, "patente_detectada": r.patente, "costo_estadia": r.monto, "tipo": r.tipo, "metodo": r.metodo} for r in results]
 
     @classmethod
-    def get_access_logs(cls, db: Session, staff: models.User, patente: str = None) -> list:
+    def get_access_logs(cls, db: Session, staff: models.User, patente: str = None, limit: int = 300) -> list:
         """Obtiene historial de accesos ALPR filtrado por sucursal y patente opcional."""
         sucursal = staff.sucursal if str(staff.rol) != UserRole.ADMIN.value else None
-        logs = ReportRepository.access_logs_history(db, sucursal=sucursal, patente=patente)
+        logs = ReportRepository.access_logs_history(db, sucursal=sucursal, patente=patente, limit=limit)
 
         # RESOLVER USUARIO (REGISTRADO O INVITADO) POR PATENTE
-        patentes = [l.patente_detectada for l in logs if l.patente_detectada]
+        patentes = list(dict.fromkeys(l.patente_detectada for l in logs if l.patente_detectada))
         user_by_plate = {}
         if patentes:
             vehicles = VehicleRepository.get_by_patentes(db, patentes)
