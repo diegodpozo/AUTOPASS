@@ -1,4 +1,4 @@
-# A9 AUDITORIA_XSS - Scan estatico de innerHTML/insertAdjacentHTML en static/js.
+# A9 XSS (ver Info proyecto/AUDITORIAS.md). Scan estatico de innerHTML/insertAdjacentHTML en static/js.
 #
 # Reproduce la metrica del informe A9 §1 de forma automatizada:
 #   1. Total de ocurrencias innerHTML=/insertAdjacentHTML(

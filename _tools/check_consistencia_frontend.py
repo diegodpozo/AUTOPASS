@@ -1,4 +1,4 @@
-"""A6 AUDITORIA_CONSISTENCIA_FRONT - Extractor de URLs del front vs app.openapi().
+"""A6 Consistencia Frontend/Backend (ver Info proyecto/AUDITORIAS.md). Extractor de URLs del front vs app.openapi().
 
 Cruza todas las rutas /v1/... citadas en `static/js/**` y `templates/**` contra los
 paths registrados en FastAPI (`app.openapi()['paths']`), detectando rutas que el

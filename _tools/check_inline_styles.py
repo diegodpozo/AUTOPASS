@@ -1,4 +1,4 @@
-"""P3 AUDITORIA_COMPONENTES - Guard de estilos inline en templates.
+"""P3 Componentes/DRY (ver Info proyecto/AUDITORIAS.md §T4). Guard de estilos inline en templates.
 
 Falla si:
   * un template existente SUPERA el conteo registrado en el baseline (regresión);
