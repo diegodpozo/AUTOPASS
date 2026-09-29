@@ -82,60 +82,60 @@ body:not(.role-local_admin) .local-admin-only {
     }
 
     .card-header-premium {
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 16px !important;
-        padding: 18px 15px !important;
-        text-align: center !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 18px 15px;
+        text-align: center;
     }
 
     .card-header-premium .header-info-group {
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-        margin-left: 0 !important;
-        flex: none !important;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        margin-left: 0;
+        flex: none;
     }
 
     .card-header-premium .header-text {
-        text-align: center !important;
+        text-align: center;
     }
 
     .card-header-premium .header-text h3 {
-        text-align: center !important;
-        font-size: 0.95rem !important;
-        letter-spacing: 1px !important;
+        text-align: center;
+        font-size: 0.95rem;
+        letter-spacing: 1px;
     }
 
     .card-header-premium .header-actions {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        width: 100% !important;
-        gap: 10px !important;
-        box-sizing: border-box !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        gap: 10px;
+        box-sizing: border-box;
     }
 
     .header-actions .btn,
     .header-actions .btn--premium,
     .header-actions .filter-group-premium,
     .header-actions .search-box-premium {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        justify-content: center !important;
-        display: flex !important;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        justify-content: center;
+        display: flex;
     }
 
     .search-box-premium input,
     .filter-group-premium select {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        text-align: center !important;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        text-align: center;
     }
 
     .btn-new-user-mobile-fix {
@@ -144,14 +144,14 @@ body:not(.role-local_admin) .local-admin-only {
     }
 
     .modal-footer-buttons {
-        flex-direction: column-reverse !important;
-        width: 100% !important;
-        gap: 10px !important;
+        flex-direction: column-reverse;
+        width: 100%;
+        gap: 10px;
     }
 
     .modal-footer-buttons .btn {
-        width: 100% !important;
-        justify-content: center !important;
+        width: 100%;
+        justify-content: center;
     }
 }
 

@@ -1,7 +1,7 @@
 /* --- BADGES BASE --- */
 .balance-badge, .points-badge {
     padding: 8px 16px; border-radius: var(--radius-full); display: flex; align-items: center; gap: 10px;
-    transition: all 0.3s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .balance-badge:hover, .points-badge:hover { transform: translateY(-1px); }
 

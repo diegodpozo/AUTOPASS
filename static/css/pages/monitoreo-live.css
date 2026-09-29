@@ -2,7 +2,7 @@
     body.monitoreo-body #vt-fab,
     body.monitoreo-body #vt-modal,
     body.monitoreo-body #pwa-install-btn {
-        display: none !important;
+        display: none;
     }
 
     /* --- CCTV GRID LAYOUT --- */
@@ -203,7 +203,7 @@
         justify-content: center;
         cursor: pointer;
         font-size: 0.9rem;
-        transition: all 0.2s;
+        transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
 
     .cctv-btn:hover {

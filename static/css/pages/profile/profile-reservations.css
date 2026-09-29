@@ -45,7 +45,7 @@
 
 .select-wrapper-premium:not(:has(select))::after,
 .select-wrapper-premium:has(input)::after {
-    display: none !important;
+    display: none;
 }
 
 .select-wrapper-premium select {
@@ -71,14 +71,14 @@
 .input-premium {
     background: #111;
     border: 1.5px solid #222;
-    color: #fff !important;
-    padding: 12px 15px !important;
+    color: #fff;
+    padding: 12px 15px;
     border-radius: var(--radius-md);
-    font-size: 0.9rem !important;
+    font-size: 0.9rem;
     font-weight: 600;
     transition: 0.3s;
     width: 100%;
-    text-align: center !important;
+    text-align: center;
     height: var(--control-height-md);
     box-sizing: border-box;
 }
@@ -91,14 +91,14 @@
 .input-premium-readonly {
     background: rgba(255,255,255,0.03);
     border: 1.5px solid #1a1a1a;
-    color: #fff !important;
-    padding: 12px 15px !important;
+    color: #fff;
+    padding: 12px 15px;
     border-radius: 12px;
-    font-size: 0.9rem !important;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: default;
     width: 100%;
-    text-align: center !important;
+    text-align: center;
     height: 48px;
     box-sizing: border-box;
 }
@@ -805,7 +805,7 @@
 }
 
 #ticket-to-capture .ticket-financial-grid {
-    gap: 8px 16px !important;
+    gap: 8px 16px;
 }
 
 #ticket-to-capture .ticket-total-row {
@@ -1058,7 +1058,7 @@
     gap: 4px;
 }
 .ticket-financial-grid {
-    gap: 12px !important;
+    gap: 12px;
 }
 .ticket-total-row {
     display: flex;
@@ -1166,7 +1166,6 @@
 @media (max-width: 640px) {
     .history-filters-premium {
         display: flex;
-        flex-wrap: nowrap !important;
         padding: 12px 10px;
         gap: 8px;
         justify-content: center;
@@ -1400,12 +1399,12 @@
         gap: 10px 12px;
         padding: 14px 15px;
     }
-    .hist-amount-info {
+    .historial-item .hist-amount-info {
         grid-column: span 2;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        margin-right: 0 !important;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-right: 0;
         background: rgba(255, 255, 255, 0.02);
         padding: 8px 12px;
         border-radius: 8px;
@@ -1757,8 +1756,8 @@
 /* Form directo (quick add) */
 .form-compact-premium.fg-bare { padding: 0; background: transparent; border: none; box-shadow: none; }
 .input-wrapper-premium { width: 100%; position: relative; }
-.input-premium-sm.fg-sm { padding: 8px 10px !important; width: 100%; text-align: center; }
-.select-wrapper-premium select.fg-pad-left { padding-left: 35px !important; text-align: center; }
+.input-premium-sm.fg-sm { padding: 8px 10px; width: 100%; text-align: center; }
+.select-wrapper-premium select.fg-pad-left { padding-left: 35px; text-align: center; }
 .btn.fg-continue { padding: 8px 25px; font-size: 0.75rem; letter-spacing: 0.5px; }
 
 /* Contenedor del form (fila) */

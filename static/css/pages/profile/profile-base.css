@@ -24,7 +24,7 @@
 }
 
 .edit-mode .input-premium-sm {
-    width: 220px !important; /* Compacto como pediste */
+    width: 220px; /* Compacto como pediste */
 }
 
 .display-mode {
@@ -169,9 +169,9 @@
 /* ACCOUNT IDENTITY */
 .account-identity-card {
     grid-column: 1 / -1;
-    padding: 35px !important;
-    background: linear-gradient(135deg, #111 0%, #050505 100%) !important;
-    border: 1px solid rgba(223, 186, 107, 0.15) !important;
+    padding: 35px;
+    background: linear-gradient(135deg, #111 0%, #050505 100%);
+    border: 1px solid rgba(223, 186, 107, 0.15);
 }
 
 .profile-header-premium {
@@ -209,7 +209,7 @@
 }
 
 .profile-info-main p {
-    color: var(--dorado) !important;
+    color: var(--dorado);
     opacity: 0.7;
     font-weight: 700;
     text-transform: uppercase;
@@ -293,23 +293,23 @@
 }
 
 .input-premium-sm {
-    background: #000 !important;
-    border: 1px solid #333 !important;
-    color: #fff !important;
-    padding: 10px 15px !important;
-    font-size: 0.85rem !important;
-    border-radius: var(--radius-sm) !important;
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 10px 15px;
+    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
     width: 100%;
     transition: 0.3s;
 }
 
 .input-premium-sm:focus {
-    border-color: var(--dorado) !important;
-    box-shadow: 0 0 15px rgba(223, 186, 107, 0.1) !important;
+    border-color: var(--dorado);
+    box-shadow: 0 0 15px rgba(223, 186, 107, 0.1);
 }
 
 .input-with-icon .input-premium-sm {
-    padding-left: 42px !important;
+    padding-left: 42px;
 }
 
 .edit-mode .input-with-icon {
@@ -346,7 +346,7 @@
 
 .personal-info-container .text-label {
     font-size: 0.65rem;
-    color: var(--dorado) !important;
+    color: var(--dorado);
     text-transform: uppercase;
     font-weight: 800;
     margin-bottom: 6px;
@@ -356,7 +356,7 @@
 
 .personal-info-container .text-bold {
     font-size: 1.05rem;
-    color: #fff !important;
+    color: #fff;
     font-weight: 600;
 }
 
@@ -418,8 +418,8 @@
 }
 
 .form-security-premium .input-premium-sm {
-    text-align: left !important;
-    padding-left: 42px !important;
+    text-align: left;
+    padding-left: 42px;
 }
 
 /* TITULOS DE TARJETAS */
@@ -443,7 +443,7 @@
 
 .personal-info-container .text-label {
     font-size: 0.65rem;
-    color: var(--dorado) !important;
+    color: var(--dorado);
     text-transform: uppercase;
     font-weight: 800;
     margin-bottom: 6px;
@@ -453,7 +453,7 @@
 
 .personal-info-container .text-bold {
     font-size: 1.05rem;
-    color: #fff !important;
+    color: #fff;
     font-weight: 600;
 }
 
@@ -567,13 +567,13 @@
 }
 
 /* --- MERCADO PAGO: ESTADÍAS EN CURSO (v9.14.0) --- */
-.active-stays-card {
+.card.active-stays-card {
     max-width: 1100px;
     margin: 0 auto 40px;
     background: linear-gradient(145deg, #111 0%, #050505 100%);
-    border: 1px solid rgba(0, 158, 227, 0.18) !important;
+    border: 1px solid rgba(0, 158, 227, 0.18);
     border-radius: 24px;
-    padding: 0 !important;
+    padding: 0;
     overflow: hidden;
 }
 
@@ -773,10 +773,10 @@
 }
 
 /* --- UNIFIED ACCOUNT SURFACE (v8.1.0) --- */
-.account-hub-card {
-    background: linear-gradient(145deg, #111 0%, #050505 100%) !important;
-    border: 1px solid rgba(223, 186, 107, 0.15) !important;
-    padding: 0 !important;
+.card.account-hub-card {
+    background: linear-gradient(145deg, #111 0%, #050505 100%);
+    border: 1px solid rgba(223, 186, 107, 0.15);
+    padding: 0;
     overflow: hidden;
     border-radius: 24px;
     box-shadow: 0 25px 50px rgba(0,0,0,0.5);

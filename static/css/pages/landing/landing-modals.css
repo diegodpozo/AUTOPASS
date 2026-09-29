@@ -86,7 +86,7 @@
 /* DISEÑO RESPONSIVO Y ADAPTACIONES GLOBAL DE LANDING */
 @media (max-width: 768px) {
     .hero h1, .hero p, .leyenda-carrusel {
-        display: none !important;
+        display: none;
     }
 
     .page-hero h1 { font-size: 2.2rem; }

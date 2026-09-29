@@ -269,21 +269,21 @@
 }
 
 .rate-group:not(.editing) .input-premium {
-    background: transparent !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
-    color: var(--dorado) !important;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--dorado);
     font-weight: 900;
     cursor: default;
     text-align: center;
-    padding: 0 !important;
+    padding: 0;
     font-size: 1.4rem;
     height: auto;
 }
 
 .rate-group:not(.editing) .input-with-icon {
-    background: transparent !important;
-    border-color: transparent !important;
+    background: transparent;
+    border-color: transparent;
     justify-content: center;
     gap: 4px;
 }
@@ -325,7 +325,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     padding: 22px 20px;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .camera-card-premium:hover {
@@ -337,52 +337,52 @@
 
 #cam-actions-entrada .btn,
 #cam-actions-salida .btn {
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50% !important;
-    padding: 0 !important;
-    font-size: 0.85rem !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.3s ease !important;
-    box-shadow: none !important;
-    margin: 0 !important;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: none;
+    margin: 0;
 }
 
 #cam-actions-entrada .btn.success,
 #cam-actions-salida .btn.success {
-    background: rgba(16, 185, 129, 0.1) !important;
-    color: #10b981 !important;
-    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 #cam-actions-entrada .btn.success:hover,
 #cam-actions-salida .btn.success:hover {
-    background: #10b981 !important;
-    color: #000 !important;
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3) !important;
+    background: #10b981;
+    color: #000;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
     transform: scale(1.05);
 }
 
 #cam-actions-entrada .btn.danger,
 #cam-actions-salida .btn.danger {
-    background: rgba(244, 63, 94, 0.1) !important;
-    color: var(--danger) !important;
-    border: 1px solid rgba(244, 63, 94, 0.2) !important;
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(244, 63, 94, 0.2);
 }
 
 #cam-actions-entrada .btn.danger:hover,
 #cam-actions-salida .btn.danger:hover {
-    background: var(--danger) !important;
-    color: #fff !important;
-    box-shadow: 0 0 15px rgba(244, 63, 94, 0.3) !important;
+    background: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
     transform: scale(1.05);
 }
 
 /* DANGER ZONE REFINEMENT */
 .danger-zone-card {
-    border: 1px solid rgba(244, 63, 94, 0.2) !important;
+    border: 1px solid rgba(244, 63, 94, 0.2);
     background: linear-gradient(180deg, rgba(244, 63, 94, 0.02) 0%, transparent 100%);
 }
 
@@ -475,7 +475,7 @@
 
 @media (max-width: 768px) {
     .camera-actions-bar {
-        justify-content: center !important;
+        justify-content: center;
         width: 100%;
     }
     .camera-actions-bar .btn {
@@ -484,7 +484,7 @@
         justify-content: center;
     }
     .camera-card-actions {
-        justify-content: center !important;
+        justify-content: center;
         width: 100%;
     }
     .camera-settings-grid {
@@ -494,7 +494,7 @@
 
 @media (max-width: 640px) {
     .settings-body {
-        padding: 18px 10px !important;
+        padding: 18px 10px;
     }
     .rates-grid {
         grid-template-columns: 1fr;
@@ -509,20 +509,17 @@
         max-width: 100%;
     }
     .diag-grid-premium {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
+        grid-template-columns: 1fr;
+        gap: 16px;
     }
     .diag-card-premium {
-        padding: 20px 15px !important;
-        border-radius: 18px !important;
+        padding: 20px 15px;
+        border-radius: var(--radius-lg);
     }
     .diag-multi-info {
-        flex-wrap: wrap !important;
-        gap: 12px !important;
+        flex-wrap: wrap;
+        gap: 12px;
     }
-}
-
-@media (max-width: 640px) {
     .btn-tab-mini {
         padding: 6px 10px;
         font-size: 0.65rem;
@@ -535,11 +532,11 @@
         flex: 1 1 auto;
     }
     .modal-capacities-row {
-        flex-direction: column !important;
-        gap: 12px !important;
+        flex-direction: column;
+        gap: 12px;
     }
     .modal-capacities-row .form-group-premium {
-        width: 100% !important;
+        width: 100%;
     }
 }
 

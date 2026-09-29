@@ -97,7 +97,7 @@
 .card-header-premium .header-icon i,
 .card-header-premium .header-info-group i,
 .card-header-premium > i {
-    color: var(--dorado) !important;
+    color: var(--dorado);
     font-size: 1.1rem;
 }
 
@@ -202,18 +202,18 @@
         grid-template-columns: repeat(3, 1fr);
     }
     .finance-breakdown-row {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 640px) {
     .kpi-grid-4, .kpi-grid-3, .kpi-grid-6 {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
     .channel-body {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
+        grid-template-columns: 1fr;
+        gap: 12px;
         text-align: center;
     }
 }
@@ -398,7 +398,7 @@
 }
 
 .kpi-card.danger-light .kpi-icon i {
-    color: var(--danger) !important;
+    color: var(--danger);
 }
 
 .kpi-card.danger-light .value {

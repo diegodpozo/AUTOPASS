@@ -1,5 +1,60 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 28, 2026 - AUDITORÍA CSS AC-1 CERRADA: LOTE 3 Y LOTE 4 COMPLETOS (−326 `!important` ACUMULADOS, **0 PROPIOS**) (V9.34.51)**:
+    *   **Lote 3 (Portal de Usuario / Perfil) CERRADO (84 → 4)**:
+        *   [`profile-reservations.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-reservations.css): 22 → 4 (18 eliminados en `.riderific`: inputs `.input-premium`/`.input-premium-readonly`, `.select-wrapper-premium` flechas, grid financiero de ticket y media queries `.history-filters-premium`/`.hist-amount-info`/`.fg-sm`; 4 preservados justificados por librería QRCode: `#ticket-to-capture .qr-canvas` 120×120px).
+        *   [`profile-base.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-base.css): 25 → 0 (25 eliminados en `.input-premium-sm`, `.account-identity-card`, `.profile-info-main`, `.personal-info-container .text-label/.text-bold`, `.form-security-premium`, `.active-stays-card` y `.account-hub-card`; selectores `.card.active-stays-card`/`.card.account-hub-card` para ganar a `.card:hover` por especificidad de orden de carga sin `!important`).
+    *   **Lote 4 (Componentes y Base Global) CERRADO (53 → 11)**:
+        *   [`tables.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/components/tables.css): 23 → 0 (utilidades `.text-center`/`.justify-center`/`.table-centered`, `td .flex-col`, `.ticket-email-text`, media query card layout; `td .user-actions`/`td .actions-reveal`/`td .btn-delete-promo` por especificidad contra dashboard css).
+        *   [`forms.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/components/forms.css): propios 9 → 0 (`.input-with-icon input` padding-left, `.num-input-wrapper .input-premium`, `.input-premium.flatpickr-input` y `.input-premium--plain`; preservados 23 de tema Flatpickr).
+        *   [`typography.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/typography.css): 5 → 0 (utilidades `.text-secondary/.text-dorado/.text-danger/.text-light/.text-muted`).
+        *   [`legal.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/legal.css): 5 → 0 (`.legal-content`/`.legal-date` — blur/glass anulado por clase única).
+        *   [`style.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/style.css): 3 → 0 (`.branch-marker-logo` gana a Leaflet por orden de carga).
+        *   [`utilities.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/utilities.css): 2 → 0 (`.no-print`, `.hidden-mobile`).
+        *   [`landing-modals.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/landing/landing-modals.css): 1 → 0 y [`monitoreo-live.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/monitoreo-live.css): 1 → 0.
+        *   [`reset.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/reset.css): 4 preservados (estados `:disabled` estandarizados AC-4, justificados).
+    *   **Balance cuantitativo**: de 345 `!important` propios a **0** (−326 acumulados, **613 → 287**). Total repo 287, **todos justificados** por librerías/PWA/RBAC/AC-4 (Leaflet 134, Tour 80, Standalone 36, Flatpickr 23, QR captura 4, RBAC 4, reset AC-4 4, utilidades defensivas 2).
+    *   **Suite de pruebas**: **702 tests pasando** (0 regresiones).
+
+- **SEPTIEMBRE 27, 2026 - AUDITORÍA CSS AC-1: LOTE 2 CERRADO Y LOTE 3 AL 44% (−239 `!important` ACUMULADOS, −52 EN LA SESIÓN)**:
+    *   **Lote 2 (Dashboard Admin) CERRADO (142 → 6)**:
+        *   [`dashboard-live.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-live.css): 15 → 0 (13 eliminados en media queries de responsive mobile y 2 en `.monitor-tab-content`; reordenamiento en cascada para resolución natural por especificidad sin conflictos y optimización de 5 `transition: all` a transiciones compuestas de GPU).
+        *   Preservados en Lote 2 únicamente 4 reglas RBAC de roles (`dashboard-base.css`) y 2 utilidades de tabla (`dashboard-tables.css`).
+    *   **Lote 3 (Portal de Usuario / Perfil) avanzado al 44% (84 → 47, −37 eliminados)**:
+        *   [`profile-notifications.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-notifications.css): 5 → 0 (5 eliminados en estados `:disabled` de botones de acciones de notificación).
+        *   [`profile-points.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-points.css): 15 → 0 (15 eliminados en `.btn-add-vehicle`, `.btn-square-icon`, `.vehicle-card`, `.vehicle-actions-overlay` y media query de 640px; optimizadas 4 transiciones para GPU).
+        *   [`profile-vehicles.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-vehicles.css): 17 → 0 (17 eliminados en `.select-vehicle-type`, `.register-trigger-card.active`, media query responsive 640px e inputs de patente/marca).
+        *   Pendiente Lote 3: [`profile-reservations.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-reservations.css) (22) y [`profile-base.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-base.css) (25).
+    *   **Balance cuantitativo propio**: de 345 iniciales a 106 (−239 `!important` acumulados, reducción del ~70% en código propio). Total repo: 374 (268 librerías/PWA + 106 propios).
+    *   **Suite de pruebas**: **702 tests pasando** limpiamente (0 regresiones).
+
+- **SEPTIEMBRE 27, 2026 - AUDITORÍA CSS AC-1: LOTE 1 CERRADO Y LOTE 2 AL 89% (−187 `!important` ELIMINADOS)**:
+    *   **Lote 1 (Navegación y Layouts Base) CERRADO (66 → 1)**:
+        *   [`landing-nav.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/landing/landing-nav.css): 46 → 1 (45 eliminados en media queries de botones, links y header; 1 preservado legítimo para `#auth-user-actions.user-nav-hidden` override JS).
+        *   [`sidebar.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/layout/sidebar.css): 17 → 0 (17 eliminados en media queries de sidebar y footer).
+        *   [`header.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/layout/header.css): 3 → 0 (3 eliminados en header-left y header-icon-box).
+    *   **Lote 2 (Dashboard Admin) avanzado al 89% (142 → 21)**:
+        *   [`dashboard-settings.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-settings.css): 43 → 0 (43 eliminados en tarifas, acciones de cámaras y diagnósticos).
+        *   [`dashboard-base.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-base.css): 41 → 4 (37 eliminados en `.card-header-premium` y `.modal-footer-buttons`; 4 preservados legítimos para RBAC de roles).
+        *   [`dashboard-cards.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-cards.css): 7 → 0 (7 eliminados en `.card-header-premium` y `.kpi-grid`).
+        *   [`dashboard-tables.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-tables.css): 36 → 2 (34 eliminados en `#modal-ticket-answer`, `.row-refund` y `.btn-gold-glow`; 1 preservado `.text-danger` + 1 de resguardo).
+        *   Pendiente Lote 2: solo [`dashboard-live.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-live.css) (15 ocurrencias).
+    *   **Balance cuantitativo propio**: de 345 iniciales a 158 (−187 `!important`).
+    *   **Suite de pruebas**: **702 tests pasando** limpiamente (0 regresiones).
+
+- **SEPTIEMBRE 27, 2026 - AUDITORÍAS CSS FASE 1 CERRADAS (AC-2 / AC-4), DIAGNÓSTICO AC-1 Y CONSOLIDACIÓN DE AUDITORÍAS (V9.34.50+)**:
+    *   **Consolidación documental**: Reunificación de 17 informes de auditoría individuales en un único documento [`AUDITORIAS.md`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/Info%20proyecto/AUDITORIAS.md).
+    *   **Auditorías CSS Fase 1 CERRADAS (AC-2 y AC-4)**:
+        *   **AC-2 (Rendimiento y GPU)**: Erradicación de 103 instancias de `transition: all` sustituyéndolas por transiciones específicas (`transform`, `opacity`, `background`, `border-color`, `box-shadow`) previniendo reflows/repaints masivos.
+        *   **AC-4 (Estados interactivos y foco de teclado)**: Implementación de anillo institucional `:focus-visible` global con resplandor dorado en `reset.css` y `forms.css`, feedback táctil `:active` con `transform: scale(0.97)` en botones, y estandarización de estados `:disabled` con escala de grises al 60%.
+    *   **Auditoría CSS AC-1 (Especificidad y guerra de `!important`) - En proceso**:
+        *   Diagnóstico exhaustivo completado: 613 ocurrencias mapeadas en 26 archivos CSS.
+        *   268 justificadas por librerías externas y PWA: Leaflet (`landing-map.css`: 134), Tour overlays (80), Standalone desktop (`standalone.css`: 36), Flatpickr (`forms.css`: 18).
+        *   345 en componentes propios: causa raíz aislada en especificidad de media queries y selectores anidados (`landing-nav.css`: 46, `dashboard-settings.css`: 43, `dashboard-base.css`: 41, `dashboard-tables.css`: 36, `profile-base.css`: 25, `tables.css`: 23, `profile-reservations.css`: 22, etc.).
+        *   Plan de refactorización preparado para reducir a <30 (solo utilidades) y erradicar de componentes estructurales (`.modal-content`, `.input-premium`, `.btn`).
+    *   **Auditorías CSS pendientes**: AC-3 (PWA/Safe areas) y AC-5 (DRY/purga CSS).
+    *   **Suite de pruebas**: **702 tests pasando** limpiamente.
+
 - **SEPTIEMBRE 24, 2026 - AUTH DE NODO ALPR EN ACCESS + DRY DE HELPERS ALPR (V9.33.0 / comm 505477d)**:
     *   Cierra la deuda de diseño A1 que quedaba abierta: `validate-plate`, `exit-plate` y `validate-qr` (`routes/parking/access.py`) ahora exigen `Depends(require_alpr_node)`.
     *   Nuevo módulo compartido `core/alpr_security.py` (DRY): `is_local_or_private`, `is_trusted_alpr_node` y la dependency `require_alpr_node` — misma política que ya usaba el WS de video: si `ALPR_NODE_SECRET` está configurado exige header `X-Node-Secret` (o query `node_secret`) comparado en tiempo constante; si no hay secreto, solo red local/privada. `routes/system/video.py` deja de definir helpers propios y los importa desde ahí.

@@ -1,6 +1,6 @@
 # Auditorías de AUTOPASS — Documento Consolidado
 
-> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-27, suite **702 passed**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Pendiente explícito único: mediciones con volumen real de Neon (no disponible). Propuestas CSS AC-1–AC-5 pendientes de ejecutar.
+> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-27, suite **702 passed**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-2 y AC-4 cerradas; **AC-1 CERRADA (Lotes 1–4 completos, 0 `!important` propios, −345, quedan solo justificados por librerías/PWA/RBAC)**; AC-3 y AC-5 pendientes de ejecutar. Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
 
 Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUDITORIAS.md` y `PROPUESTA_AUDITORIAS_CSS.md` (eliminados 2026-09-27, v9.34.50). Reúne lo más importante de cada auditoría: hallazgos, remediación, verificación y herramientas reutilizables.
 
@@ -293,24 +293,31 @@ venv\Scripts\python.exe _tools\check_consistencia_frontend.py [--json | --dump-o
 
 ---
 
-## Propuestas de Auditoría CSS (AC-1 a AC-5) — PENDIENTES
+## Propuestas de Auditoría CSS (AC-1 a AC-5) — ESTADO DE EJECUCIÓN
 
-Complemento de la propuesta original (2026-09-24) para la capa CSS. Ideas detalladas en el informe original (eliminado); aquí queda la priorización con sus métricas actuales:
+Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución de Fase 1 (AC-2 y AC-4) completada el 2026-09-27. Fase 2 (AC-1 en diagnóstico y preparación de refactor):
 
-| # | Auditoría | Prioridad | Esfuerzo | Métrica actual |
-|---|---|:---:|:---:|:---:|
-| **AC-1** | Especificidad y guerra de `!important` | Alta | 1 día | **606** usos de `!important` |
-| **AC-2** | Rendimiento de renderizado, GPU y animaciones | Alta | 1–2 días | **103** `transition: all`, **44** `backdrop-filter` |
-| **AC-3** | PWA + Safe Areas (notches / isla dinámica) | Media/Alta | 1 día | Solo **1** `safe-area-inset` |
-| **AC-4** | Estados interactivos y foco de teclado | Media | 1 día | Solo **2** `:focus-visible` (el detalle A8/A8 reporta 1 en CSS de producto) |
-| **AC-5** | CSS muerto, duplicación y DRY | Media | 1 día | ~41 archivos con patrones repetidos (`::-webkit-scrollbar`, flex-center, glass) |
+| # | Auditoría | Prioridad | Esfuerzo | Estado | Métrica actual / Diagnóstico |
+|---|---|:---:|:---:|:---:|:---|
+| **AC-1** | Especificidad y guerra de `!important` | Alta | 1 día | ✅ **CERRADA** (Lotes 1–4 completos) | **287** `!important` totales restantes (de 613 iniciales, **−326 eliminados**); **0 propios** (reducidos de **345 a 0**). Todo lo restante está justificado por librerías/PWA/RBAC/AC-4: Leaflet (`landing-map.css` 134), Tour overlays (`profile-tour.css` 71 + `dashboard-admin-tour.css` 9), Standalone desktop (`standalone.css` 36), Flatpickr (`forms.css` 23), reset AC-4 (4), QR captura (`profile-reservations.css` 4), RBAC roles (`dashboard-base.css` 4), utilidades defensivas (`dashboard-tables.css` 1, `landing-nav.css` 1). |
+| **AC-2** | Rendimiento de renderizado, GPU y animaciones | Alta | 1–2 días | ✅ **CERRADA** | **0** `transition: all` (todas migradas a `transform`/`opacity`/`background`/`border-color`/`box-shadow`) |
+| **AC-3** | PWA + Safe Areas (notches / isla dinámica) | Media/Alta | 1 día | ⏳ PENDIENTE | `env(safe-area-inset-*)` pendiente de aplicar |
+| **AC-4** | Estados interactivos y foco de teclado | Media | 1 día | ✅ **CERRADA** | Anillo institucional `:focus-visible` global en `reset.css` y `forms.css`, feedback `:active` (`scale(0.97)`), estados `:disabled` estandarizados |
+| **AC-5** | CSS muerto, duplicación y DRY | Media | 1 día | ⏳ PENDIENTE | ~41 archivos con patrones repetidos (`::-webkit-scrollbar`, flex-center, glass) |
 
-**Nota:** los conteos son del diagnóstico 2026-09-24; A8 ya aplicó el anillo de foco global (reduce el gap de AC-4) y T2/T3 ya redujeron `backdrop-filter`/breaks parcialmente. Criterios de aceptación en los entregables originales:
-- **AC-1:** reducir `!important` de 606 a <30 (solo utilities de override); cero en `.modal-content`/`.input-premium`/`.btn`.
-- **AC-2:** 0 `transition: all` en componentes de alta frecuencia; sin caídas de frames en modales/hover.
-- **AC-3:** `env(safe-area-inset-*)` global en headers/barras/modales; touch targets ≥44px; `font-size ≥16px` en inputs móviles (evita zoom iOS); `overscroll-behavior-y: contain`.
-- **AC-4:** navegación Tab/Shift+Tab 100% visible; botones `:disabled` estandarizados; feedback `:active`.
-- **AC-5:** −15–20% de peso del bundle CSS; cero clases huérfanas de versiones v9.0–v9.23.
+**Criterios de aceptación y avances:**
+- **AC-1 (CERRADAS Lotes 1–4):** 
+  - *Diagnóstico cuantitativo inicial:* 613 ocurrencias totales en 26 archivos (268 librerías/PWA + 345 propios).
+  - *Avance acumulado (2026-09-27):* **−326 `!important` eliminados** sin romper especificidad ni diseño. **0 propios restantes** (de 345 iniciales).
+    - **Lote 1 — Navegación y Layouts Base CERRADO (66 → 1):** `landing-nav.css` (46 → 1, preservada solo regla de ocultamiento de acciones auth por JS), `sidebar.css` (17 → 0), `header.css` (3 → 0).
+    - **Lote 2 — Vistas del Dashboard Admin CERRADO (142 → 6):** `dashboard-settings.css` (43 → 0), `dashboard-base.css` (41 → 4, preservadas 4 reglas RBAC de roles), `dashboard-cards.css` (7 → 0), `dashboard-tables.css` (36 → 2, preservadas utilidades de texto), `dashboard-live.css` (15 → 0).
+    - **Lote 3 — Portal de Usuario / Perfil avanzado CERRADO (84 → 4):** `profile-notifications.css` (5 → 0), `profile-points.css` (15 → 0), `profile-vehicles.css` (17 → 0), `profile-reservations.css` (22 → 4, preservadas 4 reglas de captura QR de ticket), `profile-base.css` (25 → 0).
+    - **Lote 4 — Componentes y Base Global CERRADO (53 → 11):** `tables.css` (23 → 0), `forms.css` propios (9 → 0; preservados 23 de tema Flatpickr), `typography.css` (5 → 0), `legal.css` (5 → 0), `style.css` (3 → 0), `utilities.css` (2 → 0), `landing-modals.css` (1 → 0), `monitoreo-live.css` (1 → 0); `reset.css` (4, justificados por AC-4, no tocados).
+  - *Meta final:* Reducir los propios a <30 (solo utilidades de override y RBAC). **CUMPLIDA: 0 propios.**
+- **AC-2 (CERRADA ✓):** 0 `transition: all` en componentes de alta frecuencia; animaciones compuestas con aceleración GPU sin caídas de frames en modales/hover.
+- **AC-3 (Pendiente):** `env(safe-area-inset-*)` global en headers/barras/modales; touch targets ≥44px; `font-size ≥16px` en inputs móviles (evita zoom iOS); `overscroll-behavior-y: contain`.
+- **AC-4 (CERRADA ✓):** navegación Tab/Shift+Tab 100% visible con `:focus-visible` dorado institucional; botones e inputs `:disabled` estandarizados con `filter: grayscale(0.6)`; feedback `:active` táctil unificado.
+- **AC-5 (Pendiente):** −15–20% de peso del bundle CSS; cero clases huérfanas de versiones v9.0–v9.23; unificación de patrones scrollbar y glassmorphic.
 
 ---
 

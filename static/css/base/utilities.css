@@ -77,11 +77,11 @@
 
 /* --- VISIBILITY UTILITIES --- */
 .d-none { display: none; }
-.no-print { @media print { display: none !important; } }
+.no-print { @media print { display: none; } }
 
 /* --- RESPONSIVE UTILITIES --- */
 @media (max-width: 768px) {
     .flex-wrap-mobile { flex-wrap: wrap; }
     .flex-col-mobile { flex-direction: column; }
-    .hidden-mobile { display: none !important; }
+    .hidden-mobile { display: none; }
 }

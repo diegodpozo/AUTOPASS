@@ -14,7 +14,7 @@
     box-shadow: 0 50px 120px rgba(0,0,0,0.6);
     position: relative;
     display: block;
-    backdrop-filter: none !important;
+    backdrop-filter: none;
 }
 
 .legal-content::before {
@@ -38,10 +38,10 @@
     margin-bottom: 50px;
     padding-bottom: 30px;
     border-bottom: 1px solid var(--border-light);
-    filter: none !important;
-    backdrop-filter: none !important;
-    background: transparent !important;
-    text-shadow: none !important;
+    filter: none;
+    backdrop-filter: none;
+    background: transparent;
+    text-shadow: none;
 }
 
 .legal-body {

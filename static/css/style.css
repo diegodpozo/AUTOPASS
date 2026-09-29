@@ -131,8 +131,8 @@ nav a {
 
 /* MARCADOR DE SUCURSAL EN MAPA */
 .branch-marker-logo {
-    background: none !important;
-    border: none !important;
+    background: none;
+    border: none;
     filter: drop-shadow(0 0 6px rgba(223, 186, 107, 0.7));
     transition: all 0.2s ease;
     display: flex;
@@ -141,7 +141,7 @@ nav a {
 }
 .branch-marker-logo > div {
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.6) !important;
+    background-color: rgba(0, 0, 0, 0.6);
     border: 2px solid rgba(223, 186, 107, 0.6);
 }
 

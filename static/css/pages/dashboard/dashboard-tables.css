@@ -3,12 +3,12 @@
    ========================================================================== */
 
 /* REEMBOLSOS & FILAS ESPECIALES */
-.row-refund {
-    background: rgba(244, 63, 94, 0.03) !important;
+tr.row-refund {
+    background: rgba(244, 63, 94, 0.03);
 }
 
-.row-refund:hover {
-    background: rgba(244, 63, 94, 0.06) !important;
+tr.row-refund:hover {
+    background: rgba(244, 63, 94, 0.06);
 }
 
 .text-danger { color: var(--danger) !important; }
@@ -368,18 +368,20 @@ tr:hover .btn-delete-promo {
     box-shadow: 0 0 10px rgba(223, 186, 107, 0.2);
 }
 
+.btn.btn-gold-glow,
 .btn-gold-glow {
-    background: var(--dorado) !important;
-    color: #000 !important;
-    font-weight: 800 !important;
-    border: none !important;
-    box-shadow: 0 0 12px rgba(223, 186, 107, 0.4) !important;
+    background: var(--dorado);
+    color: #000;
+    font-weight: 800;
+    border: none;
+    box-shadow: 0 0 12px rgba(223, 186, 107, 0.4);
 }
 
+.btn.btn-gold-glow:hover,
 .btn-gold-glow:hover {
-    background: #d4af37 !important;
+    background: #d4af37;
     transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(223, 186, 107, 0.6) !important;
+    box-shadow: 0 0 20px rgba(223, 186, 107, 0.6);
 }
 
 /* CHAT DEL TICKET DE SOPORTE */
@@ -603,19 +605,19 @@ tr:hover .btn-delete-promo {
 
 @media (max-width: 768px) {
     .ticket-answer-actions {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 12px !important;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
     }
 
     .ticket-answer-actions > .form-group {
-        max-width: none !important;
-        width: 100% !important;
+        max-width: none;
+        width: 100%;
     }
 
     .ticket-answer-actions .modal-footer-buttons {
-        width: 100% !important;
-        padding-bottom: 12px !important;
+        width: 100%;
+        padding-bottom: 12px;
     }
 
     .ticket-answer-actions .modal-footer-buttons .btn {
@@ -623,49 +625,47 @@ tr:hover .btn-delete-promo {
         align-items: center;
         justify-content: center;
     }
-}
 
-/* HEADER DEL MODAL DE TICKET EN MÓVIL: mantiene la "X" arriba a la derecha */
-@media (max-width: 768px) {
+    /* HEADER DEL MODAL DE TICKET EN MÓVIL: mantiene la "X" arriba a la derecha */
     #modal-ticket-answer .modal-header {
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 10px !important;
-        padding: 14px 18px !important;
-        text-align: left !important;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        text-align: left;
     }
 
     #modal-ticket-answer .modal-header .header-info-group {
-        width: auto !important;
-        flex: 1 !important;
-        justify-content: flex-start !important;
-        margin-left: 0 !important;
-        text-align: left !important;
+        width: auto;
+        flex: 1;
+        justify-content: flex-start;
+        margin-left: 0;
+        text-align: left;
         min-width: 0;
     }
 
     #modal-ticket-answer .modal-header .header-text {
-        text-align: left !important;
+        text-align: left;
         min-width: 0;
     }
 
     #modal-ticket-answer .modal-header .header-text h3 {
-        font-size: 0.9rem !important;
+        font-size: 0.9rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     #modal-ticket-answer .modal-header .header-actions {
-        width: auto !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-        gap: 8px !important;
-        flex: none !important;
+        width: auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex: none;
     }
-
+}
     #modal-ticket-answer .modal-header .close-btn {
         width: 38px;
         height: 38px;

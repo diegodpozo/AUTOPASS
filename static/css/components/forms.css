@@ -5,7 +5,7 @@
 
 .input-with-icon { position: relative; display: flex; align-items: center; }
 .input-with-icon i:not(.toggle-password) { position: absolute; left: 15px; color: var(--dorado); font-size: 0.85rem; pointer-events: none; }
-.input-with-icon input { padding-left: 45px !important; }
+.input-with-icon input { padding-left: 45px; }
 
 input, select {
     width: 100%; background: #000; border: 1px solid #333;
@@ -18,7 +18,8 @@ textarea {
     padding: 15px; border-radius: var(--radius-md); color: #fff; outline: none; transition: 0.3s;
 }
 
-input:focus, select:focus { border-color: var(--dorado); background: #050505; }
+input:focus, select:focus, textarea:focus { border-color: var(--dorado); background: #050505; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--dorado); outline-offset: 1px; }
 
 .error-msg { background: rgba(244, 63, 94, 0.1); color: var(--danger); padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(244, 63, 94, 0.2); margin-bottom: 20px; font-size: 0.85rem; display: none; text-align: center; }
 
@@ -48,7 +49,7 @@ input:focus, select:focus { border-color: var(--dorado); background: #050505; }
     font-family: var(--font-mono);
     font-size: 1rem;
     font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Fix para iconos nativos (reloj/calendario) en fondos oscuros */
@@ -79,7 +80,7 @@ input::-webkit-calendar-picker-indicator:hover {
     color: #ffffff;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
     outline: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -124,7 +125,7 @@ select option {
     color: #fff;
     font-size: 0.8rem;
     width: 200px;
-    transition: all 0.3s;
+    transition: width 0.3s ease, border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
     outline: none;
 }
 
@@ -200,7 +201,7 @@ select option {
 }
 
 .num-input-wrapper .input-premium {
-    padding-right: 35px !important;
+    padding-right: 35px;
     text-align: center;
 }
 
@@ -265,11 +266,11 @@ select option {
 /* --- MODIFICADORES PREMIUM --- */
 /* Los inputs flatpickr no llevan icono a la izquierda: alinean a 15px */
 .input-premium.flatpickr-input {
-    padding-left: 15px !important;
+    padding-left: 15px;
 }
 
 .input-premium--plain {
-    padding-left: 15px !important;
+    padding-left: 15px;
 }
 
 /* Filas de período 2 columnas (semana/quincena/mes/estándar); display lo alterna el JS */

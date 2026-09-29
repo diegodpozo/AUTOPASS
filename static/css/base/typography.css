@@ -4,10 +4,10 @@ h1 { font-size: var(--text-3xl); }
 h2 { font-size: 1.8rem; }
 h3 { font-size: var(--text-md); }
 
-.text-secondary { color: var(--secondary) !important; }
-.text-dorado { color: var(--dorado) !important; }
-.text-danger { color: var(--danger) !important; }
+.text-secondary { color: var(--secondary); }
+.text-dorado { color: var(--dorado); }
+.text-danger { color: var(--danger); }
 .text-bold { font-weight: 700; }
 .text-center { text-align: center; }
-.text-light { color: #eee !important; }
-.text-muted { color: #888 !important; }
+.text-light { color: #eee; }
+.text-muted { color: #888; }
