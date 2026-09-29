@@ -12,6 +12,7 @@ from repositories.report_repository import (
 )
 from repositories.vehicle_repository import VehicleRepository
 from repositories.user_repository import UserRepository
+from core.normalize import normalize_plate
 
 
 class ReportService:
@@ -219,10 +220,18 @@ class ReportService:
         logs = ReportRepository.access_logs_history(db, sucursal=sucursal, patente=patente, limit=limit)
 
         # RESOLVER USUARIO (REGISTRADO O INVITADO) POR PATENTE
-        patentes = list(dict.fromkeys(l.patente_detectada for l in logs if l.patente_detectada))
+        # OJO: los logs guardan la patente NORMALIZADA ("AB123CD") y el alta de vehiculo
+        # la guarda CON formato visual ("AB 123 CD", ver user_service). Por eso la
+        # busqueda es por patente normalizada y el mapeo se indexa por la misma clave.
+        # Se genera una clave POR LOG (vacia si no hay patente) para que el zip de abajo
+        # nunca se desalinee.
+        patente_keys = [
+            normalize_plate(l.normalized_patente or l.patente_detectada or "") for l in logs
+        ]
         user_by_plate = {}
-        if patentes:
-            vehicles = VehicleRepository.get_by_patentes(db, patentes)
+        normas = list(dict.fromkeys(k for k in patente_keys if k))
+        if normas:
+            vehicles = VehicleRepository.get_by_normalized_patentes(db, normas)
             user_ids = [v.user_id for v in vehicles if v.user_id]
             users_map = {}
             if user_ids:
@@ -230,12 +239,14 @@ class ReportService:
             for v in vehicles:
                 u = users_map.get(v.user_id)
                 if u:
-                    user_by_plate[v.patente] = " ".join(filter(None, [u.nombre, u.apellido])).strip() or u.email
+                    user_by_plate[normalize_plate(v.patente)] = " ".join(
+                        filter(None, [u.nombre, u.apellido])
+                    ).strip() or u.email
 
         result = []
-        for l in logs:
+        for l, key in zip(logs, patente_keys):
             d = {c.name: getattr(l, c.name) for c in l.__table__.columns}
-            d["usuario"] = user_by_plate.get(l.patente_detectada)
+            d["usuario"] = user_by_plate.get(key)
             d["es_registrado"] = bool(d["usuario"])
             result.append(d)
         return result

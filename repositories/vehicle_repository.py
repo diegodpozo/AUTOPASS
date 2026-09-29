@@ -19,18 +19,25 @@ class VehicleRepository:
         return db.query(models.Vehicle).filter(models.Vehicle.patente == patente).first()
 
     @staticmethod
-    def get_by_patentes(db: Session, patentes: list) -> list:
-        """OBTIENE TODOS LOS VEHICULOS CUYAS PATENTES ESTAN EN LA LISTA."""
-        if not patentes:
-            return []
-        return db.query(models.Vehicle).filter(models.Vehicle.patente.in_(patentes)).all()
-
-    @staticmethod
     def get_by_normalized_patente(db: Session, norm: str) -> models.Vehicle:
         """OBTIENE UN VEHICULO POR PATENTE NORMALIZADA (SIN ESPACIOS, MAYUSCULAS)."""
         return db.query(models.Vehicle).filter(
             func.replace(func.upper(models.Vehicle.patente), ' ', '') == norm
         ).first()
+
+    @staticmethod
+    def get_by_normalized_patentes(db: Session, normas: list) -> list:
+        """OBTIENE TODOS LOS VEHICULOS CUYA PATENTE NORMALIZADA ESTA EN LA LISTA (1 sola query).
+
+        Equivalente batch de get_by_normalized_patente: indispensable porque los logs
+        de acceso guardan la patente normalizada ("AB123CD") y el alta de vehiculo la
+        guarda con formato visual ("AB 123 CD"), por lo que el match exacto falla.
+        """
+        if not normas:
+            return []
+        return db.query(models.Vehicle).filter(
+            func.replace(func.upper(models.Vehicle.patente), ' ', '').in_(normas)
+        ).all()
 
     @staticmethod
     def get_by_patente_and_user(db: Session, patente: str, user_id: int) -> models.Vehicle:
