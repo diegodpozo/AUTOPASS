@@ -2,80 +2,6 @@
    AUTOPASS - DASHBOARD CARDS & STATS STYLING
    ========================================================================== */
 
-/* --- COLUMNA LATERAL & FILA DE STATS --- */
-.stats-row-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.stat-card-mini {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    transition: all 0.3s ease;
-}
-
-.stat-card-mini:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(223, 186, 107, 0.3);
-}
-
-.stat-card-mini .stat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.stat-card-mini .stat-title {
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: #777;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.stat-card-mini .stat-icon {
-    color: var(--dorado);
-    font-size: 0.9rem;
-}
-
-.stat-card-mini .stat-value {
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: #fff;
-    font-family: var(--font-mono);
-}
-
-/* BARRAS DE PROGRESO EN STATS */
-.progress-bar-container {
-    height: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: var(--dorado);
-    border-radius: 2px;
-    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* --- HEALTH CARD SPECIFICS --- */
-.health-card {
-    background: rgba(16, 185, 129, 0.02);
-    border: 1px solid rgba(16, 185, 129, 0.15);
-}
-
-.health-card .stat-icon {
-    color: var(--secondary);
-}
-
 /* --- CARD SPECIFICS --- */
 .card-header-premium {
     padding: 20px 25px;
@@ -383,14 +309,6 @@
 
 @media (max-width: 640px) {
     .method-panel.active { flex-direction: column; gap: 20px; }
-}
-
-.kpi-trend { 
-    position: absolute; 
-    top: 15px; 
-    right: 20px; 
-    font-size: 0.7rem; 
-    font-weight: 900; 
 }
 
 .kpi-card.danger-light {

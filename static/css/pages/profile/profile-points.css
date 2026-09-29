@@ -1,65 +1,4 @@
 /* --- PROFILE POINTS & FIDELIZATION --- */
-/* ==========================================================================
-   3. VEHICLES SECTION
-   ========================================================================== */
-.register-row-static {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 40px;
-    animation: slideUp 0.5s ease;
-}
-
-.form-compact-row-static {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(223, 186, 107, 0.2);
-    border-radius: 20px;
-    padding: 20px 30px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end; 
-    gap: 20px;
-    height: 95px; 
-    white-space: nowrap;
-    width: fit-content; /* Se ajusta al contenido */
-    max-width: 580px; /* Ancho reducido significativamente */
-}
-
-.btn-add-vehicle {
-    height: 42px;
-    padding: 0 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    border-radius: 12px;
-    font-weight: 900;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-    flex-shrink: 0;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.btn-add-vehicle:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(223, 186, 107, 0.3);
-}
-
-.btn-add-vehicle i {
-    font-size: 0.8rem;
-}
-
-.btn-square-icon {
-    width: 42px;
-    height: 42px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    font-size: 1rem;
-    flex-shrink: 0;
-}
 
 #vehicle-list { 
     display: flex;
@@ -345,59 +284,6 @@
 .p-val.earned { color: var(--secondary); }
 .p-val.redeemed { color: var(--danger); }
 
-/* --- POINTS PROGRESS CARD --- */
-.points-progress-card {
-    background: linear-gradient(135deg, #111 0%, #050505 100%);
-    border: 1px solid rgba(223, 186, 107, 0.1);
-    padding: 25px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-}
-
-.progress-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    align-items: center;
-}
-
-.progress-title {
-    font-size: 0.7rem;
-    font-weight: 900;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.progress-target {
-    font-size: 0.65rem;
-    color: var(--dorado);
-    font-weight: 800;
-}
-
-.progress-bar-container {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--dorado-dark) 0%, var(--dorado) 100%);
-    width: 0%;
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 15px rgba(223, 186, 107, 0.3);
-}
-
-.progress-footer-text {
-    font-size: 0.7rem;
-    color: #888;
-    margin: 0;
-    font-style: italic;
-}
-
 /* --- POINTS HISTORY ITEMS --- */
 .pts-item {
     display: flex;
@@ -563,13 +449,6 @@
     white-space: nowrap;
 }
 
-.voucher-status-badge.status-vigente {
-    background: rgba(16, 185, 129, 0.15);
-    color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
-}
-
 .voucher-status-badge.status-usado {
     background: rgba(255, 255, 255, 0.06);
     color: #9aa0a6;
@@ -669,10 +548,6 @@
     flex-wrap: wrap;
 }
 
-.voucher-content-header .voucher-code-tag {
-    margin-bottom: 0;
-}
-
 .voucher-icon-wrap {
     width: 48px;
     height: 48px;
@@ -691,20 +566,6 @@
 .voucher-content-wrap {
     flex: 1;
     min-width: 0;
-}
-
-.voucher-code-tag {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: var(--dorado);
-    background: rgba(223, 186, 107, 0.08);
-    padding: 2px 8px;
-    border-radius: 5px;
-    border: 1px dashed rgba(223, 186, 107, 0.35);
-    margin-bottom: 6px;
-    letter-spacing: 1px;
 }
 
 .voucher-card-title {

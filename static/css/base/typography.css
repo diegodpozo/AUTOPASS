@@ -7,7 +7,13 @@ h3 { font-size: var(--text-md); }
 .text-secondary { color: var(--secondary); }
 .text-dorado { color: var(--dorado); }
 .text-danger { color: var(--danger); }
-.text-bold { font-weight: 700; }
-.text-center { text-align: center; }
+.text-success { color: var(--success); }
 .text-light { color: #eee; }
+.text-white { color: #fff; }
 .text-muted { color: #888; }
+
+.text-bold, .font-bold { font-weight: 700; }
+.fw-800 { font-weight: 800; }
+.text-sm { font-size: 0.85rem; }
+.text-small { font-size: 0.8rem; }
+.text-xs { font-size: 0.75rem; }

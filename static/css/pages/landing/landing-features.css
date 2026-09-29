@@ -108,18 +108,6 @@
 
 .feature-list-horizontal li i { color: var(--dorado); }
 
-.feature-highlight {
-    background: linear-gradient(45deg, #1a1a1a, #0a0a0a);
-    padding: 40px; 
-    border-radius: 20px;
-    border: 1px solid var(--border); 
-    text-align: center;
-}
-
-.feature-highlight i { font-size: 4rem; color: var(--dorado); margin-bottom: 20px; }
-.feature-highlight h3 { color: var(--blanco); margin: 0 0 10px; }
-.feature-highlight p { color: #888; margin: 0; }
-
 /* ESTILO DE TÍTULO DE SECCIÓN PREMIUM */
 .section-title-center {
     

@@ -11,20 +11,6 @@
 }
 
 /* SECCIÓN DE INFORMACIÓN */
-.support-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(223, 186, 107, 0.1);
-    color: var(--dorado);
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    border: 1px solid var(--border-light);
-    margin-bottom: 25px;
-}
 
 .contact-info-section h2 {
     
@@ -93,28 +79,6 @@
     color: #eee;
     font-size: 1.1rem;
     font-weight: 500;
-}
-
-.emergency-notice {
-    display: flex;
-    gap: 20px;
-    background: rgba(244, 63, 94, 0.05);
-    padding: 25px;
-    border-radius: 20px;
-    border: 1px solid rgba(244, 63, 94, 0.2);
-    align-items: center;
-}
-
-.emergency-notice i {
-    font-size: 1.5rem;
-    color: var(--danger);
-}
-
-.emergency-notice p {
-    margin: 0;
-    color: #ccc;
-    font-size: 0.9rem;
-    line-height: 1.6;
 }
 
 /* CONTENEDOR DEL FORMULARIO */

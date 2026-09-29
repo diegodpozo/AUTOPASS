@@ -1047,11 +1047,6 @@
 }
 
 /* DIVIDER FINANCIERO */
-.ticket-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.06);
-    margin: 4px 0 16px;
-}
 .ticket-financial-section {
     display: flex;
     flex-direction: column;
@@ -1111,12 +1106,7 @@
 /* ==========================================================================
    6. RESPONSIVE ADJUSTMENTS
    ========================================================================== */
-@media (max-width: 1280px) {
-    .profile-main-grid { grid-template-columns: 1fr 1fr; }
-}
-
 @media (max-width: 1024px) {
-    .profile-main-grid { grid-template-columns: 1fr; gap: 24px; }
     .form-grid-premium, .dynamic-row-premium { grid-template-columns: 1fr; gap: 16px; }
     .full-width-premium { grid-column: span 1; }
     .btn-confirm-premium:hover { background: var(--dorado); color: #000; }
@@ -1285,24 +1275,6 @@
     margin-top: 20px;
 }
 
-.historial-trigger, .points-history-trigger {
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.historial-trigger:hover, .points-history-trigger:hover {
-    border-color: var(--dorado);
-    background: rgba(223, 186, 107, 0.03);
-}
-
-.trigger-icon-sm {
-    transition: transform 0.3s ease;
-}
-
-.trigger-icon-sm.open {
-    transform: rotate(180deg);
-}
-
 /* --- RESERVATION STATS GRID (RESERVATIONS) --- */
 .reserva-stats-grid {
     display: grid;
@@ -1339,12 +1311,6 @@
 .res-stat-card i {
     font-size: 1.2rem;
     color: var(--dorado);
-}
-
-.res-stat-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .res-stat-value {

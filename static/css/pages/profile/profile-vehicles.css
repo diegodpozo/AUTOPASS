@@ -1,17 +1,5 @@
 /* --- PROFILE VEHICLES --- */
 
-/* ==========================================================================
-   3. VEHICLES SECTION
-   ========================================================================== */
-.register-row-modern {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 35px;
-    animation: slideUp 0.5s ease;
-}
-
 .register-trigger-card {
     background: var(--dorado);
     color: var(--negro);
@@ -41,30 +29,6 @@
 
 .register-trigger-card.open i {
     transform: rotate(180deg);
-}
-
-.form-container-collapsible.open {
-    max-height: 800px;
-    opacity: 1;
-    margin-bottom: 30px;
-}
-
-/* Selector de Vehículo con Iconos FontAwesome */
-.select-vehicle-type {
-    font-family: 'Font Awesome 6 Free', 'Montserrat', sans-serif;
-    font-weight: 900;
-    color: #fff;
-}
-
-.select-vehicle-type option {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    background-color: #0a0a0a;
-    color: #fff;
-}
-
-.select-vehicle-type option:disabled {
-    color: #888;
 }
 
 .register-trigger-card.active {

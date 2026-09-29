@@ -37,24 +37,12 @@
     color: var(--dorado);
 }
 
-.btn--outline.btn--danger {
-    color: var(--danger);
-    border-color: var(--danger);
-}
-
-.btn--outline.btn--danger:hover {
-    background: var(--danger);
-    color: #fff;
-    border-color: var(--danger);
-}
-
 .btn--sm { padding: 8px 18px; font-size: 0.75rem; border-radius: var(--radius-full); }
-.btn--warning { border-color: var(--warning); color: var(--warning); }
 .btn--full { width: 100%; justify-content: center; }
 
 /* --- BOTONES PREMIUM --- */
 .btn--premium {
-    background: linear-gradient(135deg, var(--dorado) 0%, var(--dorado-dark) 100%);
+    background: var(--gradient-gold);
     color: var(--negro);
     border: none;
     padding: 14px 28px;
@@ -82,8 +70,7 @@
     transform: translateY(0);
 }
 
-.btn--premium.sm,
-.btn--premium--sm {
+.btn--premium.sm {
     padding: 8px 18px;
     font-size: 0.7rem;
     border-radius: var(--radius-full);

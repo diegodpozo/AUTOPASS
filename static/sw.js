@@ -14,6 +14,7 @@ const PRECACHE = [
   "/static/css/base/reset.css",
   "/static/css/base/typography.css",
   "/static/css/base/utilities.css",
+  "/static/css/base/animations.css",
   "/static/css/components/buttons.css",
   "/static/css/components/cards.css",
   "/static/css/components/forms.css",

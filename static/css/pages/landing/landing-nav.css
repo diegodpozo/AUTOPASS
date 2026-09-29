@@ -292,12 +292,6 @@ nav#nav-menu {
         box-sizing: border-box;
     }
 
-    .sidebar-header-brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
     .sidebar-header-mobile img {
         height: 32px;
         filter: drop-shadow(0 0 10px rgba(223, 186, 107, 0.3));

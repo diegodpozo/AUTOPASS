@@ -1,6 +1,6 @@
 # Auditorías de AUTOPASS — Documento Consolidado
 
-> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-27, suite **702 passed**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-2 y AC-4 cerradas; **AC-1 CERRADA (Lotes 1–4 completos, 0 `!important` propios, −345, quedan solo justificados por librerías/PWA/RBAC)**; AC-3 y AC-5 pendientes de ejecutar. Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
+> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-27, suite **702 passed**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; solo AC-3 (PWA + Safe Areas) queda pendiente. Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
 
 Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUDITORIAS.md` y `PROPUESTA_AUDITORIAS_CSS.md` (eliminados 2026-09-27, v9.34.50). Reúne lo más importante de cada auditoría: hallazgos, remediación, verificación y herramientas reutilizables.
 
@@ -295,7 +295,7 @@ venv\Scripts\python.exe _tools\check_consistencia_frontend.py [--json | --dump-o
 
 ## Propuestas de Auditoría CSS (AC-1 a AC-5) — ESTADO DE EJECUCIÓN
 
-Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución de Fase 1 (AC-2 y AC-4) completada el 2026-09-27. Fase 2 (AC-1 en diagnóstico y preparación de refactor):
+Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución de Fase 1 (AC-2 y AC-4) completada el 2026-09-27. Fase 2: AC-1 (2026-09-28) y AC-5 (2026-09-28) cerradas; AC-3 pendiente:
 
 | # | Auditoría | Prioridad | Esfuerzo | Estado | Métrica actual / Diagnóstico |
 |---|---|:---:|:---:|:---:|:---|
@@ -303,7 +303,7 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
 | **AC-2** | Rendimiento de renderizado, GPU y animaciones | Alta | 1–2 días | ✅ **CERRADA** | **0** `transition: all` (todas migradas a `transform`/`opacity`/`background`/`border-color`/`box-shadow`) |
 | **AC-3** | PWA + Safe Areas (notches / isla dinámica) | Media/Alta | 1 día | ⏳ PENDIENTE | `env(safe-area-inset-*)` pendiente de aplicar |
 | **AC-4** | Estados interactivos y foco de teclado | Media | 1 día | ✅ **CERRADA** | Anillo institucional `:focus-visible` global en `reset.css` y `forms.css`, feedback `:active` (`scale(0.97)`), estados `:disabled` estandarizados |
-| **AC-5** | CSS muerto, duplicación y DRY | Media | 1 día | ⏳ PENDIENTE | ~41 archivos con patrones repetidos (`::-webkit-scrollbar`, flex-center, glass) |
+| **AC-5** | CSS muerto, duplicación y DRY | Media | 1 día | ✅ **CERRADA** (Lotes 1, 2, 7 y 9) | **0** clases huérfanas (de 120 candidatas), **0** `@keyframes` duplicados (de 16 definidos), **−15 tokens** muertos en `variables.css` (65 → 50), 0 `!important` nuevos, **−1247 líneas** netas en el diff |
 
 **Criterios de aceptación y avances:**
 - **AC-1 (CERRADAS Lotes 1–4):** 
@@ -317,7 +317,15 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
 - **AC-2 (CERRADA ✓):** 0 `transition: all` en componentes de alta frecuencia; animaciones compuestas con aceleración GPU sin caídas de frames en modales/hover.
 - **AC-3 (Pendiente):** `env(safe-area-inset-*)` global en headers/barras/modales; touch targets ≥44px; `font-size ≥16px` en inputs móviles (evita zoom iOS); `overscroll-behavior-y: contain`.
 - **AC-4 (CERRADA ✓):** navegación Tab/Shift+Tab 100% visible con `:focus-visible` dorado institucional; botones e inputs `:disabled` estandarizados con `filter: grayscale(0.6)`; feedback `:active` táctil unificado.
-- **AC-5 (Pendiente):** −15–20% de peso del bundle CSS; cero clases huérfanas de versiones v9.0–v9.23; unificación de patrones scrollbar y glassmorphic.
+- **AC-5 (CERRADA ✓):** criterios cumplidos — **0** clases huérfanas de versiones v9.0–v9.23; **−1247 líneas** netas; unificación de scrollbar y keyframes duplicados.
+  - *Diagnóstico:* 43 CSS, 14.313 líneas, 2.576 reglas, 1.254 clases distintas. Sin duplicación real de scrollbar thumb/track (solo 1 regla `display:none` en `monitoreo-live.css`); sí 114 bloques flex-center idénticos (32 archivos), 26 `margin:0 auto` (18 archivos), 86 radios literales, 25 blur y 49 bloques `uppercase`+`letter-spacing`.
+  - *Lote 1 — CSS muerto CERRADO:* **120 clases huérfanas eliminadas**, verificadas contra templates + JS + backend y con revisión manual de excepciones runtime (`role-*` en `dashboard.html:28`, `badge-*`, estados voucher `vigente/usado/cancelado` en `profile.js`). Resultado: **0 huérfanas** sobre 1.142 clases definidas.
+  - *Lote 2 — Utilities CERRADO:* corregido bug de `.no-print` (regla mal anidada dentro de `@media print`), eliminado `.mt-30` duplicado, purgadas clases utilitarias muertas y consolidadas las definiciones de texto/pesos en `typography.css` (`.font-bold`, `.text-white`, `.text-small` como aliases). Orden de carga preservado en `base.html` (`typography.css` antes de `utilities.css`).
+  - *Lote 7 — Animaciones CERRADO:* los 3 `@keyframes` duplicados idénticos (`handBounce`, `fadeInSlideUp`, `hintPulseAnim`) se movieron a la fuente única `static/css/base/animations.css`, cargado en `base.html` y añadido al precache de `static/sw.js`. Verificado: 16 keyframes definidos, **0 huérfanos y 0 duplicados**.
+  - *Lote 9 — Tokens muertos CERRADO:* 15 tokens sin uso eliminados de `variables.css` (65 → 50), todos verificados por uso real.
+  - *Herramienta nueva:* `_tools/check_css_huerfano.py` (+ `_tools/css_huerfano_baseline.json`) con modos `--list`/`--update`, que escanea selectores `.clase` en `static/css` y los cruza contra templates, JS y backend, ignorando librerías de terceros y prefijos runtime. Baseline fijado en 0 para detectar regresiones futuras.
+  - *Verificación:* guard en 0 huérfanas, `git diff --check` sin errores, **702 passed** (7 warnings). Diff: 28 archivos, +21 / −1247.
+  - *No aplicado (fuera de alcance de esta ronda):* la unificación de los 114 bloques flex-center, 86 radios literales, 25 blur y 49 label-uppercase queda para una ronda DRY específica posterior, ya que no afecta la correctitud ni el criterio de "cero clases huérfanas".
 
 ---
 
@@ -329,13 +337,14 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
 | Scan XSS innerHTML (A9) | `_tools/check_xss_innerhtml.ps1` | Conteo de `innerHTML=`/`insertAdjacentHTML(` + interpoladas + no-escapadas |
 | Guard estilos inline (A7/T4) | `_tools/check_inline_styles.py` (+ `tests/test_inline_styles_guard.py`) | Regresión de `style="…"` por template (baseline, umbral 25, emails exceptuados) |
 | Paridad de índices (A5/T) | `tests/test_schema_parity_p2.py` | `create_all` ↔ `alembic head` = 0 diffs (usa comparador de schema orden-insensible) |
+| Guard CSS muerto (AC-5) | `_tools/check_css_huerfano.py` (+ `_tools/css_huerfano_baseline.json`) | Clases `.clase` definidas en `static/css` sin uso en templates/JS/backend; baseline 0 |
 | Verificación de cierre A7 (grep) | terminal | `except\s*:` sin tipo = 0 en `*.py` |
 
 ---
 
-## Estado de cierre (2026-09-27)
+## Estado de cierre (2026-09-28)
 
-- **Suite backend: 702 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5), 7 warnings.
+- **Suite backend: 702 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5), 7 warnings. Reverificado tras AC-5.
 - Todos los cambios CSS de T2/T3/T4 verificados sin regresión (los tests no tocan CSS).
 - **Pendiente único:** mediciones con volumen real de Neon; cuando CI se reactive: Python 3.14 + `init_db.py` + `--cov-fail-under=82`.
-- AC-1..AC-5 son candidatos naturales de la próxima ronda de auditorías.
+- AC-3 (PWA + Safe Areas) es el único candidato CSS restante de esta tanda.

@@ -5,15 +5,12 @@
 .flex-1 { flex: 1; }
 .flex-0-30 { flex: 0 0 30%; }
 .flex-0-50 { flex: 0 0 50%; }
-.w-100 { width: 100%; }
 
 .items-center, .align-center { align-items: center; }
-.items-start { align-items: flex-start; }
 .items-end { align-items: flex-end; }
 
 .justify-center { justify-content: center; }
 .justify-between { justify-content: space-between; }
-.justify-around { justify-content: space-around; }
 .justify-end { justify-content: flex-end; }
 
 /* --- SPACING UTILITIES (GAP) --- */
@@ -23,7 +20,6 @@
 .gap-10 { gap: 10px; }
 .gap-15 { gap: 16px; }
 .gap-20 { gap: 20px; }
-.gap-30 { gap: 32px; }
 
 /* --- SPACING UTILITIES (MARGIN/PADDING) --- */
 .mt-5 { margin-top: 5px; }
@@ -34,54 +30,36 @@
 .mt-30 { margin-top: 30px; }
 
 .mb-5 { margin-bottom: 5px; }
-.mb-0 { margin-bottom: 0; }
 .mb-10 { margin-bottom: 10px; }
 .mb-15 { margin-bottom: 15px; }
 .mb-20 { margin-bottom: 20px; }
 .mb-25 { margin-bottom: 25px; }
 .mb-30 { margin-bottom: 30px; }
-.mt-30 { margin-bottom: 30px; }
 
-.ml-20 { margin-left: 20px; }
 .mx-auto { margin-left: auto; margin-right: auto; }
-
-.p-10 { padding: 10px; }
 
 .p-15 { padding: 15px; }
 .p-20 { padding: 20px; }
 
-.py-10 { padding-top: 10px; padding-bottom: 10px; }
 .py-20 { padding-top: 20px; padding-bottom: 20px; }
 
-/* --- TEXT UTILITIES --- */
+/* --- TEXT UTILITIES (los pesos y tamanos viven en typography.css) --- */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
-.text-left { text-align: left; }
-
-.text-bold, .fw-600 { font-weight: 600; }
-.text-bolder, .fw-800 { font-weight: 800; }
-.text-black, .fw-900 { font-weight: 900; }
 
 .font-mono { font-family: var(--font-mono), monospace; }
-
-.text-sm { font-size: 0.85rem; }
-.text-xs { font-size: 0.75rem; }
-.text-lg { font-size: 1.2rem; }
-
-.text-dorado { color: var(--dorado); }
-.text-danger { color: var(--danger); }
-.text-success { color: var(--secondary); }
-.text-muted { color: #888; }
 
 .uppercase { text-transform: uppercase; }
 
 /* --- VISIBILITY UTILITIES --- */
 .d-none { display: none; }
-.no-print { @media print { display: none; } }
 
 /* --- RESPONSIVE UTILITIES --- */
 @media (max-width: 768px) {
     .flex-wrap-mobile { flex-wrap: wrap; }
-    .flex-col-mobile { flex-direction: column; }
     .hidden-mobile { display: none; }
+}
+
+@media print {
+    .no-print { display: none; }
 }

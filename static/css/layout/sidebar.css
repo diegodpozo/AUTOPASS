@@ -42,7 +42,7 @@
     position: relative; overflow: hidden;
 }
 .nav-item i { width: 20px; text-align: center; font-size: 1rem; }
-.nav-item.active { background: linear-gradient(135deg, var(--dorado) 0%, var(--dorado-dark) 100%); color: var(--negro); box-shadow: 0 8px 25px rgba(223, 186, 107, 0.25); }
+.nav-item.active { background: var(--gradient-gold); color: var(--negro); box-shadow: 0 8px 25px rgba(223, 186, 107, 0.25); }
 .nav-item:hover:not(.active) { background: rgba(223, 186, 107, 0.06); color: var(--dorado); border-color: var(--border-light); }
 
 /* NAV ITEM DE AYUDA OPERATIVA (LIMPIEZA INLINE v9.34.28) */

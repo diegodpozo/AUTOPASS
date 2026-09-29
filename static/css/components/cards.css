@@ -30,66 +30,6 @@
 .stat-card .label { font-size: 0.6rem; text-transform: uppercase; color: #777; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
 .stat-card .value { font-size: 2rem; font-weight: 800; color: var(--dorado); }
 
-/* --- PREMIUM STAT CARDS --- */
-.stat-card-premium {
-    background: linear-gradient(135deg, #111 0%, #080808 100%);
-    border: 1px solid var(--border-light);
-    border-radius: 20px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card-premium:hover {
-    border-color: rgba(223, 186, 107, 0.2);
-    transform: translateY(-2px);
-}
-
-.stat-card-premium.highlight {
-    background: linear-gradient(135deg, rgba(223, 186, 107, 0.1) 0%, #080808 100%);
-    border-color: rgba(223, 186, 107, 0.3);
-}
-
-.stat-icon {
-    width: 50px;
-    height: 50px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--dorado);
-    font-size: 1.2rem;
-}
-
-.stat-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.stat-info .label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    color: #888;
-    font-weight: 800;
-    letter-spacing: 1px;
-}
-
-.stat-info .value {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--blanco);
-}
-
-.stat-card-premium.highlight .value {
-    color: var(--dorado);
-}
-
 /* --- KPI CARDS --- */
 .kpi-card {
     background: linear-gradient(135deg, #111 0%, #050505 100%);

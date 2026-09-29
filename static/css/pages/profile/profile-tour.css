@@ -180,87 +180,6 @@
     color: #ddd;
 }
 
-.promo-card-badges {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    padding: 16px 20px 0 20px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.branch-badge {
-    position: static;
-    background: rgba(223, 186, 107, 0.12);
-    color: var(--dorado);
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    border: 1px solid rgba(223, 186, 107, 0.25);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    max-width: none;
-    flex-shrink: 0;
-    margin-left: auto;
-}
-
-.branch-badge.global {
-    background: rgba(16, 185, 129, 0.12);
-    color: var(--success);
-    border-color: rgba(16, 185, 129, 0.25);
-}
-
-.promo-type-badge {
-    position: static;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.promo-type-badge.voucher {
-    background: rgba(52, 152, 219, 0.12);
-    color: #3498db;
-    border: 1px solid rgba(52, 152, 219, 0.25);
-}
-
-.promo-type-badge.discount {
-    background: rgba(16, 185, 129, 0.12);
-    color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-/* Fallback defensivo para tarjetas sin wrapper .promo-card-badges */
-.promo-card > .promo-type-badge {
-    position: static;
-    margin: 16px 20px 0;
-    align-self: flex-start;
-}
-
-.promo-card > .branch-badge {
-    position: static;
-    margin: 6px 20px 0;
-    align-self: flex-end;
-}
-
-.promo-header {
-    padding: 14px 20px 10px 20px;
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-}
-
 .promo-icon {
     width: 44px;
     height: 44px;
@@ -287,14 +206,6 @@
     flex: 1;
 }
 
-.promo-body {
-    padding: 0 20px 18px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
 .promo-desc {
     color: #888;
     font-size: 0.8rem;
@@ -317,10 +228,6 @@
     text-transform: uppercase;
     color: var(--text-muted);
     letter-spacing: 1px;
-}
-
-.promo-footer {
-    padding: 0 20px 20px;
 }
 
 .btn-redeem {
@@ -449,16 +356,6 @@
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
 }
 
-@keyframes handBounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(8px); }
-}
-
-@keyframes fadeInSlideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 .leaflet-control-geolocation {
     margin-top: 6px !important; /* Mantenemos el botón en su posición elevada */
 }
@@ -496,11 +393,6 @@
     background: var(--dorado);
     border-radius: 50%;
     animation: hintPulseAnim 2s infinite;
-}
-
-@keyframes hintPulseAnim {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(2.5); opacity: 0; }
 }
 
 @keyframes fadeInSlide {

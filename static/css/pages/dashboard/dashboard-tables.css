@@ -196,12 +196,6 @@ tr.row-refund:hover {
     opacity: 0.5;
 }
 
-.capture-overlay {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-}
-
 .info-grid-compact {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -366,22 +360,6 @@ tr:hover .btn-delete-promo {
     align-items: center;
     gap: 4px;
     box-shadow: 0 0 10px rgba(223, 186, 107, 0.2);
-}
-
-.btn.btn-gold-glow,
-.btn-gold-glow {
-    background: var(--dorado);
-    color: #000;
-    font-weight: 800;
-    border: none;
-    box-shadow: 0 0 12px rgba(223, 186, 107, 0.4);
-}
-
-.btn.btn-gold-glow:hover,
-.btn-gold-glow:hover {
-    background: #d4af37;
-    transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(223, 186, 107, 0.6);
 }
 
 /* CHAT DEL TICKET DE SOPORTE */

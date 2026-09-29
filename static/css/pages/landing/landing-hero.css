@@ -97,25 +97,6 @@
     z-index: 1;
 }
 
-.leyenda-carrusel {
-    position: relative;
-    z-index: 2;
-    
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: var(--blanco);
-    text-align: center;
-    max-width: 80%;
-    letter-spacing: 2px;
-    text-shadow: 
-        -2px -2px 0 #000,  
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000,
-         0 4px 20px rgba(0,0,0,0.9);
-    animation: slideUp 1s ease-out;
-}
-
 /* SECCIÓN HERO */
 .hero {
     position: absolute;
@@ -203,8 +184,4 @@
     color: #fff;
     opacity: 1;
     transition: opacity 0.5s ease-in-out;
-}
-
-#frase-animada.fade-out {
-    opacity: 0;
 }
