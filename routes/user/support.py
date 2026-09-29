@@ -3,7 +3,7 @@ import shutil
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 import models, schemas
 from core.database import get_db
 from core.security import get_current_user

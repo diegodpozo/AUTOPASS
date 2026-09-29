@@ -12,10 +12,3 @@ export function startNotifPolling() {
     updateNotifBadge();
     notifState.pollInterval = setInterval(updateNotifBadge, 30000);
 }
-
-export function stopNotifPolling() {
-    if (notifState.pollInterval) {
-        clearInterval(notifState.pollInterval);
-        notifState.pollInterval = null;
-    }
-}

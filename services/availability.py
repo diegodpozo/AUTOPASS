@@ -108,7 +108,7 @@ def _calcular_ocupacion_maxima_simultanea(reservas, f_inicio_str: str, f_fin_str
     max_ocupacion = conteo_base
     ocupacion_actual = conteo_base
 
-    for dt, cambio in eventos:
+    for _, cambio in eventos:
         ocupacion_actual += cambio
         if ocupacion_actual > max_ocupacion:
             max_ocupacion = ocupacion_actual
@@ -357,13 +357,3 @@ def _calcular_horas_deshabilitadas(
             horas_deshabilitadas.append(h_str)
 
     return horas_deshabilitadas
-
-
-def _reservar_plaza_en_aforo(db: Session, res: "models.Reservation"):
-    """YA NO PRE-OCUPA PLAZA FISICA. La ocupación la maneja exclusivamente el ALPR (entrada/salida física)."""
-    pass
-
-
-def _liberar_plaza_en_aforo(db: Session, res: "models.Reservation"):
-    """YA NO LIBERA PLAZA FISICA. La ocupación la maneja exclusivamente el ALPR (entrada/salida física)."""
-    pass

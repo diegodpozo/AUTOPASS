@@ -2,12 +2,6 @@ import re
 from pydantic import BaseModel, field_validator
 from schemas.validators import validate_password_strength
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    rol: str
-    nombre: str
-
 class OAuthComplete(BaseModel):
     code: str
     dni: str

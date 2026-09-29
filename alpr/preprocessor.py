@@ -168,7 +168,7 @@ class ImagePreprocessor:
             upper_blue = np.array([135, 255, 255])
             mask = cv2.inRange(hsv, lower_blue, upper_blue)
             
-            h, w = mask.shape[:2]
+            h, _ = mask.shape[:2]
             top_strip = mask[0:int(h*0.35), :]
             blue_ratio = np.sum(top_strip > 0) / max(1, top_strip.size)
             return blue_ratio > 0.06
@@ -183,11 +183,11 @@ class ImagePreprocessor:
             lower_blue = np.array([90, 40, 40])
             upper_blue = np.array([135, 255, 255])
             mask = cv2.inRange(hsv, lower_blue, upper_blue)
-            h, w = mask.shape[:2]
+            h, _ = mask.shape[:2]
             top_mask = mask[0:int(h*0.5), :]
             if np.sum(top_mask) == 0:
                 return roi
-            ys, xs = np.where(top_mask > 0)
+            ys, _ = np.where(top_mask > 0)
             if len(ys) == 0:
                 return roi
             y_max = int(np.max(ys))

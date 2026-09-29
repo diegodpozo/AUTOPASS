@@ -17,7 +17,6 @@ import {
     setUserVehicles,
     getBranchesData,
     setBranchesData,
-    getReservationDiscount,
     setReservationDiscount,
     getReservationTotals,
     getFpInstances,

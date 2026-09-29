@@ -1,6 +1,6 @@
 import bcrypt
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status

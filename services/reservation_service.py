@@ -19,8 +19,6 @@ from repositories.user_repository import UserRepository
 from repositories.vehicle_repository import VehicleRepository
 from services.availability import (
     _calcular_ocupacion_maxima_simultanea,
-    _liberar_plaza_en_aforo,
-    _reservar_plaza_en_aforo,
     obtener_fechas_deshabilitadas,
     obtener_horas_deshabilitadas,
     obtener_horas_deshabilitadas_con_reservas,
@@ -123,9 +121,6 @@ class ReservationService(ReservationPaymentsMixin):
             logger.info(f"Finalizando {len(vencidas)} reservas vencidas.")
             for r in vencidas:
                 r.estado_reserva = ReservationStatus.COMPLETADA
-                # LIBERAR PLAZA SI ES NO HORARIA (NUNCA SE LIBERA EN SALIDA FISICA)
-                if r.tipo_estadia != "hora" and r.sucursal_nombre:
-                    _liberar_plaza_en_aforo(db, r)
             db.commit()
             # NOTIFICAR A LOS DASHBOARDS PARA QUE REFLEJEN LA DEUDA ACUMULADA TRAS EL VENCIMIENTO
             try:
@@ -444,7 +439,7 @@ class ReservationService(ReservationPaymentsMixin):
         data.patente = format_plate(data.patente)
         if staff.rol != UserRole.ADMIN:
             data.sucursal_nombre = staff.sucursal
-        user, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)
+        _, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)
         tipo_v = data.tipo_vehiculo or "Auto"
         if vehicle:
             tipo_v = data.tipo_vehiculo or (vehicle.tipo.value if hasattr(vehicle.tipo, 'value') else str(vehicle.tipo))

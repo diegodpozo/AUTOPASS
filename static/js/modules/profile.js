@@ -1,6 +1,5 @@
 import api from './api.js';
 import { toTitle, formatDate, formatNum, formatPlate, showToast, showConfirm } from './utils.js';
-import { closeModal } from './ui.js';
 
 /**
  * PERFIL MODULO
@@ -734,7 +733,7 @@ export async function loadActiveStays() {
     const wrap = document.getElementById('container-active-stays');
     if (!container) return;
 
-    const res = await api.get('/user/balance/active-stays');
+    const res = await api.get('/user/active-stays');
     if (!res.ok) {
         if (wrap) wrap.style.display = 'none';
         return;

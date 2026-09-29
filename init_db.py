@@ -1,8 +1,6 @@
 import models
-from core.database import SessionLocal, engine, sync_schema
+from core.database import SessionLocal, sync_schema
 from core.seed import seed_initial_data
-
-from core.config import settings
 
 def create_tables():
     """CREA TODAS LAS TABLAS DEFINIDAS EN LOS MODELOS DE SQLALCHEMY y

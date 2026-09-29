@@ -10,10 +10,6 @@ let userPage = 1;
 const userPageSize = 10;
 let allUsersData = [];
 
-export function getAllUsersData() {
-    return allUsersData;
-}
-
 export async function loadUsers() {
     try {
         const myRol = localStorage.getItem('rol');

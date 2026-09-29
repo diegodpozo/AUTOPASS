@@ -5,19 +5,19 @@ from .user import (
 )
 from .parking import (
     PlateValidation, QRValidation, AccessResponse, ParkingStatus, 
-    BranchCreate, BranchResponse, BranchPublicResponse, FloorCreate, FloorResponse,
+    BranchResponse, BranchPublicResponse, FloorCreate, FloorResponse,
     CameraCreate, CameraResponse
 )
 from .reservation import (
-    ReservationCreate, UserReservationCreate, AdminReservationCreate, 
+    UserReservationCreate, AdminReservationCreate, 
     ReservationUpdate, ConfirmPaymentRequest, UserReservationResponse
 )
-from .auth import Token
+from . import auth
 from .notification import (
     NotificationResponse, NotificationListResponse, UnreadCountResponse
 )
 from .support import (
-    SupportTicketCreate, SupportTicketUpdate, SupportTicketResponse, SupportTicketReply
+    SupportTicketCreate, SupportTicketUpdate
 )
 from .mercadopago import (
     MercadoPagoCheckout, MercadoPagoCheckoutResponse

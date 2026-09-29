@@ -28,12 +28,3 @@ class Reservation(Base):
 
     user = relationship("User", back_populates="reservations")
     access_logs = relationship("AccessLog", back_populates="reservation")
-
-class Coupon(Base):
-    """GESTION DE CUPONES DE DESCUENTO PARA RESERVAS."""
-    __tablename__ = "coupons"
-    id = Column(Integer, primary_key=True)
-    codigo = Column(String, unique=True, index=True)
-    descuento_porcentaje = Column(Integer)
-    fecha_expiracion = Column(String)
-    activo = Column(Boolean, default=True)

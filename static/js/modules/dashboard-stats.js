@@ -1,11 +1,29 @@
 import api from './api.js';
-import { formatDate, formatPlate, formatNum, toTitle, formatTime } from './utils.js';
+import { formatPlate, formatNum, toTitle, formatTime } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**
  * PANEL ESTADISTICAS MODULO
  * CARGA DE DATOS EN TIEMPO REAL, OCUPACION Y METRICAS.
  */
+
+/**
+ * PERMANENCIA DE UN VEHICULO ESTACIONADO.
+ * USA TIEMPO VIRTUAL (NO Date.now) PARA RESPETAR LA SIMULACION.
+ * @returns {number|null} Milisegundos transcurridos, o null si el ingreso no es valido.
+ */
+function getPermanenciaMs(ingreso) {
+    if (ingreso === null || ingreso === undefined || ingreso === '') return null;
+    const ts = new Date(ingreso).getTime();
+    return Number.isFinite(ts) ? Math.max(0, getVirtualNow() - ts) : null;
+}
+
+/** Formatea milisegundos como "3h 25m". */
+function formatPermanencia(ms) {
+    const horas = Math.floor(ms / 3600000);
+    const minutos = Math.floor((ms % 3600000) / 60000);
+    return `${horas}h ${minutos}m`;
+}
 
 export function initOccupancyWS() {
     const token = localStorage.getItem('token');
@@ -321,12 +339,23 @@ export async function loadOccupancy() {
         const countEl = document.getElementById('occ-stat-count');
         const motosEl = document.getElementById('occ-stat-motos');
         const debtEl = document.getElementById('occ-stat-debt');
-        
+        const avgTimeEl = document.getElementById('occ-stat-avg-time');
+
         let totalDebt = fullOccupancyData.reduce((acc, curr) => acc + (curr.deuda || 0), 0);
-        
+
+        // PROMEDIO DE PERMANENCIA: SE DESCARTAN LOS INGRESOS CON FECHA INVALIDA
+        const permanencias = fullOccupancyData
+            .map(v => getPermanenciaMs(v.ingreso))
+            .filter(ms => ms !== null);
+
         if (countEl) countEl.innerText = formatNum(fullOccupancyData.filter(v => v.tipo_vehiculo !== 'Moto').length);
         if (motosEl) motosEl.innerText = formatNum(fullOccupancyData.filter(v => v.tipo_vehiculo === 'Moto').length);
         if (debtEl) debtEl.innerText = `$${formatNum(totalDebt)}`;
+        if (avgTimeEl) {
+            avgTimeEl.innerText = permanencias.length
+                ? formatPermanencia(permanencias.reduce((a, b) => a + b, 0) / permanencias.length)
+                : '--';
+        }
     }
 }
 
@@ -403,12 +432,10 @@ function buildOccupancyRows() {
     const start = (currentPageOcc - 1) * itemsPerPageOcc;
     const end = start + itemsPerPageOcc;
     const paginatedData = filteredOccupancyData.slice(start, end);
-    const now = getVirtualNow();
 
     return paginatedData.map(occ => {
         const date = new Date(occ.ingreso);
-        const diffMs = now - date;
-        const duration = `${Math.floor(diffMs / 3600000)}h ${Math.floor((diffMs % 3600000) / 60000)}m`;
+        const duration = formatPermanencia(getPermanenciaMs(occ.ingreso) ?? 0);
 
         const statusBadge = occ.ya_pago ?
             `<span class="text-secondary text-bold">PAGADO</span>` :

@@ -4,7 +4,7 @@
         <span class="close-btn" onclick="closeModal('modal-create-user')"><i class="fas fa-xmark"></i></span>
         <h2 class="text-dorado">ALTA USUARIO</h2>
         
-        <form id="adminCreateUserForm" onsubmit="handleAdminCreateUser(event)">
+        <form onsubmit="handleAdminCreateUser(event)">
             <div class="form-row">
                 <div class="form-group">
                     <label>Nombre</label>
@@ -99,7 +99,7 @@
         <span class="close-btn" onclick="closeModal('modal-edit-user')"><i class="fas fa-xmark"></i></span>
         <h2 class="text-dorado">EDITAR USUARIO</h2>
         
-        <form id="adminEditUserForm" onsubmit="handleAdminEditUser(event)">
+        <form onsubmit="handleAdminEditUser(event)">
             <input type="hidden" id="edit-user-id">
             <div class="form-row">
                 <div class="form-group">
@@ -186,7 +186,7 @@
         <h2 class="text-dorado">CAMBIAR CONTRASEÑA</h2>
         <p class="text-small text-muted mb-20">Cambiar clave para: <b id="admin-pass-username" class="text-white">---</b></p>
         
-        <form id="adminChangePasswordForm" onsubmit="handleAdminChangePassword(event)">
+        <form onsubmit="handleAdminChangePassword(event)">
             <input type="hidden" id="admin-pass-userid">
             
             <div class="form-group">

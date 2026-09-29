@@ -1,5 +1,5 @@
 import api from './api.js';
-import { toTitle, formatDate, formatPlate, formatNum, showToast } from './utils.js';
+import { toTitle, formatDate, formatPlate, formatNum } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**

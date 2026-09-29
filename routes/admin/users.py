@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from typing import List
 import models, schemas
 from core.database import get_db
 from core.limiter import limiter, admin_rate_limit
-from core.security import get_local_manager, get_super_admin, get_password_hash
+from core.security import get_local_manager, get_password_hash
 from core.normalize import normalize_branch_name
 from models.enums import UserRole, NotificationType
 from services.user_service import UserService

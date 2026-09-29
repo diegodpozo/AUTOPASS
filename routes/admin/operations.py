@@ -1,14 +1,10 @@
-import datetime 
-import json
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 import models
 from core.database import get_db
 from core.limiter import limiter
 from core.security import get_operational_user
 from core.logger import get_logger
-from services.user_notification_service import UserNotificationService
 
 logger = get_logger("AdminOps")
 

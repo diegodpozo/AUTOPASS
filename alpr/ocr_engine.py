@@ -47,10 +47,10 @@ class ReadingStatusNotifier:
 
 from concurrent.futures import ThreadPoolExecutor
 from alpr.config import (
-    GATE_ID, GATE_TYPE, BACKEND_URL, ALPR_NODE_SECRET, COOLDOWN_SECONDS, OCR_INTERVAL,
+    GATE_ID, GATE_TYPE, BACKEND_URL, ALPR_NODE_SECRET, COOLDOWN_SECONDS,
     CONFIDENCE_THRESHOLD, FRAME_QUEUE_MAXSIZE, CONSENSUS_REQUIRED,
     CONSENSUS_WINDOW, LATAM_PLATE_PATTERN, MOTO_PATTERN, MOTO_MIN_CONFIDENCE,
-    ENABLE_MOTO_RECOGNITION, AUTO_PLATE_PATTERN, MOTO_PLATE_PATTERN
+    ENABLE_MOTO_RECOGNITION
 )
 from alpr.preprocessor import ImagePreprocessor
 
@@ -387,7 +387,7 @@ class ALPREngine:
                     try:
                         candidates = ImagePreprocessor.find_plate_roi(frame)
                         for cand in candidates:
-                            c_texts, c_scores, c_polys = self._ocr_single_roi(cand)
+                            c_texts, c_scores, _ = self._ocr_single_roi(cand)
                             if not c_texts:
                                 continue
                             for i, text in enumerate(c_texts):

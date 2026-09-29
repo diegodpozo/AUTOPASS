@@ -1,6 +1,5 @@
 import os
 import re
-import unicodedata
 import warnings
 from dotenv import load_dotenv
 

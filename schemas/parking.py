@@ -81,9 +81,6 @@ class BranchBase(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
-class BranchCreate(BranchBase):
-    pass
-
 class BranchResponse(BranchBase):
     model_config = ConfigDict(from_attributes=True)
 

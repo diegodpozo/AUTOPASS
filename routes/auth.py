@@ -47,7 +47,7 @@ def register(request: Request, user: schemas.UserCreate, db: Session = Depends(g
     """REGISTRA UN NUEVO USUARIO EN EL SISTEMA."""
     # USERSERVICE YA MANEJA VALIDACIONES DE DUPLICADOS Y NORMALIZACION
     try:
-        new_user = UserService.create_user(db, user, rol=UserRole.USER)
+        UserService.create_user(db, user, rol=UserRole.USER)
         return {"status": "ok", "message": "Usuario registrado exitosamente"}
     except HTTPException as e:
         raise e

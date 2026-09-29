@@ -1,8 +1,7 @@
 import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from core.database import get_db, SessionLocal
+from core.database import SessionLocal
 from core.limiter import admin_rate_limit
 from core.logger import get_logger
 from services.time_service import TimeService

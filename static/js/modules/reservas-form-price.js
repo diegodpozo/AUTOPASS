@@ -12,7 +12,6 @@ import {
     getUserVehicles,
     getReservationDiscount,
     setReservationDiscount,
-    getReservationTotals,
     setReservationTotals,
     getDiscountToken,
     bumpDiscountToken

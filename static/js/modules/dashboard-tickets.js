@@ -1,6 +1,6 @@
 import api from './api.js';
 import { showToast, formatDate, toTitle, formatTime, escapeHtml } from './utils.js';
-import { openModal, closeModal } from './ui.js';
+import { openModal } from './ui.js';
 import { updateNotifBadge } from './notifications.js';
 
 /**

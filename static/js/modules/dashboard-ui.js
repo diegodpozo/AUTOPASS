@@ -2,7 +2,7 @@ import api from './api.js';
 import { normalizeSystemName, formatTimeSeconds } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService } from './dashboard-cameras.js';
-import { toggleMobileNav, closeMobileNav } from './ui.js';
+import { closeMobileNav } from './ui.js';
 import { THEME } from './theme.js';
 
 export { loadCameraSettings, renderCameraSettingsTable, showCreateCameraModal, showEditCameraModal, handleSaveCameraConfig, deleteCamera, toggleDynamicCameraService };
@@ -161,22 +161,5 @@ export function toggleSidebar() {
             icon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
         }
         localStorage.setItem('sidebarCollapsed', isCollapsed);
-    }
-}
-
-export function toggleCollapsible(contentId, chevronId, maxHeight = '400px') {
-    const content = document.getElementById(contentId);
-    const chevron = document.getElementById(chevronId);
-    if (!content || !chevron) return;
-
-    content.classList.toggle('expanded');
-    const isExpanded = content.classList.contains('expanded');
-
-    if (isExpanded) {
-        content.style.maxHeight = maxHeight;
-        chevron.style.transform = 'rotate(180deg)';
-    } else {
-        content.style.maxHeight = '0px';
-        chevron.style.transform = 'rotate(0deg)';
     }
 }

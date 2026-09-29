@@ -127,7 +127,6 @@ class OccupancyService:
         cap_res_camionetas_pb = getattr(a, 'capacidad_reservas_camionetas', 2) if (a and getattr(a, 'capacidad_reservas_camionetas', None) is not None) else 2
         occ_res_camionetas_pb = getattr(a, 'ocupacion_reservas_camionetas', 0) if (a and getattr(a, 'ocupacion_reservas_camionetas', None) is not None) else 0
         cap_reservas_pb = getattr(a, 'capacidad_reservas', cap_res_autos_pb + cap_res_motos_pb + cap_res_camionetas_pb) if (a and getattr(a, 'capacidad_reservas', None) is not None) else (cap_res_autos_pb + cap_res_motos_pb + cap_res_camionetas_pb)
-        occ_reservas_pb = getattr(a, 'ocupacion_reservas', occ_res_autos_pb + occ_res_motos_pb + occ_res_camionetas_pb) if (a and getattr(a, 'ocupacion_reservas', None) is not None) else (occ_res_autos_pb + occ_res_motos_pb + occ_res_camionetas_pb)
 
         floors = branch.floors if (branch and branch.floors) else []
 
@@ -144,7 +143,6 @@ class OccupancyService:
         floors_cap_res_camionetas = sum((getattr(f, 'capacidad_reservas_camionetas', 0) or 0) for f in floors)
         floors_occ_res_camionetas = sum((getattr(f, 'ocupacion_reservas_camionetas', 0) or 0) for f in floors)
         floors_cap_reservas = sum((getattr(f, 'capacidad_reservas', 0) or 0) for f in floors)
-        floors_occ_reservas = sum((getattr(f, 'ocupacion_reservas', 0) or 0) for f in floors)
 
         cap_total = cap_autos_pb + floors_cap_autos
         occ_total = occ_autos_pb + floors_occ_autos

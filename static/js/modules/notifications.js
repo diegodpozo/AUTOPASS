@@ -17,11 +17,11 @@ import { startNotifPolling } from './notifications-polling.js';
 import { showToast } from './utils.js';
 
 export { loadNotifications, filterNotifs } from './notifications-render.js';
-export { fetchUnreadCount, updateNotifBadge } from './notifications-badge.js';
+export { updateNotifBadge } from './notifications-badge.js';
 export { markNotifRead, markAllNotifRead, deleteNotif, clearReadNotifs, confirmReminder } from './notifications-actions.js';
 export { payFromNotif, goToReservation, goToChangePassword, goToBalance, goToPoints, goToVoucher, goToNewReservation, goToReservationsList, goToVehicles, goToProfile, goToStays } from './notifications-nav.js';
 export { toggleNotifDropdown, closeNotifDropdown } from './notifications-dropdown.js';
-export { startNotifPolling, stopNotifPolling } from './notifications-polling.js';
+export { startNotifPolling } from './notifications-polling.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('token')) {

@@ -108,7 +108,8 @@
             var btn = document.getElementById('pwa-install-btn');
 
             window.addEventListener('beforeinstallprompt', function (e) {
-                const allowInstall = !document.body.classList.contains('layout-with-sidebar');
+                const allowInstall = !document.body.classList.contains('layout-with-sidebar')
+                    && !document.body.classList.contains('no-pwa-install');
                 if (!allowInstall) return;
                 e.preventDefault();
                 deferredPrompt = e;

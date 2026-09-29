@@ -31,11 +31,3 @@ export async function initVirtualTime() {
 export function getVirtualNow() {
     return new Date(Date.now() + _offsetMs);
 }
-
-export function getOffsetMs() {
-    return _offsetMs;
-}
-
-export function isVirtual() {
-    return _offsetMs !== 0;
-}

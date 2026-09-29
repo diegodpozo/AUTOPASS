@@ -1,7 +1,6 @@
 import os
 import json
 import subprocess
-import unicodedata
 from typing import Dict, List
 from fastapi import WebSocket
 from pydantic import BaseModel

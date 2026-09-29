@@ -1,13 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
-class ReservationCreate(BaseModel):
-    user_id: int
-    patente: str
-    start_time: str
-    duration_hours: int
-    coupon_code: Optional[str] = None
-
 class UserReservationCreate(BaseModel):
     patente: str
     fecha_inicio: str

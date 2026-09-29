@@ -12,7 +12,6 @@ from models.enums import PaymentStatus, ReservationStatus
 from repositories.access_log_repository import AccessRepository
 from repositories.redemption_repository import RedemptionRepository
 from repositories.reservation_repository import ReservationRepository
-from services.availability import _liberar_plaza_en_aforo, _reservar_plaza_en_aforo
 
 logger = get_logger("Payments")
 from services.billing_service import BillingService
@@ -165,13 +164,6 @@ class ReservationPaymentsMixin:
 
         db.commit()
 
-        # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS (DIA/SEMANA/QUINCENA/MES)
-        # SOLO SI LA RESERVA YA COMENZO; SI ES FUTURA, LO HARA EL WORKER AL INICIAR
-        if res.tipo_estadia != "hora" and res.sucursal_nombre:
-            now_str = TimeService.now_str()
-            if res.fecha_inicio <= now_str:
-                _reservar_plaza_en_aforo(db, res)
-
         # ENVIAR MAIL DE CONFIRMACION
         dir_info = res.sucursal_info
         if not dir_info or dir_info == "Sede no especificada." or dir_info.startswith("Sede no especificada"):
@@ -246,12 +238,6 @@ class ReservationPaymentsMixin:
         ))
 
         db.commit()
-
-        # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS YA INICIADAS (NO-OP desde v9.5)
-        if res.tipo_estadia != "hora" and res.sucursal_nombre:
-            now_str = TimeService.now_str()
-            if res.fecha_inicio <= now_str:
-                _reservar_plaza_en_aforo(db, res)
 
         # ENVIAR MAIL DE CONFIRMACION
         dir_info = res.sucursal_info
@@ -372,9 +358,6 @@ class ReservationPaymentsMixin:
             res.fecha_pago = datetime.datetime.now().isoformat()
 
         db.commit()
-
-        if res.tipo_estadia != "hora" and res.sucursal_nombre:
-            _liberar_plaza_en_aforo(db, res)
 
         msg = f"Reserva cancelada. Reembolso: ${monto_a_reembolsar}" if monto_a_reembolsar > 0 else "Reserva cancelada sin reembolso."
 

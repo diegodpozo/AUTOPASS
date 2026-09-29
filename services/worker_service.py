@@ -178,11 +178,6 @@ class WorkerService:
 
                 pagada = res.estado_pago == PaymentStatus.PAGADO
 
-                # RESERVAR PLAZA EN AFORO PARA RESERVAS NO HORARIAS PAGADAS QUE INICIAN AHORA
-                if pagada and res.tipo_estadia != "hora" and res.sucursal_nombre:
-                    from services.reservation_service import _reservar_plaza_en_aforo
-                    _reservar_plaza_en_aforo(db, res)
-
                 notif_existente = NotificationRepository.get_by_reserva_and_types(
                     db, res.id, ["RESERVATION_STARTED"]
                 )
@@ -224,11 +219,6 @@ class WorkerService:
                 # CANCELAR LA RESERVA
                 res.estado_reserva = ReservationStatus.CANCELADA
                 res.estado_pago = PaymentStatus.FALLIDO
-
-                # LIBERAR PLAZA EN AFORO SI ES NO HORARIA
-                if res.tipo_estadia != "hora" and res.sucursal_nombre:
-                    from services.reservation_service import _liberar_plaza_en_aforo
-                    _liberar_plaza_en_aforo(db, res)
 
                 db.commit()
 
