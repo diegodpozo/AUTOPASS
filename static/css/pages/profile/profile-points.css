@@ -10,7 +10,7 @@
 
 .card-vehicle-list-wrapper {
     background: rgba(255, 255, 255, 0.015);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
     border-radius: var(--radius-lg);
     padding: 40px;
     width: fit-content;
@@ -23,7 +23,7 @@
 
 .vehicle-card {
     background: #080808;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid var(--border-card);
     border-radius: 24px; 
     padding: 35px; 
     display: flex; 
@@ -69,7 +69,7 @@
 .vehicle-card:hover { 
     border-color: var(--dorado); 
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(223, 186, 107, 0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px var(--border-light);
 }
 
 .plate-badge-modern {
@@ -256,7 +256,7 @@
 
 .p-stat {
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
     padding: 15px 20px;
     border-radius: var(--radius-lg);
     display: flex;
@@ -358,10 +358,10 @@
 }
 
 .voucher-tab-btn.active {
-    background: rgba(223, 186, 107, 0.15);
+    background: var(--dorado-glow);
     border-color: var(--dorado);
     color: var(--dorado);
-    box-shadow: 0 4px 15px rgba(223, 186, 107, 0.15);
+    box-shadow: 0 4px 15px var(--dorado-glow);
 }
 
 .voucher-tab-count {
@@ -486,7 +486,7 @@
 }
 
 .voucher-branch-badge {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     color: var(--dorado);
     padding: 3px 8px;
     border-radius: 6px;
@@ -872,7 +872,7 @@
 }
 
 .discount-meta-pct .discount-vencimiento i {
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 .discount-meta-pct .discount-vencimiento b {
@@ -892,7 +892,7 @@
 }
 
 .discount-auto-note.muted i {
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 @media (max-width: 640px) {
@@ -922,6 +922,6 @@
 #section-puntos #pts-history-container { opacity: 1; margin-top: 0; }
 #section-puntos #pts-history-container .card-narrow { padding: 0; overflow: hidden; margin: 0 auto; }
 #section-puntos #points-history-list .text-bold { padding: 30px; text-align: center; }
-#section-puntos #pts-pagination { display: none; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); }
+#section-puntos #pts-pagination { display: none; padding: 20px; border-top: 1px solid var(--border-card); background: rgba(0,0,0,0.2); }
 
 

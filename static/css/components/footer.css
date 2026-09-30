@@ -92,7 +92,7 @@
 .social-link {
     width: 45px;
     height: 45px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
     border: 1px solid var(--border-light);
     display: flex;
     align-items: center;

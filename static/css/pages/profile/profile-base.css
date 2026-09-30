@@ -50,7 +50,7 @@
 }
 
 .points-badge {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     border: 1px solid var(--border);
     color: var(--dorado);
 }
@@ -78,7 +78,7 @@
 
 .btn-edit {
     background: rgba(223, 186, 107, 0.05);
-    border: 1px solid rgba(223, 186, 107, 0.1);
+    border: 1px solid var(--border-light);
     color: var(--dorado);
     width: 32px;
     height: 32px;
@@ -195,7 +195,7 @@
 /* --- FORMULARIOS (RESTAURADO) --- */
 .form-compact-premium {
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(223, 186, 107, 0.1);
+    border: 1px solid var(--border-light);
     padding: 25px;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -235,7 +235,7 @@
 
 .input-premium-sm:focus {
     border-color: var(--dorado);
-    box-shadow: 0 0 15px rgba(223, 186, 107, 0.1);
+    box-shadow: 0 0 15px var(--border-light);
 }
 
 .input-with-icon .input-premium-sm {
@@ -300,7 +300,7 @@
 
 .strength-meter-container {
     height: 4px;
-    background: rgba(255,255,255,0.05);
+    background: var(--border-card);
     margin: 5px 0 15px;
     border-radius: 10px;
     overflow: hidden;
@@ -313,8 +313,8 @@
 }
 
 .strength-weak { background: var(--danger); width: 33.33%; }
-.strength-medium { background: #f59e0b; width: 66.66%; }
-.strength-strong { background: #10b981; width: 100%; }
+.strength-medium { background: var(--warning); width: 66.66%; }
+.strength-strong { background: var(--success); width: 100%; }
 
 .form-security-premium {
     width: 100%;
@@ -489,7 +489,7 @@
     align-items: center;
     gap: 20px;
     padding: 14px 6px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-card);
 }
 
 .stay-item-premium:last-child {
@@ -594,10 +594,10 @@
 }
 
 .stepper-step.is-active .stepper-dot {
-    background: rgba(223, 186, 107, 0.15);
+    background: var(--dorado-glow);
     border-color: var(--dorado);
     color: var(--dorado);
-    box-shadow: 0 0 0 4px rgba(223, 186, 107, 0.1);
+    box-shadow: 0 0 0 4px var(--border-light);
 }
 
 .stepper-step.is-active .stepper-label {
@@ -665,7 +665,7 @@
 /* --- UNIFIED ACCOUNT SURFACE (v8.1.0) --- */
 .card.account-hub-card {
     background: linear-gradient(145deg, #111 0%, #050505 100%);
-    border: 1px solid rgba(223, 186, 107, 0.15);
+    border: 1px solid var(--dorado-glow);
     padding: 0;
     overflow: hidden;
     border-radius: 24px;
@@ -821,7 +821,7 @@
 /* --- DASHBOARD STATS (INICIO) --- */
 .stat-card {
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
     padding: 20px;
     border-radius: 18px;
     text-align: center;

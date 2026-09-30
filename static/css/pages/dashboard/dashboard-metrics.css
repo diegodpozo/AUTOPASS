@@ -55,7 +55,7 @@
 
 .metrica-card-desc {
     font-size: 0.75rem;
-    color: #9ca3af;
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 
@@ -80,7 +80,7 @@
     gap: 20px;
     flex-wrap: wrap;
     font-size: 0.72rem;
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -145,7 +145,7 @@
 
 .metricas-range-hint {
     font-size: 0.72rem;
-    color: #6b7280;
+    color: var(--text-muted);
     font-family: var(--font-mono);
     white-space: nowrap;
 }
@@ -171,7 +171,7 @@
 
 .metricas-controls-row .toolbar-label {
     font-size: 0.72rem;
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-weight: 700;
     text-transform: uppercase;
 }
@@ -197,7 +197,7 @@
 #tab-metricas .header-actions .badge .fa-circle { font-size: 0.5rem; margin-right: 4px; }
 
 /* Introducción de la card */
-#tab-metricas .card-body > p { color: #9ca3af; font-size: 0.85rem; margin: 0; }
+#tab-metricas .card-body > p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
 
 /* Badges de estado de las tarjetas de métrica */
 .metrica-card-badge .fa-circle { font-size: 0.4rem; margin-right: 4px; }
@@ -209,7 +209,7 @@
 /* Barra superior del detalle (botón volver) */
 .metricas-detail-top { margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .metricas-back-btn { display: inline-flex; align-items: center; gap: 8px; }
-#metricas-detail > p { color: #9ca3af; font-size: 0.85rem; margin-bottom: 20px; }
+#metricas-detail > p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; }
 #metricas-detail strong { color: #fff; }
 
 /* Colores de KPIs particulares de métricas */
@@ -230,7 +230,7 @@
 .metricas-filters-row { justify-content: flex-start; gap: 10px; }
 .metricas-filters-row .fa-calendar-days { margin-right: 4px; }
 .metricas-filters-row .btn i { margin-right: 4px; }
-.metricas-arrow { color: #6b7280; }
+.metricas-arrow { color: var(--text-muted); }
 
 /* Grupo ventana + checkbox de seguimiento en vivo */
 .metricas-live-toggle input { accent-color: var(--dorado); width: 16px; height: 16px; }

@@ -45,7 +45,7 @@
     padding: 22px;
     width: 400px;
     max-width: calc(100vw - 32px);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.88), 0 0 30px rgba(223, 186, 107, 0.15);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.88), 0 0 30px var(--dorado-glow);
     color: #f8fafc;
     z-index: 100000;
     opacity: 0;
@@ -126,7 +126,7 @@
 
 .btn-admin-tour-next {
     background: var(--gradient-gold);
-    color: #0b0d10;
+    color: var(--bg-sidebar);
     font-weight: 700;
     font-size: 0.8rem;
     padding: 8px 16px;
@@ -146,7 +146,7 @@
 }
 
 .btn-admin-tour-prev {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
     border: 1px solid var(--border-card);
     color: var(--text-secondary);
     font-size: 0.8rem;
@@ -157,7 +157,7 @@
 }
 
 .btn-admin-tour-prev:hover:not(:disabled) {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     border-color: var(--border-light);
     color: #ffffff;
 }
@@ -202,7 +202,7 @@
 .admin-help-modal-content {
     max-width: var(--modal-xl) !important;
     border: 1px solid rgba(223, 186, 107, 0.3) !important;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(223, 186, 107, 0.15) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px var(--dorado-glow) !important;
     border-radius: 20px !important;
     padding: 0 !important;
     overflow: hidden;
@@ -355,7 +355,7 @@
 }
 
 .admin-help-pill:hover {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     color: var(--dorado-hover);
     border-color: var(--border-light);
 }
@@ -363,7 +363,7 @@
 .admin-help-pill.active {
     background: var(--gradient-gold);
     border-color: var(--dorado);
-    color: #0b0d10;
+    color: var(--bg-sidebar);
     font-weight: 700;
     box-shadow: 0 4px 14px var(--dorado-glow);
 }
@@ -448,7 +448,7 @@
 
 .btn-help-action {
     padding: 8px 14px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
     border: 1px solid var(--border-card);
     color: var(--text-primary);
     font-size: 0.78rem;
@@ -464,7 +464,7 @@
 }
 
 .btn-help-action:hover {
-    background: rgba(223, 186, 107, 0.15);
+    background: var(--dorado-glow);
     border-color: var(--dorado);
     color: var(--dorado);
 }

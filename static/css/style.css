@@ -81,13 +81,13 @@ nav a {
     flex-shrink: 0;
 }
 
-.toast.success .toast-icon { color: #10b981; }
+.toast.success .toast-icon { color: var(--success); }
 .toast.success { border-color: rgba(16, 185, 129, 0.3); }
 .toast.error .toast-icon { color: var(--danger); }
 .toast.error { border-color: rgba(244, 63, 94, 0.3); }
-.toast.info .toast-icon { color: #3b82f6; }
+.toast.info .toast-icon { color: var(--info); }
 .toast.info { border-color: rgba(59, 130, 246, 0.3); }
-.toast.warning .toast-icon { color: #f59e0b; }
+.toast.warning .toast-icon { color: var(--warning); }
 .toast.warning { border-color: rgba(245, 158, 11, 0.3); }
 .toast.default .toast-icon { color: var(--dorado); }
 .toast.default { border-color: rgba(223, 186, 107, 0.3); }

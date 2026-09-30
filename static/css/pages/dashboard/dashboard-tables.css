@@ -26,7 +26,7 @@ tr.row-refund:hover {
 
 .badge-success-light {
     background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
+    color: var(--success);
     padding: 4px 10px;
     border-radius: var(--radius-sm);
     font-size: 0.65rem;
@@ -36,7 +36,7 @@ tr.row-refund:hover {
 }
 
 .badge-warning-light {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     color: var(--dorado);
     padding: 4px 10px;
     border-radius: var(--radius-sm);
@@ -258,7 +258,7 @@ tr.row-refund:hover {
 }
 
 .icon-option:hover {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     color: var(--dorado);
     border-color: rgba(223, 186, 107, 0.3);
 }
@@ -317,11 +317,11 @@ tr:hover .btn-delete-promo {
 /* SWITCH PREMIUM */
 .switch-premium { position: relative; display: inline-block; width: 44px; height: 20px; }
 .switch-premium input { opacity: 0; width: 0; height: 0; }
-.slider-premium { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+.slider-premium { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 20px; border: 1px solid var(--border-card); }
 .slider-premium:before { position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 2px; background-color: #888; transition: .4s; border-radius: 50%; }
 .switch-premium input:checked + .slider-premium { background-color: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.3); }
-.switch-premium input:checked + .slider-premium:before { transform: translateX(24px); background-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
-.switch-premium input:focus + .slider-premium { box-shadow: 0 0 1px #10b981; }
+.switch-premium input:checked + .slider-premium:before { transform: translateX(24px); background-color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+.switch-premium input:focus + .slider-premium { box-shadow: 0 0 1px var(--success); }
 
 /* RESPONSIVE TABLES & FILTERS */
 @media (max-width: 768px) {
@@ -348,7 +348,7 @@ tr:hover .btn-delete-promo {
 
 /* TICKETS DESTACADOS (PENDIENTES O SIN LEER) */
 .ticket-unread-tag {
-    background: linear-gradient(135deg, rgba(223, 186, 107, 0.3), rgba(223, 186, 107, 0.15));
+    background: linear-gradient(135deg, rgba(223, 186, 107, 0.3), var(--dorado-glow));
     border: 1px solid var(--dorado);
     color: var(--dorado);
     font-size: 0.65rem;
@@ -459,7 +459,7 @@ tr:hover .btn-delete-promo {
 #modal-ticket-answer .textarea-premium:focus {
     border-color: var(--dorado);
     background: rgba(223, 186, 107, 0.05);
-    box-shadow: 0 0 20px rgba(223, 186, 107, 0.1);
+    box-shadow: 0 0 20px var(--border-light);
 }
 
 #modal-ticket-answer .ticket-chat {
@@ -495,7 +495,7 @@ tr:hover .btn-delete-promo {
     margin: 8px 0 18px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
 }
 
 .ticket-msg {
@@ -524,7 +524,7 @@ tr:hover .btn-delete-promo {
 
 .ticket-msg-date {
     align-self: center;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #999;
     font-size: 0.68rem;
@@ -750,7 +750,7 @@ tr:hover .btn-delete-promo {
     background: rgba(255, 255, 255, 0.02);
     padding: 12px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
 }
 #modal-add-branch .branch-logo-wrap { position: relative; }
 #branch-logo-preview {
@@ -785,7 +785,7 @@ tr:hover .btn-delete-promo {
 /* HORARIO OPERATIVO */
 #modal-add-branch .branch-horario-card {
     background: rgba(223, 186, 107, 0.05);
-    border: 1px solid rgba(223, 186, 107, 0.1);
+    border: 1px solid var(--border-light);
     border-radius: 12px;
 }
 #branch-horario { font-size: 0.85rem; }

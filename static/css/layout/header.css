@@ -33,7 +33,7 @@
 .header-icon-box {
     width: 48px;
     height: 48px;
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     border: 1px solid rgba(223, 186, 107, 0.2);
     border-radius: 14px;
     display: flex;
@@ -41,7 +41,7 @@
     justify-content: center;
     color: var(--dorado);
     font-size: 1.3rem;
-    box-shadow: 0 0 20px rgba(223, 186, 107, 0.1);
+    box-shadow: 0 0 20px var(--border-light);
 }
 
 .header-icon-box.sm {

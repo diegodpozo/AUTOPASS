@@ -1,0 +1,18 @@
+{
+  "color": {
+    "equivalentes_a_token": 21,
+    "literales_no_genericos": 1132,
+    "valores_rgba_distintos": 341
+  },
+  "shadow": {
+    "distintas": 130
+  },
+  "spacing": {
+    "off_grid_ocurrencias": 592,
+    "off_grid_valores_distintos": 34
+  },
+  "transition": {
+    "curvas_distintas": 7,
+    "duraciones_distintas": 12
+  }
+}

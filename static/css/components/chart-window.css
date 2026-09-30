@@ -28,7 +28,7 @@
 
 .chart-window-label {
     font-size: 0.72rem;
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-weight: 700;
     text-transform: uppercase;
 }
@@ -57,7 +57,7 @@
 
 .chart-window-range-hint {
     font-size: 0.72rem;
-    color: #6b7280;
+    color: var(--text-muted);
     font-family: var(--font-mono);
     white-space: nowrap;
 }

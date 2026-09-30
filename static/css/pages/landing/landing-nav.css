@@ -14,7 +14,7 @@ header.header-landing {
     padding: calc(20px + var(--safe-area-top)) 0 20px;
     background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--border-card);
 }
 
 header.header-landing.scrolled {
@@ -23,7 +23,7 @@ header.header-landing.scrolled {
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    border-bottom-color: rgba(223, 186, 107, 0.1);
+    border-bottom-color: var(--border-light);
 }
 
 .header-container {
@@ -140,7 +140,7 @@ nav#nav-menu {
 
 .btn-login:hover {
     color: var(--dorado);
-    background: rgba(255,255,255,0.05);
+    background: var(--border-card);
 }
 
 .btn-register {
@@ -156,7 +156,7 @@ nav#nav-menu {
 }
 
 .btn-profile {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     border: 1px solid var(--dorado);
     color: var(--dorado);
     text-decoration: none;
@@ -340,7 +340,7 @@ nav#nav-menu {
     }
 
     .nav-link:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--border-card);
         color: #fff;
     }
 
@@ -404,7 +404,7 @@ nav#nav-menu {
     }
 
     .btn-login {
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--border-card);
         border: 1px solid rgba(255, 255, 255, 0.15);
         color: #fff;
     }
@@ -435,7 +435,7 @@ nav#nav-menu {
     }
 
     .btn-profile {
-        background: rgba(223, 186, 107, 0.1);
+        background: var(--border-light);
         border: 1px solid var(--border-light);
         color: var(--dorado);
     }

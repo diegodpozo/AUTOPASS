@@ -9,7 +9,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-card);
     background: rgba(255, 255, 255, 0.01);
 }
 
@@ -155,7 +155,7 @@
 .channel-card {
     background: rgba(255, 255, 255, 0.02);
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -185,9 +185,9 @@
 }
 
 .channel-header.web-channel {
-    background: linear-gradient(90deg, rgba(223, 186, 107, 0.1) 0%, transparent 100%);
+    background: linear-gradient(90deg, var(--border-light) 0%, transparent 100%);
     color: var(--dorado);
-    border-bottom: 1px solid rgba(223, 186, 107, 0.15);
+    border-bottom: 1px solid var(--dorado-glow);
 }
 
 .channel-body {
@@ -256,7 +256,7 @@
 .method-tab:hover {
     color: #ddd;
     border-color: rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
 }
 
 .method-tab.active {
@@ -332,9 +332,9 @@
 #tab-finance #fin-date-group { display: none; }
 #tab-finance #fin-date { width: 150px; color-scheme: dark; }
 #tab-finance .filter-group-premium i.fa-calendar-alt { z-index: 5; }
-#tab-finance .pagination-premium { border-top: 1px solid rgba(255,255,255,0.05); }
+#tab-finance .pagination-premium { border-top: 1px solid var(--border-card); }
 
 /* ==========================================================================
    LIMPIEZA INLINE v9.34.40 - dashboard/tabs/users.html
    ========================================================================== */
-#tab-users .pagination-premium { border-top: 1px solid rgba(255,255,255,0.05); }
+#tab-users .pagination-premium { border-top: 1px solid var(--border-card); }

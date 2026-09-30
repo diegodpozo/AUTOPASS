@@ -174,8 +174,8 @@
 #vt-modal .modal-content { max-width: 420px; padding: 24px; }
 #vt-modal .vt-actions-label { font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; }
 #vt-modal .vt-label-dorado { color: var(--dorado); }
-#vt-modal .vt-label-amber { color: #f59e0b; margin-top: 12px; }
-#vt-modal .vt-label-blue { color: #3b82f6; margin-top: 12px; }
+#vt-modal .vt-label-amber { color: var(--warning); margin-top: 12px; }
+#vt-modal .vt-label-blue { color: var(--info); margin-top: 12px; }
 #vt-modal .vt-target-row { display: flex; gap: 8px; margin-bottom: 12px; }
 #vt-modal #vt-target-dt { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; }
 #vt-modal .vt-btn-fijar { background: var(--dorado); color: #000; font-weight: 600; }

@@ -76,6 +76,8 @@ Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUD
 
 **Revisión 2026-09-30 (v9.34.60):** los dos gaps que quedaban declarados como "pendientes/depriorizados" están **cerrados**. Cobertura real medida: **93%** (16.318 stmts / 1.201 sin cubrir), suite **733 passed**.
 
+**Ronda de coherencia visual (v9.34.61):** al medir el CSS en lugar de suponerlo apareció un **token inexistente**: `.barrier-text` en `dashboard-live.css:357` usaba `var(--text)`, que no existe. Los tokens ausentes no dan error — la propiedad cae en silencio a su valor heredado y el texto se ve despintado. Corregido a `var(--text-secondary)`, con dos guards nuevos que evitan la recaída: `_tools/check_css_tokens.py` (token usado sin declarar / declarado sin usar) y `_tools/check_css_design_system.py` (baseline de las 4 métricas visuales). La migración de color de equivalencias exactas (195 literales, 31 archivos) se verificó **neutral a nivel de píxel** con `_tools/check_color_equivalence.py`, que compara el multiset de RGBA resueltos contra HEAD.
+
 **Por capa (antes → ahora):** `alpr/` 64→**95%** · `routes/` 57→**83%** · `services/` **78%** · `repositories/` **78%** · `core/` 75→**77%**.
 
 **100% alcanzado:** `auth.py`, `payments.py`, `preprocessor.py`, `video_streamer.py`, `ws_client.py`, `video.py`, `cameras.py`, `common.py`, `settings.py`, `balance.py`, `promotions.py`, `health.py`, `session_repository`.
@@ -341,6 +343,7 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
   - *Verificación:* guard en 0 huérfanas, `git diff --check` sin errores, **702 passed** (7 warnings). Diff: 28 archivos, +21 / −1247.
   - *No aplicado (fuera de alcance de esta ronda):* la unificación de los bloques flex-center, los radios literales, los blur y los label-uppercase queda para una ronda DRY específica posterior, ya que no afecta la correctitud ni el criterio de "cero clases huérfanas".
   - *Re-medido tras la purga (2026-09-30):* el diagnóstico original (114 flex-center, 86 radios, 25 blur, 49 label-uppercase) quedó desactualizado en cantidad y alcance. Con el CSS ya purgado, los valores reales son **146** flex-center idénticos (36 archivos), **253** `border-radius` literales (34 archivos), **43** blur sin token (17 archivos) y **90** `uppercase`+`letter-spacing` (29 archivos). Siguen diferidos: los 253 radios son valores **heterogéneos a propósito** (8px, 12px, 20px, 999px, 50%…) y mapearlos a tokens a ciegas rompería el diseño; solo el subconjunto de duplicados exactos sería seguro, y es chico para el ruido que genera. El subconjunto con gain real es el de los flex-center, que es también el más riesgoso.
+  - *Color — Fase 1 CERRADA, Fase 2 pendiente de criterio de diseño (v9.34.61):* de los 1.535 literales de color, solo **195** eran equivalencias exactas a tokens existentes (migrados, 31 archivos, verificado neutral a nivel de píxel con `_tools/check_color_equivalence.py`). Los 1.132 restantes se agrupan en familias de opacidad **deliberadamente distintas** — `blanco-alfa` 18 alfas, `dorado-alfa` 20, `negro-alfa` 20 — y no son duplicados: un borde al 8% y un glow al 30% son decisiones visuales distintas. Unificar eso requiere decidir una escala (nombrar los alfas: cero cambio visual / redondear a 5 niveles: coherencia real con ajuste visual leve) y por eso **queda sin arrancar** hasta que se tome esa decisión. `check_css_design_system.py` deja el baseline medido para que la decisión sea informada.
 
 ---
 
@@ -353,13 +356,19 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
 | Guard estilos inline (A7/T4) | `_tools/check_inline_styles.py` (+ `tests/test_inline_styles_guard.py`) | Regresión de `style="…"` por template (baseline, umbral 25, emails exceptuados) |
 | Paridad de índices (A5/T) | `tests/test_schema_parity_p2.py` | `create_all` ↔ `alembic head` = 0 diffs (usa comparador de schema orden-insensible) |
 | Guard CSS muerto (AC-5) | `_tools/check_css_huerfano.py` (+ `_tools/css_huerfano_baseline.json`) | Clases `.clase` definidas en `static/css` sin uso en templates/JS/backend; baseline 0 |
+| Integridad de tokens CSS (v9.34.61) | `_tools/check_css_tokens.py` | `var(--x)` sin `--x` declarado (bug silencioso) y `--x` declarado sin usar; distingue Custom Properties de clases BEM |
+| Equivalencia visual de color (v9.34.61) | `_tools/check_color_equivalence.py` | Compara el multiset de RGBA **resueltos** por archivo contra HEAD: si es idéntico, la migración no cambió ni un píxel. `--allow ARCHIVO` para diferencias deliberadas |
+| Baseline de design system (v9.34.61) | `_tools/check_css_design_system.py` (+ `_tools/css_design_system_baseline.json`) | Fija y vigila 4 métricas: color (literales no genéricos / RGBA distintos), spacing off-grid, `box-shadow` distintas, duraciones y curvas de transición |
+| Migración de color (herramienta, no guard) | `_tools/migrate_color_tokens.py` | Convierte literales con RGBA idéntico a un token existente. Dry-run por defecto, `--apply`, `--include-generic`; idempotente |
 | Verificación de cierre A7 (grep) | terminal | `except\s*:` sin tipo = 0 en `*.py` |
 
 ---
 
 ## Estado de cierre (2026-09-28)
 
-- **Suite backend: 733 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5 + 5 regresión monitoring v9.34.54 + 18 rutas virtual_time + 8 seed), 7 warnings. Cobertura **93%**. Reverificado tras AC-3 y el cierre de gaps de A3.
+- **Suite backend: 733 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5 + 5 regresión monitoring v9.34.54 + 18 rutas virtual_time + 8 seed), 7 warnings. Cobertura **93%**. Reverificado tras AC-3, el cierre de gaps de A3 y la migración de color de v9.34.61.
 - Todos los cambios CSS de T2/T3/T4 verificados sin regresión (los tests no tocan CSS).
-- **Pendiente único:** mediciones con volumen real de Neon; cuando CI se reactive: Python 3.14 + `init_db.py` + `--cov-fail-under=82`.
+- **4 guards CSS en verde**: llaves balanceadas, clases huérfanas, integridad de tokens, baseline de design system. Ninguno toca colores; la neutralidad visual de la migración de color se probó aparte con `check_color_equivalence.py` (31 de 32 archivos con multiset RGBA idéntico; el único diff es el fix intencional de `var(--text)`).
+- **Pendiente único:** mediciones con volumen real de Neon.
 - AC-3 (PWA + Safe Areas) cerrada el 2026-09-29: **no queda ninguna auditoría CSS abierta de esta tanda.**
+- **Pendiente de decisión de diseño, no de ingeniería:** la Fase 2 de color (escala de opacidad de las familias `blanco-alfa`/`dorado-alfa`/`negro-alfa`, 1.132 literales) y la unificación de la escala de espaciado off-grid, `box-shadow` y curvas de transición quedan **medidas y con baseline** pero sin arrancar, porque las tres cambian el look y son una decisión de diseño, no un refactor mecánico.

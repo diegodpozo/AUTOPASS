@@ -5,7 +5,7 @@
     padding: 25px; margin-bottom: 25px; transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
     backdrop-filter: blur(10px);
 }
-.card:hover { border-color: rgba(223, 186, 107, 0.15); }
+.card:hover { border-color: var(--dorado-glow); }
 .card--flush { padding: 0; overflow: hidden; }
 .card-body { padding: 25px; }
 
@@ -47,7 +47,7 @@
 .kpi-card:hover { transform: translateY(-2px); border-color: rgba(223, 186, 107, 0.3); }
 
 .kpi-card.highlight {
-    background: linear-gradient(135deg, rgba(223, 186, 107, 0.1) 0%, #050505 100%);
+    background: linear-gradient(135deg, var(--border-light) 0%, #050505 100%);
     border-color: rgba(223, 186, 107, 0.3);
 }
 

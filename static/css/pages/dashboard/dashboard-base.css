@@ -56,7 +56,7 @@ body:not(.role-local_admin) .local-admin-only {
     }
 
     .user-stats-trigger:hover {
-        background: rgba(223, 186, 107, 0.15);
+        background: var(--dorado-glow);
     }
 
     .user-stats-trigger .trigger-icon {

@@ -64,7 +64,7 @@
 
 .select-wrapper-premium select:focus {
     border-color: var(--dorado);
-    box-shadow: 0 0 15px rgba(223, 186, 107, 0.1);
+    box-shadow: 0 0 15px var(--border-light);
     outline: none;
 }
 
@@ -117,7 +117,7 @@
 .reservation-footer-premium {
     margin-top: 30px;
     padding-top: 25px;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid var(--border-card);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -174,7 +174,7 @@
 
 .modern-reservation-card {
     background: #0a0a0a;
-    border: 1px solid rgba(223, 186, 107, 0.15);
+    border: 1px solid var(--dorado-glow);
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 20px 40px rgba(0,0,0,0.4);
@@ -188,14 +188,14 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--border-card);
 }
 
 /* LISTA DE RESERVAS ULTRA PREMIUM */
 .reserva-card-ultra {
     background: rgba(22, 22, 22, 0.7);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(223, 186, 107, 0.15);
+    border: 1px solid var(--dorado-glow);
     border-radius: 24px;
     padding: 25px;
     margin-bottom: 25px;
@@ -211,7 +211,7 @@
 .reserva-card-ultra:hover {
     border-color: var(--dorado);
     transform: translateY(-8px) scale(1.01);
-    box-shadow: 0 25px 50px rgba(223, 186, 107, 0.15);
+    box-shadow: 0 25px 50px var(--dorado-glow);
     background: rgba(28, 28, 28, 0.85);
 }
 
@@ -297,7 +297,7 @@
 
 .timeline-progress-bg {
     height: 6px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
     border-radius: 10px;
     overflow: hidden;
 }
@@ -389,7 +389,7 @@
 }
 
 .btn-ultra-secondary {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
     color: #fff;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -413,7 +413,7 @@
 
 .btn-ultra-wallet {
     background: rgba(16, 185, 129, 0.12);
-    color: #10b981;
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
@@ -452,7 +452,7 @@
     border-radius: 28px;
     position: relative;
     padding: 35px;
-    box-shadow: 0 0 0 1px rgba(223, 186, 107, 0.15), 0 40px 80px rgba(0,0,0,0.9);
+    box-shadow: 0 0 0 1px var(--dorado-glow), 0 40px 80px rgba(0,0,0,0.9);
     
     border: 1px solid #1a1a1a;
     overflow: hidden;
@@ -986,7 +986,7 @@
     opacity: 0.85;
 }
 .ticket-container.ticket-paid {
-    border-color: rgba(223, 186, 107, 0.15);
+    border-color: var(--dorado-glow);
 }
 
 /* BADGE DE ESTADO */
@@ -1192,7 +1192,7 @@
     background: rgba(255, 255, 255, 0.02);
     padding: 18px 25px;
     gap: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-card);
     align-items: flex-end;
     flex-wrap: nowrap;
     justify-content: center;
@@ -1242,7 +1242,7 @@
 }
 
 .btn-pagination {
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     border: 1px solid var(--border);
     color: var(--dorado);
     padding: 8px 16px;
@@ -1285,7 +1285,7 @@
 
 .res-stat-card {
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
     padding: 20px 25px;
     border-radius: 20px;
     display: flex;
@@ -1458,13 +1458,13 @@
     letter-spacing: 0.5px;
 }
 
-.status-pill.completada { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+.status-pill.completada { background: rgba(16, 185, 129, 0.08); color: var(--success); }
 .status-pill.cancelada { background: rgba(244, 63, 94, 0.08); color: var(--danger); }
 
 .btn-repeat-express {
     width: 38px;
     height: 38px;
-    background: rgba(223, 186, 107, 0.1);
+    background: var(--border-light);
     border: 1px solid var(--border);
     color: var(--dorado);
     border-radius: 10px;
@@ -1491,17 +1491,17 @@
 .availability-badge-premium.success {
     background: rgba(16, 185, 129, 0.12);
     border-color: rgba(16, 185, 129, 0.35);
-    color: #10b981;
+    color: var(--success);
 }
 .availability-badge-premium.danger {
     background: rgba(244, 63, 94, 0.12);
     border-color: rgba(244, 63, 94, 0.35);
-    color: #f43f5e;
+    color: var(--danger);
 }
 .availability-badge-premium.warning {
     background: rgba(245, 158, 11, 0.12);
     border-color: rgba(245, 158, 11, 0.35);
-    color: #f59e0b;
+    color: var(--warning);
 }
 
 .hourly-slots-grid-premium {
@@ -1512,7 +1512,7 @@
     max-width: 520px;
     padding: 10px;
     background: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(223, 186, 107, 0.15);
+    border: 1px solid var(--dorado-glow);
     border-radius: 14px;
 }
 
@@ -1552,12 +1552,12 @@
 .hourly-chip-premium.available {
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #10b981;
+    color: var(--success);
 }
 
 .hourly-chip-premium.available:hover {
     background: rgba(16, 185, 129, 0.25);
-    border-color: #10b981;
+    border-color: var(--success);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
@@ -1565,7 +1565,7 @@
 .hourly-chip-premium.full {
     background: rgba(244, 63, 94, 0.08);
     border: 1px solid rgba(244, 63, 94, 0.2);
-    color: #f43f5e;
+    color: var(--danger);
     text-decoration: line-through;
     cursor: not-allowed;
     opacity: 0.55;
@@ -1589,7 +1589,7 @@
 
 .hourly-chip-premium.in-range:hover {
     background: rgba(16, 185, 129, 0.28);
-    border-color: #10b981;
+    border-color: var(--success);
     color: #6ee7b7;
     transform: none;
 }
@@ -1612,14 +1612,14 @@
 }
 
 .hourly-chip-premium.range-start {
-    background: linear-gradient(135deg, #10b981, #059669);
-    border-color: #10b981;
+    background: linear-gradient(135deg, var(--success), #059669);
+    border-color: var(--success);
     box-shadow: 0 0 12px rgba(16, 185, 129, 0.45);
 }
 
 .hourly-chip-premium.range-end {
-    background: linear-gradient(135deg, #f43f5e, #be123c);
-    border-color: #f43f5e;
+    background: linear-gradient(135deg, var(--danger), #be123c);
+    border-color: var(--danger);
     box-shadow: 0 0 12px rgba(244, 63, 94, 0.45);
 }
 

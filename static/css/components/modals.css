@@ -70,7 +70,7 @@
 
 .close-btn:hover { 
     color: var(--dorado); 
-    background: rgba(223, 186, 107, 0.1); 
+    background: var(--border-light);
 }
 
 /* UTILIDADES DE TEXTO EN MODALES */
@@ -340,7 +340,7 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-card);
     border: none;
     color: #fff;
     width: 44px;

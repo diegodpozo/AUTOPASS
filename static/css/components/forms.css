@@ -66,7 +66,7 @@ input::-webkit-calendar-picker-indicator:hover {
 .input-premium:focus {
     border-color: var(--dorado);
     background: rgba(223, 186, 107, 0.05);
-    box-shadow: 0 0 20px rgba(223, 186, 107, 0.1);
+    box-shadow: 0 0 20px var(--border-light);
     outline: none;
 }
 
@@ -260,7 +260,7 @@ select option {
 }
 
 .num-btn:hover {
-    background: rgba(223, 186, 107, 0.15);
+    background: var(--dorado-glow);
 }
 
 /* --- MODIFICADORES PREMIUM --- */

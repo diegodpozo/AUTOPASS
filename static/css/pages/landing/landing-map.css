@@ -191,7 +191,7 @@
 
 .branch-item-modern {
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(223, 186, 107, 0.1);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
     display: grid;
     grid-template-columns: 140px 1fr 60px;
@@ -221,7 +221,7 @@
     align-items: center;
     justify-content: center;
     padding: 15px;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid var(--border-card);
 }
 
 .branch-logo-large img {
@@ -369,7 +369,7 @@
 }
 
 .locality-search-box:focus-within {
-    border-color: #edd193 !important;
+    border-color: var(--dorado-hover) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95), 0 0 25px rgba(223, 186, 107, 0.45) !important;
 }
 
@@ -489,7 +489,7 @@
     display: flex !important;
     align-items: flex-start !important;
     gap: 12px !important;
-    color: #f59e0b !important;
+    color: var(--warning) !important;
     font-size: 0.82rem !important;
     line-height: 1.4 !important;
 }
@@ -497,7 +497,7 @@
 .locality-result-empty i {
     font-size: 1.2rem !important;
     margin-top: 2px !important;
-    color: #f59e0b !important;
+    color: var(--warning) !important;
 }
 
 .locality-result-empty strong {
