@@ -1,10 +1,11 @@
 import json
 import logging
+import re
 import threading
 import time
 import datetime
 from typing import Optional
-from fastapi import Request
+from fastapi import Request, HTTPException
 from core.config import settings
 
 try:
@@ -24,6 +25,27 @@ class HardwareService:
     _serial_port: Optional[object] = None
     _lock = threading.Lock()
     _connected_port_name: Optional[str] = None
+
+    _GATE_ALIASES = {
+        "ENTRADA": "ENTRADA", "INGRESO": "ENTRADA", "ENTRY": "ENTRADA", "IN": "ENTRADA",
+        "SALIDA": "SALIDA", "EGRESO": "SALIDA", "EXIT": "SALIDA", "OUT": "SALIDA",
+    }
+
+    @classmethod
+    def resolve_gate(cls, gate_id: str) -> str:
+        """RESUELVE EL PORTON DESTINO. ES EXPLICITO: UN GATE_ID DESCONOCIDO NO SE ASUME SALIDA."""
+        raw = (gate_id or "").strip().upper()
+        candidates = [c for c in re.split(r"[^A-Z0-9]+", raw) if c]
+        resueltos = {cls._GATE_ALIASES[c] for c in candidates if c in cls._GATE_ALIASES}
+        if len(resueltos) == 1:
+            return resueltos.pop()
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"gate_id '{gate_id}' no identifica un porton valido. "
+                "Debe indicar ENTRADA o SALIDA (tambien se aceptan INGRESO, EGRESO, ENTRY, EXIT)."
+            ),
+        )
 
     @classmethod
     def get_serial_connection(cls):
@@ -109,7 +131,7 @@ class HardwareService:
         Orquesta la apertura o cierre de la barrera especificada (ENTRADA o SALIDA).
         Dispara simultáneamente el mensaje MQTT y el comando Serie a Arduino Uno.
         """
-        gate = "ENTRADA" if "ENTRADA" in gate_id.upper() else "SALIDA"
+        gate = cls.resolve_gate(gate_id)
         cmd = "OPEN" if command.upper().startswith("OPEN") else "CLOSE"
         now_iso = datetime.datetime.now().isoformat()
         

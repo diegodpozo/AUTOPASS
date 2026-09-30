@@ -166,12 +166,12 @@ class AccessService(AccessOccupancyMixin):
                 NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, f"Deuda pendiente ({int(minutos_transcurridos)} min)", "error")
                 return {"status": "denied", "message": f"Deuda pendiente de pago en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min"}
             
+        now = TimeService.now()
         aforo = cls._get_aforo(db, sucursal)
         if aforo:
             es_reserva = bool(ultimo.reserva_id or (ultimo.reservation and ultimo.reservation.estado_pago == PaymentStatus.PAGADO))
             cls._liberar_plaza(aforo, ultimo.tipo_vehiculo, es_reserva)
             
-            now = TimeService.now()
         db.add(models.AccessLog(
             patente_detectada=p, 
             normalized_patente=p,
@@ -202,7 +202,9 @@ class AccessService(AccessOccupancyMixin):
         try:
             if data.gate_id and '_' in data.gate_id:
                 suc_short = normalize_name(data.gate_id.split('_')[0])
-            if suc_short not in (AccessEventType.ENTRADA.value, AccessEventType.SALIDA.value):
+            else:
+                suc_short = None
+            if suc_short and suc_short not in (AccessEventType.ENTRADA.value, AccessEventType.SALIDA.value):
                 sucursal = suc_short
             if sucursal:
                 try:
@@ -320,8 +322,11 @@ class AccessService(AccessOccupancyMixin):
                     
                 return {"status": "allowed", "action": "OPEN_GATE", "message": f"QR Válido en {sucursal or 'Global'}. Adiós {reserva.patente}"}
                 
-        except Exception as e:
-            return {"status": "error", "message": f"Error procesando QR: {str(e)}"}
+        except HTTPException:
+            raise
+        except Exception:
+            logger.error("[ACCESS] Error inesperado procesando el pase digital", exc_info=True)
+            return {"status": "error", "message": "Error interno procesando el pase digital"}
 
     @classmethod
     def manual_entry(cls, db: Session, plate: str, sucursal: str, tipo_vehiculo: str = "Auto", floor_id: int = None, request: Request = None) -> dict:
