@@ -1,6 +1,6 @@
 # Auditorías de AUTOPASS — Documento Consolidado
 
-> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-27, suite **702 passed**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; **AC-3 CERRADA (2026-09-29: `viewport-fit=cover` + 4 tokens `--safe-area-*` en 11 superficies, `overscroll-behavior-y: contain` en 3 contenedores; touch targets ≥44px descartado por no aplicar)**. **No queda ninguna auditoría CSS abierta de esta tanda.** Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
+> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-30, suite **733 passed**, cobertura **93%**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; **AC-3 CERRADA (2026-09-29: `viewport-fit=cover` + 4 tokens `--safe-area-*` en 11 superficies, `overscroll-behavior-y: contain` en 3 contenedores; touch targets ≥44px descartado por no aplicar)**. **No queda ninguna auditoría CSS abierta de esta tanda.** Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
 
 Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUDITORIAS.md` y `PROPUESTA_AUDITORIAS_CSS.md` (eliminados 2026-09-27, v9.34.50). Reúne lo más importante de cada auditoría: hallazgos, remediación, verificación y herramientas reutilizables.
 
@@ -74,15 +74,22 @@ Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUD
 
 **Cierre:** rondas #1–#22 (2026-09-21). **82% total** (7.044 stmts / 1.261 sin cubrir); de 55% inicial. Suite 609+ passed. Umbral CI sugerido: `--cov-fail-under=82`.
 
+**Revisión 2026-09-30 (v9.34.60):** los dos gaps que quedaban declarados como "pendientes/depriorizados" están **cerrados**. Cobertura real medida: **93%** (16.318 stmts / 1.201 sin cubrir), suite **733 passed**.
+
 **Por capa (antes → ahora):** `alpr/` 64→**95%** · `routes/` 57→**83%** · `services/` **78%** · `repositories/` **78%** · `core/` 75→**77%**.
 
 **100% alcanzado:** `auth.py`, `payments.py`, `preprocessor.py`, `video_streamer.py`, `ws_client.py`, `video.py`, `cameras.py`, `common.py`, `settings.py`, `balance.py`, `promotions.py`, `health.py`, `session_repository`.
 
 **Rondas destacadas:** #12 preprocessor ALPR a 100% (36 tests) · #14 `ocr_engine.py` 56→98% (55 tests) · #15 cameras/common a 100% (74 tests) · #20 `fidelization.py` →88% · #21 support user 41→100% · #22 support admin 57→100% (estos dos últimos no contabilizados en el resumen; ver `tests/test_user_support_routes.py` / `test_admin_support_routes.py`).
 
-**Pendientes/depriorizado:** `core/seed.py` 0% (utilities) y `virtual_time` (herramienta de demo, a propósito). Flujos críticos sin gap: pipeline ALPR, pagos/webhook MP, OAuth, socket de aforo, workers, streaming.
+**Gaps cerrados (2026-09-30, v9.34.60) — los 2 pendientes declarados, resueltos:**
+- `core/seed.py` **0% → 100%** con `tests/test_core_seed.py` (8 tests). Se cubrieron las 5 ramas del orquestador y, sobre todo, la **idempotencia** (que `init_db.py` puede correr más de una vez: no duplica usuarios, aforo, tarifas, promos ni sucursales), la normalización de DNI con puntos en usuarios preexistentes, y que el seed **no pisa** tarifas/aforo/promos/sucursales que el operador ya haya cargado.
+- `routes/admin/virtual_time.py` **sin cobertura → 100%** con `tests/test_admin_virtual_time_routes.py` (18 tests). `test_virtual_time.py` cubría solo `services/time_service.py`; las 6 rutas de admin estaban sin test. Ahora se cubren: avance/retroceso/`set`/`reset`/`set-target`, el alias de ruta `""` vs `/status`, el **400** de fecha ISO inválida (que no debe mover el reloj), el **422** de campo faltante, el gate `get_local_manager` (**403 para staff**, admin global y local admin sí pasan) y `_run_all_checks` (tolerancia a fallos: un worker caído se loguea y la ruta sigue respondiendo; más una guarda de que los 5 workers se siguen invocando).
+- El fixture de esos tests restaura `data/virtual_time_offset.json` porque `TimeService` persiste el offset en disco: sin eso, los tests dejaban el repo sucio y el estado se filtraba entre corridas.
 
-**CI (`ci.yml.disabled`) NO reactivar tal cual:** correr en ubuntu-latest + Python 3.14, reemplazar `patch_bidi.py` por `init_db.py`, agregar `--cov-fail-under=82`, no correr `alembic upgrade head` desde cero.
+**Sin gap:** pipeline ALPR, pagos/webhook MP, OAuth, socket de aforo, workers, streaming.
+
+**CI — CORREGIDO (2026-09-30).** La nota anterior decía "NO reactivar tal cual" y hablaba de `ci.yml.disabled`. Hoy la realidad es otra: el workflow está **activo y en verde**, con los 3 cambios que se recomendaban ya aplicados en `.github/workflows/ci.yml`: `ubuntu-latest`, Python **3.14**, `init_db.py` en vez de `patch_bidi.py`, y `--cov-fail-under=82`. Últimas corridas verificadas en GitHub Actions: `success` en `v9.34.59` (2m8s), `v9.34.58` y `v9.34.54`. La nota era una instrucción de trabajo previa, ya ejecutada.
 
 ---
 
@@ -332,7 +339,8 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
   - *Lote 9 — Tokens muertos CERRADO:* 15 tokens sin uso eliminados de `variables.css` (65 → 50), todos verificados por uso real.
   - *Herramienta nueva:* `_tools/check_css_huerfano.py` (+ `_tools/css_huerfano_baseline.json`) con modos `--list`/`--update`, que escanea selectores `.clase` en `static/css` y los cruza contra templates, JS y backend, ignorando librerías de terceros y prefijos runtime. Baseline fijado en 0 para detectar regresiones futuras.
   - *Verificación:* guard en 0 huérfanas, `git diff --check` sin errores, **702 passed** (7 warnings). Diff: 28 archivos, +21 / −1247.
-  - *No aplicado (fuera de alcance de esta ronda):* la unificación de los 114 bloques flex-center, 86 radios literales, 25 blur y 49 label-uppercase queda para una ronda DRY específica posterior, ya que no afecta la correctitud ni el criterio de "cero clases huérfanas".
+  - *No aplicado (fuera de alcance de esta ronda):* la unificación de los bloques flex-center, los radios literales, los blur y los label-uppercase queda para una ronda DRY específica posterior, ya que no afecta la correctitud ni el criterio de "cero clases huérfanas".
+  - *Re-medido tras la purga (2026-09-30):* el diagnóstico original (114 flex-center, 86 radios, 25 blur, 49 label-uppercase) quedó desactualizado en cantidad y alcance. Con el CSS ya purgado, los valores reales son **146** flex-center idénticos (36 archivos), **253** `border-radius` literales (34 archivos), **43** blur sin token (17 archivos) y **90** `uppercase`+`letter-spacing` (29 archivos). Siguen diferidos: los 253 radios son valores **heterogéneos a propósito** (8px, 12px, 20px, 999px, 50%…) y mapearlos a tokens a ciegas rompería el diseño; solo el subconjunto de duplicados exactos sería seguro, y es chico para el ruido que genera. El subconjunto con gain real es el de los flex-center, que es también el más riesgoso.
 
 ---
 
@@ -351,7 +359,7 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
 
 ## Estado de cierre (2026-09-28)
 
-- **Suite backend: 707 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5 + 5 regresión monitoring v9.34.54), 7 warnings. Reverificado tras AC-3.
+- **Suite backend: 733 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5 + 5 regresión monitoring v9.34.54 + 18 rutas virtual_time + 8 seed), 7 warnings. Cobertura **93%**. Reverificado tras AC-3 y el cierre de gaps de A3.
 - Todos los cambios CSS de T2/T3/T4 verificados sin regresión (los tests no tocan CSS).
 - **Pendiente único:** mediciones con volumen real de Neon; cuando CI se reactive: Python 3.14 + `init_db.py` + `--cov-fail-under=82`.
 - AC-3 (PWA + Safe Areas) cerrada el 2026-09-29: **no queda ninguna auditoría CSS abierta de esta tanda.**
