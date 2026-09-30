@@ -273,10 +273,10 @@
   <div class="flow-box">
     <h4>El Camino de un Vehículo (Flujo de Entrada Típico)</h4>
     <div class="flow-step" data-step="1"><strong>Detección de Presencia:</strong> El sensor físico del microcontrolador en la barrera de entrada detecta un vehículo o el sistema de video recibe el feed continuo.</div>
-    <div class="flow-step" data-step="2"><strong>Procesamiento ALPR:</strong> El servicio de visión artificial (<a href="file:///C:/xampp/htdocs/AUTOPASS/alpr_service.py">alpr_service.py</a>) toma los fotogramas de la cámara, localiza la patente mediante OpenCV, extrae el texto mediante EasyOCR y envía la patente normalizada al backend mediante una petición HTTP POST.</div>
-    <div class="flow-step" data-step="3"><strong>Validación y Negocio:</strong> El backend recibe la patente en el controlador de accesos (<a href="file:///C:/xampp/htdocs/AUTOPASS/routes/parking/access.py">routes/parking/access.py</a>) y delega la decisión al servicio de acceso (<a href="file:///C:/xampp/htdocs/AUTOPASS/services/access_service.py">services/access_service.py</a>). Este servicio verifica si el auto ya está adentro, si posee una reserva abonada o si hay cupo libre "al paso".</div>
-    <div class="flow-step" data-step="4"><strong>Apertura Física:</strong> Si el acceso es autorizado, el backend envía un comando <code>"OPEN"</code> al broker de mensajería MQTT (<a href="file:///C:/xampp/htdocs/AUTOPASS/core/mqtt.py">core/mqtt.py</a>). El microcontrolador físico (ESP32) recibe este comando de forma instantánea y acciona el servomotor para levantar la barrera física.</div>
-    <div class="flow-step" data-step="5"><strong>Actualización en Tiempo Real:</strong> En paralelo, el backend calcula la nueva ocupación y la transmite mediante WebSockets (<a href="file:///C:/xampp/htdocs/AUTOPASS/services/notification_service.py">services/notification_service.py</a>) a todas las interfaces web conectadas, actualizando el tablero de control del operador sin recargar la página.</div>
+    <div class="flow-step" data-step="2"><strong>Procesamiento ALPR:</strong> El servicio de visión artificial (<a href="alpr_service.py">alpr_service.py</a>) toma los fotogramas de la cámara, localiza la patente mediante OpenCV, extrae el texto mediante EasyOCR y envía la patente normalizada al backend mediante una petición HTTP POST.</div>
+    <div class="flow-step" data-step="3"><strong>Validación y Negocio:</strong> El backend recibe la patente en el controlador de accesos (<a href="routes/parking/access.py">routes/parking/access.py</a>) y delega la decisión al servicio de acceso (<a href="services/access_service.py">services/access_service.py</a>). Este servicio verifica si el auto ya está adentro, si posee una reserva abonada o si hay cupo libre "al paso".</div>
+    <div class="flow-step" data-step="4"><strong>Apertura Física:</strong> Si el acceso es autorizado, el backend envía un comando <code>"OPEN"</code> al broker de mensajería MQTT (<a href="core/mqtt.py">core/mqtt.py</a>). El microcontrolador físico (ESP32) recibe este comando de forma instantánea y acciona el servomotor para levantar la barrera física.</div>
+    <div class="flow-step" data-step="5"><strong>Actualización en Tiempo Real:</strong> En paralelo, el backend calcula la nueva ocupación y la transmite mediante WebSockets (<a href="services/notification_service.py">services/notification_service.py</a>) a todas las interfaces web conectadas, actualizando el tablero de control del operador sin recargar la página.</div>
   </div>
 
   <!-- LEYENDA DE CAPAS -->
@@ -501,7 +501,7 @@
       <p>Controla el estado físico del servidor, el estado de los procesos de visión artificial y el streaming de video en vivo.</p>
       <span class="func-detail"><strong>Endpoints y WebSockets clave:</strong>
         <br>• <span class="endpoint-box"><span class="method method-get">GET</span> <code>/health</code></span>: Devuelve el estado de salud de la base de datos y el tiempo transcurrido desde el último latido (heartbeat) de las cámaras.
-        <br>• <span class="endpoint-box"><span class="method method-post">POST</span> <code>/camera-service/{gate_id}/{action}</code></span>: Permite al administrador iniciar (<code>"start"</code>) o detener (<code>"stop"</code>) el proceso independiente de lectura de patentes (<a href="file:///C:/xampp/htdocs/AUTOPASS/alpr_service.py">alpr_service.py</a>) desde la interfaz web, ejecutándolo como un subproceso del sistema operativo.
+        <br>• <span class="endpoint-box"><span class="method method-post">POST</span> <code>/camera-service/{gate_id}/{action}</code></span>: Permite al administrador iniciar (<code>"start"</code>) o detener (<code>"stop"</code>) el proceso independiente de lectura de patentes (<a href="alpr_service.py">alpr_service.py</a>) desde la interfaz web, ejecutándolo como un subproceso del sistema operativo.
         <br>• <span class="endpoint-box"><span class="method method-ws">WS</span> <code>/ws/video/{camera_id}</code></span>: Canal de comunicación WebSocket bidireccional de alta velocidad. El servicio ALPR envía los fotogramas en formato JPEG codificados en Base64, y esta ruta los retransmite a los operadores para que puedan ver el video de la cámara en vivo en sus navegadores sin retrasos.
       </span>
     </li>
@@ -740,7 +740,7 @@
     <li>
       <span class="layer-tag layer-tool">Tool</span>
       <strong>init_db.py</strong> &mdash; Script de Creación e Inicialización Física de Base de Datos
-      <p>Un script de consola sencillo que se ejecuta al instalar el sistema. Se encarga de importar la configuración del motor de base de datos, borrar cualquier base de datos de pruebas anterior si se requiere, crear la estructura de tablas limpia y llamar a la siembra de datos maestros de <a href="file:///C:/xampp/htdocs/AUTOPASS/core/seed.py">core/seed.py</a>.</p>
+      <p>Un script de consola sencillo que se ejecuta al instalar el sistema. Se encarga de importar la configuración del motor de base de datos, borrar cualquier base de datos de pruebas anterior si se requiere, crear la estructura de tablas limpia y llamar a la siembra de datos maestros de <a href="core/seed.py">core/seed.py</a>.</p>
     </li>
   </ul>
 
@@ -754,3 +754,4 @@
 </div>
 </body>
 </html>
+

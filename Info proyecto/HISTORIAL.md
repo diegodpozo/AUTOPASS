@@ -18,59 +18,59 @@
 
 - **SEPTIEMBRE 28, 2026 - AUDITORÍA CSS AC-5 CERRADA: 0 CLASES HUÉRFANAS, 0 KEYFRAMES DUPLICADOS (−1247 LÍNEAS NETAS)**:
     *   **Diagnóstico base**: 43 archivos CSS, 14.313 líneas, 2.576 reglas, 1.254 clases distintas. Sin duplicación real de scrollbar thumb/track; sí 114 bloques flex-center idénticos, 26 `margin:0 auto`, 86 radios literales, 25 blur y 49 bloques `uppercase`+`letter-spacing` como candidatos DRY.
-    *   **Lote 1 — CSS muerto CERRADO (120 → 0)**: eliminadas 120 clases huérfanas tras cruzarlas contra templates, JS y backend, con revisión manual de excepciones runtime (`role-*` generado en [`dashboard.html`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/templates/dashboard.html), prefijos `badge-*` y estados voucher `vigente/usado/cancelado` de [`profile.js`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/js/modules/profile.js); `status-vigente` confirmado muerto). Resultado: **0 huérfanas** sobre 1.142 clases definidas.
-    *   **Lote 2 — Utilities CERRADO**: corregido bug de `.no-print` (regla mal anidada dentro de `@media print`), eliminado `.mt-30` duplicado, purgadas utilitarias muertas y consolidadas definiciones de texto/pesos en [`typography.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/typography.css) (aliases `.font-bold`, `.text-white`, `.text-small`).
-    *   **Lote 7 — Animaciones CERRADO (3 duplicados → 1 fuente)**: `handBounce`, `fadeInSlideUp` y `hintPulseAnim` estaban definidos dos veces (idénticos) en [`landing-map.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/landing/landing-map.css) y [`profile-tour.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-tour.css); movidos a la fuente única [`animations.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/animations.css), cargado en [`base.html`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/templates/base.html) y añadido al precache de [`sw.js`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/sw.js). Verificado: 16 keyframes, **0 huérfanos y 0 duplicados**.
-    *   **Lote 9 — Tokens muertos CERRADO (65 → 50)**: 15 variables sin uso eliminadas de [`variables.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/variables.css), todas verificadas por uso real.
-    *   **Guard nuevo**: [`check_css_huerfano.py`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/_tools/check_css_huerfano.py) con modos `--list`/`--update` y baseline [`css_huerfano_baseline.json`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/_tools/css_huerfano_baseline.json) fijado en 0 para detectar regresiones futuras.
+    *   **Lote 1 — CSS muerto CERRADO (120 → 0)**: eliminadas 120 clases huérfanas tras cruzarlas contra templates, JS y backend, con revisión manual de excepciones runtime (`role-*` generado en [`dashboard.html`](templates/dashboard.html), prefijos `badge-*` y estados voucher `vigente/usado/cancelado` de [`profile.js`](static/js/modules/profile.js); `status-vigente` confirmado muerto). Resultado: **0 huérfanas** sobre 1.142 clases definidas.
+    *   **Lote 2 — Utilities CERRADO**: corregido bug de `.no-print` (regla mal anidada dentro de `@media print`), eliminado `.mt-30` duplicado, purgadas utilitarias muertas y consolidadas definiciones de texto/pesos en [`typography.css`](static/css/base/typography.css) (aliases `.font-bold`, `.text-white`, `.text-small`).
+    *   **Lote 7 — Animaciones CERRADO (3 duplicados → 1 fuente)**: `handBounce`, `fadeInSlideUp` y `hintPulseAnim` estaban definidos dos veces (idénticos) en [`landing-map.css`](static/css/pages/landing/landing-map.css) y [`profile-tour.css`](static/css/pages/profile/profile-tour.css); movidos a la fuente única [`animations.css`](static/css/base/animations.css), cargado en [`base.html`](templates/base.html) y añadido al precache de [`sw.js`](static/sw.js). Verificado: 16 keyframes, **0 huérfanos y 0 duplicados**.
+    *   **Lote 9 — Tokens muertos CERRADO (65 → 50)**: 15 variables sin uso eliminadas de [`variables.css`](static/css/base/variables.css), todas verificadas por uso real.
+    *   **Guard nuevo**: [`check_css_huerfano.py`](_tools/check_css_huerfano.py) con modos `--list`/`--update` y baseline [`css_huerfano_baseline.json`](_tools/css_huerfano_baseline.json) fijado en 0 para detectar regresiones futuras.
     *   **Balance**: 28 archivos, +21 / −1247 líneas. 0 `!important` nuevos.
     *   **Verificación**: guard en 0 huérfanas, `git diff --check` limpio y **702 tests pasando** (7 warnings).
     *   **Pendiente**: unificación DRY de los 114 bloques flex-center, 86 radios literales, 25 blur y 49 label-uppercase queda para una ronda específica. AC-3 (PWA + Safe Areas) sigue siendo la única auditoría CSS abierta.
 
 - **SEPTIEMBRE 28, 2026 - AUDITORÍA CSS AC-1 CERRADA: LOTE 3 Y LOTE 4 COMPLETOS (−326 `!important` ACUMULADOS, **0 PROPIOS**) (V9.34.51)**:
     *   **Lote 3 (Portal de Usuario / Perfil) CERRADO (84 → 4)**:
-        *   [`profile-reservations.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-reservations.css): 22 → 4 (18 eliminados en `.riderific`: inputs `.input-premium`/`.input-premium-readonly`, `.select-wrapper-premium` flechas, grid financiero de ticket y media queries `.history-filters-premium`/`.hist-amount-info`/`.fg-sm`; 4 preservados justificados por librería QRCode: `#ticket-to-capture .qr-canvas` 120×120px).
-        *   [`profile-base.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-base.css): 25 → 0 (25 eliminados en `.input-premium-sm`, `.account-identity-card`, `.profile-info-main`, `.personal-info-container .text-label/.text-bold`, `.form-security-premium`, `.active-stays-card` y `.account-hub-card`; selectores `.card.active-stays-card`/`.card.account-hub-card` para ganar a `.card:hover` por especificidad de orden de carga sin `!important`).
+        *   [`profile-reservations.css`](static/css/pages/profile/profile-reservations.css): 22 → 4 (18 eliminados en `.riderific`: inputs `.input-premium`/`.input-premium-readonly`, `.select-wrapper-premium` flechas, grid financiero de ticket y media queries `.history-filters-premium`/`.hist-amount-info`/`.fg-sm`; 4 preservados justificados por librería QRCode: `#ticket-to-capture .qr-canvas` 120×120px).
+        *   [`profile-base.css`](static/css/pages/profile/profile-base.css): 25 → 0 (25 eliminados en `.input-premium-sm`, `.account-identity-card`, `.profile-info-main`, `.personal-info-container .text-label/.text-bold`, `.form-security-premium`, `.active-stays-card` y `.account-hub-card`; selectores `.card.active-stays-card`/`.card.account-hub-card` para ganar a `.card:hover` por especificidad de orden de carga sin `!important`).
     *   **Lote 4 (Componentes y Base Global) CERRADO (53 → 11)**:
-        *   [`tables.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/components/tables.css): 23 → 0 (utilidades `.text-center`/`.justify-center`/`.table-centered`, `td .flex-col`, `.ticket-email-text`, media query card layout; `td .user-actions`/`td .actions-reveal`/`td .btn-delete-promo` por especificidad contra dashboard css).
-        *   [`forms.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/components/forms.css): propios 9 → 0 (`.input-with-icon input` padding-left, `.num-input-wrapper .input-premium`, `.input-premium.flatpickr-input` y `.input-premium--plain`; preservados 23 de tema Flatpickr).
-        *   [`typography.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/typography.css): 5 → 0 (utilidades `.text-secondary/.text-dorado/.text-danger/.text-light/.text-muted`).
-        *   [`legal.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/legal.css): 5 → 0 (`.legal-content`/`.legal-date` — blur/glass anulado por clase única).
-        *   [`style.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/style.css): 3 → 0 (`.branch-marker-logo` gana a Leaflet por orden de carga).
-        *   [`utilities.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/utilities.css): 2 → 0 (`.no-print`, `.hidden-mobile`).
-        *   [`landing-modals.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/landing/landing-modals.css): 1 → 0 y [`monitoreo-live.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/monitoreo-live.css): 1 → 0.
-        *   [`reset.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/base/reset.css): 4 preservados (estados `:disabled` estandarizados AC-4, justificados).
+        *   [`tables.css`](static/css/components/tables.css): 23 → 0 (utilidades `.text-center`/`.justify-center`/`.table-centered`, `td .flex-col`, `.ticket-email-text`, media query card layout; `td .user-actions`/`td .actions-reveal`/`td .btn-delete-promo` por especificidad contra dashboard css).
+        *   [`forms.css`](static/css/components/forms.css): propios 9 → 0 (`.input-with-icon input` padding-left, `.num-input-wrapper .input-premium`, `.input-premium.flatpickr-input` y `.input-premium--plain`; preservados 23 de tema Flatpickr).
+        *   [`typography.css`](static/css/base/typography.css): 5 → 0 (utilidades `.text-secondary/.text-dorado/.text-danger/.text-light/.text-muted`).
+        *   [`legal.css`](static/css/pages/legal.css): 5 → 0 (`.legal-content`/`.legal-date` — blur/glass anulado por clase única).
+        *   [`style.css`](static/css/style.css): 3 → 0 (`.branch-marker-logo` gana a Leaflet por orden de carga).
+        *   [`utilities.css`](static/css/base/utilities.css): 2 → 0 (`.no-print`, `.hidden-mobile`).
+        *   [`landing-modals.css`](static/css/pages/landing/landing-modals.css): 1 → 0 y [`monitoreo-live.css`](static/css/pages/monitoreo-live.css): 1 → 0.
+        *   [`reset.css`](static/css/base/reset.css): 4 preservados (estados `:disabled` estandarizados AC-4, justificados).
     *   **Balance cuantitativo**: de 345 `!important` propios a **0** (−326 acumulados, **613 → 287**). Total repo 287, **todos justificados** por librerías/PWA/RBAC/AC-4 (Leaflet 134, Tour 80, Standalone 36, Flatpickr 23, QR captura 4, RBAC 4, reset AC-4 4, utilidades defensivas 2).
     *   **Suite de pruebas**: **702 tests pasando** (0 regresiones).
 
 - **SEPTIEMBRE 27, 2026 - AUDITORÍA CSS AC-1: LOTE 2 CERRADO Y LOTE 3 AL 44% (−239 `!important` ACUMULADOS, −52 EN LA SESIÓN)**:
     *   **Lote 2 (Dashboard Admin) CERRADO (142 → 6)**:
-        *   [`dashboard-live.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-live.css): 15 → 0 (13 eliminados en media queries de responsive mobile y 2 en `.monitor-tab-content`; reordenamiento en cascada para resolución natural por especificidad sin conflictos y optimización de 5 `transition: all` a transiciones compuestas de GPU).
+        *   [`dashboard-live.css`](static/css/pages/dashboard/dashboard-live.css): 15 → 0 (13 eliminados en media queries de responsive mobile y 2 en `.monitor-tab-content`; reordenamiento en cascada para resolución natural por especificidad sin conflictos y optimización de 5 `transition: all` a transiciones compuestas de GPU).
         *   Preservados en Lote 2 únicamente 4 reglas RBAC de roles (`dashboard-base.css`) y 2 utilidades de tabla (`dashboard-tables.css`).
     *   **Lote 3 (Portal de Usuario / Perfil) avanzado al 44% (84 → 47, −37 eliminados)**:
-        *   [`profile-notifications.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-notifications.css): 5 → 0 (5 eliminados en estados `:disabled` de botones de acciones de notificación).
-        *   [`profile-points.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-points.css): 15 → 0 (15 eliminados en `.btn-add-vehicle`, `.btn-square-icon`, `.vehicle-card`, `.vehicle-actions-overlay` y media query de 640px; optimizadas 4 transiciones para GPU).
-        *   [`profile-vehicles.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-vehicles.css): 17 → 0 (17 eliminados en `.select-vehicle-type`, `.register-trigger-card.active`, media query responsive 640px e inputs de patente/marca).
-        *   Pendiente Lote 3: [`profile-reservations.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-reservations.css) (22) y [`profile-base.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/profile/profile-base.css) (25).
+        *   [`profile-notifications.css`](static/css/pages/profile/profile-notifications.css): 5 → 0 (5 eliminados en estados `:disabled` de botones de acciones de notificación).
+        *   [`profile-points.css`](static/css/pages/profile/profile-points.css): 15 → 0 (15 eliminados en `.btn-add-vehicle`, `.btn-square-icon`, `.vehicle-card`, `.vehicle-actions-overlay` y media query de 640px; optimizadas 4 transiciones para GPU).
+        *   [`profile-vehicles.css`](static/css/pages/profile/profile-vehicles.css): 17 → 0 (17 eliminados en `.select-vehicle-type`, `.register-trigger-card.active`, media query responsive 640px e inputs de patente/marca).
+        *   Pendiente Lote 3: [`profile-reservations.css`](static/css/pages/profile/profile-reservations.css) (22) y [`profile-base.css`](static/css/pages/profile/profile-base.css) (25).
     *   **Balance cuantitativo propio**: de 345 iniciales a 106 (−239 `!important` acumulados, reducción del ~70% en código propio). Total repo: 374 (268 librerías/PWA + 106 propios).
     *   **Suite de pruebas**: **702 tests pasando** limpiamente (0 regresiones).
 
 - **SEPTIEMBRE 27, 2026 - AUDITORÍA CSS AC-1: LOTE 1 CERRADO Y LOTE 2 AL 89% (−187 `!important` ELIMINADOS)**:
     *   **Lote 1 (Navegación y Layouts Base) CERRADO (66 → 1)**:
-        *   [`landing-nav.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/landing/landing-nav.css): 46 → 1 (45 eliminados en media queries de botones, links y header; 1 preservado legítimo para `#auth-user-actions.user-nav-hidden` override JS).
-        *   [`sidebar.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/layout/sidebar.css): 17 → 0 (17 eliminados en media queries de sidebar y footer).
-        *   [`header.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/layout/header.css): 3 → 0 (3 eliminados en header-left y header-icon-box).
+        *   [`landing-nav.css`](static/css/pages/landing/landing-nav.css): 46 → 1 (45 eliminados en media queries de botones, links y header; 1 preservado legítimo para `#auth-user-actions.user-nav-hidden` override JS).
+        *   [`sidebar.css`](static/css/layout/sidebar.css): 17 → 0 (17 eliminados en media queries de sidebar y footer).
+        *   [`header.css`](static/css/layout/header.css): 3 → 0 (3 eliminados en header-left y header-icon-box).
     *   **Lote 2 (Dashboard Admin) avanzado al 89% (142 → 21)**:
-        *   [`dashboard-settings.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-settings.css): 43 → 0 (43 eliminados en tarifas, acciones de cámaras y diagnósticos).
-        *   [`dashboard-base.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-base.css): 41 → 4 (37 eliminados en `.card-header-premium` y `.modal-footer-buttons`; 4 preservados legítimos para RBAC de roles).
-        *   [`dashboard-cards.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-cards.css): 7 → 0 (7 eliminados en `.card-header-premium` y `.kpi-grid`).
-        *   [`dashboard-tables.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-tables.css): 36 → 2 (34 eliminados en `#modal-ticket-answer`, `.row-refund` y `.btn-gold-glow`; 1 preservado `.text-danger` + 1 de resguardo).
-        *   Pendiente Lote 2: solo [`dashboard-live.css`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/static/css/pages/dashboard/dashboard-live.css) (15 ocurrencias).
+        *   [`dashboard-settings.css`](static/css/pages/dashboard/dashboard-settings.css): 43 → 0 (43 eliminados en tarifas, acciones de cámaras y diagnósticos).
+        *   [`dashboard-base.css`](static/css/pages/dashboard/dashboard-base.css): 41 → 4 (37 eliminados en `.card-header-premium` y `.modal-footer-buttons`; 4 preservados legítimos para RBAC de roles).
+        *   [`dashboard-cards.css`](static/css/pages/dashboard/dashboard-cards.css): 7 → 0 (7 eliminados en `.card-header-premium` y `.kpi-grid`).
+        *   [`dashboard-tables.css`](static/css/pages/dashboard/dashboard-tables.css): 36 → 2 (34 eliminados en `#modal-ticket-answer`, `.row-refund` y `.btn-gold-glow`; 1 preservado `.text-danger` + 1 de resguardo).
+        *   Pendiente Lote 2: solo [`dashboard-live.css`](static/css/pages/dashboard/dashboard-live.css) (15 ocurrencias).
     *   **Balance cuantitativo propio**: de 345 iniciales a 158 (−187 `!important`).
     *   **Suite de pruebas**: **702 tests pasando** limpiamente (0 regresiones).
 
 - **SEPTIEMBRE 27, 2026 - AUDITORÍAS CSS FASE 1 CERRADAS (AC-2 / AC-4), DIAGNÓSTICO AC-1 Y CONSOLIDACIÓN DE AUDITORÍAS (V9.34.50+)**:
-    *   **Consolidación documental**: Reunificación de 17 informes de auditoría individuales en un único documento [`AUDITORIAS.md`](file:///C:/Users/usuario.DESKTOP-P7MEQGK/Desktop/AUTOPASS/Info%20proyecto/AUDITORIAS.md).
+    *   **Consolidación documental**: Reunificación de 17 informes de auditoría individuales en un único documento [`AUDITORIAS.md`](Info%20proyecto/AUDITORIAS.md).
     *   **Auditorías CSS Fase 1 CERRADAS (AC-2 y AC-4)**:
         *   **AC-2 (Rendimiento y GPU)**: Erradicación de 103 instancias de `transition: all` sustituyéndolas por transiciones específicas (`transform`, `opacity`, `background`, `border-color`, `box-shadow`) previniendo reflows/repaints masivos.
         *   **AC-4 (Estados interactivos y foco de teclado)**: Implementación de anillo institucional `:focus-visible` global con resplandor dorado en `reset.css` y `forms.css`, feedback táctil `:active` con `transform: scale(0.97)` en botones, y estandarización de estados `:disabled` con escala de grises al 60%.
@@ -330,3 +330,4 @@
   - **REEMBOLSOS PROPORCIONALES**: Lógica de devolución basada en tiempo restante.
 
 ... [RESTO DEL HISTORIAL SE MANTIENE IGUAL] ...
+
