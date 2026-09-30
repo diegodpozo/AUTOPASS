@@ -1,4 +1,14 @@
 {
+  "alpha_scale": {
+    "niveles_por_familia": {
+      "blanco": 19,
+      "dorado": 23,
+      "gris": 9,
+      "negro": 20,
+      "otros": 29
+    },
+    "niveles_totales": 100
+  },
   "color": {
     "equivalentes_a_token": 21,
     "literales_no_genericos": 1132,

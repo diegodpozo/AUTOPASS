@@ -26,7 +26,7 @@ import argparse
 import json
 import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -92,6 +92,47 @@ def token_rgba_map():
     return by_rgba
 
 
+def _alpha(raw):
+    """4to componente de rgba() a 0-255. Acepta fraccion (0.05), % (5%) o 0-255."""
+    if raw is None:
+        return 255
+    s = str(raw).strip()
+    if s.endswith("%"):
+        return int(round(float(s[:-1]) / 100.0 * 255))
+    f = float(s)
+    if 0.0 <= f <= 1.0:
+        return int(round(f * 255))
+    return int(round(f))
+
+
+def alpha_scale():
+    """Set de alfas de 8 bits que el proyecto usa hoy, por familia de color.
+
+    Sirve como escala declarada: un alfa nuevo no se prohibe (seria una regla
+    mortal para el diseno) pero queda flagged para que se registre en el
+    baseline y sea una decision consciente, no un descuido.
+    """
+    fam = defaultdict(Counter)
+    for _p, txt in iter_css():
+        for m in RGB.finditer(txt):
+            r, g, b = (int(float(x)) for x in m.group(1, 2, 3))
+            a = _alpha(m.group(4))
+            if a == 255:
+                continue
+            if r == g == b == 255:
+                name = "blanco"
+            elif r == g == b == 0:
+                name = "negro"
+            elif abs(r - 223) < 25 and abs(g - 186) < 25 and abs(b - 107) < 30:
+                name = "dorado"
+            elif r == g == b:
+                name = "gris"
+            else:
+                name = "otros"
+            fam[name][a] += 1
+    return {k: dict(v) for k, v in fam.items()}
+
+
 def measure():
     by_rgba = token_rgba_map()
     color_lit = Counter()
@@ -133,6 +174,9 @@ def measure():
                     r"\bease-in\b|\bease\b|\blinear\b", decl):
                 curves[c] += 1
 
+    scale = alpha_scale()
+    scale_sizes = {fam: len(levels) for fam, levels in scale.items()}
+
     return {
         "color": {
             "literales_no_genericos": sum(color_lit.values()),
@@ -148,10 +192,15 @@ def measure():
             "duraciones_distintas": len(durations),
             "curvas_distintas": len(curves),
         },
+        "alpha_scale": {
+            "niveles_por_familia": scale_sizes,
+            "niveles_totales": sum(scale_sizes.values()),
+        },
     }, {
         "off_grid_top": off_grid.most_common(10),
         "color_top": [(str(c), n) for c, n in color_lit.most_common(10)],
         "curvas_top": curves.most_common(8),
+        "alpha_scale": scale,
     }
 
 
@@ -182,12 +231,38 @@ def main():
         print("off-grid px (top 10): %s" % detail["off_grid_top"])
         print("colores literales (top 10): %s" % detail["color_top"])
         print("curvas de transicion: %s" % detail["curvas_top"])
+        print("")
+        print("ESCALA DE OPACIDAD (8-bit por familia):")
+        for fam in sorted(detail["alpha_scale"]):
+            levels = detail["alpha_scale"][fam]
+            top = sorted(levels.items(), key=lambda x: -x[1])[:8]
+            print("  %-7s %2d niveles | mas usados: %s"
+                  % (fam, len(levels),
+                     ", ".join("%d(%.0f%%)x%d" % (a, a / 255 * 100, n)
+                               for a, n in top)))
         return 0
 
     worse = []
     for section, vals in metrics.items():
         for key, val in vals.items():
             old = base.get(section, {}).get(key)
+            if isinstance(val, dict):
+                # seccion con sub-claves (ej. niveles por familia de la escala)
+                if not isinstance(old, dict):
+                    worse.append("%s.%s: NUEVO (sin baseline)" % (section, key))
+                    continue
+                for sub, sval in val.items():
+                    sold = old.get(sub)
+                    if sold is None:
+                        worse.append("%s.%s.%s: NUEVO (sin baseline)"
+                                     % (section, key, sub))
+                    elif sval > sold:
+                        worse.append("%s.%s.%s: %d -> %d (nivel de opacidad nuevo)"
+                                     % (section, key, sub, sold, sval))
+                    elif sval < sold:
+                        print("mejora  %s.%s.%s: %d -> %d"
+                              % (section, key, sub, sold, sval))
+                continue
             if old is None:
                 worse.append("%s.%s: NUEVO (sin baseline)" % (section, key))
             elif val > old:
@@ -214,6 +289,10 @@ def main():
     print("  transition %d duraciones, %d curvas" % (
         metrics["transition"]["duraciones_distintas"],
         metrics["transition"]["curvas_distintas"]))
+    asc = metrics["alpha_scale"]["niveles_por_familia"]
+    print("  opacidad   %d niveles declarados (%s)" % (
+        metrics["alpha_scale"]["niveles_totales"],
+        ", ".join("%s:%d" % (k, v) for k, v in sorted(asc.items()))))
     return 0
 
 

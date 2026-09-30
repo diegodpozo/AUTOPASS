@@ -27,8 +27,27 @@ from pathlib import Path
 
 HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
 RGB = re.compile(
-    r"rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)"
+    r"rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.%]+)\s*)?\)"
 )
+
+
+def _alpha(raw):
+    """Convierte el 4to componente de rgba() a 0-255.
+
+    CSS admite dos notaciones: 0.05 (fraccion, la que usa el proyecto) y 5%
+    (porcentaje). Cualquier otra cosa se asume que YA viene en 0-255, que es lo
+    que ocurre si alguien escribe rgba(255,255,255,14) queriendo decir alfa 14.
+    Tratar un 14 como fraccion daba 14*255=3570 y falseaba cualquier medicion.
+    """
+    if raw is None:
+        return 255
+    s = str(raw).strip()
+    if s.endswith("%"):
+        return int(round(float(s[:-1]) / 100.0 * 255))
+    f = float(s)
+    if 0.0 <= f <= 1.0:
+        return int(round(f * 255))
+    return int(round(f))
 VAR = re.compile(r"var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*))?\)")
 ENV = re.compile(r"\benv\(\s*--[\w-]+\s*(?:,[^()]*)?\)")
 STRIP = re.compile(r"/\*.*?\*/", re.S)
@@ -46,8 +65,7 @@ def hex_to_rgba(h):
 
 
 def rgb_to_rgba(r, g, b, a=None):
-    alpha = int(round(float(a) * 255)) if a is not None else 255
-    return (int(float(r)), int(float(g)), int(float(b)), alpha)
+    return (int(float(r)), int(float(g)), int(float(b)), _alpha(a))
 
 
 def token_values(text):
@@ -122,13 +140,55 @@ def color_multiset(text, vars_css):
     return out
 
 
+def _rgb_multiset(m):
+    return [c for c in m if isinstance(c, tuple)]
+
+
+def multiset_delta(mb, ma, worst_where=None):
+    """Desvio maximo por canal entre dos multisets de colores, en ambos sentidos.
+
+    Empareja cada color con su MAS CERCANO en el otro lado y se queda con el
+    peor emparejamiento. Asi una fusion de niveles casi identicos da un delta
+    chico y medible, mientras que comparar todos contra todos daria siempre el
+    maximo global y no serviria para nada.
+
+    0 = identicos. Ignora el centinela UNRESOLVED (lo cuenta _no_new_unresolved).
+    """
+    ca, cb = _rgb_multiset(mb), _rgb_multiset(ma)
+    if not ca or not cb:
+        return 0
+    worst = 0
+    for src, dst in ((ca, cb), (cb, ca)):
+        for c in src:
+            best = min(max(abs(c[i] - o[i]) for i in range(4)) for o in dst)
+            if best > worst:
+                worst = best
+                if worst_where is not None:
+                    worst_where[0] = "rgba%s" % (c,)
+    return worst
+
+
+def _no_new_unresolved(mb, ma):
+    """Falla si aparece un token AUSENTE nuevo (un color que antes no se pintaba)."""
+    return ma.get("UNRESOLVED", 0) <= mb.get("UNRESOLVED", 0)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--allow", action="append", default=[], metavar="FILE",
                     help="archivo cuyo cambio de color es INTENCIONAL; se omite "
                          "del fallo pero se informa (repetible)")
+    ap.add_argument("--max-delta", type=int, default=0, metavar="N",
+                    help="tolerancia maxima de desvío por canal en 8 bits (0 = "
+                         "exacto). Fase 2 usa un valor bajo a proposito: fusionar "
+                         "niveles casi iguales no debe mover el color de forma "
+                         "perceptible.")
+    ap.add_argument("--against", default="HEAD", metavar="REF",
+                    help="referencia de comparacion (default HEAD). Usar HEAD~1 "
+                         "para validar recien un commit ya hecho.")
     args = ap.parse_args()
     allow = {a.replace("\\", "/").split("/")[-1] for a in args.allow}
+    ref = args.against
 
     root = Path(__file__).resolve().parents[1]
     vars_path = root / "static" / "css" / "base" / "variables.css"
@@ -137,21 +197,25 @@ def main():
         return 1
     vars_new = vars_path.read_text(encoding="utf-8")
     vars_old = subprocess.run(
-        ["git", "show", "HEAD:" + vars_path.relative_to(root).as_posix()],
+        ["git", "show", ref + ":" + vars_path.relative_to(root).as_posix()],
         capture_output=True, text=True, check=True).stdout
 
     files = subprocess.run(
-        ["git", "diff", "--name-only", "HEAD", "--", "static/css"],
+        ["git", "diff", "--name-only", ref, "--", "static/css"],
         capture_output=True, text=True, check=True).stdout.split()
     files = [f for f in files if f.endswith(".css") and "variables.css" not in f]
 
     print("Archivos a comparar: %d" % len(files))
+    print("Tolerancia: %d/255 por canal%s"
+          % (args.max_delta, " (exacto)" if args.max_delta == 0 else ""))
     bad, allowed = [], []
     total_before = total_after = 0
+    worst = 0
+    worst_info = [""]
 
     for rel in files:
         before = subprocess.run(
-            ["git", "show", "HEAD:" + rel], capture_output=True, text=True,
+            ["git", "show", ref + ":" + rel], capture_output=True, text=True,
             check=True).stdout
         after = (root / rel).read_text(encoding="utf-8")
 
@@ -160,15 +224,24 @@ def main():
         total_before += sum(mb.values())
         total_after += sum(ma.values())
 
-        if mb != ma:
-            diffs = []
-            for c in set(mb) | set(ma):
-                if mb.get(c, 0) != ma.get(c, 0):
-                    diffs.append("  %s: %d -> %d" % (c, mb.get(c, 0), ma.get(c, 0)))
-            name = rel.split("/")[-1]
-            (allowed if name in allow else bad).append((rel, diffs))
+        delta = multiset_delta(mb, ma, worst_info)
+        if delta > worst:
+            worst = delta
+            worst_where = "%s (color que mas se movio: %s)" % (rel, worst_info[0])
+
+        if delta <= args.max_delta and _no_new_unresolved(mb, ma):
+            continue
+
+        diffs = []
+        for c in set(mb) | set(ma):
+            if mb.get(c, 0) != ma.get(c, 0):
+                diffs.append("  %s: %d -> %d" % (c, mb.get(c, 0), ma.get(c, 0)))
+        name = rel.split("/")[-1]
+        (allowed if name in allow else bad).append((rel, diffs))
 
     print("Colores resueltos: %d antes -> %d despues" % (total_before, total_after))
+    print("Desvio maximo por canal: %d/255%s"
+          % (worst, ("  (%s)" % worst_where) if worst else ""))
     if allowed:
         print("")
         print("CAMBIOS INTENCIONALES (--allow):")
@@ -184,11 +257,18 @@ def main():
             for d in diffs:
                 print(d)
         print("")
-        print("FALLO: la migracion no fue visualmente neutra.")
+        print("FALLO: la migracion supero la tolerancia de %d/255." % args.max_delta)
         return 1
 
-    print("OK: los %d archivos resuelven EXACTAMENTE los mismos colores." % len(files))
-    print("Cero cambio visual garantizado (mismo multiset RGBA por archivo).")
+    if args.max_delta == 0:
+        print("OK: los %d archivos resuelven EXACTAMENTE los mismos colores." % len(files))
+        print("Cero cambio visual garantizado (mismo multiset RGBA por archivo).")
+    else:
+        print("OK: los %d archivos se movieron como maximo %d/255 por canal."
+              % (len(files), worst))
+        print("Dentro de la tolerancia %d/255." % args.max_delta)
+        if worst:
+            print("El mas afectado: %s" % worst_where)
     return 0
 
 
