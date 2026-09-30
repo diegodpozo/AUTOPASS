@@ -9,12 +9,17 @@
 
 .layout-with-sidebar.collapsed { grid-template-columns: 80px 1fr; }
 
+/* AC-3: padding-bottom mantiene el final del scroll por encima del indicador
+   de inicio de iOS; overscroll-behavior-y: contain evita el pull-to-refresh y
+   el scroll-chaining en este contenedor. */
 .main-content-scroll { 
     display: flex; 
     flex-direction: column; 
     overflow-y: auto; 
+    overscroll-behavior-y: contain;
     flex: 1; 
     height: 100vh; 
+    padding-bottom: var(--safe-area-bottom);
     background: linear-gradient(180deg, var(--bg-main) 0%, #050505 100%); 
 }
 

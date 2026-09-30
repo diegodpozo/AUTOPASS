@@ -66,6 +66,15 @@
     --z-tour: 10003;            /* Overlays de tour guiado (profile-tour.css:951,1088) */
     --z-fab: 99999;             /* FAB reloj virtual (virtual-time.css:17) y admin tour */
 
+    /* SAFE AREAS (AC-3 PWA) - Insets del notch/barra de estado en iOS.
+       Requieren viewport-fit=cover en templates/base.html:5; sin ese meta
+       env() devuelve 0 y estos tokens son inertes. Se usan con calc() para
+       sumar el inset al espaciado existente sin perderlo. */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+
     /* ANCHOS DE MODALES */
     --modal-sm: 420px;   /* Confirmaciones, alertas */
     --modal-md: 520px;   /* Formularios estandar (login, vehiculo) */

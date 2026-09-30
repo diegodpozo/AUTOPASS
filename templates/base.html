@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}AUTOPASS - Estacionamiento Inteligente{% endblock %}</title>
     
     <!-- FUENTES E ICONOS -->
@@ -79,8 +79,8 @@
         #pwa-install-btn {
             display: none;
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            bottom: calc(24px + var(--safe-area-bottom));
+            right: calc(24px + var(--safe-area-right));
             z-index: 9999;
             padding: 12px 20px;
             border: none;

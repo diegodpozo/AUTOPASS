@@ -1,6 +1,10 @@
 /* --- MAIN HEADER (Layout) --- */
+/* AC-3: el padding-top suma el inset de la barra de estado/notch. Va dentro
+   del box, asi el fondo translucido sigue cubriendo esa franja y el contenido
+   queda debajo de la status bar. Debe espejarse en standalone.css:46, que
+   pisa este padding con !important. */
 .main-content-scroll header {
-    padding: 20px 40px;
+    padding: calc(20px + var(--safe-area-top)) 40px 20px;
     background: rgba(10, 10, 10, 0.85);
     backdrop-filter: blur(25px);
     border-bottom: 1px solid var(--border-light);

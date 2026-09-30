@@ -1,10 +1,11 @@
 /* --- SIDEBAR LAYOUT --- */
+/* AC-3: padding-top para que el logo/nav no queden bajo la status bar. */
 .sidebar { 
     background: linear-gradient(180deg, var(--bg-sidebar) 0%, #0d0d0d 100%);
     border-right: 1px solid var(--border-light); 
     display: flex; 
     flex-direction: column; 
-    padding: 0; 
+    padding: var(--safe-area-top) 0 0; 
     transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative; 
     height: 100vh; 
@@ -101,10 +102,11 @@
         box-shadow: 10px 0 30px rgba(0,0,0,0.8);
         overflow-x: hidden;
         overflow-y: auto;
+        overscroll-behavior-y: contain;
         box-sizing: border-box;
         transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         justify-content: flex-start;
-        padding-bottom: 40px;
+        padding-bottom: calc(40px + var(--safe-area-bottom));
     }
 
     .sidebar.mobile-open {
@@ -137,7 +139,7 @@
         display: block;
         position: fixed;
         left: 20px;
-        top: 22px;
+        top: calc(22px + var(--safe-area-top));
         margin: 0;
         font-size: 1.3rem;
         z-index: 1100;

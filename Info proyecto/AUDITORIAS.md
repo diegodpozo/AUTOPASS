@@ -1,6 +1,6 @@
 # Auditorías de AUTOPASS — Documento Consolidado
 
-> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-27, suite **702 passed**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; solo AC-3 (PWA + Safe Areas) queda pendiente. Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
+> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-27, suite **702 passed**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; **AC-3 CERRADA (2026-09-29: `viewport-fit=cover` + 4 tokens `--safe-area-*` en 11 superficies, `overscroll-behavior-y: contain` en 3 contenedores; touch targets ≥44px descartado por no aplicar)**. **No queda ninguna auditoría CSS abierta de esta tanda.** Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
 
 Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUDITORIAS.md` y `PROPUESTA_AUDITORIAS_CSS.md` (eliminados 2026-09-27, v9.34.50). Reúne lo más importante de cada auditoría: hallazgos, remediación, verificación y herramientas reutilizables.
 
@@ -295,13 +295,13 @@ venv\Scripts\python.exe _tools\check_consistencia_frontend.py [--json | --dump-o
 
 ## Propuestas de Auditoría CSS (AC-1 a AC-5) — ESTADO DE EJECUCIÓN
 
-Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución de Fase 1 (AC-2 y AC-4) completada el 2026-09-27. Fase 2: AC-1 (2026-09-28) y AC-5 (2026-09-28) cerradas; AC-3 pendiente:
+Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución de Fase 1 (AC-2 y AC-4) completada el 2026-09-27. Fase 2: AC-1 (2026-09-28), AC-5 (2026-09-28) y AC-3 (2026-09-29) cerradas:
 
 | # | Auditoría | Prioridad | Esfuerzo | Estado | Métrica actual / Diagnóstico |
 |---|---|:---:|:---:|:---:|:---|
 | **AC-1** | Especificidad y guerra de `!important` | Alta | 1 día | ✅ **CERRADA** (Lotes 1–4 completos) | **287** `!important` totales restantes (de 613 iniciales, **−326 eliminados**); **0 propios** (reducidos de **345 a 0**). Todo lo restante está justificado por librerías/PWA/RBAC/AC-4: Leaflet (`landing-map.css` 134), Tour overlays (`profile-tour.css` 71 + `dashboard-admin-tour.css` 9), Standalone desktop (`standalone.css` 36), Flatpickr (`forms.css` 23), reset AC-4 (4), QR captura (`profile-reservations.css` 4), RBAC roles (`dashboard-base.css` 4), utilidades defensivas (`dashboard-tables.css` 1, `landing-nav.css` 1). |
 | **AC-2** | Rendimiento de renderizado, GPU y animaciones | Alta | 1–2 días | ✅ **CERRADA** | **0** `transition: all` (todas migradas a `transform`/`opacity`/`background`/`border-color`/`box-shadow`) |
-| **AC-3** | PWA + Safe Areas (notches / isla dinámica) | Media/Alta | 1 día | ⏳ PENDIENTE | `env(safe-area-inset-*)` pendiente de aplicar |
+| **AC-3** | PWA + Safe Areas (notches / isla dinámica) | Media/Alta | 1 día | ✅ **CERRADA** (con 1 criterio descartado por no aplicar) | `viewport-fit=cover` en el meta + **4 tokens** `--safe-area-*` y **11 superficies** que los consumen (headers, sidebar, modales, FABs); `overscroll-behavior-y: contain` en los **3** contenedores de scroll; 0 → 11 usos de `env(safe-area-inset-*)` |
 | **AC-4** | Estados interactivos y foco de teclado | Media | 1 día | ✅ **CERRADA** | Anillo institucional `:focus-visible` global en `reset.css` y `forms.css`, feedback `:active` (`scale(0.97)`), estados `:disabled` estandarizados |
 | **AC-5** | CSS muerto, duplicación y DRY | Media | 1 día | ✅ **CERRADA** (Lotes 1, 2, 7 y 9) | **0** clases huérfanas (de 120 candidatas), **0** `@keyframes` duplicados (de 16 definidos), **−15 tokens** muertos en `variables.css` (65 → 50), 0 `!important` nuevos, **−1247 líneas** netas en el diff |
 
@@ -315,7 +315,14 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
     - **Lote 4 — Componentes y Base Global CERRADO (53 → 11):** `tables.css` (23 → 0), `forms.css` propios (9 → 0; preservados 23 de tema Flatpickr), `typography.css` (5 → 0), `legal.css` (5 → 0), `style.css` (3 → 0), `utilities.css` (2 → 0), `landing-modals.css` (1 → 0), `monitoreo-live.css` (1 → 0); `reset.css` (4, justificados por AC-4, no tocados).
   - *Meta final:* Reducir los propios a <30 (solo utilidades de override y RBAC). **CUMPLIDA: 0 propios.**
 - **AC-2 (CERRADA ✓):** 0 `transition: all` en componentes de alta frecuencia; animaciones compuestas con aceleración GPU sin caídas de frames en modales/hover.
-- **AC-3 (Pendiente):** `env(safe-area-inset-*)` global en headers/barras/modales; touch targets ≥44px; `font-size ≥16px` en inputs móviles (evita zoom iOS); `overscroll-behavior-y: contain`.
+- **AC-3 (CERRADA ✓):** `env(safe-area-inset-*)` global en headers/barras/modales; `overscroll-behavior-y: contain`.
+  - *Hallazgo previo (2026-09-29):* el proyecto declaraba `apple-mobile-web-app-status-bar-style: black-translucent` **sin** `viewport-fit=cover` en el meta. En iOS esa combinación es la peor de las tres: la webview se dibuja bajo la status bar (por `black-translucent`) pero `env()` devuelve **0** (sin `viewport-fit`), así que el header quedaba parcialmente tapado y no existía forma de compensarlo. Los dos cambios son **acoplados**: aplicar el CSS sin el meta es un no-op, y aplicar el meta sin el CSS deja el header bajo el notch.
+  - *Tokens (DRY):* 4 tokens `--safe-area-top/right/bottom/left` en `variables.css` (con fallback `0px`), consumidos con `calc()` para **sumar** el inset al espaciado existente en lugar de reemplazarlo. Se evita repetir `env(safe-area-inset-*)` en 11 sitios.
+  - *Superficies con inset (11):* `variables.css` (fuente) · `header.css` (header sticky del layout con sidebar) · `standalone.css` (espejo obligatorio: su `padding: ... !important` anulaba el inset del header en modo standalone, justo donde más hace falta) · `sidebar.css` (padding del sidebar, padding-bottom del drawer móvil, `top` del toggle fijo) · `grid.css` (fin del scroll principal) · `modals.css` (`.modal`, `.modal-premium`, `.modal-actions-sticky`) · `virtual-time.css` (`.vt-fab` inferior/derecha) · `landing-nav.css` (header fijo de landing, estados normal y `.scrolled`) · `base.html` (`#pwa-install-btn` inline).
+  - *Overscroll (3 contenedores):* `.main-content-scroll`, `.modal`, `.modal-premium` y el drawer móvil `.sidebar` → `overscroll-behavior-y: contain` para evitar pull-to-refresh y scroll-chaining.
+  - *Criterio NA (no aplicado):* touch targets ≥44px. Las 11 declaraciones entre 20–43px son botones compactos de dashboard de escritorio; la guideline es mobile y forzar 44px los desproporcionaría. El criterio de `font-size ≥16px` en inputs móviles **ya estaba cumplido** por `.input-premium` (`1rem` en `forms.css:50`), 0 reglas por debajo del umbral.
+  - *Cache:* los 5 CSS del shell modificados están en el precache de `sw.js`; se subió `SHELL_CACHE` a `autopass-shell-v2` (el propio `sw.js:1` lo indica al desplegar) para que no sirvan CSS viejo con `stale-while-revalidate`.
+  - *Verificado:* llaves balanceadas, 0 regresión de CSS muerto, **287** `!important` (baseline AC-1 sin cambios), suite **707 passed**. Pendiente de validación visual en un iPhone con notch.
 - **AC-4 (CERRADA ✓):** navegación Tab/Shift+Tab 100% visible con `:focus-visible` dorado institucional; botones e inputs `:disabled` estandarizados con `filter: grayscale(0.6)`; feedback `:active` táctil unificado.
 - **AC-5 (CERRADA ✓):** criterios cumplidos — **0** clases huérfanas de versiones v9.0–v9.23; **−1247 líneas** netas; unificación de scrollbar y keyframes duplicados.
   - *Diagnóstico:* 43 CSS, 14.313 líneas, 2.576 reglas, 1.254 clases distintas. Sin duplicación real de scrollbar thumb/track (solo 1 regla `display:none` en `monitoreo-live.css`); sí 114 bloques flex-center idénticos (32 archivos), 26 `margin:0 auto` (18 archivos), 86 radios literales, 25 blur y 49 bloques `uppercase`+`letter-spacing`.
@@ -344,7 +351,7 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
 
 ## Estado de cierre (2026-09-28)
 
-- **Suite backend: 702 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5), 7 warnings. Reverificado tras AC-5.
+- **Suite backend: 707 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5 + 5 regresión monitoring v9.34.54), 7 warnings. Reverificado tras AC-3.
 - Todos los cambios CSS de T2/T3/T4 verificados sin regresión (los tests no tocan CSS).
 - **Pendiente único:** mediciones con volumen real de Neon; cuando CI se reactive: Python 3.14 + `init_db.py` + `--cov-fail-under=82`.
-- AC-3 (PWA + Safe Areas) es el único candidato CSS restante de esta tanda.
+- AC-3 (PWA + Safe Areas) cerrada el 2026-09-29: **no queda ninguna auditoría CSS abierta de esta tanda.**

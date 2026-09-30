@@ -1,8 +1,10 @@
 /* FLOATING ACTION BUTTON */
+/* AC-3: inset inferior para no quedar bajo el indicador de inicio de iOS;
+   el inset lateral cubre el notch en landscape. */
 .vt-fab {
     position: fixed;
-    bottom: 24px;
-    right: 30px;
+    bottom: calc(24px + var(--safe-area-bottom));
+    right: calc(30px + var(--safe-area-right));
     width: 48px;
     height: 48px;
     border-radius: 50%;

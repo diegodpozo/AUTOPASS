@@ -5,7 +5,7 @@
    - API (/v1) y mutaciones: SOLO red (nunca se cachean).
    - Al desplegar una versión nueva, subir CACHE_NAME (ej. autopass-v2). */
 const CACHE_NAME = "autopass-v2";
-const SHELL_CACHE = "autopass-shell-v1";
+const SHELL_CACHE = "autopass-shell-v2";
 const RUNTIME_CACHE = "autopass-runtime-v1";
 const PRECACHE = [
   "/manifest.webmanifest",
