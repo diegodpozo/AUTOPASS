@@ -194,9 +194,10 @@ cierra el pago. Sin serialización, gana el último en escribir, y puede dejar l
 
 ## 4. Lo que NO es un problema (verificado)
 
-- `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` (`availability.py:362,367`) son
-  `pass`. La ocupación física la maneja exclusivamente el ALPR. No hay doble reserva de
-  plaza física por esta vía.
+- Las reservas no horarias nunca pre-ocupaban plaza física: los helpers
+  `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` eran `pass` y se
+  eliminaron en v9.34.55 (con sus 5 call sites). La ocupación física la maneja
+  exclusivamente el ALPR. No hay doble reserva de plaza física por esta vía.
 - `alpr/alpr_service.py` **ya no existe**; el proceso ALPR fue absorbido. El filtro de limpieza
   de `run_server.ps1:33` que lo menciona está obsoleto, pero no afecta a este análisis.
 

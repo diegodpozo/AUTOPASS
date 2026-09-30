@@ -20,7 +20,7 @@ Cualquier configuración que afecte a todo el sistema debe ir aquí.
 
 ### 3. `services/` (Cerebro)
 - **IMPORTANTE**: No pongas lógica de cálculo de precios o validación de stock en los routers. Creá un método estático en un servicio dentro de `services/`.
-- **Aforo Solo Físico (v9.5+)**: Las reservas no horarias (Día/Semana/Quincena/Mes) **no** descuentan plaza del aforo ni al pagar ni al iniciar el período. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` quedaron como **no-ops**. El conteo de ocupación lo maneja exclusivamente el ALPR/ingreso manual (incrementa en ENTRADA, decrementa en SALIDA) reflejando solo vehículos físicamente presentes. No modificar este comportamiento sin revisar el refactor v9.5.0.
+- **Aforo Solo Físico (v9.5+)**: Las reservas no horarias (Día/Semana/Quincena/Mes) **no** descuentan plaza del aforo ni al pagar ni al iniciar el período. El conteo de ocupación lo maneja exclusivamente el ALPR/ingreso manual (incrementa en ENTRADA, decrementa en SALIDA) reflejando solo vehículos físicamente presentes. No modificar este comportamiento sin revisar el refactor v9.5.0.
 - **Disponibilidad de Reserva (v9.14.1+)**: La disponibilidad del selector de reservas se valida contra los **cupos exclusivos de reserva** (`capacidad_reservas_*`/`ocupacion_reservas_*` en `ParkingAforo` y `ParkingFloor`, migración `e6f7a8b9c0d1`), NO contra el aforo físico. Usá `verificar_disponibilidad`, `obtener_fechas_deshabilitadas` y `obtener_horas_deshabilitadas` de `services/reservation_service.py` (sweep-line + cache TTL) y los endpoints `/reservations/check-availability`, `/reservations/disabled-dates` y `/reservations/disabled-hours`. Todos comparten la lógica por tipo de vehículo y solapamiento en el rango.
 
 ---
@@ -216,8 +216,7 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
 
 6. **Aforo Solo Físico (v9.5+):**
    - La ocupación se gestiona **exclusivamente** con los eventos de acceso (ALPR/ingreso manual): ENTRADA incrementa `ocupacion_actual`, SALIDA la decrementa. Refleja solo vehículos físicamente presentes.
-   - Las reservas no horarias (Día/Semana/Quincena/Mes) **no** pre-ocupan plaza. `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` en `reservation_service.py` son **no-ops** conservados por compatibilidad; no reintroducir la pre-ocupación sin autorización.
-   - Usar los helpers solo si se revierte el comportamiento v9.5.0.
+   - Las reservas no horarias (Día/Semana/Quincena/Mes) **no** pre-ocupan plaza. Desde v9.34.55 los helpers `_reservar_plaza_en_aforo` y `_liberar_plaza_en_aforo` se eliminaron por completo; no reintroducir la pre-ocupación sin autorización.
 
 6b. **Cupos Exclusivos de Reserva (v9.14.1+):**
    - La **disponibilidad de reserva** se calcula contra los cupos dedicados `capacidad_reservas_*`/`ocupacion_reservas_*` (PB en `ParkingAforo` + pisos en `ParkingFloor`), no contra el aforo físico. Migración: `e6f7a8b9c0d1`.

@@ -108,8 +108,6 @@
 │ + cancel_reservation(db, user, res_id)                        │
 │ # normalize_name(name) -> str                                 │
 │ # verificar_disponibilidad(db, ...) -> bool                   │
-│ # _reservar_plaza_en_aforo(db, ...)  [NO-OP v9.5]             │
-│ # _liberar_plaza_en_aforo(db, ...)   [NO-OP v9.5]             │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
