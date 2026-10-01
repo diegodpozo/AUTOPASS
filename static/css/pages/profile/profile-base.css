@@ -214,7 +214,7 @@
 .form-group-premium label {
     font-size: 0.7rem;
     font-weight: 800;
-    color: var(--dorado);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
     text-align: left;
@@ -394,12 +394,16 @@
 }
 
 .welcome-msg h1 {
-    color: var(--dorado);
+    color: var(--text-primary);
     
     font-weight: 900;
     letter-spacing: 2px;
     font-size: 1.4rem;
 }
+
+.welcome-msg h1 i {
+    color: var(--dorado-dark);
+    }
 
 .welcome-card {
     text-align: center;
@@ -407,7 +411,7 @@
 }
 
 .price-summary-premium .total-label {
-    color: var(--dorado);
+    color: var(--text-secondary);
     opacity: 0.8;
 }
 
@@ -648,16 +652,16 @@
 }
 
 .section-title-premium--center h3 i {
-    color: var(--dorado);
+    color: var(--dorado-dark);
     margin-right: 10px;
 }
-
+    
 .section-title-premium--center::after {
     content: "";
     display: block;
     width: 54px;
     height: 2px;
-    background: var(--dorado);
+    background: var(--dorado-dark);
     margin: 0 auto;
     opacity: 0.5;
 }
@@ -709,7 +713,7 @@
 .hub-section-title {
     font-size: 0.7rem; /* Un poco más chico */
     font-weight: 900;
-    color: var(--dorado);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 2px;
     margin-bottom: 25px;

@@ -397,5 +397,5 @@
    LIMPIEZA INLINE v9.34.38 - profile/tabs/notificaciones.html
    ========================================================================== */
 #section-notificaciones .welcome-msg h1 { justify-content: center; margin-bottom: 0; }
-#section-notificaciones .welcome-msg h1 .fa-bell { color: var(--dorado); margin-right: 10px; }
+#section-notificaciones .welcome-msg h1 .fa-bell { margin-right: 10px; }
 #section-notificaciones .notif-filter-bar { margin-top: 15px; }
