@@ -193,6 +193,24 @@ class BillingService:
         return {"status": "ok", "monto_cobrado": monto, "puntos_ganados": puntos_ganados, "aplicado": True}
 
     @staticmethod
+    def _extra_vencimiento_ya_cobrado(log, fecha_fin: str) -> bool:
+        """INDICA SI EL EXTRA POR RESERVA VENCIDA YA FUE COBRADO PARA ESTA ESTADIA.
+
+        El extra se cobra una sola vez y cubre el tramo desde fecha_fin hasta el momento
+        del cobro. Si el log ya fue pagado DESPUES de que la reserva vencio, ese tramo ya
+        esta incluido en el pago anterior y volver a acumularlo cobraria de nuevo al mismo
+        cliente por el mismo periodo.
+        """
+        if not log.fecha_pago or not fecha_fin:
+            return False
+        try:
+            pago_dt = datetime.datetime.fromisoformat(str(log.fecha_pago).replace(" ", "T"))
+            fin_dt = datetime.datetime.fromisoformat(str(fecha_fin).replace(" ", "T"))
+        except ValueError:
+            return False
+        return pago_dt > fin_dt
+
+    @staticmethod
     def process_payment(db: Session, plate: str, metodo: str = "DIGITAL") -> dict:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
         from models.enums import ReservationStatus, PaymentStatus
@@ -210,10 +228,12 @@ class BillingService:
                     now_str = TimeService.now_str()
                     if not (r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str):
                         return {"status": "error", "message": "La reserva sigue vigente"}
+                    if BillingService._extra_vencimiento_ya_cobrado(log, r.fecha_fin):
+                        return {"status": "ok", "message": "El extra por reserva vencida ya fue cobrado", "monto_cobrado": 0.0, "puntos_ganados": 0, "aplicado": False}
                     # RESERVA VENCIDA: cobrar desde fecha_fin
                     monto_real = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
                     log.costo_estadia = (log.costo_estadia or 0) + monto_real
-                    log.fecha_pago = datetime.datetime.now().isoformat()
+                    log.fecha_pago = TimeService.now().isoformat()
                     log.pago_confirmado = True
                     log.metodo_pago = metodo
                     

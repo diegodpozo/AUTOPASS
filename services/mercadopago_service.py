@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 import models
 from core.config import settings
 from core.logger import get_logger
+from core.normalize import normalize_plate
 from models.enums import PaymentStatus, ReservationStatus
 from services.billing_service import BillingService
 from repositories.access_log_repository import AccessRepository
@@ -121,8 +122,8 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
         log = AccessRepository.get_by_id(db, data.access_log_id)
         if not log:
             raise HTTPException(status_code=404, detail="Estadía no encontrada")
-        user_plates = [v.patente for v in user.vehicles]
-        if log.patente_detectada not in user_plates:
+        user_plates = [normalize_plate(v.patente) for v in user.vehicles]
+        if normalize_plate(log.patente_detectada) not in user_plates:
             raise HTTPException(status_code=403, detail="La estadía no pertenece a un vehículo del usuario")
         if log.pago_confirmado:
             raise HTTPException(status_code=400, detail="La estadía ya ha sido abonada")

@@ -2,11 +2,23 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import models
+from core.normalize import normalize_plate
 
 #--- REPOSITORIO DE VEHICULOS (ACCESO A DATOS) ---
 
 
 class VehicleRepository:
+    @staticmethod
+    def _norm_expr():
+        """EXPRESION SQL DE LA PATENTE NORMALIZADA (SIN ESPACIOS, MAYUSCULAS).
+
+        Los logs de acceso guardan la patente normalizada ("AB123CD") y el alta de
+        vehiculo la guarda con formato visual ("AB 123 CD"), por lo que el match
+        exacto falla entre ambas fuentes. Toda busqueda por patente debe usar esta
+        expresion en vez de una igualdad cruda.
+        """
+        return func.replace(func.upper(models.Vehicle.patente), ' ', '')
+
     @staticmethod
     def get_tipos_by_patentes(db: Session, patentes: list) -> dict:
         """MAPA patente -> tipo de vehiculo PARA LAS PATENTES INDICADAS."""
@@ -15,14 +27,16 @@ class VehicleRepository:
 
     @staticmethod
     def get_by_patente(db: Session, patente: str) -> models.Vehicle:
-        """OBTIENE UN VEHICULO POR SU PATENTE EXACTA."""
-        return db.query(models.Vehicle).filter(models.Vehicle.patente == patente).first()
+        """OBTIENE UN VEHICULO POR PATENTE, IGNORANDO ESPACIOS Y MAYUSCULAS."""
+        return VehicleRepository.get_by_normalized_patente(db, normalize_plate(patente))
 
     @staticmethod
     def get_by_normalized_patente(db: Session, norm: str) -> models.Vehicle:
         """OBTIENE UN VEHICULO POR PATENTE NORMALIZADA (SIN ESPACIOS, MAYUSCULAS)."""
+        if not norm:
+            return None
         return db.query(models.Vehicle).filter(
-            func.replace(func.upper(models.Vehicle.patente), ' ', '') == norm
+            VehicleRepository._norm_expr() == norm
         ).first()
 
     @staticmethod
@@ -36,7 +50,7 @@ class VehicleRepository:
         if not normas:
             return []
         return db.query(models.Vehicle).filter(
-            func.replace(func.upper(models.Vehicle.patente), ' ', '').in_(normas)
+            VehicleRepository._norm_expr().in_(normas)
         ).all()
 
     @staticmethod
@@ -52,7 +66,7 @@ class VehicleRepository:
         """OBTIENE UN VEHICULO DEL USUARIO IGNORANDO ESPACIOS Y MAYUSCULAS EN LA PATENTE."""
         return db.query(models.Vehicle).filter(
             models.Vehicle.user_id == user_id,
-            func.replace(func.upper(models.Vehicle.patente), ' ', '') == patente_norm
+            VehicleRepository._norm_expr() == patente_norm
         ).first()
 
     @staticmethod
@@ -62,7 +76,7 @@ class VehicleRepository:
             db.query(models.Vehicle)
             .join(models.User, models.User.id == models.Vehicle.user_id)
             .filter(
-                func.replace(func.upper(models.Vehicle.patente), ' ', '') == patente_norm,
+                VehicleRepository._norm_expr() == patente_norm,
                 models.User.is_deleted == False
             )
             .first()
