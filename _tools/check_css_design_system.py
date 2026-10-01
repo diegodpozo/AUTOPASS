@@ -101,6 +101,20 @@ def iter_css():
         yield p, STRIP.sub(" ", p.read_text(encoding="utf-8", errors="ignore"))
 
 
+SELECTOR = re.compile(r"[^{}]*\{")
+
+
+def declarations_only(txt):
+    """Devuelve solo el cuerpo de las reglas, descartando selectores.
+
+    Necesario para medir colores: HEX matchea `#add-vehicle-form` como si fuera
+    un literal (las letras `a` y `d` son digitos hexadecimales validos), asi que
+    contar sobre el archivo completo infla el total con selectores que no son
+    colores y hace que borrar una regla parezca una mejora de color.
+    """
+    return SELECTOR.sub("{", txt)
+
+
 def token_rgba_map():
     out = {}
     text = VARIABLES.read_text(encoding="utf-8")
@@ -142,7 +156,7 @@ def alpha_scale():
     """
     fam = defaultdict(Counter)
     for _p, txt in iter_css():
-        for m in RGB.finditer(txt):
+        for m in RGB.finditer(declarations_only(txt)):
             r, g, b = (int(float(x)) for x in m.group(1, 2, 3))
             a = _alpha(m.group(4))
             if a == 255:
@@ -174,7 +188,7 @@ def measure():
     curves = Counter()
 
     for _p, txt in iter_css():
-        for m in HEX.finditer(txt):
+        for m in HEX.finditer(declarations_only(txt)):
             raw = m.group(0).lower()
             if raw in GENERIC_HEX:
                 continue

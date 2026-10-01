@@ -122,10 +122,6 @@
     z-index: 5;
 }
 
-#add-vehicle-form .input-wrapper-premium .vehicle-type-icon {
-    display: none;
-}
-
 #add-vehicle-form input[name="patente"],
 #add-vehicle-form input[name="marca_modelo"] {
     padding: 10px;

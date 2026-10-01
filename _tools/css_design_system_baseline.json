@@ -11,8 +11,8 @@
   },
   "color": {
     "equivalentes_a_token": 179,
-    "literales_no_genericos": 1102,
-    "rgba_distintos": 341
+    "literales_no_genericos": 1090,
+    "rgba_distintos": 340
   },
   "movimiento": {
     "animaciones_infinitas": 13,

@@ -51,9 +51,6 @@
 
 .uppercase { text-transform: uppercase; }
 
-/* --- VISIBILITY UTILITIES --- */
-.d-none { display: none; }
-
 /* --- RESPONSIVE UTILITIES --- */
 @media (max-width: 768px) {
     .flex-wrap-mobile { flex-wrap: wrap; }
