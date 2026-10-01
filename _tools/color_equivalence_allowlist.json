@@ -1,0 +1,17 @@
+{
+  "_nota": "Archivos cuyo cambio de color es INTENCIONAL. check_color_equivalence.py los omite SOLO cuando --against es el padre del commit registrado, que es el caso en que se valida recien ese commit. En cualquier otra comparacion se comparan normales, para que una regresion posterior en el mismo archivo siga saltando.",
+  "files": {
+    "static/css/pages/profile/profile-base.css": {
+      "commit": "6494f61",
+      "motivo": "v9.34.68: titulos de las 7 tabs a --text-primary, .hub-section-title y etiquetas a --text-secondary, iconos de titulo y linea decorativa a --dorado-dark. El dorado bajaba de contraste alto a medio para dejar de competir con los botones."
+    },
+    "static/css/pages/profile/profile-reservations.css": {
+      "commit": "6494f61",
+      "motivo": "v9.34.68: precio total a --dorado-dark, flecha e icono del selector a --text-secondary. El foco de los inputs se mantiene en --dorado a proposito."
+    },
+    "static/css/pages/profile/profile-notifications.css": {
+      "commit": "6494f61",
+      "motivo": "v9.34.68: el color del override de .fa-bell se elimino porque la regla general .welcome-msg h1 i ya lo cubre."
+    }
+  }
+}

@@ -13,12 +13,24 @@ Clasifica cada var() en tres desenlaces, porque no son lo mismo:
   - token AUSENTE                   -> cuenta como UNRESOLVED (bug: no pinta nada)
 Esto es lo que permitio cazar el `var(--text)` inexistente de dashboard-live.css.
 
-Falla (exit 1) si algum archivo resuelve distinto a HEAD.
+Falla (exit 1) si algum arquivo resuelve distinto a HEAD.
+
+Hay cambios de color LEGITIMOS (mover un titulo de dorado a blanco para bajar la
+fatiga visual, por ejemplo). Esos no se pueden probar con este guard, porque el
+guard existe justamente para demostrar lo contrario: que una migracion de tokens
+no movio ni un pixel. Para no perder la proteccion, esos archivos van declarados
+en color_equivalence_allowlist.json y solo se omiten cuando la comparacion es
+contra el padre del commit que los cambio (validar un commit recien hecho).
+En cualquier otra comparacion se comparan normales, asi una regresion posterior
+en el mismo archivo sigue saltando. El flag --allow hace lo mismo de forma
+puntual, sin tocar el archivo de lista.
 
 Uso:  python _tools/check_color_equivalence.py
+      python _tools/check_color_equivalence.py --against HEAD~1
 Nota: comparar contra HEAD solo tiene sentido con cambios sin commitear.
 """
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -182,6 +194,46 @@ def _no_new_unresolved(mb, ma):
     return ma.get("UNRESOLVED", 0) <= mb.get("UNRESOLVED", 0)
 
 
+ALLOWLIST_PATH = Path(__file__).resolve().parent / "color_equivalence_allowlist.json"
+
+
+def _parents_of(ref):
+    """Hashes de los padres del commit `ref`. Vacio si no se puede resolver."""
+    out = subprocess.run(["git", "rev-list", "--parents", "-n", "1", ref],
+                         capture_output=True, text=True)
+    parts = out.stdout.split()
+    return set(parts[1:]) if len(parts) > 1 else set()
+
+
+def committed_allowlist(root, ref):
+    """Archivos de la lista, si `ref` es el padre del commit que los cambio.
+
+    Se omiten SOLO en ese caso (validar el commit recien hecho). Si alguien
+    vuelve a tocar el archivo mas adelante, el ref ya no es ese padre y el
+    guard lo compara entero: la lista no abre un hueco permanente.
+    """
+    if not ALLOWLIST_PATH.exists():
+        return {}
+    data = json.loads(ALLOWLIST_PATH.read_text(encoding="utf-8"))
+    entries = data.get("files", {})
+    if not entries:
+        return {}
+
+    parents = set()
+    for c in {e.get("commit", "") for e in entries.values() if e.get("commit")}:
+        parents |= _parents_of(c)
+    if not parents:
+        return {}
+
+    # El ref que se esta comparando debe ser el padre del commit declarado.
+    r = subprocess.run(["git", "rev-parse", ref], capture_output=True, text=True)
+    if r.returncode != 0 or r.stdout.strip() not in parents:
+        return {}
+
+    return {rel.replace("\\", "/"): e.get("motivo", "")
+            for rel, e in entries.items()}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--allow", action="append", default=[], metavar="FILE",
@@ -200,6 +252,7 @@ def main():
     ref = args.against
 
     root = Path(__file__).resolve().parents[1]
+    committed = committed_allowlist(root, ref)
     vars_path = root / "static" / "css" / "base" / "variables.css"
     if not vars_path.exists():
         print("No encuentro %s" % vars_path)
@@ -246,16 +299,22 @@ def main():
             if mb.get(c, 0) != ma.get(c, 0):
                 diffs.append("  %s: %d -> %d" % (c, mb.get(c, 0), ma.get(c, 0)))
         name = rel.split("/")[-1]
-        (allowed if name in allow else bad).append((rel, diffs))
+        reason = committed.get(rel)
+        if reason:
+            allowed.append((rel, diffs, "lista: " + reason))
+        elif name in allow:
+            allowed.append((rel, diffs, "--allow"))
+        else:
+            bad.append((rel, diffs))
 
     print("Colores resueltos: %d antes -> %d despues" % (total_before, total_after))
     print("Desvio maximo por canal: %d/255%s"
           % (worst, ("  (%s)" % worst_where) if worst else ""))
     if allowed:
         print("")
-        print("CAMBIOS INTENCIONALES (--allow):")
-        for rel, diffs in allowed:
-            print("  %s" % rel)
+        print("CAMBIOS INTENCIONALES (no se exige neutralidad, se informa):")
+        for rel, diffs, src in allowed:
+            print("  %s  [%s]" % (rel, src))
             for d in diffs:
                 print(d)
     print("")
@@ -269,9 +328,18 @@ def main():
         print("FALLO: la migracion supero la tolerancia de %d/255." % args.max_delta)
         return 1
 
+    n_neutral = len(files) - len(allowed)
     if args.max_delta == 0:
-        print("OK: los %d archivos resuelven EXACTAMENTE los mismos colores." % len(files))
-        print("Cero cambio visual garantizado (mismo multiset RGBA por archivo).")
+        if allowed:
+            print("OK: %d de %d archivos resuelven EXACTAMENTE los mismos colores."
+                  % (n_neutral, len(files)))
+            print("Los otros %d tienen cambio de color declarado como intencional "
+                  "(arriba)." % len(allowed))
+            print("Neutralidad garantizada solo para los %d archivos neutros."
+                  % n_neutral)
+        else:
+            print("OK: los %d archivos resuelven EXACTAMENTE los mismos colores." % len(files))
+            print("Cero cambio visual garantizado (mismo multiset RGBA por archivo).")
     else:
         print("OK: los %d archivos se movieron como maximo %d/255 por canal."
               % (len(files), worst))
