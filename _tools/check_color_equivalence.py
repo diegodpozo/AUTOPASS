@@ -69,21 +69,29 @@ def rgb_to_rgba(r, g, b, a=None):
 
 
 def token_values(text):
-    """RGBA de cada Custom Property declarada. None si el valor no es un color."""
+    """RGBA de cada Custom Property declarada. None si el valor no es un color.
+
+    Una propiedad puede contener VARIOS colores, no uno: los tokens de sombra de
+    dos capas ('--shadow-8-24-10-b70: 0 8px 24px rgba(0,0,0,0.7), 0 0 10px
+    rgba(223,186,107,0.25)') tienen dos. Guardar solo el primero dejaba el
+    segundo invisible y reportaba un falso 13/255 al tokenizar sombras, asi que
+    aqui se guarda la LISTA completa de colores.
+    """
     out = {}
     for m in re.finditer(r"(--[\w-]+)\s*:\s*([^;]+);", text):
         val = m.group(2).strip()
-        hv = HEX.search(val)
-        if hv:
-            out[m.group(1)] = hex_to_rgba(hv.group(0))
-        else:
-            rv = RGB.search(val)
-            out[m.group(1)] = rgb_to_rgba(*rv.groups()) if rv else None
+        cols = []
+        for h in HEX.finditer(val):
+            cols.append(hex_to_rgba(h.group(0)))
+        if not cols:
+            for r in RGB.finditer(val):
+                cols.append(rgb_to_rgba(*r.groups()))
+        out[m.group(1)] = cols if cols else None
     return out
 
 
 def resolve_tokens(text, extra=None):
-    """Reemplaza var(--x) por su literal RGBA textual (o por el fallback)."""
+    """Reemplaza var(--x) por sus colores RGBA textuales (o por el fallback)."""
     toks = token_values(text)
     if extra:
         toks.update(extra)
@@ -92,8 +100,9 @@ def resolve_tokens(text, extra=None):
         name, fallback = m.group(1), m.group(2)
         if name in toks and toks[name]:
             # Emitir hex8 (no rgba con alfa 0-255: el parser rgba asume 0-1).
-            r, g, b, a = toks[name]
-            return "#%02x%02x%02x%02x" % (r, g, b, a)
+            # Un token con varios colores expande a todos: se separan por coma
+            # para que el contador de colores los vea igual que en el literal.
+            return ",".join("#%02x%02x%02x%02x" % c for c in toks[name])
         if name in toks:
             return NONCOLOR          # declarado pero no es color (env(), longitud)
         return UNRESOLVED            # token ausente: bug real

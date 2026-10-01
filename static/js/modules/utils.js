@@ -371,3 +371,34 @@ export function metodoPagoReport(metodo, tipo) {
 export function escapeHtml(s) {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+/**
+ * SCROLL RESPETANDO `prefers-reduced-motion` (WCAG 2.3.3).
+ *
+ * El bloque CSS de `static/css/base/animations.css` frena transiciones y
+ * animaciones, pero `scroll-behavior` NO alcanza a
+ * `scrollIntoView({ behavior: 'smooth' })`: eso se resuelve en JS, no en CSS.
+ * Por eso las llamadas del proyecto pasan por acá en vez de codificar
+ * `behavior: 'smooth'` en cada sitio.
+ *
+ * Se usa `auto` y no `instant` porque `instant` no es un valor estandar de la
+ * API: `auto` delega en el `scroll-behavior` computado, que el bloque de
+ * reduced-motion ya fija en `auto`.
+ */
+const _motionQuery = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null;
+
+export function prefersReducedMotion() {
+    return !!(_motionQuery && _motionQuery.matches);
+}
+
+export function scrollToElement(el, options = {}) {
+    if (!el || typeof el.scrollIntoView !== 'function') return;
+    // `behavior` va DESPUES del spread a proposito: si un llamador pasa uno,
+    // la preferencia del usuario tiene que ganarle igual.
+    el.scrollIntoView({
+        ...options,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth'
+    });
+}

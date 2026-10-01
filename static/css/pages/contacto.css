@@ -47,7 +47,7 @@
 .contact-item-card:hover {
     border-color: var(--dorado);
     transform: translateX(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-10-30-b40);
 }
 
 .contact-icon-box {

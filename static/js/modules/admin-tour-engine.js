@@ -5,6 +5,7 @@
  */
 
 import { THEME } from './theme.js';
+import { scrollToElement } from './utils.js';
 
 let activeTourSteps = [];
 let currentAdminStepIndex = 0;
@@ -378,7 +379,7 @@ async function showAdminTourStep(index) {
                 const rect = resolvedTarget.getBoundingClientRect();
                 const isVisible = (rect.top >= 0) && (rect.bottom <= window.innerHeight);
                 if (!isVisible) {
-                    resolvedTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    scrollToElement(resolvedTarget, { block: 'nearest' });
                 }
             } catch (e) {}
         }

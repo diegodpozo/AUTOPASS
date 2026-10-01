@@ -75,7 +75,7 @@
     background: var(--dorado);
     color: #000;
     border-color: var(--dorado);
-    box-shadow: 0 0 15px rgba(223, 186, 107, 0.3);
+    box-shadow: var(--shadow-15-b30);
 }
 
 .monitor-tab-content {

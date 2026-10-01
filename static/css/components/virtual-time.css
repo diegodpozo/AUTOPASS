@@ -30,7 +30,7 @@
     background: linear-gradient(135deg, #2a1a1a, #3e1a1a);
     border-color: var(--danger);
     color: var(--danger);
-    box-shadow: 0 4px 20px rgba(244, 63, 94, 0.3);
+    box-shadow: var(--shadow-4-20-b30);
     animation: vt-pulse 2s infinite;
 }
 
@@ -48,7 +48,7 @@
 }
 
 @keyframes vt-pulse {
-    0%, 100% { box-shadow: 0 4px 20px rgba(244, 63, 94, 0.3); }
+    0%, 100% { box-shadow: var(--shadow-4-20-b30); }
     50% { box-shadow: 0 4px 30px rgba(244, 63, 94, 0.6); }
 }
 

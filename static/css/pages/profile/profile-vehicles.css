@@ -34,7 +34,7 @@
 .register-trigger-card.active {
     background: var(--dorado);
     transform: scale(1.02);
-    box-shadow: 0 0 15px rgba(223, 186, 107, 0.4);
+    box-shadow: var(--shadow-15-b40);
 }
 
 @media (max-width: 640px) {

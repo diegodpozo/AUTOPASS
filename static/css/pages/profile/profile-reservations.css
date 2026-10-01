@@ -64,7 +64,7 @@
 
 .select-wrapper-premium select:focus {
     border-color: var(--dorado);
-    box-shadow: 0 0 15px var(--border-light);
+    box-shadow: var(--shadow-15);
     outline: none;
 }
 
@@ -205,7 +205,7 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-15-35-b50);
 }
 
 .reserva-card-ultra:hover {
@@ -537,7 +537,7 @@
     background: #fff;
     padding: 15px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-10-30-b50);
 }
 
 .qr-canvas canvas, .qr-canvas img {

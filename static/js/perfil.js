@@ -3,7 +3,7 @@ import * as res from './modules/reservas.js';
 import * as v from './modules/vehicles.js';
 import * as ui from './modules/ui.js';
 import { initPasswordValidation } from './modules/auth.js';
-import { showToast, formatNum, formatTime, formatTimeSeconds, formatDateTime, formatDayTime, formatLocalDateTime } from './modules/utils.js';
+import { showToast, formatNum, formatTime, formatTimeSeconds, formatDateTime, formatDayTime, formatLocalDateTime, scrollToElement } from './modules/utils.js';
 import { initMap } from './modules/landing.js';
 import { getDirectionsTo } from './modules/landing-map.js';
 import * as notif from './modules/notifications.js';
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             sucursalSelect.dispatchEvent(new Event('change'));
                         }
                         if (vehicleSelect && vehicleSelect.options.length === 2) vehicleSelect.selectedIndex = 1;
-                        if (container) container.scrollIntoView({ behavior: 'smooth' });
+                        if (container) scrollToElement(container);
                         showToast(`Preparado para reservar en ${preBranch}`, 'info');
                         return true;
                     }

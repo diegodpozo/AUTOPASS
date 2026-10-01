@@ -107,7 +107,7 @@
     background: var(--dorado);
     color: var(--negro);
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(223, 186, 107, 0.3);
+    box-shadow: var(--shadow-10-20-b30);
     border-color: var(--dorado);
 }
 

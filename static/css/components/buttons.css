@@ -22,7 +22,7 @@
 .btn--primary:hover {
     background: var(--dorado-dark);
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(223, 186, 107, 0.3);
+    box-shadow: var(--shadow-10-20-b30);
 }
 
 .btn--outline {

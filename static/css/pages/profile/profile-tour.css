@@ -12,7 +12,7 @@
     justify-content: center;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-15-35-b50);
 }
 
 .points-count {
@@ -39,14 +39,14 @@
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-15-35-b40);
     position: relative;
 }
 
 .promo-card:hover {
     transform: translateY(-5px);
     border-color: rgba(155, 89, 182, 0.55);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(155, 89, 182, 0.15);
+    box-shadow: var(--shadow-18-40-25-b60);
 }
 
 /* Reuso del look "ticket" de las cards de voucher ya canjeadas en las cards de canjeo */
@@ -54,7 +54,7 @@
     background: linear-gradient(160deg, rgba(155, 89, 182, 0.12) 0%, rgba(18, 20, 24, 0.85) 48%);
     border: 1px solid rgba(155, 89, 182, 0.28);
     border-radius: 20px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--shadow-12-30-b45);
 }
 
 /* Layout de las cards de canjeo: fila icono + título, contenido centrado abajo */
@@ -290,7 +290,7 @@
     border: 1px solid var(--dorado-glow);
     border-radius: 24px;
     overflow: visible; /* Permitimos que el hint sobresalga */
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-15-35-b40);
     position: relative; /* Para el hint flotante */
 }
 
@@ -310,7 +310,7 @@
     border: 1.5px solid var(--dorado);
     pointer-events: none;
     animation: fadeInSlideUp 1s ease forwards;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-8-20-b40);
 }
 
 /* MAP OVERLAY PARA DASHBOARD (v8.7.0) */
@@ -329,7 +329,7 @@
     transform: translateY(10px);
     pointer-events: none;
     transition: all 0.4s ease;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-10-30-b50);
 }
 
 .map-overlay.active {
@@ -414,7 +414,7 @@
     border-radius: 18px !important;
     padding: 0 !important;
     border: 1px solid rgba(223, 186, 107, 0.3) !important;
-    box-shadow: 0 15px 45px rgba(0,0,0,0.6) !important;
+    box-shadow: var(--shadow-15-45-b60) !important;
 }
 
 .leaflet-popup-content {
@@ -968,7 +968,7 @@
 
 .tour-tooltip-buttons-premium .btn--primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(223, 186, 107, 0.3);
+    box-shadow: var(--shadow-5-15-b30);
 }
 
 .tour-tooltip-buttons-premium .btn-plain {

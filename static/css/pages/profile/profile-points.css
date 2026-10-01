@@ -361,7 +361,7 @@
     background: var(--dorado-glow);
     border-color: var(--dorado);
     color: var(--dorado);
-    box-shadow: 0 4px 15px var(--dorado-glow);
+    box-shadow: var(--shadow-4-15);
 }
 
 .voucher-tab-count {
@@ -400,14 +400,14 @@
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--shadow-12-30-b45);
     position: relative;
 }
 
 .voucher-card:hover {
     transform: translateY(-5px);
     border-color: rgba(155, 89, 182, 0.55);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(155, 89, 182, 0.15);
+    box-shadow: var(--shadow-18-40-25-b60);
 }
 
 .voucher-card.usado,
@@ -720,7 +720,7 @@
 
 .voucher-card.discount-card:hover {
     border-color: rgba(155, 89, 182, 0.55);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(155, 89, 182, 0.15);
+    box-shadow: var(--shadow-18-40-25-b60);
 }
 
 /* Espaciado interno más aireado sin agrandar la card */

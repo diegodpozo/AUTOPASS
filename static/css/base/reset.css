@@ -26,6 +26,60 @@ button, input, select, textarea, option {
     outline: none;
 }
 
+/* --- v9.34.65: ANILLO DE FOCO QUE NINGUN `outline: none` DE PAGINA PUEDE ANULAR ---
+   AC-4 define el anillo en `:focus-visible` (0,1,0), pero reset.css se carga
+   PRIMERO y ~20 reglas de pagina hacen `outline: none` con selector de clase
+   (0,1,0) o mas. Cuando hay empate gana el ULTIMO en cascada, asi que el anillo
+   global no se ve en esos controles.
+
+   Este bloque usa `:root :focus-visible` (0,2,0) para ganar a cualquier clase.
+   El `outline: none` con `!important` de landing-map.css:384 lo cubre el
+   `!important` de abajo.
+
+   NO usar aqui `:focus-visible` pelado: perderia contra las clases de pagina. */
+:root :focus-visible {
+    outline: 2px solid var(--dorado);
+    outline-offset: 2px;
+}
+
+/* Excepcion acotada: controles decorativos que se MAQUILLAN de control con
+   :focus propio (cambian border/background y asi ya fulfill WCAG 1.4.11 con
+   10.5:1 o mas). Anular el outline aqui evita doble anillo.
+
+   El valor NO puede ser un token: `0` no es un color de anillo valido para
+   `outline`, y un `var()` vacio lo dejaria sin computar (outline: initial = medium
+   currentColor) resucitando el anillo del navegador. Si se amplia esta lista,
+   anadir antes un `:focus` propio con indicador >= 3:1 medido. */
+:root .input-premium:focus:not(:focus-visible),
+:root .select-premium:focus:not(:focus-visible),
+:root .search-box-premium input:focus:not(:focus-visible),
+:root .numInputWrapper .numInput:focus:not(:focus-visible),
+:root #modal-ticket-answer .textarea-premium:focus:not(:focus-visible),
+:root .stat-val-input:focus:not(:focus-visible),
+:root .admin-help-search-input:focus:not(:focus-visible),
+:root .help-search-input:focus:not(:focus-visible),
+:root .form-control-custom:focus:not(:focus-visible),
+:root .filter-input-premium:focus:not(:focus-visible) {
+    outline: none !important;
+}
+
+/* --- v9.34.65: FOCO CON INDICADOR INSUFICIENTE O AUSENTE ---
+   Medido con WCAG 1.4.11 (>= 3:1 contra el fondo adyacente).
+   `.promo-branch-select:focus` usaba rgba(223,186,107,0.40) = 2.54:1  FALLA.
+   Se sube a --dorado opaco = 10.72:1 sobre #0a0a0a. */
+:root .promo-branch-select:focus-visible {
+    border-color: var(--dorado);
+}
+
+/* Controles con `outline: none` y SIN ninguna regla `:focus` propia: al recibir
+   teclado no cambiaba ni un pixel (ratio 1.00:1). Se les da el anillo global. */
+:root .select-premium-sm:focus-visible,
+:root #promo-sucursal:focus-visible,
+:root .mobile-menu-btn:focus-visible {
+    outline: 2px solid var(--dorado);
+    outline-offset: 2px;
+}
+
 /* --- ESTADOS INTERACTIVOS :active Y FEEDBACK TÁCTIL (AC-4) --- */
 button:active:not(:disabled),
 .btn:active:not(:disabled),

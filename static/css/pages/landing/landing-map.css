@@ -27,7 +27,7 @@
     width: 100%; 
     border-radius: 20px; 
     border: 1px solid var(--border); 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-10-30-b50);
 }
 
 .map-container { position: relative; }
@@ -47,7 +47,7 @@
     transform: translateY(10px);
     pointer-events: none;
     transition: all 0.4s ease;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-10-30-b50);
 }
 
 .map-overlay.active {
@@ -81,7 +81,7 @@
     border: 1.5px solid var(--dorado);
     pointer-events: none;
     animation: fadeInSlideUp 1s ease forwards;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-8-20-b40);
 }
 
 .hand-pointing {
@@ -141,7 +141,7 @@
     border-radius: 18px !important;
     padding: 0 !important;
     border: 1px solid rgba(223, 186, 107, 0.3) !important;
-    box-shadow: 0 15px 45px rgba(0,0,0,0.6) !important;
+    box-shadow: var(--shadow-15-45-b60) !important;
 }
 
 .leaflet-popup-content {

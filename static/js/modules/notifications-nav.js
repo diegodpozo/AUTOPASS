@@ -6,13 +6,14 @@
 
 import api from './api.js';
 import { closeNotifDropdown } from './notifications-dropdown.js';
+import { scrollToElement } from './utils.js';
 
 export async function payFromNotif(reservaId) {
     window.showSection?.('reservas');
     setTimeout(async () => {
         const card = document.querySelector(`[data-reserva-id="${reservaId}"]`);
         if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(card, { block: 'center' });
             card.style.boxShadow = '0 0 0 3px var(--dorado), 0 8px 32px rgba(212, 175, 55, 0.3)';
             setTimeout(() => { card.style.boxShadow = ''; }, 2000);
         }
@@ -27,7 +28,7 @@ export function goToReservation(reservaId) {
     setTimeout(() => {
         const card = document.querySelector(`[data-reserva-id="${reservaId}"]`);
         if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(card, { block: 'center' });
             card.style.boxShadow = '0 0 0 3px var(--dorado), 0 8px 32px rgba(212, 175, 55, 0.3)';
             setTimeout(() => { card.style.boxShadow = ''; }, 2000);
         }
@@ -40,7 +41,7 @@ export function goToChangePassword() {
     setTimeout(() => {
         const btnPass = document.getElementById('current-password') || document.getElementById('btn-change-password') || document.querySelector('[data-bs-target="#changePasswordModal"]') || document.querySelector('.form-security-premium');
         if (btnPass) {
-            btnPass.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(btnPass, { block: 'center' });
             btnPass.focus?.();
         }
     }, 400);
@@ -60,7 +61,7 @@ export function goToPoints() {
     window.showSection?.('puntos');
     setTimeout(() => {
         const ptsEl = document.getElementById('puntos-catalog-container') || document.querySelector('.fidelizacion-card') || document.getElementById('section-puntos');
-        if (ptsEl) ptsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (ptsEl) scrollToElement(ptsEl, { block: 'center' });
     }, 400);
 };
 
@@ -70,7 +71,7 @@ export async function goToVoucher(voucherId) {
     setTimeout(async () => {
         const vContainer = document.getElementById('vouchers-container');
         if (vContainer) {
-            vContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(vContainer, { block: 'center' });
         }
         try {
             const { showCanjeTicket, showCanjeTicketById } = await import('./profile.js');
@@ -105,7 +106,7 @@ export function goToNewReservation() {
     setTimeout(() => {
         const formContainer = document.getElementById('reserva-form-container') || document.getElementById('section-inicio');
         if (formContainer) {
-            formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(formContainer, { block: 'center' });
         }
     }, 400);
 };
@@ -116,7 +117,7 @@ export function goToReservationsList() {
     setTimeout(() => {
         const resList = document.getElementById('reservas-list') || document.getElementById('section-reservas');
         if (resList) {
-            resList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            scrollToElement(resList, { block: 'start' });
         }
     }, 400);
 };
@@ -127,7 +128,7 @@ export function goToVehicles() {
     setTimeout(() => {
         const vContainer = document.getElementById('vehicles-grid') || document.getElementById('vehicle-form-container') || document.getElementById('section-vehiculos');
         if (vContainer) {
-            vContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(vContainer, { block: 'center' });
         }
     }, 400);
 };
@@ -138,7 +139,7 @@ export function goToProfile() {
     setTimeout(() => {
         const pCard = document.querySelector('.account-hub-card') || document.getElementById('section-perfil');
         if (pCard) {
-            pCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(pCard, { block: 'center' });
         }
     }, 400);
 };
@@ -149,7 +150,7 @@ export function goToStays() {
     setTimeout(() => {
         const staysCard = document.getElementById('container-active-stays') || document.querySelector('.account-hub-card') || document.getElementById('section-perfil');
         if (staysCard) {
-            staysCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToElement(staysCard, { block: 'center' });
         }
     }, 400);
 };

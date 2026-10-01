@@ -18,3 +18,53 @@
     0% { transform: scale(1); opacity: 0.8; }
     100% { transform: scale(2.5); opacity: 0; }
 }
+
+/* ==========================================================================
+   PREFERS-REDUCED-MOTION (WCAG 2.3.3)
+   --------------------------------------------------------------------------
+   El proyecto declara 229 transition/animation y 18 @keyframes, 13 de ellas
+   infinitas (pulsos, shimmer de skeletons, rebotes con overshoot). Sin este
+   bloque, TODO eso se mueve siempre. No es una preferencia estetica: el motion
+   intenso y sostenido puede provocar nauseas y vertigo en personas con
+   sensibilidad vestibular, y el usuario no tiene forma de desactivarlo.
+
+   Se pone UNA vez aqui en vez de editar las 229 declaraciones.
+
+   DOS DECISIONES QUE NO SON OBVIAS:
+
+   1) 0.01ms y no 0s / none.
+      - Si se pusiera 'animation: none', las animaciones que hacen APARECER un
+        elemento lo dejarian en su estado inicial, que es invisible:
+        'toast-entrance' arranca en opacity:0, asi que el toast nunca se veria.
+        Con 0.01ms + iteration-count 1 la animacion corre y termina al instante:
+        el elemento queda en su estado FINAL, que es el correcto.
+      - Si se pusiera 'transition-duration: 0s', el transitionend dejaria de
+        dispararse y el JS que lo escucha (tours, notificaciones) se quedaria
+        esperando. Con 0.01ms sigue disparando.
+
+   2) 'html:root *' y no '*'.
+      Hay 5 transiciones con !important sobre selectores de clase
+      (landing-map.css:170,368,407,437 y profile-tour.css:443). Entre dos
+      declaraciones !important gana la de mayor especificidad, y '*' tiene
+      0,0,0: perderia contra una clase (0,1,0) y estas 5 seguirian animando.
+      'html:root *' es 0,1,1 y las supera sin depender del orden de carga.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    html:root *,
+    html:root *::before,
+    html:root *::after {
+        animation-duration: 0.01ms !important;
+        /* mata los 13 bucles infinitos */
+        animation-iteration-count: 1 !important;
+        /* un delay largo con 0.01ms mantendria al elemento en su estado
+           inicial durante ese delay, que es como 'toast-entrance' se
+           quedaria invisible. No hay delays hoy, se cubre el futuro. */
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+        /* hoy no hay scroll-behavior: smooth en el CSS, pero anadirlo despues
+           sin esto reintroducia el problema */
+        scroll-behavior: auto !important;
+    }
+}

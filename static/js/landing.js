@@ -1,5 +1,6 @@
 import * as land from './modules/landing.js';
 import { getDirectionsTo } from './modules/landing-map.js';
+import { scrollToElement } from './modules/utils.js';
 
 /**
  * PUENTE: LANDING.JS
@@ -74,7 +75,7 @@ window.fillReservationForm = async function(branchName) {
                 vehicleSelect.selectedIndex = 1;
             }
 
-            container.scrollIntoView({ behavior: 'smooth' });
+            scrollToElement(container);
             if (window.showToast) window.showToast(`Preparado para reservar en ${branchName}`, 'info');
             return true;
         }

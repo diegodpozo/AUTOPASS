@@ -253,7 +253,7 @@
     border-radius: 18px;
     padding: 28px 24px;
     margin-bottom: 25px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-10-30-b40);
     position: relative;
     overflow: hidden;
 }
@@ -478,7 +478,7 @@
 
 .btn-help-action.highlight-gold:hover {
     filter: brightness(1.1);
-    box-shadow: 0 4px 15px var(--dorado-glow);
+    box-shadow: var(--shadow-4-15);
 }
 
 /* FAQ Accordion Groups */

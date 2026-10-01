@@ -15,6 +15,7 @@ import {
     quickAddSteps,
 } from './tour-steps.js';
 import { THEME } from './theme.js';
+import { scrollToElement } from './utils.js';
 
 
 // active tour steps (mutable)
@@ -430,7 +431,7 @@ async function showTourStep(index) {
                 const rect = resolvedTarget.getBoundingClientRect();
                 const isVisible = (rect.top >= 0) && (rect.bottom <= window.innerHeight);
                 if (!isVisible) {
-                    resolvedTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    scrollToElement(resolvedTarget, { block: 'nearest' });
                 }
             } catch (e) {}
         }

@@ -21,8 +21,17 @@
 
 /* ==========================================================================
    LIMPIEZA INLINE v9.34.40 - components/modals_global.html
+   --------------------------------------------------------------------------
+   #modal-choice queda en 3200 A PROPOSITO: va +200 sobre #modal-confirm para
+   que la eleccion se dibuje encima de la confirmacion. Es una relacion entre
+   dos modales, no un valor absoluto, asi que NO es un token --z-modal y no debe
+   tokenizarse.
+
+   #modal-confirm SI es el token: valia 3000, que es exactamente --z-modal.
+   v9.34.65 lo paso a var() para que dejar de duplicar el numero. Cero cambio
+   visual: mismo valor.
    ========================================================================== */
-#modal-confirm { z-index: 3000; }
+#modal-confirm { z-index: var(--z-modal); }
 #modal-choice { z-index: 3200; }
 
 .modal-content { 

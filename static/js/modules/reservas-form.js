@@ -7,7 +7,7 @@
  */
 
 import api from './api.js';
-import { formatDate, formatPlate, showToast, showConfirm, formatNum } from './utils.js';
+import { formatDate, formatPlate, showToast, showConfirm, formatNum, scrollToElement } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadReservations } from './reservas-list.js';
 import {
@@ -371,7 +371,7 @@ export async function prepareEditReservation(id) {
 
     const container = document.getElementById('reserva-form-container');
     if (!container.classList.contains('open')) await toggleReservaForm();
-    container.scrollIntoView({ behavior: 'smooth' });
+scrollToElement(container);
 
     document.querySelector('.header-text h3').innerText = `MODIFICAR RESERVA #${id}`;
     document.querySelector('.btn-confirm-premium span').innerText = 'ACTUALIZAR RESERVA';
@@ -693,7 +693,7 @@ export async function repeatReservation(patente, sucursal, tipo) {
     if (container && !container.classList.contains('open')) {
         await toggleReservaForm();
     }
-    if (container) container.scrollIntoView({ behavior: 'smooth' });
+    if (container) scrollToElement(container);
     
     setTimeout(() => {
         const vSelect = document.querySelector('.res-vehicle');

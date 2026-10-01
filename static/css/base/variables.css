@@ -88,3 +88,30 @@
     --gris-card: var(--bg-card);
     --secondary: var(--success);
 }
+
+/* Sombras reutilizadas (tokenizadas por _tools/migrate_shadow_tokens.py
+   Solo duplicados EXACTOS: las sombras de un solo uso son decisiones
+   unicas de diseno y se dejan como literal. */
+    --shadow-10-30-b50: 0 10px 30px rgba(0,0,0,0.5);
+    --shadow-20: 0 0 20px var(--border-light);
+    --shadow-15-35-b40: 0 15px 35px rgba(0,0,0,0.4);
+    --shadow-15-b30: 0 0 15px rgba(223,186,107,0.3);
+    --shadow-8-32-b40: 0 8px 32px rgba(0,0,0,0.4);
+    --shadow-18-40-25-b60: 0 18px 40px rgba(0,0,0,0.6),0 0 25px rgba(155,89,182,0.15);
+    --shadow-10-20-b30: 0 10px 20px rgba(223,186,107,0.3);
+    --shadow-10-30-b30: 0 10px 30px rgba(0,0,0,0.3);
+    --shadow-4-20-b30: 0 4px 20px rgba(244,63,94,0.3);
+    --shadow-4-15-b30: 0 4px 15px rgba(223,186,107,0.3);
+    --shadow-10-30-b40: 0 10px 30px rgba(0,0,0,0.4);
+    --shadow-4-15: 0 4px 15px var(--dorado-glow);
+    --shadow-10-b20: 0 0 10px rgba(223,186,107,0.2);
+    --shadow-10-b50: 0 0 10px rgba(16,185,129,0.5);
+    --shadow-15-b40: 0 0 15px rgba(223,186,107,0.4);
+    --shadow-20-inset-b40: inset 0 0 20px rgba(0,0,0,0.4);
+    --shadow-8-24-10-b70: 0 8px 24px rgba(0,0,0,0.7),0 0 10px rgba(223,186,107,0.25);
+    --shadow-8-20-b40: 0 8px 20px rgba(0,0,0,0.4);
+    --shadow-15-45-b60: 0 15px 45px rgba(0,0,0,0.6);
+    --shadow-5-15-b30: 0 5px 15px rgba(223,186,107,0.3);
+    --shadow-15: 0 0 15px var(--border-light);
+    --shadow-12-30-b45: 0 12px 30px rgba(0,0,0,0.45);
+    --shadow-15-35-b50: 0 15px 35px rgba(0,0,0,0.5);

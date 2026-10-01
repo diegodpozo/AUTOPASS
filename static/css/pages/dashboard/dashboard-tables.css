@@ -266,7 +266,7 @@ tr.row-refund:hover {
 .icon-option.active {
     background: var(--dorado);
     color: #000;
-    box-shadow: 0 0 15px rgba(223, 186, 107, 0.4);
+    box-shadow: var(--shadow-15-b40);
 }
 
 @media (max-width: 640px) {
@@ -320,7 +320,7 @@ tr:hover .btn-delete-promo {
 .slider-premium { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 20px; border: 1px solid var(--border-card); }
 .slider-premium:before { position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 2px; background-color: #888; transition: .4s; border-radius: 50%; }
 .switch-premium input:checked + .slider-premium { background-color: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.3); }
-.switch-premium input:checked + .slider-premium:before { transform: translateX(24px); background-color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+.switch-premium input:checked + .slider-premium:before { transform: translateX(24px); background-color: var(--success); box-shadow: var(--shadow-10-b50); }
 .switch-premium input:focus + .slider-premium { box-shadow: 0 0 1px var(--success); }
 
 /* RESPONSIVE TABLES & FILTERS */
@@ -359,7 +359,7 @@ tr:hover .btn-delete-promo {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    box-shadow: 0 0 10px rgba(223, 186, 107, 0.2);
+    box-shadow: var(--shadow-10-b20);
 }
 
 /* CHAT DEL TICKET DE SOPORTE */
@@ -459,7 +459,7 @@ tr:hover .btn-delete-promo {
 #modal-ticket-answer .textarea-premium:focus {
     border-color: var(--dorado);
     background: rgba(223, 186, 107, 0.05);
-    box-shadow: 0 0 20px var(--border-light);
+    box-shadow: var(--shadow-20);
 }
 
 #modal-ticket-answer .ticket-chat {
@@ -742,7 +742,7 @@ tr:hover .btn-delete-promo {
     height: 350px;
     border-radius: 20px;
     border: 1.5px solid rgba(223, 186, 107, 0.2);
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-20-inset-b40);
 }
 
 /* SELECTOR DE LOGO */
@@ -865,7 +865,7 @@ tr:hover .btn-delete-promo {
     height: 300px;
     border-radius: 20px;
     border: 1.5px solid rgba(223, 186, 107, 0.2);
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-20-inset-b40);
 }
 
 /* BOTONES DE ACCIÓN */

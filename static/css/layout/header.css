@@ -41,7 +41,7 @@
     justify-content: center;
     color: var(--dorado);
     font-size: 1.3rem;
-    box-shadow: 0 0 20px var(--border-light);
+    box-shadow: var(--shadow-20);
 }
 
 .header-icon-box.sm {
@@ -163,7 +163,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(223, 186, 107, 0.3);
+    box-shadow: var(--shadow-4-15-b30);
 }
 
 @keyframes pulseStatus {
