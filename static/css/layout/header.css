@@ -3,7 +3,7 @@
    del box, asi el fondo translucido sigue cubriendo esa franja y el contenido
    queda debajo de la status bar. Debe espejarse en standalone.css:46, que
    pisa este padding con !important. */
-.main-content-scroll header {
+.main-content-scroll > header {
     padding: calc(20px + var(--safe-area-top)) 40px 20px;
     background: rgba(10, 10, 10, 0.85);
     backdrop-filter: blur(25px);
@@ -173,7 +173,7 @@
 
 /* RESPONSIVE HEADER */
 @media (max-width: 1024px) {
-    .main-content-scroll header {
+    .main-content-scroll > header {
         padding: 15px 25px;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
@@ -189,7 +189,7 @@
 }
 
 @media (max-width: 768px) {
-    .main-content-scroll header {
+    .main-content-scroll > header {
         padding: 15px 20px;
         flex-direction: column; 
         align-items: center;

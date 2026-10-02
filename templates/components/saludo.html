@@ -45,14 +45,24 @@ Con iniciales en vez de un icono de fuente (el avatar de Cuenta). Se pasa
       id_subtitulo id en el parrafo secundario, para el JS que lo rellena
       clase_titulo clase extra en el h1
       clase_lead   clase extra en el contenedor del lead
-      clase        clase extra en el <header>, para las variantes
+      clase        clase extra en el <div> raiz, para las variantes
+
+    El contenedor raiz es un <div>, NO un <header>, a proposito. El header del
+    portal se selecciona con `.main-content-scroll header`, y todo /perfil
+    cuelga de <main class="main-content-scroll">. Con un <header> aqui el
+    saludo matcheaba esa regla y heredaba position:sticky, top:0,
+    z-index:1000, background opaco y backdrop-filter:blur(25px) del header
+    del portal, y como va despues en el DOM a igual z-index tapaba el
+    dropdown de notificaciones. Semanticamente tampoco aporta nada: el
+    section contenedor es un <div>, no un <section>, asi que un <header>
+    ahi no es landmark, y el <h1> de adentro ya da el encabezado.
 #}
 
 {% macro saludo(icono=None, iniciales=None, id_iniciales=None,
                 lead_texto=None, titulo="",
                 subtitulo=None, id_titulo=None, id_subtitulo=None,
                 clase_titulo="", clase_lead="", clase="") %}
-<header class="saludo{% if clase %} {{ clase }}{% endif %}">
+<div class="saludo{% if clase %} {{ clase }}{% endif %}">
     {%- if iniciales or icono %}
     <span class="saludo-lead{% if clase_lead %} {{ clase_lead }}{% endif %}">
         {%- if iniciales %}<span{% if id_iniciales %} id="{{ id_iniciales }}"{% endif %}>{{ iniciales }}</span>
@@ -72,5 +82,5 @@ Con iniciales en vez de un icono de fuente (el avatar de Cuenta). Se pasa
     {%- if caller is defined %}
     <span class="saludo-extra">{{ caller() }}</span>
     {%- endif %}
-</header>
+</div>
 {% endmacro %}
