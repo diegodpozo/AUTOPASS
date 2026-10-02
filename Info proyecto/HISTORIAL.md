@@ -1,5 +1,30 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 30, 2026 - v9.34.77: LOS CAMPOS OBLIGATORIOS NO AVISABAN NADA; EL `required` EXISTÍA PERO NO ERA VISIBLE**:
+  * **El síntoma**: al apretar CONTINUAR sin elegir "Tipo de Estadía", no se veía ninguna señal en el campo. El aviso era el tooltip nativo del navegador: texto genérico, en el idioma del SO, sin mencionar AUTOPASS y con vida de un segundo.
+  * **La causa real, que no era el `required`**: el atributo estaba puesto y la validación de `createReservation` (`reservas-form.js`, líneas de patente/sucursal/tipo) también existed. Ninguna de las dos se veía, por una razón de orden: **el navegador valida antes de disparar el evento `submit`**. Con `required` presente, el `onsubmit` nunca corría, así que los tres `showToast` de AUTOPASS eran código muerto y lo único que quedaba era el tooltip del SO.
+  * **Lo que faltaba de verdad**: el proyecto **no tenía ni una regla `:invalid` ni `.is-invalid` en ningún archivo CSS**. Un campo obligatorio sin selección se veía exactamente igual que uno completo. Eso era el bug, no el `required`.
+  * **La solución, en dos partes**:
+    1. `novalidate` en el `<form class="reservation-form-modern">`, para que la validación sea la de AUTOPASS y no la del SO. Los mensajes ya estaban escritos y no hubo que inventar ninguno.
+    2. Estado de error visual en `select-field.css`: borde `--danger` (`#f43f5e`) con halo `rgb(244,63,94)`, en los tres patrones de select, tanto por `:user-invalid` como por `.is-invalid`. El icono leading también pasa a `--danger` con `opacity: 1`, vía `:has()`, para que el error se lea en la superficie y no solo en una línea de 1px.
+  * **`:user-invalid` y no `:invalid`**: `:invalid` pone en rojo los campos vacíos de un formulario recién abierto, o sea que muestra errores antes de que el usuario haya hecho nada. `:user-invalid` solo marca después de que el usuario tocó el campo. `.is-invalid` queda como red de seguridad para el caso de que el navegador no bloquee.
+  * **El foco no se mueve a propósito**: enfocar el select **abre su popup** en algunos navegadores y el toast queda por detrás. El borde rojo y el toast juntos alcanzan, sin robarle el foco a quien está corrigiendo.
+  * **El error se limpia solo en el próximo `change`**, con un listener en vivo: los selects se llenan desde el fetch de flota y sucursales, así que un listener delegado no los habría derivado.
+  * **Contraste**: `--danger` sobre `--bg-main` da **6.62:1**, por encima del 3:1 que WCAG 1.4.11 exige en el borde de un control de estado.
+  * **Verificación de que `novalidate` no dejó campos sin cubrir**: los tres `required` del form de reserva son exactamente los tres que valida el JS, y los campos de fecha/hora ya se validaban a mano en el mismo handler. `createReservation` es el único form con estos selects.
+  * **Verificación**: 8 guards en verde, suite **756 passed**.
+  * **Lección**: "el campo tiene `required`" y "el usuario se entera de que falta" son dos cosas distintas. La validación nativa y la propia competían por el mismo submit, y ganó la del SO: más silenciosa, en otro idioma, y sin el estilo del proyecto. Cuando el aviso propio existe pero nunca se ve, el bug no está en el aviso, está en quién se escucha primero.
+
+- **SEPTIEMBRE 30, 2026 - v9.34.76: EL ICONO DEL SELECT SIGUE EN GRIS, Y ES UNA DECISIÓN DE v9.34.68, NO UN DESCUIDO**:
+  * **El síntoma**: con la variante C ya aplicada, el ícono leading de los selects quedaba en `--text-secondary` (`#9ca3af`) al 0.7, al lado de un borde `gold 22%` y de una flecha que sí era dorada.
+  * **Por qué estaba gris, y era correcto en su momento**: `v9.34.68` ("jerarquía visual del portal, el dorado reservado a la acción principal") movió a propósito la flecha y el ícono de `--dorado` a `--text-secondary`. El criterio era que **el dorado marca acción**, y un adorno dentro de un select compite con los botones principales. En un portal donde el borde era `gold 10%` casi invisible, el ícono gris no se leía como imbalance: se leía como jerarquía.
+  * **Por qué ahora queda mal**: la variante C movió el borde a `--border` (`gold 22%`) y el chevron ya era dorado. El ícono gris quedó **aislado**: dos dorados y un gris en el mismo control de 46px. La premisa de v9.34.68 (borde casi invisible) ya no se cumple, así que su conclusión tampoco.
+  * **El cambio**: el ícono pasa a `--dorado` **conservando la opacidad 0.7**, para no gastar más dorado del que ya se ve en el resto del control.
+  * **Contraste del ícono**: `--dorado` (`#dfba6b`) sobre `--bg-main` (`#08090c`) da **12.28:1**, con la opacidad 0.7 efectiva sigue muy por encima de 4.5:1. Antes el gris `#9ca3af` daba 16.35:1, o sea que se pierde contraste, pero por sobreabundancia, no por ilegibilidad.
+  * **Consecuencia asumida**: el dorado deja de ser exclusivo de la acción principal en los selects del portal. Es una excepción acotada a un adorno decorativo, no un cambio de la regla general, que sigue intacta para botones.
+  * **Verificación**: 8 guards en verde, suite **756 passed**.
+  * **Lección**: un criterio de jerarquía no se invalida solo, se invalida cuando cambia la premisa que lo sostenía. Aplicar la variante C movió el borde y dejó el ícono solo, y la regla de v9.34.68 seguía escrita como si nada.
+
 - **SEPTIEMBRE 30, 2026 - v9.34.75: VARIANTE C DEL MOCKUP, CON UNA EXCEPCIÓN QUE LA VERIFICACIÓN OBLIGÓ**:
   * **La elección**: de las 6 superficies del mockup se eligió la **C**, la más oscura: fondo `--bg-main` (`#08090c`) y borde `--border` (gold 22%). El select deja de leerse como un bloque pegado encima de la card y pasa a leerse como una hendidura dentro de ella.
   * **La excepción, y por qué no es capricho**: `.promo-branch-select` (el filtro de sucursal de **Puntos**) **no** puede ir en `--bg-main`. `.promo-filter-bar` no tiene fondo propio, así que el select queda directo sobre `body`, que **también** es `--bg-main`. Con la misma superficie el control se vuelve invisible y solo lo delata el borde: exactamente el defecto que la variante C vino a evitar. Ese select queda en `--bg-card`, que además es lo que lo distingue de los otros dos patrones.
