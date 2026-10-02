@@ -205,6 +205,24 @@ def _parents_of(ref):
     return set(parts[1:]) if len(parts) > 1 else set()
 
 
+def _git_show(ref, rel):
+    """Contenido de `rel` en `ref`, o "" si ese archivo no existia todavia.
+
+    Hace falta porque un archivo CSS NUEVO aparece en `git diff --name-only ref`
+    pero no existe en `ref`. Con check=True el guard reventaba con un
+    CalledProcessError en vez de comparar, que es lo que paso con
+    components/saludo.css en v9.34.71.
+
+    Para un archivo agregado no hay baseline, asi que "" es el baseline
+    correcto: no hay pixeles previos que preservar. El archivo nuevo igual
+    queda controlado por _no_new_unresolved, que si detecta var() sin
+    resolver.
+    """
+    out = subprocess.run(["git", "show", ref + ":" + rel],
+                         capture_output=True, text=True)
+    return out.stdout if out.returncode == 0 else ""
+
+
 def committed_allowlist(root, ref):
     """Archivos de la lista, si `ref` es el padre del commit que los cambio.
 
@@ -258,9 +276,10 @@ def main():
         print("No encuentro %s" % vars_path)
         return 1
     vars_new = vars_path.read_text(encoding="utf-8")
-    vars_old = subprocess.run(
-        ["git", "show", ref + ":" + vars_path.relative_to(root).as_posix()],
-        capture_output=True, text=True, check=True).stdout
+    vars_old = _git_show(ref, vars_path.relative_to(root).as_posix())
+    if not vars_old:
+        print("No encuentro %s en %s" % (vars_path.name, ref))
+        return 1
 
     files = subprocess.run(
         ["git", "diff", "--name-only", ref, "--", "static/css"],
@@ -276,9 +295,7 @@ def main():
     worst_info = [""]
 
     for rel in files:
-        before = subprocess.run(
-            ["git", "show", ref + ":" + rel], capture_output=True, text=True,
-            check=True).stdout
+        before = _git_show(ref, rel)
         after = (root / rel).read_text(encoding="utf-8")
 
         mb = color_multiset(before, vars_old)

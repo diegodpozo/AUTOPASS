@@ -12,6 +12,22 @@
     "static/css/pages/profile/profile-notifications.css": {
       "commit": "6494f61",
       "motivo": "v9.34.68: el color del override de .fa-bell se elimino porque la regla general .welcome-msg h1 i ya lo cubre."
+    },
+    "static/css/pages/profile/profile-help.css": {
+      "commit": "3fbe82d",
+      "motivo": "v9.34.71: se borro el hero propio de Ayuda (.help-hero-card con su gradiente y radial-gradient azul de 350x350px, .help-hero-badge, .help-hero-title, .help-hero-subtitle). La paleta azul no se pierde: vive ahora en .saludo--hero."
+    },
+    "static/css/pages/profile/profile-base.css": {
+      "commit": "3fbe82d",
+      "motivo": "v9.34.71: se borraron .greeting-premium, .profile-header-premium, .avatar-circle (incluido su box-shadow dorado de 30px), .profile-info-main h1/p y .account-identity-isolated. La identidad de Cuenta la resuelve el saludo unificado."
+    },
+    "static/css/pages/profile/profile-tour.css": {
+      "commit": "3fbe82d",
+      "motivo": "v9.34.71: se borraron los overrides responsive de .greeting-premium y .btn-group-header (usado solo por el boton de Vehiculos, ahora en .saludo-extra). margin-top de 19px a 20px."
+    },
+    "static/css/pages/profile/profile-points.css": {
+      "commit": "3fbe82d",
+      "motivo": "v9.34.71: override de #section-puntos .welcome-msg h1 eliminado con el saludo unificado."
     }
   }
 }
