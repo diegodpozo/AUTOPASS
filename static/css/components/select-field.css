@@ -1,0 +1,128 @@
+/* ==========================================================================
+   SELECT-FIELD — <select> con icono leading y chevron propio
+   Componente compartido por /perfil y el dashboard.
+
+   Se extrajo de pages/profile/profile-reservations.css porque lo consumen dos
+   paginas: los selects de reserva de /perfil y los 4 de los modales de reserva
+   del dashboard (dashboard/tabs/admin_reservations.html).
+
+   BASE UNICA: los tres patrones de select del portal salen de la misma
+   declaracion, mas una variante por patron. Antes cada uno traia su propia
+   paleta, su propio radio y su propia forma de dibujar la flecha.
+
+     .select-wrapper-premium select  con icono leading  (portal + dashboard)
+     .form-control-custom            sin icono, form de Ayuda
+     .promo-branch-select            sin icono, barra de filtros
+   ========================================================================== */
+
+/* --- Chevron ------------------------------------------------------------
+   Un solo data-URI para los tres patrones. Antes el wrapper lo dibujaba con
+   un pseudo-elemento `content: "\f078"` de Font Awesome: si FA no cargaba, no
+   habia flecha y el select quedaba sin ningun indicador. */
+:root {
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23dfba6b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+}
+
+/* --- SUPERFICIE -----------------------------------------------------------
+   Fondo, borde, radio y color. La comparten los tres patrones y tambien los
+   <input> y <textarea> que llevan .form-control-custom en Ayuda y en el modal,
+   asi que aqui no va nada exclusivo de un select. */
+.select-wrapper-premium select,
+.form-control-custom,
+.promo-branch-select {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* --- CHEVRON Y APPEARANCE: solo <select> ----------------------------------
+   `.form-control-custom` va en un input y dos textareas ademas de los dos
+   selects, asi que el selector lleva el `select` adelante: sin esto un campo
+   de texto heredaria la flecha y el cursor de puntero.
+
+   `-webkit-appearance` faltaba y es lo que hacia que la flecha apareciera
+   doble en Safari/iOS: la nativa del navegador sumada a la del componente. */
+.select-wrapper-premium select,
+select.form-control-custom,
+.promo-branch-select {
+    background-image: var(--select-chevron);
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* --- FOCO ----------------------------------------------------------------
+   El foco va en --dorado en los tres. `.form-control-custom:focus` usaba
+   --info con un halo azul, y `.promo-branch-select:focus` usaba
+   rgba(223,186,107,0.4) = 2.54:1, que ya habia fallado WCAG 1.4.11. */
+.select-wrapper-premium select:focus,
+.form-control-custom:focus,
+.promo-branch-select:focus {
+    border-color: var(--dorado);
+    box-shadow: var(--shadow-15);
+}
+
+/* --- Wrapper: icono leading ----------------------------------------------
+   El <i> es hijo directo del wrapper y el select se le reserva el gutter. */
+.select-wrapper-premium {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.select-wrapper-premium > i {
+    position: absolute;
+    left: 15px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    font-size: 0.9rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.select-wrapper-premium:not(:has(select)) > i {
+    display: none;
+}
+
+.select-wrapper-premium select {
+    width: 100%;
+    padding: 12px 45px 12px 42px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* --- Variante form-control-custom ----------------------------------------
+   Sin icono, asi que no necesita el gutter izquierdo de 42px. El padding
+   derecho se separa porque el <input> y los <textarea> no llevan flecha. */
+.form-control-custom {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.92rem;
+}
+
+select.form-control-custom {
+    padding-right: 45px;
+}
+
+/* --- Variante promo-branch-select ----------------------------------------
+   Select compacto de la barra de filtros de Puntos. */
+.promo-branch-select {
+    padding: 8px 40px 8px 14px;
+    min-width: 220px;
+    max-width: 320px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background-position: right 12px center;
+    background-size: 14px;
+}
+
+.promo-branch-select:hover {
+    border-color: var(--border);
+}

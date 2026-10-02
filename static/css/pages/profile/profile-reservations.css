@@ -14,59 +14,10 @@
     overflow: hidden;
 }
 
-.select-wrapper-premium {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.select-wrapper-premium i {
-    position: absolute;
-    left: 15px;
-    color: var(--text-secondary);
-    opacity: 0.7;
-    font-size: 0.9rem;
-    z-index: 2;
-}
-
-.select-wrapper-premium::after {
-    content: "\f078";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    position: absolute;
-    right: 12px;
-    color: var(--text-secondary);
-    opacity: 0.7;
-    font-size: 0.75rem;
-    pointer-events: none;
-    z-index: 2;
-    line-height: 1;
-}
-
-.select-wrapper-premium:not(:has(select))::after,
-.select-wrapper-premium:has(input)::after {
-    display: none;
-}
-
-.select-wrapper-premium select {
-    width: 100%;
-    background: #111;
-    border: 1.5px solid #222;
-    color: #fff;
-    padding: 12px 35px 12px 42px;
-    border-radius: 12px;
-    
-    font-size: 0.85rem;
-    appearance: none;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.select-wrapper-premium select:focus {
-    border-color: var(--dorado);
-    box-shadow: var(--shadow-15);
-    outline: none;
-}
+/* v9.34.73: .select-wrapper-premium vive ahora en components/select-field.css.
+   Se movio porque lo usan tambien los modales de reserva del dashboard; antes
+   el componente compartido estaba definido dentro de una pagina del portal.
+   Las variantes .fg-* de mas abajo se quedan aca: son layout de /perfil. */
 
 .input-premium {
     background: #111;

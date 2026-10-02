@@ -154,31 +154,10 @@
     color: var(--dorado);
 }
 
-.promo-branch-select {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    color: #ddd;
-    
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 8px 14px;
-    min-width: 220px;
-    max-width: 320px;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.25s ease;
-}
-
-.promo-branch-select:hover,
-.promo-branch-select:focus {
-    border-color: rgba(223, 186, 107, 0.4);
-}
-
-.promo-branch-select option {
-    background: #1a1626;
-    color: #ddd;
-}
+/* v9.34.73: la base de .promo-branch-select (fondo, borde, radio, foco,
+   chevron) esta en components/select-field.css. El color de los <option> lo
+   sigue poniendo el `select option` global de components/forms.css: este
+   selector usaba #1a1626, el ultimo violeta que quedaba en un select. */
 
 .promo-icon {
     width: 44px;
