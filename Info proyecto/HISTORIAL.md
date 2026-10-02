@@ -1,5 +1,14 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 30, 2026 - v9.34.75: VARIANTE C DEL MOCKUP, CON UNA EXCEPCIÓN QUE LA VERIFICACIÓN OBLIGÓ**:
+  * **La elección**: de las 6 superficies del mockup se eligió la **C**, la más oscura: fondo `--bg-main` (`#08090c`) y borde `--border` (gold 22%). El select deja de leerse como un bloque pegado encima de la card y pasa a leerse como una hendidura dentro de ella.
+  * **La excepción, y por qué no es capricho**: `.promo-branch-select` (el filtro de sucursal de **Puntos**) **no** puede ir en `--bg-main`. `.promo-filter-bar` no tiene fondo propio, así que el select queda directo sobre `body`, que **también** es `--bg-main`. Con la misma superficie el control se vuelve invisible y solo lo delata el borde: exactamente el defecto que la variante C vino a evitar. Ese select queda en `--bg-card`, que además es lo que lo distingue de los otros dos patrones.
+    - Se detectó renderizando el contexto de cada uno de los 8 selects, no aplicando la regla en bloque. Los `.select-wrapper-premium` van dentro de cards, y los `.form-control-custom` dentro de `.help-ticket-card` (`rgba(30,41,59,0.7)`), así que los tres patrones toleran `--bg-main`. El cuarto no.
+  * **Contraste medido**: el texto queda en **18.41:1** sobre `--bg-main` (WCAG AA pide 4.5:1). El borde `gold 22%` compuesto da **1.60:1** contra la card, por debajo del 3:1 de WCAG 1.4.11. Es aceptable y es el mismo criterio que ya usa el proyecto: el borde fino es decorativo y lo que tiene que alcanzar 3:1 es el **indicador de foco**, que pone `border-color: var(--dorado)` opaco.
+  * **Los `<option>` siguen a la caja**: van a `--bg-main` con sus selects, para que el desplegable no sea más claro que el control. En Safari son necesarios, porque `accent-color` no alcanza ahí. El de Puntos va a `--bg-card`, por la misma excepción.
+  * **Verificación**: 8 guards en verde, suite **756 passed**.
+  * **Lección**: una regla de estilo que funciona en un contexto puede borrar el control en otro. "Misma superficie que `body`" es unaKata la que se ve mal, y hay que mirar dónde cae cada instancia antes de aplicar la regla a la clase.
+
 - **SEPTIEMBRE 30, 2026 - v9.34.74: LOS SELECTS QUEDARON GRIS Y EL POPUP SE ABRE AZUL; NO ES EL CSS, ES EL SISTEMA**:
   * **El síntoma reportado**: los selects "se ven mejor" pero los colores no cierran, y al pasar por las opciones se marcan en azul.
   * **Causa 1, el gris (token equivocado)**: la unificación de v9.34.73 puso `--bg-input` (`#1a1e26`), que es un gris azulado. El proyecto es obsidian: `--bg-main` es `#08090c` y las cards van de `#111` a `#050505`. El token estaba además mal elegido conceptualmente: `--bg-input` documenta "INPUTS, BOTONES SECUNDARIOS E INTERNOS", y un select dentro de una card es una **superficie de tarjeta**, no un botón secundario. Corregido a `--bg-card` (`#11141b`).

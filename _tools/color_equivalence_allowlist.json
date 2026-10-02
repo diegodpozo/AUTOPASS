@@ -3,8 +3,8 @@
   "_schema": "Un solo registro por ruta. Si un archivo vuelve a cambiar de color a proposito, su registro anterior se REEMPLAZA: `files` es un dict, asi que la clave repetida se descarta en silencio al parsear. Por eso los motivos de un mismo archivo no se acumulan, y el commit del registro viejo sale del conjunto de padres que usa el guard. Para conservar el historial habria que pasar `files` a lista de entradas {commit, file, motivo} y ajustar committed_allowlist().",
   "files": {
     "static/css/components/select-field.css": {
-      "commit": "a7fdebf",
-      "motivo": "v9.34.74: superficie de --bg-input (#1a1e26, gris azulado) a --bg-card (#11141b, obsidian). El gris no iba con la paleta. Se agregaron color-scheme y accent-color para el popup nativo y se fijaron los <option>, que antes tomaban el `select option` global de forms.css."
+      "commit": "7bd53fd",
+      "motivo": "v9.34.75: variante C del mockup. Superficie de --bg-card (#11141b) a --bg-main (#08090c) y borde de --border-light (gold 10%) a --border (gold 22%). El select se lee como una hendidura dentro de la card. Excepcion: .promo-branch-select y sus option quedan en --bg-card, porque .promo-filter-bar no tiene fondo propio y al compartir superficie con body el select se volveria invisible."
     },
     "static/css/pages/profile/profile-base.css": {
       "commit": "3fbe82d",
