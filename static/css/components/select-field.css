@@ -30,12 +30,37 @@
 .select-wrapper-premium select,
 .form-control-custom,
 .promo-branch-select {
-    background-color: var(--bg-input);
+    background-color: var(--bg-card);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     outline: none;
     transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* --- POPUP NATIVO --------------------------------------------------------
+   El desplegable de un <select> lo dibuja el sistema operativo, no el CSS:
+   sin esto se abre claro y la opcion bajo el cursor se marca con el azul de
+   fabrica de Windows, que es justo lo que rompe la paleta.
+
+   `color-scheme: dark` le dice al navegador que el contexto es oscuro, asi
+   que el popup se dibuja oscuro. `accent-color` pinta la marca en dorado.
+   El proyecto ya usaba las dos para los inputs de fecha del dashboard
+   (dashboard-metrics.css, dashboard-cards.css). */
+.select-wrapper-premium select,
+select.form-control-custom,
+.promo-branch-select {
+    color-scheme: dark;
+    accent-color: var(--dorado);
+}
+
+/* `accent-color` no alcanza en Safari para el popup, asi que el option lleva
+   tambien el fondo del sitio: sin esto Safari los dibuja claros. */
+.select-wrapper-premium select option,
+select.form-control-custom option,
+.promo-branch-select option {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
 }
 
 /* --- CHEVRON Y APPEARANCE: solo <select> ----------------------------------
