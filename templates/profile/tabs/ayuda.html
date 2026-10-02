@@ -1,35 +1,32 @@
+{% from "components/saludo.html" import saludo %}
 <div id="section-ayuda" class="profile-section">
-    <!-- HERO BANNER CON BUSCADOR -->
-    <div class="help-hero-card">
-        <div class="help-hero-content">
-            <div class="help-hero-badge">
-                <i class="fas fa-life-ring"></i> CENTRO DE AYUDA Y SOPORTE
-            </div>
-            <h2 class="help-hero-title">¿En qué podemos ayudarte hoy?</h2>
-            <p class="help-hero-subtitle">Buscá respuestas rápidas sobre reservas, ingreso con reconocimiento de patentes, pases QR, aforo y pagos.</p>
-            
-            <div class="help-category-pills" id="help-category-pills">
-                <button class="help-pill active" onclick="filterHelpCategory('all', this)">
-                    <i class="fas fa-th-large"></i> Todas
-                </button>
-                <button class="help-pill" onclick="filterHelpCategory('reservas', this)">
-                    <i class="fas fa-calendar-check"></i> Reservas & Aforo
-                </button>
-                <button class="help-pill" onclick="filterHelpCategory('alpr', this)">
-                    <i class="fas fa-camera"></i> Ingreso & Pase QR
-                </button>
-                <button class="help-pill" onclick="filterHelpCategory('vehiculos', this)">
-                    <i class="fas fa-car"></i> Vehículos & Tarifas
-                </button>
-                <button class="help-pill" onclick="filterHelpCategory('pagos', this)">
-                    <i class="fas fa-wallet"></i> Saldo & Puntos
-                </button>
-                <button class="help-pill" onclick="filterHelpCategory('soporte', this)">
-                    <i class="fas fa-headset"></i> Contacto Directo
-                </button>
-            </div>
-        </div>
+    {% call saludo(icono="fa-life-ring",
+                   lead_texto="CENTRO DE AYUDA Y SOPORTE",
+                   clase_lead="saludo-lead--hero",
+                   titulo="¿En qué podemos ayudarte hoy?",
+                   subtitulo="Buscá respuestas rápidas sobre reservas, ingreso con reconocimiento de patentes, pases QR, aforo y pagos.",
+                   clase="saludo--hero") %}
+    <div class="help-category-pills" id="help-category-pills">
+        <button class="help-pill active" onclick="filterHelpCategory('all', this)">
+            <i class="fas fa-th-large"></i> Todas
+        </button>
+        <button class="help-pill" onclick="filterHelpCategory('reservas', this)">
+            <i class="fas fa-calendar-check"></i> Reservas & Aforo
+        </button>
+        <button class="help-pill" onclick="filterHelpCategory('alpr', this)">
+            <i class="fas fa-camera"></i> Ingreso & Pase QR
+        </button>
+        <button class="help-pill" onclick="filterHelpCategory('vehiculos', this)">
+            <i class="fas fa-car"></i> Vehículos & Tarifas
+        </button>
+        <button class="help-pill" onclick="filterHelpCategory('pagos', this)">
+            <i class="fas fa-wallet"></i> Saldo & Puntos
+        </button>
+        <button class="help-pill" onclick="filterHelpCategory('soporte', this)">
+            <i class="fas fa-headset"></i> Contacto Directo
+        </button>
     </div>
+    {% endcall %}
 
     <!-- TARJETAS DE ACCION RAPIDA Y GUIAS -->
     <div class="help-section-title">

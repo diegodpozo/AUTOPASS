@@ -121,26 +121,10 @@
     text-align: left;
 }
 
-/* GREETING & DASHBOARD HEADER */
-.greeting-premium {
-    margin-bottom: 19px;
-    animation: fadeIn 0.8s ease;
-}
-
-.greeting-premium h2 {
-    
-    font-weight: 800;
-    font-size: 1.44rem;
-    color: #fff;
-    margin: 0;
-    letter-spacing: 1px;
-}
-
-.greeting-premium p {
-    color: #888;
-    margin: 4px 0 0;
-    font-size: 0.81rem;
-}
+/* GREETING & DASHBOARD HEADER
+   v9.34.71: .greeting-premium eliminado. El saludo de los 7 tabs ahora es el
+   componente compartido de static/css/components/saludo.css. Esta seccion
+   conserva solo el resto del encabezado del dashboard. */
 
 .grid-col {
     display: flex;
@@ -149,48 +133,12 @@
     min-width: 0;
 }
 
-.profile-header-premium {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 20px;
-}
-
-.avatar-circle {
-    width: 100px;
-    height: 100px;
-    background: var(--dorado);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 30px rgba(223, 186, 107, 0.2);
-    border: 4px solid #000;
-}
-
-#user-initials {
-    
-    font-weight: 900;
-    font-size: 2.5rem;
-    color: #000;
-}
-
-.profile-info-main h1 {
-    font-size: 1.8rem;
-    margin: 0 0 5px 0;
-    color: #fff;
-    font-weight: 800;
-}
-
-.profile-info-main p {
-    color: var(--dorado);
-    opacity: 0.7;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-}
+/* v9.34.71: .profile-header-premium, .avatar-circle, #user-initials,
+   .profile-info-main h1/p y .account-identity-isolated eliminados. La identidad
+   de Cuenta ahora usa el saludo unificado con
+   .saludo-lead--avatar (components/saludo.css), que ya define tamano, fondo y
+   tipografia del lead. El avatar baja de 100px a 64px porque a 100px
+   dominaba la pantalla de Cuenta. */
 
 /* --- FORMULARIOS (RESTAURADO) --- */
 .form-compact-premium {
@@ -393,22 +341,8 @@
     gap: 12px;
 }
 
-.welcome-msg h1 {
-    color: var(--text-primary);
-    
-    font-weight: 900;
-    letter-spacing: 2px;
-    font-size: 1.4rem;
-}
-
-.welcome-msg h1 i {
-    color: var(--dorado-dark);
-    }
-
-.welcome-card {
-    text-align: center;
-    padding: 14px 20px;
-}
+/* v9.34.71: .welcome-msg y .welcome-card eliminados. El saludo unificado vive
+   en static/css/components/saludo.css y se usa en los 7 tabs. */
 
 .price-summary-premium .total-label {
     color: var(--text-secondary);
@@ -678,12 +612,8 @@
     margin: 0 auto;
 }
 
-.account-identity-isolated {
-    padding: 30px;
-    margin-bottom: 40px;
-    display: flex;
-    justify-content: center;
-}
+/* v9.34.71: .account-identity-isolated eliminado, ver el bloque de identidad
+   mas arriba. */
 
 .account-hub-body {
     display: grid;

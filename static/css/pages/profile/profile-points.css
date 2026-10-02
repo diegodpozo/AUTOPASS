@@ -913,7 +913,7 @@
 /* ==========================================================================
    LIMPIEZA INLINE v9.34.32 - profile/tabs/puntos.html
    ========================================================================== */
-#section-puntos .welcome-msg h1 { justify-content: center; margin-bottom: 8px; }
+/* v9.34.71: override de .welcome-msg h1 eliminado con el saludo unificado. */
 #section-puntos #vouchers-section-wrapper .section-subtitle { justify-content: center; margin-left: 0; margin-top: 34px; }
 #section-puntos > .section-subtitle { justify-content: center; margin-left: 0; margin-top: 50px; }
 #section-puntos #vouchers-container { margin-top: 0; }

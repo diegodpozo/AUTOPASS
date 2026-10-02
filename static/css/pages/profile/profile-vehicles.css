@@ -53,13 +53,9 @@
     }
 }
 
-/* ==========================================================================
-   LIMPIEZA INLINE v9.34.26 - profile/tabs/vehiculos.html
-   ========================================================================== */
-#section-vehiculos .welcome-msg h1 {
-    justify-content: center;
-    margin-bottom: 0;
-}
+/* v9.34.71: el override de #section-vehiculos .welcome-msg h1 se elimino con el
+   saludo unificado (components/saludo.css). El `justify-content: center` era
+   codigo muerto: .welcome-msg h1 nunca tuvo display:flex. */
 
 #vehicle-form-container {
     width: 100%;

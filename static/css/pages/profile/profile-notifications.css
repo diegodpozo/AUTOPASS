@@ -396,6 +396,7 @@
 /* ==========================================================================
    LIMPIEZA INLINE v9.34.38 - profile/tabs/notificaciones.html
    ========================================================================== */
-#section-notificaciones .welcome-msg h1 { justify-content: center; margin-bottom: 0; }
-#section-notificaciones .welcome-msg h1 .fa-bell { margin-right: 10px; }
+/* v9.34.71: los overrides de .welcome-msg h1 se eliminaron con el saludo
+   unificado. El `justify-content: center` era codigo muerto: .welcome-msg h1
+   nunca tuvo display:flex, asi que no centrabra nada. */
 #section-notificaciones .notif-filter-bar { margin-top: 15px; }

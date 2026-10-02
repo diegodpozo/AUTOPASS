@@ -1,0 +1,174 @@
+/* ==========================================================================
+   SALUDO UNIFICADO DEL PORTAL  (v9.34.71)
+   Componente compartido por los 7 tabs de /perfil. Reemplaza a:
+     - .welcome-card + .welcome-msg + h1   (vehiculos, reservas, puntos,
+                                            notificaciones)
+     - .greeting-premium + h2              (inicio)
+     - .account-identity-isolated + .profile-header-premium + .avatar-circle
+                                         (cuenta)
+     - .help-hero-card + -badge/-title/-subtitle  (ayuda, paleta azul)
+
+   Decisiones de diseno:
+     - Sin .card: el saludo es un encabezado de pagina, no una tarjeta. Por eso
+       se queda sin borde, sin gradiente y sin backdrop-filter, que se pagaba
+       en 4 tarjetas por un fondo ya opaco.
+     - Alineado a la izquierda: el centrado forzado obligaba a un text-align en
+       el contenedor y dejaba el boton de vehiculos descolgado.
+     - Un solo acento dorado (el lead). El titulo va en --text-primary y el
+       subtitulo en --text-secondary, igual que la jerarquia de v9.34.68.
+     - La variante "hero" (Ayuda) mantiene el padillon de categorias, que es
+       contenido de esa pantalla, pero ahora con la misma estructura.
+   ========================================================================== */
+
+.saludo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 0 2px;
+}
+
+.saludo-lead {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-md);
+    background: rgba(223, 186, 107, 0.1);
+    border: 1px solid var(--border-light);
+    color: var(--dorado);
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+/* Lead con icono + texto (hero de Ayuda): el contenedor tiene que dejar de
+   ser un cuadrado de 42px o el texto se corta. */
+.saludo-lead--hero {
+    width: auto;
+    height: auto;
+    gap: 10px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.saludo-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.saludo-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+.saludo-sub {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.saludo-extra {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+/* Lead de medida completa: el avatar de Cuenta. */
+.saludo-lead--avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--dorado);
+    border: none;
+    color: #000;
+    font-size: 1.5rem;
+    font-weight: 900;
+}
+
+/* Variante alta para el hero de Ayuda. */
+.saludo--hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 28px;
+    margin-bottom: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+}
+
+/* El hero de Ayuda conserva la paleta azul que tenia su hero propio; la
+   forma (pill con icono + texto) ya la define .saludo-lead--hero. */
+.saludo--hero .saludo-lead--hero {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--info);
+}
+
+.saludo--hero .saludo-title {
+    font-size: 1.6rem;
+    letter-spacing: -0.3px;
+}
+
+.saludo--hero .saludo-sub {
+    max-width: 62ch;
+    font-size: 0.9rem;
+}
+
+/* El padillon de categorias de Ayuda vive en el bloque extra del saludo. */
+.saludo--hero .saludo-extra {
+    margin-left: 0;
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .saludo {
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .saludo-lead {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+    }
+
+    .saludo-lead--avatar {
+        width: 52px;
+        height: 52px;
+        font-size: 1.25rem;
+    }
+
+    .saludo-title {
+        font-size: 1.1rem;
+        letter-spacing: 0.3px;
+    }
+
+    .saludo-sub {
+        font-size: 0.78rem;
+    }
+
+    .saludo--hero {
+        gap: 14px;
+        padding: 20px;
+    }
+
+    .saludo--hero .saludo-title {
+        font-size: 1.25rem;
+    }
+}

@@ -1,10 +1,7 @@
 <!-- SECCIÓN: MIS PUNTOS -->
+{% from "components/saludo.html" import saludo %}
 <div id="section-puntos" class="profile-section">
-    <div class="card welcome-card">
-        <div class="welcome-msg">
-            <h1><i class="fas fa-star"></i> MIS PUNTOS AUTOPASS</h1>
-        </div>
-    </div>
+    {{ saludo(icono="fa-star", titulo="MIS PUNTOS AUTOPASS") }}
 
     <div class="points-overview-grid">
         <div class="points-main-card">

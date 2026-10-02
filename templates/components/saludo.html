@@ -1,0 +1,76 @@
+{#
+    SALUDO UNIFICADO DEL PORTAL (/perfil)
+
+    Un solo componente para los 7 tabs. Antes cada tab tenia su propia version:
+    4 usaban .card.welcome-card > .welcome-msg > h1, inicio usaba
+    .greeting-premium con h2, cuenta usaba un bloque de identidad con avatar, y
+    ayuda usaba un hero propio con paleta azul. Cuatro implementaciones de lo
+    mismo, con radios, colores y espaciados distintos.
+
+    Uso basico (solo titulo):
+        {% from "components/saludo.html" import saludo %}
+        {{ saludo(icono="fa-car-side", titulo="MIS VEHICULOS") }}
+
+    Con subtitulo:
+        {{ saludo(icono="fa-bell", titulo="CENTRO DE NOTIFICACIONES",
+                   subtitulo="Avisos de tus reservas y puntos.") }}
+
+    Con contenido extra a la derecha:
+        {% call saludo(icono="fa-car-side", titulo="MIS VEHICULOS") %}
+            <button class="btn-new-reserva">NUEVO VEHICULO</button>
+        {% endcall %}
+
+Con iniciales en vez de un icono de fuente (el avatar de Cuenta). Se pasa
+    el texto y el id por separado, no HTML crudo: Jinja2Templates de FastAPI
+    corre con autoescape=True, asi que un `lead_html` con markup habria que
+    marcarlo |safe y abriria la puerta a inyeccion si algun dia alguien pasa
+    un valor de usuario.
+        {{ saludo(iniciales="--", id_iniciales="user-initials",
+                   clase_lead="saludo-lead--avatar",
+                   titulo="...", id_titulo="profile-full-name") }}
+
+    Con variante de layout (el hero de Ayuda). La clase se pasa LITERAL, no se
+    arma con un parametro: asi check_css_huerfano.py la ve usada en el HTML.
+        {{ saludo(clase="saludo--hero", ...) }}
+
+    Parametros:
+      icono        clase de Font Awesome para el lead (string). Alternativa a
+                   iniciales.
+      iniciales    texto de las iniciales en el lead, en lugar de un icono.
+      id_iniciales id en el <span> de las iniciales, para el JS que lo rellena
+      lead_texto   texto junto al icono del lead (el hero de Ayuda)
+      titulo       texto del encabezado (string, requerido)
+      subtitulo    parrafo secundario opcional (string)
+      id_titulo    id en el h1, para el JS que lo rellena
+      id_subtitulo id en el parrafo secundario, para el JS que lo rellena
+      clase_titulo clase extra en el h1
+      clase_lead   clase extra en el contenedor del lead
+      clase        clase extra en el <header>, para las variantes
+#}
+
+{% macro saludo(icono=None, iniciales=None, id_iniciales=None,
+                lead_texto=None, titulo="",
+                subtitulo=None, id_titulo=None, id_subtitulo=None,
+                clase_titulo="", clase_lead="", clase="") %}
+<header class="saludo{% if clase %} {{ clase }}{% endif %}">
+    {%- if iniciales or icono %}
+    <span class="saludo-lead{% if clase_lead %} {{ clase_lead }}{% endif %}">
+        {%- if iniciales %}<span{% if id_iniciales %} id="{{ id_iniciales }}"{% endif %}>{{ iniciales }}</span>
+        {%- else -%}
+        <i class="fas {{ icono }}" aria-hidden="true"></i>
+        {%- endif -%}
+        {%- if lead_texto %}<span class="saludo-lead-texto">{{ lead_texto }}</span>{% endif -%}
+    </span>
+    {%- endif %}
+    <span class="saludo-body">
+        <h1 class="saludo-title{% if clase_titulo %} {{ clase_titulo }}{% endif %}"
+            {%- if id_titulo %} id="{{ id_titulo }}"{% endif %}>{{ titulo }}</h1>
+        {%- if subtitulo %}
+        <p class="saludo-sub"{%- if id_subtitulo %} id="{{ id_subtitulo }}"{% endif %}>{{ subtitulo }}</p>
+        {%- endif %}
+    </span>
+    {%- if caller is defined %}
+    <span class="saludo-extra">{{ caller() }}</span>
+    {%- endif %}
+</header>
+{% endmacro %}

@@ -1,18 +1,14 @@
 <!-- SECCIÓN: MI CUENTA (v8.1.0 Unified Surface) -->
+{% from "components/saludo.html" import saludo %}
 <div id="section-perfil" class="profile-section">
-    
-    <!-- IDENTIDAD (BLOQUE SUPERIOR AISLADO) -->
-    <div class="account-identity-isolated mb-40">
-        <div class="profile-header-premium">
-            <div class="avatar-circle">
-                <span id="user-initials">--</span>
-            </div>
-            <div class="profile-info-main">
-                <h1 id="profile-full-name">Cargando...</h1>
-                <p class="text-label mt-10" id="user-member-since">Miembro desde: --/--/----</p>
-            </div>
-        </div>
-    </div>
+
+{{ saludo(iniciales="--",
+id_iniciales="user-initials",
+clase_lead="saludo-lead--avatar",
+               titulo="Cargando...",
+               id_titulo="profile-full-name",
+               subtitulo="Miembro desde: --/--/----",
+               id_subtitulo="user-member-since") }}
 
     <!-- ESTADÍAS EN CURSO (PAGO DIRECTO CON MERCADO PAGO EN SALIDA) -->
     <div id="container-active-stays" class="card active-stays-card">

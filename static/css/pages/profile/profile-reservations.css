@@ -1113,7 +1113,8 @@
 @media (max-width: 640px) {
     .balance-badge, .points-badge { width: 100%; justify-content: center; }
     .quick-actions-grid { grid-template-columns: 1fr 1fr; }
-    .profile-header-premium { flex-direction: column; text-align: center; }
+    /* v9.34.71: se elimino el override de .profile-header-premium. Era inerte:
+       flex-direction:column y text-align:center ya eran su valor por defecto. */
     .reserva-grid-modern { grid-template-columns: 1fr; }
 }
 
@@ -1823,7 +1824,7 @@
 /* ==========================================================================
    LIMPIEZA INLINE v9.34.29 - profile/tabs/reservas.html
    ========================================================================== */
-#section-reservas .welcome-msg h1 { justify-content: center; margin-bottom: 8px; }
+/* v9.34.71: override de .welcome-msg h1 eliminado con el saludo unificado. */
 #section-reservas .reserva-stats-grid { justify-content: center; }
 #container-res-featured { display: none; text-align: center; }
 #section-reservas .section-subtitle { justify-content: center; margin-left: 0; }

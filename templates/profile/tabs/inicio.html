@@ -1,9 +1,9 @@
 <!-- SECCIÓN: INICIO -->
+{% from "components/saludo.html" import saludo %}
 <div id="section-inicio" class="profile-section active">
-    <div class="greeting-premium">
-        <h2 id="welcome-greeting">¡HOLA!</h2>
-        <p>¡Realizá tu reserva rápido y de manera simple!</p>
-    </div>
+    {{ saludo(titulo="¡HOLA!",
+               id_titulo="welcome-greeting",
+               subtitulo="¡Realizá tu reserva rápido y de manera simple!") }}
 
     {% include "profile/modals/onboarding_modal.html" %}
 

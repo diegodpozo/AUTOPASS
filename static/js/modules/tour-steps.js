@@ -4,7 +4,7 @@
 // Tour for users who have 0 vehicles registered
 export const noVehiclesTourSteps = [
     {
-        selector: '#section-vehiculos .welcome-card',
+        selector: '#section-vehiculos .saludo',
         title: '¡Bienvenido a AutoPass!',
         text: 'Para comenzar a realizar reservas en nuestras sucursales, primero necesitamos registrar la patente de tu vehículo.',
         align: 'bottom',
@@ -184,7 +184,7 @@ export const reservationsTourSteps = [
 // Manual tour steps for users with 0 vehicles (launched manually from Ayuda y Soporte)
 export const noVehiclesHelpTourSteps = [
     {
-        selector: '#section-ayuda .help-hero-card, #section-ayuda',
+        selector: '#section-ayuda .saludo, #section-ayuda',
         title: '¡Bienvenido al Tour de la App!',
         text: 'Te guiaremos paso a paso por todas las funciones de AutoPass: Alta de vehículo, Reservas, Mapa, Saldo, Puntos, Notificaciones y Soporte.',
         align: 'bottom',
@@ -226,7 +226,7 @@ export const noVehiclesHelpTourSteps = [
         }
     },
     {
-        selector: '#section-vehiculos .welcome-card, #section-vehiculos',
+        selector: '#section-vehiculos .saludo, #section-vehiculos',
         title: '2. Sección Mis Vehículos',
         text: 'En esta pestaña podrás administrar toda tu flota registrada, modificar patentes y elegir tu vehículo favorito.',
         align: 'bottom',
@@ -298,7 +298,7 @@ export const noVehiclesHelpTourSteps = [
         }
     },
     {
-        selector: '#section-ayuda .help-hero-card, #section-ayuda',
+        selector: '#section-ayuda .saludo, #section-ayuda',
         title: '¡Recorrido Completado!',
         text: '¡Excelente! Ya conocés todas las secciones de tu portal AutoPass. Al registrar tu primer vehículo, el formulario de reservas quedará completamente activo.',
         align: 'bottom',
@@ -316,7 +316,7 @@ export const noVehiclesHelpTourSteps = [
 // Manual tour steps for users with 1+ vehicles (launched manually from Ayuda y Soporte)
 export const existingVehiclesHelpTourSteps = [
     {
-        selector: '#section-ayuda .help-hero-card, #section-ayuda',
+        selector: '#section-ayuda .saludo, #section-ayuda',
         title: '¡Bienvenido al Tour de la App!',
         text: 'Te guiaremos paso a paso por todas las funciones de AutoPass: Vehículos, Reservas, Pase QR, Saldo, Puntos, Notificaciones y Soporte.',
         align: 'bottom',
@@ -329,7 +329,7 @@ export const existingVehiclesHelpTourSteps = [
         }
     },
     {
-        selector: '#section-vehiculos .welcome-card, #section-vehiculos',
+        selector: '#section-vehiculos .saludo, #section-vehiculos',
         title: '1. Mis Vehículos & Flota',
         text: 'Como ya tenés vehículos registrados, acá podés administrar tu flota de Autos, Motos y Camionetas y seleccionar tu vehículo favorito.',
         align: 'bottom',
@@ -450,7 +450,7 @@ export const existingVehiclesHelpTourSteps = [
         }
     },
     {
-        selector: '#section-ayuda .help-hero-card, #section-ayuda',
+        selector: '#section-ayuda .saludo, #section-ayuda',
         title: '¡Recorrido Completado!',
         text: '¡Felicitaciones! Ya conocés todas las herramientas del portal AutoPass. Podés volver a realizar este tour cuando lo necesites.',
         align: 'bottom',
@@ -483,7 +483,7 @@ export const ensureVehicleFormOpen = () => {
 
 export const addVehicleTourSteps = [
     {
-        selector: '#section-vehiculos .welcome-card, #section-vehiculos',
+        selector: '#section-vehiculos .saludo, #section-vehiculos',
         title: '¡Alta de Vehículo!',
         text: 'En esta sección podés administrar tu flota. Te guiaremos paso a paso para dar de alta tu auto, moto o camioneta en tiempo real.',
         align: 'bottom',
@@ -545,7 +545,7 @@ export const ensureReservationFormOpen = () => {
 
 export const createReservationTourSteps = [
     {
-        selector: '#section-inicio .welcome-card, #section-inicio',
+        selector: '#section-inicio .saludo, #section-inicio',
         title: '¡Crear una Reserva!',
         text: 'En el menú Inicio podés generar reservas en cualquiera de las sucursales de AutoPass cotizando en tiempo real.',
         align: 'bottom',

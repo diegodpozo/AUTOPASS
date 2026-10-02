@@ -4,6 +4,9 @@
 
 {% block extra_head %}
     {% include "components/css_profile.html" %}
+    {# v9.34.71: el saludo unificado solo existe en /perfil. Va aca y no en
+       css_profile.html porque ese include tambien lo carga dashboard.html. #}
+    <link rel="stylesheet" href="/static/css/components/saludo.css?v={{ cache_buster }}">
 {% endblock %}
 
 {% block body_class %}layout-with-sidebar{% endblock %}

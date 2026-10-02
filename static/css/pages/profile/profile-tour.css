@@ -276,9 +276,12 @@
 .portal-home-grid {
     display: grid;
     grid-template-columns: 0.9fr 1.3fr; /* COLUMNA IZQUIERDA MAS CHICA, MAPA 30% MAS GRANDE */
-    gap: 20px;
-    align-items: start;
-    margin-top: 19px;
+gap: 20px;
+      align-items: start;
+      /* v9.34.71: 19px -> 20px. 19px quedaba de un solo uso en todo el
+         proyecto al borrarse el .greeting-premium que lo sharing, y ademas
+         estaba fuera de la escala de 4px. */
+      margin-top: 20px;
 }
 
 .portal-home-grid .mt-20 {
@@ -793,14 +796,10 @@
     }
 }
 
-/* NEW RESERVA / NEW VEHICULO HEADER BUTTONS */
-.btn-group-header {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-}
+/* NEW RESERVA / NEW VEHICULO HEADER BUTTONS
+   v9.34.71: .btn-group-header eliminado. Solo lo usaba el boton de vehiculos,
+   que ahora vive en el bloque extra del saludo unificado
+   (.saludo-extra), que ya resuelve el flex, el wrap y el alineado a la derecha. */
 
 .btn-new-reserva {
     background: linear-gradient(135deg, var(--dorado), #c8a050);
@@ -1454,16 +1453,9 @@
    RESPONSIVE 480px: MAXIMIZAR ESPACIO EN PANTALLAS CHICAS
    ========================================================================== */
 @media (max-width: 640px) {
-    .greeting-premium {
-        margin-bottom: 0.75rem;
-    }
-    .greeting-premium h2 {
-        font-size: 1.2rem;
-    }
-    .greeting-premium p {
-        font-size: 0.7rem;
-        margin-top: 0.125rem;
-    }
+    /* v9.34.71: los overrides responsive de .greeting-premium se fueron con el
+       saludo unificado, que tiene su propio bloque responsive en
+       static/css/components/saludo.css. */
     .portal-home-grid {
         gap: 0.75rem;
         margin-top: 0.75rem;

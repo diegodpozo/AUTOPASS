@@ -1,10 +1,7 @@
 <!-- SECCIÓN: MIS RESERVAS -->
+{% from "components/saludo.html" import saludo %}
 <div id="section-reservas" class="profile-section">
-    <div class="card welcome-card">
-        <div class="welcome-msg">
-            <h1><i class="fas fa-calendar-days"></i> MIS RESERVAS</h1>
-        </div>
-    </div>
+    {{ saludo(icono="fa-calendar-days", titulo="MIS RESERVAS") }}
 
     <div class="reserva-stats-grid">
         <div class="res-stat-card">
