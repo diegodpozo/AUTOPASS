@@ -1,5 +1,16 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 30, 2026 - v9.34.74: LOS SELECTS QUEDARON GRIS Y EL POPUP SE ABRE AZUL; NO ES EL CSS, ES EL SISTEMA**:
+  * **El síntoma reportado**: los selects "se ven mejor" pero los colores no cierran, y al pasar por las opciones se marcan en azul.
+  * **Causa 1, el gris (token equivocado)**: la unificación de v9.34.73 puso `--bg-input` (`#1a1e26`), que es un gris azulado. El proyecto es obsidian: `--bg-main` es `#08090c` y las cards van de `#111` a `#050505`. El token estaba además mal elegido conceptualmente: `--bg-input` documenta "INPUTS, BOTONES SECUNDARIOS E INTERNOS", y un select dentro de una card es una **superficie de tarjeta**, no un botón secundario. Corregido a `--bg-card` (`#11141b`).
+  * **Causa 2, el azul (no es CSS)**: el desplegable de un `<select>` lo dibuja el **sistema operativo**, no la hoja de estilos. Sin `color-scheme` el navegador lo abre con la paleta clara de fábrica y marca la opción bajo el cursor con el azul de Windows. Ningún `background` ni ningún `option` lo alcanza: son estilos del popup nativo.
+    - `color-scheme: dark` le dice al navegador que el contexto es oscuro, así que el popup se dibuja oscuro.
+    - `accent-color: var(--dorado)` pinta la marca en dorado.
+    - Los `<option>` se fijan a `--bg-card` / `--text-primary`, porque `accent-color` no alcanza en Safari.
+  * **Las dos propiedades ya se usaban en el proyecto**, para el mismo problema: `color-scheme: dark` en los inputs de fecha del dashboard (`dashboard-metrics.css`, `dashboard-cards.css`) y `accent-color: var(--dorado)` en checkboxes y toggles de 5 archivos. No era una propiedad nueva: era una que faltaba acá.
+  * **Verificación**: 8 guards en verde, suite **756 passed**.
+  * **Lección**: un `<select>` tiene dos superficies, la caja (CSS nuestro) y el popup (del sistema). Unificar la caja y creer que seArregló todo deja el popup como estaba. Y elegir un token por lo que la propiedad "debería" ser, en vez de por cómo se ve contra el fondo real, produce un gris que nadie pidió.
+
 - **SEPTIEMBRE 30, 2026 - v9.34.73: LOS 8 SELECTS DEL PORTAL ERAN 3 SISTEMAS VISUALES DISTINTOS; AHORA SALEN DE UN COMPONENTE ÚNICO**:
   * **El inventario**: `/perfil` tiene 8 `<select>` en 4 plantillas (`inicio.html` x4, `ayuda.html` x2, `puntos.html` x1, `vehiculos.html` x1) repartidos en **3 clases sin relación entre sí**: `.select-wrapper-premium` (5), `.form-control-custom` (2) y `.promo-branch-select` (1). Tres paletas distintas (`#111`, `rgba(15,23,42,0.8)`, `rgba(255,255,255,0.04)`), tres radios (12, 12 y **10px**), tres formas de dibujar la flecha y tres focos distintos.
   * **Tres bugs concretos, no solo fealdad**:
