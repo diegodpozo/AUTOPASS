@@ -138,6 +138,49 @@ select.form-control-custom,
     display: none;
 }
 
+/* --- ERROR: campo obligatorio vacio ---------------------------------------
+   El `required` del HTML ya bloqueaba el submit (el navegador corre su
+   validacion antes del evento submit, asi que `createReservation` no llegaba
+   ni a sus `showToast`). El problema era visual: el proyecto no tenia
+   ninguna regla `:invalid` / `.is-invalid` en ningun lado, y el unico aviso
+   era el tooltip nativo del navegador, que no menciona AUTOPASS y se
+   desvanece solo.
+
+   `:user-invalid` marca solo cuando el usuario ya toco el campo, a
+   diferencia de `:invalid` que partiria en rojo un formulario recien abierto.
+   `.is-invalid` lo pone `createReservation` como red de seguridad, para el
+   caso de que el navegador no bloquee (formularios sin `required`).
+
+   El borde va a --danger y el halo usa rgb del mismo token, para no dejar un
+   circulo de color nuevo: `--danger` sobre `--bg-main` da 6.62:1, o sea que
+   supera el 3:1 de WCAG 1.4.11 que exige el borde de un control de estado. */
+.select-wrapper-premium select:user-invalid,
+.form-control-custom:user-invalid,
+.promo-branch-select:user-invalid,
+.select-wrapper-premium select.is-invalid,
+.form-control-custom.is-invalid,
+.promo-branch-select.is-invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
+}
+
+/* El foco se mantiene dorado en un campo con error: el usuario que esta
+   corrigiendo necesita saber donde esta el cursor, y el rojo del borde ya
+   dice que hay algo mal. Dos halos a la vez serian ruido. */
+.select-wrapper-premium select.is-invalid:focus,
+.form-control-custom.is-invalid:focus,
+.promo-branch-select.is-invalid:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.22);
+}
+
+/* El wrapper del select toma el color del borde del hijo, para que el error
+   se lea en la superficie y no solo en una linea de 1px. */
+.select-wrapper-premium:has(select.is-invalid) > i {
+    color: var(--danger);
+    opacity: 1;
+}
+
 .select-wrapper-premium select {
     width: 100%;
     padding: 12px 45px 12px 42px;

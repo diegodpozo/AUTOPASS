@@ -445,6 +445,33 @@ export function updateFormGroups(type) {
     updateReservationPrice();
 }
 
+/**
+ * Marca un campo obligatorio como faltante y avisa.
+ *
+ * El `required` del HTML alcanza para bloquear el submit, pero el aviso que
+ * ve el usuario es el tooltip nativo del navegador: generico, en el idioma
+ * del SO y sin decir que paso con AUTOPASS. Con `novalidate` en el form,
+ * esta funcion pasa a ser la unica barrera y el aviso real.
+ *
+ * SeFocus no se usa a proposito: enfocar el select abre su popup en algunos
+ * navegadores y el toast queda tapado. El borde rojo y el toast juntos ya
+ * dicen que falta, sin stealar el foco.
+ */
+function marcarFaltaReserva(el, mensaje, tipoToast = 'info') {
+    el.classList.add('is-invalid');
+    el.setAttribute('aria-invalid', 'true');
+    // Se saca solo en el proximo cambio, para no dejar el rojo pegado si el
+    // usuario se arrepiente. Se escucha en vivo porque el select se llena
+    // desde el fetch de flota/sucursales.
+    const limpiar = () => {
+        el.classList.remove('is-invalid');
+        el.removeAttribute('aria-invalid');
+        el.removeEventListener('change', limpiar);
+    };
+    el.addEventListener('change', limpiar);
+    return showToast(mensaje, tipoToast);
+}
+
 export async function createReservation(e) {
     if (e) e.preventDefault();
     console.group("AutoPass: Creando Reserva");
@@ -471,9 +498,9 @@ export async function createReservation(e) {
     const tipo = tipoEl.value;
     const originalContent = btn.innerHTML;
     
-    if (!patente) { console.groupEnd(); return showToast('Seleccioná un vehículo', 'info'); }
-    if (!sucursal) { console.groupEnd(); return showToast('Seleccioná una sucursal', 'info'); }
-    if (!tipo) { console.groupEnd(); return showToast('Seleccioná tipo de estadía', 'info'); }
+    if (!patente) { console.groupEnd(); return marcarFaltaReserva(patenteEl, 'Seleccioná un vehículo', 'info'); }
+    if (!sucursal) { console.groupEnd(); return marcarFaltaReserva(sucursalEl, 'Seleccioná una sucursal', 'info'); }
+    if (!tipo) { console.groupEnd(); return marcarFaltaReserva(tipoEl, 'Seleccioná tipo de estadía', 'info'); }
 
     let inicio, fin;
 
