@@ -110,7 +110,14 @@ select.form-control-custom,
 }
 
 /* --- Wrapper: icono leading ----------------------------------------------
-   El <i> es hijo directo del wrapper y el select se le reserva el gutter. */
+   El <i> es hijo directo del wrapper y el select se le reserva el gutter.
+
+   El icono va en --dorado, no en --text-secondary como lo dejo v9.34.68.
+   Ese cambio lo hizo con un criterio valido (el dorado marca ACCION y un
+   adorno no compite con los botones principales), pero la variante C del
+   mockup puso el borde en --border, que ya es dorado, y la flecha del
+   chevron tambien: al lado de los dos, el icono gris quedaba aislado.
+   La opacidad 0.7 se mantiene, para no gastar mas dorado del que ya se ve. */
 .select-wrapper-premium {
     position: relative;
     display: flex;
@@ -120,7 +127,7 @@ select.form-control-custom,
 .select-wrapper-premium > i {
     position: absolute;
     left: 15px;
-    color: var(--text-secondary);
+    color: var(--dorado);
     opacity: 0.7;
     font-size: 0.9rem;
     z-index: 2;
