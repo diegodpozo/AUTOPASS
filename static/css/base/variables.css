@@ -87,11 +87,14 @@
     --gris-fondo: var(--bg-main);
     --gris-card: var(--bg-card);
     --secondary: var(--success);
-}
 
-/* Sombras reutilizadas (tokenizadas por _tools/migrate_shadow_tokens.py
-   Solo duplicados EXACTOS: las sombras de un solo uso son decisiones
-   unicas de diseno y se dejan como literal. */
+    /* Sombras reutilizadas (tokenizadas por _tools/migrate_shadow_tokens.py
+       Solo duplicados EXACTOS: las sombras de un solo uso son decisiones
+       unicas de diseno y se dejan como literal.
+       v9.34.70: estaban DESPUES del cierre de :root, o sea como declaraciones
+       huerfanas. Un custom property fuera de todo bloque es CSS invalido y el
+       navegador lo descarta, asi que los 54 usos de var(--shadow-*) resolvian a
+       nada y su box-shadow caia a 'none'. Movidas dentro del bloque. */
     --shadow-10-30-b50: 0 10px 30px rgba(0,0,0,0.5);
     --shadow-20: 0 0 20px var(--border-light);
     --shadow-15-35-b40: 0 15px 35px rgba(0,0,0,0.4);
@@ -115,3 +118,4 @@
     --shadow-15: 0 0 15px var(--border-light);
     --shadow-12-30-b45: 0 12px 30px rgba(0,0,0,0.45);
     --shadow-15-35-b50: 0 15px 35px rgba(0,0,0,0.5);
+}

@@ -43,22 +43,57 @@ USE_RE = re.compile(r"var\(\s*(--[\w-]+)")
 STRIP_COMMENTS = re.compile(r"/\*.*?\*/", re.S)
 
 
+def _orphaned_decls(text):
+    """Declaraciones de custom property que caen FUERA de todo bloque.
+
+    Un `--token: valor` a nivel de archivo no pertenece a ninguna regla, asi que
+    el navegador lo descarta: el token NO existe y cada var(--token) que lo use
+    queda sin resolver (y una box-shadow invalid at computed-value time cae a
+    'none'). Este caso paso de verdad en variables.css: las 23 sombras estaban
+    despues del cierre de :root y sus 54 usos no pintaban nada, mientras este
+    guard informaba 'todos declarados' porque solo buscaba el texto.
+
+    Se ignoran las declaraciones dentro de @media/@supports y similares, que si
+    son validas: se cuenta la profundidad de llaves y solo se reporta al volver
+    a 0 (fin de archivo) o al cerrar el bloque de nivel superior.
+    """
+    text = STRIP_COMMENTS.sub(" ", text)
+    out = []
+    depth = 0
+    for chunk in re.split(r"([{}])", text):
+        if chunk == "{":
+            depth += 1
+            continue
+        if chunk == "}":
+            depth -= 1
+            continue
+        if depth <= 0:
+            for m in DECLARE_RE.finditer(chunk):
+                out.append(m.group(1))
+    return out
+
+
 def _collect():
     files = sorted(CSS_DIR.rglob("*.css"))
     declared = set()
     used = Counter()
     used_in = {}
+    orphaned = {}
 
     for path in files:
-        text = STRIP_COMMENTS.sub(" ", path.read_text(encoding="utf-8", errors="ignore"))
+        raw = path.read_text(encoding="utf-8", errors="ignore")
+        rel = path.relative_to(ROOT).as_posix()
+        text = STRIP_COMMENTS.sub(" ", raw)
         for m in DECLARE_RE.finditer(text):
             declared.add(m.group(1))
         for m in USE_RE.finditer(text):
             token = m.group(1)
             used[token] += 1
-            used_in.setdefault(token, set()).add(path.relative_to(ROOT).as_posix())
+            used_in.setdefault(token, set()).add(rel)
+        for token in _orphaned_decls(raw):
+            orphaned.setdefault(rel, set()).add(token)
 
-    return declared, used, used_in
+    return declared, used, used_in, orphaned
 
 
 def main():
@@ -66,7 +101,7 @@ def main():
     ap.add_argument("--list", action="store_true", help="detalle por token")
     args = ap.parse_args()
 
-    declared, used, used_in = _collect()
+    declared, used, used_in, orphaned = _collect()
     undef = sorted(set(used) - declared)
     unused = sorted(declared - set(used))
 
@@ -81,9 +116,23 @@ def main():
         for t in unused:
             print("SIN USAR:     %s" % t)
 
-    if not undef and not unused:
-        print("OK: %d tokens, todos declarados y usados." % len(declared))
+    if not undef and not unused and not orphaned:
+        print("OK: %d tokens, todos declarados, usados y dentro de un bloque."
+              % len(declared))
         return 0
+
+    if orphaned:
+        print("")
+        print("Declarados FUERA de todo bloque (el navegador los descarta): %d"
+              % sum(len(v) for v in orphaned.values()))
+        for rel in sorted(orphaned):
+            for t in sorted(orphaned[rel]):
+                n = used.get(t, 0)
+                extra = ("  <-- %d usos quedan sin resolver" % n) if n else ""
+                print("  %s: %s%s" % (rel, t, extra))
+
+    if not undef and not unused:
+        return 1
 
     print("")
     print("Usados sin declarar: %d" % len(undef))
