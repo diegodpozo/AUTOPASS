@@ -26,16 +26,27 @@
 /* --- SUPERFICIE -----------------------------------------------------------
    Fondo, borde, radio y color. La comparten los tres patrones y tambien los
    <input> y <textarea> que llevan .form-control-custom en Ayuda y en el modal,
-   asi que aqui no va nada exclusivo de un select. */
+   asi que aqui no va nada exclusivo de un select.
+
+   Superficie y borde de la variante C del mockup: --bg-main con --border.
+   El fondo es el mas oscuro de la paleta, asi que el select se lee como una
+   hendidura dentro de la card en vez de como un bloque pegado encima. */
 .select-wrapper-premium select,
 .form-control-custom,
 .promo-branch-select {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-light);
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     outline: none;
     transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* El filtro de Puntos NO va en --bg-main: .promo-filter-bar no tiene fondo
+   propio y queda directo sobre body, que tambien es --bg-main. Con la misma
+   superficie el select se vuelve invisible y solo lo delata el borde. */
+.promo-branch-select {
+    background-color: var(--bg-card);
 }
 
 /* --- POPUP NATIVO --------------------------------------------------------
@@ -59,8 +70,12 @@ select.form-control-custom,
 .select-wrapper-premium select option,
 select.form-control-custom option,
 .promo-branch-select option {
-    background-color: var(--bg-card);
+    background-color: var(--bg-main);
     color: var(--text-primary);
+}
+
+.promo-branch-select option {
+    background-color: var(--bg-card);
 }
 
 /* --- CHEVRON Y APPEARANCE: solo <select> ----------------------------------
