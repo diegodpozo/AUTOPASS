@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -12,25 +13,58 @@ load_dotenv()
 logger = get_logger(__name__)
 
 _FALLBACK_VERSION = "0.0.0"
+_VERSION_SCAN_DEPTH = 50
+_CANONICAL_VERSION = re.compile(r"^v(\d+\.\d+\.\d+)\b")
+_LOOSE_VERSION = re.compile(r"v(\d+\.\d+\.\d+)\b")
 
 
+@lru_cache(maxsize=1)
 def _version() -> str:
-    """Version del proyecto, derivada del subject del ultimo commit (convencion `vX.Y.Z: ...`)."""
+    """Version del proyecto, derivada del historial de commits.
+
+    Busca hacia atras en el subject de los ultimos commits y devuelve la
+    version del mas reciente que la menciona. Se aceptan dos formas:
+
+    - canonica: `vX.Y.Z: ...` o `vX.Y.Z ...` al inicio del subject;
+    - incidental: `refactor(v9.34.17): ...`, `docs(v9.31.3): ...`.
+
+    Prioriza siempre la forma canonica: si un commit viejo dice "volver a
+    v9.30.0" y otro mas nuevo empieza con `v9.34.79:`, gana el canonico.
+    Sin commits, sin git, o sin ninguna version en el historial devuelve
+    `_FALLBACK_VERSION`.
+    """
+    repo = Path(__file__).resolve().parent.parent
     try:
-        head = subprocess.run(
-            ["git", "log", "-1", "--format=%s"],
-            cwd=Path(__file__).resolve().parent.parent,
+        out = subprocess.run(
+            ["git", "log", f"-{_VERSION_SCAN_DEPTH}", "--format=%s"],
+            cwd=repo,
             capture_output=True,
             text=True,
-            timeout=2,
+            timeout=5,
             check=True,
-        ).stdout.strip()
-        found = re.match(r"v(\d+\.\d+\.\d+)", head)
-        if found:
-            return found.group(1)
-        logger.debug("Subject del ultimo commit sin prefijo de version: %r", head)
+        ).stdout
     except Exception:
-        logger.debug("No se pudo derivar la version desde git", exc_info=True)
+        logger.debug("No se pudo leer el historial de git", exc_info=True)
+        return _FALLBACK_VERSION
+
+    subjects = [line for line in out.splitlines() if line.strip()]
+    if not subjects:
+        logger.debug("Historial de git vacio: version %s", _FALLBACK_VERSION)
+        return _FALLBACK_VERSION
+
+    for pattern in (_CANONICAL_VERSION, _LOOSE_VERSION):
+        for subject in subjects:
+            found = pattern.search(subject)
+            if found:
+                logger.debug("Version %s derivada del subject %r", found.group(1), subject)
+                return found.group(1)
+
+    logger.warning(
+        "Ninguno de los ultimos %d commits menciona una version (sigue %s): "
+        "conviene versionar con prefijo 'vX.Y.Z:'",
+        len(subjects),
+        _FALLBACK_VERSION,
+    )
     return _FALLBACK_VERSION
 
 
