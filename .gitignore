@@ -6,6 +6,7 @@ __pycache__/
 coverage_html/
 .env
 .gemini/
+.opencode/
 
 Captura de pantalla*.jpg
 *.sqlite

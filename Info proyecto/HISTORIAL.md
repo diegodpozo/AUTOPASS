@@ -16,7 +16,7 @@
   * **Por qué los 756 tests no lo detectaban**: ninguno toca el frontend. Los 8 guards verifican que el CSS esté balanceado y que los tokens existan; no pueden saber si un elemento se ve o no en pantalla. Un bug de visibilidad es invisible para toda la suite, y hay que medirlo con un navegador.
   * **Un error de medición propio, para no repetirlo**: la primera medición dio `display: none` siempre, incluso con los dos selects elegidos, y parecía un bug del toggle. El probe seteaba los `value` a mano sin llamar a `updateReservationPrice`, o sea que la clase nunca se quitaba. El bug era del probe. Segundo intento: importar el módulo real.
   * **8 guards en verde, suite 756 passed.**
-  * **Lección**: "no aparece `$ ---`" es un pedido sobre un elemento concreto del DOM, y se contestaba con un plan entero sobre `required`. Cuando el usuario cita un texto literal, hay que buscar ese texto en el código antes de decidir qué está roto: el `$ ---` estaba a dos greps de distancia, en `inicio.html` y en `reservas-form-price.js`.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.77: LOS CAMPOS OBLIGATORIOS NO AVISABAN NADA; EL `required` EXISTÍA PERO NO ERA VISIBLE**:
   * **El síntoma**: al apretar CONTINUAR sin elegir "Tipo de Estadía", no se veía ninguna señal en el campo. El aviso era el tooltip nativo del navegador: texto genérico, en el idioma del SO, sin mencionar AUTOPASS y con vida de un segundo.
@@ -31,7 +31,7 @@
   * **Contraste**: `--danger` sobre `--bg-main` da **6.62:1**, por encima del 3:1 que WCAG 1.4.11 exige en el borde de un control de estado.
   * **Verificación de que `novalidate` no dejó campos sin cubrir**: los tres `required` del form de reserva son exactamente los tres que valida el JS, y los campos de fecha/hora ya se validaban a mano en el mismo handler. `createReservation` es el único form con estos selects.
   * **Verificación**: 8 guards en verde, suite **756 passed**.
-  * **Lección**: "el campo tiene `required`" y "el usuario se entera de que falta" son dos cosas distintas. La validación nativa y la propia competían por el mismo submit, y ganó la del SO: más silenciosa, en otro idioma, y sin el estilo del proyecto. Cuando el aviso propio existe pero nunca se ve, el bug no está en el aviso, está en quién se escucha primero.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.76: EL ICONO DEL SELECT SIGUE EN GRIS, Y ES UNA DECISIÓN DE v9.34.68, NO UN DESCUIDO**:
   * **El síntoma**: con la variante C ya aplicada, el ícono leading de los selects quedaba en `--text-secondary` (`#9ca3af`) al 0.7, al lado de un borde `gold 22%` y de una flecha que sí era dorada.
@@ -41,7 +41,7 @@
   * **Contraste del ícono**: `--dorado` (`#dfba6b`) sobre `--bg-main` (`#08090c`) da **12.28:1**, con la opacidad 0.7 efectiva sigue muy por encima de 4.5:1. Antes el gris `#9ca3af` daba 16.35:1, o sea que se pierde contraste, pero por sobreabundancia, no por ilegibilidad.
   * **Consecuencia asumida**: el dorado deja de ser exclusivo de la acción principal en los selects del portal. Es una excepción acotada a un adorno decorativo, no un cambio de la regla general, que sigue intacta para botones.
   * **Verificación**: 8 guards en verde, suite **756 passed**.
-  * **Lección**: un criterio de jerarquía no se invalida solo, se invalida cuando cambia la premisa que lo sostenía. Aplicar la variante C movió el borde y dejó el ícono solo, y la regla de v9.34.68 seguía escrita como si nada.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.75: VARIANTE C DEL MOCKUP, CON UNA EXCEPCIÓN QUE LA VERIFICACIÓN OBLIGÓ**:
   * **La elección**: de las 6 superficies del mockup se eligió la **C**, la más oscura: fondo `--bg-main` (`#08090c`) y borde `--border` (gold 22%). El select deja de leerse como un bloque pegado encima de la card y pasa a leerse como una hendidura dentro de ella.
@@ -50,7 +50,7 @@
   * **Contraste medido**: el texto queda en **18.41:1** sobre `--bg-main` (WCAG AA pide 4.5:1). El borde `gold 22%` compuesto da **1.60:1** contra la card, por debajo del 3:1 de WCAG 1.4.11. Es aceptable y es el mismo criterio que ya usa el proyecto: el borde fino es decorativo y lo que tiene que alcanzar 3:1 es el **indicador de foco**, que pone `border-color: var(--dorado)` opaco.
   * **Los `<option>` siguen a la caja**: van a `--bg-main` con sus selects, para que el desplegable no sea más claro que el control. En Safari son necesarios, porque `accent-color` no alcanza ahí. El de Puntos va a `--bg-card`, por la misma excepción.
   * **Verificación**: 8 guards en verde, suite **756 passed**.
-  * **Lección**: una regla de estilo que funciona en un contexto puede borrar el control en otro. "Misma superficie que `body`" es unaKata la que se ve mal, y hay que mirar dónde cae cada instancia antes de aplicar la regla a la clase.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.74: LOS SELECTS QUEDARON GRIS Y EL POPUP SE ABRE AZUL; NO ES EL CSS, ES EL SISTEMA**:
   * **El síntoma reportado**: los selects "se ven mejor" pero los colores no cierran, y al pasar por las opciones se marcan en azul.
@@ -61,7 +61,7 @@
     - Los `<option>` se fijan a `--bg-card` / `--text-primary`, porque `accent-color` no alcanza en Safari.
   * **Las dos propiedades ya se usaban en el proyecto**, para el mismo problema: `color-scheme: dark` en los inputs de fecha del dashboard (`dashboard-metrics.css`, `dashboard-cards.css`) y `accent-color: var(--dorado)` en checkboxes y toggles de 5 archivos. No era una propiedad nueva: era una que faltaba acá.
   * **Verificación**: 8 guards en verde, suite **756 passed**.
-  * **Lección**: un `<select>` tiene dos superficies, la caja (CSS nuestro) y el popup (del sistema). Unificar la caja y creer que seArregló todo deja el popup como estaba. Y elegir un token por lo que la propiedad "debería" ser, en vez de por cómo se ve contra el fondo real, produce un gris que nadie pidió.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.73: LOS 8 SELECTS DEL PORTAL ERAN 3 SISTEMAS VISUALES DISTINTOS; AHORA SALEN DE UN COMPONENTE ÚNICO**:
   * **El inventario**: `/perfil` tiene 8 `<select>` en 4 plantillas (`inicio.html` x4, `ayuda.html` x2, `puntos.html` x1, `vehiculos.html` x1) repartidos en **3 clases sin relación entre sí**: `.select-wrapper-premium` (5), `.form-control-custom` (2) y `.promo-branch-select` (1). Tres paletas distintas (`#111`, `rgba(15,23,42,0.8)`, `rgba(255,255,255,0.04)`), tres radios (12, 12 y **10px**), tres formas de dibujar la flecha y tres focos distintos.
@@ -80,7 +80,7 @@
   * **Chevron en token**: `--select-chevron` en `:root`, para no repetir el data-URI (que ya estaba duplicado en `forms.css` y `dashboard-tables.css`).
   * **Verificación**: 8 guards en verde, suite **756 passed**, y el design system registra **12 mejoras y 0 regresiones** (`color.literales_no_genericos` 1090 → 1069, `rgba_distintos` 340 → 336, `shadow.distintas` 127 → 124).
   * **Pendiente de vista humana**: el `.select-wrapper-premium` del dashboard cambia de `#111` a `--bg-input` y su borde pasa de `1.5px #222` a `1px --border-light`. Es deliberado, pero no se ve en un test.
-  * **Lección**: un componente compartido escondido en el CSS de una página parece local hasta que alguien lo incluye desde otra. Y tres clases con nombres parecidos (`select-premium`, `select-premium-sm`, `select-wrapper-premium`, `input-premium-sm`) son cuatro sistemas distintos, no variantes de uno.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.72: EL SALUDO TAPABA EL DROPDOWN DE NOTIFICACIONES, Y ERA UNA REGRESIÓN DE v9.34.71**:
   * **El síntoma**: al abrir la campana, el panel aparecía detrás del saludo, en escritorio y en móvil. Después de separar los síntomas resultó que tapaba los primeros elementos de **todas** las páginas, no solo del saludo: todos los saludos son el primer elemento de su tab.
@@ -93,7 +93,7 @@
   * **Guard nuevo** `_tools/check_header_scope.py`: falla si alguna regla vuelve al selector descendiente, si algún tab del portal emite `<header>`, o si el header real de `perfil.html` deja de ser hijo directo de `main-content-scroll` (o sea, si la regla `> header` queda inaplicable).
   * **Mordidas probadas**: (1) revertir el selector a descendente → detecta las 4 ocurrencias; (2) `<header>` en un tab → detecta la línea exacta. Ambas dan `exit 1`, y el estado normal `exit 0`.
   * **Verificación**: 8 guards en verde, suite **756 passed**, los 7 tabs renderizan sin `<header>` y `perfil.html` conserva el suyo.
-  * **Lección**: un selector por etiqueta, usado para el layout de una página, es una trampa para cualquier elemento con esa etiqueta que se agregue después. El guard es la parte que importa: la causa raíz era el selector demasiado amplio, no el `<header>` del saludo.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.71: LOS 7 SALUDOS DEL PORTAL ERAN 4 IMPLEMENTACIONES DISTINTAS; AHORA SON UN SOLO COMPONENTE**:
   * **El problema**: los 7 tabs de `/perfil` tenían su propio saludo. Cuatro usaban `.card.welcome-card > .welcome-msg > h1`, Inicio usaba `.greeting-premium` con un `h2`, Cuenta tenía un bloque de identidad aparte con avatar de 100px y Ayuda un hero propio con paleta azul y un radial-gradient de 350x350px. Cuatro radios, cuatro colores, cuatro espaciados para el mismo elemento.
@@ -106,7 +106,7 @@
   * **`saludo.css` no va en `css_profile.html`**: ese include lo cargan `perfil.html` **y** `dashboard.html`. El link está en el `extra_head` de `perfil.html`, que es el único lugar donde existe la clase.
   * **El tour**: 4 selectores `#section-ayuda .help-hero-card` pasaron a `.saludo`, junto con el resto de `.welcome-card`.
   * **Verificación**: 7 guards en verde (0 huérfanas, 0 tokens rotos, llaves balanceadas, sin inline styles), suite **756 passed**, `perfil.html` y `dashboard.html` parsean.
-  * **Pendiente de mirada humana**: responsive y contraste final en navegador. Lo que hay acá es verificación estática, no visual.
+
 
 - **SEPTIEMBRE 30, 2026 - v9.34.70: 23 TOKENS DE SOMBRA ESTABAN FUERA DEL `:root`, 54 `box-shadow` NO PINTABAN NADA**:
   * **El bug**: al tokenizar las sombras duplicadas (v9.34.63) las 23 declaraciones `--shadow-*` quedaron **después** del cierre de `:root` en `variables.css`, es decir como declaraciones a nivel de archivo, sin pertenecer a ninguna regla. Eso es CSS inválido: el navegador las descarta. Cada `var(--shadow-*)` de los **54 usos en 20 archivos** quedaba sin resolver, y un `box-shadow` *invalid at computed-value time* cae a su valor inicial, **`none`**. O sea: ninguno de esos 54 sombras se pintaba.
