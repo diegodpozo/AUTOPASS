@@ -1,11 +1,42 @@
 import os
+import re
+import subprocess
+from pathlib import Path
+
 from dotenv import load_dotenv
+
+from core.logger import get_logger
 
 load_dotenv()
 
+logger = get_logger(__name__)
+
+_FALLBACK_VERSION = "0.0.0"
+
+
+def _version() -> str:
+    """Version del proyecto, derivada del subject del ultimo commit (convencion `vX.Y.Z: ...`)."""
+    try:
+        head = subprocess.run(
+            ["git", "log", "-1", "--format=%s"],
+            cwd=Path(__file__).resolve().parent.parent,
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=True,
+        ).stdout.strip()
+        found = re.match(r"v(\d+\.\d+\.\d+)", head)
+        if found:
+            return found.group(1)
+        logger.debug("Subject del ultimo commit sin prefijo de version: %r", head)
+    except Exception:
+        logger.debug("No se pudo derivar la version desde git", exc_info=True)
+    return _FALLBACK_VERSION
+
+
 class Settings:
     PROJECT_NAME: str = "AUTOPASS Professional"
-    VERSION: str = "9.14.0"
+    VERSION: str = _version()
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
 
     # CONTACTO

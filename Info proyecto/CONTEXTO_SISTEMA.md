@@ -17,6 +17,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `core/logger.py`: Configuración global de logging (`setup_logging`) y `get_logger`.
     *   `core/time.py`: `utcnow()` — fecha/hora UTC como datetime naive (base de timestamps).
     *   `core/normalize.py`: Normalización de nombres/sucursales (`normalize_name`, `normalize_branch_name`, `normalize_user_name`).
+    *   `core/alpr_security.py`: `require_alpr_node` — autentica los nodos ALPR en `validate-plate`/`exit-plate`/`validate-qr` (header `X-Node-Secret` en tiempo constante, o red local/privada si está vacío).
 
 2. **Backend Multi-Sucursal (FastAPI - `routes/`)**: 
     *   `routes/auth.py`: Autenticación, registro de usuarios, gestión de tokens JWT, recuperación de contraseña (`/forgot-password`, `/reset-password`), registro de sesiones multi-dispositivo (`UserSession`) y rate limiting (SlowAPI).
@@ -68,7 +69,8 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   **Gestión de Cámaras**: Configuración de IP por puerta (entrada/salida) en DB vía `Settings`, start/stop de procesos ALPR desde dashboard, service restart.
 
 ##  Configuración y Seguridad
-- **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`). Incluye `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `SMTP_*`, `MP_ACCESS_TOKEN`/`MP_PUBLIC_KEY`/`MP_WEBHOOK_URL`/`MP_PREFERENCE_EXPIRE_MINUTES`, `BASE_URL` (obligatorio `https://` para MP), `ACCESS_TOKEN_EXPIRE_MINUTES` (default 1440 = 24h), `ALGORITHM` (HS256), `SECRET_KEY`, `ALLOWED_ORIGINS` (CORS), `VIDEO_SOURCE_ENTRADA`/`VIDEO_SOURCE_SALIDA` (cámaras ALPR), `ALPR_COOLDOWN`/`ALPR_CONFIDENCE_THRESHOLD`/`ALPR_IMAGE_RETENTION_DAYS`, y los de hardware serial `SERIAL_ENABLED` (default true), `SERIAL_PORT` (default AUTO) y `SERIAL_BAUDRATE` (9600).
+- **Variables de Entorno**: Configuración centralizada en `core/config.py` (consume de `.env`). Incluye `ENVIRONMENT`, `DATABASE_URL`, `TURSO_AUTH_TOKEN` (fallback LibSQL/Turso), `RESERVA_HORA_MIN_SEGUNDOS`, `MAINTENANCE_INTERVAL_SECONDS`, `HEARTBEAT_TIMEOUT_SECONDS` (default 90), `SMTP_*`, `MP_ACCESS_TOKEN`/`MP_PUBLIC_KEY`/`MP_WEBHOOK_URL`/`MP_PREFERENCE_EXPIRE_MINUTES`, `BASE_URL` (obligatorio `https://` para MP), `ACCESS_TOKEN_EXPIRE_MINUTES` (default 1440 = 24h), `ALGORITHM` (HS256), `SECRET_KEY`, `ALLOWED_ORIGINS` (CORS), `VIDEO_SOURCE_ENTRADA`/`VIDEO_SOURCE_SALIDA` (cámaras ALPR), `ALPR_COOLDOWN`/`ALPR_CONFIDENCE_THRESHOLD`/`ALPR_IMAGE_RETENTION_DAYS`, `ALPR_NODE_SECRET` (ver abajo), y los de hardware serial `SERIAL_ENABLED` (default true), `SERIAL_PORT` (default AUTO) y `SERIAL_BAUDRATE` (9600).
+- **`ALPR_NODE_SECRET`** (remediación A1, `core/alpr_security.py`): secreto compartido que los nodos ALPR envían en el header `X-Node-Secret` para `validate-plate`/`exit-plate`/`validate-qr`. **Vacío = solo se aceptan nodos desde red local/loopback.** Es decir, con la variable sin definir el nodo ALPR funciona únicamente si corre en la misma máquina/red que el backend; para un nodo remoto hay que definirla en el `.env` **del backend** y en el entorno del proceso ALPR. Está declarada (vacía) en `.env.example`; generar con `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
 - **Token JWT**: Protección robusta de endpoints con validación de roles en tiempo real. Decodificación vía `decode_access_token` en `core/security.py`. El payload incluye `sub` (email) y `rol`. `create_access_token` firma con expiración por defecto de 15 min si no se pasa `expires_delta` (pero el login usa `ACCESS_TOKEN_EXPIRE_MINUTES`, default 24h).
 - **RBAC**: Roles `ADMIN` (global), `LOCAL_ADMIN` (por sucursal), `STAFF` (operativo), `USER` (cliente). Dependencias: `get_super_admin` (solo ADMIN), `get_local_manager` (ADMIN/LOCAL_ADMIN), `get_operational_user` (ADMIN/LOCAL_ADMIN/STAFF), `get_current_user` (todos autenticados).
 - **Bloqueo de Usuarios**: `User.is_blocked` permite bloqueo administrativo. `authenticate_user` verifica el flag y rechaza login si está bloqueado (403).
@@ -152,7 +154,7 @@ El frontend usa un patrón de **dos capas** para compatibilizar módulos ES6 con
 modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclick handlers
 ```
 
-### Módulos Frontend (62 módulos ES6)
+### Módulos Frontend (63 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -218,6 +220,7 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `landing-map-locality.js` | Filtro y búsqueda por localidad (`filterMapByLocality`) |
 | `chart-window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
 | `estadisticas-ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
+| `theme.js` | Paleta de tokens compartida: importada por 11 módulos para leer los tokens CSS desde JS (chart-window, dashboard-*, estadisticas-ocr, landing-map*, reservations-admin-form, admin-tour-engine, tour). Evita duplicar literales de color en JS. |
 
 ### Scripts Puente (Orquestadores)
 
@@ -233,15 +236,16 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `vehicles.js` | Portal de Usuario | CRUD de vehículos del cliente |
 | `contacto.js` | Contacto | Formulario de contacto |
 
-### CSS (40 archivos)
-Organizado en `static/css/`:
-- `base/`: Variables, reset, tipografía, utilidades (4 archivos)
-- `layout/`: Sidebar, header, grid (4 archivos)
-- `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
-- `pages/`: landing, profile, dashboard, contacto, legal (5 + 18 sub-archivos)
-  - `pages/dashboard/`: dashboard-base, dashboard-cards, dashboard-live, dashboard-settings, dashboard-tables, dashboard-admin-tour
-  - `pages/landing/`: landing-features, landing-hero, landing-map, landing-modals, landing-nav
-  - `pages/profile/`: profile-base, profile-help, profile-notifications, profile-points, profile-reservations, profile-tour, profile-vehicles
+### CSS (46 archivos en `static/css/`)
+- `base/` (5): `variables`, `reset`, `typography`, `utilities`, `animations`
+- `layout/` (4): `sidebar`, `header`, `grid`, `standalone` (PWA standalone)
+- `components/` (13): `buttons`, `cards`, `badges`, `modals`, `forms`, `tables`, `footer`, `virtual-time`, `premium`, `skeleton`, `chart-window`, `select-field`, `saludo`
+- `pages/` (23 = 4 + 19 en subcarpetas):
+  - raíz (4): `contacto`, `legal`, `estadisticas-ocr`, `monitoreo-live`
+  - `dashboard/` (7): `dashboard-base`, `dashboard-cards`, `dashboard-live`, `dashboard-settings`, `dashboard-tables`, `dashboard-metrics`, `dashboard-admin-tour`
+  - `landing/` (5): `landing-features`, `landing-hero`, `landing-map`, `landing-modals`, `landing-nav`
+  - `profile/` (7): `profile-base`, `profile-help`, `profile-notifications`, `profile-points`, `profile-reservations`, `profile-tour`, `profile-vehicles`
+- `style.css`: estilos globales adicionales (raíz de `static/css/`)
 
 ---
 

@@ -1,6 +1,6 @@
 # Auditorías de AUTOPASS — Documento Consolidado
 
-> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-30, suite **733 passed**, cobertura **93%**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; **AC-3 CERRADA (2026-09-29: `viewport-fit=cover` + 4 tokens `--safe-area-*` en 11 superficies, `overscroll-behavior-y: contain` en 3 contenedores; touch targets ≥44px descartado por no aplicar)**. **No queda ninguna auditoría CSS abierta de esta tanda.** Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
+> **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-30, suite **756 passed**, cobertura **93%**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; **AC-3 CERRADA (2026-09-29: `viewport-fit=cover` + 4 tokens `--safe-area-*` en 11 superficies, `overscroll-behavior-y: contain` en 3 contenedores; touch targets ≥44px descartado por no aplicar)**. **No queda ninguna auditoría CSS abierta de esta tanda.** Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
 
 Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUDITORIAS.md` y `PROPUESTA_AUDITORIAS_CSS.md` (eliminados 2026-09-27, v9.34.50). Reúne lo más importante de cada auditoría: hallazgos, remediación, verificación y herramientas reutilizables.
 
@@ -107,7 +107,7 @@ Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUD
 - Deuda A4.6 liquidada: eliminados los 2 "parches" de datos de `core/seed.py` (aforo `getattr` legacy y `update()` masivo de sucursales).
 - **Verificado en sandbox SQLite:** BD vacía → `upgrade head` EXIT 0, 18 tablas, schema **idéntico** a `create_all` (**0 diffs** orden-insensible), `current == head`.
 
-**Reproducibilidad:** cadena lineal de 14 migraciones, single head `ce7d1e2f3a5b`; `alembic current` en Neon = head (sin pendientes; solo lectura, no se tocó prod). **0 migraciones con data de usuario** (DDL puro; grep `op.execute|insert|update|delete|bulk` = 0). Updates legacy ("AUTOPASS " prefix) resueltos en lectura (`core/normalize.py`), no en BD.
+**Reproducibilidad:** cadena lineal de 17 migraciones, single head `9c4f2a7b1e83`; `alembic current` en Neon = head (sin pendientes; solo lectura, no se tocó prod). La última (`9c4f2a7b1e83`) **dropea la tabla `coupons`** y su índice `ix_coupons_codigo`: el modelo `Coupon` ya no existe (0 referencias en el repo) y sin ese drop la paridad modelo↔alembic que exige `tests/test_schema_parity_p2.py` quedaba rota. Su `downgrade` los recrea. **0 migraciones con data de usuario** (DDL puro; grep `op.execute|insert|update|delete|bulk` = 0). Updates legacy ("AUTOPASS " prefix) resueltos en lectura (`core/normalize.py`), no en BD.
 
 **Nota compatibilidad:** una BD ya creada por `create_all` y sellada en head no re-ejecuta migraciones; el baseline no altera prod.
 
@@ -370,7 +370,7 @@ Complemento de la propuesta original (2026-09-24) para la capa CSS. Ejecución d
 
 ## Estado de cierre (2026-09-28)
 
-- **Suite backend: 733 passed** (695 base + 5 regresión P1 A5 + 2 paridad P2 A5 + 5 regresión monitoring v9.34.54 + 18 rutas virtual_time + 8 seed), 7 warnings. Cobertura **93%**. Reverificado tras AC-3, el cierre de gaps de A3 y la migración de color de v9.34.61.
+- **Suite backend: 756 passed**, 8 warnings. Cobertura **93%** (16.468 stmts / 1.160 sin cubrir). Reverificado tras AC-3, el cierre de gaps de A3, la migración de color de v9.34.61 y la documentación de v9.34.78.
 - Todos los cambios CSS de T2/T3/T4 verificados sin regresión (los tests no tocan CSS).
 - **5 guards CSS en verde**: llaves balanceadas, clases huérfanas, integridad de tokens, baseline de design system, y equivalencia de color con `--max-delta 0` (v9.34.63). Ninguno toca colores por su cuenta; la neutralidad visual de la migración de color se probó aparte con `check_color_equivalence.py` (31 de 32 archivos con multiset RGBA idéntico; el único diff es el fix intencional de `var(--text)`).
 - **Pendiente único:** mediciones con volumen real de Neon.

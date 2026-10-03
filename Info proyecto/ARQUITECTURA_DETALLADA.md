@@ -11,7 +11,7 @@ El proyecto sigue una organización basada en la separación de responsabilidade
 ```text
 AUTOPASS/
 ├── alpr/               # Paquete modular ALPR (Vision, Preprocessing, Consensus, WS Streamer)
-├── core/               # Infraestructura (Configuración, Seguridad/RBAC/JWT, Rate Limit, DB, MQTT, Logger, Time, Normalize, Seed, Caché TTL)
+├── core/               # Infraestructura, 12 módulos (Configuración, Seguridad/RBAC/JWT, Rate Limit, DB, MQTT, Logger, Time, Normalize, Seed, Caché TTL, Seguridad ALPR)
 ├── models/             # Entidades SQLAlchemy + Enums (Domain Layer)
 ├── schemas/            # Validación Pydantic
 ├── routes/             # Endpoints (Transport Layer - Delgados, organizados por submódulos)
@@ -25,18 +25,18 @@ AUTOPASS/
 ├── tests/              # Pruebas unitarias (pytest)
 ├── static/
 │   ├── js/
-│   │   ├── modules/    # 62 módulos ES6 (lógica de negocio frontend)
+│   │   ├── modules/    # 63 módulos ES6 (lógica de negocio frontend)
 │   │   └── *.js        # 9 scripts puente (bridge: módulos → window.*)
-│   ├── css/            # 40 archivos CSS organizados en base/layout/components/pages
+│   ├── css/            # 46 archivos CSS organizados en base/layout/components/pages
 │   └── images/
 ├── templates/
 │   ├── dashboard/
-│   │   ├── tabs/       # 9 pestañas del dashboard admin (incl. occupancy) + settings/ (4 sub-archivos)
+│   │   ├── tabs/       # 10 pestañas del dashboard admin (incl. occupancy) + settings/ (4 sub-archivos)
 │   │   └── modals/     # Modales reutilizables (user_modals, branch_modals, promotion_modal)
 │   ├── profile/
 │   │   ├── tabs/       # 7 pestañas del portal de usuario
 │   │   └── modals/     # Modales reutilizables (onboarding_modal, modals.html)
-│   ├── components/     # 7 componentes reutilizables (navbar, footer, modales globales, monitoreo_controls, etc.)
+│   ├── components/     # 12 componentes reutilizables (navbar, sidebar_user, footer, saludo, virtual_time_banner, modals_global, auth_modals, chart_window_controls, css_dashboard, css_landing, css_profile, monitoreo_controls)
 │   └── emails/         # 4 templates de email transaccional
 ├── Info proyecto/
 │   └── hardware/       # Firmware ESP32 (firmware_esp32.ino) + documentación
@@ -68,7 +68,7 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **Seguridad de Tipos:** Se han implementado Enums en `models/enums.py` para eliminar "strings mágicos" (ej: `UserRole`, `VehicleType`, `ReservationStatus`).
 - **Gestión Vertical:** Soporte para sucursales con múltiples pisos (`ParkingFloor`), cada uno con capacidad independiente y trimodal para autos, motos y camionetas (`capacidad_total`, `ocupacion_actual`, `capacidad_motos`, `ocupacion_motos`, `capacidad_camionetas`, `ocupacion_camionetas`).
 - **Cupos Exclusivos de Reserva (v9.14.1+):** `ParkingAforo` (planta baja) y `ParkingFloor` (pisos) incluyen `capacidad_reservas_autos/motos/camionetas` (defaults 5/3/2) y `capacidad_reservas` (default 10) con sus contadores `ocupacion_reservas_*`. Estos cupos **no** afectan el aforo físico; alimentan la disponibilidad de reserva (sweep-line) y el bloqueo de fechas/horas en el picker. Migración Alembic `e6f7a8b9c0d1`.
-- **Fidelización:** Modelos `Promotion` (catálogo de beneficios con icono, categoría, sucursal, activa; incluye `tipo_canje`, `valor_descuento` y, desde v9.19.0, ubicación propia: `direccion`, `latitude`, `longitude`), `Coupon` (cupones generados por canje de puntos) y `RedemptionTicket` (`redemption_tickets`: voucher con `codigo` de 16 caracteres, `qr_data = "AUTOPASS_REDEMPTION|ID:{codigo}"`, válido 30 días, o `descuento_reserva` que se aplica al pagar la próxima reserva; también guarda snapshot de ubicación `direccion`, `latitude`, `longitude`). Migración Alembic `ce7d1e2f3a5b`. **Fallback de ubicación**: al canjear, `_crear_ticket` toma la ubicación de la promo y si no tiene, la de su sucursal; `GET /user/redemption-tickets` **enriquece** la respuesta sin reescribir BD (ubicación del ticket → promo actual → sucursal asignada).
+- **Fidelización:** Modelos `Promotion` (catálogo de beneficios con icono, categoría, sucursal, activa; incluye `tipo_canje`, `valor_descuento` y, desde v9.19.0, ubicación propia: `direccion`, `latitude`, `longitude`) y `RedemptionTicket` (`redemption_tickets`: voucher con `codigo` de 16 caracteres, `qr_data = "AUTOPASS_REDEMPTION|ID:{codigo}"`, válido 30 días, o `descuento_reserva` que se aplica al pagar la próxima reserva; también guarda snapshot de ubicación `direccion`, `latitude`, `longitude`). Migración Alembic `ce7d1e2f3a5b`. **Fallback de ubicación**: al canjear, `_crear_ticket` toma la ubicación de la promo y si no tiene, la de su sucursal; `GET /user/redemption-tickets` **enriquece** la respuesta sin reescribir BD (ubicación del ticket → promo actual → sucursal asignada).
 - **Configuración Dinámica:** Modelo `Settings` (key-value store con `valor_str` para configuraciones de texto como IPs de cámaras, y aislamiento por sucursal).
 - **Cámaras:** Modelo `ParkingCamera` (nombre, tipo: `PATENTE_INGRESO`, `PATENTE_EGRESO`, `QR_INGRESO`, `QR_EGRESO`, `PREDIO`, source/URL, sucursal, activa) para gestión dinámica de cámaras de seguridad.
 - **Normalización de Patentes:** Campo `normalized_patente` en `AccessLog` para búsquedas eficientes, con funciones `normalize_plate`/`format_plate` en `routes/parking/utils.py` que soportan formatos MERCOSUR (Argentina, Brasil, Uruguay, Paraguay).
@@ -95,7 +95,7 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 - **Scripts Puente** (`static/js/*.js`): Importan módulos y exponen funciones al scope global (`window.*`) para compatibilidad con handlers inline en templates Jinja2.
 - **Carga**: Los scripts puente se cargan como `<script type="module">`. Los módulos se cargan en paralelo y se resuelven automáticamente.
 
-#### Módulos Frontend (`static/js/modules/` - 62 módulos ES6)
+#### Módulos Frontend (`static/js/modules/` - 63 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -202,7 +202,7 @@ Servicio independiente de visión artificial modularizado en el paquete `alpr/` 
 - **Modos de Operación:** Configurado via `GATE_TYPE`: `entrada`, `salida`, `patente`, `qr`, `predio`. Fuente de video via `VIDEO_SOURCE` (webcam, RTSP, HTTP MJPEG).
 
 ### 5. Capa de Hardware (ESP32 / Arduino Uno)
-- **Firmware:** `Info proyecto/hardware/firmware_esp32.ino` y `Info proyecto/hardware/firmware_arduino_uno.ino`.
+- **Firmware:** `Info proyecto/hardware/firmware_esp32.ino` (ESP32 por MQTT) e `Info proyecto/hardware/GUIA_ARDUINO_UNO.md` (guía de la barrera con Arduino Uno por serie USB). No hay un `firmware_arduino_uno.ino`: el Arduino se maneja con `scripts/arduino_bridge.py`.
 - **Comunicación:** MQTT con CallbackAPIVersion.VERSION2 (ESP32) y Serie USB vía pyserial (Arduino Uno, auto-detección de puerto con `arduino_bridge.py`).
 - **Tópicos configurables vía .env:** `MQTT_TOPIC_ENTRADA`, `MQTT_TOPIC_SALIDA`.
 - **Componentes:** Servomotor (barrera), sensor ultrasónico (detección de paso), pantalla LCD (mensajes al conductor).

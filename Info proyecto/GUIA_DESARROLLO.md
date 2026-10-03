@@ -168,7 +168,7 @@ Para correr las pruebas tras un cambio:
 ```bash
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-Tests disponibles en `tests/` (**82 pruebas en 21 archivos**):
+Tests disponibles en `tests/` (**756 pruebas en 56 archivos**; abajo se listan los 21 principales):
 - `test_access_service.py`: Validación de placas, entrada/salida
 - `test_admin_reservations.py`: CRUD de reservas admin (búsqueda, creación, edición, confirmación de pago con método, simulación y reembolso de cancelación)
 - `test_alpr_aspect_ratio_filter.py`: Filtro de aspecto (área de placa)
