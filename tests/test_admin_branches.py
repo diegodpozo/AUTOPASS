@@ -21,8 +21,8 @@ from models.enums import ReservationStatus, PaymentStatus
 
 BRANCHES_URL = "/v1/admin/branches"
 FLOORS_URL = "/v1/admin/floors"
-ADMIN = type("AdminUser", (), {"rol": "admin", "id": 1})()
-LOCAL = type("LocalUser", (), {"rol": "local_admin", "id": 2})()
+ADMIN = type("AdminUser", (), {"rol": "admin", "id": 1, "sucursal": None})()
+LOCAL = type("LocalUser", (), {"rol": "local_admin", "id": 2, "sucursal": "Centro"})()
 
 
 @pytest.fixture
@@ -296,3 +296,62 @@ def test_toggle_branch_con_vehiculos_400(client):
 def test_toggle_branch_inexistente_404(client):
     tc, _ = client
     assert tc.post(f"{BRANCHES_URL}/999/toggle").status_code == 404
+
+# ---------------------------------------------------------------------------
+# AISLAMIENTO POR SEDE DE LOS ENDPOINTS DE PISOS (bug 2.3 de BUGS A RESOLVER.md)
+# ---------------------------------------------------------------------------
+
+def test_add_floor_de_otra_sede_403(client):
+    """Un LOCAL_ADMIN de Centro no puede agregar pisos en otra sede."""
+    tc, TestSession = client
+    otra = _seed_branch(TestSession, nombre="Norte")
+    r = tc.post(f"/v1/admin/{otra.id}/floors", json={"nombre": "P1", "capacidad_total": 10})
+    assert r.status_code == 403
+
+
+def test_delete_floor_de_otra_sede_403(client):
+    """Un LOCAL_ADMIN de Centro no puede borrar pisos de otra sede."""
+    tc, TestSession = client
+    otra = _seed_branch(TestSession, nombre="Norte")
+    piso = _seed_floor(TestSession, otra.id)
+    r = tc.delete(f"{FLOORS_URL}/{piso.id}")
+    assert r.status_code == 403
+
+
+def test_update_floor_capacity_de_otra_sede_403(client):
+    """Un LOCAL_ADMIN de Centro no puede cambiar la capacidad de pisos de otra sede."""
+    tc, TestSession = client
+    otra = _seed_branch(TestSession, nombre="Norte")
+    piso = _seed_floor(TestSession, otra.id)
+    r = tc.patch(f"{FLOORS_URL}/{piso.id}", params={"cap_autos": 50, "cap_motos": 5})
+    assert r.status_code == 403
+    assert piso.capacidad_total != 50
+
+
+def test_pisos_de_su_propia_sede_siguen_funcionando(client):
+    """El scope no debe romper al LOCAL_ADMIN legItimo de su propia sede."""
+    tc, TestSession = client
+    propia = _seed_branch(TestSession, nombre="Centro")
+    piso = _seed_floor(TestSession, propia.id)
+    r = tc.patch(f"{FLOORS_URL}/{piso.id}", params={"cap_autos": 50, "cap_motos": 5})
+    assert r.status_code == 200
+    assert r.json()["capacidad_total"] == 50
+
+
+def test_admin_global_pisos_de_cualquier_sede(client, monkeypatch):
+    """El ADMIN global no tiene restriccion de sede."""
+    tc, TestSession = client
+    app.dependency_overrides[get_local_manager] = lambda: ADMIN
+    otra = _seed_branch(TestSession, nombre="Norte")
+    piso = _seed_floor(TestSession, otra.id)
+    r = tc.patch(f"{FLOORS_URL}/{piso.id}", params={"cap_autos": 50, "cap_motos": 5})
+    assert r.status_code == 200
+
+
+def test_scope_compara_normalizado_sin_distinguir_mayusculas(client):
+    """"Centro" y "centro" deben tratarse como la misma sede."""
+    tc, TestSession = client
+    propia = _seed_branch(TestSession, nombre="centro")
+    piso = _seed_floor(TestSession, propia.id)
+    r = tc.patch(f"{FLOORS_URL}/{piso.id}", params={"cap_autos": 40, "cap_motos": 5})
+    assert r.status_code == 200

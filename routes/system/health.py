@@ -8,6 +8,7 @@ from core.database import get_db
 from core.limiter import limiter
 from core.security import get_super_admin, get_operational_user
 from core.config import settings
+from core.alpr_security import require_alpr_node
 from services.time_service import TimeService
 from routes.system.common import ALPR_HEARTBEATS, normalize_system_name
 from models.enums import UserRole
@@ -54,7 +55,13 @@ def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_o
     return {"database": "ONLINE" if db_ok else "OFFLINE", "alpr": alpr_status, "api": "ONLINE"}
 
 @router.post("/heartbeat")
-def alpr_heartbeat(gate_id: str):
+def alpr_heartbeat(gate_id: str, _: None = Depends(require_alpr_node)):
+    """Registra el latido de un nodo ALPR.
+
+    Sin esta proteccion cualquier cliente podia escribir en ALPR_HEARTBEATS con un
+    gate_id arbitrario, haciendo pasar un nodo caido por ONLINE y dejando el
+    diccionario sin limite de crecimiento.
+    """
     gate_id = gate_id.strip().upper()
     ALPR_HEARTBEATS[gate_id] = datetime.datetime.now()
     return {"status": "ok"}

@@ -134,34 +134,27 @@ Además, restringir los ACL del broker para que el usuario de AUTOPASS solo pued
 | | |
 |---|---|
 | **Severidad** | Alta |
-| **Estado** | Pendiente |
-| **Componente** | `core/security.py` |
+| **Estado** | Parcial (`routes/admin/branches.py`: pisos protegidos por scope de sede. Resta revisar otros endpoints que usan get_local_manager) |
+| **Componente** | `core/security.py`, `routes/admin/branches.py`, otros routers que usan `get_local_manager` |
 
 **Descripción**
 
-`get_local_manager` (`core/security.py:116-121`) y `get_operational_user` (`core/security.py:123-128`) solo validan el **rol**, nunca la **sede**:
-
-```python
-def get_local_manager(current_user: models.User = Depends(get_current_user)):
-    role_str = str(current_user.rol)
-    if role_str not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value]:
-        raise HTTPException(status_code=403, ...)
-    return current_user
-```
-
-El campo `User.sucursal` existe y distingue al admin local de sede del admin global, pero las dependencias no lo usan. El filtrado por sede se hace de forma **puntual y manual** en algunos endpoints (por ejemplo `routes/system/video.py:87` y `routes/system/health.py`), pero no de forma centralizada.
+`get_local_manager` y `get_operational_user` solo validan el **rol**, nunca la **sede**. El filtrado por sede se hace de forma **puntual y manual** en algunos endpoints. Como `get_local_manager` es una dependencia que no conoce el recurso sobre el que opera (recibe solo al usuario), no es posible forzar el scope a nivel de dependencia para todos los casos sin cambiar la firma de rutas que pasan ids.
 
 **Impacto**
 
-Un `LOCAL_ADMIN` de la sede *Centro* que consiga un token válido puede consultar y modificar sucursales, pisos, cámaras, reservas y tarifas de *Norte*, y ver el video de sus cámaras. El alcance queda en manos de cada endpoint, así que es fácil que algún endpoint se olvide del filtro.
+Un `LOCAL_ADMIN` de la sede *Centro* podía operar pisos (`add_floor`, `delete_floor`, `update_floor_capacity`) de otra sede (caso concreto detectado).
 
-**Corrección sugerida**
+**Corrección aplicada**
 
-Centralizar el chequeo en las dependencias, derivando de la ruta el recurso afectado:
+- En `core/security.py`: agregado `validate_local_admin_branch(admin, branch_nombre)` (usa `normalize_branch_name` para comparar de forma insensible a mayúsculas/espacios).
+- En `routes/admin/branches.py`: se invoca el validador en los 3 endpoints de pisos (add/delete/update), recuperando la sucursal del piso/sucursal objetivo antes de aplicar cambios. Se mantuvieron `get_super_admin` para operaciones a nivel sucursal (crear/editar/eliminar sucursales, activar/desactivar) según criterio existente.
 
-1. Agregar una dependencia `get_sucursal_autorizada(sucursal: str)` que lance `403` si `current_user.rol != ADMIN` y `normalize_system_name(current_user.sucursal) != normalize_system_name(sucursal)`.
-2. Usarla en todos los endpoints que reciben o resuelven una sede por parámetro.
-3. Agregar un test parametrizado que recorra los routers y verifique que ningún endpoint con `{gate_id}` / `{camera_id}` / sede en el path quede sin el chequeo.
+**Pruebas agregadas:** 6 tests en `tests/test_admin_branches.py` que verifican 403 ante otra sede, éxito en propia sede, ADMIN global sin restricciones y comparación normalizada.
+
+**Pendiente**
+
+Revisar sistemáticamente endpoints que usan `get_local_manager` sin validar sede (ej. `virtual_time` es global, revisar `promotions.py`, `settings.py`, `users.py`, `reports.py`) y aplicar validación explícita por recurso cuando corresponda.
 
 ---
 
@@ -170,36 +163,46 @@ Centralizar el chequeo en las dependencias, derivando de la ruta el recurso afec
 | | |
 |---|---|
 | **Severidad** | Media |
-| **Estado** | Pendiente |
+| **Estado** | Parcial (`/heartbeat` corregido; `/camera-reading` sigue pendiente) |
 | **Componente** | `routes/system/cameras.py`, `routes/system/health.py` |
 
 **Descripción**
 
 Dos endpoints mutan estado global sin ninguna dependencia de autenticación:
 
-**`POST /camera-reading/{gate_id}`** — `routes/system/cameras.py:325`
+**`POST /camera-reading/{gate_id}`** — `routes/system/cameras.py` (PENDIENTE)
 
 ```python
 @router.post("/camera-reading/{gate_id}")
 def notify_camera_reading(gate_id: str, db: Session = Depends(get_db)):
 ```
 
-Notifica al dashboard que una cámara está leyendo. **Todos** los demás endpoints del router (`/camera-config`, `/cameras`, `/camera-service/{gate_id}/{action}`) sí usan `Depends(get_operational_user)`; este quedó afuera.
+Notifica al dashboard que una cámara está leyendo. **Todos** los demás endpoints del router (`/camera-config`, `/cameras`, `/camera-service/{gate_id}/{action}`) sí usan `Depends(get_operational_user)`; este quedó afuera. Verificado sobre el código actual: sigue sin dependencia de autenticación.
 
-**`POST /heartbeat`** — `routes/system/health.py:56`
+**`POST /heartbeat`** — `routes/system/health.py` (CORREGIDO)
+
+Antes mutaba `ALPR_HEARTBEATS` sin ninguna comprobación:
 
 ```python
-@router.post("/heartbeat")
 def alpr_heartbeat(gate_id: str):
     ALPR_HEARTBEATS[gate_id] = datetime.datetime.now()
 ```
 
-Cualquiera puede marcar un portón como `ONLINE` en el panel de salud, falseando el monitoreo operativo. Tampoco tiene rate limit (a diferencia de `/reset`, que usa `@limiter.limit`).
+Cualquiera podía marcar un portón como `ONLINE` en el panel de salud, falseando el monitoreo operativo, y spamming `gate_id` distintos hacía crecer el diccionario sin límite.
 
-**Corrección sugerida**
+**Corrección aplicada**: se agregó la dependencia `require_alpr_node` que ya existía en `core/alpr_security.py:23` y que se usa igual en el resto de los endpoints de nodo ALPR:
 
-- `notify_camera_reading`: agregar `Depends(get_operational_user)` y validar que el `gate_id` pertenezca a la sede del usuario, reutilizando el mismo criterio que el WS de video (`routes/system/video.py:22`) para los nodos ALPR.
-- `alpr_heartbeat`: aplicar el mismo esquema de confianza de nodo ALPR que ya existe en `routes/system/video.py:75` (`_is_trusted_alpr_node(peer, node_secret)`) en lugar de depender solo del rol, y agregarle `@limiter.limit`.
+```python
+def alpr_heartbeat(gate_id: str, _: None = Depends(require_alpr_node)):
+```
+
+Con `ALPR_NODE_SECRET` configurado exige el secreto por header `x-node-secret` o query `node_secret` (comparación en tiempo constante); sin secreto configurado cae al criterio de red local/privada. Cubierto por 4 tests en `tests/test_system_health.py`, incluidos el rechazo con secreto ausente y con secreto incorrecto.
+
+Nota: al verificar este bug se constató que ningún componente del repositorio envía heartbeats (ni el backend, ni `firmware_arduino_uno.ino`, ni `firmware_esp32.ino`, ni `scripts/arduino_bridge.py`, que es un bridge MQTT). El endpoint queda protegido sin riesgo de romper un cliente existente, pero mientras ningún nodo lo llame el indicador de liveness del panel de salud no puede marcar `ONLINE`.
+
+**Corrección pendiente**
+
+- `notify_camera_reading`: agregar `Depends(get_operational_user)` y validar que el `gate_id` pertenezca a la sede del usuario.
 
 ---
 
@@ -246,7 +249,7 @@ Agregar `MP_WEBHOOK_SECRET` a la configuración y al `.env.example`.
 | 2.1 | Seguridad | **Crítica** | `.env` (historial de Git) |
 | 2.2 | Seguridad | Alta | `core/mqtt.py` |
 | 2.3 | Seguridad | Alta | `core/security.py` |
-| 2.4 | Seguridad | Media | `routes/system/cameras.py`, `routes/system/health.py` |
+| 2.4 | Seguridad | Media | `routes/system/cameras.py` (`/heartbeat` ya corregido) |
 | 2.5 | Seguridad | Media | `routes/user/mercadopago.py` |
 
 **Orden de ataque sugerido**: 2.1 (rotar credenciales ya, es lo más urgente y no depende de código) → 2.2 → 2.3 → 2.4 → 2.5 → 1.1.

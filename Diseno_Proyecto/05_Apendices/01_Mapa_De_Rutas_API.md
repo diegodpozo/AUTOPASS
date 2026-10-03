@@ -135,7 +135,7 @@
 | Método | Ruta | Función | Rol Requerido |
 |--------|------|---------|---------------|
 | GET | `/health` | Health check | STAFF+ |
-| POST | `/heartbeat` | Heartbeat ALPR | Público (ALPR) |
+| POST | `/heartbeat` | Heartbeat ALPR | Nodo ALPR (`x-node-secret` o red local) |
 | POST | `/reset` | Reset sistema | ADMIN |
 | GET | `/virtual-time` | Ver tiempo virtual (solo lectura) | LOCAL_ADMIN+ |
 | GET | `/cameras` | Listar cámaras | STAFF+ |

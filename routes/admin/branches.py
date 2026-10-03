@@ -7,7 +7,7 @@ from typing import List, Optional
 import models, schemas
 from core.database import get_db
 from core.limiter import admin_rate_limit
-from core.security import get_super_admin, get_local_manager
+from core.security import get_super_admin, get_local_manager, validate_local_admin_branch
 from services.branch_service import BranchService
 from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
@@ -27,6 +27,7 @@ def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(g
     branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
+    validate_local_admin_branch(admin, branch.nombre)
     
     cap_res_autos = getattr(data, 'capacidad_reservas_autos', 0) or 0
     cap_res_motos = getattr(data, 'capacidad_reservas_motos', 0) or 0
@@ -65,7 +66,9 @@ def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.Use
 
     branch_id = floor.branch_id
     branch = BranchRepository.get_by_id(db, branch_id)
-
+    if branch:
+        validate_local_admin_branch(admin, branch.nombre)
+  
     db.delete(floor)
     db.commit()
     if branch:
@@ -92,6 +95,7 @@ def update_floor_capacity(
     """ACTUALIZA LA CAPACIDAD DE UN PISO VALIDANDO QUE SEA MAYOR O IGUAL A LA OCUPACION ACTUAL."""
     floor = BranchRepository.get_floor_by_id(db, floor_id)
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
+    validate_local_admin_branch(admin, floor.branch.nombre if floor.branch else "")
     
     if cap_autos < (floor.ocupacion_actual or 0):
         raise HTTPException(status_code=400, detail=f"La capacidad de autos ({cap_autos}) no puede ser menor a la ocupación actual ({floor.ocupacion_actual}).")

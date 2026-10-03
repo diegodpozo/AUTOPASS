@@ -196,14 +196,48 @@ def test_health_usuario_comun_403(client):
 # POST /heartbeat
 # ---------------------------------------------------------------------------
 
-def test_heartbeat_normaliza_y_registra(client):
+def test_heartbeat_normaliza_y_registra(client, monkeypatch):
     c, _ = client
-    resp = c.post("/heartbeat", params={"gate_id": "  puerta-norte "})
+    monkeypatch.setattr(core_settings, "ALPR_NODE_SECRET", "secreto-de-prueba", raising=False)
+    resp = c.post("/heartbeat", params={"gate_id": "  puerta-norte "},
+                  headers={"x-node-secret": "secreto-de-prueba"})
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
     assert "PUERTA-NORTE" in ALPR_HEARTBEATS
     age = (datetime.datetime.now() - ALPR_HEARTBEATS["PUERTA-NORTE"]).total_seconds()
     assert age < 5
+
+
+def test_heartbeat_rechaza_nodo_no_autorizado(client, monkeypatch):
+    """Sin node_secret (y host no loopback) el heartbeat debe rechazarse.
+
+    Es el cierre del bug 2.4 de BUGS A RESOLVER.md: el endpoint era publico, asi
+    que cualquiera podia escribir en ALPR_HEARTBEATS con un gate_id arbitrario,
+    simular un nodo caido como ONLINE y hacer crecer el diccionario sin limite.
+    """
+    c, _ = client
+    monkeypatch.setattr(core_settings, "ALPR_NODE_SECRET", "secreto-de-prueba", raising=False)
+    resp = c.post("/heartbeat", params={"gate_id": "PUERTA_FALSA"})
+    assert resp.status_code == 403
+    assert "PUERTA_FALSA" not in ALPR_HEARTBEATS
+
+
+def test_heartbeat_rechaza_secreto_incorrecto(client, monkeypatch):
+    c, _ = client
+    monkeypatch.setattr(core_settings, "ALPR_NODE_SECRET", "secreto-de-prueba", raising=False)
+    resp = c.post("/heartbeat", params={"gate_id": "PUERTA_FALSA"},
+                  headers={"x-node-secret": "secreto-erroneo"})
+    assert resp.status_code == 403
+    assert "PUERTA_FALSA" not in ALPR_HEARTBEATS
+
+
+def test_heartbeat_acepta_query_param_node_secret(client, monkeypatch):
+    """El secret tambien puede ir por query, como en el resto de endpoints ALPR."""
+    c, _ = client
+    monkeypatch.setattr(core_settings, "ALPR_NODE_SECRET", "secreto-de-prueba", raising=False)
+    resp = c.post("/heartbeat", params={"gate_id": "PUERTA_OK", "node_secret": "secreto-de-prueba"})
+    assert resp.status_code == 200
+    assert "PUERTA_OK" in ALPR_HEARTBEATS
 
 
 # ---------------------------------------------------------------------------

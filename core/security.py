@@ -10,6 +10,7 @@ import models
 from core.database import get_db
 from core.config import settings
 from core.time import utcnow
+from core.normalize import normalize_branch_name
 from models.enums import UserRole
 
 # --- CONFIGURACION DE SEGURIDAD ---
@@ -121,11 +122,28 @@ def get_local_manager(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 def get_operational_user(current_user: models.User = Depends(get_current_user)):
-    """VALIDA SI EL USUARIO ES PERSONAL OPERATIVO (ADMIN, LOCAL ADMIN O STAFF)."""
-    role_str = str(current_user.rol)
-    if role_str not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
-        raise HTTPException(status_code=403, detail="Acceso restringido a personal autorizado")
-    return current_user
+      """VALIDA SI EL USUARIO ES PERSONAL OPERATIVO (ADMIN, LOCAL ADMIN O STAFF)."""
+      role_str = str(current_user.rol)
+      if role_str not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
+          raise HTTPException(status_code=403, detail="Acceso restringido a personal autorizado")
+      return current_user
+  
+def validate_local_admin_branch(admin: models.User, branch_nombre: str):
+    """Valida que un LOCAL_ADMIN solo pueda operar sobre los recursos de SU sede.
+
+    ADMIN global no tiene restricciones. Para LOCAL_ADMIN compara la sede del
+    usuario con la del recurso usando la misma normalizacion que el resto del
+    proyecto, asi "Castelar" y "castelar" se consideran la misma sede.
+
+    get_local_manager NO puede hacer esto: es una dependencia que no sabe sobre que
+    sede opera cada endpoint (los recursos llegan por id de path o de body). Por eso
+    los endpoints de pisos, que solo verifican el rol, deben llamar a esta funcion.
+    """
+    if str(admin.rol) == UserRole.ADMIN.value:
+        return
+    admin_suc_norm = normalize_branch_name(admin.sucursal or "")
+    if normalize_branch_name(branch_nombre or "") != admin_suc_norm:
+        raise HTTPException(status_code=403, detail="No tenés permisos sobre recursos de otra sucursal")
 
 def authenticate_user(db: Session, email: str, password: str):
     """VERIFICA LAS CREDENCIALES DE UN USUARIO CONTRA LA BASE DE DATOS."""
