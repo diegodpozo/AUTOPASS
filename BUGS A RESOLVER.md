@@ -65,7 +65,7 @@ Los `onclick` inline dependen de que cada handler se registre a mano en `window`
 - `MP_ACCESS_TOKEN` — token de producción de Mercado Pago (75 caracteres)
 - `SMTP_PASSWORD` — contraseña real del servidor de correo (20 caracteres)
 - `SECRET_KEY` — clave de firma de JWT, usada para emitir sesiones
-- `DATABASE_URL` — credenciales de la base de datos (Turso)
+- `DATABASE_URL` — credenciales de la base de datos (Neon/PostgreSQL; antes Turso/libSQL)
 - `MP_WEBHOOK_URL`, `MP_PUBLIC_KEY`, `SMTP_USER`
 
 **Commits donde entraron**

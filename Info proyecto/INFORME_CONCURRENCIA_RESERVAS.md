@@ -211,7 +211,7 @@ cierra el pago. Sin serialización, gana el último en escribir, y puede dejar l
 |---------|--------------|-------------------------|--------------------|----------------------|
 | **PostgreSQL** (Neon) | **Producción** (`.env`) | Sí | Sí | Sí (requiere `btree_gist`) |
 | SQLite | Dev y tests | No | No | No |
-| LibSQL / Turso | Fallback configurado | No | No | No |
+| SQLite | Fallback configurado | No | No | No |
 
 **Implicación:** la solución **no puede ser un único `pg_advisory_lock` a secas**. Debe ser un
 helper con bifurcación por dialecto, y el tier de constraints solo aplica a Postgres.
@@ -276,7 +276,7 @@ def bloqueo_transaccional(db: Session, *claves: str) -> Iterator[None]:
     """Serializa secciones críticas que abarcan varias lecturas y escrituras.
 
     Postgres: pg_advisory_xact_lock, liberado en commit/rollback (seguro con
-    transaction pooling de Neon). SQLite/LibSQL: no-op, ver nota de limitaciones.
+    transaction pooling de Neon). SQLite: no-op, ver nota de limitaciones.
     """
 ```
 
@@ -340,7 +340,7 @@ lock se adquiriera más tarde habría que repetir `verificar_disponibilidad` den
 - **R1 no se puede expresar como constraint**: "no más de N reservas solapadas" no es
   declarable en SQL estándar. Sigue dependiendo del lock `aforo:`.
 - `models/reservation.py`: declarar el constraint en el modelo para que `create_all` lo vea.
-- En SQLite/LibSQL el constraint no se crea y el guard de aplicación queda como única defensa.
+- En SQLite el constraint no se crea y el guard de aplicación queda como única defensa.
   Documentarlo explícitamente.
 
 **Criterio de salida:** un `INSERT` manual que solape una patente vigente falla con

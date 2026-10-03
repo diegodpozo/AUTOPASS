@@ -92,7 +92,6 @@ class Settings:
     
     # BASE DE DATOS
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./parking.db")
-    TURSO_AUTH_TOKEN: str = os.getenv("TURSO_AUTH_TOKEN", "")
     
     # SMTP (MAILTRAP POR DEFECTO PARA DESARROLLO)
     SMTP_SERVER: str = os.getenv("SMTP_SERVER", "sandbox.smtp.mailtrap.io")

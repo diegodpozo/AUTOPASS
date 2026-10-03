@@ -73,7 +73,7 @@ def test_normalize_postgres_a_psycopg():
 def test_normalize_respeta_urls_ya_normalizadas():
     assert core_db.normalize_database_url("postgresql+psycopg://u:p@h/db") == "postgresql+psycopg://u:p@h/db"
     assert core_db.normalize_database_url("sqlite:///./x.db") == "sqlite:///./x.db"
-    assert core_db.normalize_database_url("sqlite+libsql://x") == "sqlite+libsql://x"
+    assert core_db.normalize_database_url("sqlite+pysqlite:///./x.db") == "sqlite+pysqlite:///./x.db"
 
 
 # ---------------------------------------------------------------------------
