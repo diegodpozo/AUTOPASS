@@ -1,5 +1,23 @@
 # HISTORIAL DEL PROYECTO: AUTOPASS
 
+- **SEPTIEMBRE 30, 2026 - v9.34.78: "TOTAL: $ ---" SE VEÍA ANTES DE ELEGIR NADA; Y EL PEDIDO ORIGINAL ERA OTRO**:
+  * **El síntoma real**: al abrir la reserva, el bloque del total mostraba `Total: $ ---` antes de haber elegido sucursal y tipo de estadía.
+  * **Antes de arreglarlo: una lección sobre cómo preguntas mal las cosas**. `v9.34.77` interpretó el pedido como "validación de los selects obligatorios" y agregó borde rojo en el `required` de cada uno. Estaba mal dirigido. El texto que el usuario señalaba era `$ ---`, o sea el **total de la reserva**, no el aviso de un campo vacío. Se arregló el problema equivocado y se anunció como resuelto. La causa fue no preguntar qué significaba literalmente `$ ---` antes de tocar código.
+  * **Dónde estaba**: `templates/profile/tabs/inicio.html`, línea del `.price-summary-premium`: un `<span id="reserva-total-est">$ ---</span>` hardcodeado en el HTML, que `reservas-form-price.js` deja en `$ ---` mientras `total` es 0. O sea, se pintaba un precio que todavía no existe, y `Total:` con `$ ---` no le dice nada útil a nadie.
+  * **La solución, en dos partes, y la segunda es la importante**:
+    1. `updateReservationPrice` ahora saca una clase `is-pendiente` del `.price-summary-premium` mientras falte sucursal o tipo de estadía.
+    2. **La clase va en el HTML, no solo en el JS**. Es lo que evita el bug: sin la clase en el markup, el HTML estático pinta `Total: $ ---` apenas carga la página, antes de que corra un solo script. Poner el `display:none` solo desde el JS deja el flash igual.
+  * **El gate es por los dos selects, no por `total > 0`**: así el `$ ---` sigue apareciendo cuando ya elegiste qué estás reservando pero falta la fecha, que sí es información útil ("elegiste, pero no puedo calcular todavía"). Si el gate fuera por precio, el `$ ---` desaparecería también en ese caso y el usuario se queda sin ninguna señal de por qué no hay monto.
+  * **No se oculta el contenedor escribiendo `style.display`**: la clase es la que apaga el bloque en el markup, y tocar el display por separado dejaría un atributo inline que la regla CSS vuelve a pelear. Se usa `classList.toggle('is-pendiente', faltanBases)`.
+  * **Verificación, y esta vez en un navegador de verdad**: se levantó un `http.server` sobre la raíz del proyecto y se cargó la página con **el módulo real** (`import { updateReservationPrice } from '/static/js/modules/reservas-form-price.js'`) en Chrome headless, midiendo `getComputedStyle`:
+    - carga inicial (sin sucursal ni tipo) → `display: none`, no se ve
+    - solo sucursal → `display: none`, no se ve
+    - sucursal + tipo → `display: flex`, se ve
+  * **Por qué los 756 tests no lo detectaban**: ninguno toca el frontend. Los 8 guards verifican que el CSS esté balanceado y que los tokens existan; no pueden saber si un elemento se ve o no en pantalla. Un bug de visibilidad es invisible para toda la suite, y hay que medirlo con un navegador.
+  * **Un error de medición propio, para no repetirlo**: la primera medición dio `display: none` siempre, incluso con los dos selects elegidos, y parecía un bug del toggle. El probe seteaba los `value` a mano sin llamar a `updateReservationPrice`, o sea que la clase nunca se quitaba. El bug era del probe. Segundo intento: importar el módulo real.
+  * **8 guards en verde, suite 756 passed.**
+  * **Lección**: "no aparece `$ ---`" es un pedido sobre un elemento concreto del DOM, y se contestaba con un plan entero sobre `required`. Cuando el usuario cita un texto literal, hay que buscar ese texto en el código antes de decidir qué está roto: el `$ ---` estaba a dos greps de distancia, en `inicio.html` y en `reservas-form-price.js`.
+
 - **SEPTIEMBRE 30, 2026 - v9.34.77: LOS CAMPOS OBLIGATORIOS NO AVISABAN NADA; EL `required` EXISTÍA PERO NO ERA VISIBLE**:
   * **El síntoma**: al apretar CONTINUAR sin elegir "Tipo de Estadía", no se veía ninguna señal en el campo. El aviso era el tooltip nativo del navegador: texto genérico, en el idioma del SO, sin mencionar AUTOPASS y con vida de un segundo.
   * **La causa real, que no era el `required`**: el atributo estaba puesto y la validación de `createReservation` (`reservas-form.js`, líneas de patente/sucursal/tipo) también existed. Ninguna de las dos se veía, por una razón de orden: **el navegador valida antes de disparar el evento `submit`**. Con `required` presente, el `onsubmit` nunca corría, así que los tres `showToast` de AUTOPASS eran código muerto y lo único que quedaba era el tooltip del SO.

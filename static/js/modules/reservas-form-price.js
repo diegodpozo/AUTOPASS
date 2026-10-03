@@ -133,6 +133,25 @@ export function updateReservationPrice() {
     const labelEl = document.getElementById('reserva-total-label');
     const pct = getReservationDiscount().pct || 0;
 
+    /* El bloque de total se oculta mientras falte sucursal o tipo de estadia.
+       Antes se veía "Total: $ ---" en un form recien abierto, que es un precio
+       que no existe todavia y no aporta nada. El gate es por los dos selects,
+       no por `total > 0`: asi el "$ ---" sigue apareciendo cuando ya elegiste
+       que estas reserving pero falta la fecha, que si es informacion util.
+
+       Se oculta el contenedor y no los hijos, porque los hijos ya se togglean
+       (original y descuento) y tocar sus display por separado los desincroniza
+       del estado real del descuento. */
+    const sucursalEl = document.querySelector('.res-sucursal');
+    const resumenEl = document.querySelector('.price-summary-premium');
+    if (resumenEl) {
+        const faltanBases = !sucursalEl?.value || !type;
+        /* Se saca la clase y NO se escribe style.display: la clase es la que
+           apagaba el bloque en el markup, y escribir el display aparte dejaria
+           un atributo inline que la regla de arriba vuelve a pelear. */
+        resumenEl.classList.toggle('is-pendiente', faltanBases);
+    }
+
     if (total > 0 && pct > 0) {
         const discountAmount = Math.round(total * pct) / 100;
         const finalTotal = total - discountAmount;

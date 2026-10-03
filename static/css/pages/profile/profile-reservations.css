@@ -79,6 +79,15 @@
     flex-direction: column;
 }
 
+/* El total arranca oculto y lo revela `updateReservationPrice` cuando ya hay
+   sucursal y tipo de estadia. Va en el markup y no solo en el JS para que el
+   "Total: $ ---" no aparezca ni un frame antes de que corra el script: ese
+   flash era justo lo que el usuario reportaba. Sin esta regla, el HTML estatico
+   pinta "Total: $ ---" apenas carga la pagina. */
+.price-summary-premium.is-pendiente {
+    display: none;
+}
+
 .total-label {
     font-size: 0.75rem;
     color: #888;
