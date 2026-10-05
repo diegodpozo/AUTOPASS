@@ -431,6 +431,7 @@ HTTP / WebSocket  ──▶  <b>routes/</b>        (FastAPI: endpoints, validaci
     </li>
     <li>
       <strong>Ejecutar el instalador</strong><br>
+<div style="margin:8px 0 10px;"><figure style="margin:6px 0 10px;"><img src="screenshot instalacion.jpg" alt="Instalación automática del backend (proceso de setup)" style="max-width:100%;height:auto;border:1px solid var(--brd,#c8d1e0);border-radius:8px;box-shadow:var(--shadow,0 2px 8px rgba(0,0,0,.06));"><figcaption style="font-size:11px;color:var(--muted,#5f6b8a);margin-top:4px;">Figura: Proceso de instalación automática (setup_backend.bat → scripts/setup.ps1): creación del entorno virtual, instalación de dependencias, configuración de .env, estructura de base de datos y migraciones de Alembic.</figcaption></figure></div>
       Doble clic en <code>setup_backend.bat</code>. El script crea el entorno virtual, instala las
       dependencias e inicializa la base de datos.
       <div class="verify"><b>Verificar:</b> el instalador debe terminar mostrando
@@ -443,7 +444,7 @@ HTTP / WebSocket  ──▶  <b>routes/</b>        (FastAPI: endpoints, validaci
       aplicación.
       <div class="verify"><b>Verificar:</b> abrir <span class="mono">http://localhost:8000</span> →
         debe cargar la pantalla de acceso. Logs: <span class="mono">Uvicorn running on
-        http://127.0.0.1:8000</span>.</div>
+        http://127.0.0.1:8000</span>.</div><div style="margin:14px 0 10px;"><figure style="margin:6px 0 10px;"><img src="screenshot instalacion completa.jpg" alt="Instalación automática completada con éxito (setup backend)" style="max-width:100%;height:auto;border:1px solid var(--brd,#c8d1e0);border-radius:8px;box-shadow:var(--shadow,0 2px 8px rgba(0,0,0,.06));"><figcaption style="font-size:11px;color:var(--muted,#5f6b8a);margin-top:4px;">Figura: Instalación finalizada con éxito. El script muestra el resumen con <code>[✔] INSTALACIÓN COMPLETADA CON ÉXITO</code>, credenciales de prueba y el estado de las pruebas automáticas (Pytest).</figcaption></figure></div>
     </li>
   </ol>
 
