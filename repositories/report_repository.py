@@ -399,3 +399,35 @@ class ReportRepository:
         if sucursal:
             filters.append(_branch_filter(models.AccessLog.sucursal, sucursal))
         return db.query(models.AccessLog.fecha_hora, models.AccessLog.tipo_evento).filter(*filters).all()
+
+    @staticmethod
+    def reservation_activity_rows(db: Session, sucursal=None, start_date=None, end_date=None) -> list:
+        """TUPLAS (fecha_inicio, fecha_fin, estado_reserva, estado_pago, monto_total, tipo_vehiculo, patente)
+        DE RESERVAS QUE TOCAN EL RANGO [start_date, end_date]."""
+        q = db.query(
+            models.Reservation.fecha_inicio, models.Reservation.fecha_fin,
+            models.Reservation.estado_reserva, models.Reservation.estado_pago,
+            models.Reservation.monto_total, models.Reservation.tipo_vehiculo,
+            models.Reservation.patente
+        )
+        if sucursal:
+            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+        if start_date:
+            q = q.filter(models.Reservation.fecha_fin >= start_date)
+        if end_date:
+            q = q.filter(models.Reservation.fecha_inicio <= end_date)
+        return q.all()
+
+    @staticmethod
+    def entrance_patent_events(db: Session, sucursal=None, start_date=None, end_date=None) -> list:
+        """PARES (normalized_patente, fecha_hora) DE EVENTOS ENTRADA ALPR (PARA DETECTAR NO-SHOW)."""
+        q = db.query(models.AccessLog.normalized_patente, models.AccessLog.fecha_hora).filter(
+            models.AccessLog.tipo_evento == AccessEventType.ENTRADA.value
+        )
+        if sucursal:
+            q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
+        if start_date:
+            q = q.filter(models.AccessLog.fecha_hora >= start_date)
+        if end_date:
+            q = q.filter(models.AccessLog.fecha_hora <= end_date)
+        return q.all()

@@ -82,6 +82,28 @@ def get_metrics_access_activity(
     """Serie temporal horaria de accesos (ENTRADA/SALIDA) con filtro opcional de rango (desde/hasta)."""
     return ReportService.get_access_activity(db=db, admin=admin, desde=desde, hasta=hasta)
 
+@router.get("/metrics/traffic-heatmap")
+def get_metrics_traffic_heatmap(
+    sucursal: str = None,
+    desde: str = None,
+    hasta: str = None,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_local_manager)
+):
+    """Mapa de calor diario: matriz día del mes (1-31) x horas de apertura con totales por día y hora."""
+    return ReportService.get_traffic_heatmap(db=db, admin=admin, sucursal=sucursal, desde=desde, hasta=hasta)
+
+@router.get("/metrics/occupancy-summary")
+def get_metrics_occupancy_summary(
+    sucursal: str = None,
+    desde: str = None,
+    hasta: str = None,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_local_manager)
+):
+    """Ocupación de reservas vs capacidad por hora + KPIs de reservas (incluye no-show)."""
+    return ReportService.get_occupancy_summary(db=db, admin=admin, sucursal=sucursal, desde=desde, hasta=hasta)
+
 @router.get("/ocr-activity")
 def get_ocr_activity(
     db: Session = Depends(get_db),

@@ -6,6 +6,7 @@ import * as ops from './modules/dashboard-operations.js';
 import * as reservations from './modules/dashboard-reservations.js';
 import * as finance from './modules/dashboard-finance.js';
 import * as metricas from './modules/dashboard-metrics.js';
+import * as informes from './modules/dashboard-informes.js';
 import * as tickets from './modules/dashboard-tickets.js';
 import * as adminTour from './modules/admin-tour.js';
 import * as baseUi from './modules/ui.js';
@@ -111,6 +112,11 @@ window.irAlInicio = metricas.irAlInicio;
 window.irAlFinal = metricas.irAlFinal;
 window.aplicarFiltroMetricas = metricas.aplicarFiltroMetricas;
 window.limpiarFiltroMetricas = metricas.limpiarFiltroMetricas;
+
+// 5.2 INFORMES DEL SISTEMA (mapa de calor, ocupación, recaudación, OCR)
+window.cargarInforme = informes.cargarInforme;
+window.aplicarInforme = informes.aplicarInforme;
+window.limpiarInforme = informes.limpiarInforme;
 
 // 6. ACCIONES ADMINISTRATIVAS Y USUARIOS
 window.openBarrier = admin.openBarrier;

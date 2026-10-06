@@ -219,8 +219,8 @@
 .kpi-icon--danger { color: var(--danger); }
 
 /* Gráfico: cabecera y cuerpo (bloque para los controles) */
-#metricas-detail .channel-header.web-channel { justify-content: space-between; }
-#metricas-detail .channel-body { display: block; }
+#metricas-detail-wrap .channel-header.web-channel { justify-content: space-between; }
+#metricas-detail-wrap .channel-body { display: block; }
 
 /* Leyenda del gráfico */
 #metricas-detail .metricas-chart-legend .dot-success { background: var(--success); }
@@ -243,3 +243,162 @@
 
 /* Icono del texto de ayuda */
 .metricas-helper .fa-circle-info { color: var(--dorado); margin-right: 6px; }
+
+/* ==========================================================================
+   INFORMES DE MÉTRICAS v10.0.0 (MAPA DE CALOR, OCUPACIÓN, RECAUDACIÓN, OCR)
+   ========================================================================== */
+
+/* Vistas de detalle por informe (el JS alterna display) */
+.metrica-detail-view { display: none; }
+#metricas-detail-wrap > .metrica-detail-view { display: none; }
+.metrica-detail-breadcrumb {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--dorado);
+    opacity: 0.9;
+}
+#metricas-detail-wrap > div > p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 18px; }
+#metricas-detail-wrap > div > p strong { color: #fff; }
+
+/* Bloque vacío / error de informe */
+.heatmap-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 44px 12px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+/* --- GRILLA DEL MAPA DE CALOR: DÍAS DEL MES (COLUMNAS) × HORAS DE APERTURA (FILAS) --- */
+.heatmap-wrap { overflow-x: auto; padding-top: 6px; }
+.heatmap-grid {
+    display: grid;
+    gap: 3px;
+    min-width: 960px;
+    align-items: stretch;
+    font-family: var(--font-mono);
+}
+.heatmap-grid--mes {
+    grid-template-columns: 78px repeat(var(--hm-cols, 31), minmax(14px, 1fr)) 58px;
+}
+.heatmap-month {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 5px 4px 5px 8px;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--dorado);
+    background: rgba(223, 186, 107, 0.06);
+    border-radius: 5px 5px 0 0;
+    border-bottom: 1px solid var(--border-card);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.heatmap-corner,
+.heatmap-dia,
+.heatmap-hour,
+.heatmap-day,
+.heatmap-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+.heatmap-corner {
+    padding: 4px 4px;
+    font-size: 0.58rem;
+    letter-spacing: 0.4px;
+    color: #fff;
+    font-weight: 800;
+    text-transform: uppercase;
+    border: 1px solid var(--border-card);
+    background: rgba(255, 255, 255, 0.03);
+    text-align: center;
+}
+.heatmap-dia {
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    padding: 3px 0;
+}
+.heatmap-dia--total {
+    color: var(--dorado);
+    font-weight: 800;
+    font-size: 0.6rem;
+}
+.heatmap-hour {
+    color: var(--text-secondary);
+    font-size: 0.66rem;
+    justify-content: flex-end;
+    padding-right: 8px;
+}
+.heatmap-hour--total {
+    color: var(--dorado);
+    font-weight: 800;
+    font-size: 0.62rem;
+    justify-content: center;
+}
+.heatmap-day--total {
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.62rem;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-card);
+    text-transform: none;
+}
+.heatmap-day--total.heatmap-day {
+    justify-content: flex-start;
+    padding: 6px 8px 0 8px;
+    text-transform: uppercase;
+}
+.heatmap-cell {
+    height: 26px;
+    font-size: 0.58rem;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: default;
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+.heatmap-cell:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 1px rgba(223, 186, 107, 0.6);
+    z-index: 2;
+}
+
+/* Legend del heatmap */
+.heatmap-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.heatmap-legend-cell {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    background: rgba(223, 186, 107, 0.5);
+}
+.heatmap-legend-cell--0 { background: rgba(223, 186, 107, 0.09); }
+.heatmap-legend-cell--m { background: rgba(223, 186, 107, 0.5); }
+.heatmap-legend-cell--h { background: rgba(223, 186, 107, 0.95); }
+
+/* Nota bajo el informe */
+.informe-note {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-card);
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.informe-note .fa-circle-info { color: var(--dorado); }

@@ -1,6 +1,7 @@
 import api from './api.js';
 import { formatDateTime, formatDayTime } from './utils.js';
 import { THEME } from './theme.js';
+import { cargarInforme } from './dashboard-informes.js';
 
 /**
  * Módulo de Métricas del Sistema (Gráfico de Accesos en Vivo)
@@ -294,23 +295,64 @@ function setViewTitle(text) {
     if (el) el.innerText = text;
 }
 
+const TITULOS_METRICAS = {
+    accesos: 'Métricas: Actividad de Accesos',
+    heatmap: 'Métricas: Mapa de Calor de Tráfico',
+    ocupacion: 'Métricas: Ocupación y Reservas',
+    recaudacion: 'Métricas: Recaudación',
+    ocr: 'Métricas: Tiempos OCR y ALPR'
+};
+
 export function abrirMetrica(key) {
     const list = document.getElementById('metricas-list');
-    const detail = document.getElementById('metricas-detail');
     if (list) list.style.display = 'none';
-    if (detail) detail.style.display = 'block';
-    setViewTitle('Métricas: Actividad de Accesos');
-    cargarSerie();
-    configurarRefresh();
+    const cont = (_key) =>
+        document.getElementById(_key === 'accesos' ? 'metricas-detail' : `metricas-detail-${_key}`);
+    [null, 'accesos', 'heatmap', 'ocupacion', 'recaudacion', 'ocr'].forEach((k) => {
+        if (!k) return;
+        const el = cont(k);
+        if (el) el.style.display = k === key ? 'block' : 'none';
+    });
+    setViewTitle(TITULOS_METRICAS[key] || 'Métricas');
+    if (key === 'accesos') {
+        cargarSerie();
+        configurarRefresh();
+    } else {
+        detenerRefresh();
+        cargarInforme(key);
+    }
 }
 
 export function volverMetricas() {
     const list = document.getElementById('metricas-list');
-    const detail = document.getElementById('metricas-detail');
     if (list) list.style.display = 'block';
-    if (detail) detail.style.display = 'none';
+    ['metricas-detail', 'metricas-detail-heatmap', 'metricas-detail-ocupacion',
+        'metricas-detail-recaudacion', 'metricas-detail-ocr'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
     setViewTitle('Métricas');
     detenerRefresh();
+}
+
+export function verDetalleVisible() {
+    if (document.getElementById('metricas-detail')?.style.display === 'block') return 'accesos';
+    if (document.getElementById('metricas-detail-heatmap')?.style.display === 'block') return 'heatmap';
+    if (document.getElementById('metricas-detail-ocupacion')?.style.display === 'block') return 'ocupacion';
+    if (document.getElementById('metricas-detail-recaudacion')?.style.display === 'block') return 'recaudacion';
+    if (document.getElementById('metricas-detail-ocr')?.style.display === 'block') return 'ocr';
+    return null;
+}
+
+export function loadMetricas() {
+    const key = verDetalleVisible();
+    if (key === 'accesos') {
+        setViewTitle(TITULOS_METRICAS.accesos);
+        cargarSerie();
+    } else if (key) {
+        setViewTitle(TITULOS_METRICAS[key] || 'Métricas');
+        cargarInforme(key);
+    }
 }
 
 export function irAlInicio() {
@@ -329,13 +371,6 @@ export function irAlFinal() {
     estado.viewStart = maxStart();
     sincronizarSlider();
     renderGrafico();
-}
-
-export function loadMetricas() {
-    if (document.getElementById('metricas-detail')?.style.display === 'block') {
-        setViewTitle('Métricas: Actividad de Accesos');
-        cargarSerie();
-    }
 }
 
 export function initMetricas() {

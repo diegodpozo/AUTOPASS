@@ -43,6 +43,11 @@ def _capacidad_reservas_para_tipo(db: Session, sucursal_nombre: str, tipo_vehicu
     return 5
 
 
+def capacidad_reservas(db: Session, sucursal_nombre: str, tipo_vehiculo: str = "Auto") -> int:
+    """CAPACIDAD TOTAL DE PLAZAS DE RESERVA DE LA SUCURSAL PARA UN TIPO DE VEHICULO (PB + PISOS)."""
+    return _capacidad_reservas_para_tipo(db, sucursal_nombre, tipo_vehiculo)
+
+
 def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, tipo_vehiculo: str, exclude_id: int = None) -> list:
     """RESERVAS ACTIVAS/PENDIENTES SOLAPADAS EN EL RANGO [desde, hasta) FILTRADAS POR TIPO DE VEHICULO."""
     tipo_vehiculo = (tipo_vehiculo or "Auto").strip().title()
