@@ -61,6 +61,18 @@ class ReservationRepository:
         ).first()
 
     @staticmethod
+    def get_user_overlap_other_branch(db: Session, user_id: int, sucursal_nombre: str, desde_str: str, hasta_str: str):
+        """RESERVA ACTIVA/PENDIENTE DEL USUARIO QUE SE SUPERPONE CON EL RANGO EN OTRA SUCURSAL."""
+        return db.query(models.Reservation).filter(
+            models.Reservation.user_id == user_id,
+            models.Reservation.sucursal_nombre != sucursal_nombre,
+            models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
+            models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
+            models.Reservation.fecha_inicio < hasta_str,
+            models.Reservation.fecha_fin > desde_str
+        ).first()
+
+    @staticmethod
     def get_expired(db: Session, now_str: str):
         """RESERVAS PENDIENTES/ACTIVAS CUYA FECHA FIN YA PASO."""
         return db.query(models.Reservation).filter(

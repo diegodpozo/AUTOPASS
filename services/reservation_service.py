@@ -234,6 +234,9 @@ class ReservationService(ReservationPaymentsMixin):
         existing_overlap = ReservationRepository.get_overlap_by_patente(db, p_clean, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
         if existing_overlap:
             raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")
+        other_branch_overlap = ReservationRepository.get_user_overlap_other_branch(db, user.id, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
+        if other_branch_overlap:
+            raise HTTPException(status_code=400, detail="YA HAY RESERVAS EN ESE HORARIO EN OTRA SUCURSAL")
         rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
         start = datetime.datetime.fromisoformat(data.fecha_inicio)
         end = datetime.datetime.fromisoformat(data.fecha_fin)
