@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual del Administrador General — AUTOPASS</title>
+<meta name="description" content="Guía completa de uso del panel de administración de AUTOPASS para el administrador general de la red.">
+<link rel="stylesheet" href="assets/css/manual.css">
+</head>
+<body>
+
+<header class="portada">
+  <div class="marca">AUTOPASS · MANUAL DE USO</div>
+  <h1>Administrador General</h1>
+  <p class="sub">
+    Guía completa para administrar la red de sucursales: alta y estado de las sedes,
+    usuarios de toda la organización, métricas, promociones y soporte.
+  </p>
+  <div class="meta">
+    <span class="chip">Nivel: principiante</span>
+    <span class="chip">8 secciones</span>
+    <span class="chip">11 capturas de pantalla</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ================= ÍNDICE ================= -->
+  <nav class="toc">
+    <h2>Contenido</h2>
+    <ol>
+      <li><a href="#antes">Antes de empezar</a></li>
+      <li><a href="#sucursales">Sucursales</a></li>
+      <li><a href="#usuarios">Gestión de usuarios</a></li>
+      <li><a href="#metricas">Métricas</a></li>
+      <li><a href="#promociones">Promociones</a></li>
+      <li><a href="#tickets">Soporte y tickets</a></li>
+      <li><a href="#ayuda">Ayuda operativa</a></li>
+      <li><a href="#problemas">Problemas frecuentes</a></li>
+    </ol>
+  </nav>
+
+  <main class="contenido">
+
+    <!-- ================= 1. ANTES DE EMPEZAR ================= -->
+    <section class="seccion" id="antes">
+      <h2><span class="num">1.</span> Antes de empezar</h2>
+
+      <p class="lead">
+        Este manual es para el <strong>administrador general</strong> de AUTOPASS. Vos manejás
+        la red completa: sos quien da de alta una sucursal nueva, quien suspende una sede y
+        quien crea las cuentas de los administradores de cada local.
+      </p>
+
+      <h3>¿Qué puedo y qué no puedo hacer?</h3>
+
+      <p>
+        El sistema distingue cuatro tipos de cuenta. Todos entran al mismo panel, pero cada una
+        ve solamente las pantallas que le corresponden:
+      </p>
+
+      <div class="roles">
+        <div class="rol">
+          <h4>Empleado</h4>
+          <p>Solo monitoreo y reservas de su sucursal. No ve tareas administrativas.</p>
+        </div>
+        <div class="rol">
+          <h4>Admin de Sucursal</h4>
+          <p>Todo lo de su sede: usuarios, finanzas, promociones, tickets y configuración.</p>
+        </div>
+        <div class="rol activo">
+          <h4>Admin General <span style="color:var(--gold)">(vos)</span></h4>
+          <p>Administra la red: sucursales y usuarios de toda la organización. <strong>Es tu rol.</strong></p>
+        </div>
+      </div>
+
+      <div class="aviso dato">
+        <span class="titulo">Tu alcance</span>
+        <p>
+          Lo que ves en <strong>Métricas</strong>, <strong>Promociones</strong> y
+          <strong>Soporte</strong> abarca <strong>todas las sucursales</strong> de la red, no una
+          sola. En cambio, cada administrador de sucursal ve solamente los datos de su sede.
+        </p>
+      </div>
+
+      <h3>Las 6 pantallas de tu panel</h3>
+
+      <p>
+        Tu menú lateral es más corto que el de un administrador de sucursal, y a propósito:
+      </p>
+
+      <div class="pantallas">
+        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Sucursales</strong><span>Dar de alta, editar, suspender o eliminar las sedes de la red.</span></span></div>
+        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Gestión de Usuarios</strong><span>Todas las cuentas de la organización, de cualquier sucursal y cualquier rol.</span></span></div>
+        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Métricas</strong><span>Indicadores de uso y accesos de toda la red.</span></span></div>
+        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Promociones</strong><span>Beneficios y campañas de la organización, vigentes en toda la red.</span></span></div>
+        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Soporte &amp; Tickets</strong><span>Consultas y problemas que envían los clientes de cualquier sede.</span></span></div>
+        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Ayuda Operativa</strong><span>Centro de ayuda con recorridos guiados del panel.</span></span></div>
+      </div>
+
+      <div class="aviso atencion">
+        <span class="titulo">Lo que no vas a ver</span>
+        <p>
+          <strong>Monitoreo</strong>, <strong>Reservas</strong>, <strong>Reporte Financiero</strong> y
+          <strong>Configuración</strong> no aparecen en tu menú. Son pantallas del administrador de
+          sucursal, porque se usan en el día a día de una sede. Si tu rol es correcto y aun así
+          las pedís, es porque te iniciaste sesión con otra cuenta: cerrá sesión y entrá de nuevo.
+        </p>
+      </div>
+
+      <h3>Cómo entrar al sistema</h3>
+
+      <ol class="pasos">
+        <li>Entrá a la página principal de AUTOPASS desde el navegador.</li>
+        <li>Hacé clic en el botón <strong>INICIAR SESIÓN</strong>, en la parte superior derecha.</li>
+        <li>Se abre una ventana con un formulario. Escribí tu <strong>correo electrónico</strong> y tu <strong>contraseña</strong>.</li>
+        <li>Presioná <strong>Iniciar sesión</strong>. El sistema te lleva directo al panel.</li>
+      </ol>
+
+      <figure>
+        <span class="numero">1</span>
+        <img src="assets/img/general-ingreso.png" alt="Ventana de inicio de sesión con el formulario de acceso">
+        <figcaption><strong>La ventana de acceso.</strong> Acá es donde vas cada vez que quieras entrar al panel.</figcaption>
+      </figure>
+
+      <div class="aviso">
+        <span class="titulo">¿No te acepta la contraseña?</span>
+        <p>
+          Revisá que las mayúsculas y el teclado estén bien. Si el problema sigue, probá con
+          el enlace de recuperación desde la misma ventana de acceso. Como administrador general
+          <strong>no</strong> podés restablecer tu propia contraseña desde el panel: eso lo
+          resuelve una persona de soporte del sistema.
+        </p>
+      </div>
+
+      <h3>Reconocer el menú lateral</h3>
+
+      <figure>
+        <span class="numero">2</span>
+        <img src="assets/img/general-menu-lateral.png" alt="Menú lateral con las seis secciones disponibles para el administrador general">
+        <figcaption><strong>Tu menú lateral.</strong> Seis secciones y, abajo, el botón para cerrar sesión.</figcaption>
+      </figure>
+
+      <p>
+        Para cambiar de pantalla, hacé clic en el nombre de la sección. La sección activa queda
+        marcada con una franja dorada a la izquierda. Abajo del todo está
+        <strong>Cerrar Sesión</strong>.
+      </p>
+    </section>
+
+    <!-- ================= 2. SUCURSALES ================= -->
+    <section class="seccion" id="sucursales">
+      <h2><span class="num">2.</span> Sucursales</h2>
+
+      <p class="lead">
+        Esta es tu sección principal. Es donde nacen las sedes de la red: las creás, les
+        editás los datos, las suspendés si dejan de operar y las das de baja cuando cierran.
+      </p>
+
+      <h3>Ver la red completa</h3>
+
+      <p>
+        Al entrar, la tabla lista <strong>todas las sucursales</strong> de la organización. Cada
+        fila muestra:
+      </p>
+
+      <div class="tabla-envoltura">
+        <table>
+          <thead>
+            <tr><th>Columna</th><th>Qué te dice</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sucursal</strong></td><td>Su logo y su nombre.</td></tr>
+            <tr><td><strong>Dirección</strong></td><td>La calle donde está ubicada.</td></tr>
+            <tr><td><strong>Administrador</strong></td><td>Quién tiene el cargo, o <em>Sin asignar</em>.</td></tr>
+            <tr><td><strong>Plazas (A/M)</strong></td><td>Te aparece siempre como <code>---</code>. Ver la nota de abajo.</td></tr>
+            <tr><td><strong>Teléfono</strong></td><td>Un número de contacto del local.</td></tr>
+            <tr><td><strong>Horario</strong></td><td>El horario de atención, o <code>24hs</code>.</td></tr>
+            <tr><td><strong>Estado</strong></td><td>Un interruptor: activada o suspendida.</td></tr>
+            <tr><td><strong>Acciones</strong></td><td>Editar la sucursal o eliminarla.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <span class="numero">3</span>
+        <img src="assets/img/general-sucursales.png" alt="Tabla con la lista de sucursales de la red">
+        <figcaption><strong>La red completa.</strong> Cada fila es una sede; el interruptor de la columna Estado la activa o la suspende.</figcaption>
+      </figure>
+
+      <div class="aviso dato">
+        <span class="titulo">Por qué la columna Plazas dice “---”</span>
+        <p>
+          La cantidad de lugares disponibles se calcula con los datos del monitoreo de cada sede,
+          algo que ocurre en la playa de la sede. Vos no ves esos números desde acá: los lleva el
+          administrador de esa sucursal, desde <strong>Configuración → Plazas</strong>.
+          Es normal que te aparezcan tres rayitas.
+        </p>
+      </div>
+
+      <h3>Crear una sucursal</h3>
+
+      <p>
+        Hacé clic en <strong>Sucursales</strong> en el menú lateral y después en el botón
+        <strong>NUEVA</strong>, arriba a la derecha. Se abre una ventana con dos columnas.
+      </p>
+
+      <figure>
+        <span class="numero">4</span>
+        <img src="assets/img/general-sucursal-nueva.png" alt="Ventana de alta de sucursal con los campos de datos, mapa, logo y horario">
+        <figcaption><strong>Alta de sucursal.</strong> Izquierda, los datos y el mapa. Derecha, el logo y el horario.</figcaption>
+      </figure>
+
+      <h4>Datos principales</h4>
+
+      <ol class="pasos">
+        <li><strong>Nombre de Sucursal.</strong> El nombre corto con el que se la conoce, por ejemplo <em>Central</em>.</li>
+        <li><strong>Teléfono de Contacto.</strong> Un número donde la gente pueda llamar, por ejemplo <code>0800-444-AUTO</code>.</li>
+        <li><strong>Dirección.</strong> La calle, el número y la localidad, por ejemplo <em>Av. del Libertador 1200, CABA</em>.</li>
+      </ol>
+
+      <p>
+        Junto al campo de dirección hay un botón con una lupa. Si lo presionás, el sistema busca
+        esa dirección en el mapa y coloca un punto automáticamente. Si la dirección está bien
+        escrita te avisa <em>Ubicación encontrada</em>; si no, te pide que seas más específico.
+      </p>
+
+      <p>
+        De todos modos, <strong>revisá el punto en el mapa</strong>: la búsqueda automática
+        identifica la calle, pero no siempre la puerta exacta. Si está corrido, hacé clic en el
+        lugar correcto para moverlo. La ubicación tiene que ser precisa porque después se usa
+        para los reportes de geolocalización.
+      </p>
+
+      <h4>Logo y horario</h4>
+
+      <ol class="pasos">
+        <li><strong>Logo de la Sucursal.</strong> Hacé clic en <strong>SUBIR IMAGEN</strong> y elegí el archivo. Se muestra una vista previa; con la <strong>X</strong> la quitás.</li>
+        <li><strong>Horario Operativo.</strong> Escribí el rango, por ejemplo <code>07:00 a 23:00</code>.</li>
+        <li><strong>¿ABIERTO 24 HS?</strong> Si la sede funciona las 24 horas, activá el interruptor: el campo de horario se desactiva solo.</li>
+        <li>Presioná <strong>GUARDAR SUCURSAL</strong>.</li>
+      </ol>
+
+      <div class="aviso atencion">
+        <span class="titulo">La sucursal todavía no tiene personas</span>
+        <p>
+          Guardar la sede no crea ninguna cuenta. Apenas aparece en la tabla, la columna
+          <strong>Administrador</strong> va a decir <em>Sin asignar</em>. Tenés que crearle al
+          administrador en <strong>Gestión de Usuarios</strong> y asignarle esa sucursal, o la
+          sede queda sin nadie a cargo.
+        </p>
+      </div>
+
+      <h3>Editar una sucursal</h3>
+
+      <ol class="pasos">
+        <li>Buscá la fila de la sede que querés cambiar.</li>
+        <li>Hacé clic en el ícono del lápiz, en la columna <strong>Acciones</strong>.</li>
+        <li>Se abre la misma ventana de la Alta, pero ahora el título dice <strong>EDITAR SUCURSAL</strong> y el mapa arranca en la ubicación de esa sede.</li>
+        <li>Cambiá lo que necesites y presioná <strong>GUARDAR SUCURSAL</strong>.</li>
+      </ol>
+
+      <h3>Activar o suspender una sucursal</h3>
+
+      <p>
+        El interruptor de la columna <strong>Estado</strong> hace las dos cosas. Cada cambio se
+        aplica al instante y el sistema te confirma con un aviso verde:
+        <em>Sucursal Activada</em> o <em>Sucursal Suspendida</em>.
+      </p>
+
+      <p>
+        <strong>Suspender</strong> es la opción para una sede que dejó de operar de forma
+        temporal, por ejemplo por una reforma. La sucursal queda en la lista, deja de atender y
+        podés reactivarla cuando vuelva, sin volver a cargarla.
+      </p>
+
+      <h3>Eliminar una sucursal</h3>
+
+      <p>
+        El ícono de la <strong>X</strong> roja, en la misma columna de acciones, borra la sede.
+        Antes de hacerlo, el sistema te muestra una confirmación que dice, textualmente:
+      </p>
+
+      <div class="aviso peligro">
+        <span class="titulo">Eliminar Sucursal</span>
+        <p>¿Estás seguro de eliminar esta sucursal? Esto no afectará los registros históricos pero impedirá nuevas operaciones en ella.</p>
+      </div>
+
+      <p>
+        O sea: los pagos, las reservas y los tickets que pertenecen a esa sede
+        <strong>no se borran</strong>, quedan en el historial. Lo que deja de funcionar es la
+        operación: nadie va a poder trabajar ahí.
+      </p>
+
+      <p>
+        Si la idea es una pausa y no un cierre, <strong>suspendé la sucursal en lugar de
+        eliminarla</strong>. Eliminar es definitivo.
+      </p>
+    </section>
+
+    <!-- ================= 3. USUARIOS ================= -->
+    <section class="seccion" id="usuarios">
+      <h2><span class="num">3.</span> Gestión de usuarios</h2>
+
+      <p class="lead">
+        Acá manejás <strong>todas</strong> las cuentas de la organización. El administrador de
+        sucursal solo ve su propia gente; vos ves las de todas las sedes, y sos el único rol que
+        puede crear otro administrador general.
+      </p>
+
+      <h3>La lista de usuarios</h3>
+
+      <p>
+        Arriba hay un resumen con cuántas cuentas hay de cada tipo. Debajo, la tabla con una
+        fila por persona:
+      </p>
+
+      <div class="tabla-envoltura">
+        <table>
+          <thead>
+            <tr><th>Columna</th><th>Qué te dice</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Nombre Completo</strong></td><td>Nombre, apellido y DNI.</td></tr>
+            <tr><td><strong>Contacto</strong></td><td>Correo electrónico y, si tiene, teléfono.</td></tr>
+            <tr><td><strong>Rol</strong></td><td>Cliente, Empleado, Admin Sucursal o Admin General. Si es de una sede, lo aclara al lado.</td></tr>
+            <tr><td><strong>Puntos</strong></td><td>Los puntos acumulados por fidelidad.</td></tr>
+            <tr><td><strong>Saldo</strong></td><td>El dinero cargado en su cuenta.</td></tr>
+            <tr><td><strong>Acciones</strong></td><td>Editar, cambiar contraseña, bloquear o eliminar.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <span class="numero">5</span>
+        <img src="assets/img/general-usuarios.png" alt="Tabla con la lista de usuarios de toda la organización">
+        <figcaption><strong>Los usuarios de la red.</strong> Cada persona que tiene una cuenta en AUTOPASS, sin importar de qué sede sea.</figcaption>
+      </figure>
+
+      <h3>Buscar y filtrar</h3>
+
+      <ul>
+        <li><strong>Buscar.</strong> Escribí en el campo de texto para filtrar por nombre, DNI o correo. Se actualiza mientras escribís.</li>
+        <li><strong>Filtrar por rol.</strong> La lista desplegable te deja ver solamente <code>CLIENTES</code>, <code>EMPLEADOS</code>, <code>ADMIN SUCURSAL</code> o <code>ADMIN GENERAL</code>.</li>
+        <li><strong>Recorrer.</strong> Si hay muchas filas, usá los botones de página que están debajo.</li>
+      </ul>
+
+      <h3>Crear un usuario</h3>
+
+      <p>
+        Hacé clic en <strong>NUEVO USUARIO</strong>. Se abre una ventana con estos campos:
+      </p>
+
+      <figure>
+        <span class="numero">6</span>
+        <img src="assets/img/general-usuario-nuevo.png" alt="Ventana de alta de usuario con el campo de rol y sus cuatro opciones">
+        <figcaption><strong>Alta de usuario.</strong> El campo Rol decide qué puede hacer la persona, y si hay que asignarle una sucursal.</figcaption>
+      </figure>
+
+      <ol class="pasos">
+        <li><strong>Nombre</strong> y <strong>Apellido</strong>.</li>
+        <li><strong>Correo Electrónico.</strong> Es el usuario con el que va a entrar.</li>
+        <li><strong>DNI.</strong> Sin puntos ni guiones.</li>
+        <li><strong>Rol.</strong> Elegí uno de los cuatro valores de la lista.</li>
+        <li><strong>Contraseña Temporal.</strong> Escribí una clave simple para el primer ingreso y comunicala por un canal seguro.</li>
+        <li><strong>Sucursal Asignada.</strong> Solo aparece si el rol es <em>Empleado</em> o <em>Admin de Sucursal</em>.</li>
+        <li>Guardá.</li>
+      </ol>
+
+      <h4>Los cuatro roles</h4>
+
+      <div class="roles">
+        <div class="rol">
+          <h4>Cliente</h4>
+          <p>Reserva, paga y consulta su saldo. No entra al panel administrativo.</p>
+        </div>
+        <div class="rol">
+          <h4>Empleado</h4>
+          <p>Monitoreo y reservas de su sede. Necesitás asignarle una sucursal.</p>
+        </div>
+        <div class="rol">
+          <h4>Admin de Sucursal</h4>
+          <p>Administra una sede completa. Necesitás asignarle una sucursal.</p>
+        </div>
+        <div class="rol">
+          <h4>Admin General</h4>
+          <p>Administra toda la red. <strong>Sin sucursal asignada.</strong></p>
+        </div>
+      </div>
+
+      <div class="aviso dato">
+        <span class="titulo">El rol Administrador General sos vos</span>
+        <p>
+          Crear una cuenta con ese rol es una decisión exclusiva tuya: el administrador de
+          sucursal no puede hacerlo. Antes de dar de alta a otro administrador general, pensá si
+          de verdad hace falta, porque esa persona va a poder dar de alta y borrar sucursales de
+          toda la organización.
+        </p>
+      </div>
+
+      <h3>Las acciones sobre un usuario</h3>
+
+      <div class="tabla-envoltura">
+        <table>
+          <thead>
+            <tr><th>Acción</th><th>Para qué sirve</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Editar Información</strong></td><td>Corregir nombre, correo, DNI, teléfono, cambiar el rol o reasignar la sucursal.</td></tr>
+            <tr><td><strong>Cambiar Contraseña</strong></td><td>Establecer una clave nueva, por ejemplo si alguien la olvidó.</td></tr>
+            <tr><td><strong>Bloquear</strong></td><td>Impide el ingreso sin borrar la cuenta ni su historial. Sirve para una baja temporal o una investigación.</td></tr>
+            <tr><td><strong>Eliminar</strong></td><td>Borra la cuenta. Para casos puntuales: si solo necesitás que no entre, usá <strong>Bloquear</strong>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Crear al administrador de una sucursal nueva</h3>
+
+      <p>
+        Es el procedimiento que más vas a repetir. Son dos pasos, en este orden:
+      </p>
+
+      <ol class="pasos">
+        <li>Primero creá la <strong>sucursal</strong> en la sección <strong>Sucursales</strong>. Necesitás el nombre exacto para poder seleccionarla después.</li>
+        <li> Después creá el <strong>usuario</strong> en esta sección, con rol <em>Admin de Sucursal</em> y la sucursal recién creada en <strong>Sucursal Asignada</strong>.</li>
+        <li>Volvé a <strong>Sucursales</strong>: la columna <strong>Administrador</strong> ya muestra el nombre de la persona.</li>
+      </ol>
+
+      <div class="aviso atencion">
+        <span class="titulo">El orden importa</span>
+        <p>
+          La lista de sucursales que aparece en el formulario se arma con las sedes que ya
+          existen. Si intentás asignarle una sede a alguien y todavía no la creaste, no la vas a
+          encontrar en la lista.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= 4. MÉTRICAS ================= -->
+    <section class="seccion" id="metricas">
+      <h2><span class="num">4.</span> Métricas</h2>
+
+      <p class="lead">
+        Indicadores de uso del sistema. A diferencia del administrador de sucursal, que los ve
+        filtrados por su sede, vos los ves <strong>consolidados de toda la red</strong>.
+      </p>
+
+      <figure>
+        <span class="numero">7</span>
+        <img src="assets/img/general-metricas.png" alt="Pantalla de métricas con los indicadores de la red">
+        <figcaption><strong>Métricas de la red.</strong> Los mismos indicadores que ve el administrador de sucursal, pero agrupados por sede.</figcaption>
+      </figure>
+
+      <h3>Qué muestran</h3>
+
+      <ul>
+        <li><strong>Actividad de accesos.</strong> Cuánta gente entrou al panel y desde qué roles.</li>
+        <li><strong>Uso por sucursal.</strong> Qué sede tiene más movimiento.</li>
+        <li><strong>Evolución en el tiempo.</strong> Permiten alternar entre el pasado y el presente.</li>
+      </ul>
+
+      <div class="aviso dato">
+        <span class="titulo">Cómo leerlas</span>
+        <p>
+          Un número alto no siempre es una buena noticia: si la ocupación de una sede roza el
+          límite, ese es el lugar donde conviene sumar capacidad. Usá las métricas para decidir
+          dónde abrir la próxima sucursal y dónde reinforce una que ya está al límite.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= 5. PROMOCIONES ================= -->
+    <section class="seccion" id="promociones">
+      <h2><span class="num">5.</span> Promociones</h2>
+
+      <p class="lead">
+        Campañas y beneficios que se otorgan a los clientes. Lo que definís acá se aplica a
+        toda la red, no a una sede en particular.
+      </p>
+
+      <figure>
+        <span class="numero">8</span>
+        <img src="assets/img/general-promociones.png" alt="Listado de promociones de la organización">
+        <figcaption><strong>Las promociones.</strong> Lista de campañas con su vigencia y su estado.</figcaption>
+      </figure>
+
+      <h3>Crear una promoción</h3>
+
+      <ol class="pasos">
+        <li>Entrá a <strong>Promociones</strong>.</li>
+        <li>Hacé clic en <strong>NUEVA</strong>.</li>
+        <li>Completá el nombre de la campaña y las fechas de inicio y fin.</li>
+        <li>Elegí qué recompensa otorga y con cuántos puntos se canjea.</li>
+        <li>Guardá.</li>
+      </ol>
+
+      <figure>
+        <span class="numero">9</span>
+        <img src="assets/img/general-promocion-nueva.png" alt="Ventana de alta de una promoción con sus campos">
+        <figcaption><strong>Alta de promoción.</strong> Definí la recompensa y el costo en puntos antes de publicarla.</figcaption>
+      </figure>
+
+      <div class="aviso atencion">
+        <span class="titulo">Revisá el costo en puntos</span>
+        <p>
+          El canje descuenta puntos de la cuenta del cliente en el momento de aplicarlo. Si el
+          valor queda muy por debajo de lo que cuesta la recompensa, la promoción se va a
+          consumir sola. Probala con un número redondo y ajustalo una vez que veas el
+          movimiento.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= 6. SOPORTE Y TICKETS ================= -->
+    <section class="seccion" id="tickets">
+      <h2><span class="num">6.</span> Soporte y tickets</h2>
+
+      <p class="lead">
+        Las consultas y los problemas que envían los clientes. Ves los tickets de
+        <strong>todas las sucursales</strong>: los que resuelve el administrador de una sede y los
+        que quedan sin resolver.
+      </p>
+
+      <figure>
+        <span class="numero">10</span>
+        <img src="assets/img/general-tickets.png" alt="Listado de tickets de soporte de toda la red">
+        <figcaption><strong>La mesa de tickets.</strong> Filtalos por estado o por sucursal para priorizar.</figcaption>
+      </figure>
+
+      <h3>Los cuatro estados</h3>
+
+      <div class="tabla-envoltura">
+        <table>
+          <thead>
+            <tr><th>Estado</th><th>Qué significa</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abierto</strong></td><td>Nuevo, todavía sin respuesta.</td></tr>
+            <tr><td><strong>En proceso</strong></td><td>Alguien lo está tomando.</td></tr>
+            <tr><td><strong>Resuelto</strong></td><td>Cerrado. La conversación queda bloqueada.</td></tr>
+            <tr><td><strong>Cerrado</strong></td><td>Archivado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Responder un ticket</h3>
+
+      <ol class="pasos">
+        <li>Buscá el que te interese y abrilo.</li>
+        <li>Escribí la respuesta en el cuadro de texto.</li>
+        <li>Elegí el estado nuevo: normalmente <em>En proceso</em> mientras lo trabajás y <em>Resuelto</em> cuando terminates.</li>
+        <li>Guardá el mensaje.</li>
+      </ol>
+
+      <div class="aviso">
+        <span class="titulo">Un ticket resuelto no se puede reabrir</span>
+        <p>
+          Cuando el ticket pasa a <strong>Resuelto</strong> el hilo queda bloqueado y no se
+          pueden escribir mensajes nuevos. Si el cliente vuelve a tener el mismo problema, creá
+          un ticket nuevo y citá el número del anterior.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= 7. AYUDA OPERATIVA ================= -->
+    <section class="seccion" id="ayuda">
+      <h2><span class="num">7.</span> Ayuda operativa</h2>
+
+      <p class="lead">
+        El centro de ayuda del panel, con recorridos guiados de las pantallas.
+      </p>
+
+      <figure>
+        <span class="numero">11</span>
+        <img src="assets/img/general-ayuda.png" alt="Centro de ayuda operativa con los recorridos disponibles">
+        <figcaption><strong>La ayuda del panel.</strong> También podés recorrer las pantallas paso a paso desde acá.</figcaption>
+      </figure>
+
+      <p>
+        Hacé clic en <strong>Ayuda Operativa</strong>, en la parte de abajo del menú lateral.
+        Desde ahí se abre el recorrido con las explicaciones de cada sección.
+      </p>
+
+      <p>
+        Esta es la ayuda <strong>dentro</strong> del sistema. El manual que estás leyendo es el
+        complemento: alcanza los casos que el recorrido no explica.
+      </p>
+    </section>
+
+    <!-- ================= 8. PROBLEMAS FRECUENTES ================= -->
+    <section class="seccion" id="problemas">
+      <h2><span class="num">8.</span> Problemas frecuentes</h2>
+
+      <p class="lead">
+        Las consultas que más se repiten, con la respuesta corta.
+      </p>
+
+      <h3>No me aparece una sección del menú</h3>
+      <p>
+        Revisá que hayas entrado con la cuenta de administrador general. A ese rol no le
+        aparecen Monitoreo, Reservas, Reporte Financiero ni Configuración: es lo esperado.
+      </p>
+
+      <h3>Una sucursal nueva dice “Sin asignar”</h3>
+      <p>
+        Todavía no creaste al administrador de esa sede. Andá a <strong>Gestión de Usuarios</strong>,
+        creá el usuario con rol <em>Admin de Sucursal</em> y asignale esa sucursal.
+      </p>
+
+      <h3>No encuentro la sucursal en la lista para asignarla</h3>
+      <p>
+        La lista se arma con las sedes existentes. Creá primero la sucursal y después asignala;
+        si ya existe, revisá que el nombre sea el correcto.
+      </p>
+
+      <h3>La columna Plazas muestra tres rayitas</h3>
+      <p>
+        Es normal para tu rol. La ocupación se calcula con el monitoreo de cada sede y la
+        lleva el administrador de esa sucursal.
+      </p>
+
+      <h3>El mapa no encuentra la dirección</h3>
+      <p>
+        Sumá localidad y provincia, y separá el número con una coma. Si sigue sin encontrar,
+        ubicá el punto a mano haciendo clic en el mapa.
+      </p>
+
+      <h3>¿Suspendo o elimino una sucursal?</h3>
+      <p>
+        Si la pausa es temporal, <strong>suspendé</strong>: la sede queda en la lista y la podés
+        reactivar. <strong>Eliminar</strong> es definitivo y solo corresponde a un cierre.
+      </p>
+
+      <h3>Un usuario se olvidó la contraseña</h3>
+      <p>
+        Entrá a <strong>Gestión de Usuarios</strong>, ubicá su fila y usá
+        <strong>Cambiar Contraseña</strong>. Para tu propia cuenta de administrador general,
+        pedí el restablecimiento a soporte del sistema.
+      </p>
+
+      <h3>¿Bloqueo o elimino a un usuario?</h3>
+      <p>
+        <strong>Bloquear</strong> impide el ingreso y conserva el historial; es la opción
+        habitual. <strong>Eliminar</strong> borra la cuenta y solo corresponde a casos puntuales.
+      </p>
+
+      <h3>No puedo escribir en un ticket resuelto</h3>
+      <p>
+        Los tickets resueltos quedan bloqueados. Creá uno nuevo y citá el número del anterior.
+      </p>
+
+      <h3>Los gráficos se ven vacíos</h3>
+      <p>
+        Probablemente estés mirando un período sin movimiento. Revisá el filtro de fechas y
+        volvé a la vista en vivo o elegí el día de hoy.
+      </p>
+
+      <h3>La aplicación se ve desactualizada</h3>
+      <p>
+        Recargá la página completa con <code>F5</code>. Si el problema sigue, probá con una
+        ventana de incógnito: a veces queda una sesión vieja cacheada en el navegador.
+      </p>
+    </section>
+
+    <p style="text-align:center;margin-top:40px">
+      <a href="index.html" class="volver">← Volver a los manuales</a>
+    </p>
+
+  </main>
+</div>
+
+<footer class="pie">
+  <p><strong>Manual del Administrador General</strong> · AUTOPASS</p>
+  <p>Las capturas se regeneran con <code>python manual/tools/capturar.py</code></p>
+</footer>
+
+</body>
+</html>

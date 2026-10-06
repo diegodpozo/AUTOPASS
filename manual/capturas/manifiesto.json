@@ -1,0 +1,489 @@
+{
+  "_comentario": "Manifiesto de capturas de los manuales AUTOPASS. Cada entrada genera un archivo en manual/assets/img/. Para regenerar una sola imagen: python manual/tools/capturar.py <id>",
+  "_roles": {
+    "local_admin": "Administrador de sucursal (admcastelar@autopass.com)",
+    "admin": "Administrador general (admin@autopass.com)"
+  },
+  "capturas": [
+    {
+      "id": "sucursal-monitoreo",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-monitoreo.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"live\"]"}, {"espera": 2500}],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-monitoreo-movimientos",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-monitoreo-movimientos.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"live\"]"},
+        {"espera": 2500},
+        {"clic": "text=ÚLTIMOS MOVIMIENTOS"},
+        {"espera": 1800}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "sucursal-ingreso",
+      "manual": "admin-sucursal",
+      "rol": "anonimo",
+      "archivo": "sucursal-ingreso.png",
+      "url": "/",
+      "pasos": [
+        {"espera": 3000},
+        {"clic": "#nav-login"},
+        {"espera": 2000}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "sucursal-menu-lateral",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-menu-lateral.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"live\"]"}, {"espera": 2000}],
+      "elemento": "nav.sidebar, .sidebar",
+      "espera_ms": 800
+    },
+    {
+      "id": "sucursal-monitoreo-ingreso-manual",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-monitoreo-ingreso-manual.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"live\"]"},
+        {"espera": 2500},
+        {"scroll": "document.querySelector('#manual-ops-content')?.scrollIntoView({block:'start'})"}
+      ],
+      "espera_ms": 1500
+    },
+    {
+      "id": "sucursal-reservas",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-reservas.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"admin-reservations\"]"}, {"espera": 2800}],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-reservas-nueva",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-reservas-nueva.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"admin-reservations\"]"},
+        {"espera": 2800},
+        {"clic_texto": "NUEVA RESERVA"},
+        {"espera": 2000}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "sucursal-usuarios",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-usuarios.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"'users'\"]"}, {"espera": 2800}],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-usuarios-nuevo",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-usuarios-nuevo.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"'users'\"]"},
+        {"espera": 2800},
+        {"clic_texto": "NUEVO USUARIO"},
+        {"espera": 2000}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "sucursal-financiero",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-financiero.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"finance\"]"}, {"espera": 3500}],
+      "espera_ms": 3000
+    },
+    {
+      "id": "sucursal-financiero-grafico",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-financiero-grafico.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"finance\"]"},
+        {"espera": 3500},
+        {"scroll": "document.querySelector('canvas')?.scrollIntoView({block:'center'})"}
+      ],
+      "espera_ms": 3000
+    },
+    {
+      "id": "sucursal-metricas",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-metricas.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"metricas\"]"}, {"espera": 3500}],
+      "espera_ms": 3000
+    },
+    {
+      "id": "sucursal-promociones",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-promociones.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"promotions\"]"}, {"espera": 2800}],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-promociones-nueva",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-promociones-nueva.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"promotions\"]"},
+        {"espera": 2800},
+        {"clic": "button[onclick*=\"showCreatePromotionModal\"]"},
+        {"espera": 2000}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "sucursal-tickets",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-tickets.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"tickets\"]"}, {"espera": 2800}],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-ayuda",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-ayuda.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item-help"}, {"espera": 2500}],
+      "espera_ms": 2000
+    },
+    {
+      "id": "sucursal-config-tarifario",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-config-tarifario.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"settings\"]"},
+        {"espera": 2500},
+        {"clic": ".btn-tab-mini[onclick*=\"rates\"]"},
+        {"espera": 2200}
+      ],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-config-plazas",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-config-plazas.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"settings\"]"},
+        {"espera": 2500},
+        {"clic": ".btn-tab-mini[onclick*=\"floors\"]"},
+        {"espera": 2200}
+      ],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-config-monitoreo",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-config-monitoreo.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"settings\"]"},
+        {"espera": 2500},
+        {"clic": ".btn-tab-mini[onclick*=\"monitoring\"]"},
+        {"espera": 2200}
+      ],
+      "espera_ms": 2500
+    },
+    {
+      "id": "sucursal-config-sistema",
+      "manual": "admin-sucursal",
+      "rol": "local_admin",
+      "archivo": "sucursal-config-sistema.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"settings\"]"},
+        {"espera": 2500},
+        {"clic": ".btn-tab-mini[onclick*=\"system\"]"},
+        {"espera": 2200}
+      ],
+      "espera_ms": 2500
+    },
+    {
+      "id": "general-ingreso",
+      "manual": "admin-general",
+      "rol": "anonimo",
+      "archivo": "general-ingreso.png",
+      "url": "/",
+      "pasos": [
+        {"espera": 3000},
+        {"clic": "#nav-login"},
+        {"espera": 2000}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "general-menu-lateral",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-menu-lateral.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"users\"]"}, {"espera": 2000}],
+      "elemento": "nav.sidebar, .sidebar",
+      "espera_ms": 800
+    },
+    {
+      "id": "general-usuarios",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-usuarios.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"users\"]"}, {"espera": 2600}],
+      "espera_ms": 2600
+    },
+    {
+      "id": "general-usuario-nuevo",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-usuario-nuevo.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"users\"]"},
+        {"espera": 2600},
+        {"clic": "button[onclick=\"showCreateUserModal()\"]"},
+        {"espera": 2200}
+      ],
+      "espera_ms": 2200
+    },
+    {
+      "id": "general-sucursales",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-sucursales.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"branches\"]"}, {"espera": 3000}],
+      "espera_ms": 3000
+    },
+    {
+      "id": "general-sucursal-nueva",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-sucursal-nueva.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"branches\"]"},
+        {"espera": 3000},
+        {"clic": "button[onclick=\"showCreateBranchModal()\"]"},
+        {"espera": 3500}
+      ],
+      "espera_ms": 3500
+    },
+    {
+      "id": "general-metricas",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-metricas.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"metricas\"]"}, {"espera": 3000}],
+      "espera_ms": 3000
+    },
+    {
+      "id": "general-promociones",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-promociones.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"promotions\"]"}, {"espera": 2600}],
+      "espera_ms": 2600
+    },
+    {
+      "id": "general-promocion-nueva",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-promocion-nueva.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"promotions\"]"},
+        {"espera": 2600},
+        {"clic": "button[onclick=\"showCreatePromotionModal()\"]"},
+        {"espera": 2200}
+      ],
+      "espera_ms": 2200
+    },
+    {
+      "id": "general-tickets",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-tickets.png",
+      "url": "/dashboard",
+      "pasos": [{"clic": ".nav-item[onclick*=\"tickets\"]"}, {"espera": 2800}],
+      "espera_ms": 2800
+    },
+    {
+      "id": "general-ayuda",
+      "manual": "admin-general",
+      "rol": "admin",
+      "archivo": "general-ayuda.png",
+      "url": "/dashboard",
+      "pasos": [
+        {"clic": ".nav-item-help"},
+        {"espera": 2500}
+      ],
+      "espera_ms": 2500
+    },
+    {
+      "id": "cliente-ingreso",
+      "manual": "cliente",
+      "rol": "anonimo",
+      "archivo": "cliente-ingreso.png",
+      "url": "/",
+      "pasos": [{"espera": 3000}, {"clic": "#nav-login"}, {"espera": 2000}],
+      "espera_ms": 2000
+    },
+    {
+      "id": "cliente-registro",
+      "manual": "cliente",
+      "rol": "anonimo",
+      "archivo": "cliente-registro.png",
+      "url": "/",
+      "pasos": [
+        {"espera": 3000},
+        {"clic": "#nav-login"},
+        {"espera": 2000},
+        {"clic": ".modal-link:has-text('Registrate acá')"},
+        {"espera": 2000}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "cliente-inicio",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-inicio.png",
+      "url": "/perfil",
+      "espera_ms": 4000
+    },
+    {
+      "id": "cliente-menu-lateral",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-menu-lateral.png",
+      "url": "/perfil",
+      "elemento": "nav.sidebar, .sidebar, aside.sidebar",
+      "espera_ms": 1200
+    },
+    {
+      "id": "cliente-vehiculos",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-vehiculos.png",
+      "url": "/perfil",
+      "pasos": [{"clic": ".nav-item[onclick*=\"vehiculos\"]"}, {"espera": 2500}],
+      "espera_ms": 2500
+    },
+    {
+      "id": "cliente-vehiculo-nuevo",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-vehiculo-nuevo.png",
+      "url": "/perfil",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"vehiculos\"]"},
+        {"espera": 2500},
+        {"clic": "#vehicle-form-trigger"},
+        {"espera": 1800}
+      ],
+      "espera_ms": 1800
+    },
+    {
+      "id": "cliente-reservas",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-reservas.png",
+      "url": "/perfil",
+      "pasos": [{"clic": ".nav-item[onclick*=\"reservas\"]"}, {"espera": 3500}],
+      "espera_ms": 3500
+    },
+    {
+      "id": "cliente-puntos",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-puntos.png",
+      "url": "/perfil",
+      "pasos": [{"clic": ".nav-item[onclick*=\"puntos\"]"}, {"espera": 3500}],
+      "espera_ms": 3500
+    },
+    {
+      "id": "cliente-notificaciones",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-notificaciones.png",
+      "url": "/perfil",
+      "pasos": [
+        {"clic": ".nav-item[onclick*=\"notificaciones\"]"},
+        {"espera": 3000}
+      ],
+      "espera_ms": 3000
+    },
+    {
+      "id": "cliente-cuenta",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-cuenta.png",
+      "url": "/perfil",
+      "pasos": [{"clic": ".nav-item[onclick*=\"perfil\"]"}, {"espera": 3500}],
+      "espera_ms": 3500
+    },
+    {
+      "id": "cliente-cargar-saldo",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-cargar-saldo.png",
+      "url": "/perfil",
+      "pasos": [
+        {"espera": 3000},
+        {"clic": ".action-btn-premium[onclick*='openRechargeModal']"},
+        {"espera": 2000}
+      ],
+      "espera_ms": 2000
+    },
+    {
+      "id": "cliente-ayuda",
+      "manual": "cliente",
+      "rol": "cliente",
+      "archivo": "cliente-ayuda.png",
+      "url": "/perfil",
+      "pasos": [{"clic": ".nav-item[onclick*=\"ayuda\"]"}, {"espera": 3500}],
+      "espera_ms": 3500
+    }
+  ]
+}

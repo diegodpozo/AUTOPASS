@@ -147,6 +147,10 @@ class UserService:
         if tipo not in ["Auto", "Moto", "Camioneta"]:
             raise HTTPException(status_code=400, detail="Tipo de vehículo inválido. Use 'Auto', 'Moto' o 'Camioneta'.")
 
+        existing_count = db.query(models.Vehicle).filter(models.Vehicle.user_id == user.id).count()
+        if existing_count >= 5:
+            raise HTTPException(status_code=400, detail="EL LIMITE MAXIMO DE VEHICULOS GENERADOS ES DE 5")
+
         p_clean = normalize_plate(patente)
         old_format   = re.match(r'^[A-Z]{3}[0-9]{3}$', p_clean)
         new_format   = re.match(r'^[A-Z]{2}[0-9]{3}[A-Z]{2}$', p_clean)

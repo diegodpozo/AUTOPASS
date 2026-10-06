@@ -224,6 +224,13 @@ class ReservationService(ReservationPaymentsMixin):
         if not vehicle:
             raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
         p_clean = data.patente.upper().replace(' ', '')
+        # LIMITACION: maximo 5 reservas activas o pendientes por usuario
+        from models.reservation import Reservation
+        from models.enums import ReservationStatus
+        activas = db.query(Reservation).filter(Reservation.user_id==user.id, Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA])).count()
+        if activas >= 5:
+            raise HTTPException(status_code=400, detail="MAXIMO DE RESERVAS PERMITIDAS POR USUARIO ES DE 5")
+
         existing_overlap = ReservationRepository.get_overlap_by_patente(db, p_clean, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
         if existing_overlap:
             raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")

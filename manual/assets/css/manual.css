@@ -1,0 +1,688 @@
+/* ==========================================================================
+   AUTOPASS — Estilos compartidos de los manuales de usuario
+   Un solo archivo para los 3 manuales (admin-sucursal, admin-general, cliente).
+   Editar acá y el cambio se refleja en todos.
+   ========================================================================== */
+
+:root {
+  --navy: #0f1424;
+  --navy-soft: #1a2238;
+  --gold: #d4a853;
+  --gold-soft: #f0e0b8;
+  --ink: #1d2333;
+  --ink-soft: #4a5266;
+  --muted: #767f95;
+  --line: #e2e6ef;
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --ok: #1f8a5b;
+  --warn: #b7791f;
+  --danger: #c0392b;
+  --info: #2563a8;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(15, 20, 36, .08), 0 6px 20px rgba(15, 20, 36, .05);
+  --sans: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+a { color: var(--info); }
+
+/* ---------- Portada ---------- */
+
+.portada {
+  background: linear-gradient(135deg, var(--navy) 0%, #243055 100%);
+  color: #fff;
+  padding: 56px 24px;
+  text-align: center;
+  border-bottom: 4px solid var(--gold);
+}
+
+.portada .marca {
+  font-size: .8rem;
+  letter-spacing: .28em;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.portada h1 {
+  margin: 0 0 14px;
+  font-size: 2.3rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.portada p.sub {
+  max-width: 700px;
+  margin: 0 auto 22px;
+  color: #cfd6e6;
+  font-size: 1.06rem;
+}
+
+.portada .meta {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.portada .chip {
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .18);
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: .82rem;
+  color: #e7ecf6;
+}
+
+/* ---------- Layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 34px;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 34px 24px 90px;
+  align-items: start;
+}
+
+.toc {
+  position: sticky;
+  top: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  box-shadow: var(--shadow);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.toc h2 {
+  font-size: .74rem;
+  letter-spacing: .16em;
+  color: var(--muted);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+
+.toc li { counter-increment: toc; }
+
+.toc a {
+  display: flex;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-size: .9rem;
+  line-height: 1.4;
+}
+
+.toc a::before {
+  content: counter(toc);
+  color: var(--gold);
+  font-weight: 700;
+  font-size: .78rem;
+  min-width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.toc a:hover { background: #eef1f8; color: var(--ink); }
+
+.contenido { min-width: 0; }
+
+/* ---------- Secciones ---------- */
+
+.seccion { margin-bottom: 54px; scroll-margin-top: 20px; }
+
+.seccion > h2 {
+  font-size: 1.72rem;
+  margin: 0 0 6px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--line);
+  color: var(--navy);
+}
+
+.seccion > h2 .num {
+  color: var(--gold);
+  margin-right: 7px;
+}
+
+.seccion h3 {
+  font-size: 1.16rem;
+  margin: 30px 0 8px;
+  color: var(--navy);
+}
+
+.seccion h4 {
+  font-size: 1rem;
+  margin: 20px 0 6px;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.seccion p { margin: 0 0 14px; }
+.seccion ul, .seccion ol { margin: 0 0 16px; padding-left: 22px; }
+.seccion li { margin-bottom: 6px; }
+
+.lead { color: var(--ink-soft); font-size: 1.02rem; }
+
+/* ---------- Figuras / capturas ---------- */
+
+figure {
+  margin: 20px 0 26px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+figure figcaption {
+  margin-top: 10px;
+  font-size: .87rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+figure figcaption strong { color: var(--ink-soft); }
+
+.numero {
+  position: absolute;
+  top: -11px;
+  left: -11px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #fff;
+  font-weight: 700;
+  font-size: .84rem;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .22);
+}
+
+figure { position: relative; }
+
+/* ---------- Pasos ---------- */
+
+.pasos {
+  list-style: none;
+  counter-reset: paso;
+  padding: 0;
+  margin: 16px 0 22px;
+}
+
+.pasos > li {
+  counter-increment: paso;
+  position: relative;
+  padding: 0 0 14px 46px;
+  margin: 0;
+}
+
+.pasos > li::before {
+  content: counter(paso);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  font-size: .88rem;
+  display: grid;
+  place-items: center;
+}
+
+.pasos > li::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 34px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--line);
+}
+
+.pasos > li:last-child { padding-bottom: 0; }
+.pasos > li:last-child::after { display: none; }
+
+.pasos strong { color: var(--navy); }
+
+/* ---------- Avisos ---------- */
+
+.aviso {
+  border-left: 4px solid var(--info);
+  background: #eef4fb;
+  padding: 14px 18px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 18px 0;
+}
+
+.aviso.dato { border-color: var(--gold); background: #fdf8ec; }
+.aviso.atencion { border-color: var(--warn); background: #fdf5e7; }
+.aviso.peligro { border-color: var(--danger); background: #fdeeec; }
+
+.aviso .titulo {
+  font-weight: 700;
+  color: var(--navy);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.aviso p:last-child { margin-bottom: 0; }
+
+/* ---------- Tablas ---------- */
+
+.tabla-envoltura { overflow-x: auto; margin: 18px 0 24px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  font-size: .93rem;
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+th, td {
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  background: var(--navy);
+  color: #fff;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: #fafbfe; }
+
+td code, .tag {
+  background: #eef1f8;
+  color: var(--navy);
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: .87em;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+/* ---------- Tarjetas de pantalla ---------- */
+
+.pantallas { display: grid; gap: 12px; margin: 18px 0 24px; }
+
+.pantalla {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 13px 16px;
+}
+
+.pantalla .ico {
+  font-size: 1.2rem;
+  color: var(--gold);
+  line-height: 1.4;
+}
+
+.pantalla .txt { flex: 1; }
+.pantalla .txt strong { display: block; color: var(--navy); }
+.pantalla .txt span { font-size: .91rem; color: var(--ink-soft); }
+
+/* ---------- Rejilla de roles ---------- */
+
+.roles { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin: 20px 0 26px; }
+
+.rol {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--navy);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.rol.activo { border-top-color: var(--gold); }
+.rol h4 { margin: 0 0 6px; font-size: 1rem; }
+.rol p { margin: 0; font-size: .89rem; color: var(--ink-soft); }
+
+/* ---------- Botones de tarjeta (indice) ---------- */
+
+.boton-manual {
+  display: inline-block;
+  padding: 9px 18px;
+  border-radius: 8px;
+  background: var(--gold);
+  color: #fff;
+  font-weight: 700;
+  font-size: .89rem;
+  text-decoration: none;
+  border: 1px solid var(--gold);
+}
+
+.boton-manual:hover { background: #c29742; }
+
+.boton-manual.secundario {
+  background: transparent;
+  color: var(--navy);
+  border-color: var(--line);
+}
+
+.boton-manual.secundario:hover { background: #eef1f8; }
+
+/* ---------- Pie ---------- */
+
+.pie {
+  border-top: 1px solid var(--line);
+  background: var(--card);
+  padding: 26px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .87rem;
+}
+
+.pie a { color: var(--muted); }
+
+.volver {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: .88rem;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 22px; }
+  .toc { position: static; max-height: none; }
+  .portada h1 { font-size: 1.7rem; }
+  .portada { padding: 40px 18px; }
+}
+
+/* ==========================================================================
+   INDICE PARA EL PDF
+   Esta seccion solo existe en el PDF: el script la inyecta antes de imprimir.
+   En pantalla no se muestra (clase .solo-pdf).
+   ========================================================================== */
+
+.solo-pdf { display: none; }
+
+.indice-pdf {
+  page-break-before: always;
+  break-before: page;
+  page-break-after: always;
+  break-after: page;
+  padding-top: 4mm;
+}
+
+.indice-pdf header {
+  border-bottom: 2px solid var(--gold);
+  margin-bottom: 22px;
+  padding-bottom: 8px;
+}
+
+.indice-pdf header .marca {
+  font-size: .68rem;
+  letter-spacing: .24em;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.indice-pdf header h2 {
+  font-size: 1.5rem;
+  margin: 4px 0 0;
+  color: var(--navy);
+  border: none;
+  padding: 0;
+}
+
+.indice-fila { margin-bottom: 1px; }
+
+.indice-fila a {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.indice-fila .idx-titulo { flex-shrink: 0; }
+
+.indice-fila .idx-puntos {
+  flex: 1 1 auto;
+  min-width: 12mm;
+  border-bottom: 1px dotted #aab1c2;
+  transform: translateY(-2px);
+}
+
+.indice-fila .idx-pag {
+  font-weight: 700;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nivel 1: secciones, en negrita y con aire */
+.indice-fila.nivel-1 { margin-top: 7px; margin-bottom: 3px; }
+
+.indice-fila.nivel-1 .idx-titulo {
+  font-weight: 700;
+  font-size: .8rem;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+/* Nivel 2: temas, indentados y mas chicos */
+.indice-fila.nivel-2 { padding-left: 8mm; }
+
+.indice-fila.nivel-2 .idx-titulo { font-size: .78rem; color: var(--ink-soft); }
+.indice-fila.nivel-2 .idx-pag { font-size: .78rem; color: var(--ink-soft); font-weight: 600; }
+
+.indice-pdf .pie-indice {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: .74rem;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   IMPRESION / PDF
+   Objetivo: que el PDF se lea como un manual impreso, no como una web que
+   le "cayó" una pagina encima. Reglas:
+     - la portada ocupa su propia pagina
+     - cada seccion (h2) arranca en pagina nueva
+     - ningun tema queda partido con menos de la mitad util
+     - imagenes, tablas, avisos y listas de pasos nunca se parten al medio
+   ========================================================================== */
+
+@media print {
+  /* Ajustes de pagina que el script reinforce via page.pdf() */
+  @page {
+    size: A4;
+    margin: 16mm 14mm 18mm;
+  }
+
+  html, body {
+    background: #fff;
+    font-size: 10.2pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* El indice lateral y los links de navegacion no tienen sentido en papel */
+  .toc,
+  .volver { display: none !important; }
+
+  .layout {
+    display: block;
+    padding: 0;
+    max-width: none;
+    margin: 0;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* --- Portada: pagina completa --- */
+  .portada {
+    page-break-after: always;
+    break-after: page;
+    padding: 46mm 20mm;
+    margin: -16mm -14mm 0;
+  }
+
+  /* --- Cada seccion en pagina nueva --- */
+  .seccion {
+    page-break-before: always;
+    break-before: page;
+    margin-bottom: 0;
+  }
+
+  .seccion > h2 {
+    margin-top: 0;
+    /* evita que el titulo quede solo al pie de una pagina */
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* --- Temas (h3 + su contenido): no partir si queda menos de la mitad --- */
+  .tema {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .tema > h3:first-child {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  /* --- Bloques atomicos: jamas se parten --- */
+  figure,
+  .aviso,
+  .tabla-envoltura,
+  .pasos,
+  .pantallas,
+  .pantalla,
+  .roles,
+  .rol {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Las imagenes son el motivo principal del manual: nunca cortadas */
+  figure img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-height: 205mm;
+    object-fit: contain;
+    border: 1px solid var(--line);
+  }
+
+  figure { padding: 8px; box-shadow: none; }
+
+  /* Titulos nunca al final de pagina */
+  h3, h4, h5 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Chromium ignora "break-after: avoid" si el bloque siguiente es largo.
+     Marcando tambien el bloque siguiente, el titulo y su primer parrafo
+     quedan siempre juntos. */
+  .seccion h3 + p,
+  .seccion h3 + ol,
+  .seccion h3 + ul,
+  .seccion h3 + figure,
+  .seccion h3 + .aviso,
+  .seccion h3 + .tabla-envoltura,
+  .seccion h3 + .pantallas,
+  .seccion h3 + .roles,
+  .seccion h4 + p,
+  .seccion h4 + ol,
+  .seccion h4 + ul {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  /* Titulos que el generador detecta huérfanos al pie de una pagina:
+     arrancan en pagina nueva. */
+  .salto {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  /* Contexto de lineas: deja al menos 3 lineas al pasar de pagina */
+  p, li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Tablas sin sombra ni radios raros */
+  table {
+    box-shadow: none;
+    border: 1px solid var(--line);
+    font-size: 9.2pt;
+  }
+
+  th {
+    background: var(--navy) !important;
+    color: #fff !important;
+  }
+
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; break-inside: avoid; }
+
+  .numero {
+    border: 1px solid var(--line);
+    box-shadow: none;
+  }
+
+  /* El pie de pagina no necesita el bloque de regeneracion */
+  .pie { padding: 12px 0 0; }
+
+  /* El link "volver" y el bloque de mantenimiento solo tienen sentido en pantalla */
+  .solo-web { display: none !important; }
+
+  /* El indice existe solo en el PDF */
+  .solo-pdf { display: block !important; }
+
+  /* El indice lateral de pantalla no se imprime: el del PDF lo reemplaza */
+  .toc { display: none !important; }
+}
