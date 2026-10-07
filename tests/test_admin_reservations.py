@@ -2,7 +2,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Reservation, ParkingBranch, ParkingAforo, User, Vehicle, RedemptionTicket
+from models import Base, Reservation, ParkingBranch, ParkingAforo, User, Vehicle, RedemptionTicket, Settings
 from models.enums import ReservationStatus, PaymentStatus
 from services.reservation_service import ReservationService, verificar_disponibilidad, obtener_horas_deshabilitadas_con_reservas
 from services.report_service import ReportService
@@ -26,6 +26,13 @@ def db():
     branch = ParkingBranch(nombre="Sucursal Central", direccion="Av. Test 123", horario="24hs", is_24h=True)
     db.add(branch)
     db.add(ParkingAforo(sucursal="Sucursal Central", capacidad_reservas_autos=2))
+    for suc in ("Sucursal Central", "Sucursal Dos"):
+        db.add(Settings(clave="precio_hora", valor=1500.0, sucursal=suc))
+        db.add(Settings(clave="precio_30min", valor=750.0, sucursal=suc))
+        db.add(Settings(clave="precio_hora_moto", valor=800.0, sucursal=suc))
+        db.add(Settings(clave="precio_30min_moto", valor=400.0, sucursal=suc))
+        db.add(Settings(clave="precio_hora_camioneta", valor=2000.0, sucursal=suc))
+        db.add(Settings(clave="precio_30min_camioneta", valor=1000.0, sucursal=suc))
     db.commit()
     yield db
     db.close()
@@ -901,6 +908,8 @@ def test_get_new_reservations_count_aislamiento_sucursales(db):
 
     branch2 = ParkingBranch(nombre="Sucursal Norte", direccion="Calle Norte 456", horario="24hs", is_24h=True)
     db.add(branch2)
+    db.add(Settings(clave="precio_hora", valor=1500.0, sucursal="Sucursal Norte"))
+    db.add(Settings(clave="precio_30min", valor=750.0, sucursal="Sucursal Norte"))
     db.commit()
 
     # Reserva en Sucursal Central

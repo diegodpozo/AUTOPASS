@@ -127,9 +127,12 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
             raise HTTPException(status_code=403, detail="La estadía no pertenece a un vehículo del usuario")
         if log.pago_confirmado:
             raise HTTPException(status_code=400, detail="La estadía ya ha sido abonada")
-        monto = round(BillingService.calculate_debt(
+        deuda = BillingService.calculate_debt(
             log.fecha_hora, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo or "Auto"
-        ), 2)
+        )
+        if deuda is None:
+            raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado. No se puede cobrar la estadía.")
+        monto = round(deuda, 2)
         title = f"Estadía AutoPass - Patente {log.patente_detectada}"
         desc = f"Sucursal {log.sucursal or '-'} - Ingreso {log.fecha_hora}"
         access_log = log

@@ -60,6 +60,8 @@ def _token(user):
 def _crear_entrada(TestSession, placa, hace_horas=2):
     db = TestSession()
     now_iso = (datetime.datetime.now() - datetime.timedelta(hours=hace_horas)).isoformat()
+    db.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal="AUTOPASS Central"))
+    db.add(models.Settings(clave="precio_30min", valor=750.0, sucursal="AUTOPASS Central"))
     log = models.AccessLog(patente_detectada=placa, tipo_evento="ENTRADA",
                            tipo_vehiculo="Auto", fecha_hora=now_iso,
                            pago_confirmado=False, sucursal="AUTOPASS Central")

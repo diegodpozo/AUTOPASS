@@ -26,6 +26,9 @@ def db(monkeypatch):
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     session = sessionmaker(bind=engine, autoflush=False, autocommit=False)()
     Base.metadata.create_all(bind=engine)
+    session.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal=SUCURSAL))
+    session.add(models.Settings(clave="precio_30min", valor=750.0, sucursal=SUCURSAL))
+    session.commit()
     yield session
     session.close()
     Base.metadata.drop_all(bind=engine)

@@ -3,7 +3,6 @@ import math
 from typing import Dict
 from sqlalchemy.orm import Session
 import models
-from core.config import settings
 from core.logger import get_logger
 from services.time_service import TimeService
 from models.enums import PaymentStatus, ReservationStatus
@@ -229,20 +228,19 @@ class OccupancyService:
             clave30, clave_hora = RATE_CLAVES.get(tipo, ("precio_30min", "precio_hora"))
             if (clave30, suc) in rate_map:
                 return rate_map[(clave30, suc)]
-            if suc and (clave30, None) in rate_map:
-                return rate_map[(clave30, None)]
-            # FALLBACK: MITAD DE LA TARIFA HORA
+            # FALLBACK: MITAD DE LA TARIFA HORA (solo propia de la sede; sin globales ni DEFAULT)
             for c in (clave_hora,):
                 if (c, suc) in rate_map:
                     return rate_map[(c, suc)] / 2
-                if suc and (c, None) in rate_map:
-                    return rate_map[(c, None)] / 2
-            return settings.DEFAULT_HOURLY_RATE / 2
+            return None
 
         def calc_debt(entry_time_str, suc, tipo):
+            tarifa = rate30_for(suc, tipo)
+            if tarifa is None:
+                return None
             delta = TimeService.now() - datetime.datetime.fromisoformat(entry_time_str)
             bloques = max(1, math.ceil(delta.total_seconds() / 1800))
-            return float(bloques * rate30_for(suc, tipo))
+            return float(bloques * tarifa)
 
         res = []
         for e in entradas:
@@ -265,7 +263,7 @@ class OccupancyService:
                     now_str = TimeService.now_str()
                     # SI LA RESERVA EXPIRÓ (COMPLETADA/CANCELADA O FECHA_FIN YA PASÓ), ACUMULAR DEUDA DESDE ESE MOMENTO
                     if r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str:
-                        extra = calc_debt(r.fecha_fin, e.sucursal, e.tipo_vehiculo)
+                        extra = calc_debt(r.fecha_fin, e.sucursal, e.tipo_vehiculo) or 0.0
                         if pagada:
                             deuda = max(0, extra - (e.costo_estadia or 0))
                             ya_pago = deuda == 0

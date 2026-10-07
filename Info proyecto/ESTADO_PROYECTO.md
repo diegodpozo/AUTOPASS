@@ -326,7 +326,7 @@
 - **Reservas**: Cupos **exclusivos para reservas** (`capacidad_reservas_*` en PB y pisos) validados por sweep-line en `verificar_disponibilidad`, con fechas/horas deshabilitadas en el picker. El aforo físico sigue siendo "solo físico" (no-ops v9.5 conservados).
 - **Pagos**: Billetera virtual (saldo), Mercado Pago Checkout Pro (redirección) y efectivo (CAJA) con desglose por método en reportes.
 - **ALPR**: Pipeline completo de visión artificial (**RapidOCR ONNX** primario + fallback **PaddleOCR** + OpenCV) con consenso de votos, lectura QR y streaming de video.
-- **Base de Datos**: **Neon/Postgres online** (`postgresql://...@ep-silent-math-acirnekl.sa-east-1.aws.neon.tech/neondb`) en región `sa-east-1` (São Paulo), compartida entre varias PC, con fallback a SQLite local (`parking.db`). Esquema gestionado con **Alembic** + `create_all` de modelos (`init_db.py` como flujo único; `alembic/`, primera migración `c833a3129266_initial_schema`).
+- **Base de Datos**: **Neon/Postgres online** (`postgresql://...@ep-silent-math-acirnekl.sa-east-1.aws.neon.tech/neondb`) en región `sa-east-1` (São Paulo), **compartida entre varias PC** (es la única base en uso: no hay `parking.db` local ni fallback automático; SQLite queda como alternativa aislada vía `DATABASE_URL=sqlite:///./parking.db`). Esquema gestionado con **Alembic** + `create_all` de modelos (`init_db.py` como flujo único; `alembic/`, primera migración `c833a3129266_initial_schema`).
 
 ### 📊 Cobertura de Funcionalidades
 - **Gestión**: Multi-sucursal y Multi-piso con restricciones de seguridad por sede.

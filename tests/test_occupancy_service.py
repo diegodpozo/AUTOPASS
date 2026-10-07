@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, ParkingBranch, ParkingAforo, ParkingFloor, AccessLog, Reservation
+from models import Base, ParkingBranch, ParkingAforo, ParkingFloor, AccessLog, Reservation, Settings
 from models.enums import ReservationStatus, PaymentStatus
 from services.occupancy_service import OccupancyService
 from services.time_service import TimeService
@@ -15,6 +15,9 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 def db():
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
+    db.add(Settings(clave="precio_hora", valor=1500.0, sucursal="Centro"))
+    db.add(Settings(clave="precio_30min", valor=750.0, sucursal="Centro"))
+    db.commit()
     yield db
     db.close()
     Base.metadata.drop_all(bind=engine)

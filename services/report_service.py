@@ -159,6 +159,8 @@ class ReportService:
             if key not in rate_cache:
                 rate_cache[key] = BillingService.get_30min_rate(db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
             tarifa_30min = rate_cache[key]
+            if tarifa_30min is None:
+                continue
             delta = TimeService.now() - datetime.datetime.fromisoformat(e.fecha_hora)
             bloques_a_cobrar = max(1, math.ceil(delta.total_seconds() / 1800))
             deuda_proyectada += bloques_a_cobrar * tarifa_30min

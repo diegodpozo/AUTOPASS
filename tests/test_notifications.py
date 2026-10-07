@@ -272,8 +272,10 @@ def test_onsite_stay_payment_emits_notifications(db_session: Session):
     db_session.commit()
 
     now_str = (datetime.datetime.now() - datetime.timedelta(hours=2)).isoformat()
-    log = models.AccessLog(patente_detectada="AC123BD", tipo_evento="ENTRADA", sucursal="AUTOPASS Morón", tipo_vehiculo="Auto", fecha_hora=now_str, pago_confirmado=False)
+    log = models.AccessLog(patente_detectada="AC123BD", tipo_evento="ENTRADA", sucursal="AUTOPASS Morén", tipo_vehiculo="Auto", fecha_hora=now_str, pago_confirmado=False)
     db_session.add(log)
+    db_session.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal="AUTOPASS Morén"))
+    db_session.add(models.Settings(clave="precio_30min", valor=750.0, sucursal="AUTOPASS Morén"))
     db_session.commit()
 
     BillingService.process_payment(db_session, "AC123BD", metodo="CAJA")
@@ -313,6 +315,8 @@ def test_user_modify_reservation_notification(db_session: Session):
     branch = models.ParkingBranch(nombre="AUTOPASS Centro", direccion="Av. Centro 123", horario="24hs", is_24h=True)
     aforo = models.ParkingAforo(sucursal="AUTOPASS Centro", capacidad_reservas_autos=20, ocupacion_reservas_autos=0)
     db_session.add_all([branch, aforo])
+    db_session.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal="AUTOPASS Centro"))
+    db_session.add(models.Settings(clave="precio_30min", valor=750.0, sucursal="AUTOPASS Centro"))
     db_session.commit()
 
     vehicle = models.Vehicle(user_id=user.id, patente="AB345CD", tipo="Auto")

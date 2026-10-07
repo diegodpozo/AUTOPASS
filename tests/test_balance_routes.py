@@ -3,8 +3,8 @@
 Cubre /active-stays (usuario sin vehículos, sin ingresos, entrada no pagada con
 deuda, entrada pagada sin deuda, exclusión por salida posterior, múltiples salidas
 quedándose con la más reciente, salida anterior al ingreso que no excluye),
-/payment-history (logs pagados del usuario), /rates (globales + defaults, prioridad
-por sucursal) y /recharge-balance (monto inválido 400, recarga exitosa con
+/payment-history (logs pagados del usuario), /rates (tarifas estrictas por sede: no
+inventa precios, no hereda globales, deriva 30min = mitad de hora) y /recharge-balance (monto inválido 400, recarga exitosa con
 notificación y con excepción de notificación tolerada).
 """
 import importlib
@@ -192,17 +192,15 @@ def test_payment_history_sin_logs_pagados(client):
     assert c.get("/payment-history").json() == []
 
 
-def test_rates_sin_seeds_devuelve_defaults(client):
+def test_rates_sin_configuracion_no_inventa_precios(client):
     c, _ = client
     body = c.get("/rates").json()
-    assert body["hora"] == 1500
-    assert body["30min"] == 750
-    assert body["semana"] == 70000
-    assert body["mes"] == 200000
-    assert "mes_moto" not in body
+    assert body == {}
+    assert "hora" not in body
+    assert "30min" not in body
 
 
-def test_rates_globales_combinadas_con_defaults(client):
+def test_rates_globales_deriva_30min_de_hora(client):
     c, db_factory = client
     db = db_factory()
     db.add(models.Settings(clave="precio_hora", valor=1800.0, sucursal=None))
@@ -211,12 +209,12 @@ def test_rates_globales_combinadas_con_defaults(client):
     db.close()
     body = c.get("/rates").json()
     assert body["hora"] == 1800
+    assert body["30min"] == 900
     assert body["mes_moto"] == 250000
-    assert body["30min"] == 750
-    assert body["quincena"] == 120000
+    assert "quincena" not in body
 
 
-def test_rates_sucursal_prioriza_sobre_globales(client):
+def test_rates_sucursal_no_hereda_globales(client):
     c, db_factory = client
     db = db_factory()
     db.add(models.Settings(clave="precio_hora", valor=1800.0, sucursal=None))
@@ -227,7 +225,18 @@ def test_rates_sucursal_prioriza_sobre_globales(client):
     body = c.get("/rates", params={"sucursal": "Centro"}).json()
     assert body["hora"] == 2200
     assert body["dia"] == 17000
-    assert body["30min"] == 750
+    assert body["30min"] == 1100
+    assert "mes" not in body
+
+
+def test_rates_sucursal_sin_tarifario_devuelve_vacio(client):
+    c, db_factory = client
+    db = db_factory()
+    db.add(models.Settings(clave="precio_hora", valor=2200.0, sucursal="Centro"))
+    db.commit()
+    db.close()
+    body = c.get("/rates", params={"sucursal": "Castelar"}).json()
+    assert body == {}
 
 
 def test_recharge_balance_monto_invalido(client):

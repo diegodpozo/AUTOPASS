@@ -25,7 +25,7 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 - **Tiempo Virtual** — Servicio de testing que permite simular el paso del tiempo sin afectar el reloj real
 - **PWA instalable** — Manifest + Service Worker en scope raíz con cache offline de assets
 - **RBAC** — Control de acceso por roles: Admin Global, Local Admin, Staff, User
-- **Base de Datos Online** — Neon/Postgres (sa-east-1) compartido entre múltiples PC, con fallback a SQLite local
+- **Base de Datos Online** — Neon/Postgres (sa-east-1) **compartido** por todas las PC (no hay fallback automático; SQLite local queda solo como opción aislada para desarrollo/tests)
 - **Migraciones** — Alembic para control de versiones del esquema
 
 ## Arquitectura
@@ -57,7 +57,7 @@ AUTOPASS/
 | Capa | Tecnología |
 |------|-----------|
 | Backend | FastAPI (Python 3.14) |
-| Base de Datos | SQLAlchemy — Neon/Postgres (sa-east-1) o SQLite local |
+| Base de Datos | SQLAlchemy — Neon/Postgres (sa-east-1) compartido por defecto · SQLite local (opcional, aislado) |
 | Frontend | Vanilla JS (ES6 Modules), CSS Moderno, Jinja2 |
 | Visión Artificial | PaddleOCR + OpenCV |
 | IoT | ESP32 + Arduino Uno (MQTT + Serie USB) |
@@ -94,7 +94,8 @@ pip install -r requirements.txt
 ### 3. Configuración
 El instalador automático crea `.env` desde `.env.example`. Si instalás manualmente, creá o editá el archivo `.env` en la raíz:
 ```env
-DATABASE_URL=sqlite:///./parking.db
+# Base de datos compartida (por defecto): Neon/Postgres, la cadena completa está en .env.example
+DATABASE_URL=postgresql://usuario:clave@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 SECRET_KEY=tu_secreto_aqui
 MQTT_BROKER=broker.hivemq.com
 MQTT_TOPIC_ENTRADA=parking/barrera/entrada/control
@@ -117,9 +118,11 @@ SMTP_USER=tu_email@gmail.com
 SMTP_PASSWORD=tu_password
 SMTP_FROM=noreply@autopass.com.ar
 
-# Base online (opcional) - Neon/Postgres
-# DATABASE_URL=postgresql://user:pass@ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
+# Base local aislada (opcional, solo desarrollo/tests; reemplaza la DATABASE_URL de arriba)
+# DATABASE_URL=sqlite:///./parking.db
 ```
+
+> **Importante — base compartida:** por defecto todas las PC que arranquen el backend apuntan a la **misma** base Neon/Postgres: usuarios, reservas, saldos y sucursales se comparten. Si cargás datos de prueba, afectan a todos. Para trabajar aislado, usá la alternativa SQLite de arriba.
 
 ### 4. Inicializar Base de Datos (solo instalación manual)
 ```bash

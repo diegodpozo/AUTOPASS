@@ -48,6 +48,8 @@ class ReservationService(ReservationPaymentsMixin):
             db, data.tipo_estadia, data.fecha_inicio, data.fecha_fin, 
             sucursal=data.sucursal_nombre, tipo_vehiculo=tipo_vehiculo
         )
+        if monto is None:
+            raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo. No se puede crear la reserva.")
 
         info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
 
@@ -238,6 +240,8 @@ class ReservationService(ReservationPaymentsMixin):
         if other_branch_overlap:
             raise HTTPException(status_code=400, detail="YA HAY RESERVAS EN ESE HORARIO EN OTRA SUCURSAL")
         rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
+        if rate is None:
+            raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
         start = datetime.datetime.fromisoformat(data.fecha_inicio)
         end = datetime.datetime.fromisoformat(data.fecha_fin)
         max_future = datetime.datetime.now() + datetime.timedelta(days=90)
@@ -267,6 +271,8 @@ class ReservationService(ReservationPaymentsMixin):
         elif data.tipo_estadia == "hora":
             v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
             tarifa_30min = BillingService.get_30min_rate(db, sucursal=data.sucursal_nombre, tipo_vehiculo=v_str)
+            if tarifa_30min is None:
+                raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
             monto = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
         elif data.tipo_estadia == "dia":
             monto = max(1, math.ceil(duration_hours / 24)) * rate
@@ -339,12 +345,16 @@ class ReservationService(ReservationPaymentsMixin):
         vehiculo_mod = VehicleRepository.get_by_patente(db, res.patente)
         tipo_vehiculo_mod = vehiculo_mod.tipo if vehiculo_mod else "Auto"
         rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+        if rate is None:
+            raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
         duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
         if duration_hours <= 0:
             raise HTTPException(status_code=400, detail="Fechas inválidas")
         monto_nuevo = math.ceil(duration_hours) * rate
         if res.tipo_estadia == "hora":
             tarifa_30min = BillingService.get_30min_rate(db, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+            if tarifa_30min is None:
+                raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
             monto_nuevo = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
         elif res.tipo_estadia == "dia":
             monto_nuevo = max(1, math.ceil(duration_hours / 24)) * rate
@@ -515,6 +525,8 @@ class ReservationService(ReservationPaymentsMixin):
                 db, data.tipo_estadia, data.fecha_inicio, data.fecha_fin,
                 sucursal=data.sucursal_nombre, tipo_vehiculo=tipo_v_str
             )
+            if monto is None:
+                raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
             ticket_aplicado = None
             if reserva.estado_pago == PaymentStatus.PAGADO:
                 ticket_aplicado = RedemptionRepository.get_used_discount_for_reserva(db, reserva.id)

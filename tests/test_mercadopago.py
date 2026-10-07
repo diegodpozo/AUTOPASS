@@ -2,7 +2,7 @@ import pytest
 import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, Vehicle, Reservation, AccessLog, MercadoPagoPayment
+from models import Base, User, Vehicle, Reservation, AccessLog, MercadoPagoPayment, Settings
 from models.enums import ReservationStatus, PaymentStatus
 from services import mercadopago_service as mp_service
 from fastapi import HTTPException
@@ -75,6 +75,10 @@ def test_create_payment_estadia_creates_intent(db, monkeypatch):
     user = _crear_usuario(db)
 
     db.add(Vehicle(user_id=user.id, patente="ABC123", marca_modelo="Test Auto", tipo="Auto"))
+    db.commit()
+
+    db.add(Settings(clave="precio_hora", valor=1500.0, sucursal=None))
+    db.add(Settings(clave="precio_30min", valor=750.0, sucursal=None))
     db.commit()
 
     log = AccessLog(patente_detectada="ABC123", tipo_evento="ENTRADA",

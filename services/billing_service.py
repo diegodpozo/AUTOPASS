@@ -1,9 +1,9 @@
 import datetime
 import math
+from typing import Optional
 from sqlalchemy.orm import Session
 import models
 
-from core.config import settings
 from core.logger import get_logger
 from services.time_service import TimeService
 from repositories.access_log_repository import AccessRepository
@@ -43,10 +43,13 @@ class BillingService:
         elif tipo_vehiculo == VehicleType.CAMIONETA:
             clave = f"{clave}_camioneta"
         
-        # BUSCAR TARIFA POR SEDE (CON FALLBACK A GLOBAL DENTRO DEL REPOSITORIO)
-        setting = SettingsRepository.get_by_clave(db, clave, sucursal=sucursal)
+        # TARIFA ESTRICTA POR SEDE: SI LA SUCURSAL NO TIENE TARIFA PROPIA NO HAY PRECIO
+        # (no se hereda la global ni se inventa un DEFAULT). Si sucursal=None se usa la global.
+        setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal)
 
-        val = float(setting.valor) if setting else settings.DEFAULT_BASE_RATE
+        if not setting:
+            return None
+        val = float(setting.valor)
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
 
@@ -65,9 +68,11 @@ class BillingService:
         elif tipo_vehiculo == "Camioneta":
             clave = "precio_hora_camioneta"
 
-        setting = SettingsRepository.get_by_clave(db, clave, sucursal=sucursal)
+        setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal)
 
-        val = float(setting.valor) if setting else settings.DEFAULT_HOURLY_RATE
+        if not setting:
+            return None
+        val = float(setting.valor)
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
 
@@ -86,17 +91,23 @@ class BillingService:
         elif tipo_vehiculo == "Camioneta":
             clave = "precio_30min_camioneta"
 
-        setting = SettingsRepository.get_by_clave(db, clave, sucursal=sucursal)
+        setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal)
 
-        # FALLBACK: MITAD DE LA TARIFA POR HORA
-        val = float(setting.valor) if setting else (BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo) / 2)
+        # FALLBACK: MITAD DE LA TARIFA POR HORA (solo si la hora existe; si no, no hay precio)
+        tarifa_hora = BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
+        if not setting and tarifa_hora is None:
+            return None
+        val = float(setting.valor) if setting else (tarifa_hora / 2)
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
 
     @staticmethod
-    def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> float:
-        """CALCULA LA DEUDA ACUMULADA BASADA EN BLOQUES DE 30 MIN, SEDE Y TIPO DE VEHICULO."""
+    def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
+        """CALCULA LA DEUDA ACUMULADA BASADA EN BLOQUES DE 30 MIN, SEDE Y TIPO DE VEHICULO.
+        Devuelve None si la sucursal no tiene tarifario configurado (no inventa precio)."""
         tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
+        if tarifa_30min is None:
+            return None
         entrada_dt = datetime.datetime.fromisoformat(entry_time_str)
         
         delta = TimeService.now() - entrada_dt
@@ -107,8 +118,9 @@ class BillingService:
         return float(bloques_a_cobrar * tarifa_30min)
 
     @staticmethod
-    def calculate_total_amount(db: Session, tipo_estadia: str, fecha_inicio: str, fecha_fin: str, sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> float:
-        """CALCULA EL MONTO TOTAL BASADO EN LA DURACION Y EL TIPO DE ESTADIA."""
+    def calculate_total_amount(db: Session, tipo_estadia: str, fecha_inicio: str, fecha_fin: str, sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> Optional[float]:
+        """CALCULA EL MONTO TOTAL BASADO EN LA DURACION Y EL TIPO DE ESTADIA.
+        Devuelve None si la sucursal no tiene tarifario configurado (no inventa precio)."""
         start = datetime.datetime.fromisoformat(fecha_inicio)
         end = datetime.datetime.fromisoformat(fecha_fin)
         duration_hours = (end - start).total_seconds() / 3600
@@ -119,6 +131,8 @@ class BillingService:
         rate = BillingService.get_rate(db, tipo_estadia, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
         v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
         tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=v_str)
+        if rate is None or tarifa_30min is None:
+            return None
         
         if tipo_estadia == "hora":
             return float(max(1, math.ceil(duration_hours * 2)) * tarifa_30min)
@@ -232,6 +246,8 @@ class BillingService:
                         return {"status": "ok", "message": "El extra por reserva vencida ya fue cobrado", "monto_cobrado": 0.0, "puntos_ganados": 0, "aplicado": False}
                     # RESERVA VENCIDA: cobrar desde fecha_fin
                     monto_real = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+                    if monto_real is None:
+                        return {"status": "error", "message": "Tarifas no configuradas en la sucursal. Configurá el tarifario antes de cobrar."}
                     log.costo_estadia = (log.costo_estadia or 0) + monto_real
                     log.fecha_pago = TimeService.now().isoformat()
                     log.pago_confirmado = True
@@ -261,7 +277,10 @@ class BillingService:
                 # RESERVA IMPAGA QUE YA INGRESÓ: COBRAR MONTO DE LA RESERVA + EXTRA ACUMULADO SI VENCIÓ
                 monto_real = (r.monto_total or 0)
                 if r.fecha_fin < now_str:
-                    monto_real += BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+                    monto_extra = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+                    if monto_extra is None:
+                        return {"status": "error", "message": "Tarifas no configuradas en la sucursal. Configurá el tarifario antes de cobrar."}
+                    monto_real += monto_extra
                 # MARCAR LA RESERVA COMO PAGADA (SE ABONÓ EN EL PREDIO)
                 r.estado_pago = PaymentStatus.PAGADO
                 if r.estado_reserva == ReservationStatus.PENDIENTE:
@@ -272,8 +291,12 @@ class BillingService:
             elif r and r.fecha_fin < now_str:
                 # RESERVA YA PAGADA (ONLINE) PERO EL LOG NO: COBRAR SOLO EL EXTRA ACUMULADO
                 monto_real = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+                if monto_real is None:
+                    return {"status": "error", "message": "Tarifas no configuradas en la sucursal. Configurá el tarifario antes de cobrar."}
         else:
             monto_real = BillingService.calculate_debt(log.fecha_hora, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+            if monto_real is None:
+                return {"status": "error", "message": "Tarifas no configuradas en la sucursal. Configurá el tarifario antes de cobrar."}
         
         # CONFIRMACION DE PAGO EN EL LOG
         log.pago_confirmado = True

@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Reservation, ParkingBranch
+from models import Base, Reservation, ParkingBranch, Settings
 from models.enums import ReservationStatus, PaymentStatus, VehicleType
 from services.reservation_service import ReservationService
 from schemas import AdminReservationCreate
@@ -23,6 +23,8 @@ def test_create_reservation_success(db):
     #CONFIGURAR SUCURSAL
     branch = ParkingBranch(nombre="TestBranch", direccion="Calle Falsa 123", horario="24hs")
     db.add(branch)
+    db.add(Settings(clave="precio_hora", valor=1500.0, sucursal="TestBranch"))
+    db.add(Settings(clave="precio_30min", valor=750.0, sucursal="TestBranch"))
     db.commit()
     
     data = AdminReservationCreate(

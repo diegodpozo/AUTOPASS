@@ -52,7 +52,7 @@ El proyecto sigue una estructura modular diseñada para el escalamiento y la alt
 ## Tecnologías
 
 - **Backend:** FastAPI (Python 3.14)
-- **Base de Datos:** SQLAlchemy — SQLite local o **Neon/Postgres en la nube** (compartida entre varias PC, región `sa-east-1`)
+- **Base de Datos:** SQLAlchemy — **Neon/Postgres en la nube** (compartida entre varias PC, región `sa-east-1`, por defecto) o SQLite local (opcional, aislado)
 - **Frontend:** Vanilla JS (ES6 Modules), CSS Moderno, Jinja2, Chart.js.
 - **IoT:** Paho-MQTT (ESP32) + Serie USB / pyserial (Arduino Uno).
 - **IA:** OpenCV + RapidOCR ONNX / PaddleOCR (lectura de patentes) + detección QR y consenso de votos.

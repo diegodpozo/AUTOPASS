@@ -327,9 +327,9 @@
         <br>• Variable <code>settings</code>: Instancia global exportada para consumo general.
       </span>
       <span class="func-detail"><strong>Variables críticas expuestas:</strong>
-        <br>• <code>DATABASE_URL</code>: Ruta del archivo de base de datos SQLite (ej. <code>sqlite:///./parking.db</code>).
+        <br>• <code>DATABASE_URL</code>: URL de conexión a la base de datos. Por defecto apunta a la base **compartida** Neon/Postgres (cadena completa en <code>.env.example</code>); como alternativa acepta una base local aislada (<code>sqlite:///./parking.db</code>).
         <br>• <code>SECRET_KEY</code>: Llave criptográfica para firmar los tokens JWT de sesión.
-        <br>• <code>RESERVA_HORA_MIN_SEGUNDOS</code>: Tiempo de anticipación mínimo para reservas por hora (por defecto 3600 segundos = 1 hora).
+        <br>• <code>RESERVA_HORA_MIN_SEGUNDOS</code>: Tiempo de anticipación mínimo para reservas por hora (por defecto 1800 segundos = 30 minutos).
         <br>• Configuración del Broker MQTT (<code>MQTT_BROKER</code>, <code>MQTT_PORT</code>) para controlar las barreras.
       </span>
       <span class="func-detail"><strong>Relación con otros archivos:</strong> Es importado por casi cualquier archivo que necesite saber una dirección IP, puerto, clave secreta o valor de tarifa base.</span>
@@ -338,12 +338,12 @@
     <li>
       <span class="layer-tag layer-core">Core</span>
       <strong>core/database.py</strong> &mdash; Motor y Conexión de Base de Datos (SQLAlchemy)
-      <p>Configura la comunicación con SQLite. Establece el "Engine" (puente de conexión), la clase base de la cual heredarán todos los modelos de tablas (<code>Base</code>) y el generador de sesiones de consulta (<code>SessionLocal</code>).</p>
+      <p>Configura la comunicación con la base de datos definida en <code>DATABASE_URL</code> (SQLite o PostgreSQL/Neon). Establece el "Engine" (puente de conexión), la clase base de la cual heredarán todos los modelos de tablas (<code>Base</code>) y el generador de sesiones de consulta (<code>SessionLocal</code>).</p>
       <span class="func-detail"><strong>Componentes clave:</strong>
         <br>• <code>SessionLocal</code>: Fábrica de conexiones de base de datos.
         <br>• <code>Base</code>: Clase declarativa base para mapear objetos Python a tablas SQL.
         <br>• <code>get_db()</code>: Función generadora (yield) usada como dependencia en las rutas de FastAPI. Abre una sesión de base de datos cuando llega una petición HTTP y la cierra automáticamente al terminar, evitando fugas de memoria.
-        <br>• <code>init_db()</code>: Inicializa físicamente el archivo SQLite creando todas las tablas que hereden de <code>Base</code> si no existen en el disco.
+        <br>• <code>init_db()</code>: Crea en la base indicada por <code>DATABASE_URL</code> todas las tablas que hereden de <code>Base</code> si no existen.
       </span>
     </li>
 

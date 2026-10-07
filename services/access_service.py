@@ -470,6 +470,8 @@ class AccessService(AccessOccupancyMixin):
             if not ultimo.pago_confirmado:
                 from services.billing_service import BillingService
                 monto = BillingService.calculate_debt(ultimo.fecha_hora, db, sucursal=sucursal, tipo_vehiculo=ultimo.tipo_vehiculo)
+                if monto is None:
+                    raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado. No se puede calcular el monto de la estadía.")
                 raise HTTPException(status_code=402, detail=f"Excedió cortesía ({int(minutos_transcurridos)} min). Debe abonar ${monto}")
             
             db.add(models.AccessLog(

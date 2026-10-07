@@ -39,7 +39,10 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
         p = ing.patente_detectada
         f_salida = salida_map.get(p)
         if not f_salida or f_salida < ing.fecha_hora:
-            deuda = 0.0 if ing.pago_confirmado else BillingService.calculate_debt(ing.fecha_hora, db)
+            if ing.pago_confirmado:
+                deuda = 0.0
+            else:
+                deuda = BillingService.calculate_debt(ing.fecha_hora, db, sucursal=ing.sucursal, tipo_vehiculo=ing.tipo_vehiculo)
             res.append({
                 "id": ing.id,
                 "patente": p,
@@ -57,26 +60,27 @@ def get_user_payment_history(db: Session = Depends(get_db), current_user: models
 
 @router.get("/rates")
 def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
-    """RETORNA LAS TARIFAS VIGENTES. SI HAY SEDE, PRIORIZA SUS PRECIOS Y COMPLETA CON GLOBALES."""
+    """RETORNA LAS TARIFAS CONFIGURADAS (NO INVENTA PRECIOS).
+    Sin sucursal: tarifas globales. Con sucursal: SOLO las de esa sede (sin heredar globales).
+    Si falta '30min' pero existe 'hora', la fracción vale la mitad de la hora."""
     keys = [
         "precio_30min", "precio_hora", "precio_dia", "precio_semana", "precio_quincena", "precio_mes",
-        "precio_30min_moto", "precio_hora_moto", "precio_dia_moto", "precio_semana_moto", "precio_quincena_moto", "precio_mes_moto"
+        "precio_30min_moto", "precio_hora_moto", "precio_dia_moto", "precio_semana_moto", "precio_quincena_moto", "precio_mes_moto",
+        "precio_30min_camioneta", "precio_hora_camioneta", "precio_dia_camioneta", "precio_semana_camioneta", "precio_quincena_camioneta", "precio_mes_camioneta"
     ]
 
-    global_settings = SettingsRepository.get_rates_by_claves(db, keys)
+    res = {
+        s.clave.replace("precio_", ""): s.valor
+        for s in SettingsRepository.get_all_by_sucursal(db, sucursal)
+        if s.clave in keys
+    }
 
-    res = {s.clave.replace("precio_", ""): s.valor for s in global_settings}
+    for familia in ("", "_moto", "_camioneta"):
+        clave_hora = f"hora{familia}"
+        clave_30 = f"30min{familia}"
+        if clave_30 not in res and res.get(clave_hora):
+            res[clave_30] = res[clave_hora] / 2
 
-    if sucursal:
-        branch_settings = SettingsRepository.get_rates_by_claves(db, keys, sucursales=[sucursal])
-        for s in branch_settings:
-            res[s.clave.replace("precio_", "")] = s.valor
-
-    # FALLBACK DE SEGURIDAD PARA ASEGURAR QUE EXISTAN LAS CLAVES BASICAS
-    defaults = {"30min": 750, "hora": 1500, "dia": 15000, "semana": 70000, "quincena": 120000, "mes": 200000}
-    for k, v in defaults.items():
-        if k not in res: res[k] = v
-        
     return res
 
 @router.post("/recharge-balance")
