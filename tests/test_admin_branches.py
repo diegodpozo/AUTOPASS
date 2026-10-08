@@ -16,13 +16,14 @@ import models
 from main import app
 from core.database import get_db, Base
 from core.limiter import limiter
-from core.security import get_super_admin, get_local_manager
+from core.security import get_super_admin, get_local_manager, get_operational_user
 from models.enums import ReservationStatus, PaymentStatus
 
 BRANCHES_URL = "/v1/admin/branches"
 FLOORS_URL = "/v1/admin/floors"
 ADMIN = type("AdminUser", (), {"rol": "admin", "id": 1, "sucursal": None})()
 LOCAL = type("LocalUser", (), {"rol": "local_admin", "id": 2, "sucursal": "Centro"})()
+OPER = type("OpUser", (), {"rol": "staff", "id": 3, "sucursal": "Centro"})()
 
 
 @pytest.fixture
@@ -42,6 +43,7 @@ def client():
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_super_admin] = lambda: ADMIN
     app.dependency_overrides[get_local_manager] = lambda: LOCAL
+    app.dependency_overrides[get_operational_user] = lambda: OPER
     limiter.reset()
     yield TestClient(app), TestSession
     app.dependency_overrides.clear()
@@ -77,6 +79,18 @@ def test_list_branches_con_resumen(client):
     assert len(data) == 2
     names = {b["nombre"] for b in data}
     assert names == {"Centro", "Norte"}
+
+
+def test_list_branches_requiere_auth(client):
+    tc, _ = client
+    saved = dict(app.dependency_overrides)
+    app.dependency_overrides.pop(get_operational_user, None)
+    try:
+        r = tc.get(BRANCHES_URL)
+        assert r.status_code in (401, 403)
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(saved)
 
 
 # ---------------------------------------------------------------------------

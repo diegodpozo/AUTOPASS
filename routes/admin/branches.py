@@ -7,7 +7,7 @@ from typing import List, Optional
 import models, schemas
 from core.database import get_db
 from core.limiter import admin_rate_limit
-from core.security import get_super_admin, get_local_manager, validate_local_admin_branch
+from core.security import get_super_admin, get_local_manager, get_operational_user, validate_local_admin_branch
 from services.branch_service import BranchService
 from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
@@ -15,7 +15,7 @@ from repositories.reservation_repository import ReservationRepository
 router = APIRouter()
 
 @router.get("/branches", response_model=List[schemas.BranchResponse])
-def list_branches(db: Session = Depends(get_db)):
+def list_branches(db: Session = Depends(get_db), current_user: models.User = Depends(get_operational_user)):
     """RETORNA LA LISTA DE TODAS LAS SUCURSALES CON RESUMEN DE CAPACIDAD Y OCUPACION."""
     return BranchService.list_branches_with_summary(db)
 

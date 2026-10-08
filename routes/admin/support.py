@@ -7,7 +7,6 @@ from core.limiter import admin_rate_limit
 from core.security import get_operational_user
 from services.support_service import SupportService
 from repositories.notification_repository import NotificationRepository
-from repositories.support_repository import SupportRepository
 from services.notification_service import NotificationService
 
 router = APIRouter()
@@ -39,7 +38,7 @@ def get_admin_support_ticket(
     current_user: models.User = Depends(get_operational_user)
 ):
     """RETORNA UN TICKET ESPECIFICO CON TODOS SUS MENSAJES."""
-    ticket = SupportRepository.get_by_id_with_user(db, ticket_id)
+    ticket = SupportService.get_admin_support_ticket_detail(db, current_user, ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
     messages = SupportService.get_ticket_messages(db, ticket_id)

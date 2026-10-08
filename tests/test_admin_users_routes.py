@@ -180,6 +180,12 @@ def test_create_user_local_no_puede_admin(client_local):
     r = c.post(USERS_URL, json=_valid_create(), params={"rol": "admin"})
     assert r.status_code == 403
     r = c.post(USERS_URL, json=_valid_create(), params={"rol": "staff"})
+    assert r.status_code == 403
+
+
+def test_create_user_local_si_puede_cliente(client_local):
+    c, TestSession = client_local
+    r = c.post(USERS_URL, json=_valid_create(), params={"rol": "user"})
     assert r.status_code == 200
     assert r.json()["sucursal"] == "Quilmes"
 
@@ -194,6 +200,13 @@ def test_update_user_admin_ok(client):
     r = c.patch(f"{USERS_URL}/{uid}", json={"nombre": "Carlos", "rol": "staff"})
     assert r.status_code == 200
     assert r.json()["status"] == "ok"
+
+
+def test_update_user_local_no_promueve_staff(client_local):
+    c, TestSession = client_local
+    uid = _seed_user(TestSession, email="promo@test.com", sucursal="Quilmes")
+    r = c.patch(f"{USERS_URL}/{uid}", json={"rol": "staff"})
+    assert r.status_code == 403
 
 
 def test_update_user_404(client):
@@ -247,6 +260,20 @@ def test_change_user_role_local_asigna_admin(client_local):
     uid = _seed_user(TestSession, email="target@test.com")
     r = c.post(f"{USERS_URL}/{uid}/role", params={"nuevo_rol": "admin"})
     assert r.status_code == 403
+
+
+def test_change_user_role_local_no_promueve_staff(client_local):
+    c, TestSession = client_local
+    uid = _seed_user(TestSession, email="promoveme@test.com", sucursal="Quilmes")
+    r = c.post(f"{USERS_URL}/{uid}/role", params={"nuevo_rol": "staff"})
+    assert r.status_code == 403
+
+
+def test_change_user_role_local_si_cambia_user_a_user(client_local):
+    c, TestSession = client_local
+    uid = _seed_user(TestSession, email="sigueuser@test.com", sucursal="Quilmes")
+    r = c.post(f"{USERS_URL}/{uid}/role", params={"nuevo_rol": "user"})
+    assert r.status_code == 200
 
 
 # ---------------------------------------------------------------------------

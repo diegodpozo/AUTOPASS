@@ -25,6 +25,8 @@ from core.security import get_operational_user
 SUPPORT_URL = "/v1/admin/support-tickets"
 ADMIN = type("AdminUser", (), {"rol": "admin", "id": 1, "sucursal": "General",
                                 "nombre": "Admin", "apellido": "Global"})()
+LOCAL = type("LocalUser", (), {"rol": "local_admin", "id": 2, "sucursal": "Centro",
+                               "nombre": "Local", "apellido": "Centro"})()
 
 
 @pytest.fixture
@@ -134,6 +136,32 @@ def test_get_admin_ticket_404(client):
     c, _ = client
     r = c.get(f"{SUPPORT_URL}/99999")
     assert r.status_code == 404
+
+
+def test_get_admin_ticket_403_otra_sucursal(client):
+    c, TestSession = client
+    tid = _seed_ticket(TestSession, sucursal="Norte")
+    saved = dict(app.dependency_overrides)
+    app.dependency_overrides[get_operational_user] = lambda: LOCAL
+    try:
+        r = c.get(f"{SUPPORT_URL}/{tid}")
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(saved)
+    assert r.status_code == 403
+
+
+def test_update_admin_ticket_403_otra_sucursal(client):
+    c, TestSession = client
+    tid = _seed_ticket(TestSession, sucursal="Norte")
+    saved = dict(app.dependency_overrides)
+    app.dependency_overrides[get_operational_user] = lambda: LOCAL
+    try:
+        r = c.patch(f"{SUPPORT_URL}/{tid}", json={"estado": "Resuelto"})
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(saved)
+    assert r.status_code == 403
 
 
 # ---------------------------------------------------------------------------

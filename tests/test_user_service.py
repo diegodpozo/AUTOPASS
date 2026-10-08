@@ -51,9 +51,15 @@ def test_local_admin_permissions_on_branch_users(db):
     res_up = update_user_admin(staff.id, up, db=db, admin=local_admin)
     assert res_up["status"] == "ok"
 
-    # 2. Local admin can change role of staff in their branch
+    # 2. Local admin CANNOT assign staff/staff roles (only the global admin can)
     fake_request = Request({"type": "http", "method": "POST", "path": "/", "headers": [], "client": ("127.0.0.1", 12345), "server": ("test", 80), "scheme": "http", "query_string": b""})
-    res_role = change_user_role(fake_request, staff.id, UserRole.STAFF, db=db, admin=local_admin)
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc:
+        change_user_role(fake_request, staff.id, UserRole.STAFF, db=db, admin=local_admin)
+    assert exc.value.status_code == 403
+
+    # 2b. ...but the global admin can assign any role
+    res_role = change_user_role(fake_request, staff.id, UserRole.STAFF, db=db, admin=global_admin)
     assert res_role["status"] == "ok"
 
     # 3. Local admin can delete staff in their branch

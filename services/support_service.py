@@ -162,10 +162,30 @@ class SupportService:
         return result
 
     @staticmethod
+    def _can_access_ticket(db: Session, current_user: models.User, ticket: models.SupportTicket) -> bool:
+        """TRUE SI EL USUARIO TIENE JURISDICCION SOBRE EL TICKET (MISMA REGLA QUE EL LISTADO ADMIN)."""
+        if current_user.rol == UserRole.ADMIN:
+            return True
+        user_suc_norm = normalize_branch_name(current_user.sucursal or "")
+        return bool(user_suc_norm and normalize_branch_name(ticket.sucursal or "") == user_suc_norm)
+
+    @staticmethod
+    def get_admin_support_ticket_detail(db: Session, current_user: models.User, ticket_id: int):
+        """RETORNA UN TICKET CON SUS MENSAJES RESPETANDO LA JURISDICCION POR SUCURSAL."""
+        ticket = SupportRepository.get_by_id_with_user(db, ticket_id)
+        if not ticket:
+            return None
+        if not SupportService._can_access_ticket(db, current_user, ticket):
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre tickets de otra sucursal")
+        return ticket
+
+    @staticmethod
     def update_ticket_status(db: Session, current_user: models.User, ticket_id: int, estado: str, respuesta: Optional[str] = None) -> models.SupportTicket:
         ticket = SupportRepository.get_by_id(db, ticket_id)
         if not ticket:
             return None
+        if not SupportService._can_access_ticket(db, current_user, ticket):
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre tickets de otra sucursal")
 
         if (ticket.estado or "").strip().lower() == "resuelto":
             raise HTTPException(status_code=400, detail="Este ticket ya fue resuelto y quedó bloqueado. No se puede cambiar el estado ni responder.")

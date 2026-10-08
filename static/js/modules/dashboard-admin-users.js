@@ -197,9 +197,10 @@ export async function showCreateUserModal() {
     `;
 
     if (rol === 'local_admin') {
+        // R4/RBAC: un administrador local solo puede dar de alta clientes (USER).
+        // La creación/promoción de personal (STAFF/LOCAL_ADMIN) es solo del Admin Global.
         roleSelect.innerHTML = `
-            <option value="staff" style="background: #111;">Empleado</option>
-            <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
+            <option value="user" style="background: #111;">Cliente</option>
         `;
         
         if (branchRow) branchRow.style.display = 'block';
@@ -336,16 +337,15 @@ export async function openEditUserModal(userId) {
     const mySucursal = localStorage.getItem('sucursal') || '';
 
     if (myRol === 'local_admin') {
-        if (u.rol === 'user') {
-            roleSelect.innerHTML = `<option value="user" style="background: #111;">Cliente</option>`;
-            roleSelect.disabled = true;
-        } else {
-            roleSelect.innerHTML = `
-                <option value="staff" style="background: #111;">Empleado</option>
-                <option value="local_admin" style="background: #111;">Administrador de Sucursal</option>
-            `;
-            roleSelect.disabled = false;
-        }
+        // R4/RBAC: la asignación de roles es del Admin Global. El local solo edita datos.
+        const rolLabels = {
+            user: 'Cliente',
+            staff: 'Empleado',
+            local_admin: 'Administrador de Sucursal',
+            admin: 'Administrador General'
+        };
+        roleSelect.innerHTML = `<option value="${u.rol}" style="background: #111;">${rolLabels[u.rol] || u.rol}</option>`;
+        roleSelect.disabled = true;
         
         const branchSelect = document.getElementById('edit-user-sucursal');
         if (branchSelect) {
@@ -397,18 +397,23 @@ export async function handleAdminEditUser(event) {
     event.preventDefault();
     const btn = event.target.querySelector('button[type="submit"]');
     const userId = document.getElementById('edit-user-id').value;
-    const rol = document.getElementById('edit-user-rol').value;
-    const sucursal = (rol === 'staff' || rol === 'local_admin') ? document.getElementById('edit-user-sucursal').value : null;
+    const rolSelect = document.getElementById('edit-user-rol');
+    const rol = rolSelect ? rolSelect.value : '';
+    const isLocal = localStorage.getItem('rol') === 'local_admin';
+    const sucursalInput = document.getElementById('edit-user-sucursal');
+    const sucursal = (rol === 'staff' || rol === 'local_admin') ? (sucursalInput ? sucursalInput.value : null) : null;
 
     const payload = {
         nombre: document.getElementById('edit-user-nombre').value,
         apellido: document.getElementById('edit-user-apellido').value,
         email: document.getElementById('edit-user-email').value,
         dni: document.getElementById('edit-user-dni').value,
-        telefono: document.getElementById('edit-user-tel').value,
-        rol: rol,
-        sucursal: sucursal
+        telefono: document.getElementById('edit-user-tel').value
     };
+    if (!isLocal) {
+        payload.rol = rol;
+    }
+    payload.sucursal = sucursal;
 
     btn.disabled = true;
     const res = await api.patch(`/admin/users/${userId}`, payload);

@@ -5,8 +5,9 @@ Las 6 rutas de admin —incluido el parsing de fecha, el rollback de _run_all_ch
 el gate de rol— estaban sin cubrir.
 
 Cubre: GET /status y GET "" (alias), POST /advance, /rewind, /set-target (con ISO
-valido e invalido -> 400), /set, /reset, el gate de local_manager (403 para staff) y
-_run_all_checks ejecutando los 5 workers sin tumbar la ruta si uno falla.
+valido e invalido -> 400), /set, /reset, el gate de rol (operativo: admin/local/staff
+pueden; cliente -> 403) y _run_all_checks ejecutando los 5 workers sin tumbar la ruta
+si uno falla. El reloj virtual es una herramienta de TEST (se descartará en produccion).
 """
 import datetime
 import importlib
@@ -200,16 +201,17 @@ def test_reset_deja_el_reloj_en_cero(client):
 
 # --- Gate de rol ---
 
-def test_staff_no_puede_manipular_el_reloj(client):
-    """get_local_manager acepta ADMIN y LOCAL_ADMIN, pero NO staff."""
+def test_staff_si_puede_manipular_el_reloj(client):
+    """El reloj virtual es una herramienta de TEST: cualquier operativo (staff
+    incluido) puede usarlo."""
     _set_user(rol=UserRole.STAFF)
     r = client.post("/virtual-time/advance", json={"hours": 1})
-    assert r.status_code == 403
-    assert TimeService.get_offset() == 0
+    assert r.status_code == 200
+    assert TimeService.get_offset() == 3600
 
 
 def test_admin_global_si_puede(client):
-    """El docstring de get_local_manager dice 'global o local': admin global entra."""
+    """El reloj virtual es GLOBAL: lo usan los roles operativos (test)."""
     _set_user(rol=UserRole.ADMIN)
     assert client.post("/virtual-time/advance", json={"hours": 1}).status_code == 200
 
@@ -219,9 +221,17 @@ def test_local_admin_si_puede(client):
     assert client.post("/virtual-time/advance", json={"hours": 1}).status_code == 200
 
 
-def test_status_tambien_exige_rol_administrativo(client):
-    """El gate protege tambien la lectura: staff no ve el estado del reloj."""
-    _set_user(rol=UserRole.STAFF)
+def test_cliente_no_puede_manipular_el_reloj(client):
+    """Un cliente (USER) no es operativo: no toca el reloj."""
+    _set_user(rol=UserRole.USER)
+    r = client.post("/virtual-time/advance", json={"hours": 1})
+    assert r.status_code == 403
+    assert TimeService.get_offset() == 0
+
+
+def test_status_tambien_exige_rol_operativo(client):
+    """El gate protege tambien la lectura: un cliente no ve el estado del reloj."""
+    _set_user(rol=UserRole.USER)
     assert client.get("/virtual-time/status").status_code == 403
 
 

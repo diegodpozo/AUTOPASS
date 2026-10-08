@@ -25,6 +25,19 @@ def validate_local_admin_user_permission(admin: models.User, target_user: models
         raise HTTPException(status_code=403, detail="No tenés permisos sobre usuarios de otra sucursal")
 
 
+def validate_staff_role_assignment(admin: models.User, nuevo_rol):
+    """SOLO EL ADMINISTRADOR GLOBAL PUEDE CREAR/PROMOVER PERSONAL (STAFF/LOCAL_ADMIN).
+    Un administrador local solo gestiona el rol base (USER, clientes)."""
+    if str(admin.rol) == UserRole.ADMIN.value:
+        return
+    target = getattr(nuevo_rol, "value", nuevo_rol)
+    if str(target) != UserRole.USER.value:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el Administrador Global puede crear o asignar roles de personal (STAFF/LOCAL_ADMIN)",
+        )
+
+
 @router.get("/users")
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """RETORNA LA LISTA DE USUARIOS. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES REGISTRADOS."""
@@ -47,6 +60,7 @@ def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.US
             raise HTTPException(status_code=403, detail="No podés crear un Administrador Global")
         user_data.sucursal = admin.sucursal
     
+    validate_staff_role_assignment(admin, rol)
     return UserService.create_user(db, user_data, rol, user_data.sucursal)
 
 
@@ -58,6 +72,8 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     validate_local_admin_user_permission(admin, user)
+    if user_data.rol:
+        validate_staff_role_assignment(admin, user_data.rol)
     if str(admin.rol) != UserRole.ADMIN.value:
         admin_suc_norm = normalize_branch_name(admin.sucursal or "")
         if user_data.rol and str(user_data.rol) == UserRole.ADMIN.value:
@@ -86,6 +102,7 @@ def change_user_role(request: Request, user_id: int, nuevo_rol: UserRole, db: Se
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     validate_local_admin_user_permission(admin, user)
+    validate_staff_role_assignment(admin, nuevo_rol)
     if str(admin.rol) != UserRole.ADMIN.value and nuevo_rol == UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="No tenés permisos para asignar o modificar el rol de Administrador Global")
 

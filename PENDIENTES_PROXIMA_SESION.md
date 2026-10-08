@@ -68,16 +68,19 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 - **AUDITORIA_VALIDACIONES.md** (commit `e637bd4`): 12 hallazgos V1–V12 aún vigentes en el código.
   Plan F1 (críticos), F2 (simetría), F3 (defensa en profundidad) documentado. **No se tocó código
   todavía** — decidir qué hallazgos corregir.
-- **AUDITORIA_RBAC.md** (documento nuevo, sin commitear): auditoría de autorización completa.
-  10 hallazgos (R1–R10). Críticos para próximos pasos:
-  - **R1 ALTA**: `GET /v1/admin/branches` sin dependencia de auth (`routes/admin/branches.py:18`).
-  - **R2 ALTA**: detail/PATCH de tickets de soporte sin filtro de sucursal
-    (`routes/admin/support.py:42,73`; el listado sí filtra).
-  - **R3 MEDIA-ALTA**: virtual time acepta `local_manager` pero el recurso es **global**
-    (`routes/admin/virtual_time.py`).
-  - **R4 MEDIA-ALTA**: un local_admin puede promover a otro a STAFF/LOCAL_ADMIN, incluso de otra
-    sucursal (`validate_local_admin_user_permission` no restringe target USER por sucursal).
-  - Plan por fases (F1–F3) y fortalezas confirmadas en el documento.
+- **AUDITORIA_RBAC.md**: auditoría de autorización completa, 10 hallazgos (R1–R10).
+  **Fase 1 (R1–R4) APLICADA y verificada (2026-10-08):**
+  - R1: `GET /v1/admin/branches` ahora exige `get_operational_user` (antes sin auth).
+  - R2: detail/PATCH de tickets de soporte ahora con scoping por sucursal
+    (`SupportService._can_access_ticket` → 403 cross-sucursal).
+  - R3: **DESCARTADO por decisión del usuario** — el reloj virtual es feature de TEST que se
+    descartará en producción. Queda en `get_operational_user` (admin/local/staff; clientes 403).
+  - R4: `validate_staff_role_assignment` en create/update/role: solo Admin Global asigna
+    STAFF/LOCAL_ADMIN; local solo gestiona clientes. Front `dashboard-admin-users.js`
+    sincronizado (alta: local solo "Cliente"; edición: rol solo-lecturo).
+  **Fases 2–3 (R5–R10) pendientes:** scoping de `patente_lookup`/`redemptions`, auth en
+  `camera-reading`, rol en WS occupancy, `mark_ticket_notifications_read`, normalización de
+  comparaciones de sucursal (`get_capture`, cámaras, payment_history).
 - **5 archivos de test cuelgan por puerto serial real (Arduino)** en esta máquina:
   `test_access_service.py`, `test_access_flow.py`, `test_reservation_spots.py`,
   `test_alpr_node_auth.py`, `test_bugfixes_funcionales.py`. `HardwareService.send_serial_command`
