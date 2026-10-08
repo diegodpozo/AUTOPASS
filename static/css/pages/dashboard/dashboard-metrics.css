@@ -71,7 +71,6 @@
 }
 
 .metrica-card-badge.disponible { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-.metrica-card-badge.proximamente { background: var(--violet-glow); color: var(--violet-brand); }
 
 /* --- GRÁFICO MÓVIL --- */
 .metricas-chart-legend {
@@ -273,6 +272,7 @@
     font-size: 0.82rem;
     text-align: center;
 }
+.heatmap-vacio i { opacity: 0.4; }
 
 /* --- GRILLA DEL MAPA DE CALOR: DÍAS DEL MES (COLUMNAS) × HORAS DE APERTURA (FILAS) --- */
 .heatmap-wrap { overflow-x: auto; padding-top: 6px; }

@@ -75,6 +75,9 @@
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-left: env(safe-area-inset-left, 0px);
 
+    /* PARAMETROS DE VISTAS DINAMICAS (seteados por JS vía style attr) */
+    --hm-cols: 31;   /* Columnas del mapa de calor (dias del mes, sobrescrito inline) */
+
     /* ANCHOS DE MODALES */
     --modal-sm: 420px;   /* Confirmaciones, alertas */
     --modal-md: 520px;   /* Formularios estandar (login, vehiculo) */

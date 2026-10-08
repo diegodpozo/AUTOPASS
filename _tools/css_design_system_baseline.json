@@ -1,38 +1,38 @@
 {
   "alpha_scale": {
     "niveles_por_familia": {
-      "blanco": 19,
-      "dorado": 23,
+      "blanco": 20,
+      "dorado": 25,
       "gris": 9,
-      "negro": 20,
+      "negro": 19,
       "otros": 29
     },
-    "niveles_totales": 100
+    "niveles_totales": 102
   },
   "color": {
-    "equivalentes_a_token": 179,
-    "literales_no_genericos": 1090,
+    "equivalentes_a_token": 178,
+    "literales_no_genericos": 1079,
     "rgba_distintos": 340
   },
   "movimiento": {
     "animaciones_infinitas": 13,
     "bloques_prefers_reduced_motion": 1,
-    "declaraciones_transition_animation": 229,
+    "declaraciones_transition_animation": 227,
     "keyframes": 18
   },
   "shadow": {
     "distintas": 127
   },
   "spacing": {
-    "adopcion_escala_pct": 99.2,
-    "ocurrencias_con_valor_repetido": 1329,
-    "ocurrencias_totales": 1340,
-    "valores_de_un_solo_uso": 11,
+    "adopcion_escala_pct": 99.1,
+    "ocurrencias_con_valor_repetido": 1341,
+    "ocurrencias_totales": 1353,
+    "valores_de_un_solo_uso": 12,
     "valores_distintos": 55,
-    "valores_reutilizados": 44
+    "valores_reutilizados": 43
   },
   "transition": {
     "curvas_distintas": 7,
-    "duraciones_distintas": 12
+    "duraciones_distintas": 13
   }
 }
