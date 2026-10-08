@@ -1,7 +1,7 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 07/10/2026
+Última actualización: 08/10/2026
 
 ## Completado (no reabrir salvo regresión)
 
@@ -44,12 +44,24 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 
 ## Pendiente tests / CI (entorno)
 
-- **2 tests fallan SIEMPRE (pre-existentes, NO los causó la unificación)**:
-  - `tests/test_admin_branches.py::test_list_branches_con_resumen` → la política de tarifas
-    estrictas devuelve `None` y choca con `BranchResponse` (campos `float`). Fix candidato:
-    hacer `Optional`/default en el schema o sembrar settings en el test.
-  - `tests/test_inline_styles_guard.py::test_guard_inline_styles_no_regresiones`. Revisar qué
-    template/style dispara el guard.
+- **2 tests SI fallaban (pre-existentes, de commits remotos) — YA CORREGIDOS y pusheados en
+  `f07494a`**:
+  - `tests/test_admin_branches.py::test_list_branches_con_resumen` → `BranchResponse.tarifa_*`
+    ahora `Optional[float] = None` (tarifario no configurado = null, no 500).
+  - `tests/test_inline_styles_guard.py::test_guard_inline_styles_no_regresiones` → opacidad del
+    heatmap vacío movida de `style=inline` a `.heatmap-vacio i` en dashboard-metrics.css.
+  - En el mismo commit se dejaron verdes 3 guards CSS que 16d6d3c (MAPA DE CALOR) había roto sin
+    actualizar: se borró `.metrica-card-badge.proximamente` (huérfana), se declaró `--hm-cols`
+    en variables.css (token sin declarar) y se registró el baseline del design system.
+  - Verificado: suite completa `782 passed` (con y sin `--cov`), 8/8 guards en verde.
+
+- **RESUELTO — test flake de Mercado Pago que dependía del entorno**:
+  `tests/test_bugfixes_funcionales.py::test_checkout_mercadopago_de_estadia_acepta_patente_en_distinto_formato`
+  usaba el `MP_ACCESS_TOKEN` real del `.env` (`settings.MP_ENABLED` = bool(token)), por eso pasaba
+  local y daba `503` en un entorno sin ese secreto (git/CI). Fix aplicado (patrón de
+  `test_mercadopago.py:71`): `monkeypatch` de `MP_ACCESS_TOKEN`/`BASE_URL` + fake `_mp_request`.
+  Verificado pasando con `MP_ACCESS_TOKEN=""` y suite completa `782 passed`.
+  Sin commitear aún.
 - **5 archivos de test cuelgan por puerto serial real (Arduino)** en esta máquina:
   `test_access_service.py`, `test_access_flow.py`, `test_reservation_spots.py`,
   `test_alpr_node_auth.py`, `test_bugfixes_funcionales.py`. `HardwareService.send_serial_command`
@@ -60,6 +72,7 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 
 ## Notas operación
 
+- Última versión local = remoto = `f07494a` (fix tests/guards). Working tree limpio.
 - Los scripts de migración de Neon se dejaron en `%TEMP%\opencode\*` (migrate_normalize.py,
   migrate2.py, copy_tarifas.py, collision_check.py). Recrearlos si se necesitan.
 - Regla AGENTS: no commitear/pushear sin pedido expreso. Antes de `git pull`, revisar si hay

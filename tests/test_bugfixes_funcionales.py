@@ -141,8 +141,17 @@ def test_validate_qr_no_expone_mensajes_de_error_interno(db):
     assert "local variable" not in res["message"]
 
 
-def test_checkout_mercadopago_de_estadia_acepta_patente_en_distinto_formato(db):
+def test_checkout_mercadopago_de_estadia_acepta_patente_en_distinto_formato(db, monkeypatch):
+    from services import mercadopago_service as mp_service
     from services.mercadopago_service import create_payment
+
+    monkeypatch.setattr(mp_service.settings, "MP_ACCESS_TOKEN", "TEST-TOKEN")
+    monkeypatch.setattr(mp_service.settings, "BASE_URL", "https://localhost")
+
+    def fake_mp_request(method, path, payload=None):
+        return {"id": "PREF-1", "init_point": "https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=PREF-1"}
+
+    monkeypatch.setattr(mp_service, "_mp_request", fake_mp_request)
 
     _sucursal(db)
     user = _usuario(db)
@@ -152,6 +161,7 @@ def test_checkout_mercadopago_de_estadia_acepta_patente_en_distinto_formato(db):
     res = create_payment(db, user, schemas.MercadoPagoCheckout(tipo="estadia", access_log_id=log.id))
 
     assert res["external_reference"].startswith("AP-ESTADIA-")
+    assert res["init_point"]
     assert db.query(models.MercadoPagoPayment).count() == 1
 
 
