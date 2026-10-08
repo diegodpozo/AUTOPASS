@@ -1,7 +1,6 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional
-import re
-from schemas.validators import validate_password_strength
+from schemas.validators import validate_password_strength, validate_dni_digits, validate_phone_digits, validate_email_format
 
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -22,10 +21,12 @@ class UserBase(BaseModel):
     @field_validator('telefono')
     @classmethod
     def validate_telefono(cls, v):
-        clean = re.sub(r'[^0-9]', '', v)
-        if len(clean) < 10:
-            raise ValueError('El teléfono debe contener al menos 10 dígitos (característica + número)')
-        return v
+        return validate_phone_digits(v)
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        return validate_email_format(v)
 
 class UserUpdate(BaseModel):
     nombre: Optional[str] = None
@@ -33,6 +34,16 @@ class UserUpdate(BaseModel):
     telefono: Optional[str] = None
     email: Optional[str] = None
     direccion: Optional[str] = None
+
+    @field_validator('telefono')
+    @classmethod
+    def validate_telefono(cls, v):
+        return validate_phone_digits(v)
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        return validate_email_format(v)
 
 class UserAdminUpdate(BaseModel):
     nombre: Optional[str] = None
@@ -43,16 +54,28 @@ class UserAdminUpdate(BaseModel):
     sucursal: Optional[str] = None
     rol: Optional[str] = None
 
+    @field_validator('dni')
+    @classmethod
+    def validate_dni(cls, v):
+        return validate_dni_digits(v)
+
+    @field_validator('telefono')
+    @classmethod
+    def validate_telefono(cls, v):
+        return validate_phone_digits(v)
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        return validate_email_format(v)
+
 class UserCreate(UserBase):
     password: str
 
     @field_validator('dni')
     @classmethod
     def validate_dni(cls, v):
-        clean = re.sub(r'[^0-9]', '', v or '')
-        if not clean or not clean.isdigit():
-            raise ValueError('El DNI debe contener únicamente números (se toleran puntos y espacios)')
-        return clean
+        return validate_dni_digits(v)
 
     @field_validator('password')
     @classmethod
@@ -72,6 +95,11 @@ class UserLogin(BaseModel):
     email: str
     password: str
     device_id: Optional[str] = None
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        return validate_email_format(v)
 
 class RechargeBalance(BaseModel):
     monto: float

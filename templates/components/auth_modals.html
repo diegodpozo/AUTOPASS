@@ -110,15 +110,17 @@
                     <label>DNI</label>
                     <div class="input-with-icon">
                         <i class="fas fa-id-card"></i>
-                        <input type="text" id="reg-dni" placeholder="12345678" maxlength="8" required>
+                        <input type="text" id="reg-dni" class="digits-only" placeholder="12345678" maxlength="8" required>
                     </div>
+                    <small class="field-hint">Solo números, sin puntos.</small>
                 </div>
                 <div class="form-group">
                     <label>Teléfono</label>
                     <div class="input-with-icon">
                         <i class="fas fa-phone"></i>
-                        <input type="tel" id="reg-tel" placeholder="11 2233 4455" required>
+                        <input type="tel" id="reg-tel" class="digits-only" placeholder="1122334455" maxlength="13" required>
                     </div>
+                    <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                 </div>
             </div>
             <div class="form-group">
@@ -206,15 +208,17 @@
                     <label>DNI</label>
                     <div class="input-with-icon">
                         <i class="fas fa-id-card"></i>
-                        <input type="text" id="oauth-signup-dni" placeholder="12345678" maxlength="8" required>
+                        <input type="text" id="oauth-signup-dni" class="digits-only" placeholder="12345678" maxlength="8" required>
                     </div>
+                    <small class="field-hint">Solo números, sin puntos.</small>
                 </div>
                 <div class="form-group">
                     <label>Teléfono</label>
                     <div class="input-with-icon">
                         <i class="fas fa-phone"></i>
-                        <input type="tel" id="oauth-signup-tel" placeholder="11 2233 4455" required>
+                        <input type="tel" id="oauth-signup-tel" class="digits-only" placeholder="1122334455" maxlength="13" required>
                     </div>
+                    <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                 </div>
             </div>
             <p class="oauth-note"><i class="fas fa-shield-halved"></i> No necesitás contraseña: vas a ingresar siempre con tu red social.</p>

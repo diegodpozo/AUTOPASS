@@ -7,6 +7,15 @@
 .input-with-icon i:not(.toggle-password) { position: absolute; left: 15px; color: var(--dorado); font-size: 0.85rem; pointer-events: none; }
 .input-with-icon input { padding-left: 45px; }
 
+/* --- TEXTO DE AYUDA DE CAMPOS DE FORMULARIO (EJ: "Solo números, sin puntos") --- */
+.field-hint {
+    display: block;
+    margin-top: 6px;
+    color: #888;
+    font-size: 0.7rem;
+    line-height: 1.2;
+}
+
 input, select {
     width: 100%; background: #000; border: 1px solid #333;
     padding: 15px; border-radius: var(--radius-md); color: #fff; outline: none; transition: 0.3s;

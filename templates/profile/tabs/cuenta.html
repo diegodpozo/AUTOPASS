@@ -91,7 +91,8 @@ clase_lead="saludo-lead--avatar",
                             </div>
                             <div class="edit-mode">
                                 <label>Editar DNI</label>
-                                <input type="text" id="input-dni" class="input-premium-sm" placeholder="Tu DNI">
+                                <input type="text" id="input-dni" class="input-premium-sm digits-only" placeholder="Tu DNI">
+                                <small class="field-hint">Solo números, sin puntos.</small>
                                 <div class="edit-actions">
                                     <button class="btn btn--sm btn--outline" onclick="exitEditMode('dni')">Cancelar</button>
                                     <button class="btn btn--sm btn--primary" onclick="saveField('dni', event)">Guardar</button>
@@ -139,7 +140,8 @@ clase_lead="saludo-lead--avatar",
                             </div>
                             <div class="edit-mode">
                                 <label>Editar Teléfono</label>
-                                <input type="tel" id="input-telefono" class="input-premium-sm" placeholder="Tu teléfono">
+                                <input type="tel" id="input-telefono" class="input-premium-sm digits-only" placeholder="1122334455" maxlength="13">
+                                <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                                 <div class="edit-actions">
                                     <button class="btn btn--sm btn--outline" onclick="exitEditMode('telefono')">Cancelar</button>
                                     <button class="btn btn--sm btn--primary" onclick="saveField('telefono', event)">Guardar</button>

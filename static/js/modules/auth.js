@@ -147,8 +147,8 @@ export async function handleRegister(e) {
         return;
     }
 
-    if (telefono.length < 10) {
-        errorMsg.innerText = 'El teléfono debe tener al menos 10 dígitos';
+    if (telefono.length < 10 || telefono.length > 13) {
+        errorMsg.innerText = 'El teléfono debe tener entre 10 y 13 dígitos';
         errorMsg.style.display = 'block';
         return;
     }
@@ -322,8 +322,8 @@ export async function handleOAuthComplete(e) {
         errorMsg.style.display = 'block';
         return;
     }
-    if (telefono.length < 10) {
-        errorMsg.innerText = 'El teléfono debe tener al menos 10 dígitos';
+    if (telefono.length < 10 || telefono.length > 13) {
+        errorMsg.innerText = 'El teléfono debe tener entre 10 y 13 dígitos';
         errorMsg.style.display = 'block';
         return;
     }

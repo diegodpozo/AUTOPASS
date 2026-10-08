@@ -297,6 +297,23 @@ export function filterTable(tbodyId, query) {
 }
 
 /**
+ * HABILITA UN INPUT PARA ACEPTAR SOLO DIGITOS (EJ: DNI, TELEFONO).
+ * Bloquea letras/simbolos al tipear y limpia lo pegado o autocompletado.
+ */
+export function bindDigitsOnly(input) {
+    input.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey || e.key.length > 1) return;
+        if (/\D/.test(e.key)) e.preventDefault();
+    });
+    input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '');
+    });
+}
+
+// INPUTS DE SOLO DIGITOS: SE BINDER AUTOMATICAMENTE LOS MARCADOS CON LA CLASE "digits-only"
+document.querySelectorAll('input.digits-only').forEach(bindDigitsOnly);
+
+/**
  * VALIDA LA PATENTE SEGUN EL TIPO Y PAIS.
  */
 export function validatePlate(plate, tipo) {
