@@ -179,7 +179,7 @@ def test_complete_oauth_signup_creates_user(db, monkeypatch):
     code = oauth_service.issue_oauth_signup_code("nuevo@mail.com", "google", "Ana", "Gomez")
     user = oauth_service.complete_oauth_signup(db, code, "30111222", "1122334455")
     assert user.email == "nuevo@mail.com"
-    assert user.dni == "30.111.222"
+    assert user.dni == "30111222"
     assert user.telefono == "1122334455"
     assert user.nombre == "Ana"
     assert user.apellido == "Gomez"
@@ -206,7 +206,7 @@ def test_complete_oauth_signup_rejects_duplicate_email(db, monkeypatch):
 
 def test_complete_oauth_signup_rejects_duplicate_dni(db, monkeypatch):
     monkeypatch.setattr(oauth_service.settings, "OAUTH_SIGNUP_EXPIRE_MINUTES", 15)
-    db.add(User(email="otro@mail.com", nombre="X", apellido="Y", dni="30.111.222",
+    db.add(User(email="otro@mail.com", nombre="X", apellido="Y", dni="30111222",
                 password_hash="h", rol="user"))
     db.commit()
     code = oauth_service.issue_oauth_signup_code("nuevo@mail.com", "google", "Ana", "Gomez")

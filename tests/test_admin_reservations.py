@@ -278,7 +278,7 @@ def test_edit_admin_reservation_actualiza_datos_y_recalcula_monto(db):
     )
 
     res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
-    assert res.patente == "ABC 124"
+    assert res.patente == "ABC124"
     assert res.fecha_inicio == "2026-07-11 08:00"
     assert res.fecha_fin == "2026-07-11 11:00"
     assert res.origen == "manual"
@@ -310,7 +310,7 @@ def test_edit_admin_reservation_vincula_usuario_por_patente(db):
 
     res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
     assert res.user_id == user.id
-    assert res.patente == "ABC 123"
+    assert res.patente == "ABC123"
 
 
 def test_edit_reserva_de_cliente_rechazada(db):
@@ -388,7 +388,7 @@ def test_edit_sin_user_id_conserva_vinculo_si_la_patente_sigue_siendo_del_usuari
 
     res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
     assert res.user_id == user.id
-    assert res.patente == "ABC 123"
+    assert res.patente == "ABC123"
 
 
 def test_edit_sin_user_id_desvincula_si_la_patente_ya_no_es_del_usuario(db):
@@ -401,15 +401,15 @@ def test_edit_sin_user_id_desvincula_si_la_patente_ya_no_es_del_usuario(db):
 
     res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
     assert res.user_id is None
-    assert res.patente == "ZZZ 999"
+    assert res.patente == "ZZZ999"
 
 
-def test_create_admin_reservation_formatea_patente_con_espacios(db):
+def test_create_admin_reservation_almacena_patente_canonica_sin_espacios(db):
     staff = _staff(db)
     resultado = create_admin_reservation(_reserva_data(patente="as122tr", pagar=False), db, staff)
 
     res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
-    assert res.patente == "AS 122 TR"
+    assert res.patente == "AS122TR"
 
 
 def test_disabled_hours_excluye_propia_reserva_al_editar(db):

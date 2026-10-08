@@ -77,7 +77,7 @@ def test_add_vehicle_success(db):
     assert res["status"] == "ok"
     vehicles = UserService.list_vehicles(db, user.id)
     assert len(vehicles) == 1
-    assert vehicles[0].patente == "AB 123 CD"
+    assert vehicles[0].patente == "AB123CD"
     assert vehicles[0].marca_modelo == "Ford Ka"
 
 def test_add_vehicle_invalid_plate(db):

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.logger import get_logger
-from core.normalize import format_plate, normalize_name as _normalizar_sucursal
+from core.normalize import normalize_plate, normalize_name as _normalizar_sucursal
 from models.enums import PaymentStatus, ReservationStatus, UserRole, VehicleType
 from repositories.access_log_repository import AccessRepository
 from repositories.branch_repository import BranchRepository
@@ -225,7 +225,7 @@ class ReservationService(ReservationPaymentsMixin):
         vehicle = VehicleRepository.get_by_patente_and_user(db, data.patente, user.id)
         if not vehicle:
             raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
-        p_clean = data.patente.upper().replace(' ', '')
+        p_clean = normalize_plate(data.patente)
         # LIMITACION: maximo 5 reservas activas o pendientes por usuario
         from models.reservation import Reservation
         from models.enums import ReservationStatus
@@ -288,7 +288,7 @@ class ReservationService(ReservationPaymentsMixin):
         info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
         tipo_v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
         new_res = models.Reservation(
-            user_id=user.id, patente=data.patente, fecha_inicio=data.fecha_inicio, fecha_fin=data.fecha_fin,
+            user_id=user.id, patente=normalize_plate(data.patente), fecha_inicio=data.fecha_inicio, fecha_fin=data.fecha_fin,
             tipo_estadia=data.tipo_estadia, monto_total=monto, estado_pago=estado_pago, estado_reserva=ReservationStatus.PENDIENTE,
             sucursal_nombre=data.sucursal_nombre, sucursal_info=info_sede,
             dias_semana=data.dias_semana, tipo_vehiculo=tipo_v_str
@@ -337,7 +337,7 @@ class ReservationService(ReservationPaymentsMixin):
         if data.patente:
             if not VehicleRepository.get_by_patente_and_user(db, data.patente, user.id):
                 raise HTTPException(status_code=400, detail="Patente no vinculada")
-            res.patente = data.patente
+            res.patente = normalize_plate(data.patente)
         if data.tipo_estadia:
             res.tipo_estadia = data.tipo_estadia
         if data.sucursal_nombre:
@@ -456,7 +456,7 @@ class ReservationService(ReservationPaymentsMixin):
 
     @staticmethod
     def create_admin_reservation(db: Session, staff, data) -> dict:
-        data.patente = format_plate(data.patente)
+        data.patente = normalize_plate(data.patente)
         if staff.rol != UserRole.ADMIN:
             data.sucursal_nombre = staff.sucursal
         _, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)
@@ -492,7 +492,7 @@ class ReservationService(ReservationPaymentsMixin):
 
     @staticmethod
     def update_admin_reservation(db: Session, staff, res_id: int, data) -> dict:
-        data.patente = format_plate(data.patente)
+        data.patente = normalize_plate(data.patente)
         reserva = ReservationService.get_reservation_or_404(db, res_id)
         if (getattr(reserva, "origen", None) or "cliente") != "manual":
             raise HTTPException(status_code=400, detail="Solo se pueden editar reservas creadas por administración o empleados")

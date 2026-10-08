@@ -4,6 +4,7 @@ import models, schemas
 from core.database import get_db
 from core.security import get_current_user
 from core.logger import get_logger
+from core.normalize import normalize_plate
 from services.billing_service import BillingService
 from repositories.access_log_repository import AccessRepository
 from repositories.settings_repository import SettingsRepository
@@ -15,7 +16,7 @@ router = APIRouter()
 @router.get("/active-stays")
 def get_user_active_stays(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """LISTA LAS ESTADIAS ACTUALES (DENTRO DEL PREDIO) PARA LOS VEHICULOS DEL USUARIO."""
-    user_plates = [v.patente for v in current_user.vehicles]
+    user_plates = [normalize_plate(v.patente) for v in current_user.vehicles]
     if not user_plates:
         return []
 
@@ -55,7 +56,7 @@ def get_user_active_stays(db: Session = Depends(get_db), current_user: models.Us
 @router.get("/payment-history")
 def get_user_payment_history(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """HISTORIAL CRONOLOGICO DE PAGOS REALIZADOS POR EL USUARIO."""
-    user_plates = [v.patente for v in current_user.vehicles]
+    user_plates = [normalize_plate(v.patente) for v in current_user.vehicles]
     return AccessRepository.get_paid_logs_by_patentes(db, user_plates)
 
 @router.get("/rates")

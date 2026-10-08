@@ -49,9 +49,10 @@ class UserCreate(UserBase):
     @field_validator('dni')
     @classmethod
     def validate_dni(cls, v):
-        if not v.isdigit():
-            raise ValueError('El DNI debe contener únicamente números (sin puntos ni espacios)')
-        return v
+        clean = re.sub(r'[^0-9]', '', v or '')
+        if not clean or not clean.isdigit():
+            raise ValueError('El DNI debe contener únicamente números (se toleran puntos y espacios)')
+        return clean
 
     @field_validator('password')
     @classmethod

@@ -32,6 +32,28 @@ def _canonical_method(m):
     return "DIGITAL"
 
 
+def _vehicle_type_key(vehicle_type: str) -> str:
+    """NORMALIZA EL TIPO DE VEHICULO A CLAVE CANONICA ('Auto'/'Moto'/'Camioneta').
+    Unifica 'MOTO', 'moto', 'Camioneta', 'CAMIONETA', etc."""
+    vt = str(vehicle_type or "").strip()
+    if not vt or vt.lower() == "all":
+        return "all"
+    upper = vt.upper()
+    if upper in ("MOTO", "MOTOCICLETA"):
+        return "Moto"
+    if upper in ("CAMIONETA", "CAMIONETAS", "UTILITARIO", "UTILITARIA"):
+        return "Camioneta"
+    return "Auto"
+
+
+def _vehicle_type_condition(column, vehicle_type: str):
+    """CONDICION SQL DE TIPO DE VEHICULO SIN DISTINGUIR MAYUSCULAS/MINUSCULAS."""
+    canon = _vehicle_type_key(vehicle_type)
+    if canon == "all":
+        return None
+    return func.lower(column) == canon.lower()
+
+
 def _es_reembolso_parcial(col_estado, col_reembolsado):
     """REEMBOLSOS: RESERVAS REEMBOLSADAS COMPLETAS O PAGADAS CON REEMBOLSO PARCIAL ACUMULADO."""
     return or_(
@@ -52,12 +74,28 @@ def _payment_method_filter(column, method: str):
     return column == method
 
 
+def _unaccent(column):
+    """EXPRESION SQL QUE REEMPLAZA ACENTOS PARA COMPARAR 'Ituzaingó' == 'Ituzaingo'."""
+    for acc, plain in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"),
+                       ("ñ", "n"), ("Á", "A"), ("É", "E"), ("Í", "I"), ("Ó", "O"), ("Ú", "U"), ("Ñ", "N")):
+        column = func.replace(column, acc, plain)
+    return column
+
+
+def _branch_key(name: str):
+    """CLAVE CANONICA DE SUCURSAL: minusculas, sin 'AUTOPASS ', sin acentos."""
+    n = (name or "").replace("AUTOPASS ", "").strip().lower()
+    for acc, plain in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ñ", "n")):
+        n = n.replace(acc, plain)
+    return n
+
+
 def _branch_filter(column, sucursal: str):
-    """FILTRO SQL DE AISLAMIENTO POR SUCURSAL (SUBCADENA 'AUTOPASS ' NORMALIZADA)."""
+    """FILTRO SQL DE AISLAMIENTO POR SUCURSAL SIN DISTINGUIR PREFIJO 'AUTOPASS ' NI ACENTOS."""
     if not sucursal:
         return None
-    target_name = sucursal.replace('AUTOPASS ', '').strip()
-    return column.like(f"%{target_name}%")
+    target = _branch_key(sucursal)
+    return func.lower(_unaccent(column)).like(f"%{target}%")
 
 
 class ReportRepository:
@@ -75,7 +113,7 @@ class ReportRepository:
             q = q.filter(filtro)
 
         if vehicle_type != "all":
-            q = q.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
 
         if sucursal:
             q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
@@ -100,7 +138,7 @@ class ReportRepository:
         q = q.filter(models.Reservation.estado_pago.in_([PaymentStatus.PAGADO, PaymentStatus.REEMBOLSADO]))
 
         if vehicle_type != "all":
-            q = q.filter(models.Vehicle.tipo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
             q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
@@ -128,7 +166,7 @@ class ReportRepository:
         q = q.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
 
         if vehicle_type != "all":
-            q = q.filter(models.Vehicle.tipo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
             q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
@@ -155,7 +193,7 @@ class ReportRepository:
         ).filter(models.Reservation.estado_reserva == ReservationStatus.CANCELADA)
 
         if vehicle_type != "all":
-            q = q.filter(models.Vehicle.tipo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
             q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
@@ -176,7 +214,7 @@ class ReportRepository:
         )
 
         if vehicle_type != "all":
-            q = q.filter(models.Vehicle.tipo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
             q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
@@ -205,7 +243,7 @@ class ReportRepository:
         )
 
         if vehicle_type != "all":
-            q = q.filter(Log.tipo_vehiculo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(Log.tipo_vehiculo, vehicle_type))
 
         if sucursal:
             q = q.filter(_branch_filter(Log.sucursal, sucursal))
@@ -222,7 +260,7 @@ class ReportRepository:
             func.count(models.AccessLog.id)
         ).filter(models.AccessLog.pago_confirmado == True, models.AccessLog.costo_estadia > 0)
         if vehicle_type != "all":
-            q = q.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
         if sucursal:
             q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
         if start_date:
@@ -244,7 +282,7 @@ class ReportRepository:
         ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
         q = q.filter(models.Reservation.estado_pago.in_([PaymentStatus.PAGADO, PaymentStatus.REEMBOLSADO]))
         if vehicle_type != "all":
-            q = q.filter(models.Vehicle.tipo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
             q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date:
@@ -266,7 +304,7 @@ class ReportRepository:
         ).join(models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True)
         q = q.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         if vehicle_type != "all":
-            q = q.filter(models.Vehicle.tipo == vehicle_type)
+            q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
             q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date:
@@ -293,7 +331,7 @@ class ReportRepository:
         ).filter(models.AccessLog.pago_confirmado == True, models.AccessLog.costo_estadia > 0)
 
         if vehicle_type != "all":
-            q_logs = q_logs.filter(models.AccessLog.tipo_vehiculo == vehicle_type)
+            q_logs = q_logs.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
         filtro_logs = _payment_method_filter(models.AccessLog.metodo_pago, method)
         if filtro_logs is not None:
             q_logs = q_logs.filter(filtro_logs)
@@ -318,7 +356,7 @@ class ReportRepository:
 
         q_res = q_res.filter(models.Reservation.estado_pago == PaymentStatus.PAGADO)
         if vehicle_type != "all":
-            q_res = q_res.filter(models.Vehicle.tipo == vehicle_type)
+            q_res = q_res.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
             q_res = q_res.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date:
@@ -343,7 +381,7 @@ class ReportRepository:
 
         q_refunds = q_refunds.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         if vehicle_type != "all":
-            q_refunds = q_refunds.filter(models.Vehicle.tipo == vehicle_type)
+            q_refunds = q_refunds.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
             q_refunds = q_refunds.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
         if start_date:

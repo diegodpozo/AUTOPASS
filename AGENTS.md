@@ -1,5 +1,10 @@
 # AGENTS — Reglas para asistentes automatizados
 
+## Continuidad entre sesiones
+
+- Al iniciar una sesión, revisar `PENDIENTES_PROXIMA_SESION.md` (raíz del repo): contiene el
+  estado de la última tanda y los puntos abiertos con las decisiones del usuario.
+
 ## Estilo de código
 
 - Escribir código **escalable**, **minimalista** y **agrupado por funciones** (seguir el principio DRY): no duplicar lógica, CSS, marcado o componentes.

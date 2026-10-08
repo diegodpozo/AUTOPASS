@@ -21,9 +21,12 @@ class VehicleRepository:
 
     @staticmethod
     def get_tipos_by_patentes(db: Session, patentes: list) -> dict:
-        """MAPA patente -> tipo de vehiculo PARA LAS PATENTES INDICADAS."""
-        rows = db.query(models.Vehicle).filter(models.Vehicle.patente.in_(patentes)).all()
-        return {v.patente: v.tipo for v in rows}
+        """MAPA patente -> tipo de vehiculo PARA LAS PATENTES INDICADAS (ignora espacios/mayusculas)."""
+        normas = [normalize_plate(p) for p in patentes if p]
+        if not normas:
+            return {}
+        rows = db.query(models.Vehicle).filter(VehicleRepository._norm_expr().in_(normas)).all()
+        return {normalize_plate(v.patente): v.tipo for v in rows}
 
     @staticmethod
     def get_by_patente(db: Session, patente: str) -> models.Vehicle:
@@ -55,9 +58,9 @@ class VehicleRepository:
 
     @staticmethod
     def get_by_patente_and_user(db: Session, patente: str, user_id: int) -> models.Vehicle:
-        """OBTIENE UN VEHICULO POR PATENTE EXACTA Y USUARIO DUENO."""
+        """OBTIENE UN VEHICULO POR PATENTE (IGNORANDO ESPACIOS/MAYUSCULAS) Y USUARIO DUENO."""
         return db.query(models.Vehicle).filter(
-            models.Vehicle.patente == patente,
+            VehicleRepository._norm_expr() == normalize_plate(patente),
             models.Vehicle.user_id == user_id
         ).first()
 

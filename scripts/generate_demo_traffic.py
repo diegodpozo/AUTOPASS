@@ -13,6 +13,7 @@ import random
 from datetime import datetime, timedelta
 
 from core.database import SessionLocal
+from core.normalize import normalize_plate
 from models import AccessLog, ParkingBranch, Vehicle
 
 MARCA = "demo:traffic"
@@ -75,8 +76,8 @@ def generar(db, dias: int, por_dia: int, seed: int) -> dict:
                 salida = entrada + timedelta(hours=duracion_h)
                 costo = round(rng.uniform(800, 6000), 0)
                 comun = dict(
-                    patente_detectada=patente,
-                    normalized_patente=patente.replace(" ", "").replace("-", "").upper(),
+                    patente_detectada=normalize_plate(patente),
+                    normalized_patente=normalize_plate(patente),
                     tipo_vehiculo=tipo,
                     sucursal=sucursal,
                     imagen_path=MARCA,

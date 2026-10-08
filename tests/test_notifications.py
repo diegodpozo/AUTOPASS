@@ -417,7 +417,7 @@ def test_vehicle_registration_and_removal_notifications(db_session: Session):
     notifs = UserNotificationService.get_user_notifications(db_session, user.id)
     reg_notifs = [n for n in notifs if n.tipo == models.NotificationType.VEHICLE_REGISTERED]
     assert len(reg_notifs) == 1
-    assert "AA 123 CD" in reg_notifs[0].mensaje or "Ferrari F1" in reg_notifs[0].mensaje
+    assert "AA123CD" in reg_notifs[0].mensaje or "Ferrari F1" in reg_notifs[0].mensaje
 
     # 2. Eliminar vehiculo
     resp_del = delete_user_vehicle(
@@ -430,6 +430,6 @@ def test_vehicle_registration_and_removal_notifications(db_session: Session):
     notifs_after = UserNotificationService.get_user_notifications(db_session, user.id)
     del_notifs = [n for n in notifs_after if n.tipo == models.NotificationType.VEHICLE_REMOVED]
     assert len(del_notifs) == 1
-    assert "AA 123 CD" in del_notifs[0].mensaje
+    assert "AA123CD" in del_notifs[0].mensaje
 
 

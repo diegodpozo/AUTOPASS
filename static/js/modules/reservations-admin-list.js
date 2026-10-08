@@ -35,7 +35,7 @@ allReservations = res.data;
         tbody.innerHTML = res.data.map(r => `
             <tr class="row-premium">
                 <td data-label="Cliente"><div class="user-name">${r.usuario_nombre || 'S/N'} ${r.usuario_apellido || ''}</div></td>
-                <td data-label="Patente"><span class="plate-style">${r.patente}</span></td>
+                <td data-label="Patente"><span class="plate-style">${utils.formatPlate(r.patente)}</span></td>
                 <td data-label="Fecha">
                     <div class="flex-col items-center gap-8">
                         <div class="text-small text-light">${utils.formatDate(r.fecha_inicio)}</div>
@@ -159,7 +159,7 @@ export function showReservationDetail(resId) {
 
     document.getElementById('res-detail-id').innerText = `#${r.id}`;
     document.getElementById('res-detail-user').innerText = `${r.usuario_nombre || 'S/N'} ${r.usuario_apellido || ''}`;
-    document.getElementById('res-detail-plate').innerText = r.patente;
+    document.getElementById('res-detail-plate').innerText = utils.formatPlate(r.patente);
     document.getElementById('res-detail-start').innerText = utils.formatDate(r.fecha_inicio);
     document.getElementById('res-detail-end').innerText = utils.formatDate(r.fecha_fin);
     document.getElementById('res-detail-sucursal').innerText = r.sucursal_nombre;

@@ -43,10 +43,12 @@ def format_plate(p: str):
 
 
 def normalize_dni(s: str):
-    """APLICA FORMATO DE PUNTOS AL DNI PARA VISUALIZACION."""
+    """DNI CANONICO: SOLO DIGITOS, SIN PUNTOS NI SEPARADORES (unifica '12.345.678' y '12345678')."""
     if not s: return ""
-    clean = re.sub(r'[^0-9]', '', s)
-    if len(clean) == 7: return f"{clean[0]}.{clean[1:4]}.{clean[4:]}"
-    if len(clean) == 8: return f"{clean[:2]}.{clean[2:5]}.{clean[5:]}"
-    return clean
+    return re.sub(r'[^0-9]', '', s)
+
+
+def format_dni(s: str) -> str:
+    """DNI SOLO DIGITOS PARA VISUALIZACION (sin puntos)."""
+    return normalize_dni(s)
 

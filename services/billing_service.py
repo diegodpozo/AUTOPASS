@@ -19,10 +19,22 @@ logger = get_logger("BillingService")
 
 class BillingService:
     @staticmethod
+    def _tipo_key(tipo_vehiculo) -> str:
+        """NORMALIZA EL TIPO DE VEHICULO A UNA CLAVE CANONICA ('Auto'/'Moto'/'Camioneta').
+        Unifica 'MOTO', 'moto', 'Moto', 'camioneta', etc."""
+        v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
+        v_low = v_str.strip().upper()
+        if v_low in ("MOTO", "MOTOCICLETA"):
+            return "Moto"
+        if v_low in ("CAMIONETA", "CAMIONETAS", "UTILITARIO", "UTILITARIA"):
+            return "Camioneta"
+        return "Auto"
+
+    @staticmethod
     def get_rate(db: Session, tipo: str = "hora", sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> float:
         """OBTIENE LA TARIFA CONFIGURADA SEGUN LA MODALIDAD DE ESTADIA, SEDE Y TIPO DE VEHICULO."""
         from core.cache import ttl_cache
-        v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
+        v_str = BillingService._tipo_key(tipo_vehiculo)
         cache_key = f"rate_get_{tipo}_{sucursal}_{v_str}"
         cached = ttl_cache.get(cache_key)
         if cached is not None:
@@ -38,9 +50,9 @@ class BillingService:
         clave = setting_map.get(tipo, "precio_hora")
         
         # AJUSTAR CLAVE SEGUN TIPO DE VEHICULO
-        if tipo_vehiculo == VehicleType.MOTO:
+        if v_str == "Moto":
             clave = f"{clave}_moto"
-        elif tipo_vehiculo == VehicleType.CAMIONETA:
+        elif v_str == "Camioneta":
             clave = f"{clave}_camioneta"
         
         # TARIFA ESTRICTA POR SEDE: SI LA SUCURSAL NO TIENE TARIFA PROPIA NO HAY PRECIO
@@ -63,9 +75,9 @@ class BillingService:
             return cached
 
         clave = "precio_hora"
-        if tipo_vehiculo == "Moto":
+        if BillingService._tipo_key(tipo_vehiculo) == "Moto":
             clave = "precio_hora_moto"
-        elif tipo_vehiculo == "Camioneta":
+        elif BillingService._tipo_key(tipo_vehiculo) == "Camioneta":
             clave = "precio_hora_camioneta"
 
         setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal)
@@ -86,9 +98,9 @@ class BillingService:
             return cached
 
         clave = "precio_30min"
-        if tipo_vehiculo == "Moto":
+        if BillingService._tipo_key(tipo_vehiculo) == "Moto":
             clave = "precio_30min_moto"
-        elif tipo_vehiculo == "Camioneta":
+        elif BillingService._tipo_key(tipo_vehiculo) == "Camioneta":
             clave = "precio_30min_camioneta"
 
         setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal)
@@ -129,8 +141,7 @@ class BillingService:
             return 0.0
             
         rate = BillingService.get_rate(db, tipo_estadia, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
-        v_str = tipo_vehiculo.value if hasattr(tipo_vehiculo, "value") else str(tipo_vehiculo)
-        tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=v_str)
+        tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
         if rate is None or tarifa_30min is None:
             return None
         

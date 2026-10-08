@@ -1,0 +1,66 @@
+# PENDIENTES_PROXIMA_SESION.md
+
+Recordatorio de trabajo pendiente para continuar en una próxima sesión.
+Última actualización: 07/10/2026
+
+## Completado (no reabrir salvo regresión)
+
+### Unificación de criterios de PATENTES y DNI (commit "UNIFICACION DE CRITERIOS DE PATENTES Y DNI")
+
+- **Patentes**: se guardan SIEMPRE canónicas (mayúsculas, sin espacios, ej. `AE114RA`) en
+  `vehicles`, `reservations`, `access_logs.patente_detectada`, `access_logs.normalized_patente`.
+  El front muestra con espacios vía `formatPlate`/`format_plate`; el ingreso tolera ambos formatos
+  (`normalize_plate` al escribir y al matchear).
+- **DNI**: solo dígitos, sin puntos (`normalize_dni`). Registro web (`schemas/user.py`) y OAuth
+  (`schemas/auth.py`) aceptan DNI con puntos y lo normalizan. El front muestra sin puntos.
+- **Sucursales**: `parking_cameras.sucursal` y `support_tickets.sucursal` quedaron con los nombres
+  de branch canónicos (sin prefijo `AUTOPASS `, tildes correctas). Las comparaciones usan
+  `normalize_system_name` (quita prefijo, pasa a mayúsculas y quita acentos).
+- **tipo_vehiculo**: unificado a `Auto`/`Moto`/`Camioneta` en `access_logs`, `vehicles`,
+  `reservations`. `billing_service._tipo_key` y `report_repository` normalizan en comparaciones.
+- **Migración Neon aplicada** con backups por tabla (`backup_users`, `backup_vehicles`,
+  `backup_reservations`, `backup_access_logs`, `backup_parking_cameras`, `backup_support_tickets`).
+  Antes de descartar los backups, confirmar que los reportes corren bien.
+- Archivos backend/front/scripts/tests tocados (ver git log del commit). NADA de Arduino,
+  firmware (`.ino`), `hardware_service`, MQTT, ALPR pipeline o config de cámaras fue modificado.
+
+## Pendiente H6 (datos Neon) — requiere decisión del usuario
+
+1. **Reservas huérfanas** `id` 79 y 84 (sin usuario/vehículo): decidir si vincular o eliminar.
+2. **62 reservas pagadas sin `fecha_pago`**: completar `fecha_pago` (usar `fecha_inicio`/`updated_at`?)
+   en `reservations`.
+3. **211 access_logs pagados (`pago_confirmado`) con `costo_estadia = 0`**: son de "pago interno"
+   (metodo `SALDO`?) y rompen métricas. Decidir si dejar 0 o recalcular con tarifario.
+4. **25 pagos MercadoPago PENDIENTE viejos**: decidir si cancelar/limpiar.
+5. **IPs duplicadas** en 4 de las cámaras (misma IP en varias cámaras): corregir IPs en `parking_cameras`.
+
+## Pendiente config / tarifas
+
+- **Central no tiene tarifario** (0 settings de precio) → no puede cobrar (409). Decidir si cargar
+  tarifas de Central (seguía bloqueada a propósito).
+- **`precio_quincena_camioneta` no existe en ninguna sede** (solo global): cobrar "quincena" a una
+  camioneta en sede da error. Se agregaron las 5 tarifas de camioneta a Santos Dumont copiadas de
+  Castelar (30min/hora/dia/semana/mes). Falta decidir quincena si la modalidad es usable.
+
+## Pendiente tests / CI (entorno)
+
+- **2 tests fallan SIEMPRE (pre-existentes, NO los causó la unificación)**:
+  - `tests/test_admin_branches.py::test_list_branches_con_resumen` → la política de tarifas
+    estrictas devuelve `None` y choca con `BranchResponse` (campos `float`). Fix candidato:
+    hacer `Optional`/default en el schema o sembrar settings en el test.
+  - `tests/test_inline_styles_guard.py::test_guard_inline_styles_no_regresiones`. Revisar qué
+    template/style dispara el guard.
+- **5 archivos de test cuelgan por puerto serial real (Arduino)** en esta máquina:
+  `test_access_service.py`, `test_access_flow.py`, `test_reservation_spots.py`,
+  `test_alpr_node_auth.py`, `test_bugfixes_funcionales.py`. `HardwareService.send_serial_command`
+  hace `conn.write()` bloqueante si hay un COM presente pero sin dispositivo respondiendo.
+  Correr el resto del suite con:
+  `pytest --ignore=tests/test_access_service.py --ignore=tests/test_access_flow.py --ignore=tests/test_reservation_spots.py --ignore=tests/test_alpr_node_auth.py --ignore=tests/test_bugfixes_funcionales.py`
+  Fix candidato: mockear/desactivar serial en tests (o guardar `SERIAL_ENABLED=False` solo en tests).
+
+## Notas operación
+
+- Los scripts de migración de Neon se dejaron en `%TEMP%\opencode\*` (migrate_normalize.py,
+  migrate2.py, copy_tarifas.py, collision_check.py). Recrearlos si se necesitan.
+- Regla AGENTS: no commitear/pushear sin pedido expreso. Antes de `git pull`, revisar si hay
+  cambios de BD (`*.db`) en el remoto; si el schema NO cambió, preservar BD local.

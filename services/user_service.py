@@ -4,7 +4,7 @@ import models
 import schemas
 from core.security import get_password_hash
 from core.logger import get_logger
-from core.normalize import normalize_user_name as normalize_name, normalize_dni, normalize_plate, format_plate
+from core.normalize import normalize_user_name as normalize_name, normalize_dni, normalize_plate
 from models.enums import UserRole
 from repositories.user_repository import UserRepository
 from repositories.vehicle_repository import VehicleRepository
@@ -164,7 +164,7 @@ class UserService:
 
         new_vehicle = models.Vehicle(
             user_id=user.id,
-            patente=format_plate(patente),
+            patente=normalize_plate(patente),
             marca_modelo=normalize_name(marca_modelo),
             tipo=tipo
         )

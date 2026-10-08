@@ -10,9 +10,10 @@ class OAuthComplete(BaseModel):
     @field_validator('dni')
     @classmethod
     def validate_dni(cls, v):
-        if not re.fullmatch(r'\d{7,8}', (v or '').strip()):
-            raise ValueError('El DNI debe tener 7 u 8 números')
-        return v.strip()
+        clean = re.sub(r'[^0-9]', '', v or '')
+        if not re.fullmatch(r'\d{7,8}', clean):
+            raise ValueError('El DNI debe tener 7 u 8 números (se toleran puntos)')
+        return clean
 
     @field_validator('telefono')
     @classmethod

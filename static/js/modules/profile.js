@@ -49,7 +49,7 @@ export async function loadProfile() {
             let val = user[f];
             if (f === 'nombre' || f === 'apellido') val = toTitle(val);
             if (f === 'telefono' && val) val = val.replace(/(\d{2})(\d{4})(\d+)/, "$1 $2 $3");
-            if (f === 'dni' && val) val = val.toString().replace(/(\d{2})(\d{3})(\d{3})/, "$1.$2.$3");
+            if (f === 'dni' && val) val = val.toString().replace(/\D/g, '');
             disp.innerText = val || 'S/D';
         }
     });

@@ -10,6 +10,7 @@ from core.logger import get_logger
 from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
 from repositories.vehicle_repository import VehicleRepository
+from core.normalize import normalize_plate
 from services.time_service import TimeService
 
 
@@ -58,7 +59,7 @@ def _reservas_activas_tipo(db: Session, sucursal_nombre: str, desde_str: str, ha
 
     patentes = [r.patente for r in all_res]
     v_map = VehicleRepository.get_tipos_by_patentes(db, patentes)
-    return [r for r in all_res if v_map.get(r.patente, r.tipo_vehiculo or "Auto").strip().title() == tipo_vehiculo]
+    return [r for r in all_res if v_map.get(normalize_plate(r.patente), r.tipo_vehiculo or "Auto").strip().title() == tipo_vehiculo]
 
 
 def _get_cached_availability(key: tuple, generator):
@@ -139,7 +140,7 @@ def verificar_disponibilidad(db: Session, sucursal_nombre: str, fecha_inicio: st
         patentes = [r.patente for r in all_res]
         v_map = VehicleRepository.get_tipos_by_patentes(db, patentes)
         for r in all_res:
-            v_tipo = v_map.get(r.patente, r.tipo_vehiculo or "Auto")
+            v_tipo = v_map.get(normalize_plate(r.patente), r.tipo_vehiculo or "Auto")
             if v_tipo.strip().title() == tipo_vehiculo:
                 reservas_filtradas.append(r)
 

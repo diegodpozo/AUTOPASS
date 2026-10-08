@@ -32,7 +32,7 @@ def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_o
         for gate, ts in ALPR_HEARTBEATS.items():
             alpr_status[gate] = "ONLINE" if (now - ts).total_seconds() < 90 else "OFFLINE"
     else:
-        cameras = [c for c in CameraRepository.get_all(db) if c.sucursal == staff.sucursal]
+        cameras = [c for c in CameraRepository.get_all(db) if normalize_system_name(c.sucursal) == normalize_system_name(staff.sucursal)]
         if not cameras:
             prefix = normalize_system_name(staff.sucursal)
             gates_to_check = [f"{prefix}_ENTRADA", f"{prefix}_SALIDA"]

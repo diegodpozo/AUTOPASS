@@ -4,6 +4,7 @@ from models import ParkingBranch, Vehicle, Reservation, AccessLog
 from models.user import User
 from faker import Faker
 from core.security import get_password_hash
+from core.normalize import normalize_plate
 import random
 from datetime import datetime, timedelta
 
@@ -26,7 +27,7 @@ def main():
     db.commit()
     for u in creados:
         db.refresh(u)
-        v = Vehicle(user_id=u.id, patente=f"AA{random.randint(100,999)}{f.lexify(text='??').upper()}", marca_modelo=f"{f.company()} {random.randint(2015,2025)}", tipo=random.choice(['AUTO','MOTO','CAMIONETA']), is_favorite=True)
+        v = Vehicle(user_id=u.id, patente=normalize_plate(f"AA{random.randint(100,999)}{f.lexify(text='??').upper()}"), marca_modelo=f"{f.company()} {random.randint(2015,2025)}", tipo=random.choice(['Auto','Moto','Camioneta']), is_favorite=True)
         db.add(v)
     db.commit()
     branches = db.query(ParkingBranch).all()
@@ -40,8 +41,8 @@ def main():
             r = Reservation(user_id=u.id, patente=v.patente, fecha_inicio=inicio_dt.isoformat(), fecha_fin=fin_dt.isoformat(), monto_total=round(random.uniform(500,5000),2), monto_reembolsado=0.0, estado_pago='Pagado', estado_reserva=random.choice(['Completada','Activa']), sucursal_nombre=b.nombre, tipo_estadia='hora', cliente_nombre=u.nombre, tipo_vehiculo=v.tipo, origen='cliente', metodo_pago='SALDO')
             db.add(r)
             db.flush()
-            db.add(AccessLog(patente_detectada=v.patente, normalized_patente=v.patente.replace('-','').upper(), tipo_evento='ENTRADA', tipo_vehiculo=v.tipo, reserva_id=r.id, fecha_hora=inicio_dt.isoformat()))
-            db.add(AccessLog(patente_detectada=v.patente, normalized_patente=v.patente.replace('-','').upper(), tipo_evento='SALIDA', tipo_vehiculo=v.tipo, reserva_id=r.id, fecha_hora=fin_dt.isoformat()))
+            db.add(AccessLog(patente_detectada=v.patente, normalized_patente=v.patente, tipo_evento='ENTRADA', tipo_vehiculo=v.tipo, reserva_id=r.id, sucursal=b.nombre, fecha_hora=inicio_dt.isoformat()))
+            db.add(AccessLog(patente_detectada=v.patente, normalized_patente=v.patente, tipo_evento='SALIDA', tipo_vehiculo=v.tipo, reserva_id=r.id, sucursal=b.nombre, fecha_hora=fin_dt.isoformat()))
             u.saldo = float(u.saldo or 0) + float(r.monto_total)
     db.commit()
     db.close()

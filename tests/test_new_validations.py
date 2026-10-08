@@ -76,7 +76,7 @@ def test_add_vehicle_camioneta_and_blocked_check(db):
 
     res = add_user_vehicle("AB 123 CD", "Toyota Hilux", "Camioneta", db, user)
     assert res["status"] == "ok"
-    veh = db.query(Vehicle).filter(Vehicle.patente == "AB 123 CD").first()
+    veh = db.query(Vehicle).filter(Vehicle.patente == "AB123CD").first()
     assert veh is not None
     assert veh.tipo == "Camioneta"
 

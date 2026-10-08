@@ -19,8 +19,9 @@ def test_format_plate_mercosur_brasil():
     assert format_plate("ABC1D23") == "ABC 1D23"
 
 def test_normalize_dni():
-    assert normalize_dni("12345678") == "12.345.678"
-    assert normalize_dni("7654321") == "7.654.321"
+    assert normalize_dni("12345678") == "12345678"
+    assert normalize_dni("12.345.678") == "12345678"
+    assert normalize_dni("7654321") == "7654321"
 
 def test_identify_country_bw_paper_printed_plate():
     from alpr.preprocessor import ImagePreprocessor

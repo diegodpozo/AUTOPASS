@@ -147,7 +147,7 @@ export async function loadFinanceData(resetPage = true) {
                 return `
                 <tr class="${rowClass}">
                     <td data-label="Fecha"><span class="text-light">${utils.formatDate(p.fecha_pago)}</span></td>
-                    <td data-label="Patente"><span class="plate-style">${p.patente_detectada}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
+                    <td data-label="Patente"><span class="plate-style">${utils.formatPlate(p.patente_detectada)}</span>${isRefund ? ' <i class="fas fa-undo text-xs"></i>' : ''}</td>
                     <td data-label="Monto" class="text-bold ${amountClass}">$${utils.formatNum(p.costo_estadia)}</td>
                     <td data-label="Método"><span class="text-small">${metodoPago}</span></td>
                     <td data-label="Tipo"><span class="${badgeClass}">${p.tipo.toUpperCase()}</span></td>
