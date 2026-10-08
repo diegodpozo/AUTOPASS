@@ -61,7 +61,23 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
   local y daba `503` en un entorno sin ese secreto (git/CI). Fix aplicado (patrón de
   `test_mercadopago.py:71`): `monkeypatch` de `MP_ACCESS_TOKEN`/`BASE_URL` + fake `_mp_request`.
   Verificado pasando con `MP_ACCESS_TOKEN=""` y suite completa `782 passed`.
-  Sin commitear aún.
+  **Commiteado y pusheado en `2185ffe`.**
+
+## Pendiente auditorías: implementar remediación
+
+- **AUDITORIA_VALIDACIONES.md** (commit `e637bd4`): 12 hallazgos V1–V12 aún vigentes en el código.
+  Plan F1 (críticos), F2 (simetría), F3 (defensa en profundidad) documentado. **No se tocó código
+  todavía** — decidir qué hallazgos corregir.
+- **AUDITORIA_RBAC.md** (documento nuevo, sin commitear): auditoría de autorización completa.
+  10 hallazgos (R1–R10). Críticos para próximos pasos:
+  - **R1 ALTA**: `GET /v1/admin/branches` sin dependencia de auth (`routes/admin/branches.py:18`).
+  - **R2 ALTA**: detail/PATCH de tickets de soporte sin filtro de sucursal
+    (`routes/admin/support.py:42,73`; el listado sí filtra).
+  - **R3 MEDIA-ALTA**: virtual time acepta `local_manager` pero el recurso es **global**
+    (`routes/admin/virtual_time.py`).
+  - **R4 MEDIA-ALTA**: un local_admin puede promover a otro a STAFF/LOCAL_ADMIN, incluso de otra
+    sucursal (`validate_local_admin_user_permission` no restringe target USER por sucursal).
+  - Plan por fases (F1–F3) y fortalezas confirmadas en el documento.
 - **5 archivos de test cuelgan por puerto serial real (Arduino)** en esta máquina:
   `test_access_service.py`, `test_access_flow.py`, `test_reservation_spots.py`,
   `test_alpr_node_auth.py`, `test_bugfixes_funcionales.py`. `HardwareService.send_serial_command`
@@ -72,7 +88,10 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 
 ## Notas operación
 
-- Última versión local = remoto = `f07494a` (fix tests/guards). Working tree limpio.
+- Última versión local = remoto = `e637bd4` (128 docs: auditorías validaciones + RBAC).
+  Working tree limpio.
+- Auditorías en `Info proyecto/`: `AUDITORIAS.md` (A1–A9), `AUDITORIA_DB.md`,
+  `AUDITORIA_DB_NEON.md`, `AUDITORIA_VALIDACIONES.md` (V1–V12), `AUDITORIA_RBAC.md` (R1–R10).
 - Los scripts de migración de Neon se dejaron en `%TEMP%\opencode\*` (migrate_normalize.py,
   migrate2.py, copy_tarifas.py, collision_check.py). Recrearlos si se necesitan.
 - Regla AGENTS: no commitear/pushear sin pedido expreso. Antes de `git pull`, revisar si hay
