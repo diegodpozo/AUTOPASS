@@ -131,6 +131,13 @@ class BranchService:
         old_prefix = normalize_system_name(old_nombre)
         new_prefix = normalize_system_name(new_nombre)
 
+        # Renombrar la sede PRIMERO (+ flush) para que en Postgres el ON UPDATE CASCADE
+        # de las FKs (aforo, settings, camaras, promos) ya las deje en el nuevo nombre.
+        # Luego propagate_rename cubre el resto (users, reservations, access_logs,
+        # support_tickets) y, en SQLite (FKs no activas), tambien las tablas de config.
+        branch.nombre = new_nombre
+        db.flush()
+
         # Propagar el cambio de nombre a tablas dependientes
         BranchRepository.propagate_rename(db, old_nombre, new_nombre)
 
@@ -156,8 +163,6 @@ class BranchService:
                     except Exception:
                         logger.warning("[BRANCH] Error deteniendo proceso de cámara", exc_info=True)
                 CAMERA_PROCESSES.pop(gate_id, None)
-
-        branch.nombre = new_nombre
 
     @staticmethod
     def list_branches_with_summary(db: Session):

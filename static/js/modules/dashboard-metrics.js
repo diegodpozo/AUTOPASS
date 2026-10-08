@@ -1,5 +1,5 @@
 import api from './api.js';
-import { formatDateTime, formatDayTime } from './utils.js';
+import { formatDateTime, formatDayTime, parseFecha } from './utils.js';
 import { THEME } from './theme.js';
 import { cargarInforme } from './dashboard-informes.js';
 
@@ -21,7 +21,7 @@ let intervaloRefresh = null;
 // --- UTILIDADES DE FECHA ---
 function bucketToDate(label) {
     if (!label) return null;
-    const d = new Date(String(label).replace(' ', 'T'));
+    const d = parseFecha(label);
     return isNaN(d.getTime()) ? null : d;
 }
 

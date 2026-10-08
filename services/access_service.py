@@ -248,7 +248,7 @@ class AccessService(AccessOccupancyMixin):
                 if reserva.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
                      return {"status": "denied", "message": "Esta reserva ya expiró o fue cancelada"}
                 
-                now_str = now.strftime("%Y-%m-%d %H:%M")
+                now_str = now.strftime("%Y-%m-%d %H:%M:%S")
                 if reserva.fecha_inicio > now_str or reserva.fecha_fin < now_str:
                     return {"status": "denied", "message": "La reserva no está vigente en este horario"}
 

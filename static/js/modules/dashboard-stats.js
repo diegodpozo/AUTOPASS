@@ -1,5 +1,5 @@
 import api from './api.js';
-import { formatPlate, formatNum, toTitle, formatTime } from './utils.js';
+import { formatPlate, formatNum, toTitle, formatTime, parseFecha } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 
 /**
@@ -14,7 +14,7 @@ import { getVirtualNow } from './virtual-time.js';
  */
 function getPermanenciaMs(ingreso) {
     if (ingreso === null || ingreso === undefined || ingreso === '') return null;
-    const ts = new Date(ingreso).getTime();
+    const ts = parseFecha(ingreso).getTime();
     return Number.isFinite(ts) ? Math.max(0, getVirtualNow() - ts) : null;
 }
 
@@ -242,7 +242,7 @@ export function renderLogsTable() {
     const paginatedData = filteredLogsData.slice(start, end);
 
     tbody.innerHTML = paginatedData.map(log => {
-        const fecha = new Date(log.fecha_hora);
+        const fecha = parseFecha(log.fecha_hora);
         const time = formatTime(fecha);
         const day = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
         const badgeClass = log.tipo_evento === 'ENTRADA' ? 'text-secondary' : 'text-danger';
@@ -395,7 +395,7 @@ export function renderOccupancyTable() {
 let cortesiaTimer = null;
 
 function getCortesiaRemainingMs(ingreso) {
-    const entryDate = new Date(ingreso);
+    const entryDate = parseFecha(ingreso);
     const elapsedMs = getVirtualNow() - entryDate;
     return Math.max(0, 10 * 60 * 1000 - elapsedMs);
 }
@@ -438,7 +438,7 @@ function buildOccupancyRows() {
     const paginatedData = filteredOccupancyData.slice(start, end);
 
     return paginatedData.map(occ => {
-        const date = new Date(occ.ingreso);
+        const date = parseFecha(occ.ingreso);
         const duration = formatPermanencia(getPermanenciaMs(occ.ingreso) ?? 0);
 
         const statusBadge = occ.ya_pago ?
@@ -526,10 +526,10 @@ export function filterOccupancy(query) {
 
 
 export async function cancelStay(plate, type, debt, ingreso) {
-    const { showConfirm, showToast, formatPlate } = await import('./utils.js');
+    const { showConfirm, showToast, formatPlate, parseFecha } = await import('./utils.js');
     
     // CALCULAR SI ESTA EN CORTESIA (10 MIN) PARA MOSTRAR DEUDA 0 EN EL MENSAJE
-    const entryDate = new Date(ingreso);
+    const entryDate = parseFecha(ingreso);
     const minutesElapsed = (getVirtualNow() - entryDate) / 60000;
     const displayDebt = minutesElapsed <= 10 ? 0 : debt;
 

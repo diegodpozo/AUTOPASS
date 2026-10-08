@@ -202,7 +202,7 @@ export function renderRevenueChart(data, period) {
     
     const parseDate = (str) => {
         if (!str) return new Date(NaN);
-        return new Date(str.replace(' ', 'T'));
+        return utils.parseFecha(str);
     };
 
     const sortedData = [...data].sort((a, b) => parseDate(a.fecha_pago) - parseDate(b.fecha_pago));

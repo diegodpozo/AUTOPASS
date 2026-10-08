@@ -41,6 +41,12 @@
   git show :archivo.db | sqlite3 ".schema"  # remoto (versión del index)
   ```
 
+## Proyecto escolar — todos los datos son de prueba
+
+- Este proyecto es un **trabajo escolar** y **NUNCA irá a producción**.
+- Todos los datos (BD de desarrollo, Neon, seeds, etc.) son **datos de prueba** y se tratan como tales.
+- **No** proponer ni ejecutar tareas de "ir a producción", deploy, hardening de datos reales, migraciones de producción ni controles de saneamiento de datos (suprimir filas demo, limpiar `eliminado-N`, `demo:traffic`, `bench*`, etc.) salvo pedido expreso del usuario. Tomar las decisiones de base de datos pensando en el entorno de prueba actual, sin obsesionarse por "datos reales".
+
 ## Backlog web (backlogAUTOPASS)
 
 - El tablero vive en el repo `backlogAUTOPASS/` (sitio: `https://marianojac.github.io/backlogAUTOPASS/`). El `DATA` dentro de `index.html` es solo la semilla/fallback: si Firebase (`backlog/rows2`) tiene datos, la app los usa e IGNORA el `DATA` del HTML.

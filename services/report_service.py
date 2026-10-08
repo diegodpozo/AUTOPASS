@@ -4,6 +4,7 @@ import re
 from sqlalchemy.orm import Session
 import models
 from models.enums import UserRole, PaymentStatus, AccessEventType, ReservationStatus
+from models.types import parse_fecha
 from services.billing_service import BillingService
 from services.time_service import TimeService
 from repositories.report_repository import (
@@ -40,13 +41,10 @@ def _parse(value):
     """PARSEA UN TIMESTAMP FLEXIBLE (ISO con 'T', con/ sin segundos o con microsegundos)."""
     if not value:
         return None
-    norm = str(value).replace("T", " ").strip()
-    for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
-        try:
-            return datetime.datetime.strptime(norm, fmt)
-        except ValueError:
-            continue
-    return None
+    try:
+        return parse_fecha(value)
+    except ValueError:
+        return None
 
 
 def _boundary(s, is_end=False):

@@ -157,7 +157,9 @@ def adjust_user_balance(request: Request, user_id: int, monto: float, db: Sessio
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     validate_local_admin_user_permission(admin, user)
-        
+
+    if monto < 0:
+        raise HTTPException(status_code=400, detail="El saldo no puede ser negativo")
     user.saldo = monto
     db.commit()
 

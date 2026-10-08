@@ -281,8 +281,8 @@ def test_edit_admin_reservation_actualiza_datos_y_recalcula_monto(db):
 
     res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
     assert res.patente == "ABC124"
-    assert res.fecha_inicio == "2026-07-11 08:00"
-    assert res.fecha_fin == "2026-07-11 11:00"
+    assert res.fecha_inicio == "2026-07-11 08:00:00"
+    assert res.fecha_fin == "2026-07-11 11:00:00"
     assert res.origen == "manual"
     expected = BillingService.calculate_total_amount(
         db, "hora", "2026-07-11 08:00", "2026-07-11 11:00",

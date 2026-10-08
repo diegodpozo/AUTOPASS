@@ -1,5 +1,5 @@
 import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models
 from models.enums import UserRole
@@ -44,6 +44,8 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
 @router.post("/settings/prices", dependencies=[Depends(admin_rate_limit)])
 def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR."""
+    if valor < 0:
+        raise HTTPException(status_code=400, detail="El valor no puede ser negativo")
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
 
     if clave in ["capacidad_total", "capacidad_motos", "capacidad_camionetas", "capacidad_reservas", "capacidad_reservas_autos", "capacidad_reservas_motos", "capacidad_reservas_camionetas"]:

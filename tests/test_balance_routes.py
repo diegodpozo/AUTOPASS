@@ -113,7 +113,7 @@ def test_active_stays_ingreso_no_pagado_con_deuda(client, monkeypatch):
     assert body[0]["patente"] == "ABC123"
     assert body[0]["deuda"] == 123.5
     assert body[0]["pago_confirmado"] is False
-    assert body[0]["ingreso"] == "2026-09-20T10:00:00"
+    assert body[0]["ingreso"] == "2026-09-20 10:00:00"
 
 
 def test_active_stays_ingreso_pagado_deuda_cero(client, monkeypatch):

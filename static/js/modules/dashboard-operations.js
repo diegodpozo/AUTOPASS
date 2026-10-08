@@ -136,7 +136,7 @@ export async function showLogDetail(logId) {
 
     const plateEl = document.getElementById('audit-plate');
     if (plateEl) plateEl.innerText = log.patente_detectada;
-    const d = new Date(log.fecha_hora);
+    const d = utils.parseFecha(log.fecha_hora);
     document.getElementById('audit-time').innerText = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     document.getElementById('audit-type').innerText = log.tipo_evento;
     document.getElementById('audit-payment').innerText = log.pago_confirmado ? 'PAGADO' : 'PENDIENTE';

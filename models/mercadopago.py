@@ -1,10 +1,14 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
 from core.database import Base
+from models.types import DateTimeAsStr
 
 class MercadoPagoPayment(Base):
     """REGISTRO DE INTENCIONES Y CONFIRMACIONES DE PAGO MERCADO PAGO (CHECKOUT PRO)."""
     __tablename__ = "mercadopago_payments"
+    __table_args__ = (
+        CheckConstraint("COALESCE(monto, 0) >= 0", name="ck_mercadopago_payments_monto_nonneg"),
+    )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -23,8 +27,8 @@ class MercadoPagoPayment(Base):
     estado = Column(String, default="PENDIENTE")   # PENDIENTE | APROBADO | FALLIDO | CANCELADO
     mp_status = Column(String, nullable=True)      # status crudo reportado por Mercado Pago
 
-    fecha_creacion = Column(String, nullable=True)
-    fecha_confirmacion = Column(String, nullable=True)
+    fecha_creacion = Column(DateTimeAsStr, nullable=True)
+    fecha_confirmacion = Column(DateTimeAsStr, nullable=True)
 
     user = relationship("User")
     reservation = relationship("Reservation")

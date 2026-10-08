@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, CheckConstraint
 from sqlalchemy.orm import relationship
 from core.database import Base
+from models.types import DateTimeAsStr
 import datetime
 
 
@@ -11,6 +12,10 @@ def datetime_now_iso():
 class User(Base):
     """MODELO PARA LA GESTION DE USUARIOS Y ADMINISTRADORES."""
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint("COALESCE(saldo, 0) >= 0", name="ck_users_saldo_nonneg"),
+        CheckConstraint("COALESCE(puntos_acumulados, 0) >= 0", name="ck_users_puntos_nonneg"),
+    )
     id = Column(Integer, primary_key=True)
     nombre = Column(String)
     apellido = Column(String)
@@ -52,13 +57,18 @@ class PointsLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     cantidad = Column(Integer)
     motivo = Column(String)
-    fecha = Column(String)
+    fecha = Column(DateTimeAsStr)
 
     user = relationship("User", back_populates="points_logs")
 
 class Promotion(Base):
     """CATALOGO DE BENEFICIOS CANJEABLES POR PUNTOS."""
     __tablename__ = "promotions"
+    __table_args__ = (
+        CheckConstraint("COALESCE(costo_puntos, 0) >= 0", name="ck_promotions_costo_puntos_nonneg"),
+        CheckConstraint("valor_descuento IS NULL OR valor_descuento BETWEEN 1 AND 100",
+                        name="ck_promotions_valor_descuento_pct"),
+    )
     id = Column(Integer, primary_key=True)
     titulo = Column(String)
     descripcion = Column(String)
@@ -66,7 +76,11 @@ class Promotion(Base):
     icono = Column(String, default="fas fa-gift")
     categoria = Column(String, default="Beneficio")
     activa = Column(Boolean, default=True, server_default="1")
-    sucursal = Column(String, nullable=True) # NONE PARA GLOBAL, O NOMBRE DE LA SEDE
+    sucursal = Column(
+        String,
+        ForeignKey("parking_branches.nombre", name="fk_promotions_sucursal_branch",
+                   onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=True) # NONE PARA GLOBAL, O NOMBRE DE LA SEDE
     # TIPO DE CANJE: 'descuento_reserva' (% de descuento en estacionamiento, impacta en pago)
     #                o 'voucher' (genera un ticket con QR, sin validación automática)
     tipo_canje = Column(String, default="voucher")

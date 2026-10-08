@@ -3,6 +3,31 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 08/10/2026
 
+## Puntos 1-4 de mejoras BD — RESUELTOS 08/10/2026 (migraciones `a7f3d9c2e1b8` y `b2f4e8c1a9d7`)
+
+- **1. Fechas varchar → timestamp**: 8 columnas convertidas en Neon
+  (`access_logs.fecha_hora/fecha_pago`, `reservations.fecha_inicio/fecha_fin/fecha_pago`,
+  `mercadopago_payments.fecha_creacion/fecha_confirmacion`, `points_log.fecha`) con
+  `USING NULLIF(col,'')::timestamp`. Backup previo en `backup_fechas_pre_ts` (25.477 filas).
+- **2. CheckConstraints**: 11 constraints aplicados (no negatividad de saldo/puntos/montos/aforo/
+  costo/settings/costo_puntos; % de descuento 1-100; orden `fecha_fin >= fecha_inicio`). Los
+  guards 400 acompañan: `adjust_user_balance` (monto<0), `update_price` (valor<0) y ajuste
+  negativo de puntos al editar reserva.
+- **3. UNIQUE de settings**: índice `uq_settings_clave_sucursal (clave, COALESCE(sucursal,''))`
+  (0 duplicados en 112 filas).
+- **4. FKs de sucursal**: 4 constraints aplicadas en Neon (migración `b2f4e8c1a9d7`):
+  `fk_parking_aforo_sucursal_branch`, `fk_settings_sucursal_branch`,
+  `fk_parking_cameras_sucursal_branch`, `fk_promotions_sucursal_branch` →
+  `parking_branches.nombre`, todas con `ON UPDATE CASCADE ON DELETE CASCADE`
+  (0 huérfanos verificado antes de aplicar). Modelos actualizados con las mismas FKs.
+- **Compatibilidad back/front**: `models/types.py` `DateTimeAsStr` (timestamp en BD, `str`
+  `'YYYY-MM-DD HH:MM:SS'` en Python). Helper front `parseFecha` en `utils.js` + `_coerceDate`
+  unificado; `TimeService.now_str()` alineado a `%Y-%m-%d %H:%M:%S`. Tests: **718 passed**
+  (los 5 archivos que cuelgan por puerto serial siguen excluidos).
+- **Puntos 5 y 6 DESCARTADOS por decisión del usuario** (no reabrir salvo pedido):
+  5 (`parking_floors` vacía con FK viva) y 6 (94% de `access_logs` son demo). Todos los datos
+  son de PRUEBA, proyecto escolar que nunca irá a producción (ver AGENTS.md).
+
 ## Completado (no reabrir salvo regresión)
 
 ### Unificación de criterios de PATENTES y DNI (commit "UNIFICACION DE CRITERIOS DE PATENTES Y DNI")
@@ -24,23 +49,30 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 - Archivos backend/front/scripts/tests tocados (ver git log del commit). NADA de Arduino,
   firmware (`.ino`), `hardware_service`, MQTT, ALPR pipeline o config de cámaras fue modificado.
 
-## Pendiente H6 (datos Neon) — requiere decisión del usuario
+## H6 (datos Neon) — RESUELTO 08/10/2026 (los 7 ítems aplicados/decididos)
 
-1. **Reservas huérfanas** `id` 79 y 84 (sin usuario/vehículo): decidir si vincular o eliminar.
-2. **62 reservas pagadas sin `fecha_pago`**: completar `fecha_pago` (usar `fecha_inicio`/`updated_at`?)
-   en `reservations`.
-3. **211 access_logs pagados (`pago_confirmado`) con `costo_estadia = 0`**: son de "pago interno"
-   (metodo `SALDO`?) y rompen métricas. Decidir si dejar 0 o recalcular con tarifario.
-4. **25 pagos MercadoPago PENDIENTE viejos**: decidir si cancelar/limpiar.
-5. **IPs duplicadas** en 4 de las cámaras (misma IP en varias cámaras): corregir IPs en `parking_cameras`.
+Backups en Neon `backup_h6_*`:
 
-## Pendiente config / tarifas
+1. **RESUELTO**: reservas huérfanas 79 y 84 eliminadas (0 referencias) → `backup_h6_reservaciones`.
+2. **RESUELTO**: 62 pagadas sin `fecha_pago` → completadas con `fecha_pago = fecha_inicio`
+   → `backup_h6_reservas_sinfp`. NO se borraron porque 90 `access_logs.reserva_id` las referencian.
+3. **RESUELTO**: 211 `access_logs` con `pago_confirmado=TRUE` y `costo_estadia` 0/NULL
+   **ELIMINADOS** (decisión del usuario) → `backup_h6_logs_costo0`. Verificado antes de borrar:
+   única FK hacia `access_logs` = `mercadopago_payments.access_log_id` con 0 referencias a esos 211.
+4. **RESUELTO**: 25 MP `PENDIENTE` eliminados (quedan 3 FALLIDO + 9 APROBADO) → `backup_h6_mp_pendientes`.
+5. **DESCARTADO POR DISEÑO** (decisión del usuario): las IPs/cámaras "duplicadas" son configuración
+   de **PRUEBA** — misma LAN y misma cámara usada cambiando de sede; el sistema está en prueba.
+   **No es un problema ni debe tratarse como bug.** Las 7 filas que se habían borrado fueron
+   **RESTAURADAS** (5 desde `backup_parking_cameras`, 2 desde `backup_h6_camaras`):
+   `parking_cameras` quedó con sus **22 filas originales**.
 
-- **Central no tiene tarifario** (0 settings de precio) → no puede cobrar (409). Decidir si cargar
-  tarifas de Central (seguía bloqueada a propósito).
-- **`precio_quincena_camioneta` no existe en ninguna sede** (solo global): cobrar "quincena" a una
-  camioneta en sede da error. Se agregaron las 5 tarifas de camioneta a Santos Dumont copiadas de
-  Castelar (30min/hora/dia/semana/mes). Falta decidir quincena si la modalidad es usable.
+## Pendiente config / tarifas — RESUELTO 08/10/2026
+
+- **Central**: 15 tarifas `precio_*` copiadas de Castelar (antes 0 → ahora 18 settings con quincena).
+- **Quincena por sede**: `precio_quincena` 120000 / `precio_quincena_moto` 60000 /
+  `precio_quincena_camioneta` 150000 creadas en las 5 sedes (antes solo globales; `get_rate` es
+  estricto por sede → la modalidad quincena daba 409). Verificado: 15 filas quincena por sede.
+- La caché de tarifas (`ttl_cache`, 300 s) no cachea misses → los rates nuevos aplican ya.
 
 ## Pendiente tests / CI (entorno)
 
@@ -102,10 +134,13 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 ## Notas operación
 
 - Último push = `87d170d` (fix(rbac) Fase 1). **Cambios LOCALES sin commitear:** Fase 2 RBAC
-  (R5–R7) + docs — esperar pedido expreso para commit/push (regla AGENTS).
+  (R5–R7) + docs + **mejoras BD puntos 1-4** (models, migraciones `a7f3d9c2e1b8`/`b2f4e8c1a9d7`,
+  front fechas, guards 400, tests) — esperar pedido expreso para commit/push (regla AGENTS).
 - Auditorías en `Info proyecto/`: `AUDITORIAS.md` (A1–A9), `AUDITORIA_DB.md`,
   `AUDITORIA_DB_NEON.md`, `AUDITORIA_VALIDACIONES.md` (V1–V12), `AUDITORIA_RBAC.md` (R1–R10).
 - Los scripts de migración de Neon se dejaron en `%TEMP%\opencode\*` (migrate_normalize.py,
-  migrate2.py, copy_tarifas.py, collision_check.py). Recrearlos si se necesitan.
+  migrate2.py, copy_tarifas.py, collision_check.py, migrate_orden.py, migrate_orden2.py,
+  cams_final.py, verify_final.py, borrar_logs3.py, find_lost_cams.py, restore_cams.py).
+  Recrearlos si se necesitan.
 - Regla AGENTS: no commitear/pushear sin pedido expreso. Antes de `git pull`, revisar si hay
   cambios de BD (`*.db`) en el remoto; si el schema NO cambió, preservar BD local.

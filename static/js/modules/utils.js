@@ -65,9 +65,21 @@ const _TIME_FMT = {
     localDateTime: new Intl.DateTimeFormat('es-AR', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false })
 };
 
+/**
+ * CONVIERTE UN STRING DE FECHA A Date DE FORMA SEGURA EN TODOS LOS ENGINES.
+ * NORMALIZA EL FORMATO CANONICO DE BACKEND 'YYYY-MM-DD HH:MM:SS' (SPACE) A ISO CON 'T'
+ * (SIN ESO, SAFARI/ALGUNOS ENGINES DEVUELVEN Invalid Date PARA SPACE-STRINGS).
+ */
+export function parseFecha(s) {
+    if (s instanceof Date) return s;
+    if (typeof s === 'number') return new Date(s);
+    const str = String(s ?? '');
+    return new Date(/^\d{4}-\d{2}-\d{2} /.test(str) ? str.replace(' ', 'T') : str);
+}
+
 function _coerceDate(d) {
     if (!d) return null;
-    const dt = d instanceof Date ? d : new Date(d);
+    const dt = parseFecha(d);
     return isNaN(dt.getTime()) ? null : dt;
 }
 

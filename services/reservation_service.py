@@ -379,6 +379,8 @@ class ReservationService(ReservationPaymentsMixin):
             diferencia = monto_nuevo - monto_anterior
             dif_puntos = BillingService.calculate_points(monto_nuevo) - BillingService.calculate_points(monto_anterior)
             if dif_puntos != 0:
+                if user.puntos_acumulados + dif_puntos < 0:
+                    raise HTTPException(status_code=400, detail="Puntos insuficientes para el ajuste")
                 user.puntos_acumulados += dif_puntos
                 db.add(models.PointsLog(user_id=user.id, cantidad=dif_puntos, motivo=f"Ajuste Reserva: {res.patente}", fecha=datetime.datetime.now().isoformat()))
             if diferencia > 0:

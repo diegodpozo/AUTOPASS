@@ -3,7 +3,7 @@
  * DASHBOARD DE ESTADISTICAS DEL SISTEMA ALPR: KPIS, GRÁFICO MÓVIL Y TABLA DE DETALLE.
  */
 import api from './api.js';
-import { formatTimeSeconds, formatDateTime } from './utils.js';
+import { formatTimeSeconds, formatDateTime, parseFecha } from './utils.js';
 import { WindowedChart } from './chart-window.js';
 import { THEME } from './theme.js';
 
@@ -99,7 +99,7 @@ function pushSerieOcr() {
 function formatearFecha(isoStr) {
     if (!isoStr) return '--';
     try {
-        const d = new Date(isoStr);
+        const d = parseFecha(isoStr);
         if (isNaN(d.getTime())) {
             return isoStr.replace('T', ' ').substring(0, 19);
         }
@@ -145,7 +145,7 @@ export async function actualizarEstadisticasOcr() {
                 patente: l.patente,
                 sucursal: l.sucursal,
                 tipo_evento: l.tipo_evento,
-                t: new Date(String(l.fecha_hora).replace(' ', 'T'))
+                t: parseFecha(l.fecha_hora)
             })).filter(p => !isNaN(p.t.getTime()) && !isNaN(p.y))
               .map(p => ({ ...p, tMs: p.t.getTime() }));
         }

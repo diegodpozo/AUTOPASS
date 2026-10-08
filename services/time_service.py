@@ -38,7 +38,7 @@ class TimeService:
 
     @classmethod
     def now_str(cls):
-        return cls.now().strftime("%Y-%m-%d %H:%M")
+        return cls.now().strftime("%Y-%m-%d %H:%M:%S")
 
     @classmethod
     def set_offset(cls, seconds: int):

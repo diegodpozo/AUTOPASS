@@ -1,10 +1,22 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, Index
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, Index, CheckConstraint, text
 from sqlalchemy.orm import relationship
 from core.database import Base
+from models.types import DateTimeAsStr
 
 class ParkingAforo(Base):
     """CONTROL DE CAPACIDAD Y OCUPACION EN TIEMPO REAL."""
     __tablename__ = "parking_aforo"
+    __table_args__ = (
+        CheckConstraint(
+            "COALESCE(capacidad_total, 0) >= 0 AND COALESCE(ocupacion_actual, 0) >= 0 AND "
+            "COALESCE(capacidad_motos, 0) >= 0 AND COALESCE(ocupacion_motos, 0) >= 0 AND "
+            "COALESCE(capacidad_camionetas, 0) >= 0 AND COALESCE(ocupacion_camionetas, 0) >= 0 AND "
+            "COALESCE(capacidad_reservas_autos, 0) >= 0 AND COALESCE(ocupacion_reservas_autos, 0) >= 0 AND "
+            "COALESCE(capacidad_reservas_motos, 0) >= 0 AND COALESCE(ocupacion_reservas_motos, 0) >= 0 AND "
+            "COALESCE(capacidad_reservas_camionetas, 0) >= 0 AND COALESCE(ocupacion_reservas_camionetas, 0) >= 0 AND "
+            "COALESCE(capacidad_reservas, 0) >= 0 AND COALESCE(ocupacion_reservas, 0) >= 0",
+            name="ck_parking_aforo_nonneg"),
+    )
     id = Column(Integer, primary_key=True)
     capacidad_total = Column(Integer, default=20) # PARA AUTOS
     ocupacion_actual = Column(Integer, default=0) # PARA AUTOS
@@ -21,16 +33,29 @@ class ParkingAforo(Base):
     capacidad_reservas = Column(Integer, default=10)
     ocupacion_reservas = Column(Integer, default=0)
     ultima_actualizacion = Column(String)
-    sucursal = Column(String, unique=True, nullable=True)
+    sucursal = Column(
+        String,
+        ForeignKey("parking_branches.nombre", name="fk_parking_aforo_sucursal_branch",
+                   onupdate="CASCADE", ondelete="CASCADE"),
+        unique=True, nullable=True)
 
 class Settings(Base):
     """CONFIGURACIONES GLOBALES DEL SISTEMA (PRECIOS, PARAMETROS)."""
     __tablename__ = "settings"
+    __table_args__ = (
+        CheckConstraint("COALESCE(valor, 0) >= 0", name="ck_settings_valor_nonneg"),
+        # UNICIDAD DE CLAVE POR SEDE: LA SUCURSAL NULL (GLOBAL) CUENTA COMO VALOR PROPIO
+        Index("uq_settings_clave_sucursal", text("clave"), text("COALESCE(sucursal, '')"), unique=True),
+    )
     id = Column(Integer, primary_key=True)
     clave = Column(String) # REMOVIDO UNIQUE=TRUE PARA PERMITIR VARIANTES POR SEDE
     valor = Column(Float, nullable=True)
     valor_str = Column(String, nullable=True) # PARA CONFIGURACIONES DE TEXTO (IPS, ETC)
-    sucursal = Column(String, nullable=True) #NONE = CONFIGURACION GLOBAL
+    sucursal = Column(
+        String,
+        ForeignKey("parking_branches.nombre", name="fk_settings_sucursal_branch",
+                   onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=True) #NONE = CONFIGURACION GLOBAL
 
 class ParkingCamera(Base):
     """CONFIGURACION DE CAMARAS DE MONITOREO DEL ESTACIONAMIENTO."""
@@ -39,7 +64,11 @@ class ParkingCamera(Base):
     nombre = Column(String, nullable=False)
     tipo = Column(String, nullable=False) # 'ENTRADA', 'SALIDA', 'PREDIO', 'PATENTE', 'QR'
     source = Column(String, nullable=False) # IP de camara, path de video o id de camara web (ej. "0")
-    sucursal = Column(String, nullable=True) # Aislamiento por sucursal
+    sucursal = Column(
+        String,
+        ForeignKey("parking_branches.nombre", name="fk_parking_cameras_sucursal_branch",
+                   onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=True) # Aislamiento por sucursal
     activa = Column(Boolean, default=True)
 
 
@@ -50,6 +79,7 @@ class AccessLog(Base):
         Index("ix_access_logs_pat_tipo_suc_fecha", "patente_detectada", "tipo_evento",
               "sucursal", "fecha_hora"),
         Index("ix_access_logs_reserva_id", "reserva_id", "tipo_evento"),
+        CheckConstraint("COALESCE(costo_estadia, 0) >= 0", name="ck_access_logs_costo_estadia_nonneg"),
     )
     id = Column(Integer, primary_key=True)
     patente_detectada = Column(String)
@@ -58,8 +88,8 @@ class AccessLog(Base):
     tipo_vehiculo = Column(String, default="Auto") # 'AUTO' O 'MOTO'
     reserva_id = Column(Integer, ForeignKey("reservations.id"), nullable=True)
     floor_id = Column(Integer, ForeignKey("parking_floors.id"), nullable=True)
-    fecha_hora = Column(String)
-    fecha_pago = Column(String, nullable=True) # NUEVA COLUMNA PARA REPORTES FINANCIEROS
+    fecha_hora = Column(DateTimeAsStr)
+    fecha_pago = Column(DateTimeAsStr, nullable=True) # NUEVA COLUMNA PARA REPORTES FINANCIEROS
     imagen_path = Column(String, nullable=True)
     pago_confirmado = Column(Boolean, default=False)
     metodo_pago = Column(String, nullable=True) # 'DIGITAL' O 'CAJA'
