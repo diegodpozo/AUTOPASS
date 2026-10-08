@@ -45,13 +45,13 @@ Leyenda: **A**=get_super_admin · **M**=get_local_manager · **O**=get_operation
 | POST/DELETE/PATCH `/branches*` · POST `/branches/{id}/toggle` | **A** + rate | — | OK |
 | POST `/open-barrier` · `/manual-entry` · `/manual-exit` · `/cancel-stay` | **O** + `30/min` | por `staff.sucursal` 🔒 | OK (hardware envía sucursal en details) |
 | Promotion CRUD | **M** + rate | local: `sucursal == admin.sucursal` 🔒 | OK |
-| GET `/reservations/patente-lookup` | **O** | **sin scope** | [**R5**] expone PII de cualquier usuario |
+| GET `/reservations/patente-lookup` | **O** + rate | PII minimizado | ✅ Corregido (R5): sin `email`; rate limit anti-enumeración |
 | GET `/reservations` · POST/PUT/reservas admin, confirm-payment, cancel | **O** + rate | `get_permissioned_reservation` 🔒 | OK |
 | GET `/reservations/{id}/redemptions` · `/redemption-info` | **O** | `get_permissioned_reservation` 🔒 | OK |
-| GET `/redemptions/available?user_id=` | **O** | **sin scope** | [**R5**] IDOR a canjes de otro user |
+| GET `/redemptions/available?user_id=` | **O** + rate | usuario activo (404) | ✅ Corregido (R5): `user_id` inexistente/borrado → 404 |
 | GET `/settings` · POST `/settings/prices` | **M** + rate | por `admin.sucursal` 🔒 | OK (validación de valores pendiente: AUDITORIA_VALIDACIONES V4) |
-| Soporte GET/PATCH (list y detail) | **O** | listar sí 🔒, **detail NO** | [**R2**] |
-| USERS: list · create · update · role · toggle-block · balance · password · delete | **M** | `validate_local_admin_user_permission` (USER global) | [**R4**] escalada cross-sucursal |
+| Soporte GET/PATCH (list y detail) | **O** | scoping por sucursal | ✅ Corregido (R2) |
+| USERS: list · create · update · role · toggle-block · balance · password · delete | **M** | `validate_local_admin_user_permission` + `validate_staff_role_assignment` | ✅ Corregido (R4): solo Admin Global asigna STAFF/LOCAL_ADMIN |
 | Virtual time (advance/rewind/set/target/reset) | **O** (operativo) + rate | **GLOBAL** (feature de test) | ✅ Uso de test: admin/local/staff |
 
 ### user (`routes/user/`) — prefijo `/v1/user`
@@ -60,7 +60,7 @@ Leyenda: **A**=get_super_admin · **M**=get_local_manager · **O**=get_operation
 
 ### system (`routes/system/`) — prefijo `/v1/system`
 - Cámaras (CRUD/control/config) → **O** con scoping por sucursal y prefijo de gate 🔒 | OK.
-- POST `/camera-reading/{gate_id}` → **NINGUNA** | [**R6**]
+- POST `/camera-reading/{gate_id}` → **`require_alpr_node`** (nodo envía `X-Node-Secret`) | ✅ Corregido (R6)
 - Video WS/frames → token/rol o nodo ALPR 🔒 | OK.
 - GET `/capture/{log_id}` → token/bearer + rol staff+, scoping `log.sucursal == staff.sucursal` (comparación exacta) | [**R10**] inconsistencia de comparación.
 - GET `/health` **O** · POST `/heartbeat` **N** · POST `/reset` **A** · GET `/virtual-time` **P**. OK.
@@ -70,7 +70,7 @@ Leyenda: **A**=get_super_admin · **M**=get_local_manager · **O**=get_operation
 - POST `/access/pay-stay` → **O** + `10/min` | OK.
 - GET `/parking/branches` → **P** | OK (endpoint público con `BranchPublicResponse`).
 - GET `/parking/status` · `/current-occupancy` → **O** | OK.
-- WS `/parking/ws` → token JWT, **sin validación de rol** | [**R7**] cualquier USER puede recibir el feed de ocupación.
+- WS `/parking/ws` → token JWT + **rol operativo** (4003 si es cliente) | ✅ Corregido (R7)
 
 ### reports (`routes/reports.py`) — prefijo `/v1/reports`
 | Ruta | Dep | Scoping |
@@ -102,7 +102,9 @@ Todos con scoping por `staff.sucursal`/`admin.sucursal` salvo el caso [**R10**] 
 
 **Estado de remediación:** **R1, R2 y R4 CORREGIDOS** el 2026-10-08 (Fase 1, sección 5).
 **R3 DESCARTADO** (feature de test, se descartará en producción).
-Pendientes: **R5–R10** (Fases 2 y 3).
+**R5, R6 y R7 CORREGIDOS** el 2026-10-08 (Fase 2, sección 5) — R5 con mitigación de PII +
+rate limit (scoping por sede descartado: rompe el flujo de caja multi-sede, ver F2.1).
+Pendientes: **R8–R10** (Fase 3).
 
 ---
 
@@ -111,7 +113,7 @@ Pendientes: **R5–R10** (Fases 2 y 3).
 1. **Endpoints ALPR** (`validate-plate`, `exit-plate`, `validate-qr`, `heartbeat`, WS video, `update-frame`): todos protegidos por `require_alpr_node` / token + rol / red local. Sin acceso anónimo. ✅
 2. **Ownership en el 100% de las rutas user** (reservas, notificaciones, tickets, vehículos, canjes): verificadas por `get_by_user_and_id`/`get_by_id_and_user` en los servicios. ✅
 3. **Scoping por sucursal en reportes** implementado de forma consistente en `ReportService` (9/9 endpoints). ✅
-4. **Requisito de rol en todos los mutadores admin** salvo R1/R6; rate limits en la mayoría (creación/edición/borrado, pagos, balance, cajas, promociones). ✅
+4. **Requisito de rol en todos los mutadores admin** (R1/R6 cerrados en Fases 1–2); rate limits en la mayoría (creación/edición/borrado, pagos, balance, cajas, promociones). ✅
 5. **Barreras de jurisdicción** (`validate_local_admin_branch`, `validate_local_admin_user_permission`, `get_permissioned_reservation`, `normalize_system_name` en cámaras) cubren el caso de pisos, cámaras, reservas y operación. ✅
 6. **Doble refuerzo de la data de Neon**: los hallazgos no son «acceso total», sino faltas de scoping puntuales; ningún rol puede leer saldos, claves ni tokens ajenos vía API. ✅
 
@@ -140,10 +142,30 @@ tickets, gate de virtual time, promoción de personal), guards de frontend en ve
 > **Nota R3:** al ser de test, evaluar si al descartarla conviene mover las rutas bajo
 > `require_alpr_node`/entorno solo-dev, o eliminarla del todo.
 
-### Fase 2: Endurecimiento de scoping (P2)
-- [ ] **F2.1 (R5):** `patente_lookup`: acotar a patentes de la sede del staff (o exigir `A` para buscada global); `admin_available_redemptions`: validar que `user_id` pertenezca a clientes de la sede del operador o restringir a `M`.
-- [ ] **F2.2 (R6):** `POST /camera-reading/{gate_id}` → `Depends(require_alpr_node)` o `get_operational_user` (los nodos ya envían `X-Node-Secret`).
-- [ ] **F2.3 (R7):** En `occupancy_websocket_endpoint`, exigir rol operativo (misma regla que `/parking/status`).
+### Fase 2: Endurecimiento de scoping (P2) — ✅ APLICADA (2026-10-08)
+- [x] **F2.1 (R5):** mitigación **sin romper el flujo de caja multi-sede**:
+  - `lookup_patente` ya **no devuelve `email`** (único PII sensible; el front solo usa
+    `user_id/nombre/apellido/tipo_vehiculo` — verificado en `reservations-admin-form.js:102-111`).
+  - `GET /reservations/patente-lookup` y `GET /redemptions/available` ahora con
+    `admin_rate_limit` (30/min por IP; el lookup del front tiene debounce de 450 ms → sin impacto
+    operativo; frena enumeración masiva de patentes/user_ids).
+  - `ReservationService.get_admin_available_redemptions` valida que el `user_id` exista y esté
+    activo → **404** (antes, cualquier id arbitrario devolvía sus canjes).
+  - **Scoping por sucursal DESCARTADO** (igual que R3): `vehicles` no tiene FK a sede y los
+    clientes no están ligados a una sede (`User.sucursal` nullable) → acotar por sede haría que
+    la caja no pueda vincular clientes de otra sede o de primera visita.
+- [x] **F2.2 (R6):** `POST /camera-reading/{gate_id}` → `Depends(require_alpr_node)`;
+  `alpr/ocr_engine.py::ReadingStatusNotifier._fire` ahora envía `X-Node-Secret` (mismo patrón que
+  `_dispatch_request`).
+- [x] **F2.3 (R7):** `occupancy_websocket_endpoint` exige rol operativo (helper DRY
+  `is_operational_role` en `core/security.py`, ahora usado también por `get_operational_user`) →
+  cierra con **4003** a clientes. El feed incluye `last_event` (patentes en vivo), por eso se
+  restringe; los clientes ven `/parking/branches` (público, sin eventos). Fronts
+  `dashboard-stats.js` y `monitoreo-live.js` no reintentan ante 4003.
+
+**Verificación:** suite completa `794 passed` (+5 tests: 403 sin/secret inválido en
+camera-reading, staff recibe WS, cliente cerrado con 4003, redemptions 404 por id inexistente;
+el lookup sin `email` se aserta en el test existente), guards de frontend en verde.
 
 ### Fase 3: Normalización y consistencia (P3)
 - [ ] **F3.1 (R9/R10):** Reemplazar comparaciones literales de sucursal por `normalize_branch_name()` en `get_capture`, scoping de cámaras/video e historial de pagos; documentar que la comparación canónica es la normalizada.

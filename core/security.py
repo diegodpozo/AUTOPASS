@@ -121,12 +121,17 @@ def get_local_manager(current_user: models.User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Requiere permisos de gestión administrativa")
     return current_user
 
+OPERATIONAL_ROLES = (UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value)
+
+def is_operational_role(rol) -> bool:
+    """True si el rol pertenece al personal operativo (ADMIN, LOCAL ADMIN O STAFF)."""
+    return getattr(rol, "value", rol) in OPERATIONAL_ROLES
+
 def get_operational_user(current_user: models.User = Depends(get_current_user)):
-      """VALIDA SI EL USUARIO ES PERSONAL OPERATIVO (ADMIN, LOCAL ADMIN O STAFF)."""
-      role_str = str(current_user.rol)
-      if role_str not in [UserRole.ADMIN.value, UserRole.LOCAL_ADMIN.value, UserRole.STAFF.value]:
-          raise HTTPException(status_code=403, detail="Acceso restringido a personal autorizado")
-      return current_user
+    """VALIDA SI EL USUARIO ES PERSONAL OPERATIVO (ADMIN, LOCAL ADMIN O STAFF)."""
+    if not is_operational_role(current_user.rol):
+        raise HTTPException(status_code=403, detail="Acceso restringido a personal autorizado")
+    return current_user
   
 def validate_local_admin_branch(admin: models.User, branch_nombre: str):
     """Valida que un LOCAL_ADMIN solo pueda operar sobre los recursos de SU sede.

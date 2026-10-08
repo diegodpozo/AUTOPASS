@@ -276,7 +276,8 @@ function connectGeneralWS() {
         } catch (e) {}
     };
 
-    wsGeneral.onclose = () => {
+    wsGeneral.onclose = (event) => {
+        if (event && event.code === 4003) return;
         setTimeout(connectGeneralWS, 5000);
     };
 }

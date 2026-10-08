@@ -215,6 +215,8 @@ def test_patente_lookup_encuentra_dueno_registrado(db):
     assert resultado["nombre"] == "Cliente"
     assert resultado["apellido"] == "Test"
     assert resultado["tipo_vehiculo"] == "Moto"
+    # R5: el lookup no expone PII sensible (email) al operador de caja
+    assert "email" not in resultado
 
 
 def test_patente_lookup_no_encontrada(db):
@@ -788,6 +790,14 @@ def test_admin_available_redemptions_sin_tickets_vacia(db):
     staff = _staff(db)
     out = admin_available_redemptions(user.id, "Sucursal Central", db, staff)
     assert out == []
+
+
+def test_admin_available_redemptions_user_id_inexistente_404(db):
+    _cliente(db)
+    staff = _staff(db)
+    with pytest.raises(HTTPException) as exc:
+        admin_available_redemptions(999999, "Sucursal Central", db, staff)
+    assert exc.value.status_code == 404
 
 
 def test_redemption_info_edicion_reserva_pagada_con_descuento(db):

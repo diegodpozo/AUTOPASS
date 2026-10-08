@@ -10,9 +10,10 @@ from repositories.redemption_repository import RedemptionRepository
 
 router = APIRouter()
 
-@router.get("/reservations/patente-lookup")
+@router.get("/reservations/patente-lookup", dependencies=[Depends(admin_rate_limit)])
 def patente_lookup(patente: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
-    """BUSCA SI UNA PATENTE ESTA REGISTRADA A UN USUARIO PARA VINCULARLA A UNA RESERVA MANUAL."""
+    """BUSCA SI UNA PATENTE ESTA REGISTRADA A UN USUARIO PARA VINCULARLA A UNA RESERVA MANUAL.
+    No expone datos sensibles del dueño (email, etc.): solo lo necesario para el badge de caja."""
     return ReservationService.lookup_patente(db, patente)
 
 @router.get("/reservations/new-count")
@@ -94,9 +95,9 @@ def reservation_redemption_info(res_id: int, db: Session = Depends(get_db), staf
         info.update(aplica=True, fuente="aplicado", valor_descuento=ticket_aplicado.valor_descuento, ticket_id=ticket_aplicado.id)
     return info
 
-@router.get("/redemptions/available")
+@router.get("/redemptions/available", dependencies=[Depends(admin_rate_limit)])
 def admin_available_redemptions(user_id: int, sucursal: str = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """LISTA LOS DESCUENTOS DE RESERVA (%) VIGENTES DE UN USUARIO APLICABLES A UNA SUCURSAL.
     Se usa en el flujo de nueva reserva manual en caja para ofrecer el descuento antes de crear y pagar."""
-    descuentos = ReservationService.get_available_redemption_discounts(db, user_id, sucursal)
+    descuentos = ReservationService.get_admin_available_redemptions(db, user_id, sucursal)
     return [{"id": d.id, "titulo": d.titulo, "valor_descuento": d.valor_descuento or 0, "created_at": d.created_at} for d in descuentos]

@@ -196,14 +196,25 @@ def test_ws_admin_recibe_global_update(client, monkeypatch):
     assert msg["type"] == "GLOBAL_UPDATE"
 
 
-def test_ws_user_recibe_branch_update(client, monkeypatch):
+def test_ws_staff_recibe_branch_update(client, monkeypatch):
     tc, TestSession = client
     _seed(TestSession)
-    _mock_ws(monkeypatch, TestSession, FakeUser(rol="user", email="client@test.com", sucursal="Centro"))
+    _mock_ws(monkeypatch, TestSession, FakeUser(rol="staff", email="staff@test.com", sucursal="Centro"))
     with tc.websocket_connect(f"{WS_URL}?token=valid") as ws:
         msg = ws.receive_json()
     assert msg["type"] == "BRANCH_UPDATE"
     assert msg["data"]["ocupacion_actual"] == 3
+
+
+def test_ws_cliente_no_operativo_cierra_4003(client, monkeypatch):
+    tc, TestSession = client
+    _seed(TestSession)
+    _mock_ws(monkeypatch, TestSession, FakeUser(rol="user", email="client@test.com", sucursal="Centro"))
+    with pytest.raises(WebSocketDisconnect) as ei:
+        with tc.websocket_connect(f"{WS_URL}?token=valid") as ws:
+            ws.receive_json()
+    assert ei.value.code == 4003
+    assert occupancy_manager.active_connections.get("CENTRO") in (None, [])
 
 
 def test_ws_dos_clientes_reciben_broadcast(client, monkeypatch):

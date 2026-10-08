@@ -10,6 +10,7 @@ import schemas
 from models.enums import UserRole
 from core.database import get_db
 from core.security import get_operational_user
+from core.alpr_security import require_alpr_node
 from core.logger import get_logger
 from routes.system.common import CAMERA_PROCESSES, CameraConfig, normalize_system_name
 from routes.system.common import manager as video_manager
@@ -322,9 +323,10 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
             
     return {"status": "error", "message": "Acción no válida"}
 
-@router.post("/camera-reading/{gate_id}")
+@router.post("/camera-reading/{gate_id}", dependencies=[Depends(require_alpr_node)])
 def notify_camera_reading(gate_id: str, db: Session = Depends(get_db)):
-    """NOTIFICA AL DASHBOARD QUE LA CAMARA ESTA LEYENDO ACTIVAMENTE UNA PATENTE."""
+    """NOTIFICA AL DASHBOARD QUE LA CAMARA ESTA LEYENDO ACTIVAMENTE UNA PATENTE.
+    Solo nodos ALPR autorizados (secret o red local): evita spoofing del estado operativo."""
     from core.normalize import normalize_user_name as normalize_name
     from services.notification_service import NotificationService
     sucursal = None

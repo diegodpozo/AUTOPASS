@@ -53,7 +53,11 @@ export function initOccupancyWS() {
         }
     };
 
-    socket.onclose = () => {
+    socket.onclose = (event) => {
+        if (event && event.code === 4003) {
+            console.warn('[WS Occupancy] Acceso restringido a personal operativo');
+            return;
+        }
         console.warn('[WS Occupancy] Connection closed. Retrying in 5s...');
         setTimeout(initOccupancyWS, 5000);
     };

@@ -78,9 +78,19 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
   - R4: `validate_staff_role_assignment` en create/update/role: solo Admin Global asigna
     STAFF/LOCAL_ADMIN; local solo gestiona clientes. Front `dashboard-admin-users.js`
     sincronizado (alta: local solo "Cliente"; edición: rol solo-lecturo).
-  **Fases 2–3 (R5–R10) pendientes:** scoping de `patente_lookup`/`redemptions`, auth en
-  `camera-reading`, rol en WS occupancy, `mark_ticket_notifications_read`, normalización de
-  comparaciones de sucursal (`get_capture`, cámaras, payment_history).
+  **Fase 2 (R5–R7) APLICADA y verificada (2026-10-08):**
+  - R5: `patente_lookup` ya no devuelve `email` (el front no lo usa); `admin_rate_limit` en
+    lookup + `/redemptions/available`; `get_admin_available_redemptions` valida usuario activo
+    → 404. **Scoping por sede DESCARTADO** (vehicles sin sede y clientes no ligados a sede →
+    rompería caja multi-sede), decisión documentada en AUDITORIA_RBAC.md F2.1.
+  - R6: `POST /camera-reading/{gate_id}` con `require_alpr_node`; `ocr_engine._fire` ahora
+    envía `X-Node-Secret`.
+  - R7: WS `/parking/ws` exige rol operativo (helper DRY `is_operational_role` en
+    `core/security.py`) → 4003 a clientes; fronts `dashboard-stats.js`/`monitoreo-live.js` no
+    reintentan ante 4003. El feed incluye `last_event` con patentes en vivo.
+  - Verificado: suite **794 passed** + guards en verde.
+  **Fase 3 (R8–R10) pendiente:** `mark_ticket_notifications_read` con scope de sucursal;
+  normalizar comparaciones de sucursal (`get_capture`, cámaras, payment_history).
 - **5 archivos de test cuelgan por puerto serial real (Arduino)** en esta máquina:
   `test_access_service.py`, `test_access_flow.py`, `test_reservation_spots.py`,
   `test_alpr_node_auth.py`, `test_bugfixes_funcionales.py`. `HardwareService.send_serial_command`
@@ -91,8 +101,8 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 
 ## Notas operación
 
-- Última versión local = remoto = `e637bd4` (128 docs: auditorías validaciones + RBAC).
-  Working tree limpio.
+- Último push = `87d170d` (fix(rbac) Fase 1). **Cambios LOCALES sin commitear:** Fase 2 RBAC
+  (R5–R7) + docs — esperar pedido expreso para commit/push (regla AGENTS).
 - Auditorías en `Info proyecto/`: `AUDITORIAS.md` (A1–A9), `AUDITORIA_DB.md`,
   `AUDITORIA_DB_NEON.md`, `AUDITORIA_VALIDACIONES.md` (V1–V12), `AUDITORIA_RBAC.md` (R1–R10).
 - Los scripts de migración de Neon se dejaron en `%TEMP%\opencode\*` (migrate_normalize.py,

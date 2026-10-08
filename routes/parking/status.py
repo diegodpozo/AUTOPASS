@@ -5,7 +5,7 @@ from typing import List, Dict
 import models, schemas
 from models.enums import UserRole
 from core.database import get_db
-from core.security import get_operational_user, decode_access_token
+from core.security import get_operational_user, decode_access_token, is_operational_role
 from core.logger import get_logger, mask_email
 from services.notification_service import NotificationService
 from services.occupancy_service import OccupancyService
@@ -162,7 +162,13 @@ async def occupancy_websocket_endpoint(websocket: WebSocket, token: str = Query(
         if not user or (getattr(user, "is_blocked", False)):
             await websocket.close(code=4008)
             return
-            
+        # EL FEED INCLUYE last_event (patentes/estados EN VIVO): SOLO PERSONAL OPERATIVO.
+        # Mismo criterio que el REST /parking/status; los clientes ven /parking/branches
+        # (publico, sin eventos) en el mapa.
+        if not is_operational_role(user.rol):
+            await websocket.close(code=4003)
+            return
+
         sucursal = await occupancy_manager.connect(websocket, user)
         
         # Registrar el event loop principal para permitir notificaciones desde hilos sincrónicos

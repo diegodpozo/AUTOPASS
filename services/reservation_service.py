@@ -171,10 +171,21 @@ class ReservationService(ReservationPaymentsMixin):
         owner = vehicle.owner
         return {
             "encontrado": True, "user_id": owner.id, "nombre": owner.nombre,
-            "apellido": owner.apellido, "email": owner.email,
+            "apellido": owner.apellido,
             "tipo_vehiculo": vehicle.tipo or "Auto",
             "marca_modelo": vehicle.marca_modelo or ""
         }
+
+    @staticmethod
+    def get_admin_available_redemptions(db: Session, user_id: int, sucursal: str = None):
+        """DESCUENTOS VIGENTES DE UN USUARIO PARA CAJA, VALIDANDO QUE EXISTA Y ESTE ACTIVO.
+        El user_id llega del cliente HTTP (vinculacion por patente): sin esta validacion
+        permitiria enumerar descuentos de cualquier id arbitrario."""
+        if not user_id:
+            return []
+        if not UserRepository.get_active_by_id(db, user_id):
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        return ReservationService.get_available_redemption_discounts(db, user_id, sucursal)
 
     @staticmethod
     def get_new_reservations_count(db: Session, staff, since_id: int = None) -> dict:

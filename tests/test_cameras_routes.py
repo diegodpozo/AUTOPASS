@@ -18,6 +18,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import models
+from core.config import settings
 from core.database import Base
 from core.normalize import normalize_name as normalize_system_name
 from models.enums import UserRole
@@ -106,7 +107,13 @@ class FakeLoop:
 
 
 @pytest.fixture
-def client():
+def node_secret(monkeypatch):
+    monkeypatch.setattr(settings, "ALPR_NODE_SECRET", "s3cret")
+    yield "s3cret"
+
+
+@pytest.fixture
+def client(node_secret):
     engine = create_engine(
         "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
@@ -811,12 +818,24 @@ class FakeBranch:
         self.nombre = nombre
 
 
+def test_reading_403_sin_secret(client):
+    c, _ = client
+    assert c.post("/camera-reading/CENTRO_1").status_code == 403
+
+
+def test_reading_403_secret_invalido(client):
+    c, _ = client
+    resp = c.post("/camera-reading/CENTRO_1", headers={"X-Node-Secret": "malo"})
+    assert resp.status_code == 403
+
+
 def test_reading_con_sucursal_matcheada(client, monkeypatch):
     c, _ = client
     calls = _capture_set_last_event(monkeypatch)
     monkeypatch.setattr(cam.BranchRepository, "get_all",
                         lambda db: [FakeBranch("Centro")])
-    resp = c.post("/camera-reading/CENTRO_1")
+    resp = c.post("/camera-reading/CENTRO_1",
+                  headers={"X-Node-Secret": "s3cret"})
     assert resp.json() == {"status": "ok"}
     assert calls == [("Centro", "READING", "", "LEYENDO PATENTE...", "reading")]
 
@@ -826,7 +845,7 @@ def test_reading_sin_match_de_sucursal_global(client, monkeypatch):
     calls = _capture_set_last_event(monkeypatch)
     monkeypatch.setattr(cam.BranchRepository, "get_all",
                         lambda db: [FakeBranch("Otra")])
-    c.post("/camera-reading/CENTRO_1")
+    c.post("/camera-reading/CENTRO_1", headers={"X-Node-Secret": "s3cret"})
     assert calls[0][0] == "GLOBAL"
 
 
@@ -838,14 +857,14 @@ def test_reading_excepcion_de_repositorio_global(client, monkeypatch):
         raise RuntimeError("db caida")
 
     monkeypatch.setattr(cam.BranchRepository, "get_all", boom)
-    c.post("/camera-reading/CENTRO_1")
+    c.post("/camera-reading/CENTRO_1", headers={"X-Node-Secret": "s3cret"})
     assert calls[0][0] == "GLOBAL"
 
 
 def test_reading_gate_sin_guion_bajo_global(client, monkeypatch):
     c, _ = client
     calls = _capture_set_last_event(monkeypatch)
-    c.post("/camera-reading/GLOBALCAM")
+    c.post("/camera-reading/GLOBALCAM", headers={"X-Node-Secret": "s3cret"})
     assert calls[0][0] == "GLOBAL"
 
 

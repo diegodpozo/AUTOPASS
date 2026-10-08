@@ -41,7 +41,8 @@ class ReadingStatusNotifier:
 
     def _fire(self):
         try:
-            requests.post(f"{BACKEND_URL}/v1/system/camera-reading/{GATE_ID}", timeout=0.8)
+            requests.post(f"{BACKEND_URL}/v1/system/camera-reading/{GATE_ID}", timeout=0.8,
+                          headers={"X-Node-Secret": ALPR_NODE_SECRET} if ALPR_NODE_SECRET else None)
         except Exception:
             pass
 
