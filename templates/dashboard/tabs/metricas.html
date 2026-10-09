@@ -194,7 +194,8 @@
                 <span class="metrica-detail-breadcrumb">MAPA DE CALOR DE TRÁFICO</span>
             </div>
             <p>
-                Entradas de vehículos por <strong>día del mes</strong> (columnas, 1 al 31) y <strong>hora de apertura</strong> (filas) de la sucursal seleccionada. Cuanto más cálido el color, mayor el movimiento; debajo de cada día va su total.
+                Entradas de vehículos por <strong>día del mes</strong> (columnas, 1 al 31) y <strong>hora de apertura</strong> (filas) de la sucursal seleccionada. Los colores van de <strong>blanco (menor movimiento)</strong> a <strong>rojo (mayor)</strong>; debajo de cada día va su total.
+                Con el botón superior podés alternar entre el <strong>mapa de calor</strong> y un <strong>gráfico de barras</strong> con el total por tramo horario de cada día.
             </p>
             <div class="metricas-controls-row metricas-filters-row">
                 <span class="toolbar-label"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
@@ -212,11 +213,17 @@
             <div class="card channel-card card--flush">
                 <div class="channel-header web-channel">
                     <span><i class="fas fa-fire"></i> TRÁFICO DIARIO POR HORA</span>
-<span class="metricas-chart-legend">
-                        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Bajo</span>
-                        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--m"></span>Medio</span>
-                        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>
-                    </span>
+                    <div class="hm-header-tools">
+                        <span id="hm-leyenda" class="metricas-chart-legend">
+                            <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Bajo</span>
+                            <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--m"></span>Medio</span>
+                            <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>
+                        </span>
+                        <span class="hm-view-toggle">
+                            <button type="button" class="hm-view-btn hm-view-btn--active" data-hm-view="calor" onclick="alternarHeatmapVista('calor')"><i class="fas fa-fire"></i> MAPA</button>
+                            <button type="button" class="hm-view-btn" data-hm-view="barras" onclick="alternarHeatmapVista('barras')"><i class="fas fa-chart-simple"></i> BARRAS</button>
+                        </span>
+                    </div>
                 </div>
                 <div class="channel-body">
                     <div id="hm-contenido" class="heatmap-wrap">

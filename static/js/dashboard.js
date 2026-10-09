@@ -117,6 +117,7 @@ window.limpiarFiltroMetricas = metricas.limpiarFiltroMetricas;
 window.cargarInforme = informes.cargarInforme;
 window.aplicarInforme = informes.aplicarInforme;
 window.limpiarInforme = informes.limpiarInforme;
+window.alternarHeatmapVista = informes.alternarHeatmapVista;
 
 // 6. ACCIONES ADMINISTRATIVAS Y USUARIOS
 window.openBarrier = admin.openBarrier;

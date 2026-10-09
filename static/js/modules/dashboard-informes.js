@@ -17,6 +17,44 @@ const filtros = {
 
 let branchesLoaded = false;
 
+// Vista del mapa de calor: 'calor' (grilla) o 'barras' (gráfico por tramos horarios)
+let heatmapView = 'calor';
+let heatmapCache = null;
+let hmBarrasChart = null;
+
+// Rampa blanco → rojo: menos actividad (blanco) → más actividad (rojo) [solo grilla heatmap]
+const HM_WHITE_TO_RED = [[255, 255, 255], [220, 38, 38]];
+
+// Colores fijos por tramo horario (indicación de horario en el gráfico de barras)
+const HM_TRAMO_COLORS = [
+    'rgba(223,186,107,0.25)',
+    'rgba(223,186,107,0.45)',
+    'rgba(223,186,107,0.65)',
+    'rgba(223,186,107,0.85)',
+    THEME.gold
+];
+
+function _hmLerp(ratio) {
+    const t = Math.min(1, Math.max(0, ratio));
+    const [aw, ag, ab] = HM_WHITE_TO_RED[0];
+    const [bw, bg, bb] = HM_WHITE_TO_RED[1];
+    return [
+        Math.round(aw + (bw - aw) * t),
+        Math.round(ag + (bg - ag) * t),
+        Math.round(ab + (bb - ab) * t)
+    ];
+}
+
+function _hmCellColor(ratio) {
+    const [r, g, b] = _hmLerp(ratio);
+    return `rgb(${r},${g},${b})`;
+}
+
+function _hmCellText(ratio) {
+    const [r, g, b] = _hmLerp(ratio);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 150 ? '#14161a' : 'rgba(255,255,255,0.92)';
+}
+
 async function cargarBranches() {
     if (branchesLoaded) return;
     const res = await api.get('/parking/branches');
@@ -50,6 +88,15 @@ export function limpiarInforme(key) {
     if (key === 'ocupacion') filtros.ocupacion = _limpiar('occ');
     if (key === 'recaudacion') filtros.recaudacion = _limpiar('fin');
     cargarInforme(key);
+}
+
+export function alternarHeatmapVista(vista) {
+    if (vista !== 'calor' && vista !== 'barras') return;
+    heatmapView = vista;
+    document.querySelectorAll('[data-hm-view]').forEach(btn =>
+        btn.classList.toggle('hm-view-btn--active', btn.dataset.hmView === vista));
+    _pintarLeyenda();
+    if (heatmapCache) _renderHeatmap();
 }
 
 function _leerFiltros(prefix) {
@@ -87,6 +134,7 @@ async function cargarHeatmap() {
     container.innerHTML = '<div class="heatmap-vacio"><i class="fas fa-fire" style="opacity:0.4;"></i> Cargando mapa de calor…</div>';
 
     const res = await api.get(`/reports/metrics/traffic-heatmap${_params(filtros.heatmap)}`);
+    heatmapCache = null;
     if (!res.ok) return _err(container, res.error);
     const data = res.data;
 
@@ -95,6 +143,20 @@ async function cargarHeatmap() {
         return;
     }
 
+    heatmapCache = data;
+    _pintarLeyenda();
+    _renderHeatmap();
+}
+
+function _renderHeatmap() {
+    const container = document.getElementById('hm-contenido');
+    if (!container || !heatmapCache) return;
+    if (heatmapView === 'barras') return _renderHeatmapBarras(container);
+    _renderHeatmapGrid(container);
+}
+
+function _renderHeatmapGrid(container) {
+    const data = heatmapCache;
     const { horas_labels, matrix, totals_per_day, totals_per_hour, max, dias, meses } = data;
     const n_dias = dias.length;
 
@@ -115,10 +177,9 @@ async function cargarHeatmap() {
         const celdas = dias.map((fecha, c) => {
             const v = matrix[r][c];
             const ratio = max > 0 ? v / max : 0;
-            const alpha = 0.08 + ratio * 0.87;
             const tooltip = `${formatDate(fecha)} ${hl} — ${v} entradas`;
             return `<div class="heatmap-cell" title="${tooltip}"
-                        style="background:rgba(223,186,107,${alpha.toFixed(2)});">${v || ''}</div>`;
+                        style="background:${_hmCellColor(ratio)};color:${_hmCellText(ratio)};">${v || ''}</div>`;
         }).join('');
         return `<div class="heatmap-hour">${hl}</div>${celdas}
                 <div class="heatmap-hour heatmap-hour--total">${formatNum(totals_per_hour[r])}</div>`;
@@ -142,6 +203,116 @@ async function cargarHeatmap() {
             Filas: horas de apertura de ${data.sucursal || 'todas las sucursales'} (${horas_labels[0]} a ${horas_labels[horas_labels.length - 1]}).
             Total: ${formatNum(data.total_entradas)} entradas.
         </div>`;
+}
+
+// Divide las horas de apertura en 5 tramos y suma las entradas de cada día dentro de cada tramo
+function _calcTramos(data) {
+    const horas = data.horas_labels;
+    const tam = Math.max(1, Math.ceil(horas.length / 5));
+    const tramos = [];
+    for (let i = 0; i < horas.length; i += tam) {
+        const hasta = Math.min(i + tam, horas.length);
+        const idx = [];
+        for (let j = i; j < hasta; j++) idx.push(j);
+        tramos.push({
+            label: `${horas[i].slice(0, 5)} a ${horas[hasta - 1].slice(0, 5)}`,
+            cls: `hm-leg--t${tramos.length}`,
+            color: HM_TRAMO_COLORS[tramos.length],
+            values: data.dias.map((_, c) => {
+                let s = 0;
+                for (const r of idx) s += data.matrix[r][c] || 0;
+                return s;
+            })
+        });
+    }
+    return tramos;
+}
+
+function _renderHeatmapBarras(container) {
+    const data = heatmapCache;
+    const tramos = _calcTramos(data);
+
+    const viewport = document.createElement('div');
+    viewport.className = 'hm-barras-viewport';
+    viewport.style.width = (data.dias.length * 150 + 90) + 'px';
+    viewport.innerHTML = '<canvas id="hmBarrasChart"></canvas>';
+
+    container.innerHTML = '';
+    container.appendChild(viewport);
+    container.insertAdjacentHTML('beforeend', `<div class="informe-note">
+        <i class="fas fa-circle-info"></i> Columnas: días del ${data.desde.slice(0, 7)} al ${data.hasta.slice(0, 7)}
+        (usá el scroll horizontal para recorrerlos). Barras 1-5: total de entradas por tramo
+        (${data.horas_labels[0]} a ${data.horas_labels[data.horas_labels.length - 1]}). Barra TOTAL: suma del día en la misma escala
+        (= la suma de las 5 barras del día). Total general: ${formatNum(data.total_entradas)} entradas.
+    </div>`);
+
+    const canvas = document.getElementById('hmBarrasChart');
+    if (!canvas || typeof window.Chart === 'undefined') {
+        container.innerHTML = '<div class="heatmap-vacio" style="color:var(--danger);"><i class="fas fa-chart-simple"></i> No se pudo dibujar el gráfico de barras.</div>';
+        return;
+    }
+    if (window.Chart.getChart(canvas)) window.Chart.getChart(canvas).destroy();
+
+    const datasets = tramos.map(t => ({
+        label: t.label,
+        data: t.values,
+        backgroundColor: t.color,
+        borderRadius: 3,
+        barPercentage: 0.86,
+        categoryPercentage: 0.92
+    })).concat([{
+        label: 'TOTAL',
+        data: data.totals_per_day,
+        backgroundColor: THEME.gold,
+        borderRadius: 3,
+        barPercentage: 0.86,
+        categoryPercentage: 0.92
+    }]);
+
+    hmBarrasChart = new window.Chart(canvas, {
+        type: 'bar',
+        data: { labels: data.dias.map(d => d.slice(8, 10)), datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: THEME.bgSoft, titleColor: THEME.gold,
+                    bodyColor: THEME.textPrimary, borderColor: THEME.goldBorder, borderWidth: 1,
+                    callbacks: {
+                        title: (items) => formatDate(data.dias[items[0].dataIndex]),
+                        label: (c) => c.dataset.label === 'TOTAL'
+                            ? ` TOTAL: ${formatNum(c.parsed.y)} entradas`
+                            : ` ${c.dataset.label}: ${formatNum(c.parsed.y)} entradas`
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { color: THEME.grid, drawBorder: false }, ticks: { color: THEME.textMuted, font: { size: 9 }, maxRotation: 0, autoSkip: false } },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Entradas', color: THEME.textMuted, font: { size: 9 } },
+                    grid: { color: THEME.grid, drawBorder: false },
+                    ticks: { color: THEME.textMuted, font: { size: 9 } }
+                }
+            }
+        }
+    });
+}
+
+function _pintarLeyenda() {
+    const ley = document.getElementById('hm-leyenda');
+    if (!ley) return;
+    if (heatmapView === 'barras' && heatmapCache) {
+        ley.innerHTML = _calcTramos(heatmapCache)
+            .map(t => `<span class="heatmap-legend"><span class="heatmap-legend-cell ${t.cls}"></span>${t.label}</span>`)
+            .join('')
+            + '<span class="heatmap-legend"><span class="heatmap-legend-cell hm-leg--tot"></span>TOTAL DÍA</span>';
+        return;
+    }
+    ley.innerHTML = `<span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Bajo</span>
+        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--m"></span>Medio</span>
+        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>`;
 }
 
 function _err(el, msg) {

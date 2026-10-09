@@ -385,9 +385,61 @@
     border-radius: 3px;
     background: rgba(223, 186, 107, 0.5);
 }
-.heatmap-legend-cell--0 { background: rgba(223, 186, 107, 0.09); }
-.heatmap-legend-cell--m { background: rgba(223, 186, 107, 0.5); }
-.heatmap-legend-cell--h { background: rgba(223, 186, 107, 0.95); }
+.heatmap-legend-cell--0 { background: #ffffff; }
+.heatmap-legend-cell--m { background: #ee9393; }
+.heatmap-legend-cell--h { background: #dc2626; }
+
+/* Header de la vista heatmap: leyenda + toggle mapa/barras */
+.hm-header-tools {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.hm-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--border-card);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+}
+.hm-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.hm-view-btn:hover { color: var(--text-primary); }
+.hm-view-btn--active {
+    background: var(--dorado);
+    color: #111;
+}
+
+/* Colores fijos por tramo horario (consistente con HM_TRAMO_COLORS del JS) */
+.hm-leg--t0 { background: rgba(223, 186, 107, 0.25); }
+.hm-leg--t1 { background: rgba(223, 186, 107, 0.45); }
+.hm-leg--t2 { background: rgba(223, 186, 107, 0.65); }
+.hm-leg--t3 { background: rgba(223, 186, 107, 0.85); }
+.hm-leg--t4 { background: #dfba6b; }
+.hm-leg--tot { background: #dfba6b; }
+
+/* Viewport del gráfico de barras (ancho fijado desde JS para el scroll horizontal) */
+.hm-barras-viewport {
+    position: relative;
+    height: 380px;
+    margin-top: 6px;
+}
 
 /* Nota bajo el informe */
 .informe-note {
