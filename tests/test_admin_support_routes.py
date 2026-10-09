@@ -115,6 +115,19 @@ def test_mark_ticket_notifs_read(client):
     assert r.json()["marked"] in (True, False)
 
 
+def test_mark_ticket_notifs_read_403_otra_sucursal(client):
+    c, TestSession = client
+    tid = _seed_ticket(TestSession, sucursal="Norte")
+    saved = dict(app.dependency_overrides)
+    app.dependency_overrides[get_operational_user] = lambda: LOCAL
+    try:
+        r = c.patch(f"{SUPPORT_URL}/{tid}/read-notifs")
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(saved)
+    assert r.status_code == 403
+
+
 # ---------------------------------------------------------------------------
 # get single ticket
 # ---------------------------------------------------------------------------

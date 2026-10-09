@@ -1,7 +1,7 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 08/10/2026
+Última actualización: 09/10/2026
 
 ## Puntos 1-4 de mejoras BD — RESUELTOS 08/10/2026 (migraciones `a7f3d9c2e1b8` y `b2f4e8c1a9d7`)
 
@@ -121,8 +121,16 @@ Backups en Neon `backup_h6_*`:
     `core/security.py`) → 4003 a clientes; fronts `dashboard-stats.js`/`monitoreo-live.js` no
     reintentan ante 4003. El feed incluye `last_event` con patentes en vivo.
   - Verificado: suite **794 passed** + guards en verde.
-  **Fase 3 (R8–R10) pendiente:** `mark_ticket_notifications_read` con scope de sucursal;
-  normalizar comparaciones de sucursal (`get_capture`, cámaras, payment_history).
+  **Fase 3 (R8–R10) APLICADA y verificada (2026-10-09):**
+  - R8: `mark_ticket_notifications_read` valida jurisdicción reutilizando `_can_access_ticket`
+    (403 cross-sucursal); la ruta delega en `SupportService.mark_ticket_notifications_read`.
+  - R9/R10: helper DRY `same_branch(a, b)` en `core/normalize.py` (normaliza prefijo `AUTOPASS `,
+    mayúsculas y acentos; deniega si la sede es vacía) reemplaza comparaciones literales en
+    `get_capture` (`video.py`), promociones (toggle/update/delete) y reservas
+    (`get_permissioned_reservation`, update y confirm-payment). `ReportService`/cámaras ya
+    normalizaban (`_branch_filter`, `normalize_system_name`) → sin cambios.
+  - Verificado: suite **799 passed** (+5 tests nuevos). **TODOS los hallazgos R1–R10 cerrados**
+    (R3 descartado por decisión del usuario).
 - **5 archivos de test cuelgan por puerto serial real (Arduino)** en esta máquina:
   `test_access_service.py`, `test_access_flow.py`, `test_reservation_spots.py`,
   `test_alpr_node_auth.py`, `test_bugfixes_funcionales.py`. `HardwareService.send_serial_command`
@@ -133,9 +141,9 @@ Backups en Neon `backup_h6_*`:
 
 ## Notas operación
 
-- Último push = `87d170d` (fix(rbac) Fase 1). **Cambios LOCALES sin commitear:** Fase 2 RBAC
-  (R5–R7) + docs + **mejoras BD puntos 1-4** (models, migraciones `a7f3d9c2e1b8`/`b2f4e8c1a9d7`,
-  front fechas, guards 400, tests) — esperar pedido expreso para commit/push (regla AGENTS).
+- Fase 3 RBAC (R8–R10) APLICADA y commiteada el 2026-10-09. Base previa: `cebf799` (Fase 2) +
+  pull fast-forward a `8253ddc` (gráficos + validaciones Neon). **Todos los hallazgos R1–R10
+  cerrados** (R3 descartado por decisión del usuario).
 - Auditorías en `Info proyecto/`: `AUDITORIAS.md` (A1–A9), `AUDITORIA_DB.md`,
   `AUDITORIA_DB_NEON.md`, `AUDITORIA_VALIDACIONES.md` (V1–V12), `AUDITORIA_RBAC.md` (R1–R10).
 - Los scripts de migración de Neon se dejaron en `%TEMP%\opencode\*` (migrate_normalize.py,

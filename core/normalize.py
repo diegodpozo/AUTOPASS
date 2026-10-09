@@ -12,6 +12,14 @@ def normalize_branch_name(text: str) -> str:
     return normalize_name(text)
 
 
+def same_branch(a: str, b: str) -> bool:
+    """TRUE SI DOS NOMBRES DE SUCURSAL REFIEREN A LA MISMA SEDE.
+    Comparacion canonica del proyecto: ignora prefijo 'AUTOPASS ', mayusculas y acentos.
+    Devuelve False si alguna sede es vacia (denegar ante dato faltante)."""
+    na = normalize_branch_name(a or "")
+    return bool(na) and na == normalize_branch_name(b or "")
+
+
 def normalize_user_name(s: str):
     if not s: return ""
     return s.strip().title()

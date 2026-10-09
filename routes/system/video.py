@@ -8,6 +8,7 @@ import models
 from models.enums import UserRole
 from core.database import get_db
 from core.security import get_operational_user, decode_access_token
+from core.normalize import same_branch
 from core.config import settings
 from core.logger import get_logger, mask_email
 from core.alpr_security import is_local_or_private as _is_local_or_private, is_trusted_alpr_node as _is_trusted_alpr_node
@@ -131,7 +132,7 @@ def get_capture(log_id: int, request: Request, token: str = Query(None), db: Ses
     log = AccessRepository.get_by_id(db, log_id)
     if not log:
         raise HTTPException(status_code=404, detail="Log no encontrado")
-    if str(staff.rol) != UserRole.ADMIN.value and log.sucursal != staff.sucursal:
+    if str(staff.rol) != UserRole.ADMIN.value and not same_branch(log.sucursal, staff.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos")
     if log.imagen_path:
         full_path = os.path.abspath(os.path.join(settings.IMAGE_DIR, log.imagen_path))

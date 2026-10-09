@@ -6,6 +6,7 @@ from models.enums import UserRole
 from core.database import get_db
 from core.limiter import admin_rate_limit
 from core.security import get_local_manager
+from core.normalize import same_branch
 from repositories.promotion_repository import PromotionRepository
 from repositories.redemption_repository import RedemptionRepository
 
@@ -51,7 +52,7 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     
-    if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
         
     promo.activa = not promo.activa
@@ -65,7 +66,7 @@ def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session =
     if not promo:
         raise HTTPException(status_code=404, detail="Promoción no encontrada")
 
-    if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
 
     promo.titulo = data.titulo
@@ -91,7 +92,7 @@ def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
     
-    if admin.rol != UserRole.ADMIN and promo.sucursal != admin.sucursal:
+    if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
     
     # DESASOCIAR TICKETS DE CANJE PARA EVITAR VIOLACION DE FK (los tickets guardan snapshot)

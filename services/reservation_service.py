@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.logger import get_logger
-from core.normalize import normalize_plate, normalize_name as _normalizar_sucursal
+from core.normalize import normalize_plate, normalize_name as _normalizar_sucursal, same_branch
 from models.enums import PaymentStatus, ReservationStatus, UserRole, VehicleType
 from repositories.access_log_repository import AccessRepository
 from repositories.branch_repository import BranchRepository
@@ -156,7 +156,7 @@ class ReservationService(ReservationPaymentsMixin):
     def get_permissioned_reservation(db: Session, staff, res_id: int):
         """Obtiene una reserva validando que el operador tenga acceso (admin == todas)."""
         res = ReservationService.get_reservation_or_404(db, res_id)
-        if staff.rol != UserRole.ADMIN and res.sucursal_nombre != staff.sucursal:
+        if staff.rol != UserRole.ADMIN and not same_branch(res.sucursal_nombre, staff.sucursal):
             raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
         return res
 
@@ -511,7 +511,7 @@ class ReservationService(ReservationPaymentsMixin):
             raise HTTPException(status_code=400, detail="Solo se pueden editar reservas creadas por administración o empleados")
         if reserva.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
             raise HTTPException(status_code=400, detail="No se puede editar una reserva completada o cancelada")
-        if staff.rol != UserRole.ADMIN and reserva.sucursal_nombre != staff.sucursal:
+        if staff.rol != UserRole.ADMIN and not same_branch(reserva.sucursal_nombre, staff.sucursal):
             raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
         if staff.rol != UserRole.ADMIN:
             data.sucursal_nombre = staff.sucursal
@@ -638,7 +638,7 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def confirm_reservation_payment(db: Session, staff, res_id: int, data=None) -> dict:
         reserva = ReservationService.get_reservation_or_404(db, res_id)
-        if staff.rol != UserRole.ADMIN and reserva.sucursal_nombre != staff.sucursal:
+        if staff.rol != UserRole.ADMIN and not same_branch(reserva.sucursal_nombre, staff.sucursal):
             raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
         metodo = (data.metodo_pago if data else None) or "Caja"
         redemption_ticket_id = (data.redemption_ticket_id if data else None)

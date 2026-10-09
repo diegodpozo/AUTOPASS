@@ -358,6 +358,34 @@ def test_edit_staff_no_puede_editar_otra_sucursal(db):
     assert exc.value.status_code == 403
 
 
+def test_get_permissioned_reservation_misma_sucursal_distinto_formato(db):
+    res = Reservation(patente="NOR123", fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00",
+                      tipo_estadia="hora", monto_total=1500.0, estado_pago="Pendiente",
+                      estado_reserva="Pendiente", sucursal_nombre="AUTOPASS Sucursal Central",
+                      tipo_vehiculo="Auto")
+    db.add(res)
+    db.commit()
+    staff = _staff(db)
+
+    resultado = ReservationService.get_permissioned_reservation(db, staff, res.id)
+
+    assert resultado.id == res.id
+
+
+def test_get_permissioned_reservation_otra_sucursal_403(db):
+    res = Reservation(patente="NOR124", fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00",
+                      tipo_estadia="hora", monto_total=1500.0, estado_pago="Pendiente",
+                      estado_reserva="Pendiente", sucursal_nombre="Sucursal Dos",
+                      tipo_vehiculo="Auto")
+    db.add(res)
+    db.commit()
+    staff = _staff(db)
+
+    with pytest.raises(HTTPException) as exc:
+        ReservationService.get_permissioned_reservation(db, staff, res.id)
+    assert exc.value.status_code == 403
+
+
 def test_edit_excluye_propia_reserva_de_disponibilidad(db):
     staff = _staff(db)
     _reserva_data_10_12 = lambda: _reserva_data(fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00")

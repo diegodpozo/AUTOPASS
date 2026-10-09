@@ -6,7 +6,6 @@ from core.database import get_db
 from core.limiter import admin_rate_limit
 from core.security import get_operational_user
 from services.support_service import SupportService
-from repositories.notification_repository import NotificationRepository
 from services.notification_service import NotificationService
 
 router = APIRouter()
@@ -27,8 +26,9 @@ def mark_ticket_notifications_read(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_operational_user)
 ):
-    """MARCA COMO LEIDAS LAS NOTIFICACIONES DE UN TICKET PARA EL ADMIN ACTUAL."""
-    updated = NotificationRepository.mark_ticket_read_for_user(db, ticket_id, current_user.id)
+    """MARCA COMO LEIDAS LAS NOTIFICACIONES DE UN TICKET PARA EL ADMIN ACTUAL.
+    Respeta la jurisdiccion por sucursal (misma regla que el listado/detail)."""
+    updated = SupportService.mark_ticket_notifications_read(db, current_user, ticket_id)
     return {"marked": updated}
 
 @router.get("/support-tickets/{ticket_id}")

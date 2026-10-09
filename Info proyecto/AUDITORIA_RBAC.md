@@ -62,7 +62,7 @@ Leyenda: **A**=get_super_admin · **M**=get_local_manager · **O**=get_operation
 - Cámaras (CRUD/control/config) → **O** con scoping por sucursal y prefijo de gate 🔒 | OK.
 - POST `/camera-reading/{gate_id}` → **`require_alpr_node`** (nodo envía `X-Node-Secret`) | ✅ Corregido (R6)
 - Video WS/frames → token/rol o nodo ALPR 🔒 | OK.
-- GET `/capture/{log_id}` → token/bearer + rol staff+, scoping `log.sucursal == staff.sucursal` (comparación exacta) | [**R10**] inconsistencia de comparación.
+- GET `/capture/{log_id}` → token/bearer + rol staff+, scoping por sede normalizada (`same_branch`) | ✅ Corregido (R9/R10)
 - GET `/health` **O** · POST `/heartbeat` **N** · POST `/reset` **A** · GET `/virtual-time` **P**. OK.
 
 ### parking (`routes/parking/`)
@@ -81,7 +81,7 @@ Leyenda: **A**=get_super_admin · **M**=get_local_manager · **O**=get_operation
 | `/ocr-stats` · `/ocr-activity` | **O** | 🔒 |
 | `/metrics/*` | **M** | 🔒 |
 
-Todos con scoping por `staff.sucursal`/`admin.sucursal` salvo el caso [**R10**] de databases con nombres «AUTOPASS X».
+Todos con scoping por `staff.sucursal`/`admin.sucursal`; la comparación canónica es **normalizada** (`same_branch` / `_branch_filter`), por lo que los nombres «AUTOPASS X» ya no provocan exclusión de datos (R10 corregido).
 
 ---
 
@@ -104,7 +104,8 @@ Todos con scoping por `staff.sucursal`/`admin.sucursal` salvo el caso [**R10**] 
 **R3 DESCARTADO** (feature de test, se descartará en producción).
 **R5, R6 y R7 CORREGIDOS** el 2026-10-08 (Fase 2, sección 5) — R5 con mitigación de PII +
 rate limit (scoping por sede descartado: rompe el flujo de caja multi-sede, ver F2.1).
-Pendientes: **R8–R10** (Fase 3).
+**R8, R9 y R10 CORREGIDOS** el 2026-10-09 (Fase 3, sección 5) — helper DRY `same_branch` en
+`core/normalize.py` para toda comparación de sede.
 
 ---
 
@@ -167,9 +168,22 @@ tickets, gate de virtual time, promoción de personal), guards de frontend en ve
 camera-reading, staff recibe WS, cliente cerrado con 4003, redemptions 404 por id inexistente;
 el lookup sin `email` se aserta en el test existente), guards de frontend en verde.
 
-### Fase 3: Normalización y consistencia (P3)
-- [ ] **F3.1 (R9/R10):** Reemplazar comparaciones literales de sucursal por `normalize_branch_name()` en `get_capture`, scoping de cámaras/video e historial de pagos; documentar que la comparación canónica es la normalizada.
-- [ ] **F3.2 (R8):** `mark_ticket_notifications_read` con scope de sucursal por coherencia con el listado.
+### Fase 3: Normalización y consistencia (P3) — ✅ APLICADA (2026-10-09)
+- [x] **F3.1 (R9/R10):** nuevo helper DRY `same_branch(a, b)` en `core/normalize.py`
+  (normaliza `AUTOPASS `, mayúsculas y acentos; **deniega si la sede está vacía**). Reemplaza las
+  comparaciones literales en `routes/system/video.py:134` (`get_capture`), `routes/admin/promotions.py`
+  (toggle/update/delete) y `services/reservation_service.py` (`get_permissioned_reservation`,
+  update y confirm-payment). `ReportService`/cámaras ya usaban filtros normalizados
+  (`_branch_filter`, `normalize_system_name`) → sin cambios. La comparación canónica del proyecto
+  pasa a ser la normalizada.
+- [x] **F3.2 (R8):** `mark_ticket_notifications_read` valida jurisdicción reutilizando
+  `SupportService._can_access_ticket` (403 cross-sucursal), por coherencia con el listado/detail;
+  la ruta delega en `SupportService.mark_ticket_notifications_read` (ya no toca el repo directo).
+
+**Verificación:** suite completa `799 passed` (+5 tests: 403 en read-notifs, captura con distinto
+formato de sede, promo y reserva con sede normalizada, reserva cross-sucursal 403). Guards de
+frontend: **8/8 en verde** (se corrigió la regresión de CSS que trajo el pull, ver
+`PENDIENTES_PROXIMA_SESION.md`).
 
 ---
 

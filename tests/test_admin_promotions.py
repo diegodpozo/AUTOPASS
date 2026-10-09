@@ -222,6 +222,14 @@ def test_toggle_promotion_otra_sucursal_403(client):
     assert resp.json()["detail"] == "No tenés permisos sobre esta promoción"
 
 
+def test_toggle_promotion_misma_sucursal_distinto_formato_ok(client):
+    c, db_factory = client
+    pid = _seed_promo(db_factory, "Normalizada", sucursal="AUTOPASS Centro")
+    _set_user(rol=UserRole.LOCAL_ADMIN, sucursal="Centro")
+    resp = c.post(f"/promotions/{pid}/toggle")
+    assert resp.status_code == 200
+
+
 def test_update_promotion_admin_global_reasigna_sucursal(client):
     c, db_factory = client
     pid = _seed_promo(db_factory, "Antes", sucursal="Centro")

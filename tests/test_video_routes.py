@@ -412,6 +412,18 @@ def test_capture_sucursal_distinta_403(app_client, monkeypatch):
     assert resp.status_code == 403
 
 
+def test_capture_misma_sucursal_distinto_formato_ok(app_client, monkeypatch):
+    _capture_setup(
+        app_client, monkeypatch,
+        log=FakeLog(sucursal="AUTOPASS Centro", imagen_path="logs/1.jpg"),
+        user_factory=lambda db, email: FakeUser(rol="staff", sucursal="Centro", email=email),
+    )
+    _fake_fileresponse(monkeypatch)
+    monkeypatch.setattr(video_mod.os.path, "exists", lambda p: True)
+    resp = app_client.get("/capture/1?token=abc")
+    assert resp.status_code == 200
+
+
 def test_capture_image_no_existe_devuelve_logo(app_client, monkeypatch):
     _capture_setup(app_client, monkeypatch, log=FakeLog(imagen_path="no/está.jpg"))
     _fake_fileresponse(monkeypatch)

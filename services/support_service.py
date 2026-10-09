@@ -4,7 +4,7 @@ from typing import List, Optional
 import models, schemas
 from models.enums import UserRole
 from core.time import localnow
-from core.normalize import normalize_branch_name
+from core.normalize import normalize_branch_name, same_branch
 from repositories.support_repository import SupportRepository
 from repositories.notification_repository import NotificationRepository
 from repositories.user_repository import UserRepository
@@ -166,8 +166,16 @@ class SupportService:
         """TRUE SI EL USUARIO TIENE JURISDICCION SOBRE EL TICKET (MISMA REGLA QUE EL LISTADO ADMIN)."""
         if current_user.rol == UserRole.ADMIN:
             return True
-        user_suc_norm = normalize_branch_name(current_user.sucursal or "")
-        return bool(user_suc_norm and normalize_branch_name(ticket.sucursal or "") == user_suc_norm)
+        return same_branch(current_user.sucursal, ticket.sucursal)
+
+    @staticmethod
+    def mark_ticket_notifications_read(db: Session, current_user: models.User, ticket_id: int) -> int:
+        """MARCA COMO LEIDAS LAS NOTIFICACIONES DE UN TICKET PARA EL ADMIN ACTUAL.
+        Respeta la jurisdiccion por sucursal (misma regla que el listado/detail)."""
+        ticket = SupportRepository.get_by_id(db, ticket_id)
+        if ticket and not SupportService._can_access_ticket(db, current_user, ticket):
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre tickets de otra sucursal")
+        return NotificationRepository.mark_ticket_read_for_user(db, ticket_id, current_user.id)
 
     @staticmethod
     def get_admin_support_ticket_detail(db: Session, current_user: models.User, ticket_id: int):
