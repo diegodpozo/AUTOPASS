@@ -471,6 +471,12 @@ export function resetSlotRange() {
     slotRangeStart = null;
     slotRangeEnd = null;
     slotRangeDate = null;
+    // Limpia el rango comprometido en el DOM para que no quede un dato
+    // obsoleto tras cambiar sucursal/vehículo/tipo o resetear el formulario.
+    const timeInput = document.querySelector('.res-time-only');
+    const hoursQtyInput = document.querySelector('.res-hours-qty');
+    if (timeInput) timeInput.value = '';
+    if (hoursQtyInput) hoursQtyInput.value = '1';
 }
 
 export function setSlotRange({ start, end, date }) {

@@ -476,12 +476,12 @@
     justify-content: center;
     gap: 0;
     width: 100%;
-    max-width: 560px;
-    margin: 0 auto 22px;
-    padding: 12px 8px;
+    max-width: 380px;
+    margin: 0 auto 18px;
+    padding: 10px 8px;
     background: rgba(18, 18, 18, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 16px;
+    border-radius: 14px;
     backdrop-filter: blur(10px);
     position: sticky;
     top: 10px;
@@ -501,22 +501,22 @@
 .stepper-line {
     flex: 1;
     height: 2px;
-    margin: 0 6px 18px;
+    margin: 0 4px 16px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 2px;
     transition: background 0.3s ease;
 }
 
 .stepper-dot {
-    width: 32px;
-    height: 32px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.08);
     color: #888;
-    font-size: 0.85rem;
+    font-size: 0.55rem;
     border: 1px solid rgba(255, 255, 255, 0.12);
     transition: all 0.3s ease;
 }
@@ -543,30 +543,60 @@
 }
 
 .stepper-step.is-done .stepper-dot {
-    background: var(--dorado);
-    border-color: var(--dorado);
-    color: #0b0b0b;
+    background: var(--success);
+    border-color: var(--success);
+    color: #062a1c;
 }
 
 .stepper-step.is-done .stepper-label {
-    color: #c9c9c9;
+    color: #6fcf97;
 }
 
 .stepper-line.is-done {
-    background: var(--dorado);
+    background: var(--success);
     opacity: 0.6;
 }
 
 @media (max-width: 640px) {
     .reservation-stepper { max-width: 100%; padding: 8px 4px; }
-    .stepper-dot { width: 26px; height: 26px; font-size: 0.7rem; }
-    .stepper-label { font-size: 0.5rem; }
+    .stepper-dot { width: 13px; height: 13px; font-size: 0.45rem; }
+    .stepper-label { font-size: 0.48rem; }
 }
 
 @media (min-width: 769px) {
     /* En escritorio el header del portal es sticky (top:0, z-index:1000):
        el stepper se pega debajo de él en vez de quedar oculto. */
     .reservation-stepper { top: 100px; }
+}
+
+@media (min-width: 1281px) {
+    /* P2.5 UX/UI: en pantallas amplias el stepper es un raíl vertical a la
+       izquierda del panel de reserva (reserva-layout), del alto justo de sus
+       pasos (dot arriba, label debajo, líneas verticales) y pegajoso debajo
+       del header sticky del portal para no perderse al hacer scroll. */
+    .reservation-stepper {
+        position: sticky;
+        top: 100px;
+        align-self: start;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        width: auto;
+        max-width: none;
+        margin: 0;
+        padding: 12px 6px;
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    }
+
+    .reservation-stepper .stepper-step { gap: 6px; }
+
+    .reservation-stepper .stepper-line {
+        width: 2px;
+        height: 22px;
+        flex: none;
+        margin: 4px 0;
+    }
 }
 
 /* --- P3.7 UX/UI: TÍTULO PREMIUM CENTRADO (sin estilos inline) --- */

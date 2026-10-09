@@ -254,8 +254,8 @@
 /* --- PORTAL HOME: MAP INTEGRATION --- */
 .portal-home-grid {
     display: grid;
-    grid-template-columns: 0.9fr 1.3fr; /* COLUMNA IZQUIERDA MAS CHICA, MAPA 30% MAS GRANDE */
-gap: 20px;
+    grid-template-columns: 1fr 1.1fr; /* COLUMNA DE RESERVA ESTABLE, MAPA 10% MAS GRANDE */
+    gap: 16px;
       align-items: start;
       /* v9.34.71: 19px -> 20px. 19px quedaba de un solo uso en todo el
          proyecto al borrarse el .greeting-premium que lo sharing, y ademas
@@ -435,6 +435,36 @@ gap: 20px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+/* --- P2.5 UX/UI: LAYOUT RESERVA (barra de pasos + panel) --- */
+.reserva-layout {
+    display: block;
+}
+
+@media (min-width: 1281px) {
+    /* Con la barra de pasos vertical a la izquierda, el panel de reserva
+       (formulario + mapa) se corre a la derecha. Las columnas internas del
+       grid se rebalancean: la de reserva mantiene tamaño y el mapa se achica. */
+    .reserva-layout {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: start;
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .reserva-layout .portal-home-grid {
+        margin-top: 0;
+    }
+
+    .portal-map-container {
+        height: 430px;
+    }
+
+    .portal-home-grid .flex-col.gap-20 { gap: 16px; }
+    .section-title-premium--center { margin-bottom: 12px; }
+    .map-and-stats-side { gap: 14px; }
 }
 
 /* ==========================================================================

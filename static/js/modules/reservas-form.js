@@ -35,6 +35,12 @@ import {
     setSlotRange
 } from './reservas-form-slot.js';
 
+// P2.5 UX/UI: el stepper no debe "ganar" pasos solo. La fecha viene precargada
+// (flatpickr defaultDate = hoy) y el total se calcula apenas hay datos; estos
+// flags marcan la interacción real del usuario: tocar una fecha y confirmar.
+let fechaReservaTocada = false;
+let reservaConfirmada = false;
+
 export function initReservationForm() {
     if (!window.flatpickr) return;
 
@@ -54,6 +60,7 @@ export function initReservationForm() {
         dateFormat: "Y-m-d",
         defaultDate: now,
         onChange: () => {
+            fechaReservaTocada = true;
             updateReservationPrice();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
@@ -66,6 +73,7 @@ export function initReservationForm() {
     getFpInstances().week = flatpickr(".res-week-start", { 
         ...commonConfig, 
         onChange: (sd, ds) => {
+            fechaReservaTocada = true;
             updatePeriodEnd(ds, 7, '.res-week-end');
             updatePeriodAvailabilityBadge();
         } 
@@ -73,6 +81,7 @@ export function initReservationForm() {
     getFpInstances().fortnight = flatpickr(".res-fortnight-start", { 
         ...commonConfig, 
         onChange: (sd, ds) => {
+            fechaReservaTocada = true;
             updatePeriodEnd(ds, 15, '.res-fortnight-end');
             updatePeriodAvailabilityBadge();
         } 
@@ -80,6 +89,7 @@ export function initReservationForm() {
     getFpInstances().month = flatpickr(".res-month-start", { 
         ...commonConfig, 
         onChange: (sd, ds) => {
+            fechaReservaTocada = true;
             updatePeriodEnd(ds, 30, '.res-month-end');
             updatePeriodAvailabilityBadge();
         } 
@@ -169,24 +179,21 @@ export function updateReservationStepper() {
     const vehicle = document.querySelector('.res-vehicle')?.value;
     const sucursal = document.querySelector('.res-sucursal')?.value;
     const type = document.querySelector('.res-type')?.value;
-    const dateMap = {
-        'hora': '.res-date-only',
-        'dia': '.res-day-only',
-        'semana': '.res-week-start',
-        'quincena': '.res-fortnight-start',
-        'mes': '.res-month-start',
-        '': '.res-date-only'
-    };
-    const dateSel = dateMap[type] || '.res-start';
-    const hasDate = Boolean(document.querySelector(dateSel)?.value);
-    const totalEl = document.getElementById('reserva-total-est');
-    const hasTotal = totalEl ? totalEl.innerText.replace(/\s/g, '') !== '$---' : false;
+    // La fecha llega precargada (flatpickr defaultDate = hoy) y el precio se
+    // calcula apenas hay datos. Para no ganar pasos solo, "Horario" cuenta
+    // únicamente cuando el usuario termina de elegirlo: en "hora" al
+    // comprometer el rango (inicio Y fin; .res-time-only solo se llena ahí);
+    // en las demás modalidades con tocar/confirmar la fecha.
+    // "Confirmación" solo cuando la reserva se creó/editó de verdad.
+    const horarioElegido = type === 'hora'
+        ? Boolean(document.querySelector('.res-time-only')?.value)
+        : fechaReservaTocada;
 
     let active = 1;
     if (vehicle) active = 2;
     if (vehicle && sucursal) active = 3;
-    if (vehicle && sucursal && hasDate) active = 4;
-    const complete = active >= 4 && hasTotal;
+    if (vehicle && sucursal && horarioElegido) active = 4;
+    const complete = reservaConfirmada;
 
     steps.forEach((s, i) => {
         const idx = i + 1;
@@ -316,7 +323,9 @@ export async function refreshReservationFormState() {
     }
 
     // 2. CARGAR SUCURSALES DINÁMICAMENTE
-    const resBranches = await api.get('/admin/branches');
+    // Endpoint público (RBAC): /admin/branches exige rol operativo y el portal
+    // lo usa un CLIENT (rol=user), que obtiene 403 y deja el select colgado.
+    const resBranches = await api.get('/parking/branches');
     if (resBranches.ok) {
         setBranchesData(resBranches.data);
         const sucursalSelects = document.querySelectorAll('.res-sucursal');
@@ -326,6 +335,13 @@ export async function refreshReservationFormState() {
                 getBranchesData().map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
+    } else {
+        // No dejar el select colgado en "Cargando sucursales..." ante un fallo.
+        console.error('[!] Error al cargar sucursales:', resBranches.status, resBranches.error);
+        document.querySelectorAll('.res-sucursal').forEach(select => {
+            select.innerHTML = '<option value="" selected disabled hidden>Sucursales no disponibles</option>';
+        });
+        if (typeof showToast === 'function') showToast('No se pudieron cargar las sucursales. Reintentá en unos segundos.', 'error');
     }
 
     // YA CON LAS SUCURSALES CARGADAS: consulta tarifas + descuento para la sucursal seleccionada
@@ -334,6 +350,9 @@ export async function refreshReservationFormState() {
 }
 
 export function resetReservaForm() {
+    // P2.5 UX/UI: al resetear el formulario el stepper vuelve al paso 1.
+    fechaReservaTocada = false;
+    reservaConfirmada = false;
     setEditingReservaId(null);
     resetSlotRange();
     const form = document.querySelector('.reservation-form-modern');
@@ -363,6 +382,10 @@ export async function prepareEditReservation(id) {
     }
 
     setEditingReservaId(id);
+
+    // P2.5 UX/UI: al editar una reserva existente todo se considera completado.
+    fechaReservaTocada = true;
+    reservaConfirmada = true;
     
     if (window.showSection) {
         const inicioNavItem = document.querySelector('.nav-item[onclick*="inicio"]');
