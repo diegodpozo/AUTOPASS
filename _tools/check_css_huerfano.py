@@ -27,9 +27,11 @@ BASELINE_PATH = Path(__file__).resolve().parent / "css_huerfano_baseline.json"
 THIRD_PARTY_PREFIXES = ("flatpickr-", "leaflet-", "numInput", "arrowUp", "arrowDown")
 
 # Clases vivas solo por concatenacion en runtime, p.ej. dashboard.html
-# "document.body.classList.add('role-' + rol)" y reservations-admin-list.js
-# "badge-${estado.toLowerCase()}". Se validan a mano contra el emisor.
-RUNTIME_BUILT_PREFIXES = ("badge-", "role-")
+# "document.body.classList.add('role-' + rol)", reservations-admin-list.js
+# "badge-${estado.toLowerCase()}" y dashboard-informes.js
+# "hm-leg--t${tramos.length}" (leyenda del grafico de barras). Se validan a mano
+# contra el emisor.
+RUNTIME_BUILT_PREFIXES = ("badge-", "role-", "hm-leg--t")
 
 SELECTOR_CLASS_RE = re.compile(r"\.(-?[_a-zA-Z][\w-]*)")
 

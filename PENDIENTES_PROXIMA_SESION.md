@@ -144,6 +144,14 @@ Backups en Neon `backup_h6_*`:
 - Fase 3 RBAC (R8–R10) APLICADA y commiteada el 2026-10-09. Base previa: `cebf799` (Fase 2) +
   pull fast-forward a `8253ddc` (gráficos + validaciones Neon). **Todos los hallazgos R1–R10
   cerrados** (R3 descartado por decisión del usuario).
+- **Guards CSS (regresión del pull resuelta, 2026-10-09):** el pull (`8253ddc`/`7c88eb5`)
+  había roto `check_css_huerfano.py` (5 clases `hm-leg--t0..t4`, **falso positivo**: las genera
+  `dashboard-informes.js` con `` `hm-leg--t${tramos.length}` `` → se agregó el prefijo `hm-leg--t`
+  a `RUNTIME_BUILT_PREFIXES`) y `check_css_design_system.py` (literales/spacing nuevos del rediseño
+  de gráficos). Fix DRY: `#dfba6b` → `var(--dorado)` en la leyenda; el resto son colores del
+  rediseño sin token (`#dc2626`/`#ee9393` = rampa blanco→rojo de `HM_WHITE_TO_RED`, `#6fcf97`/
+  `#062a1c` del stepper, `#888`, `#111`) + CSS nuevo legítimo → se aceptó el estado con
+  `--update` del baseline. **8/8 guards en verde.**
 - Auditorías en `Info proyecto/`: `AUDITORIAS.md` (A1–A9), `AUDITORIA_DB.md`,
   `AUDITORIA_DB_NEON.md`, `AUDITORIA_VALIDACIONES.md` (V1–V12), `AUDITORIA_RBAC.md` (R1–R10).
 - Los scripts de migración de Neon se dejaron en `%TEMP%\opencode\*` (migrate_normalize.py,
