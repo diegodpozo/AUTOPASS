@@ -1,7 +1,37 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 09/10/2026
+Última actualización: 10/10/2026
+
+## F1 de AUDITORIA_VALIDACIONES — APLICADO 10/10/2026 (pendiente de commit/push)
+
+- **V1**: `UserService.create_user` valida `get_active_by_dni` antes de insertar → 400
+  "El DNI ya está registrado por otro usuario."; `routes/auth.py` captura `IntegrityError`
+  como red (rollback + 400). Test `test_register_dni_duplicado_400`.
+- **V2**: helper DRY `_save_branch_logo` en `routes/admin/branches.py` (extensión
+  whitelist png/jpg/jpeg/webp, máx 2 MB leído en chunks de 64KB, aborta sin escribir más;
+  makedirs del dir; en update, el logo nuevo se guarda antes de borrar el viejo).
+  Se quitó `import shutil` (quedó huérfano). Test `test_create_branch_logo_extension_invalida_400`.
+- **V5**: `PromotionCreate` en `schemas/user.py`: `costo_puntos = Field(..., gt=0)` y
+  `valor_descuento = Field(default=None, ge=1, le=100)`. Tests de 422 en
+  `test_admin_promotions.py`.
+- **Ya resueltos antes** (la auditoría quedó desactualizada): V3 (`users.py:161`),
+  V4-guard de valor (`settings.py:47`), V10 (validators DNI 7-8 + email en
+  `schemas/validators.py`), V12 (CheckConstraints en modelos + Neon).
+- **Restan de la auditoría**: V4-whitelist de claves en `update_price`, V6 (patentes
+  Mercosur front vs back), V7 (schema `VehicleCreate`), V8 (adjunto de soporte por
+  chunks), V9 (`disabled-hours` params), V11 (reserva admin `end > start` + solapamiento).
+  Plan F2/F3 en `Info proyecto/AUDITORIA_VALIDACIONES.md`.
+- Verificado: suite completa **727 passed** (excluidos los 5 que cuelgan por serial).
+
+## UX del portal — APLICADO y COMMITEADO/PUSHEADO en v9.34.81 (`09955fe`, 10/10/2026)
+
+- Stepper sticky (header sticky ≥769, rail vertical ≥1281 con sync de altura vía
+  ResizeObserver en `reservas-form.js`, `scroll-padding-top` en `.main-content-scroll`).
+- Hamburguesa móvil anclada al header (`position:absolute` ≤1024) en vez de flotar.
+- Nav inferior `.user-footer-nav` solo en responsive (≤1024, coincidente con drawer).
+- Reloj virtual (`.vt-fab` + controles) oculto para clientes (`rol:user` en localStorage);
+  se muestra solo a admin/local_admin/staff.
 
 ## Puntos 1-4 de mejoras BD — RESUELTOS 08/10/2026 (migraciones `a7f3d9c2e1b8` y `b2f4e8c1a9d7`)
 

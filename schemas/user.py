@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional
 from schemas.validators import validate_password_strength, validate_dni_digits, validate_phone_digits, validate_email_format
 
@@ -115,12 +115,12 @@ class UserPasswordChange(BaseModel):
 class PromotionCreate(BaseModel):
     titulo: str
     descripcion: str
-    costo_puntos: int
+    costo_puntos: int = Field(..., gt=0)
     icono: Optional[str] = "fas fa-gift"
     categoria: Optional[str] = "Beneficio"
     sucursal: Optional[str] = None
     tipo_canje: Optional[str] = "voucher"          # 'descuento_reserva' o 'voucher'
-    valor_descuento: Optional[int] = None          # porcentaje si tipo_canje == 'descuento_reserva'
+    valor_descuento: Optional[int] = Field(default=None, ge=1, le=100)  # porcentaje si tipo_canje == 'descuento_reserva'
     direccion: Optional[str] = None                # dirección donde se canjea (visible en la card)
     latitude: Optional[float] = None               # marcador del mapa
     longitude: Optional[float] = None

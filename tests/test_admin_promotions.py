@@ -190,6 +190,23 @@ def test_create_promotion_local_admin_sucursal_forzada(client):
     assert p.sucursal == "Centro"
 
 
+def test_create_promotion_costo_puntos_invalido_422(client):
+    c, db_factory = client
+    resp = c.post("/promotions", json={
+        "titulo": "Costo0", "descripcion": "Promo", "costo_puntos": 0,
+    })
+    assert resp.status_code == 422
+
+
+def test_create_promotion_descuento_fuera_de_rango_422(client):
+    c, db_factory = client
+    resp = c.post("/promotions", json={
+        "titulo": "DescOff", "descripcion": "Promo", "costo_puntos": 60,
+        "tipo_canje": "descuento_reserva", "valor_descuento": 150,
+    })
+    assert resp.status_code == 422
+
+
 def test_toggle_promotion_activa_a_desactiva(client):
     c, db_factory = client
     pid = _seed_promo(db_factory, "Toggle")

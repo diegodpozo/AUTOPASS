@@ -1,5 +1,4 @@
 import os
-import shutil
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from sqlalchemy.orm import Session
@@ -13,6 +12,35 @@ from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
 
 router = APIRouter()
+
+LOGO_ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+LOGO_MAX_SIZE = 2 * 1024 * 1024
+
+def _save_branch_logo(logo_file: UploadFile) -> str:
+    """VALIDA EXTENSION Y TAMANO DEL LOGO DE SUCURSAL Y LO PERSISTE EN CHUNKS
+    SIN ESCRIBIR MAS DE LO PERMITIDO NI ACEPTAR ARCHIVOS ARBITRARIOS."""
+    file_ext = (logo_file.filename or "").rsplit(".", 1)[-1].lower()
+    if file_ext not in LOGO_ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Formato de logo no permitido (use png, jpg, jpeg o webp)")
+    file_name = f"branch_{uuid.uuid4()}.{file_ext}"
+    file_path = os.path.join("static", "uploads", "branches", file_name)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    total = 0
+    with open(file_path, "wb") as buffer:
+        while True:
+            chunk = logo_file.file.read(64 * 1024)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > LOGO_MAX_SIZE:
+                os.remove(file_path)
+                raise HTTPException(status_code=400, detail="El logo supera el tamaño máximo de 2 MB")
+            buffer.write(chunk)
+    if total == 0:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail="El logo está vacío")
+    return f"/static/uploads/branches/{file_name}"
 
 @router.get("/branches", response_model=List[schemas.BranchResponse])
 def list_branches(db: Session = Depends(get_db), current_user: models.User = Depends(get_operational_user)):
@@ -157,13 +185,7 @@ async def create_branch(
     
     logo_url = "/static/images/logo.png"
     if logo_file:
-        file_ext = logo_file.filename.split(".")[-1]
-        file_name = f"branch_{uuid.uuid4()}.{file_ext}"
-        file_path = os.path.join("static", "uploads", "branches", file_name)
-        
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(logo_file.file, buffer)
-        logo_url = f"/static/uploads/branches/{file_name}"
+        logo_url = _save_branch_logo(logo_file)
 
     new_branch = models.ParkingBranch(
         nombre=nombre,
@@ -247,19 +269,13 @@ async def update_branch(
     branch.longitude = longitude
 
     if logo_file:
-        # Borrar logo anterior si existe
+        # Guardar nuevo logo y recién si se validó, borrar el anterior.
+        new_logo_url = _save_branch_logo(logo_file)
         if branch.logo_url and branch.logo_url != '/static/images/logo.png':
-            old_path = os.path.join(branch.logo_url.lstrip('/'))
+            old_path = branch.logo_url.lstrip('/')
             if os.path.exists(old_path):
                 os.remove(old_path)
-        # Guardar nuevo logo
-        file_ext = logo_file.filename.split(".")[-1]
-        file_name = f"branch_{uuid.uuid4()}.{file_ext}"
-        file_path = os.path.join("static", "uploads", "branches", file_name)
-        
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(logo_file.file, buffer)
-        branch.logo_url = f"/static/uploads/branches/{file_name}"
+        branch.logo_url = new_logo_url
     elif logo_clear:
         # Borrar logo sin reemplazar
         if branch.logo_url and branch.logo_url != '/static/images/logo.png':

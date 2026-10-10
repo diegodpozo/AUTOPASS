@@ -2,6 +2,7 @@
 
 **Fecha de auditoría:** 2026-10-05
 **Fecha de re-verificación:** 2026-10-08 (los 12 hallazgos siguen vigentes contra el código actual; se actualizaron referencias de archivo:línea)
+**Re-verificación 2026-10-10:** F1 aplicado (V1, V2, V5 con tests). Ya resueltos por tandas previas: V3 (`routes/admin/users.py:161`), V4-guard de valor (`routes/admin/settings.py:47`), V10 (validators DNI 7-8 + email), V12 (CheckConstraints en modelos + Neon). Restan de la fase F2/F3: V4-whitelist de claves, V6, V7, V8, V9, V11.
 **Alcance:** Backend (Pydantic, Routers, Servicios), Base de Datos (Modelos, Constraints), y Frontend (Formularios, JS, UX)
 **Estado:** Auditoría completada. Identificación de fortalezas, brechas, discrepancias y plan de remediación priorizado.
 
@@ -183,10 +184,10 @@ Sin embargo, la auditoría exhaustiva de extremo a extremo reveló **asimetrías
 ## 5. Plan de Remediación Propuesto
 
 ### Fase 1: Correcciones Críticas de Integridad y Robustez (P0 / P1)
-- [ ] **F1.1 (V1):** En `UserService.create_user`, normalizar y validar `UserRepository.get_active_by_dni(db, dni)` antes de insertar, lanzando `HTTP 400: "El DNI ya se encuentra registrado"`. Capturar `IntegrityError` en `routes/auth.py` como red de seguridad.
-- [ ] **F1.2 (V2):** En `routes/admin/branches.py`, agregar lista blanca estricta de extensiones para logos (`{'png', 'jpg', 'jpeg', 'webp'}`) y límite de tamaño máximo (ej. 2 MB) leyendo en chunks en memoria antes de persistir.
-- [ ] **F1.3 (V3 & V4):** Agregar validación `if monto < 0: raise HTTPException(...)` en `adjust_user_balance`. En `update_price`, validar `valor >= 0` y verificar que `clave` pertenezca a un conjunto permitido.
-- [ ] **F1.4 (V5):** En `schemas/user.py`, añadir validadores Pydantic en `PromotionCreate`: `costo_puntos = Field(..., gt=0)` y `valor_descuento = Field(None, ge=1, le=100)`.
+- [x] **F1.1 (V1):** En `UserService.create_user`, normalizar y validar `UserRepository.get_active_by_dni(db, dni)` antes de insertar, lanzando `HTTP 400: "El DNI ya se encuentra registrado"`. Capturar `IntegrityError` en `routes/auth.py` como red de seguridad. (Aplicado 2026-10-10; tests en `test_routes_auth.py`)
+- [x] **F1.2 (V2):** En `routes/admin/branches.py`, agregar lista blanca estricta de extensiones para logos (`{'png', 'jpg', 'jpeg', 'webp'}`) y límite de tamaño máximo (2 MB) leyendo en chunks en memoria antes de persistir. (Aplicado 2026-10-10 con helper DRY `_save_branch_logo`; test en `test_admin_branches.py`)
+- [~] **F1.3 (V3 & V4):** `monto < 0` ya validado en `adjust_user_balance` (`users.py:161`, previo 08/10); `valor >= 0` ya validado en `update_price` (`settings.py:47`, previo 08/10). **Pendiente:** whitelist de claves permitidas en `update_price` (queda para la tanda F2).
+- [x] **F1.4 (V5):** En `schemas/user.py`, añadir validadores Pydantic en `PromotionCreate`: `costo_puntos = Field(..., gt=0)` y `valor_descuento = Field(None, ge=1, le=100)`. (Aplicado 2026-10-10; tests en `test_admin_promotions.py`)
 
 ### Fase 2: Simetría y Estandarización de Entrada (P2)
 - [ ] **F2.1 (V6):** Alinear `UserService.add_vehicle` con `core/normalize.py` para admitir patentes Mercosur de Brasil, Uruguay y Paraguay, igualando las capacidades del frontend.

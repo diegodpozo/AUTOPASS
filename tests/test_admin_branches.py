@@ -5,6 +5,7 @@ sucursales incluyendo validaciones de ocupación física, reservas activas, reno
 y toggle de estado.
 """
 import datetime
+import io
 
 import pytest
 from fastapi.testclient import TestClient
@@ -202,6 +203,15 @@ def test_create_branch_ok(client):
     db.close()
     assert branch is not None and branch.activa is True
     assert branch.logo_url == "/static/images/logo.png"
+
+
+def test_create_branch_logo_extension_invalida_400(client):
+    tc, TestSession = client
+    r = tc.post(BRANCHES_URL, data={"nombre": "Este", "direccion": "Av. Z",
+                                    "telefono": "456", "horario": "24hs"},
+                files={"logo_file": ("logo.exe", io.BytesIO(b"MZ\x90\x00\x03\x00"), "application/x-msdownload")})
+    assert r.status_code == 400
+    assert "logo" in r.json()["detail"]
 
 
 def test_create_branch_duplicado_400(client):

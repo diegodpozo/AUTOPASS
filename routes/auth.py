@@ -2,6 +2,7 @@ import datetime
 import urllib.parse
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 import models, schemas
 from core.database import get_db
@@ -51,6 +52,9 @@ def register(request: Request, user: schemas.UserCreate, db: Session = Depends(g
         return {"status": "ok", "message": "Usuario registrado exitosamente"}
     except HTTPException as e:
         raise e
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="El correo o el DNI ya se encuentra registrado")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Error interno al guardar el usuario.")
 

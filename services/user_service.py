@@ -30,7 +30,11 @@ class UserService:
         existing = UserRepository.get_by_email(db, user_data.email)
         if existing:
             raise HTTPException(status_code=400, detail="El correo ya está registrado")
-        
+
+        existing_dni = UserRepository.get_active_by_dni(db, normalize_dni(user_data.dni))
+        if existing_dni:
+            raise HTTPException(status_code=400, detail="El DNI ya está registrado por otro usuario.")
+
         new_user = models.User(
             nombre=normalize_name(user_data.nombre),
             apellido=normalize_name(user_data.apellido),

@@ -107,6 +107,25 @@ def test_register_duplicado_400(client):
     assert "ya está registrado" in second.json()["detail"]
 
 
+def test_register_dni_duplicado_400(client):
+    tc, _ = client
+    dni = str(uuid.uuid4().int)[:8]
+    payload_1 = {
+        "email": f"dni1_{uuid.uuid4().hex[:8]}@autopass.com.ar",
+        "password": "Password123!",
+        "nombre": "Test",
+        "apellido": "User",
+        "dni": dni,
+        "telefono": "1122334455",
+    }
+    first = tc.post("/v1/auth/register", json=payload_1)
+    assert first.status_code in [200, 201]
+    payload_2 = dict(payload_1, email=f"dni2_{uuid.uuid4().hex[:8]}@autopass.com.ar")
+    second = tc.post("/v1/auth/register", json=payload_2)
+    assert second.status_code == 400
+    assert "DNI" in second.json()["detail"]
+
+
 def test_register_error_interno_500(client, monkeypatch):
     tc, _ = client
 
