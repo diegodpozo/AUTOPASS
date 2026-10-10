@@ -2,7 +2,7 @@
 
 **Fecha de auditoría:** 2026-10-05
 **Fecha de re-verificación:** 2026-10-08 (los 12 hallazgos siguen vigentes contra el código actual; se actualizaron referencias de archivo:línea)
-**Re-verificación 2026-10-10:** F1 aplicado completo (V1, V2, V3, V4 con whitelist, V5 — todos con tests). F2 aplicado: V6 (back-end acepta patentes Mercosur BR/UY/PY), V7 (`VehicleCreate` + `POST /user/vehicles` por body JSON), V8 (chunks 64 KB con aborto a 1 MB), V9 (query params acotados en `disabled-dates`/`disabled-hours`), V11 (fin posterior a inicio + solapamiento de patente en alta y edición admin). Residual de F2: F2.5 (V10) migración de emails a `EmailStr`.
+**Re-verificación 2026-10-10:** F1 aplicado completo (V1, V2, V3, V4 con whitelist, V5 — todos con tests). F2 aplicado: V6 (back-end acepta patentes Mercosur BR/UY/PY), V7 (`VehicleCreate` + `POST /user/vehicles` por body JSON), V8 (chunks 64 KB con aborto a 1 MB), V9 (query params acotados en `disabled-dates`/`disabled-hours`), V11 (fin posterior a inicio + solapamiento de patente en alta y edición admin). V10 y V12 verificados como ya cubiertos (validators DNI 7-8 + email y CheckConstraints en modelos + Neon). **Auditoría F1/F2/F3 cerrada al 100%.**
 **Alcance:** Backend (Pydantic, Routers, Servicios), Base de Datos (Modelos, Constraints), y Frontend (Formularios, JS, UX)
 **Estado:** Auditoría completada. Identificación de fortalezas, brechas, discrepancias y plan de remediación priorizado.
 
@@ -194,8 +194,8 @@ Sin embargo, la auditoría exhaustiva de extremo a extremo reveló **asimetrías
 - [x] **F2.2 (V7):** `VehicleCreate(BaseModel)` en `schemas/parking.py` (tipo `Literal["Auto","Moto","Camioneta"]= "Auto"`); `POST /v1/user/vehicles` recibe body JSON; frontend actualizado en `vehicles.js:181`. (Aplicado 2026-10-10)
 - [x] **F2.3 (V8):** `reply_to_support_ticket` lee el stream en bloques de 64 KB y aborta (sin escribir a disco) al superar 1 MB; borrado del parcial fuera del contexto abierto (evita `PermissionError` en Windows). (Aplicado 2026-10-10)
 - [x] **F2.4 (V9):** `disabled-dates`: `dias = Query(90, ge=1, le=365)`; `disabled-hours`: `duracion_horas = Query(1.0, gt=0, le=24)`, `paso_minutos = Query(30, ge=5, le=120)`, `exclude_id = Query(None, ge=1)`. (Aplicado 2026-10-10)
-- [ ] **F2.5 (V10):** Migrar campos de email en schemas a `EmailStr` o agregar `@field_validator` de correo; incorporar validación de longitud 7 u 8 dígitos en `UserCreate.validate_dni`.
+- [x] **F2.5 (V10):** Cobertura ya existente verificada: `schemas/validators.py` expone `validate_email_format` (formato `usuario@dominio.tld`) y `validate_dni_digits` (7 u 8 dígitos); todos los emails/DNI de `schemas/user.py` y `schemas/auth.py` pasan por `@field_validator`. (Verificado 2026-10-10; equivalent a la opción `@field_validator` del hallazgo.)
 - [x] **F2.6 (V11):** `create_admin_reservation` valida `fecha_inicio < fecha_fin` y rechaza solapamiento de la misma patente en la sede; `update_admin_reservation` replica el chequeo excluyendo la propia reserva (`exclude_id`). (Aplicado 2026-10-10)
 
 ### Fase 3: Defensa en Profundidad (P3)
-- [ ] **F3.1 (V12):** Evaluar migración Alembic para incorporar `CheckConstraint("saldo >= 0", name="ck_users_saldo_non_negative")` y `CheckConstraint("capacidad_total >= 0")` en `parking_aforo`.
+- [x] **F3.1 (V12):** `CheckConstraint` presentes en modelos (`ck_users_saldo_nonneg`, `ck_users_puntos_nonneg`, `ck_settings_valor_nonneg`, `ck_access_logs_costo_estadia_nonneg`, `ck_reservations_monto_total_nonneg`, `ck_reservations_monto_reembolsado_nonneg`, orden `fecha_fin >= fecha_inicio`, `ck_mercadopago_payments_monto_nonneg`, `ck_promotions_costo_puntos_nonneg`, `valor_descuento BETWEEN 1 AND 100`, aforo no negativo) y aplicados en Neon. (Verificado 2026-10-10)

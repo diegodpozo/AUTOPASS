@@ -43,10 +43,9 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
   Setup del test `test_edit_excluye_propia_reserva_de_disponibilidad` ajustado a patentes
   distintas (r1 `ABC123`, r2 `ZZZ999`) porque ahora el doble-book de una misma patente se rechaza.
 - Verificado: suite completa **732 passed** (excluidos los 5 serial-hanging) + **8/8 guards** OK.
-- **Restan de la auditoría**: F2.5 (V10) migrar emails a `EmailStr` (los validators DNI 7-8 y
-  formato email ya existen), y F3.1 (V12) CheckConstraints — verificar si se considera cerrado
-  (ya hay constraints en modelos + Neon según tandas previas). Plan F2/F3 en
-  `Info proyecto/AUDITORIA_VALIDACIONES.md`.
+- **AUDITORIA_VALIDACIONES F1/F2/F3 CERRADA al 100% (10/10/2026):** F2.5 (V10) y F3.1 (V12)
+  verificados como ya cubiertos (validators DNI 7-8 + formato email vía `@field_validator`, y
+  CheckConstraints en modelos + Neon). Sin trabajo pendiente de esta auditoría.
 
 ## UX del portal — APLICADO y COMMITEADO/PUSHEADO en v9.34.81 (`09955fe`, 10/10/2026)
 
