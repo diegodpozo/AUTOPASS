@@ -390,11 +390,11 @@ def test_edit_excluye_propia_reserva_de_disponibilidad(db):
     staff = _staff(db)
     _reserva_data_10_12 = lambda: _reserva_data(fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00")
     r1 = create_admin_reservation(_reserva_data_10_12(), db, staff)["id"]
-    r2 = create_admin_reservation(_reserva_data_10_12(), db, staff)["id"]
+    r2 = create_admin_reservation(_reserva_data(patente="ZZZ999", fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00"), db, staff)["id"]
 
     # CAPACIDAD 2: AMBAS RESERVAS LLENAN EL SLOT. EDITAR UNA SIN EXCLUIR FALLARIA,
     # PERO EXCLUYENDO LA PROPIA DEBE PERMITIRSE.
-    resultado = update_admin_reservation(r2, _reserva_data_10_12(), db, staff)
+    resultado = update_admin_reservation(r2, _reserva_data(patente="ZZZ999", fecha_inicio="2026-07-10 10:00", fecha_fin="2026-07-10 12:00"), db, staff)
     assert resultado["status"] == "ok"
     assert r1 != r2
 

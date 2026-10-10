@@ -156,10 +156,13 @@ class UserService:
             raise HTTPException(status_code=400, detail="EL LIMITE MAXIMO DE VEHICULOS GENERADOS ES DE 5")
 
         p_clean = normalize_plate(patente)
-        old_format   = re.match(r'^[A-Z]{3}[0-9]{3}$', p_clean)
-        new_format   = re.match(r'^[A-Z]{2}[0-9]{3}[A-Z]{2}$', p_clean)
-        moto_format  = re.match(r'^[0-9]{3}[A-Z]{3}$', p_clean) or re.match(r'^[A-Z]{1}[0-9]{3}[A-Z]{3}$', p_clean)
-        if not old_format and not new_format and not moto_format:
+        ar_old      = re.match(r'^[A-Z]{3}[0-9]{3}$', p_clean)
+        ar_new      = re.match(r'^[A-Z]{2}[0-9]{3}[A-Z]{2}$', p_clean)
+        ar_moto     = re.match(r'^[0-9]{3}[A-Z]{3}$', p_clean) or re.match(r'^[A-Z]{1}[0-9]{3}[A-Z]{3}$', p_clean)
+        br_old      = re.match(r'^[A-Z]{3}[0-9]{4}$', p_clean)
+        br_mercosur = re.match(r'^[A-Z]{3}[0-9][A-Z][0-9]{2}$', p_clean)
+        py_mercosur = re.match(r'^[0-9]{4}[A-Z]{3}$', p_clean)
+        if not ar_old and not ar_new and not ar_moto and not br_old and not br_mercosur and not py_mercosur:
             raise HTTPException(status_code=400, detail="Formato de patente inválido.")
 
         existing = VehicleRepository.get_by_normalized_patente(db, p_clean)

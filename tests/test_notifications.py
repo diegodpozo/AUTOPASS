@@ -7,6 +7,7 @@ from services.user_notification_service import UserNotificationService
 from services.worker_service import WorkerService
 from services.reservation_service import ReservationService
 from services.support_service import SupportService
+import schemas
 import models
 
 @pytest.fixture
@@ -406,9 +407,7 @@ def test_vehicle_registration_and_removal_notifications(db_session: Session):
 
     # 1. Agregar vehiculo
     resp_add = add_user_vehicle(
-        patente="AA 123 CD",
-        marca_modelo="Ferrari F1",
-        tipo="Auto",
+        schemas.VehicleCreate(patente="AA 123 CD", marca_modelo="Ferrari F1", tipo="Auto"),
         db=db_session,
         current_user=user
     )

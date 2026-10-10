@@ -4,7 +4,7 @@ from .user import (
     RedemptionTicketResponse
 )
 from .parking import (
-    PlateValidation, QRValidation, AccessResponse, ParkingStatus, 
+    PlateValidation, QRValidation, AccessResponse, ParkingStatus, VehicleCreate,
     BranchResponse, BranchPublicResponse, FloorCreate, FloorResponse,
     CameraCreate, CameraResponse
 )

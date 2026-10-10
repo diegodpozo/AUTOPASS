@@ -476,6 +476,11 @@ class ReservationService(ReservationPaymentsMixin):
         tipo_v = data.tipo_vehiculo or "Auto"
         if vehicle:
             tipo_v = data.tipo_vehiculo or (vehicle.tipo.value if hasattr(vehicle.tipo, 'value') else str(vehicle.tipo))
+        if data.fecha_inicio >= data.fecha_fin:
+            raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
+        existing_overlap = ReservationRepository.get_overlap_by_patente(db, data.patente, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
+        if existing_overlap:
+            raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")
         disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, tipo_vehiculo=tipo_v)
         if not disp["disponible"]:
             raise HTTPException(status_code=400, detail=disp["mensaje"])
@@ -517,6 +522,9 @@ class ReservationService(ReservationPaymentsMixin):
             data.sucursal_nombre = staff.sucursal
         if data.fecha_fin <= data.fecha_inicio:
             raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
+        existing_overlap = ReservationRepository.get_overlap_by_patente(db, data.patente, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, exclude_id=reserva.id)
+        if existing_overlap:
+            raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")
         vehicle = None
         if data.user_id:
             _, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)

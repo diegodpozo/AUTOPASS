@@ -11,6 +11,16 @@ from repositories.branch_repository import BranchRepository
 
 router = APIRouter()
 
+# CLAVES PERMITIDAS PARA update_price: tarifas (por tipo de vehiculo) y
+# capacidades de aforo. Evita inyectar claves arbitrarias en la tabla Settings.
+ALLOWED_SETTINGS_KEYS = {
+    "precio_30min", "precio_hora", "precio_dia", "precio_semana", "precio_quincena", "precio_mes",
+    "precio_30min_moto", "precio_hora_moto", "precio_dia_moto", "precio_semana_moto", "precio_quincena_moto", "precio_mes_moto",
+    "precio_30min_camioneta", "precio_hora_camioneta", "precio_dia_camioneta", "precio_semana_camioneta", "precio_quincena_camioneta", "precio_mes_camioneta",
+    "capacidad_total", "capacidad_motos", "capacidad_camionetas",
+    "capacidad_reservas", "capacidad_reservas_autos", "capacidad_reservas_motos", "capacidad_reservas_camionetas",
+}
+
 @router.get("/settings")
 def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """RETORNA LAS CONFIGURACIONES VIGENTES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
@@ -46,6 +56,8 @@ def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin:
     """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR."""
     if valor < 0:
         raise HTTPException(status_code=400, detail="El valor no puede ser negativo")
+    if clave not in ALLOWED_SETTINGS_KEYS:
+        raise HTTPException(status_code=400, detail="Clave de configuración no permitida")
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
 
     if clave in ["capacidad_total", "capacidad_motos", "capacidad_camionetas", "capacidad_reservas", "capacidad_reservas_autos", "capacidad_reservas_motos", "capacidad_reservas_camionetas"]:

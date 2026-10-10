@@ -3,7 +3,7 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 10/10/2026
 
-## F1 de AUDITORIA_VALIDACIONES — APLICADO 10/10/2026 (pendiente de commit/push)
+## F1 de AUDITORIA_VALIDACIONES — APLICADO y PUSHEADO en v9.34.82 (`0f35417`, 10/10/2026)
 
 - **V1**: `UserService.create_user` valida `get_active_by_dni` antes de insertar → 400
   "El DNI ya está registrado por otro usuario."; `routes/auth.py` captura `IntegrityError`
@@ -15,14 +15,38 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 - **V5**: `PromotionCreate` en `schemas/user.py`: `costo_puntos = Field(..., gt=0)` y
   `valor_descuento = Field(default=None, ge=1, le=100)`. Tests de 422 en
   `test_admin_promotions.py`.
-- **Ya resueltos antes** (la auditoría quedó desactualizada): V3 (`users.py:161`),
-  V4-guard de valor (`settings.py:47`), V10 (validators DNI 7-8 + email en
-  `schemas/validators.py`), V12 (CheckConstraints en modelos + Neon).
-- **Restan de la auditoría**: V4-whitelist de claves en `update_price`, V6 (patentes
-  Mercosur front vs back), V7 (schema `VehicleCreate`), V8 (adjunto de soporte por
-  chunks), V9 (`disabled-hours` params), V11 (reserva admin `end > start` + solapamiento).
-  Plan F2/F3 en `Info proyecto/AUDITORIA_VALIDACIONES.md`.
-- Verificado: suite completa **727 passed** (excluidos los 5 que cuelgan por serial).
+
+## F2 de AUDITORIA_VALIDACIONES — APLICADO 10/10/2026 (pendiente de commit/push)
+
+- **V4-whitelist**: `ALLOWED_SETTINGS_KEYS` en `routes/admin/settings.py` (18 tarifas
+  `precio_*` × Auto/Moto/Camioneta + 7 claves `capacidad_*`); `update_price` rechaza claves
+  fuera de la lista con 400 "Clave de configuración no permitida". Tests de
+  `test_admin_settings.py` migrados a claves canónicas + `test_update_price_clave_no_permitida_400`.
+- **V6**: `UserService.add_vehicle` acepta patentes Mercosur BR/UY/PY (BR viejo `ABC1234`,
+  BR Mercosur `ABC1D23`, UY `AB123CD`, PY `1234ABC`) además de AR (viejo, Mercosur y moto).
+  Tests parametrizados en `test_user_service.py`. **Decisión del usuario**: alinear backend
+  al frontend (aceptar), sin tocar front.
+- **V7**: `VehicleCreate(BaseModel)` en `schemas/parking.py` con `tipo: Literal["Auto",
+  "Moto", "Camioneta"] = "Auto"` (exportado en `schemas/__init__.py`); `POST /v1/user/vehicles`
+  recibe body JSON (`data: VehicleCreate` por import directo para que openapi resuelva);
+  `vehicles.js:181` envía `{ patente, marca_modelo, tipo }`. Tests de firma actualizados
+  (`test_new_validations.py`, `test_notifications.py`).
+- **V8**: `reply_to_support_ticket` lee el adjunto en chunks de 64 KB y aborta a 1 MB sin
+  escribir a disco; el borrado del parcial se hace fuera del `with open()` (evita
+  `PermissionError` WinError 32 en Windows). Se quitó `import shutil`.
+- **V9**: `disabled-dates`: `dias = Query(90, ge=1, le=365)`; `disabled-hours`:
+  `duracion_horas = Query(1.0, gt=0, le=24)`, `paso_minutos = Query(30, ge=5, le=120)`,
+  `exclude_id = Query(None, ge=1)`.
+- **V11**: `create_admin_reservation` valida `fecha_inicio < fecha_fin` (400) y solapamiento
+  de la misma patente en la sede (`get_overlap_by_patente` → 400). `update_admin_reservation`
+  replica el chequeo excluyendo la propia reserva (`exclude_id` agregado al repositorio).
+  Setup del test `test_edit_excluye_propia_reserva_de_disponibilidad` ajustado a patentes
+  distintas (r1 `ABC123`, r2 `ZZZ999`) porque ahora el doble-book de una misma patente se rechaza.
+- Verificado: suite completa **732 passed** (excluidos los 5 serial-hanging) + **8/8 guards** OK.
+- **Restan de la auditoría**: F2.5 (V10) migrar emails a `EmailStr` (los validators DNI 7-8 y
+  formato email ya existen), y F3.1 (V12) CheckConstraints — verificar si se considera cerrado
+  (ya hay constraints en modelos + Neon según tandas previas). Plan F2/F3 en
+  `Info proyecto/AUDITORIA_VALIDACIONES.md`.
 
 ## UX del portal — APLICADO y COMMITEADO/PUSHEADO en v9.34.81 (`09955fe`, 10/10/2026)
 

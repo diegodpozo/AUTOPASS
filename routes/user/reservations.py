@@ -24,7 +24,7 @@ def get_disabled_dates(
     tipo_vehiculo: str = "Auto",
     tipo_estadia: str = "dia",
     fecha_desde: str = None,
-    dias: int = 90,
+    dias: int = Query(90, ge=1, le=365),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -45,9 +45,9 @@ def get_disabled_hours(
     sucursal_nombre: str,
     fecha: str,
     tipo_vehiculo: str = "Auto",
-    duracion_horas: float = 1.0,
-    paso_minutos: int = 30,
-    exclude_id: Optional[int] = Query(None),
+    duracion_horas: float = Query(1.0, gt=0, le=24),
+    paso_minutos: int = Query(30, ge=5, le=120),
+    exclude_id: Optional[int] = Query(None, ge=1),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):

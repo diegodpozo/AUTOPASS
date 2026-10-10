@@ -93,6 +93,17 @@ def test_add_vehicle_invalid_plate(db):
         UserService.add_vehicle(db, user, "XYZ", "Ford", "Auto")
     assert exc.value.status_code == 400
 
+@pytest.mark.parametrize("plate", [
+    "ABC1234",      # BRASIL viejo
+    "ABC1D23",      # BRASIL Mercosur
+    "AB123CD",      # URUGUAY Mercosur (mismo patrón que AR nuevo)
+    "1234ABC",      # PARAGUAY Mercosur
+])
+def test_add_vehicle_acepta_patentes_mercosur_extranjeras(db, plate):
+    user = _make_user(db)
+    res = UserService.add_vehicle(db, user, plate, "Fiat Uno", "Auto")
+    assert res["status"] == "ok"
+
 def test_add_vehicle_duplicate(db):
     user = _make_user(db)
     UserService.add_vehicle(db, user, "AB 123 CD", "Ford Ka", "Auto")

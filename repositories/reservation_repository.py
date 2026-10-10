@@ -49,16 +49,19 @@ class ReservationRepository:
         return q.all()
 
     @staticmethod
-    def get_overlap_by_patente(db: Session, patente_norm: str, sucursal_nombre: str, desde_str: str, hasta_str: str):
+    def get_overlap_by_patente(db: Session, patente_norm: str, sucursal_nombre: str, desde_str: str, hasta_str: str, exclude_id: int = None):
         """RESERVA ACTIVA DE UNA PATENTE (normalizada) QUE SE SUPERPONE CON EL RANGO EN LA SUCURSAL."""
-        return db.query(models.Reservation).filter(
+        q = db.query(models.Reservation).filter(
             func.replace(func.upper(models.Reservation.patente), ' ', '') == patente_norm,
             models.Reservation.sucursal_nombre == sucursal_nombre,
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
             models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
             models.Reservation.fecha_inicio < hasta_str,
             models.Reservation.fecha_fin > desde_str
-        ).first()
+        )
+        if exclude_id is not None:
+            q = q.filter(models.Reservation.id != exclude_id)
+        return q.first()
 
     @staticmethod
     def get_user_overlap_other_branch(db: Session, user_id: int, sucursal_nombre: str, desde_str: str, hasta_str: str):

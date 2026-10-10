@@ -63,18 +63,19 @@ def test_delete_vehicle_parked_inside_fails(db):
 
 def test_add_vehicle_camioneta_and_blocked_check(db):
     from routes.user.vehicles import add_user_vehicle
+    from schemas import VehicleCreate
     user = User(nombre="Pedro", email="pedro@test.com", password_hash="pwd", rol="user", is_blocked=True)
     db.add(user)
     db.commit()
 
     with pytest.raises(HTTPException) as exc:
-        add_user_vehicle("AB 123 CD", "Toyota Hilux", "Camioneta", db, user)
+        add_user_vehicle(VehicleCreate(patente="AB 123 CD", marca_modelo="Toyota Hilux", tipo="Camioneta"), db, user)
     assert exc.value.status_code == 403
 
     user.is_blocked = False
     db.commit()
 
-    res = add_user_vehicle("AB 123 CD", "Toyota Hilux", "Camioneta", db, user)
+    res = add_user_vehicle(VehicleCreate(patente="AB 123 CD", marca_modelo="Toyota Hilux", tipo="Camioneta"), db, user)
     assert res["status"] == "ok"
     veh = db.query(Vehicle).filter(Vehicle.patente == "AB123CD").first()
     assert veh is not None

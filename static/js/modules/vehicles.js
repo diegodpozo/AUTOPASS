@@ -178,7 +178,7 @@ export async function addVehicle(e, isQuickAdd = false) {
     btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
     btn.disabled = true;
 
-    const res = await api.post(`/user/vehicles?patente=${encodeURIComponent(patente)}&marca_modelo=${encodeURIComponent(marca_modelo)}&tipo=${encodeURIComponent(tipo)}`);
+    const res = await api.post('/user/vehicles', { patente, marca_modelo, tipo });
     if (res.ok) {
         showToast('Vehículo registrado con éxito', 'success');
         form.reset();

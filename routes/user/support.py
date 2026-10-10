@@ -1,5 +1,4 @@
 import os
-import shutil
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
@@ -106,13 +105,26 @@ async def reply_to_support_ticket(
         file_name = f"support_{uuid.uuid4().hex}.{ext}"
         file_path = os.path.join(UPLOAD_DIR, file_name)
 
+        # GUARDAR EN CHUNKS Y ABORTAR SI SE SUPERA EL TAMAÑO MAX, SIN ESCRIBIR
+        # MAS DE LO PERMITIDO A DISCO.
+        total = 0
+        excedido = False
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(adjunto.file, buffer)
-
-        size = os.path.getsize(file_path)
-        if size > MAX_FILE_SIZE:
+            while True:
+                chunk = adjunto.file.read(64 * 1024)
+                if not chunk:
+                    break
+                if total + len(chunk) > MAX_FILE_SIZE:
+                    excedido = True
+                    break
+                buffer.write(chunk)
+                total += len(chunk)
+        if excedido:
             os.remove(file_path)
             raise HTTPException(status_code=400, detail="El archivo supera el tamaño máximo de 1 MB.")
+        if total == 0:
+            os.remove(file_path)
+            raise HTTPException(status_code=400, detail="El archivo adjunto está vacío.")
 
         adjunto_url = f"/static/uploads/support/{file_name}"
         adjunto_nombre = original_name

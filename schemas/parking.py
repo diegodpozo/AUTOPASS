@@ -1,5 +1,10 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Literal
+
+class VehicleCreate(BaseModel):
+    patente: str
+    marca_modelo: str
+    tipo: Literal["Auto", "Moto", "Camioneta"] = "Auto"
 
 class PlateValidation(BaseModel):
     plate: str

@@ -258,18 +258,18 @@ def test_update_price_notificacion_que_falla_devuelve_ok(client, monkeypatch):
 
 def test_update_price_existente_actualiza_setting(client):
     c, db_factory = client
-    _seed_setting(db_factory, "PRECIO_HORA", 5.0, sucursal=None)
-    resp = c.post("/settings/prices", params={"clave": "PRECIO_HORA", "valor": "7.5"})
+    _seed_setting(db_factory, "precio_hora", 5.0, sucursal=None)
+    resp = c.post("/settings/prices", params={"clave": "precio_hora", "valor": "7.5"})
     assert resp.json() == {"status": "ok",
-                           "message": "Precio PRECIO_HORA actualizado para Global"}
-    assert _get_setting(db_factory, "PRECIO_HORA").valor == 7.5
+                           "message": "Precio precio_hora actualizado para Global"}
+    assert _get_setting(db_factory, "precio_hora").valor == 7.5
 
 
 def test_update_price_nuevo_setting_global(client):
     c, db_factory = client
-    resp = c.post("/settings/prices", params={"clave": "PRECIO_NOCHE", "valor": "9.9"})
-    assert resp.json()["message"] == "Precio PRECIO_NOCHE actualizado para Global"
-    s = _get_setting(db_factory, "PRECIO_NOCHE", sucursal=None)
+    resp = c.post("/settings/prices", params={"clave": "precio_hora", "valor": "9.9"})
+    assert resp.json()["message"] == "Precio precio_hora actualizado para Global"
+    s = _get_setting(db_factory, "precio_hora", sucursal=None)
     assert s.valor == 9.9
     assert s.sucursal is None
 
@@ -277,11 +277,19 @@ def test_update_price_nuevo_setting_global(client):
 def test_update_price_local_admin_guarda_en_su_sede(client):
     c, db_factory = client
     _set_user(rol=UserRole.LOCAL_ADMIN, sucursal="Centro")
-    resp = c.post("/settings/prices", params={"clave": "PRECIO_CENTRO", "valor": "3.5"})
-    assert resp.json()["message"] == "Precio PRECIO_CENTRO actualizado para Centro"
-    s = _get_setting(db_factory, "PRECIO_CENTRO", sucursal="Centro")
+    resp = c.post("/settings/prices", params={"clave": "precio_hora", "valor": "3.5"})
+    assert resp.json()["message"] == "Precio precio_hora actualizado para Centro"
+    s = _get_setting(db_factory, "precio_hora", sucursal="Centro")
     assert s is not None
-    assert _get_setting(db_factory, "PRECIO_CENTRO", sucursal=None) is None
+    assert _get_setting(db_factory, "precio_hora", sucursal=None) is None
+
+
+def test_update_price_clave_no_permitida_400(client):
+    c, db_factory = client
+    resp = c.post("/settings/prices", params={"clave": "PRECIO_NOCHE", "valor": "9.9"})
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Clave de configuración no permitida"
+    assert _get_setting(db_factory, "PRECIO_NOCHE", sucursal=None) is None
 
 
 def test_update_price_staff_403(client):

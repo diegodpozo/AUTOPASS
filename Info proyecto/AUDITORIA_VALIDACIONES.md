@@ -2,7 +2,7 @@
 
 **Fecha de auditoría:** 2026-10-05
 **Fecha de re-verificación:** 2026-10-08 (los 12 hallazgos siguen vigentes contra el código actual; se actualizaron referencias de archivo:línea)
-**Re-verificación 2026-10-10:** F1 aplicado (V1, V2, V5 con tests). Ya resueltos por tandas previas: V3 (`routes/admin/users.py:161`), V4-guard de valor (`routes/admin/settings.py:47`), V10 (validators DNI 7-8 + email), V12 (CheckConstraints en modelos + Neon). Restan de la fase F2/F3: V4-whitelist de claves, V6, V7, V8, V9, V11.
+**Re-verificación 2026-10-10:** F1 aplicado completo (V1, V2, V3, V4 con whitelist, V5 — todos con tests). F2 aplicado: V6 (back-end acepta patentes Mercosur BR/UY/PY), V7 (`VehicleCreate` + `POST /user/vehicles` por body JSON), V8 (chunks 64 KB con aborto a 1 MB), V9 (query params acotados en `disabled-dates`/`disabled-hours`), V11 (fin posterior a inicio + solapamiento de patente en alta y edición admin). Residual de F2: F2.5 (V10) migración de emails a `EmailStr`.
 **Alcance:** Backend (Pydantic, Routers, Servicios), Base de Datos (Modelos, Constraints), y Frontend (Formularios, JS, UX)
 **Estado:** Auditoría completada. Identificación de fortalezas, brechas, discrepancias y plan de remediación priorizado.
 
@@ -186,16 +186,16 @@ Sin embargo, la auditoría exhaustiva de extremo a extremo reveló **asimetrías
 ### Fase 1: Correcciones Críticas de Integridad y Robustez (P0 / P1)
 - [x] **F1.1 (V1):** En `UserService.create_user`, normalizar y validar `UserRepository.get_active_by_dni(db, dni)` antes de insertar, lanzando `HTTP 400: "El DNI ya se encuentra registrado"`. Capturar `IntegrityError` en `routes/auth.py` como red de seguridad. (Aplicado 2026-10-10; tests en `test_routes_auth.py`)
 - [x] **F1.2 (V2):** En `routes/admin/branches.py`, agregar lista blanca estricta de extensiones para logos (`{'png', 'jpg', 'jpeg', 'webp'}`) y límite de tamaño máximo (2 MB) leyendo en chunks en memoria antes de persistir. (Aplicado 2026-10-10 con helper DRY `_save_branch_logo`; test en `test_admin_branches.py`)
-- [~] **F1.3 (V3 & V4):** `monto < 0` ya validado en `adjust_user_balance` (`users.py:161`, previo 08/10); `valor >= 0` ya validado en `update_price` (`settings.py:47`, previo 08/10). **Pendiente:** whitelist de claves permitidas en `update_price` (queda para la tanda F2).
+- [x] **F1.3 (V3 & V4):** `monto < 0` ya validado en `adjust_user_balance` (`users.py:161`, previo 08/10); `valor >= 0` ya validado en `update_price` (`settings.py:47`, previo 08/10). Whitelist de claves permitidas aplicada (2026-10-10) vía `ALLOWED_SETTINGS_KEYS` en `routes/admin/settings.py`; test de rechazo en `test_admin_settings.py`.
 - [x] **F1.4 (V5):** En `schemas/user.py`, añadir validadores Pydantic en `PromotionCreate`: `costo_puntos = Field(..., gt=0)` y `valor_descuento = Field(None, ge=1, le=100)`. (Aplicado 2026-10-10; tests en `test_admin_promotions.py`)
 
 ### Fase 2: Simetría y Estandarización de Entrada (P2)
-- [ ] **F2.1 (V6):** Alinear `UserService.add_vehicle` con `core/normalize.py` para admitir patentes Mercosur de Brasil, Uruguay y Paraguay, igualando las capacidades del frontend.
-- [ ] **F2.2 (V7):** Crear `VehicleCreate(BaseModel)` en `schemas/parking.py` o `schemas/user.py` y actualizar `POST /v1/user/vehicles` para recibir cuerpo JSON en vez de query params.
-- [ ] **F2.3 (V8):** En `reply_to_support_ticket`, leer el stream en bloques de 64 KB y abortar inmediatamente si el acumulador supera 1 MB, evitando escribir archivos gigantescos a disco.
-- [ ] **F2.4 (V9):** En `routes/user/reservations.py`, restringir query parameters en `disabled-hours`: `paso_minutos = Query(30, ge=5, le=120)` y `duracion_horas = Query(1.0, gt=0, le=24)`.
+- [x] **F2.1 (V6):** `UserService.add_vehicle` admite patentes Mercosur de Brasil (`ABC1234` viejo, `ABC1D23` nuevo), Uruguay (`AB123CD`) y Paraguay (`1234ABC`), igualando el frontend. (Aplicado 2026-10-10; tests parametrizados en `test_user_service.py`)
+- [x] **F2.2 (V7):** `VehicleCreate(BaseModel)` en `schemas/parking.py` (tipo `Literal["Auto","Moto","Camioneta"]= "Auto"`); `POST /v1/user/vehicles` recibe body JSON; frontend actualizado en `vehicles.js:181`. (Aplicado 2026-10-10)
+- [x] **F2.3 (V8):** `reply_to_support_ticket` lee el stream en bloques de 64 KB y aborta (sin escribir a disco) al superar 1 MB; borrado del parcial fuera del contexto abierto (evita `PermissionError` en Windows). (Aplicado 2026-10-10)
+- [x] **F2.4 (V9):** `disabled-dates`: `dias = Query(90, ge=1, le=365)`; `disabled-hours`: `duracion_horas = Query(1.0, gt=0, le=24)`, `paso_minutos = Query(30, ge=5, le=120)`, `exclude_id = Query(None, ge=1)`. (Aplicado 2026-10-10)
 - [ ] **F2.5 (V10):** Migrar campos de email en schemas a `EmailStr` o agregar `@field_validator` de correo; incorporar validación de longitud 7 u 8 dígitos en `UserCreate.validate_dni`.
-- [ ] **F2.6 (V11):** En `ReservationService.create_admin_reservation`, incorporar chequeo de `start < end` y verificación de solapamiento de la misma patente en la sede.
+- [x] **F2.6 (V11):** `create_admin_reservation` valida `fecha_inicio < fecha_fin` y rechaza solapamiento de la misma patente en la sede; `update_admin_reservation` replica el chequeo excluyendo la propia reserva (`exclude_id`). (Aplicado 2026-10-10)
 
 ### Fase 3: Defensa en Profundidad (P3)
 - [ ] **F3.1 (V12):** Evaluar migración Alembic para incorporar `CheckConstraint("saldo >= 0", name="ck_users_saldo_non_negative")` y `CheckConstraint("capacidad_total >= 0")` en `parking_aforo`.
