@@ -41,6 +41,35 @@ import {
 let fechaReservaTocada = false;
 let reservaConfirmada = false;
 
+/**
+ * P2.5 UX/UI: el rail del stepper calca el alto de la card de reserva en su
+ * estado no expandido. Al elegir "por hora" la card crece (slots/horarios) y
+ * este sync se congela: el stepper queda fijado al alto que ya tenía y no
+ * acompaña la expansión. Al volver a otra modalidad recalca la card.
+ */
+function syncStepperToCardHeight() {
+    const stepper = document.getElementById('reservation-stepper');
+    const card = document.getElementById('reserva-form-container');
+    if (!stepper || !card) return;
+    if (!window.matchMedia('(min-width: 1281px)').matches) {
+        stepper.style.removeProperty('height');
+        return;
+    }
+    const tipoHora = document.querySelector('.res-type')?.value === 'hora';
+    if (tipoHora) return;
+    const alto = card.getBoundingClientRect().height;
+    if (alto === 0) return;
+    stepper.style.setProperty('height', `${alto}px`);
+}
+
+function initStepperHeightSync() {
+    const card = document.getElementById('reserva-form-container');
+    if (!card || !('ResizeObserver' in window)) return;
+    new ResizeObserver(syncStepperToCardHeight).observe(card);
+    window.addEventListener('resize', syncStepperToCardHeight);
+    syncStepperToCardHeight();
+}
+
 export function initReservationForm() {
     if (!window.flatpickr) return;
 
@@ -166,6 +195,8 @@ export function initReservationForm() {
     // P2.5 UX/UI: stepper global disponible para el sincronizador de precio
     window.updateReservationStepper = updateReservationStepper;
     updateReservationStepper();
+
+    initStepperHeightSync();
 }
 
 // P2.5 UX/UI: refleja el progreso de la reserva en el stepper.

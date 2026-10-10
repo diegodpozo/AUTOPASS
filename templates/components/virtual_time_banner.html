@@ -78,9 +78,11 @@ window.getVirtualNow = function() {
     const fab = document.getElementById('vt-fab');
     // SOLO DASHBOARD Y PERFIL (páginas con sidebar); oculto en landing y demás.
     const allowVT = document.body.classList.contains('layout-with-sidebar');
-    if (fab) fab.style.display = (vtToken && allowVT) ? 'flex' : 'none';
+    // OCULTO PARA CLIENTES (rol "user"): el reloj virtual es una herramienta de administración.
+    const isOperational = ['admin', 'local_admin', 'staff'].includes(localStorage.getItem('rol'));
+    if (fab) fab.style.display = (vtToken && allowVT && isOperational) ? 'flex' : 'none';
     const controls = document.getElementById('vt-panel-controls');
-    if (controls) controls.style.display = vtToken ? '' : 'none';
+    if (controls) controls.style.display = (vtToken && isOperational) ? '' : 'none';
     await updateVT();
     setInterval(updateVT, 30000);
 })();

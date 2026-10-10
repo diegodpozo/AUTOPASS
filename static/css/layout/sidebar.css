@@ -137,9 +137,9 @@
 
     .mobile-nav-toggle {
         display: block;
-        position: fixed;
+        position: absolute;
         left: calc(20px + var(--safe-area-left));
-        top: calc(22px + var(--safe-area-top));
+        top: calc(16px + var(--safe-area-top));
         margin: 0;
         font-size: 1.3rem;
         z-index: 1100;

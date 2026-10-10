@@ -484,9 +484,17 @@
     border-radius: 14px;
     backdrop-filter: blur(10px);
     position: sticky;
-    top: 10px;
+    top: calc(10px + var(--safe-area-top));
     z-index: 60;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* P2.5 UX/UI: con el stepper pegado arriba, al tocar un campo de la card el
+   scroll del portal lo lleva hasta DEBAJO del stepper (scroll-padding-top)
+   en vez de ocultarlo tras la barra. Así la card nunca queda tapada al
+   interactuar con ella. */
+.main-content-scroll {
+    scroll-padding-top: calc(66px + var(--safe-area-top));
 }
 
 .stepper-step {
@@ -564,22 +572,29 @@
 }
 
 @media (min-width: 769px) {
-    /* En escritorio el header del portal es sticky (top:0, z-index:1000):
-       el stepper se pega debajo de él en vez de quedar oculto. */
-    .reservation-stepper { top: 100px; }
+    /* P2.5 UX/UI: el header del portal es sticky (top:0, z-index:1000). El
+       stepper se pega justo debajo de él (altura del header: padding top+bottom
+       20px + contenido ~40px + safe-area) en vez de quedar oculto detrás. */
+    .reservation-stepper { top: calc(82px + var(--safe-area-top)); }
+
+    /* La card queda visible debajo del stepper pegado + header (82px de pin +
+       ~54px del stepper). */
+    .main-content-scroll {
+        scroll-padding-top: calc(138px + var(--safe-area-top));
+    }
 }
 
 @media (min-width: 1281px) {
-    /* P2.5 UX/UI: en pantallas amplias el stepper es un raíl vertical a la
-       izquierda del panel de reserva (reserva-layout), del alto justo de sus
-       pasos (dot arriba, label debajo, líneas verticales) y pegajoso debajo
-       del header sticky del portal para no perderse al hacer scroll. */
+    /* P2.5 UX/UI: raíl vertical a la izquierda de la card de reserva.
+       Pegado debajo del header sticky del portal; no tapa la card porque va al
+       costado de ella. Estira al alto de la card (misma posición, mismo alto)
+       y reparte sus pasos a lo largo de ella. */
     .reservation-stepper {
         position: sticky;
-        top: 100px;
-        align-self: start;
+        top: calc(82px + var(--safe-area-top));
+        align-self: stretch;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: space-between;
         align-items: center;
         width: auto;
         max-width: none;
@@ -593,8 +608,8 @@
 
     .reservation-stepper .stepper-line {
         width: 2px;
-        height: 22px;
-        flex: none;
+        height: 2px;
+        flex: 1;
         margin: 4px 0;
     }
 }

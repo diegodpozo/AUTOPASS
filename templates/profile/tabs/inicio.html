@@ -9,34 +9,35 @@
 
     <!-- P2.5 UX/UI: PASOS DE LA RESERVA -->
     <div class="reserva-layout">
-    <div class="reservation-stepper" id="reservation-stepper" aria-label="Progreso de la reserva" role="group">
-        <div class="stepper-step" data-step="1">
-            <span class="stepper-dot"><i class="fas fa-car"></i></span>
-            <span class="stepper-label">Vehículo</span>
-        </div>
-        <span class="stepper-line" aria-hidden="true"></span>
-        <div class="stepper-step" data-step="2">
-            <span class="stepper-dot"><i class="fas fa-location-dot"></i></span>
-            <span class="stepper-label">Sucursal</span>
-        </div>
-        <span class="stepper-line" aria-hidden="true"></span>
-        <div class="stepper-step" data-step="3">
-            <span class="stepper-dot"><i class="fas fa-clock"></i></span>
-            <span class="stepper-label">Horario</span>
-        </div>
-        <span class="stepper-line" aria-hidden="true"></span>
-        <div class="stepper-step" data-step="4">
-            <span class="stepper-dot"><i class="fas fa-circle-check"></i></span>
-            <span class="stepper-label">Confirmación</span>
-        </div>
-    </div>
-
     <div class="portal-home-grid">
         <!-- LADO IZQUIERDO: ACCIONES RÁPIDAS Y RESERVA -->
         <div class="grid-col booking-side">
             <div class="section-title-premium section-title-premium--center">
                 <h3><i class="fas fa-pen"></i>HACÉ TU RESERVA MANUALMENTE</h3>
             </div>
+            <div class="reserva-form-layout">
+            <div class="reservation-stepper" id="reservation-stepper" aria-label="Progreso de la reserva" role="group">
+                <div class="stepper-step" data-step="1">
+                    <span class="stepper-dot"><i class="fas fa-car"></i></span>
+                    <span class="stepper-label">Vehículo</span>
+                </div>
+                <span class="stepper-line" aria-hidden="true"></span>
+                <div class="stepper-step" data-step="2">
+                    <span class="stepper-dot"><i class="fas fa-location-dot"></i></span>
+                    <span class="stepper-label">Sucursal</span>
+                </div>
+                <span class="stepper-line" aria-hidden="true"></span>
+                <div class="stepper-step" data-step="3">
+                    <span class="stepper-dot"><i class="fas fa-clock"></i></span>
+                    <span class="stepper-label">Horario</span>
+                </div>
+                <span class="stepper-line" aria-hidden="true"></span>
+                <div class="stepper-step" data-step="4">
+                    <span class="stepper-dot"><i class="fas fa-circle-check"></i></span>
+                    <span class="stepper-label">Confirmación</span>
+                </div>
+            </div>
+
             <div id="reserva-form-container" class="open">
                 <div class="modern-reservation-card">
 
@@ -230,6 +231,7 @@
                         </form>
                     </div>
                 </div>
+            </div>
             </div>
 
             <!-- Botones de Utilidad Secundaria -->

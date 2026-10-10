@@ -442,20 +442,26 @@
     display: block;
 }
 
+/* La barra de pasos y la card de reserva comparten contenedor: así en
+   escritorio el stepper estira al alto de la card (misma posición, mismo
+   alto) y el título / acciones rápidas quedan fuera del rail. */
+.reserva-form-layout {
+    display: block;
+}
+
 @media (min-width: 1281px) {
-    /* Con la barra de pasos vertical a la izquierda, el panel de reserva
-       (formulario + mapa) se corre a la derecha. Las columnas internas del
-       grid se rebalancean: la de reserva mantiene tamaño y el mapa se achica. */
     .reserva-layout {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        align-items: start;
-        gap: 16px;
         margin-top: 20px;
     }
 
     .reserva-layout .portal-home-grid {
         margin-top: 0;
+    }
+
+    .reserva-form-layout {
+        display: flex;
+        align-items: stretch;
+        gap: 16px;
     }
 
     .portal-map-container {
@@ -1212,13 +1218,16 @@
 }
 
 /* --- BARRA DE NAVEGACION INFERIOR (USER FOOTER) --- */
+/* Solo en responsive: en escritorio la navegacion es el sidebar, asi que la
+   barra inferior no se muestra. Coincide con el breakpoint del drawer de
+   sidebar (sidebar.css: @media max-width 1024px). */
 .user-footer-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 998;
-    display: flex;
+    display: none;
     justify-content: space-around;
     align-items: center;
     background: rgba(10, 10, 10, 0.95);
@@ -1227,6 +1236,12 @@
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     padding: 6px 8px;
     padding-bottom: max(6px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 1024px) {
+    .user-footer-nav {
+        display: flex;
+    }
 }
 
 .layout-with-sidebar .user-footer-nav {
