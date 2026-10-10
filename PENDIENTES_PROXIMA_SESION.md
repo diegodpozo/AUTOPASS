@@ -3,6 +3,51 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 10/10/2026
 
+## Comunicación de Soporte (usuario ↔ soporte) — APLICADO 10/10/2026 (pendiente de commit/push)
+
+Auditoría de la cadena ticket/notificación + frontend de Ayuda. Hallazgos A1–A10
+reportados; el usuario eligió **A1–A6** (B7/B8/B9/B10 NO se tocaron).
+
+- **A1**: listado "MIS CONSULTAS / TICKETS" para el cliente (`loadMyTickets` en
+  `profile-help.js`, `GET /user/support-tickets`, carga on-demand vía `showSection('ayuda')`,
+  refresh tras crear/responder).
+- **A2**: XSS cerrado en el chat del usuario (`escapeHtml` en `renderTicketMessages`).
+- **A3**: `is_admin` incluye `staff` (`support_service.py`).
+- **A4**: estado "En Revisión" integrado (filtro/admin select/KPIs; `reply_to_ticket` lo setea).
+- **A5**: tickets terminales (resuelto/resuelta/cerrado/cancelado) bloqueados para responder
+  (backend `TERMINAL_STATES` + frontend en dashboard y perfil).
+- **A6**: `get_admin_pending_count` excluye los terminales.
+- **Rediseño de la pantalla Ayuda y Soporte** (pedido por el usuario al ver el listado
+  desacomodado): "MIS CONSULTAS" salió del grid 2 col de contacto y quedó full-width debajo;
+  `.my-ticket-subject` con `-webkit-line-clamp:2`; modal con pill de estado
+  (`#modal-ticket-state`), asunto con `overflow-wrap`, burbujas con `overflow-wrap:anywhere`.
+- Verificación runtime en Edge headless (CDP): grid 2 col con alturas iguales (h=134),
+  subjects clamp 2 líneas sin overflow horizontal, gap wrapper→MIS CONSULTAS 40px, pill
+  "En Revisión" visible en modal, palabra larga (360 chars AEIOU) sin overflow en la burbuja,
+  asunto largo envuelto dentro del card. Suite soporte **47 passed**; **8/8 guards** OK
+  (design system re-baselineado `--update` + `check_color_equivalence --allow profile-help.css`,
+  mecanismo documentado de aceptación).
+- **Escalabilidad de listados (volumen)** — patron DRY reutilizable: helper
+  `static/js/modules/list-pagination.js` (`renderCappedList(container, itemsHtml, cfg)` con
+  `pageSize/tag/colspan/toggleClass/toggleAll/toggleLess/emptyHtml/onToggle`, estado por
+  `container.id`, `window.__capToggleList(id)` para el onclick inline + `resetCappedState(container)`);
+  CSS global `.cap-toggle-grid`/`.cap-toggle-btn` en `utilities.css`. Aplicado a:
+  - **MIS CONSULTAS (usuario)**: cap 6 + "Ver todas las consultas (N)"/"Ver menos" + pills de
+    estado (Todas/Pendientes/En revisión/En proceso/Resueltas/Cerradas) + chip `(N)`.
+  - **Soporte admin** (`dashboard-tickets.js`): cap 8 (`drag` tabla).
+  - **Reservas admin** (`reservations-admin-list.js`): cap 8.
+  - **Vouchers usuario** (`profile.js`, tab Mis Puntos): cap 6 + "Ver todos (N)" (`.voucher-toggle`).
+  - NO aplicado en notificaciones ni promociones (fuera del scope elegido). `profile.js` historial
+    de pagos solo alimenta un contador (`acc-stat-stays`), no es lista → descartado.
+  Verificación runtime (Edge headless CDP, usuario + 12 tickets + 10 vouchers canjeados por API):
+  my-tickets 6 → 12 → 6, filtro en_revision 2; vouchers 6 → 10 → 6; admin tickets 8(+header) →
+  67/66; reservas admin 8(+header) de 175. Suite soporte 47 passed; guards 8/8 (design system
+  re-baselineado `--update` + `check_color_equivalence --allow profile-help.css --allow utilities.css
+  --allow profile-points.css`).
+- **PENDIENTE**: commit/push de este bloque (18 archivos modificados + 1 nuevo
+  `static/js/modules/list-pagination.js`) + en su momento evaluar B7 (`notify_occupancy_change`
+  inútil en rutas de soporte) y B8 (duplicación `respuesta`/thread) si el usuario quiere.
+
 ## F1 de AUDITORIA_VALIDACIONES — APLICADO y PUSHEADO en v9.34.82 (`0f35417`, 10/10/2026)
 
 - **V1**: `UserService.create_user` valida `get_active_by_dni` antes de insertar → 400

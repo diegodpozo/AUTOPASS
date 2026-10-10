@@ -64,6 +64,50 @@ def test_create_and_get_support_ticket(db_session):
     assert updated.estado == "Resuelto"
     assert updated.respuesta == "Barrera reseteada"
 
+def test_reply_sets_en_revision_y_bloquea_terminales(db_session):
+    user = db_session.query(models.User).filter_by(email="test@user.com").first()
+    super_admin = models.User(
+        nombre="Super", apellido="Admin", email="super@autopass.com",
+        password_hash="xxx", rol="admin", sucursal=None
+    )
+    db_session.add(super_admin)
+    db_session.commit()
+
+    ticket = SupportService.create_ticket(db_session, user, schemas.SupportTicketCreate(
+        categoria="reserva", sucursal="General", asunto="Problema", mensaje="Ayuda"
+    ))
+
+    updated = SupportService.reply_to_ticket(db_session, ticket.id, user.id, "Gracias!")
+    assert updated.estado == "En Revisión"
+
+    SupportService.update_ticket_status(db_session, super_admin, ticket.id, "Resuelto", "Listo")
+    with pytest.raises(Exception) as excinfo:
+        SupportService.reply_to_ticket(db_session, ticket.id, user.id, "Quiero reabrir")
+    assert getattr(excinfo.value, "status_code", None) == 400 or "bloqueado" in str(excinfo.value)
+
+def test_staff_messages_render_as_is_admin(db_session):
+    user = db_session.query(models.User).filter_by(email="test@user.com").first()
+    staff = models.User(
+        nombre="Staff",
+        apellido="Operador",
+        email="staff@autopass.com",
+        password_hash="xxx",
+        rol="staff",
+        sucursal="AUTOPASS Belgrano"
+    )
+    db_session.add(staff)
+    db_session.commit()
+
+    ticket = SupportService.create_ticket(db_session, user, schemas.SupportTicketCreate(
+        categoria="otro", sucursal="AUTOPASS Belgrano", asunto="Necesito ayuda", mensaje="Hola"
+    ))
+    SupportService.update_ticket_status(db_session, staff, ticket.id, "En Proceso", "Atendido por staff")
+
+    messages = SupportService.get_ticket_messages(db_session, ticket.id)
+    staff_replies = [m for m in messages if m["autor"] == "Staff Operador"]
+    assert staff_replies, "El mensaje del staff debe existir"
+    assert all(m["is_admin"] for m in staff_replies)
+
 def test_ticket_filtering_by_role_and_branch(db_session):
     user = db_session.query(models.User).filter_by(email="test@user.com").first()
     

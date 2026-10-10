@@ -448,6 +448,171 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
+/* Mis Consultas / Tickets del usuario */
+.my-tickets-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dorado);
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.my-tickets-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.my-tickets-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.my-tickets-pill:hover {
+    border-color: rgba(223, 186, 107, 0.5);
+    color: var(--dorado);
+}
+
+.my-tickets-pill.active {
+    background: rgba(223, 186, 107, 0.15);
+    border-color: var(--dorado);
+    color: var(--dorado);
+}
+
+.my-tickets-pill i {
+    font-size: 0.72rem;
+}
+
+.my-tickets-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 26px;
+}
+
+@media (max-width: 640px) {
+    .my-tickets-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+.my-tickets-toggle {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding-top: 4px;
+}
+
+.my-tickets-empty {
+    grid-column: 1 / -1;
+    background: rgba(30, 41, 59, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 26px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.my-tickets-empty i {
+    font-size: 1.5rem;
+    color: var(--info);
+}
+
+.my-ticket-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.my-ticket-card:hover {
+    border-color: rgba(223, 186, 107, 0.45);
+    transform: translateY(-2px);
+}
+
+.my-ticket-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.my-ticket-nro {
+    color: var(--dorado);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.my-ticket-state {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.my-ticket-state.is-pending { background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.35); }
+.my-ticket-state.is-review { background: rgba(52, 152, 219, 0.15); color: var(--info); border: 1px solid rgba(52, 152, 219, 0.35); }
+.my-ticket-state.is-process { background: rgba(52, 152, 219, 0.15); color: var(--info); border: 1px solid rgba(52, 152, 219, 0.35); }
+.my-ticket-state.is-resolved { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); }
+.my-ticket-state.is-closed { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+.my-ticket-subject {
+    color: #f8fafc;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* Pill de estado en el modal del chat de soporte (modals.html) */
+#modal-ticket-state {
+    margin-top: 10px;
+}
+
+#modal-ticket-state:empty {
+    display: none;
+}
+
+.my-ticket-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    flex-wrap: wrap;
+}
+
 .ticket-header {
     margin-bottom: 22px;
 }

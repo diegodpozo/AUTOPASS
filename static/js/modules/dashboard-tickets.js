@@ -2,6 +2,7 @@ import api from './api.js';
 import { showToast, formatDate, toTitle, formatTime, escapeHtml } from './utils.js';
 import { openModal } from './ui.js';
 import { updateNotifBadge } from './notifications.js';
+import { renderCappedList, resetCappedState } from './list-pagination.js';
 
 /**
  * DASHBOARD TICKETS MODULE (v9.8.6)
@@ -55,6 +56,7 @@ export async function updateTicketBadge() {
 
 export function filterTicketList(query = '') {
     if (!query) {
+        resetCappedState(document.getElementById('tickets-admin-table-body'));
         renderAdminTickets(allTickets);
         return;
     }
@@ -66,6 +68,7 @@ export function filterTicketList(query = '') {
         (t.categoria && t.categoria.toLowerCase().includes(q)) ||
         (t.sucursal && t.sucursal.toLowerCase().includes(q))
     );
+    resetCappedState(document.getElementById('tickets-admin-table-body'));
     renderAdminTickets(filtered);
 }
 
@@ -85,7 +88,7 @@ function updateTicketStats(tickets) {
     const resolvedEl = document.getElementById('stat-tickets-resolved');
     const countEl = document.getElementById('ticket-admin-count');
 
-    const pending = tickets.filter(t => t.estado.toLowerCase() === 'pendiente').length;
+    const pending = tickets.filter(t => ['pendiente', 'en revisión'].includes(t.estado.toLowerCase())).length;
     const process = tickets.filter(t => t.estado.toLowerCase() === 'en proceso').length;
     const resolved = tickets.filter(t => t.estado.toLowerCase() === 'resuelto').length;
 
@@ -105,9 +108,9 @@ function renderAdminTickets(tickets) {
         return;
     }
 
-    tableBody.innerHTML = tickets.map(t => {
+    renderCappedList(tableBody, tickets.map(t => {
         const isUnread = !!t.has_unread;
-        const isProcess = t.estado.toLowerCase() === 'en proceso';
+        const isProcess = ['en proceso', 'en revisión'].includes(t.estado.toLowerCase());
         const isResolved = t.estado.toLowerCase() === 'resuelto';
 
         let rowClass = 'row-premium';
@@ -150,7 +153,14 @@ function renderAdminTickets(tickets) {
                 <td data-label="Acciones" class="text-center"><div style="display: flex; justify-content: center;"><button class="btn-edit actions-reveal" style="cursor: pointer;" onclick="openTicketAnswerModal(${t.id})" title="Ver detalle del ticket"><i class="fas fa-eye"></i></button></div></td>
             </tr>
         `;
-    }).join('');
+    }), {
+        pageSize: 8,
+        tag: 'tr',
+        colspan: 7,
+        toggleAll: total => `Ver todos los tickets (${total})`,
+        toggleLess: 'Ver menos',
+        onToggle: () => renderAdminTickets(tickets)
+    });
 }
 
 function renderAdminTicketMessages(messages) {
@@ -202,7 +212,7 @@ function setTicketAnswerLocked(locked) {
     const formGroups = document.querySelectorAll('#modal-ticket-answer form .form-group');
 
     if (statusSel) statusSel.disabled = locked;
-    if (textArea) { textArea.disabled = locked; textArea.placeholder = locked ? 'Ticket resuelto y bloqueado. No se pueden enviar más mensajes.' : 'Escribí aquí la respuesta o resolución enviada al cliente...'; }
+    if (textArea) { textArea.disabled = locked; textArea.placeholder = locked ? 'Ticket cerrado y bloqueado. No se pueden enviar más mensajes.' : 'Escribí aquí la respuesta o resolución enviada al cliente...'; }
     if (footerBtns) footerBtns.style.display = locked ? 'none' : 'flex';
     if (lockMsg) lockMsg.style.display = locked ? 'flex' : 'none';
     formGroups.forEach(g => { g.style.display = locked ? 'none' : ''; });
@@ -226,8 +236,8 @@ export async function openTicketAnswerModal(ticketId) {
     document.getElementById('ticket-answer-status').value = ticket.estado;
     document.getElementById('ticket-answer-text').value = '';
 
-    const isResolved = (ticket.estado || '').toLowerCase() === 'resuelto';
-    setTicketAnswerLocked(isResolved);
+    const isLocked = ['resuelto', 'resuelta', 'cerrado', 'cancelado'].includes((ticket.estado || '').toLowerCase());
+    setTicketAnswerLocked(isLocked);
 
     openModal('modal-ticket-answer');
 

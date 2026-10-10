@@ -1,5 +1,6 @@
 import api from './api.js';
-import { showToast, toTitle, formatDayTime } from './utils.js';
+import { showToast, toTitle, formatDayTime, escapeHtml } from './utils.js';
+import { renderCappedList, resetCappedState } from './list-pagination.js';
 
 /**
  * PERFIL HELP MODULE (v9.8.5)
@@ -7,6 +8,9 @@ import { showToast, toTitle, formatDayTime } from './utils.js';
  */
 
 let helpBranchesLoaded = false;
+let myTicketsLoaded = false;
+
+const TERMINAL_TICKET_STATES = ['resuelto', 'resuelta', 'cerrado', 'cancelado'];
 
 export async function loadHelpBranches() {
     const branchSelect = document.getElementById('ticket-branch');
@@ -30,6 +34,105 @@ export async function loadHelpBranches() {
     } catch (e) {
         console.error('[HELP] Error al cargar sucursales para ticket:', e);
     }
+}
+
+function ticketStateClass(estado) {
+    const e = (estado || '').toLowerCase();
+    if (e === 'resuelto' || e === 'resuelta') return 'is-resolved';
+    if (TERMINAL_TICKET_STATES.includes(e)) return 'is-closed';
+    if (e === 'en proceso') return 'is-process';
+    if (e === 'en revisión') return 'is-review';
+    return 'is-pending';
+}
+
+export async function loadMyTickets() {
+    const container = document.getElementById('my-tickets');
+    if (!container || myTicketsLoaded) return;
+    myTicketsLoaded = true;
+
+    container.innerHTML = '<div class="my-tickets-empty"><i class="fas fa-spinner fa-spin"></i> Cargando tus consultas...</div>';
+
+    try {
+        const res = await api.get('/user/support-tickets');
+        if (!res.ok || !Array.isArray(res.data)) {
+            container.innerHTML = '<div class="my-tickets-empty">No se pudieron cargar tus consultas.</div>';
+            return;
+        }
+        myTicketsAll = [...res.data].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+        renderMyTickets();
+    } catch (e) {
+        myTicketsLoaded = false;
+        container.innerHTML = '<div class="my-tickets-empty">Error de conexión al cargar tus consultas.</div>';
+    }
+}
+
+const MY_TICKETS_MAX_VISIBLE = 6;
+let myTicketsAll = [];
+let myTicketsFilter = 'all';
+
+function myTicketMatchesFilter(t) {
+    const e = (t.estado || '').toLowerCase();
+    switch (myTicketsFilter) {
+        case 'pendiente': return e === 'pendiente';
+        case 'en_revision': return e === 'en revisión';
+        case 'en_proceso': return e === 'en proceso';
+        case 'resuelto': return e === 'resuelto' || e === 'resuelta';
+        case 'cerrado': return e === 'cerrado' || e === 'cancelado';
+        default: return true;
+    }
+}
+
+function renderMyTickets() {
+    const container = document.getElementById('my-tickets');
+    const countEl = document.getElementById('my-tickets-count');
+    if (!container) return;
+
+    if (myTicketsAll.length === 0) {
+        container.innerHTML = '<div class="my-tickets-empty"><i class="fas fa-inbox"></i> Todavía no tenés consultas. Usá el formulario para abrir tu primer ticket.</div>';
+        if (countEl) countEl.textContent = '';
+        return;
+    }
+    if (countEl) countEl.textContent = `(${myTicketsAll.length})`;
+
+    const filtered = myTicketsAll.filter(myTicketMatchesFilter);
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="my-tickets-empty"><i class="fas fa-filter-circle-xmark"></i> No hay consultas en este estado.</div>';
+        return;
+    }
+
+    renderCappedList(container, filtered.map(t => `
+            <div class="my-ticket-card" onclick="openSupportTicketModal(${t.id})">
+                <div class="my-ticket-head">
+                    <span class="my-ticket-nro">#${t.id}</span>
+                    <span class="my-ticket-state ${ticketStateClass(t.estado)}">${escapeHtml(t.estado || 'Pendiente')}</span>
+                </div>
+                <div class="my-ticket-subject">${escapeHtml(t.asunto || 'Sin asunto')}</div>
+                <div class="my-ticket-meta">
+                    <span>${toTitle(t.categoria)} · ${escapeHtml(toTitle(t.sucursal))}</span>
+                    <span>${t.created_at ? formatDayTime(new Date(t.created_at)) : ''}</span>
+                </div>
+            </div>
+        `), {
+        pageSize: MY_TICKETS_MAX_VISIBLE,
+        tag: 'div',
+        toggleClass: 'my-tickets-toggle',
+        toggleAll: total => `Ver todas las consultas (${total})`,
+        toggleLess: 'Ver menos',
+        onToggle: () => renderMyTickets()
+    });
+}
+
+export function filterMyTickets(estado, pillBtn) {
+    myTicketsFilter = estado || 'all';
+    document.querySelectorAll('.my-tickets-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.estado === myTicketsFilter));
+    resetCappedState(document.getElementById('my-tickets'));
+    renderMyTickets();
+}
+
+function refreshMyTickets() {
+    myTicketsLoaded = false;
+    loadMyTickets();
 }
 
 export function toggleFaq(btn) {
@@ -136,6 +239,12 @@ function applyHelpFilters() {
         contactWrapper.style.display = showContact ? 'grid' : 'none';
         const soporteTitle = document.getElementById('soporte-section');
         if (soporteTitle) soporteTitle.style.display = showContact ? 'flex' : 'none';
+        const misConsultasTitle = document.getElementById('mis-consultas-section');
+        if (misConsultasTitle) misConsultasTitle.style.display = showContact ? 'flex' : 'none';
+        const myTicketsPills = document.getElementById('my-tickets-pills');
+        if (myTicketsPills) myTicketsPills.style.display = showContact ? 'flex' : 'none';
+        const myTicketsEl = document.getElementById('my-tickets');
+        if (myTicketsEl) myTicketsEl.style.display = showContact ? 'grid' : 'none';
     }
 
     // Estado vacío
@@ -176,6 +285,7 @@ export async function submitSupportTicket(event) {
             showToast(`¡Ticket #${res.data.ticket_id}${branchNotice} enviado con éxito! Te responderemos a la brevedad.`, 'success');
             const form = document.getElementById('help-support-form');
             if (form) form.reset();
+            refreshMyTickets();
         } else {
             showToast(res.error || 'Error al enviar el ticket de soporte', 'error');
         }
@@ -218,18 +328,19 @@ function renderTicketMessages(messages) {
         if (m.adjunto_url) {
             const isImage = /\.(png|jpe?g|gif|webp)$/i.test(m.adjunto_url);
             const adjUrl = encodeURI(m.adjunto_url);
+            const adjName = escapeHtml(m.adjunto_nombre || 'Adjunto');
             attachHtml = isImage
-                ? `<div style="margin-top:8px;font-size:0.8rem;"><a href="${adjUrl}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-image"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`
-                : `<div style="margin-top:8px;font-size:0.8rem;"><a href="${adjUrl}" target="_blank" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-file-pdf"></i> ${m.adjunto_nombre || 'Adjunto'}</a></div>`;
+                ? `<div style="margin-top:8px;font-size:0.8rem;"><a href="${adjUrl}" target="_blank" rel="noopener" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-image"></i> ${adjName}</a></div>`
+                : `<div style="margin-top:8px;font-size:0.8rem;"><a href="${adjUrl}" target="_blank" rel="noopener" style="color:${isMine?'var(--dorado)':'#8bc34a'};text-decoration:none;"><i class="fas fa-file-pdf"></i> ${adjName}</a></div>`;
         }
         return `
             <div style="display:flex;align-self:${align};flex-direction:column;max-width:75%;margin-left:${isMine?'8px':'0'};margin-right:${isMine?'0':'8px'};">
-                <div style="background:${bgColor};border-radius:12px;padding:10px 12px;${borderSide}:3px solid ${borderColor};">
-                    <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;">
-                        <span>${label} — ${m.autor}</span>
+                <div style="background:${bgColor};border-radius:12px;padding:10px 12px;${borderSide}:3px solid ${borderColor};min-width:0;">
+                    <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span>${label} — ${escapeHtml(m.autor || '')}</span>
                         <span>${time}</span>
                     </div>
-                    <div style="font-size:0.88rem;color:#eee;line-height:1.5;white-space:pre-wrap;text-align:left;">${m.mensaje}</div>
+                    <div style="font-size:0.88rem;color:#eee;line-height:1.5;white-space:pre-wrap;text-align:left;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(m.mensaje)}</div>
                     ${attachHtml}
                 </div>
             </div>`;
@@ -279,6 +390,8 @@ export async function openSupportTicketModal(ticketId) {
     document.getElementById('modal-ticket-id').textContent = ticketId;
     document.getElementById('modal-ticket-subject').textContent = 'Cargando...';
     document.getElementById('modal-ticket-meta').textContent = '';
+    const stateEl = document.getElementById('modal-ticket-state');
+    if (stateEl) { stateEl.textContent = ''; stateEl.className = 'my-ticket-state'; }
     const msgContainer = document.getElementById('modal-ticket-messages');
     if (msgContainer) msgContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
     document.getElementById('modal-ticket-reply-input').value = '';
@@ -298,12 +411,17 @@ export async function openSupportTicketModal(ticketId) {
         const t = res.data;
         document.getElementById('modal-ticket-id').textContent = t.id;
         document.getElementById('modal-ticket-subject').textContent = t.asunto;
-        document.getElementById('modal-ticket-meta').textContent = `${toTitle(t.categoria)} · ${toTitle(t.sucursal)} · ${t.estado}`;
+        document.getElementById('modal-ticket-meta').textContent = `${toTitle(t.categoria)} · ${toTitle(t.sucursal)}`;
+        const estado = t.estado || 'Pendiente';
+        if (stateEl) {
+            stateEl.className = 'my-ticket-state ' + ticketStateClass(estado);
+            stateEl.textContent = estado;
+        }
 
         renderTicketMessages(t.messages);
 
         const replyBox = document.getElementById('modal-ticket-reply-box');
-        if (t.estado === 'Resuelto' || t.estado === 'Cerrado') {
+        if (TERMINAL_TICKET_STATES.includes((t.estado || '').toLowerCase())) {
             replyBox.style.display = 'none';
         } else {
             replyBox.style.display = 'block';
@@ -348,6 +466,7 @@ export async function submitTicketReply() {
             if (attachInput) attachInput.value = '';
             const nameEl = document.getElementById('modal-ticket-attach-name');
             if (nameEl) nameEl.textContent = '';
+            refreshMyTickets();
             if (res.data.messages) {
                 renderTicketMessages(res.data.messages);
             } else {

@@ -51,6 +51,40 @@
 
 .uppercase { text-transform: uppercase; }
 
+/* --- LISTAS CON TOPE (helper list-pagination.js) --- */
+.cap-toggle-grid {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding-top: 4px;
+}
+
+.cap-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px auto;
+    padding: 7px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 20px;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.cap-toggle-btn:hover {
+    border-color: var(--dorado);
+    color: var(--dorado);
+}
+
+.cap-toggle-btn i {
+    font-size: 0.7rem;
+}
+
 /* --- RESPONSIVE UTILITIES --- */
 @media (max-width: 768px) {
     .flex-wrap-mobile { flex-wrap: wrap; }

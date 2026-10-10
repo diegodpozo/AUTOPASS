@@ -32,6 +32,8 @@ window.filterHelpContent = help.filterHelpContent;
 window.clearHelpSearch = help.clearHelpSearch;
 window.submitSupportTicket = help.submitSupportTicket;
 window.loadHelpBranches = help.loadHelpBranches;
+window.loadMyTickets = help.loadMyTickets;
+window.filterMyTickets = help.filterMyTickets;
 window.handleTicketAttach = help.handleTicketAttach;
 window.openSupportTicketModal = help.openSupportTicketModal;
 window.closeSupportTicketModal = help.closeSupportTicketModal;
@@ -141,7 +143,7 @@ window.showSection = function(sectionId, el) {
     if (sectionId === 'perfil') { prof.loadProfile(); if (window.loadActiveStays) loadActiveStays(); }
     if (sectionId === 'vehiculos') v.loadVehicles();
     if (sectionId === 'notificaciones') loadNotifications();
-    if (sectionId === 'ayuda') help.loadHelpBranches();
+    if (sectionId === 'ayuda') { help.loadHelpBranches(); help.loadMyTickets(); }
 };
 
 window.openFullMap = function(pushState = true) {

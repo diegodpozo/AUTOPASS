@@ -96,6 +96,15 @@ def test_pending_count_admin(client):
     assert r.json()["count"] >= 1
 
 
+def test_pending_count_excluye_terminales(client):
+    c, TestSession = client
+    _seed_ticket(TestSession, estado="Cancelado")
+    _seed_ticket(TestSession, email="cer@test.com", estado="En Revisión")
+    r = c.get(f"{SUPPORT_URL}/pending-count")
+    assert r.status_code == 200
+    assert r.json()["count"] == 1
+
+
 def test_pending_count_zero(client):
     c, _ = client
     r = c.get(f"{SUPPORT_URL}/pending-count")

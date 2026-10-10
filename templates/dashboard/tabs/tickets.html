@@ -46,6 +46,7 @@
                     <select id="ticket-admin-status-filter" class="select-premium-sm" onchange="loadAdminTickets()">
                         <option value="TODOS">Todos</option>
                         <option value="PENDIENTE">Pendientes</option>
+                        <option value="EN REVISIÓN">En Revisión</option>
                         <option value="EN PROCESO">En Proceso</option>
                         <option value="RESUELTO">Resueltos</option>
                     </select>
@@ -133,7 +134,7 @@
 
             <form onsubmit="submitTicketAnswer(event)">
                 <div id="ticket-answer-locked" class="ticket-answer-locked">
-                    <i class="fas fa-lock"></i> Ticket resuelto y bloqueado. Solo visualización.
+                    <i class="fas fa-lock"></i> Ticket cerrado y bloqueado. Solo visualización.
                 </div>
                 <div class="form-group mb-10">
                     <label for="ticket-answer-text" class="text-muted text-small text-bold block mb-5">RESPUESTA</label>
@@ -145,9 +146,11 @@
                         <label for="ticket-answer-status" class="text-muted text-small text-bold block mb-5">ESTADO</label>
                         <div class="select-premium-box">
                             <select id="ticket-answer-status" class="select-premium" required>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En Revisión">En Revisión</option>
                                 <option value="En Proceso">En Proceso</option>
                                 <option value="Resuelto">Resuelto</option>
-                                <option value="Pendiente">Pendiente</option>
+                                <option value="Cancelado">Cancelado</option>
                             </select>
                             <i class="fas fa-chevron-down select-premium-chevron"></i>
                         </div>

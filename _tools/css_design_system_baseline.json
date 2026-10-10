@@ -10,14 +10,14 @@
     "niveles_totales": 102
   },
   "color": {
-    "equivalentes_a_token": 179,
-    "literales_no_genericos": 1086,
-    "rgba_distintos": 342
+    "equivalentes_a_token": 181,
+    "literales_no_genericos": 1115,
+    "rgba_distintos": 346
   },
   "movimiento": {
     "animaciones_infinitas": 13,
     "bloques_prefers_reduced_motion": 1,
-    "declaraciones_transition_animation": 228,
+    "declaraciones_transition_animation": 231,
     "keyframes": 18
   },
   "shadow": {
@@ -25,11 +25,11 @@
   },
   "spacing": {
     "adopcion_escala_pct": 99.1,
-    "ocurrencias_con_valor_repetido": 1357,
-    "ocurrencias_totales": 1369,
+    "ocurrencias_con_valor_repetido": 1376,
+    "ocurrencias_totales": 1388,
     "valores_de_un_solo_uso": 12,
-    "valores_distintos": 55,
-    "valores_reutilizados": 43
+    "valores_distintos": 56,
+    "valores_reutilizados": 44
   },
   "transition": {
     "curvas_distintas": 7,

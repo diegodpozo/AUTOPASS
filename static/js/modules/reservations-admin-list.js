@@ -2,6 +2,7 @@ import api from './api.js';
 import * as utils from './utils.js';
 import * as baseUi from './ui.js';
 import { getVirtualNow } from './virtual-time.js';
+import { renderCappedList } from './list-pagination.js';
 
 /**
  * Módulo de Gestión de Reservas Administrativas
@@ -32,7 +33,7 @@ allReservations = res.data;
             }
         }
 
-        tbody.innerHTML = res.data.map(r => `
+        const rowsHtml = allReservations.map(r => `
             <tr class="row-premium">
                 <td data-label="Cliente"><div class="user-name">${r.usuario_nombre || 'S/N'} ${r.usuario_apellido || ''}</div></td>
                 <td data-label="Patente"><span class="plate-style">${utils.formatPlate(r.patente)}</span></td>
@@ -81,7 +82,16 @@ allReservations = res.data;
                         ` : `<span class="text-xs text-muted">—</span>`}
                     </div>
                 </td>
-            </tr>`).join('') || '<tr><td colspan="8" class="text-center py-20">No hay reservas.</td></tr>';
+            </tr>`);
+        const drawList = () => renderCappedList(tbody, rowsHtml, {
+            pageSize: 8,
+            tag: 'tr',
+            colspan: 8,
+            toggleAll: total => `Ver todas las reservas (${total})`,
+            toggleLess: 'Ver menos',
+            onToggle: drawList
+        });
+        drawList();
         
         const statTotal = document.getElementById('admin-res-stat-total');
         const statPending = document.getElementById('admin-res-stat-pending');

@@ -191,6 +191,25 @@ def test_reply_my_support_ticket(client):
     assert r.status_code == 200
     body = r.json()
     assert "messages" in body
+    assert body["estado"] == "En Revisión"
+
+
+def test_reply_ticket_resuelto_bloqueado(client):
+    c, TestSession = client
+    uid, tid = _seed_ticket(TestSession, estado="Resuelto")
+    CURRENT["user"] = FakeUser(user_id=uid)
+    r = c.patch(f"{SUPPORT_URL}/{tid}/reply", data={"mensaje": "Quiero reabrir esto"})
+    assert r.status_code == 400
+    assert "bloqueado" in r.json()["detail"]
+
+
+def test_reply_ticket_cancelado_bloqueado(client):
+    c, TestSession = client
+    uid, tid = _seed_ticket(TestSession, estado="Cancelado")
+    CURRENT["user"] = FakeUser(user_id=uid)
+    r = c.patch(f"{SUPPORT_URL}/{tid}/reply", data={"mensaje": "Reabrir por favor"})
+    assert r.status_code == 400
+    assert "bloqueado" in r.json()["detail"]
 
 
 def test_reply_support_ticket_404(client):

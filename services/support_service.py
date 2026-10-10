@@ -9,6 +9,8 @@ from repositories.support_repository import SupportRepository
 from repositories.notification_repository import NotificationRepository
 from repositories.user_repository import UserRepository
 
+TERMINAL_STATES = {"resuelto", "resuelta", "cerrado", "cancelado"}
+
 class SupportService:
 
     @staticmethod
@@ -149,7 +151,7 @@ class SupportService:
                         "mensaje": m.mensaje,
                         "adjunto_url": m.adjunto_url,
                         "adjunto_nombre": m.adjunto_nombre,
-                        "is_admin": m.user.rol in ("admin", "local_admin") if m.user else False,
+"is_admin": m.user.rol in ("admin", "local_admin", "staff") if m.user else False,
                         "autor": f"{m.user.nombre} {m.user.apellido}" if m.user else "Desconocido",
                         "created_at": m.created_at.isoformat() if m.created_at else None,
                     }
@@ -195,8 +197,8 @@ class SupportService:
         if not SupportService._can_access_ticket(db, current_user, ticket):
             raise HTTPException(status_code=403, detail="No tenés permisos sobre tickets de otra sucursal")
 
-        if (ticket.estado or "").strip().lower() == "resuelto":
-            raise HTTPException(status_code=400, detail="Este ticket ya fue resuelto y quedó bloqueado. No se puede cambiar el estado ni responder.")
+        if (ticket.estado or "").strip().lower() in TERMINAL_STATES:
+            raise HTTPException(status_code=400, detail="Este ticket fue cerrado y quedó bloqueado. No se puede cambiar el estado ni responder.")
 
         ticket.estado = estado
         if respuesta:
@@ -261,7 +263,7 @@ class SupportService:
                 "mensaje": m.mensaje,
                 "adjunto_url": m.adjunto_url,
                 "adjunto_nombre": m.adjunto_nombre,
-                "is_admin": m.user.rol in ("admin", "local_admin") if m.user else False,
+                "is_admin": m.user.rol in ("admin", "local_admin", "staff") if m.user else False,
                 "autor": f"{m.user.nombre} {m.user.apellido}" if m.user else "Desconocido",
                 "created_at": m.created_at.isoformat() if m.created_at else None,
             }
@@ -274,8 +276,8 @@ class SupportService:
         if not ticket:
             return None
 
-        if (ticket.estado or "").strip().lower() == "resuelto":
-            raise HTTPException(status_code=400, detail="Este ticket ya fue resuelto y quedó bloqueado. No se pueden enviar más mensajes.")
+        if (ticket.estado or "").strip().lower() in TERMINAL_STATES:
+            raise HTTPException(status_code=400, detail="Este ticket fue cerrado y quedó bloqueado. No se pueden enviar más mensajes.")
 
         msg = models.SupportTicketMessage(
             ticket_id=ticket.id,
@@ -287,7 +289,7 @@ class SupportService:
         )
         db.add(msg)
         ticket.user_response = mensaje
-        ticket.estado = "En revisión"
+        ticket.estado = "En Revisión"
         db.commit()
         db.refresh(ticket)
 
@@ -322,5 +324,5 @@ class SupportService:
 
         return len([
             t for t in scoped
-            if (t.estado or "").strip().lower() not in ("resuelto", "resuelta")
+            if (t.estado or "").strip().lower() not in TERMINAL_STATES
         ])

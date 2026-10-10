@@ -1,5 +1,6 @@
 import api from './api.js';
 import { toTitle, formatDate, formatNum, formatPlate, showToast, showConfirm } from './utils.js';
+import { renderCappedList, resetCappedState } from './list-pagination.js';
 
 /**
  * PERFIL MODULO
@@ -111,6 +112,7 @@ export function switchVoucherTab(tab) {
         btnVig.classList.toggle('active', tab === 'VIGENTES');
         btnFin.classList.toggle('active', tab === 'FINALIZADOS');
     }
+    resetCappedState(document.getElementById('vouchers-grid'));
     renderVouchers();
 }
 
@@ -168,7 +170,7 @@ export function renderVouchers() {
         return;
     }
 
-    grid.innerHTML = filteredTickets.map(t => {
+    renderCappedList(grid, filteredTickets.map(t => {
         const estado = (t.estado || 'VIGENTE').toUpperCase();
         const isVigente = estado === 'VIGENTE';
         const isUsado = estado === 'USADO';
@@ -238,7 +240,14 @@ export function renderVouchers() {
                 </button>` : ''}
             </div>
         </div>`;
-    }).join('');
+    }), {
+        pageSize: 6,
+        tag: 'div',
+        toggleClass: 'voucher-toggle',
+        toggleAll: total => `Ver todos (${total})`,
+        toggleLess: 'Ver menos',
+        onToggle: () => renderVouchers()
+    });
 }
 
 // CARD ESPECIAL PARA DESCUENTOS DE RESERVA (tipo_canje = 'descuento_reserva').
