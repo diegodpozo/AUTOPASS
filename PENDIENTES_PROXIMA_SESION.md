@@ -1,9 +1,31 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 10/10/2026
+Última actualización: 11/10/2026
 
-## Comunicación de Soporte (usuario ↔ soporte) — APLICADO 10/10/2026 (pendiente de commit/push)
+## Follow-ups post v9.34.85 — APLICADO 11/10/2026 (pendiente de commit/push)
+
+- **Fix tests serial-colgados**: nuevo `tests/conftest.py` setea `settings.SERIAL_ENABLED = False`
+  a nivel import (evita `serial.Serial.write()` bloqueante si hay un COM sin dispositivo). No había
+  conftest antes. Suite completa **813 passed** sin `--ignore` (antes había que excluir 5 archivos).
+- **B7**: removidas llamadas espurias `NotificationService.notify_occupancy_change(db)` en
+  `routes/user/support.py` y `routes/admin/support.py` (+ imports sin uso).
+- **B8**: eliminadas columnas legacy `respuesta`/`user_response` de `models/support.py`; helper
+  `SupportService._build_message(...)` reemplaza el doble-escritura/lectura; campos removidos de las
+  respuestas de API (user/admin); `schemas/support.py` mantiene `respuesta` como input.
+  Migración nueva `alembic/versions/f9a8b7c6d5e4_drop_legacy_support_reply_fields.py` (down_revision
+  `b2f4e8c1a9d7`) — **NO aplicada a Neon**: `alembic_version` en Neon tiene un stamp viejo no
+  reproducible (`f5a6b7c8d9e0`); la app lo tolera (sella head; modelos = fuente de verdad).
+- **Escalabilidad → notificaciones y promociones** (ver sección v9.34.85 abajo): helper extendido con
+  `wrapperClass`; `notifications-render.js` cap 8; `dashboard-promotions.js` cap 8 con
+  `renderPromotionsTable()` para el `onToggle`. Bug detectado y corregido en runtime: sin `onToggle`
+  el botón cambiaba el estado pero no re-renderizaba (no expandía).
+- Verificación runtime (Edge headless CDP, server :8000): notificaciones 8 → "Ver todas las
+  notificaciones (10)" → 10 → 8 (filtro reagrupa); promociones admin 8 → "Ver todas las promociones
+  (12)" → 12 → 8. Guards 8/8 verdes (sin CSS nuevo). Suite completa **813 passed**.
+- **PENDIENTE**: commit/push de esta tanda (conftest + B7/B8 + helper `wrapperClass` + notif/promos).
+
+## Comunicación de Soporte (usuario ↔ soporte) — APLICADO y PUSHEADO en v9.34.85 (`acafbd2`, 10/10/2026)
 
 Auditoría de la cadena ticket/notificación + frontend de Ayuda. Hallazgos A1–A10
 reportados; el usuario eligió **A1–A6** (B7/B8/B9/B10 NO se tocaron).
@@ -36,17 +58,20 @@ reportados; el usuario eligió **A1–A6** (B7/B8/B9/B10 NO se tocaron).
     estado (Todas/Pendientes/En revisión/En proceso/Resueltas/Cerradas) + chip `(N)`.
   - **Soporte admin** (`dashboard-tickets.js`): cap 8 (`drag` tabla).
   - **Reservas admin** (`reservations-admin-list.js`): cap 8.
-  - **Vouchers usuario** (`profile.js`, tab Mis Puntos): cap 6 + "Ver todos (N)" (`.voucher-toggle`).
-  - NO aplicado en notificaciones ni promociones (fuera del scope elegido). `profile.js` historial
-    de pagos solo alimenta un contador (`acc-stat-stays`), no es lista → descartado.
+   - **Vouchers usuario** (`profile.js`, tab Mis Puntos): cap 6 + "Ver todos (N)" (`.voucher-toggle`).
+   - **Notificaciones** (`notifications-render.js`): cap 8 + "Ver todas las notificaciones (N)"
+     (`.notif-list`, vía la opción nueva `wrapperClass` del helper); reset al recargar y al cambiar filtro.
+   - **Promociones admin** (`dashboard-promotions.js`): cap 8 + "Ver todas las promociones (N)"
+     (`renderPromotionsTable()` extraído para el `onToggle`).
+   - `profile.js` historial de pagos solo alimenta un contador (`acc-stat-stays`), no es lista → descartado.
   Verificación runtime (Edge headless CDP, usuario + 12 tickets + 10 vouchers canjeados por API):
   my-tickets 6 → 12 → 6, filtro en_revision 2; vouchers 6 → 10 → 6; admin tickets 8(+header) →
   67/66; reservas admin 8(+header) de 175. Suite soporte 47 passed; guards 8/8 (design system
   re-baselineado `--update` + `check_color_equivalence --allow profile-help.css --allow utilities.css
   --allow profile-points.css`).
-- **PENDIENTE**: commit/push de este bloque (18 archivos modificados + 1 nuevo
-  `static/js/modules/list-pagination.js`) + en su momento evaluar B7 (`notify_occupancy_change`
-  inútil en rutas de soporte) y B8 (duplicación `respuesta`/thread) si el usuario quiere.
+- **APLICADO y PUSHEADO en v9.34.85 (`acafbd2`, 10/10/2026)**: 19 archivos (+605/−39) incluyendo
+  el nuevo `static/js/modules/list-pagination.js`. La extensión a notificaciones/promociones y la
+  limpieza B7/B8 se hicieron en la tanda siguiente (v9.34.86, ver sección superior).
 
 ## F1 de AUDITORIA_VALIDACIONES — APLICADO y PUSHEADO en v9.34.82 (`0f35417`, 10/10/2026)
 
@@ -229,13 +254,10 @@ Backups en Neon `backup_h6_*`:
     normalizaban (`_branch_filter`, `normalize_system_name`) → sin cambios.
   - Verificado: suite **799 passed** (+5 tests nuevos). **TODOS los hallazgos R1–R10 cerrados**
     (R3 descartado por decisión del usuario).
-- **5 archivos de test cuelgan por puerto serial real (Arduino)** en esta máquina:
-  `test_access_service.py`, `test_access_flow.py`, `test_reservation_spots.py`,
-  `test_alpr_node_auth.py`, `test_bugfixes_funcionales.py`. `HardwareService.send_serial_command`
-  hace `conn.write()` bloqueante si hay un COM presente pero sin dispositivo respondiendo.
-  Correr el resto del suite con:
-  `pytest --ignore=tests/test_access_service.py --ignore=tests/test_access_flow.py --ignore=tests/test_reservation_spots.py --ignore=tests/test_alpr_node_auth.py --ignore=tests/test_bugfixes_funcionales.py`
-  Fix candidato: mockear/desactivar serial en tests (o guardar `SERIAL_ENABLED=False` solo en tests).
+- **RESUELTO (11/10/2026)** — los 5 archivos de test que colgaban por puerto serial real (Arduino) ya
+  no cuelgan: `tests/conftest.py` setea `settings.SERIAL_ENABLED = False` a nivel import (evita el
+  `conn.write()` bloqueante de `HardwareService.send_serial_command` si hay un COM sin dispositivo).
+  Ya no hace falta correr con `--ignore`; suite completa **813 passed** sin exclusiones.
 
 ## Notas operación
 

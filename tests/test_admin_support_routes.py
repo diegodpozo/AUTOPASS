@@ -53,7 +53,7 @@ def client():
 
 
 def _seed_ticket(TestSession, email="cliente@test.com", sucursal="General",
-                 estado="Pendiente", respuesta=None):
+                 estado="Pendiente"):
     db = TestSession()
     u = models.User(
         nombre="Cliente", apellido="Test", email=email,
@@ -65,7 +65,7 @@ def _seed_ticket(TestSession, email="cliente@test.com", sucursal="General",
     t = models.SupportTicket(
         user_id=u.id, categoria="consulta", sucursal=sucursal,
         asunto="Problema con reserva", mensaje="No puedo entrar",
-        estado=estado, respuesta=respuesta,
+        estado=estado,
     )
     db.add(t)
     db.commit()

@@ -7,6 +7,9 @@
 import api from './api.js';
 import { notifState } from './notifications-state.js';
 import { getNotifIcon, getNotifCategoryClass, getNotifActions, getTimeAgo } from './notifications-format.js';
+import { renderCappedList, resetCappedState } from './list-pagination.js';
+
+const NOTIF_PAGE_SIZE = 8;
 
 export async function loadNotifications() {
     const container = document.getElementById('notifications-container');
@@ -23,6 +26,7 @@ export async function loadNotifications() {
     const { notifications } = res.data;
     notifState.cachedNotifications = notifications || [];
 
+    resetCappedState(container);
     updateNotifActionButtonsState();
     renderNotificationList();
 }
@@ -50,31 +54,27 @@ export function renderNotificationList() {
 
     const filtered = filterNotificationsArray(notifState.cachedNotifications, notifState.currentFilter);
 
-    if (!filtered || filtered.length === 0) {
-        let msg = 'No tenés notificaciones.';
-        if (notifState.currentFilter === 'UNREAD') msg = 'No tenés notificaciones sin leer.';
-        else if (notifState.currentFilter === 'RESERVATION') msg = 'No hay notificaciones de reservas.';
-        else if (notifState.currentFilter === 'FINANCE') msg = 'No hay notificaciones de pagos o saldo.';
-        else if (notifState.currentFilter === 'SUPPORT') msg = 'No hay notificaciones de soporte.';
-        else if (notifState.currentFilter === 'SECURITY') msg = 'No hay notificaciones de seguridad.';
+    let msg = 'No tenés notificaciones.';
+    if (notifState.currentFilter === 'UNREAD') msg = 'No tenés notificaciones sin leer.';
+    else if (notifState.currentFilter === 'RESERVATION') msg = 'No hay notificaciones de reservas.';
+    else if (notifState.currentFilter === 'FINANCE') msg = 'No hay notificaciones de pagos o saldo.';
+    else if (notifState.currentFilter === 'SUPPORT') msg = 'No hay notificaciones de soporte.';
+    else if (notifState.currentFilter === 'SECURITY') msg = 'No hay notificaciones de seguridad.';
 
-        container.innerHTML = `
+    const emptyHtml = `
             <div class="empty-state">
                 <i class="fas fa-bell-slash" style="font-size: 3rem; color: var(--dorado); opacity:0.5; margin-bottom:15px;"></i>
                 <p>${msg}</p>
             </div>`;
-        return;
-    }
 
-    let html = '<div class="notif-list">';
-    for (const n of filtered) {
+    const items = (filtered || []).map(n => {
         const isUnread = !n.leido;
         const timeAgo = getTimeAgo(n.created_at);
         const actions = getNotifActions(n);
         const catClass = getNotifCategoryClass(n.tipo);
         const iconClass = getNotifIcon(n.tipo);
 
-        html += `
+        return `
             <div class="notif-item ${isUnread ? 'notif-unread' : ''} ${catClass}" data-id="${n.id}" ${isUnread ? `onclick="markNotifRead(${n.id}, this)"` : ''}>
                 <div class="notif-icon-box ${catClass}">
                     <i class="fas ${iconClass}"></i>
@@ -94,9 +94,15 @@ export function renderNotificationList() {
                     </button>
                 </div>
             </div>`;
-    }
-    html += '</div>';
-    container.innerHTML = html;
+    });
+
+    renderCappedList(container, items, {
+        pageSize: NOTIF_PAGE_SIZE,
+        wrapperClass: 'notif-list',
+        toggleAll: (total) => `Ver todas las notificaciones (${total})`,
+        emptyHtml,
+        onToggle: () => renderNotificationList()
+    });
 }
 
 function filterNotificationsArray(list, filter) {
@@ -126,5 +132,6 @@ export function filterNotifs(filterType, btn) {
     notifState.currentFilter = filterType;
     document.querySelectorAll('.notif-chip').forEach(c => c.classList.remove('active'));
     if (btn) btn.classList.add('active');
+    resetCappedState(document.getElementById('notifications-container'));
     renderNotificationList();
 };

@@ -6,7 +6,6 @@ from core.database import get_db
 from core.limiter import admin_rate_limit
 from core.security import get_operational_user
 from services.support_service import SupportService
-from services.notification_service import NotificationService
 
 router = APIRouter()
 
@@ -52,7 +51,6 @@ def get_admin_support_ticket(
         "asunto": ticket.asunto,
         "mensaje": ticket.mensaje,
         "estado": ticket.estado,
-        "respuesta": ticket.respuesta,
         "messages": messages,
         "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
         "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None,
@@ -81,8 +79,6 @@ def update_support_ticket(
     )
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
-
-    NotificationService.notify_occupancy_change(db)
 
     messages = SupportService.get_ticket_messages(db, ticket_id)
     return {

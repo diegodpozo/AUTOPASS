@@ -13,8 +13,6 @@ class SupportTicket(Base):
     asunto      = Column(String, nullable=False)
     mensaje     = Column(Text, nullable=False)
     estado      = Column(String, default="Pendiente", index=True)
-    respuesta      = Column(Text, nullable=True)
-    user_response  = Column(Text, nullable=True)
     created_at     = Column(DateTime, default=localnow)
     updated_at  = Column(DateTime, default=localnow, onupdate=localnow)
 

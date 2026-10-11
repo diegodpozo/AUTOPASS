@@ -73,7 +73,7 @@ def _reset_user():
     CURRENT["user"] = USER
 
 
-def _seed_ticket(TestSession, estado="Pendiente", respuesta=None,
+def _seed_ticket(TestSession, estado="Pendiente",
                  asunto="Problema con reserva", mensaje="No puedo entrar"):
     db = TestSession()
     u = models.User(id=2, nombre="Cliente", apellido="Seed", email="cliente@test.com",
@@ -82,7 +82,7 @@ def _seed_ticket(TestSession, estado="Pendiente", respuesta=None,
     db.commit()
     t = models.SupportTicket(
         user_id=u.id, categoria="consulta", sucursal="General",
-        asunto=asunto, mensaje=mensaje, estado=estado, respuesta=respuesta
+        asunto=asunto, mensaje=mensaje, estado=estado
     )
     db.add(t)
     db.commit()

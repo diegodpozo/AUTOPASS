@@ -48,6 +48,21 @@ class SupportService:
             print(f"[ERROR NOTIF] No se pudo notificar a admins de soporte: {e}")
 
     @staticmethod
+    def _build_message(ticket_id: int, user_id: int, mensaje: str,
+                       adjunto_url: Optional[str] = None,
+                       adjunto_nombre: Optional[str] = None) -> models.SupportTicketMessage:
+        """CONSTRUYE UN MENSAJE DEL HILO. El hilo (support_ticket_messages) es la
+        unica fuente de verdad de la conversacion; no se duplica en el ticket."""
+        return models.SupportTicketMessage(
+            ticket_id=ticket_id,
+            user_id=user_id,
+            mensaje=mensaje,
+            adjunto_url=adjunto_url,
+            adjunto_nombre=adjunto_nombre,
+            created_at=localnow()
+        )
+
+    @staticmethod
     def create_ticket(db: Session, user: models.User, ticket_data: schemas.SupportTicketCreate) -> models.SupportTicket:
         ticket = models.SupportTicket(
             user_id=user.id,
@@ -58,12 +73,7 @@ class SupportService:
             estado="Pendiente"
         )
 
-        msg_factory = lambda t: models.SupportTicketMessage(
-            ticket_id=t.id,
-            user_id=user.id,
-            mensaje=ticket_data.mensaje,
-            created_at=localnow()
-        )
+        msg_factory = lambda t: SupportService._build_message(t.id, user.id, ticket_data.mensaje)
         ticket = SupportRepository.create_ticket(db, ticket, msg_factory)
 
         suc_text = f" ({ticket.sucursal})" if ticket.sucursal and ticket.sucursal != "General" else ""
@@ -142,7 +152,6 @@ class SupportService:
                 "asunto": t.asunto,
                 "mensaje": t.mensaje,
                 "estado": t.estado,
-                "respuesta": t.respuesta,
                 "has_unread": t.id in unread_ticket_ids,
                 "messages": [
                     {
@@ -202,16 +211,7 @@ class SupportService:
 
         ticket.estado = estado
         if respuesta:
-            ticket.respuesta = respuesta
-
-        if respuesta:
-            msg = models.SupportTicketMessage(
-                ticket_id=ticket.id,
-                user_id=current_user.id,
-                mensaje=respuesta,
-                created_at=localnow()
-            )
-            db.add(msg)
+            db.add(SupportService._build_message(ticket.id, current_user.id, respuesta))
 
         # Marcar todas las notificaciones asociadas a este ticket como leídas
         NotificationRepository.mark_ticket_notifications_as_read(db, [ticket_id])
@@ -279,16 +279,11 @@ class SupportService:
         if (ticket.estado or "").strip().lower() in TERMINAL_STATES:
             raise HTTPException(status_code=400, detail="Este ticket fue cerrado y quedó bloqueado. No se pueden enviar más mensajes.")
 
-        msg = models.SupportTicketMessage(
-            ticket_id=ticket.id,
-            user_id=user_id,
-            mensaje=mensaje,
-            adjunto_url=adjunto_url,
-            adjunto_nombre=adjunto_nombre,
-            created_at=localnow()
+        msg = SupportService._build_message(
+            ticket.id, user_id, mensaje,
+            adjunto_url=adjunto_url, adjunto_nombre=adjunto_nombre
         )
         db.add(msg)
-        ticket.user_response = mensaje
         ticket.estado = "En Revisión"
         db.commit()
         db.refresh(ticket)

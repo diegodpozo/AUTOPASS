@@ -1,5 +1,6 @@
 import api from './api.js';
 import { showToast, showConfirm } from './utils.js';
+import { renderCappedList, resetCappedState } from './list-pagination.js';
 
 /**
  * PANEL PROMOTIONS MODULO
@@ -109,6 +110,24 @@ export async function loadPromotionsAdmin() {
     const tbody = document.getElementById('promotions-admin-table-body');
     if (!tbody) return;
 
+    const res = await api.get('/admin/promotions');
+    if (res.ok) {
+        promotionsCache = res.data;
+        resetCappedState(tbody);
+        renderPromotionsTable();
+    } else {
+        tbody.innerHTML = `<tr><td colspan="${_promoColSpan()}" class="text-center py-20 text-danger">Error: ${res.error}</td></tr>`;
+    }
+}
+
+function _promoColSpan() {
+    return localStorage.getItem('rol') === 'admin' ? 5 : 4;
+}
+
+function renderPromotionsTable() {
+    const tbody = document.getElementById('promotions-admin-table-body');
+    if (!tbody) return;
+
     const rol = localStorage.getItem('rol');
     const isAdmin = rol === 'admin';
     const isStaff = rol === 'staff';
@@ -120,10 +139,7 @@ export async function loadPromotionsAdmin() {
 
     const colSpan = isAdmin ? 5 : 4;
 
-    const res = await api.get('/admin/promotions');
-    if (res.ok) {
-        promotionsCache = res.data;
-        tbody.innerHTML = res.data.map(p => {
+    const rows = (promotionsCache || []).map(p => {
             const branchLabel = p.sucursal ? p.sucursal.replace('AUTOPASS ', '') : 'Global';
             const branchClass = p.sucursal ? 'text-dorado' : 'text-success';
 
@@ -179,10 +195,16 @@ export async function loadPromotionsAdmin() {
                     ${actionCell}
                 </td>
             </tr>`;
-        }).join('') || `<tr><td colspan="${colSpan}" class="text-center py-20">No hay promociones registradas.</td></tr>`;
-    } else {
-        tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-20 text-danger">Error: ${res.error}</td></tr>`;
-    }
+    });
+
+    renderCappedList(tbody, rows, {
+        pageSize: 8,
+        tag: 'tr',
+        colspan: colSpan,
+        toggleAll: (total) => `Ver todas las promociones (${total})`,
+        emptyHtml: `<tr><td colspan="${colSpan}" class="text-center py-20">No hay promociones registradas.</td></tr>`,
+        onToggle: renderPromotionsTable
+    });
 }
 
 async function _cargarSucursalesPromo(selectedNombre) {

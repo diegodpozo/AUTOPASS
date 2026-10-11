@@ -7,7 +7,6 @@ import models, schemas
 from core.database import get_db
 from core.security import get_current_user
 from services.support_service import SupportService
-from services.notification_service import NotificationService
 
 router = APIRouter()
 
@@ -24,7 +23,6 @@ def create_support_ticket(
 ):
     """PERMITE A UN CLIENTE CREAR UN TICKET DE SOPORTE."""
     ticket = SupportService.create_ticket(db, current_user, ticket_data)
-    NotificationService.notify_occupancy_change(db)
     return {
         "message": "Ticket creado exitosamente",
         "ticket_id": ticket.id,
@@ -47,8 +45,6 @@ def get_my_support_tickets(
             "asunto": t.asunto,
             "mensaje": t.mensaje,
             "estado": t.estado,
-            "respuesta": t.respuesta,
-            "user_response": t.user_response,
             "created_at": t.created_at.isoformat() if t.created_at else None,
             "updated_at": t.updated_at.isoformat() if t.updated_at else None
         }
@@ -73,8 +69,6 @@ def get_support_ticket(
         "asunto": ticket.asunto,
         "mensaje": ticket.mensaje,
         "estado": ticket.estado,
-        "respuesta": ticket.respuesta,
-        "user_response": ticket.user_response,
         "messages": messages,
         "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
         "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None

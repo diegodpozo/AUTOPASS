@@ -62,7 +62,11 @@ def test_create_and_get_support_ticket(db_session):
     # Update ticket status
     updated = SupportService.update_ticket_status(db_session, admin, ticket.id, "Resuelto", "Barrera reseteada")
     assert updated.estado == "Resuelto"
-    assert updated.respuesta == "Barrera reseteada"
+    admin_messages = [
+        m for m in SupportService.get_ticket_messages(db_session, ticket.id)
+        if m["mensaje"] == "Barrera reseteada"
+    ]
+    assert admin_messages, "La respuesta del admin debe quedar en el hilo de mensajes"
 
 def test_reply_sets_en_revision_y_bloquea_terminales(db_session):
     user = db_session.query(models.User).filter_by(email="test@user.com").first()

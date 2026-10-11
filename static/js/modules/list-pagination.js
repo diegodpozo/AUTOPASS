@@ -11,6 +11,7 @@
  *     emptyHtml (scene)      : HTML del estado vacío cuando no hay items.
  *     tag       ('div'|'tr') : envoltorio del toggle (grilla o fila de tabla).
  *     colspan   (1)          : colspan cuando tag='tr'.
+ *     wrapperClass           : clase del contenedor que envuelve los items (ej. notif-list).
  *     toggleClass            : clase del envoltorio div (default cap-toggle-grid).
  *     toggleAll (fn)         : (total) => etiqueta "Ver todas".
  *     toggleLess ('Ver menos'): etiqueta al colapsar.
@@ -54,7 +55,12 @@ export function renderCappedList(container, itemsHtml, config = {}) {
             : `<div class="${toggleClass}">${btn}</div>`;
     }
 
-    container.innerHTML = visible.join('') + toggleHtml;
+    const body = visible.join('') + toggleHtml;
+    if (tag !== 'tr' && config.wrapperClass) {
+        container.innerHTML = `<div class="${config.wrapperClass}">${body}</div>`;
+    } else {
+        container.innerHTML = body;
+    }
     return container.innerHTML;
 }
 
