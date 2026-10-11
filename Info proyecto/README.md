@@ -2,14 +2,18 @@
 
 Solución empresarial para la gestión de estacionamientos que combina **Visión Artificial (ALPR)**, **Arquitectura Limpia (Clean Architecture)** y un **Frontend Premium** de alto impacto.
 
-## Últimas Actualizaciones (v9.14.2+ - Septiembre 2026)
-- **Gestión Integral de Reservas para Admins**: Módulo completo en Dashboard (`routes/admin/reservations.py`, `dashboard-reservations.js`) con búsqueda multi-criterio (cliente, email, DNI, patente, ID, sucursal), filtros por estado (`PENDIENTE_PAGO`, `PAGADA`, `EN_USO`, `FINALIZADA`, `CANCELADA`), tipo de vehículo, rango de fechas y sucursal. Permite crear reservas a nombre de usuarios, editar fechas/patente/tipo, confirmar pagos con método configurable (`DIGITAL`, `CAJA`, `MERCADOPAGO`, `SALDO`) y cancelar con reembolso simular/aplicar.
+## Últimas Actualizaciones (v9.34.87 - Octubre 2026)
+- **Soporte usuario↔admin (A1–A6)**: listado "Mis consultas" para el cliente, XSS cerrado en el chat, estado "En Revisión", tickets terminales bloqueados y rediseño de la pantalla de Ayuda (`profile-help.js`, `support_service.py`).
+- **Auditorías cerradas**: validaciones (`AUDITORIA_VALIDACIONES` V1–V12: DNI duplicado, logos, rangos, patentes Mercosur BR/UY/PY, adjuntos por chunks, solapamiento de patente en reservas) y autorización (`AUDITORIA_RBAC` R1–R10: scoping por sucursal, PII minimizada, rol operativo en WS).
+- **Escalabilidad de listados**: helper DRY `static/js/modules/list-pagination.js` (`renderCappedList`/`renderPaginatedList`) aplicado a consultas, vouchers, notificaciones, promociones, tickets y reservas admin (paginador de 10 con card de altura estable).
+- **Mejoras BD (Neon)**: fechas varchar→timestamp, 11 CheckConstraints, UNIQUE de settings y 4 FKs de sucursal (`b2f4e8c1a9d7`), con backups previos.
+- **Gestión Integral de Reservas para Admins**: Módulo completo en Dashboard (`routes/admin/reservations.py`, `dashboard-reservations.js`) con búsqueda multi-criterio (cliente, email, DNI, patente, ID, sucursal), filtros por estado (`PENDIENTE_PAGO`, `PAGADA`, `EN_USO`, `FINALIZADA`, `CANCELADA`), tipo de vehículo, rango de fechas y sucursal. Permite crear reservas a nombre de usuarios, editar fechas/patente/tipo con **ajuste financiero automático** (cobra/reembolsa la diferencia), confirmar pagos con método configurable (`DIGITAL`, `CAJA`, `MERCADOPAGO`, `SALDO`) y cancelar con reembolso simular/aplicar.
 - **Soporte de `tipo_vehiculo` y `metodo_pago` en Reservas**: Nuevos campos en `Reservation` y migraciones Alembic (`a4c8d2e3f5b6` y `d3b7e1a9c2f0`). Validación de disponibilidad respetando cupos por tipo de vehículo (`capacidad_reservas_autos/motos/camionetas`).
-- **Suite de 756 Tests Automáticos**: **756 pruebas passing en 56 archivos de test** (`pytest`), cubriendo OAuth, Checkout Mercado Pago, Admin Reservations, ALPR, Notificaciones, Rate Limiting, Tiempo Virtual, Soporte y Lógica de Aforo.
+- **Suite de 813 Tests Automáticos**: **813 pruebas passing en 57 archivos de test** (`pytest`), cubriendo OAuth, Checkout Mercado Pago, Admin Reservations, ALPR, Notificaciones, Rate Limiting, Tiempo Virtual, Soporte y Lógica de Aforo.
 - **Login social (OAuth 2.0 - Google + Facebook)**: Botones "Continuar con..." en login y registro. Usuarios nuevos completan DNI y teléfono en una modal (nombre/email precargados) y quedan logueados sin contraseña; usuarios existentes entran directo por su correo. Config vía `GOOGLE_OAUTH_CLIENT_ID/SECRET` y `FACEBOOK_OAUTH_CLIENT_ID/SECRET` (`services/oauth_service.py`).
 - **Pagos manuales en efectivo (`CAJA`)**: El operador puede registrar el pago de una estadía en efectivo desde el monitoreo (`metodo=CAJA` en `POST /v1/access/pay-stay`); los reportes financieros desglosan la recaudación por método (`recaudado_efectivo` / `recaudado_digital`) con KPIs dedicados en el dashboard.
 - **Re-impresión de vouchers**: Los tickets de canje de puntos pueden reimprimirse desde el portal de usuario.
-- **PWA instalable & Standalone Layout**: Manifest + Service Worker en scope raíz (`autopass-v2`) con página `/instalar` y forzado de layout desktop en PWA instalada (`standalone.css`).
+- **PWA instalable & Standalone Layout**: Manifest + Service Worker en scope raíz (`autopass-v3`) con página `/instalar` y forzado de layout desktop en PWA instalada (`standalone.css`).
 - **Pagos con Mercado Pago (v9.14.0)**: Checkout Pro por redirección para abonar **reservas** y **estadías en curso** sin tocar el saldo de la billetera; confirmación por retorno (`/success|pending|failure`) y webhook (`services/mercadopago_service.py`, tabla `mercadopago_payments`).
 - **Soporte con adjuntos**: Los tickets de soporte aceptan archivos jpg/jpeg/png/gif/webp/pdf (máx. 1 MB) en mensajes del hilo, con modal responsive y scrolleable.
 - **Performance & Caché**: Índices de base de datos (migración `49a240f0fc25`) y caché TTL en memoria (`core/cache.py`) para tarifas.
@@ -17,6 +21,7 @@ Solución empresarial para la gestión de estacionamientos que combina **Visión
 - **OCR Dual (v9.10.0)**: Motor OCR **RapidOCR ONNX** como primario (compatible con Python 3.14+) con fallback a **PaddleOCR**. Saludo personalizado en monitor ALPR ("¡BIENVENIDO!" / "¡HASTA LUEGO!").
 
 ## Versiones Previas
+- **v9.20.0-v9.34.87**: Reservas admin (edición con ajuste financiero automático, descuentos en caja, notificaciones tipificadas), auditorías de seguridad/validaciones/RBAC, escalabilidad de listados, rediseño de Ayuda y mejoras UX del portal.
 - **v9.14.0-v9.14.1**: Mercado Pago Checkout Pro, Pagos en efectivo CAJA, KPIs financieros, PWA instalable.
 - **v9.13.0**: Motor OCR lazy/opcional (RapidOCR/PaddleOCR) y estadísticas OCR (`/estadisticas-ocr`).
 - **v9.12.0**: Notificaciones de usuario, permisos de sucursal para `local_admin`, soporte visual del admin.

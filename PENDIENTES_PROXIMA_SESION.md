@@ -49,8 +49,11 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
   `SupportService._build_message(...)` reemplaza el doble-escritura/lectura; campos removidos de las
   respuestas de API (user/admin); `schemas/support.py` mantiene `respuesta` como input.
   Migración nueva `alembic/versions/f9a8b7c6d5e4_drop_legacy_support_reply_fields.py` (down_revision
-  `b2f4e8c1a9d7`) — **NO aplicada a Neon**: `alembic_version` en Neon tiene un stamp viejo no
-  reproducible (`f5a6b7c8d9e0`); la app lo tolera (sella head; modelos = fuente de verdad).
+  `b2f4e8c1a9d7`) — **APLICADA a Neon el 11/10/2026**: se dropearon `support_tickets.respuesta` y
+  `support_tickets.user_response` (backup `backup_f9_support_reply`, 86 filas) y se selló
+  `alembic_version` en `f9a8b7c6d5e4` (head) con `alembic stamp --purge head` (el stamp viejo
+  `f5a6b7c8d9e0` no existía en la cadena, por eso el purge). Verificado: `alembic current` = head,
+  ORM `SupportTicket` sin las columnas, `support_ticket_messages` intacta (138 filas).
 - **Escalabilidad → notificaciones y promociones** (ver sección v9.34.85 abajo): helper extendido con
   `wrapperClass`; `notifications-render.js` cap 8; `dashboard-promotions.js` cap 8 con
   `renderPromotionsTable()` para el `onToggle`. Bug detectado y corregido en runtime: sin `onToggle`

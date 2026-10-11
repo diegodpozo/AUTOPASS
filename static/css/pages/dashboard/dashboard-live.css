@@ -374,12 +374,6 @@
 }
 
 /* ==========================================================================
-   LIMPIEZA INLINE v9.34.35 - dashboard/tabs/occupancy.html
+   Ingreso manual (tab Monitoreo en vivo)
    ========================================================================== */
-#tab-occupancy .monitoring-grid { gap: 24px; }
-#tab-occupancy .manual-ops-row { display: flex; gap: 16px; align-items: flex-end; padding: 0 25px 25px; }
-#tab-occupancy .manual-ops-row > .form-group-premium:first-child { flex: 1; max-width: none; }
-#tab-occupancy .manual-ops-row > .form-group-premium:nth-child(2) { width: 150px; }
 #manual-floor-group { width: 180px; display: none; }
-#tab-occupancy .manual-ops-row > .btn { height: 48px; padding: 0 25px; }
-#occ-pagination-tab { padding: 10px 25px 20px; display: flex; justify-content: center; gap: 10px; }

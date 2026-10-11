@@ -17,7 +17,7 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 - **Pagos en efectivo y digital** — El pago de estadías soporta método `DIGITAL` (billetera/MP) o `CAJA` (efectivo, registrado por el operador desde monitoreo); los reportes financieros desglosan la recaudación por método (`recaudado_efectivo` / `recaudado_digital`)
 - **Fidelización** — Sistema de puntos (10 pts/$1000), catálogo de promociones canjeables, cupones y descuentos con voucher
 - **Mapas Interactivos & Filtro de Localidades** — Mosaico de Google Maps con buscador autocompletado en tiempo real, desglose de direcciones exactas, aviso de disponibilidad por zona y navegación animada `flyTo`
-- **Dashboard Admin Premium** — 9 pestañas modulares (Monitoreo, Ocupación, Reservas, Usuarios, Reportes, Promociones, Soporte, Sucursales, Configuración) + página de Estadísticas OCR
+- **Dashboard Admin Premium** — 9 pestañas modulares (Monitoreo, Reservas, Gestión de Usuarios, Reporte Financiero, Métricas, Promociones, Soporte, Sucursales, Configuración) + página de Estadísticas OCR
 - **Portal de Usuario** — Perfil, reservas, vehículos, billetera virtual, pase digital QR, notificaciones
 - **Real-time** — WebSocket (aforo), MQTT (barreras), polling de notificaciones
 - **Monitoreo CCTV** — Grilla dinámica de cámaras con streaming MJPEG y controles DVR
@@ -40,12 +40,12 @@ AUTOPASS/
 │   ├── user/           # Portal usuario (profile, vehicles, reservations, balance, fidelization, notifications, support, mercadopago)
 │   ├── parking/        # Control de acceso (ALPR/QR, status, utils)
 │   └── system/         # Sistema (health, cameras, video, common)
-├── services/           # Lógica de negocio (14 servicios)
+├── services/           # Lógica de negocio (16 servicios + 3 submódulos de apoyo)
 ├── repositories/       # Data Access Layer
 ├── alpr/               # Paquete modular de visión artificial
 ├── static/
-│   ├── js/modules/     # 36 módulos ES6
-│   └── css/            # 40 archivos CSS (Glassmorphism Premium)
+│   ├── js/modules/     # 65 módulos ES6
+│   └── css/            # 46 archivos CSS (Glassmorphism Premium)
 ├── templates/          # Jinja2 (dashboard 9 tabs + página OCR, profile 7 tabs, emails, modales)
 ├── tests/              # Suite de pruebas automatizadas (pytest)
 ├── alembic/            # Migraciones de BD
@@ -172,6 +172,8 @@ SMTP_FROM=noreply@autopass.com.ar
 | TimeService | Tiempo virtual para testing |
 | HardwareService | Control de barreras MQTT y comunicación Serie USB con Arduino Uno |
 | MercadoPagoService | Preferencias Checkout Pro, confirmación (retorno/webhook) y aplicación de pagos MP en reservas y estadías |
+| OccupancyService | Ocupación de plazas (física y de reserva) por sucursal, Planta Baja y pisos |
+| OAuthService | Login social (Google/Facebook): state HMAC, intercambio de código y alta de usuario |
 
 ## Pagos con Mercado Pago (v9.14.0)
 
@@ -191,15 +193,15 @@ Integración **Checkout Pro** (redirección) para pagar **reservas** y **estadí
 
 ## Frontend
 
-- **36 módulos ES6** con patrón Bridge (módulos → scripts puente → window.* → HTML onclick)
-- **40 archivos CSS** organizados en base/layout/components/pages
+- **65 módulos ES6** con patrón Bridge (módulos → scripts puente → window.* → HTML onclick)
+- **46 archivos CSS** organizados en base/layout/components/pages
 - **Design System Premium**: Glassmorphism, dorado (#C5A059), animaciones fluidas
 - **Dashboard**: 9 pestañas admin + portal de usuario con 7 tabs
 - **Componentes**: Leaflet.js (mapas), Chart.js (reportes), Flatpickr (fechas), QRCode.js (pases)
 
 ## PWA
 
-- Service Worker en scope raíz (`/sw.js`, `Service-Worker-Allowed: /`) con cache de assets por versionado (`autopass-v2`)
+- Service Worker en scope raíz (`/sw.js`, `Service-Worker-Allowed: /`) con cache de assets por versionado (`autopass-v3`)
 - Manifest en `/manifest.webmanifest`; página de guía de instalación en `/instalar`
 - Botón de instalación visible solo donde corresponde (oculto en el monitor de cámaras multicámara, que además no forma parte de la app instalable)
 

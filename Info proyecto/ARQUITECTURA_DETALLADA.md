@@ -25,13 +25,13 @@ AUTOPASS/
 ├── tests/              # Pruebas unitarias (pytest)
 ├── static/
 │   ├── js/
-│   │   ├── modules/    # 63 módulos ES6 (lógica de negocio frontend)
+│   │   ├── modules/    # 65 módulos ES6 (lógica de negocio frontend)
 │   │   └── *.js        # 9 scripts puente (bridge: módulos → window.*)
 │   ├── css/            # 46 archivos CSS organizados en base/layout/components/pages
 │   └── images/
 ├── templates/
 │   ├── dashboard/
-│   │   ├── tabs/       # 10 pestañas del dashboard admin (incl. occupancy) + settings/ (4 sub-archivos)
+│   │   ├── tabs/       # 9 pestañas renderizadas del dashboard admin + settings/ (4 sub-archivos)
 │   │   └── modals/     # Modales reutilizables (user_modals, branch_modals, promotion_modal)
 │   ├── profile/
 │   │   ├── tabs/       # 7 pestañas del portal de usuario
@@ -59,10 +59,13 @@ Toda la lógica de negocio se ha centralizado en archivos bajo `services/`:
 - **`EmailService`**: Envío de emails transaccionales con templates Jinja2 (confirmación de reserva con QR embebido, recuperación de contraseña, logo en base64).
 - **`NotificationService`**: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal para actualización en tiempo real del aforo. Usa un `OccupancyManager` con `broadcast_update` para distribuir cambios.
 - **`UserNotificationService`**: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
+- **`OccupancyService`**: Cálculo de ocupación de plazas (física y de reserva) por sucursal, Planta Baja y pisos; alimenta `status`/WS/mapa.
 - **`SupportService`**: CRUD de tickets de soporte (`SupportTicket`) con aislamiento por sucursal según rol: los clientes crean/consultan/responden sus tickets (`/v1/user/support-tickets`, con adjuntos jpg/jpeg/png/gif/webp/pdf hasta 1 MB) y los operadores/admin los gestionan y responden (`/v1/admin/support-tickets`, incl. `pending-count` y `read-notifs`).
 - **`WorkerService`**: 2 hilos de fondo: (1) limpieza/mantenimiento cada `MAINTENANCE_INTERVAL_SECONDS` (`cleanup_overdue_reservations`, `auto_finalize_all_reservations` y purga de imágenes ALPR antiguas `_cleanup_old_alpr_images`); (2) notificaciones cada 30s (recordatorios 31 min antes del inicio, paso a ACTIVA de reservas iniciadas y auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio).
 - **`TimeService`**: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
 - **`MercadoPagoService`** (v9.14.0): Integración Checkout Pro por redirección. `create_payment` crea la preferencia (`MercadoPagoPayment`) y `confirm_payment` consulta MP (por `payment_id` o `external_reference`), valida `approved` + monto e **aplica de forma idempotente** (véase §6). No usa SDK: se llama a la API vía `requests` (`MP_API_BASE = https://api.mercadopago.com`).
+- **`OAuthService`**: Login social Google/Facebook — registro de proveedores, `state` HMAC stateless, intercambio de código vía `requests` y perfil normalizado.
+- **Submódulos de apoyo**: `access_occupancy.py` (mixin de ocupación física/de reserva), `availability.py` (disponibilidad sweep-line, fechas/horas deshabilitadas) y `payments.py` (pagos, descuentos por canje y reembolsos de reservas), compartidos entre servicios para evitar duplicación.
 
 ### 2. Capa de Datos (Modelos y Enums)
 - **Seguridad de Tipos:** Se han implementado Enums en `models/enums.py` para eliminar "strings mágicos" (ej: `UserRole`, `VehicleType`, `ReservationStatus`).
@@ -95,13 +98,14 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 - **Scripts Puente** (`static/js/*.js`): Importan módulos y exponen funciones al scope global (`window.*`) para compatibilidad con handlers inline en templates Jinja2.
 - **Carga**: Los scripts puente se cargan como `<script type="module">`. Los módulos se cargan en paralelo y se resuelven automáticamente.
 
-#### Módulos Frontend (`static/js/modules/` - 63 módulos ES6)
+#### Módulos Frontend (`static/js/modules/` - 65 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
 | `dashboard-ui.js` | Navegación de pestañas (`switchTab`), reloj, salud del sistema, streaming de video, gestión de cámaras |
 | `dashboard-stats.js` | Estadísticas en vivo, logs recientes, tabla de ocupación, WebSocket de aforo, cancelar estadía |
 | `dashboard-metrics.js` | Métricas del sistema: gráfico de accesos en vivo, filtros por rango y navegación de ventana |
+| `dashboard-informes.js` | Informes: mapa de calor de tráfico, resumen de ocupación y métricas de reportes |
 | `dashboard-admin.js` | Orquestador del admin (importa sub-módulos y expone funciones globales) |
 | `dashboard-admin-users.js` | CRUD usuarios (crear, editar, toggle-block, balance, password, rol, eliminar) |
 | `dashboard-admin-branches.js` | Fachada de sucursales (re-exporta `crud` y `floors`) |
@@ -161,6 +165,7 @@ modules/*.js  →  bridge.js (dashboard.js, perfil.js, etc.)  →  window.*  →
 | `landing-map-locality.js` | Filtro y búsqueda por localidad (`filterMapByLocality`) |
 | `chart-window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
 | `estadisticas-ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
+| `list-pagination.js` | Helper DRY de listados: `renderCappedList`/`renderPaginatedList` (topes y paginación reutilizables) |
 
 #### Scripts Puente del Dashboard (`static/js/dashboard.js`)
 El orquestador centraliza todas las asignaciones `window.*`:
@@ -171,12 +176,12 @@ El orquestador centraliza todas las asignaciones `window.*`:
 - Reservas: `window.openEditReservationModal`, `window.cancelReservationAdmin`
 
 #### Estilo CSS
-Organización en 4 capas bajo `static/css/` (40 archivos totales):
-- `base/`: Variables CSS, reset, tipografía, utilidades (4 archivos)
-- `layout/`: Sidebar, header, grid (4 archivos)
-- `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time (8 archivos)
-- `pages/`: landing, profile, dashboard, contacto, legal (5 archivos + 18 sub-archivos)
-  - `pages/dashboard/`: `dashboard-base.css`, `dashboard-cards.css`, `dashboard-live.css`, `dashboard-settings.css`, `dashboard-tables.css`, `dashboard-admin-tour.css`
+Organización en 4 capas bajo `static/css/` (46 archivos totales):
+- `base/`: Variables CSS, reset, tipografía, utilidades, animaciones (5 archivos)
+- `layout/`: Sidebar, header, grid, standalone (4 archivos)
+- `components/`: Botones, cards, badges, modals, forms, tables, footer, virtual_time, premium, skeleton, chart-window, select-field, saludo (13 archivos)
+- `pages/`: contacto, legal, estadisticas-ocr, monitoreo-live (4 archivos raíz + 19 sub-archivos: dashboard, landing y profile)
+  - `pages/dashboard/`: `dashboard-base.css`, `dashboard-cards.css`, `dashboard-live.css`, `dashboard-settings.css`, `dashboard-tables.css`, `dashboard-metrics.css`, `dashboard-admin-tour.css`
   - `pages/landing/`: `landing-features.css`, `landing-hero.css`, `landing-map.css`, `landing-modals.css`, `landing-nav.css`
   - `pages/profile/`: `profile-base.css`, `profile-help.css`, `profile-notifications.css`, `profile-points.css`, `profile-reservations.css`, `profile-tour.css`, `profile-vehicles.css`
 - `style.css` (raíz): Estilos globales adicionales

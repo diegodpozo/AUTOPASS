@@ -43,7 +43,6 @@ templates/                     # 51 templates HTML
 │       │       ├── settings_monitoring.html
 │       │       └── settings_system.html
 │       ├── finance.html       # Reportes financieros
-│       ├── occupancy.html     # Estadisticas de ocupacion
 │       ├── live.html          # Monitoreo en vivo (camaras)
 │       ├── metricas.html      # Grafico de accesos en vivo
 │       └── tickets.html       # Soporte y tickets

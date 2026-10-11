@@ -1,6 +1,16 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-09-28)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-10-11)
 
-### 🚀 Estado actual (2026-09-30) - A1–A9 CERRADAS, suite 756 passed, cobertura 93%, CI activa, auditorías CSS AC-1 a AC-5 CERRADAS (ninguna abierta)
+### 🚀 Estado actual (2026-10-11) - v9.34.87: soporte A1–A6, auditorías de validaciones (V1–V12) y RBAC (R1–R10) cerradas, escalabilidad de listados y suite 813 passed
+
+> **Versión `v9.34.87`.** Se cerraron los pendientes de las auditorías de validaciones (`AUDITORIA_VALIDACIONES` F1/F2/F3, V1–V12) y de autorización (`AUDITORIA_RBAC` R1–R10; R3 descartado por decisión del usuario). Comunicación de soporte usuario↔admin (A1–A6) con rediseño de la pantalla de Ayuda. Escalabilidad de listados con el helper DRY `list-pagination.js` (`renderCappedList`/`renderPaginatedList`) aplicado a consultas, vouchers, notificaciones, promociones, tickets y reservas admin (paginador de 10). Suite **813 passed** sin exclusiones (`tests/conftest.py` desactiva el puerto serial), 8/8 guards CSS en verde y cobertura ~93%.
+- [x] **Soporte usuario↔soporte (A1–A6)**: listado "Mis consultas", XSS cerrado en el chat, `is_admin` incluye `staff`, estado "En Revisión", tickets terminales bloqueados y `pending-count` ajustado; rediseño de la pantalla de Ayuda.
+- [x] **AUDITORIA_VALIDACIONES CERRADA (V1–V12)**: DNI duplicado 400, logo de sucursal validado (whitelist + tamaño), rangos en `PromotionCreate` y whitelist de claves de settings, patentes Mercosur BR/UY/PY, alta de vehículo por schema, adjuntos por chunks, queries acotados y solapamiento de patente en reservas admin.
+- [x] **AUDITORIA_RBAC CERRADA (R1–R10)**: auth/scoping en branches y tickets, PII minimizada, rol operativo en los WS de aforo y video, y helper `same_branch` normalizado; R3 (reloj virtual) descartado por decisión del usuario.
+- [x] **Escalabilidad de listados**: helper `static/js/modules/list-pagination.js` (topes y paginación reutilizables, `.pagination-premium`); reservas admin con paginador de 10 y altura de card estable.
+- [x] **UX del portal (v9.34.81)**: stepper sticky, hamburguesa móvil anclada al header, nav inferior solo responsive y reloj virtual oculto a clientes.
+- [x] **Puntos 1–4 de mejoras BD resueltos (08/10/2026)**: fechas varchar→timestamp, 11 CheckConstraints, UNIQUE de settings y 4 FKs de sucursal en Neon (con backups previos). Puntos 5–6 descartados por decisión del usuario.
+
+### 🚀 Estado previo (2026-09-30) - A1–A9 CERRADAS, suite 756 passed, cobertura 93%, CI activa, auditorías CSS AC-1 a AC-5 CERRADAS (ninguna abierta)
 
 > **Ronda auditorías (cerrada el 2026-09-27):** A1 Seguridad API (remediación P0/P1/P2/P3 **COMPLETA** + auth de nodo ALPR cerrada) · A2 Dependencias (bump starlette 1.6.0 + cryptography 50.0.1) · A3 Cobertura (CI `--cov-fail-under=82`, cobertura real 85%) · A4 Datos/Migraciones (cadena reproducible desde cero + baseline 16 tablas) · A5 Rendimiento (hotspot financiero 217s→1.86s, 0 N+1 en suite, P1 y P2 aplicados) · A6 Consistencia front/back (11 rutas, 0 faltantes) · A7 Errores (0 `except:` desnudos en todo el repo) · A8 Accesibilidad (`#F2E3BF` + `:focus-visible` global) · A9 XSS (`encodeURI` + `escapeHtml` sin vectores explotables). Auditorías transversales (T1 modularización 10/10, T2 tokens/colores, T3 volumetría/gaps, T4 BEM/componentes, T5 UX/UI). **Auditorías CSS:** AC-2 (rendimiento/GPU, 0 `transition: all`), AC-4 (foco institucional `:focus-visible`, feedback `:active`, `:disabled`) y **AC-1 (especificidad y `!important`) CERRADAS** (Lotes 1–4 completos, −326 `!important`, **0 propios**; solo quedan justificados por librerías/PWA/RBAC) y **AC-5 (DRY/purga CSS) CERRADA** (Lotes 1, 2, 7 y 9: **0 clases huérfanas**, **0 keyframes duplicados** consolidados en `base/animations.css`, **−15 tokens** muertos, **−1247 líneas** netas, guard `_tools/check_css_huerfano.py` con baseline 0) y **AC-3 (PWA/Safe areas) CERRADA** (`viewport-fit=cover` + 4 tokens `--safe-area-*` consumidos en 11 superficies, `overscroll-behavior-y: contain` en 3 contenedores de scroll, `SHELL_CACHE` de `sw.js` subido a `autopass-shell-v2`; touch targets ≥44px descartado por no aplicar a un dashboard de escritorio). **No queda ninguna auditoría CSS abierta.** Documentación consolidada en `Info proyecto/AUDITORIAS.md`. Suite estable **733 passed** (cobertura 93%).
 - [x] **Auditorías CSS Fase 1 CERRADAS (AC-2 y AC-4)**: Eliminación de 103 `transition: all` a favor de transiciones compuestas sobre `transform`, `opacity`, `border-color` y `box-shadow` (AC-2); anillo de foco accesible institucional `:focus-visible` con resplandor dorado en `reset.css` y `forms.css`, feedback táctil `:active` con `scale(0.97)` y estados `:disabled` con escala de grises al 60% (AC-4).
@@ -318,7 +328,7 @@
 
 ### 🛠️ Arquitectura Actual (v9.14.1+)
 - **Backend**: Clean Architecture con Servicios y Repositories. 19 servicios en `services/`, 102 archivos Python en paquetes (`core/`, `models/`, `schemas/`, `routes/`, `services/`, `repositories/`, `alpr/`), 16 repositorios en `repositories/`.
-- **Frontend**: Dashboard Premium modularizado. 63 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 49 templates HTML, 40 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
+- **Frontend**: Dashboard Premium modularizado. 65 módulos ES6 en `static/js/modules/`, 9 scripts puente en `static/js/`, 55 templates HTML, 46 archivos CSS organizados en `base/`, `layout/`, `components/`, `pages/` (con subdirectorios `dashboard/`, `landing/`, `profile/`).
 - **Seguridad**: JWT + RBAC (4 roles: admin, local_admin, staff, user) + Rate limiting (SlowAPI).
 - **Real-time**: WebSocket (aforo), MQTT (barreras), Polling (notificaciones 30s), Virtual Time (sync 1min).
 - **Modelo Vehicular**: Trimodal (Auto, Moto, Camioneta).
@@ -333,7 +343,7 @@
 - **Facturación**: Trimodal (Auto/Moto/Camioneta) con filtros avanzados de canal de pago (all/DIGITAL/CAJA) y KPIs de recaudación por método (efectivo/digital).
 - **Monitoreo**: ALPR en vivo con gestión centralizada, aforo real-time vía WebSocket y streaming de video multi-cámara.
 - **Fidelización**: Sistema de puntos (10 pts/$1000), promociones canjeables y cupones.
-- **Frontend**: Dashboard modular con 9 pestañas (Monitoreo, Ocupación, Reservas, Gestión de Usuarios, Reporte Financiero, Promociones, Soporte & Tickets, Sucursales, Configuración).
+- **Frontend**: Dashboard modular con 9 pestañas (Monitoreo, Reservas, Gestión de Usuarios, Reporte Financiero, Métricas, Promociones, Soporte & Tickets, Sucursales, Configuración).
 
 ### Cambios técnicos recientes (2026-09-29)
 - Limpieza de código muerto (Lotes 1-4) y 3 bugs corregidos: el KPI "Promedio Estadía" (`occ-stat-avg-time`) que nunca se calculaba, el 404 de `/v1/user/balance/active-stays` → `/v1/user/active-stays`, y el botón "INSTALAR APP" (PWA) que aparecía en `/monitoreo`. Se eliminaron 25 imports Python y 7 JS, código muerto JS (`existingVehiclesTourSteps` entre otros), 9 locales sin uso, 5 clases de schema sin referencias, el modelo `Coupon` y 19 `id` redundantes de templates. Detalle en `HISTORIAL.md` (V9.34.55).

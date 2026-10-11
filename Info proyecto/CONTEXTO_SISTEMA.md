@@ -35,6 +35,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `services/reservation_service.py`: Ciclo de vida de reservas (creación, edición, pago, cancelación con reembolsos proporcionales, simulación de cancelación, cleanup). Desde v9.5 las reservas no horarias **no pre-ocupan plaza** en el aforo físico: el conteo lo maneja exclusivamente el ALPR/manual (los helpers que lo implementaban se eliminaron en v9.34.55). Desde v9.14.1 la **disponibilidad de reserva** usa cupos exclusivos (`capacidad_reservas_*`) con `verificar_disponibilidad` (sweep-line), `obtener_fechas_deshabilitadas` (90 días) y `obtener_horas_deshabilitadas` (slot 30 min), que alimentan los endpoints del portal `/reservations/check-availability`, `/reservations/disabled-dates` y `/reservations/disabled-hours`.
     *   `services/notification_service.py`: Sistema de notificaciones asíncronas vía WebSockets con aislamiento por sucursal. Usa `OccupancyManager` con `broadcast_update` para distribuir cambios de ocupación.
     *   `services/user_notification_service.py`: CRUD de notificaciones in-app (create, get, unread count, mark read, mark all read). Almacena en tabla `user_notifications`.
+    *   `services/occupancy_service.py`: Cálculo de ocupación de plazas (física y de reserva) por sucursal, Planta Baja y pisos; usado por status/WS/mapa.
     *   `services/support_service.py`: CRUD de tickets de soporte (`SupportTicket`) con aislamiento por sucursal según rol del usuario.
     *   `services/worker_service.py`: 2 hilos de fondo: (1) limpieza/mantenimiento (`cleanup_overdue_reservations`, `auto_finalize_all_reservations` y purga de imágenes ALPR antiguas vía `_cleanup_old_alpr_images`) cada `MAINTENANCE_INTERVAL_SECONDS`; (2) notificaciones cada 30s (`NOTIFICATION_CHECK_INTERVAL`): recordatorios 31 min antes del inicio, paso a ACTIVA de reservas iniciadas y auto-cancelación de reservas PENDIENTES no pagadas 30 min después del inicio.
     *   `services/time_service.py`: Sistema de tiempo virtual para testing. Permite adelantar el reloj sin alterar el reloj real. Offset persistido en `data/virtual_time_offset.json`.
@@ -43,6 +44,7 @@ El sistema opera bajo un modelo de **Centro de Comando Descentralizado** con una
     *   `services/hardware_service.py`: Control de barreras físicas vía MQTT y comunicación Serie USB (pyserial) con Arduino Uno (auto-detección de puerto COM).
     *   `services/email_service.py`: Envío de emails transaccionales con templates HTML Jinja2 (confirmación de reserva con QR embebido en base64, recuperación de contraseña con token).
     *   `services/mercadopago_service.py` (v9.14.0): Integración Checkout Pro por redirección — `create_payment` crea la preferencia y `confirm_payment` la confirma de forma **idempotente** (retorno `success/pending/failure` y webhook). Requiere `BASE_URL` con `https://`.
+    *   `services/oauth_service.py`: Login social Google/Facebook — registro de proveedores, `state` HMAC stateless, intercambio de código vía `requests` y perfil normalizado (ver endpoints OAuth en `routes/auth.py`).
 
 4.  **Capa de Repositories (`repositories/` - 16 repos)**:
     *   `user_repository.py`: Acceso a datos de usuarios.
@@ -139,7 +141,7 @@ uvicorn main:app --reload --reload-dir core --reload-dir routes --reload-dir ser
 - **KPIs de Recaudación por Método (v9.14.1)**: 6 cards de reporte financiero (Recaudación Efectivo / Recaudación Digital incluidos) con auto-ajuste de fuente según el monto.
 - **PWA (v9.14.1+)**:
   - Service Worker en scope raíz: servido en `/sw.js` con `Service-Worker-Allowed: /` y `Cache-Control: no-cache`; manifiesto en `/manifest.webmanifest` (desde `static/manifest.json`).
-  - Cache de assets por versión (`CACHE_NAME = "autopass-v2"` en `static/sw.js`); subir el número de versión al desplegar.
+  - Cache de assets por versión (`CACHE_NAME = "autopass-v3"` y `SHELL_CACHE = "autopass-shell-v3"` en `static/sw.js`); subir el número de versión al desplegar.
   - Botón "INSTALAR APP" (`#pwa-install-btn`) visible donde corresponde; `beforeinstallprompt` evita el `preventDefault()` cuando el botón no se muestra (no genera warnings de consola).
   - Página `/instalar` con guía de instalación; el monitor multicámara (`/monitoreo`) queda fuera del alcance instalable (botón oculto).
 
@@ -154,13 +156,14 @@ El frontend usa un patrón de **dos capas** para compatibilizar módulos ES6 con
 modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclick handlers
 ```
 
-### Módulos Frontend (63 módulos ES6)
+### Módulos Frontend (65 módulos ES6)
 
 | Módulo | Responsabilidad |
 |---|---|
 | `dashboard-ui.js` | Navegación (`switchTab`), reloj, salud del sistema, streaming de video, cámaras |
 | `dashboard-stats.js` | Estadísticas en vivo, logs, ocupación, WebSocket de aforo |
 | `dashboard-metrics.js` | Métricas del sistema: gráfico de accesos en vivo, filtros por rango y navegación de ventana |
+| `dashboard-informes.js` | Informes: mapa de calor de tráfico, resumen de ocupación y métricas de reportes |
 | `dashboard-admin.js` | Orquestador del admin (importa sub-módulos y expone funciones globales) |
 | `dashboard-admin-users.js` | CRUD usuarios (crear, editar, toggle-block, balance, password, rol, eliminar) |
 | `dashboard-admin-branches.js` | Fachada de sucursales (re-exporta `crud` y `floors`) |
@@ -220,6 +223,7 @@ modules/*.js (lógica)  →  bridge.js (asignaciones window.*)  →  HTML onclic
 | `landing-map-locality.js` | Filtro y búsqueda por localidad (`filterMapByLocality`) |
 | `chart-window.js` | Clase `WindowedChart` (gráficos con ventana temporal: seguimiento en vivo, INICIO/FINAL, deslizador) |
 | `estadisticas-ocr.js` | Estadísticas OCR (métricas del motor, tabla y filtros) |
+| `list-pagination.js` | Helper DRY de listados: `renderCappedList`/`renderPaginatedList` (topes y paginación reutilizables) |
 | `theme.js` | Paleta de tokens compartida: importada por 11 módulos para leer los tokens CSS desde JS (chart-window, dashboard-*, estadisticas-ocr, landing-map*, reservations-admin-form, admin-tour-engine, tour). Evita duplicar literales de color en JS. |
 
 ### Scripts Puente (Orquestadores)
