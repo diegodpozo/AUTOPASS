@@ -1,6 +1,32 @@
 import api from './api.js';
 import { showToast, showConfirm, toTitle } from './utils.js';
 
+const CAMERA_DEFAULT_PORT = '8080';
+const CAMERA_DEFAULT_PATH = '/video';
+const CAMERA_BARE_IP_RE = /^(\d{1,3}(?:\.\d{1,3}){3})(?::(\d+))?$/;
+const CAMERA_FULL_URL_RE = /^https?:\/\/([^/]+?)(?::(\d+))?\/video\/?$/;
+
+export function buildCameraSource(raw) {
+    const value = (raw || '').trim();
+    if (!value) return value;
+    const match = value.match(CAMERA_BARE_IP_RE);
+    if (match) {
+        const port = match[2] || CAMERA_DEFAULT_PORT;
+        return `http://${match[1]}:${port}${CAMERA_DEFAULT_PATH}`;
+    }
+    return value;
+}
+
+export function cameraSourceToInput(source) {
+    const value = (source || '').trim();
+    if (!value) return value;
+    const match = value.match(CAMERA_FULL_URL_RE);
+    if (match) {
+        return match[2] && match[2] !== CAMERA_DEFAULT_PORT ? `${match[1]}:${match[2]}` : match[1];
+    }
+    return value;
+}
+
 export async function loadCameraSettings() {
     const listEl = document.getElementById('camera-settings-list');
     if (!listEl) return;
@@ -59,12 +85,12 @@ export function renderCameraSettingsTable(cameras) {
                 
                 <div class="camera-card-info p-12 mb-15" style="background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid rgba(255,255,255,0.04);">
                     <div class="flex-row justify-between items-center mb-10 flex-wrap gap-5">
-                        <span class="text-xxs text-muted uppercase fw-800">TIPO / FUNCIÓN</span>
+                        <span class="text-xxs text-muted uppercase fw-800">FUNCIÓN</span>
                         <span class="badge-status badge-info-light" style="font-size: 0.68rem;">${tipoLabel}</span>
                     </div>
                     <div class="flex-row justify-between items-center flex-wrap gap-5">
-                        <span class="text-xxs text-muted uppercase fw-800">ORIGEN / IP</span>
-                        <span class="text-xs font-mono text-white text-truncate" style="max-width: 220px;" title="${cam.source}">${cam.source}</span>
+                        <span class="text-xxs text-muted uppercase fw-800">IP</span>
+                        <span class="text-xs font-mono text-white text-truncate" style="max-width: 220px;" title="${cam.source}">${cameraSourceToInput(cam.source)}</span>
                     </div>
                 </div>
 
@@ -140,7 +166,7 @@ export async function showEditCameraModal(cam) {
     if (tipoSelect) tipoSelect.value = cam.tipo;
 
     const sourceInput = document.getElementById('camera-source');
-    if (sourceInput) sourceInput.value = cam.source;
+    if (sourceInput) sourceInput.value = cameraSourceToInput(cam.source);
 
     const sucursalGroup = document.getElementById('camera-sucursal-group');
     const selectSucursal = document.getElementById('camera-sucursal');
@@ -179,7 +205,7 @@ export async function handleSaveCameraConfig(event) {
     const editId = document.getElementById('edit-camera-id').value;
     const nombre = toTitle(document.getElementById('camera-nombre').value);
     const tipo = document.getElementById('camera-tipo').value;
-    const source = document.getElementById('camera-source').value;
+    const source = buildCameraSource(document.getElementById('camera-source').value);
     const sucursal = document.getElementById('camera-sucursal').value || null;
     const activa = document.getElementById('camera-activa').checked;
 
