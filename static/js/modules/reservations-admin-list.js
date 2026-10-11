@@ -2,7 +2,7 @@ import api from './api.js';
 import * as utils from './utils.js';
 import * as baseUi from './ui.js';
 import { getVirtualNow } from './virtual-time.js';
-import { renderCappedList } from './list-pagination.js';
+import { renderPaginatedList, resetPaginatedState } from './list-pagination.js';
 
 /**
  * Módulo de Gestión de Reservas Administrativas
@@ -10,6 +10,7 @@ import { renderCappedList } from './list-pagination.js';
 
 let allReservations = [];
 let resBadgeInterval = null;
+let adminResQuery = '';
 
 export function getAllReservations() {
     return allReservations;
@@ -33,7 +34,40 @@ allReservations = res.data;
             }
         }
 
-        const rowsHtml = allReservations.map(r => `
+        resetPaginatedState(tbody);
+        renderAdminReservationRows();
+
+        const statTotal = document.getElementById('admin-res-stat-total');
+        const statPending = document.getElementById('admin-res-stat-pending');
+        const statToday = document.getElementById('admin-res-stat-today');
+        if (statTotal) statTotal.innerText = utils.formatNum(res.data.length);
+        if (statPending) statPending.innerText = utils.formatNum(res.data.filter(r => r.estado_reserva === 'Pendiente').length);
+        if (statToday) {
+            const now = getVirtualNow();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            const countToday = res.data.filter(r => {
+                if (r.estado_reserva === 'Completada' || r.estado_reserva === 'Cancelada') return false;
+                const ini = new Date(String(r.fecha_inicio || '').replace(/-/g, '/'));
+                const fin = new Date(String(r.fecha_fin || '').replace(/-/g, '/'));
+                if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return false;
+                return ini <= todayEnd && fin >= todayStart;
+            }).length;
+            statToday.innerText = utils.formatNum(countToday);
+        }
+    }
+}
+
+function renderAdminReservationRows() {
+    const tbody = document.getElementById('admin-res-list');
+    if (!tbody) return;
+
+    const q = adminResQuery.trim().toLowerCase();
+    const list = q
+        ? allReservations.filter(r => `${r.patente || ''} ${r.usuario_nombre || ''} ${r.usuario_apellido || ''}`.toLowerCase().includes(q))
+        : allReservations;
+
+    const rowsHtml = list.map(r => `
             <tr class="row-premium">
                 <td data-label="Cliente"><div class="user-name">${r.usuario_nombre || 'S/N'} ${r.usuario_apellido || ''}</div></td>
                 <td data-label="Patente"><span class="plate-style">${utils.formatPlate(r.patente)}</span></td>
@@ -83,35 +117,24 @@ allReservations = res.data;
                     </div>
                 </td>
             </tr>`);
-        const drawList = () => renderCappedList(tbody, rowsHtml, {
-            pageSize: 8,
-            tag: 'tr',
-            colspan: 8,
-            toggleAll: total => `Ver todas las reservas (${total})`,
-            toggleLess: 'Ver menos',
-            onToggle: drawList
-        });
-        drawList();
-        
-        const statTotal = document.getElementById('admin-res-stat-total');
-        const statPending = document.getElementById('admin-res-stat-pending');
-        const statToday = document.getElementById('admin-res-stat-today');
-        if (statTotal) statTotal.innerText = utils.formatNum(res.data.length);
-        if (statPending) statPending.innerText = utils.formatNum(res.data.filter(r => r.estado_reserva === 'Pendiente').length);
-        if (statToday) {
-            const now = getVirtualNow();
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-            const countToday = res.data.filter(r => {
-                if (r.estado_reserva === 'Completada' || r.estado_reserva === 'Cancelada') return false;
-                const ini = new Date(String(r.fecha_inicio || '').replace(/-/g, '/'));
-                const fin = new Date(String(r.fecha_fin || '').replace(/-/g, '/'));
-                if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return false;
-                return ini <= todayEnd && fin >= todayStart;
-            }).length;
-            statToday.innerText = utils.formatNum(countToday);
-        }
-    }
+
+    const drawList = () => renderPaginatedList(tbody, rowsHtml, {
+        pageSize: 10,
+        tag: 'tr',
+        colspan: 8,
+        navContainer: document.getElementById('admin-res-pager'),
+        emptyHtml: '<tr><td colspan="8" class="text-center py-20">No hay reservas para mostrar.</td></tr>',
+        fillRow: '<tr class="row-filler" aria-hidden="true"><td colspan="8"></td></tr>',
+        onPage: drawList
+    });
+    drawList();
+}
+
+export function onAdminResSearch(query) {
+    adminResQuery = query || '';
+    const tbody = document.getElementById('admin-res-list');
+    resetPaginatedState(tbody);
+    renderAdminReservationRows();
 }
 
 export async function payReservationAdmin(resId) {

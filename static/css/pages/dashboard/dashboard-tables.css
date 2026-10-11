@@ -104,6 +104,34 @@ tr.row-refund:hover {
     min-width: 160px;
 }
 
+/* Registro de Reservas (admin): filas de altura uniforme en desktop para que la card
+   no cambie de tamaño al paginar (algunas filas traen línea extra de reembolso o EN PREDIO).
+   En <=1024px la tabla se convierte en cards y no aplica. */
+@media (min-width: 1025px) {
+    #tab-admin-reservations #admin-res-list tr.row-premium td {
+        height: 106px;
+        vertical-align: middle;
+    }
+
+    #tab-admin-reservations table thead th {
+        white-space: nowrap;
+    }
+
+    /* Filas de relleno para que la ultima pagina conserve la altura de una pagina completa */
+    #tab-admin-reservations #admin-res-list tr.row-filler td {
+        height: 106px;
+        border-bottom: none;
+        pointer-events: none;
+    }
+}
+
+/* En <=1024px la tabla se convierte en cards: el relleno de altura no aplica */
+@media (max-width: 1024px) {
+    #tab-admin-reservations #admin-res-list tr.row-filler {
+        display: none;
+    }
+}
+
 .chart-wrapper { padding: 25px; height: 350px; }
 
 /* CONTROLES Y FILTROS */

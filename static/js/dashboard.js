@@ -79,6 +79,7 @@ window.showLogDetail = ops.showLogDetail;
 
 // 4. RESERVAS ADMINISTRATIVAS
 window.loadAdminReservations = reservations.loadAdminReservations;
+window.onAdminResSearch = reservations.onAdminResSearch;
 window.payReservationAdmin = reservations.payReservationAdmin;
 window.cancelReservationAdmin = reservations.cancelReservationAdmin;
 window.showReservationDetail = reservations.showReservationDetail;

@@ -3,7 +3,42 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 11/10/2026
 
-## Follow-ups post v9.34.85 — APLICADO 11/10/2026 (pendiente de commit/push)
+## Paginador de reservas admin — APLICADO 11/10/2026 (pendiente de commit/push)
+
+- Pedido del usuario: en "REGISTRO DE RESERVAS" (dashboard admin) reemplazar el toggle
+  "Ver todas las reservas (N)" por una **barra navegadora de 10 por página**.
+- Helper DRY nuevo `renderPaginatedList(container, itemsHtml, cfg)` + `resetPaginatedState` en
+  `static/js/modules/list-pagination.js` (convive con `renderCappedList`): estado por `container.id`,
+  `window.__pageGoto(id,page)`, `onPage` para re-render sin resetear, y `fillRow` (opcional) para
+  rellenar la última página con filas vacías y mantener la altura. **Reutiliza el componente de
+  paginación del proyecto** (`.pagination-premium` + botones `btn--icon sm` con chevrons + etiqueta
+  `text-small text-muted font-bold` "Página X de Y", igual que users.html/finance.html/live).
+- `reservations-admin-list.js`: render extraído a `renderAdminReservationRows()` (cap 10, navContainer
+  `#admin-res-pager`, `fillRow: '<tr class="row-filler" ...>'`); **búsqueda re-integrada**
+  (`onAdminResSearch`) para que filtre el dataset completo y re-pagine (antes `filterTable` solo veía
+  las filas en DOM → con paginado habría buscado solo la página).
+  Nuevo contenedor `#admin-res-pager` (`class="pagination-premium flex-row items-center justify-center
+  gap-20 py-20"`) en `admin_reservations.html`; input onkeyup → `onAdminResSearch`.
+  Facade `dashboard-reservations.js` y binding en `dashboard.js` (`window.onAdminResSearch`).
+- **Fix "la card se agranda al paginar"** (lo reportó el usuario): la card cambiaba de alto porque
+  (a) las filas variaban 73/86px según contenido condicional (línea de reembolso o "EN PREDIO"),
+  (b) el `thead` pasaba de 1 a 2 líneas (40/55px) porque `table-layout:auto` redistribuye columnas
+  según el contenido de cada página y "ESTADO PAGO"/"ESTADO RESERVA" se partían, y (c) algunas filas
+  con nota de reembolso larga llegaban a 101px (wrap en la celda "Monto"). Solución en
+  `static/css/pages/dashboard/dashboard-tables.css` (solo `@media (min-width: 1025px)`; en ≤1024px la
+  tabla es card-layout y no aplica): altura de fila uniforme `td { height: 106px; vertical-align: middle }`
+  (cubre el peor caso de 2 líneas), `thead th { white-space: nowrap }`, y filas de relleno
+  `tr.row-filler td { height: 106px; border-bottom: none; pointer-events: none }` para la última página.
+  Además `renderPaginatedList` soporta `fillRow` (solo con >1 página).
+- Verificación runtime (Edge headless CDP, 175 reservas): **pager top = 1479 px en las 18 páginas**
+  (antes variaba hasta ~80px), card idéntica (1329px) en todas; filas 106px uniformes; última página 5
+  reales + 5 relleno (border suprimido, `borderBottomStyle: none`); búsqueda "AE114RA" → 4 páginas,
+  "Teresa" → 2 páginas (sin relleno en página full), sin resultados → estado vacío sin pager.
+  Guards 8/8 sin `--update`/`--allow` (color_equivalence exacto 0/255), suite **813 passed**.
+- **PENDIENTE**: commit/push. Mensaje propuesto: `v9.34.87: paginador de 10 por pagina en registro de
+  reservas admin (estilo del proyecto) y altura de card estable`.
+
+## Follow-ups post v9.34.85 — APLICADO y PUSHEADO 11/10/2026 (v9.34.86, `8b04563`)
 
 - **Fix tests serial-colgados**: nuevo `tests/conftest.py` setea `settings.SERIAL_ENABLED = False`
   a nivel import (evita `serial.Serial.write()` bloqueante si hay un COM sin dispositivo). No había
@@ -23,7 +58,7 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 - Verificación runtime (Edge headless CDP, server :8000): notificaciones 8 → "Ver todas las
   notificaciones (10)" → 10 → 8 (filtro reagrupa); promociones admin 8 → "Ver todas las promociones
   (12)" → 12 → 8. Guards 8/8 verdes (sin CSS nuevo). Suite completa **813 passed**.
-- **PENDIENTE**: commit/push de esta tanda (conftest + B7/B8 + helper `wrapperClass` + notif/promos).
+- **COMMITEADO y PUSHEADO en v9.34.86 (`8b04563`, 11/10/2026)** (13 archivos, +173/−82).
 
 ## Comunicación de Soporte (usuario ↔ soporte) — APLICADO y PUSHEADO en v9.34.85 (`acafbd2`, 10/10/2026)
 

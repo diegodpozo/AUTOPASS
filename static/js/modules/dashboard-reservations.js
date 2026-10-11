@@ -7,6 +7,7 @@
 export {
     getAllReservations,
     loadAdminReservations,
+    onAdminResSearch,
     payReservationAdmin,
     cancelReservationAdmin,
     showReservationDetail,

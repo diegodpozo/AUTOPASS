@@ -49,7 +49,7 @@
                 </div>
                 <div class="search-box-premium" title="Buscar por patente, nombre o apellido">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Buscar patente..." onkeyup="filterTable('admin-res-list', this.value)">
+                    <input type="text" placeholder="Buscar patente..." onkeyup="onAdminResSearch(this.value)">
                 </div>
             </div>
 
@@ -75,6 +75,7 @@
                 </tbody>
             </table>
         </div>
+        <div id="admin-res-pager" class="pagination-premium flex-row items-center justify-center gap-20 py-20"></div>
     </div>
 </div>
 

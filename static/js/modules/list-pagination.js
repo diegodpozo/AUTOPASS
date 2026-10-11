@@ -3,6 +3,7 @@
  * Helper DRY para listas/grillas que acumulan muchos items: muestra las primeras N
  * con un toggle "Ver todas (M) / Ver menos" y empty configurable. Se reutiliza en
  * perfil (mis consultas, vouchers) y dashboard admin (tickets, reservas).
+ * Tambien expone renderPaginatedList: muestra de a N con barra navegadora (reservas admin).
  *
  * container   : elemento donde se inyectan los items (debe tener id).
  * itemsHtml   : array de strings HTML (un elemento por item).
@@ -68,7 +69,103 @@ export function resetCappedState(container) {
     if (container && container.id) capState[container.id] = false;
 }
 
+/**
+ * LISTA PAGINADA (v1.0)
+ * Alternativa a renderCappedList: en vez de "Ver todas / Ver menos", muestra de a
+ * N items con una barra navegadora (anterior / numeros de pagina / siguiente).
+ *
+ * config: {
+ *     pageSize  (10)      : items por pagina.
+ *     tag       ('div'|'tr'): tipo de item.
+ *     colspan   (1)       : colspan del renglon del pager cuando no hay navContainer y tag='tr'.
+ *     navContainer        : elemento (o id) donde va la barra; si falta, se inyecta junto a los items.
+ *     wrapperClass        : clase del contenedor que envuelve los items.
+ *     emptyHtml           : HTML del estado vacio.
+ *     fillRow             : HTML de una fila/celda vacia para rellenar la ultima pagina
+ *                           (solo si hay mas de una pagina) y mantener altura estable.
+ *     onPage (fn)         : re-render del caller al cambiar de pagina.
+ * }
+ */
+const pageState = {};
+const pageRenders = {};
+
+export function renderPaginatedList(container, itemsHtml, config = {}) {
+    if (!container) return;
+    const navTarget = _resolveNav(container, config);
+
+    if (!itemsHtml || itemsHtml.length === 0) {
+        container.innerHTML = config.emptyHtml != null ? config.emptyHtml : '';
+        if (navTarget && navTarget !== container) navTarget.innerHTML = '';
+        return;
+    }
+
+    const pageSize = config.pageSize || 10;
+    const tag = config.tag || 'div';
+    const colspan = config.colspan > 0 ? config.colspan : 1;
+    const id = container.id || (container.id = 'paged-list-' + (++capSeq));
+
+    const pages = Math.max(1, Math.ceil(itemsHtml.length / pageSize));
+    let page = pageState[id] || 1;
+    if (page > pages) page = pages;
+    if (page < 1) page = 1;
+    pageState[id] = page;
+
+    pageRenders[id] = () => renderPaginatedList(container, itemsHtml, config);
+
+    const slice = itemsHtml.slice((page - 1) * pageSize, page * pageSize);
+    let body = slice.join('');
+    if (config.fillRow && pages > 1 && page === pages && slice.length < pageSize) {
+        body += config.fillRow.repeat(pageSize - slice.length);
+    }
+    container.innerHTML = (tag !== 'tr' && config.wrapperClass)
+        ? `<div class="${config.wrapperClass}">${body}</div>` : body;
+
+    if (navTarget) {
+        if (pages > 1) {
+            const pager = _buildPager(id, page, pages);
+            if (navTarget !== container) {
+                navTarget.innerHTML = pager;
+            } else if (tag === 'tr') {
+                container.innerHTML += `<tr><td colspan="${colspan}"><div class="pagination-premium flex-row items-center justify-center gap-20 py-20">${pager}</div></td></tr>`;
+            } else {
+                container.innerHTML += `<div class="pagination-premium flex-row items-center justify-center gap-20 py-20">${pager}</div>`;
+            }
+        } else if (navTarget !== container) {
+            navTarget.innerHTML = '';
+        }
+    }
+}
+
+function _resolveNav(container, config) {
+    if (config.navContainer) {
+        return (typeof config.navContainer === 'string')
+            ? document.getElementById(config.navContainer)
+            : config.navContainer;
+    }
+    return container;
+}
+
+function _buildPager(id, page, pages) {
+    return `
+        <button class="btn--icon sm" ${page <= 1 ? 'disabled' : ''} onclick="__pageGoto('${id}',${page - 1})" title="Página anterior">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span class="text-small text-muted font-bold">Página ${page} de ${pages}</span>
+        <button class="btn--icon sm" ${page >= pages ? 'disabled' : ''} onclick="__pageGoto('${id}',${page + 1})" title="Página siguiente">
+            <i class="fas fa-chevron-right"></i>
+        </button>`;
+}
+
+export function resetPaginatedState(container) {
+    if (container && container.id) pageState[container.id] = 1;
+}
+
 window.__capToggleList = (id) => {
     const fn = capToggleIds[id];
     if (typeof fn === 'function') fn();
+};
+
+window.__pageGoto = (id, p) => {
+    const fn = pageRenders[id];
+    if (typeof fn === 'function') { pageState[id] = p; fn(); }
 };
