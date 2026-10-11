@@ -3,6 +3,25 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 11/10/2026
 
+## Columnas legacy `sucursal_id` (Neon) — ANALIZADO Y RESTAURADO 11/10/2026 (pendiente decisión)
+
+- **Hallazgo**: 9 tablas de Neon tenían una columna `sucursal_id` (+ índice
+  `ix_<tabla>_sucursal_id` + FK `fk_<tabla>_sucursal_id_branch` →
+  `parking_branches(id)` `ON UPDATE CASCADE`), heredada de ~v7.9.0. El código actual
+  **no la referencia en ningún punto** (búsqueda `sucursal_id` = 0 en py/js/html/json/md);
+  los modelos referencian la sede por **nombre** (`sucursal` con FK a
+  `parking_branches.nombre`).
+- Se **dropearon** las 9 (FK + índice + columna) como DDL out-of-band, y luego se
+  **restauraron** a pedido del usuario. Estado actual: **restauradas tal cual** (columna +
+  datos + FK + índice), idénticas al hallazgo.
+- **Backup** conservado: `backup_sucursal_id_legacy` (12.631 filas: `tabla, fila_id, sucursal_id`).
+- **Sin migración Alembic**: estas columnas nunca estuvieron en la cadena (una de drop
+  rompería la reproducibilidad desde cero).
+- **Refactor evaluado** (usar `id` en vez de `nombre`): ~1.780 refs en ~151 archivos
+  (models 4, services 14, repos 8, routes 18, schemas 4, static 44, templates 21, tests 35).
+  **Decisión pendiente**: refactor completo a `id` (alto esfuerzo) vs. endurecer el enfoque
+  por `nombre` (agregar FKs faltantes, bajo esfuerzo) vs. dejar el híbrido actual.
+
 ## Paginador de reservas admin — APLICADO 11/10/2026 (pendiente de commit/push)
 
 - Pedido del usuario: en "REGISTRO DE RESERVAS" (dashboard admin) reemplazar el toggle
