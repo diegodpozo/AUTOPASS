@@ -10,7 +10,7 @@ from core.security import get_super_admin, get_operational_user
 from core.config import settings
 from core.alpr_security import require_alpr_node
 from services.time_service import TimeService
-from routes.system.common import ALPR_HEARTBEATS, normalize_system_name
+from routes.system.common import ALPR_HEARTBEATS, normalize_system_name, misma_sucursal
 from models.enums import UserRole
 from repositories.camera_repository import CameraRepository
 from repositories.system_repository import SystemRepository
@@ -32,7 +32,7 @@ def get_health(db: Session = Depends(get_db), staff: models.User = Depends(get_o
         for gate, ts in ALPR_HEARTBEATS.items():
             alpr_status[gate] = "ONLINE" if (now - ts).total_seconds() < 90 else "OFFLINE"
     else:
-        cameras = [c for c in CameraRepository.get_all(db) if normalize_system_name(c.sucursal) == normalize_system_name(staff.sucursal)]
+        cameras = [c for c in CameraRepository.get_all(db) if misma_sucursal(c, staff)]
         if not cameras:
             prefix = normalize_system_name(staff.sucursal)
             gates_to_check = [f"{prefix}_ENTRADA", f"{prefix}_SALIDA"]

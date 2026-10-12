@@ -35,6 +35,16 @@ def stop_all_cameras():
 from core.normalize import normalize_name as normalize_system_name
 
 
+def misma_sucursal(camera, staff) -> bool:
+    """MISMA SEDE ENTRE UNA CAMARA Y UN OPERADOR, CON PRIORIDAD POR `sucursal_id`
+    (si ambos lo tienen) Y FALLBACK LEGACY POR NOMBRE (registros de test/legacy sin id)."""
+    cam_id = getattr(camera, "sucursal_id", None)
+    staff_id = getattr(staff, "sucursal_id", None)
+    if cam_id is not None and staff_id is not None:
+        return cam_id == staff_id
+    return normalize_system_name(camera.sucursal) == normalize_system_name(staff.sucursal)
+
+
 class ConnectionManager:
     """Gestión de WebSockets para espectadores de streaming de video por sucursal."""
 

@@ -1,13 +1,28 @@
-from sqlalchemy import func
+from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session, selectinload
 
 import models
 from models.enums import AccessEventType
+from repositories.branch_repository import BranchRepository
 
 #--- REPOSITORIO DE LOGS DE ACCESO (INGRESOS/SALIDAS FISICAS) ---
 
 
 class AccessRepository:
+    @staticmethod
+    def _sucursal_id_filter(db: Session, sucursal: str):
+        """CONDICION SQL P/ FILTRAR LOGS POR SUCURSAL CON PRIORIDAD POR `sucursal_id` Y
+        FALLBACK LEGACY POR NOMBRE (registros de prueba/legacy sin id)."""
+        if not sucursal:
+            return None
+        branch_id = BranchRepository.get_id_by_name(db, sucursal)
+        if branch_id:
+            return or_(
+                models.AccessLog.sucursal_id == branch_id,
+                and_(models.AccessLog.sucursal_id.is_(None), models.AccessLog.sucursal == sucursal)
+            )
+        return models.AccessLog.sucursal == sucursal
+
     @staticmethod
     def get_by_id(db: Session, log_id: int) -> models.AccessLog:
         """OBTIENE UN LOG DE ACCESO POR SU IDENTIFICADOR UNICO."""
@@ -20,7 +35,7 @@ class AccessRepository:
             db.query(models.AccessLog)
             .filter(
                 models.AccessLog.normalized_patente == normalized_patente,
-                models.AccessLog.sucursal == sucursal
+                AccessRepository._sucursal_id_filter(db, sucursal)
             )
             .order_by(models.AccessLog.id.desc())
             .first()
@@ -33,7 +48,7 @@ class AccessRepository:
             db.query(models.AccessLog)
             .filter(
                 models.AccessLog.patente_detectada == patente_detectada,
-                models.AccessLog.sucursal == sucursal
+                AccessRepository._sucursal_id_filter(db, sucursal)
             )
             .order_by(models.AccessLog.id.desc())
             .first()
@@ -81,7 +96,7 @@ class AccessRepository:
             .filter(
                 models.AccessLog.normalized_patente == normalized_patente,
                 models.AccessLog.tipo_evento == AccessEventType.ENTRADA,
-                models.AccessLog.sucursal == sucursal
+                AccessRepository._sucursal_id_filter(db, sucursal)
             )
             .order_by(models.AccessLog.id.desc())
             .first()
@@ -109,7 +124,7 @@ class AccessRepository:
                 models.AccessLog.patente_detectada == patente_detectada,
                 models.AccessLog.tipo_evento == AccessEventType.SALIDA,
                 models.AccessLog.id > after_id,
-                models.AccessLog.sucursal == sucursal
+                AccessRepository._sucursal_id_filter(db, sucursal)
             )
             .first()
         )
@@ -168,8 +183,9 @@ class AccessRepository:
             )
             .filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
         )
-        if sucursal:
-            subq = subq.filter(models.AccessLog.sucursal == sucursal)
+        suc_filter = AccessRepository._sucursal_id_filter(db, sucursal or "")
+        if suc_filter is not None:
+            subq = subq.filter(suc_filter)
         subq = subq.group_by(models.AccessLog.patente_detectada).subquery()
 
         return (

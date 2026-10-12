@@ -1,26 +1,61 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 11/10/2026
+Última actualización: 12/10/2026
 
-## Columnas legacy `sucursal_id` (Neon) — ANALIZADO Y RESTAURADO 11/10/2026 (pendiente decisión)
+## Refactor "sucursal por id" — APLICADO EN LOCAL 12/10/2026 (pendiente commit/push + decisión Neon)
 
-- **Hallazgo**: 9 tablas de Neon tenían una columna `sucursal_id` (+ índice
-  `ix_<tabla>_sucursal_id` + FK `fk_<tabla>_sucursal_id_branch` →
-  `parking_branches(id)` `ON UPDATE CASCADE`), heredada de ~v7.9.0. El código actual
-  **no la referencia en ningún punto** (búsqueda `sucursal_id` = 0 en py/js/html/json/md);
-  los modelos referencian la sede por **nombre** (`sucursal` con FK a
-  `parking_branches.nombre`).
-- Se **dropearon** las 9 (FK + índice + columna) como DDL out-of-band, y luego se
-  **restauraron** a pedido del usuario. Estado actual: **restauradas tal cual** (columna +
-  datos + FK + índice), idénticas al hallazgo.
-- **Backup** conservado: `backup_sucursal_id_legacy` (12.631 filas: `tabla, fila_id, sucursal_id`).
-- **Sin migración Alembic**: estas columnas nunca estuvieron en la cadena (una de drop
-  rompería la reproducibilidad desde cero).
-- **Refactor evaluado** (usar `id` en vez de `nombre`): ~1.780 refs en ~151 archivos
-  (models 4, services 14, repos 8, routes 18, schemas 4, static 44, templates 21, tests 35).
-  **Decisión pendiente**: refactor completo a `id` (alto esfuerzo) vs. endurecer el enfoque
-  por `nombre` (agregar FKs faltantes, bajo esfuerzo) vs. dejar el híbrido actual.
+- **Objetivo cumplido**: TODA referencia a sede en las tablas dependientes se guarda por
+  `sucursal_id`; el nombre vive SOLO en `parking_branches`. Se eliminó `propagate_rename`
+  (`repositories/branch_repository.py`, `services/branch_service.py`): renombrar una sede ya
+  no toca ninguna otra tabla.
+- **Traductor central** (`models/branch_ref.py`, nuevo): hybrid `branch_ref_property(default)`
+  expone el nombre para display y permite seguir haciendo `Modelo.sucursal == x` (se traduce a
+  un subselect sobre `parking_branches`); el setter posterga la traducción y un `before_flush`
+  resuelve nombre→id una sola vez por flush, **por nombre normalizado** (ignora prefijo
+  `AUTOPASS `, mayúsculas y acentos → "AUTOPASS Centro" y "Centro" apuntan a la misma sede).
+  Nombre inexistente → `sucursal_id = NULL`; queda un fallback en memoria
+  (`_sucursal_fallback`) para display/comparación dentro de la misma sesión.
+- **Modelos** (9) sin columnas de nombre, con `branch = relationship("ParkingBranch", lazy="joined")`:
+  `parking_aforo`, `settings`, `parking_cameras`, `promotions`, `reservations`, `access_logs`,
+  `support_tickets`, `support_ticket_messages`, `users`. Eliminado `models/branch_id_sync.py`.
+  `_sucursal_predicate` estricto (`false()` si la sede no existe) en `settings_repository` y
+  `promotion_repository`; serialización API por `response_model` (`routes/admin/users.py`).
+- **Migraciones nuevas** (locales, **sin aplicar a Neon**):
+  `d1e2f3a4b5c6_add_sucursal_id_dependencias`, `f5a6b7c8d9e0_add_sucursal_id_tablas_config`,
+  `c3d4e5f6a7b8_drop_sucursal_nombre_columns` (dropea las 9 columnas de nombre + índices/FKs por
+  nombre; recrea `ix_access_logs_pat_tipo_suc_fecha` y `uq_settings_clave_sucursal` sobre
+  `sucursal_id`) y `e1f2a3b4c5d6_merge_sucursal_id_chain_y_drop_legacy_` (merge de la cadena con la
+  de MarianoJAC). Backfill 100% verificado; head único; `test_schema_parity_p2` verde.
+- **Merge de `origin/main`** (12 commits, `8253ddc` → `8230f4c`): conflictos resueltos en
+  `services/support_service.py` (`_can_access_ticket` id-first + se conservó
+  `mark_ticket_notifications_read` de Mariano) y en este doc; revisados los archivos
+  auto-mergeados (reservation/promotion repositories, users, tests).
+- **Suite completa: 822 passed, 0 fallos** (los 5 archivos que antes colgaban por serial ya no
+  se excluyen; `tests/conftest.py` setea `SERIAL_ENABLED=False`). Fixtures sembradas con
+  `ParkingBranch` donde faltaba (reservas, ocupación, pagos, bugfixes, notificaciones,
+  promociones, settings, users, cámaras, health, soporte). Nota operación: `git stash@{0}`
+  (refactor WIP pre-merge) quedó retenido tras el `pop`; se puede dropear.
+
+### Pendiente
+1. **Neon ALINEADA 12/10/2026** (autorizado por el usuario):
+   - Backups creados en Neon: `backup_refactor_id_<tabla>` × 9 (12084+ filas:
+     `id, nombre, sucursal_id`), `backup_refactor_id_branches` y `backup_refactor_id_alembic`
+     (version vieja `b8f1c2d3e4a5`).
+   - **Backfill**: 34 filas insertadas tras F1/F4 quedaron sin `sucursal_id` (14 `access_logs`
+     'Castelar', 20 `redemption_tickets` 'Morón') → se completaron con el id derivado del nombre
+     normalizado. Los 66 `support_tickets` 'General' quedan `sucursal_id NULL` (tickets globales,
+     centinela del hybrid `default="General"`), igual que users/settings/promotions/aforo globales.
+   - `alembic_version` pasó de `b8f1c2d3e4a5` (fantasma) a marcado doble `{f5a6b7c8d9e0,
+     f9a8b7c6d5e4}` (ambas ramas aplicadas) y `upgrade head` corrió `c3d4e5f6a7b8` + `e1f2a3b4c5d6`.
+   - Resultado: head único `e1f2a3b4c5d6`; las 9 columnas de NOMBRE eliminadas; `sucursal_id`
+     presente con FK por id en las 9 tablas; 0 huérfanos (`NOT EXISTS` a `parking_branches`);
+     `ix_access_logs_pat_tipo_suc_fecha` recreado sobre `sucursal_id` y `uq_settings_clave_sucursal`
+     sobre `COALESCE(sucursal_id,-1)`; conteos intactos (12298 logs, 175 reservas, etc.).
+     Así el `alembic upgrade head` ya NO falla (antes: `Can't locate revision 'b8f1c2d3e4a5'`).
+   - Nota: `parking_cameras.orden` sigue en Neon pero no está en el modelo (columna legacy previa;
+     SQLAlchemy la ignora — no es parte del refactor).
+2. **Commit/push** del refactor (no hecho: regla AGENTS exige pedido expreso del usuario).
 
 ## Paginador de reservas admin — APLICADO 11/10/2026 (pendiente de commit/push)
 

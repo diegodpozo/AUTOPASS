@@ -3,6 +3,7 @@ from sqlalchemy import func, union_all, literal_column, or_, and_
 
 import models
 from models.enums import ReservationStatus, PaymentStatus, AccessEventType
+from repositories.branch_repository import BranchRepository
 
 #--- REPOSITORIO DE REPORTES E INTELIGENCIA DE NEGOCIO (CONSULTAS AGREGADAS) ---
 
@@ -90,12 +91,16 @@ def _branch_key(name: str):
     return n
 
 
-def _branch_filter(column, sucursal: str):
-    """FILTRO SQL DE AISLAMIENTO POR SUCURSAL SIN DISTINGUIR PREFIJO 'AUTOPASS ' NI ACENTOS."""
+def _branch_filter(db: Session, name_column, id_column, sucursal: str):
+    """FILTRO SQL DE ISOLAMIENTO POR SUCURSAL CON PRIORIDAD POR `sucursal_id` Y FALLBACK LEGACY
+    POR NOMBRE (LIKE leniente sin prefijo 'AUTOPASS ' ni acentos) para registros sin id."""
     if not sucursal:
         return None
-    target = _branch_key(sucursal)
-    return func.lower(_unaccent(column)).like(f"%{target}%")
+    legacy_cond = func.lower(_unaccent(name_column)).like(f"%{_branch_key(sucursal)}%")
+    branch_id = BranchRepository.get_id_by_name(db, sucursal)
+    if branch_id:
+        return or_(id_column == branch_id, and_(id_column.is_(None), legacy_cond))
+    return legacy_cond
 
 
 class ReportRepository:
@@ -116,7 +121,7 @@ class ReportRepository:
             q = q.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
 
         if sucursal:
-            q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
 
         if start_date:
             q = q.filter((models.AccessLog.fecha_pago >= start_date) |
@@ -141,7 +146,7 @@ class ReportRepository:
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
-            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
 
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
@@ -169,7 +174,7 @@ class ReportRepository:
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
-            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
 
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
@@ -196,7 +201,7 @@ class ReportRepository:
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
-            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
 
         if start_date:
             q = q.filter(models.Reservation.fecha_inicio >= start_date)
@@ -217,7 +222,7 @@ class ReportRepository:
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
         if sucursal:
-            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
 
         if start_date:
             q = q.filter(models.Reservation.fecha_inicio >= start_date)
@@ -238,7 +243,10 @@ class ReportRepository:
                 Salida.patente_detectada == Log.patente_detectada,
                 Salida.tipo_evento == AccessEventType.SALIDA,
                 Salida.fecha_hora > Log.fecha_hora,
-                Salida.sucursal == Log.sucursal
+                or_(
+                    Salida.sucursal_id == Log.sucursal_id,
+                    and_(Salida.sucursal_id.is_(None), Salida.sucursal == Log.sucursal)
+                )
             ).exists()
         )
 
@@ -246,7 +254,7 @@ class ReportRepository:
             q = q.filter(_vehicle_type_condition(Log.tipo_vehiculo, vehicle_type))
 
         if sucursal:
-            q = q.filter(_branch_filter(Log.sucursal, sucursal))
+            q = q.filter(_branch_filter(db, Log.sucursal, Log.sucursal_id, sucursal))
 
         return q.all()
 
@@ -262,7 +270,7 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
         if sucursal:
-            q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
         if start_date:
             q = q.filter((models.AccessLog.fecha_pago >= start_date) |
                            ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
@@ -284,7 +292,7 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
-            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
                            ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -306,7 +314,7 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
-            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
                            ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -336,7 +344,7 @@ class ReportRepository:
         if filtro_logs is not None:
             q_logs = q_logs.filter(filtro_logs)
         if sucursal:
-            q_logs = q_logs.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
+            q_logs = q_logs.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
         if start_date:
             q_logs = q_logs.filter((models.AccessLog.fecha_pago >= start_date) |
                                    ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
@@ -358,7 +366,7 @@ class ReportRepository:
         if vehicle_type != "all":
             q_res = q_res.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
-            q_res = q_res.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q_res = q_res.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
         if start_date:
             q_res = q_res.filter((models.Reservation.fecha_pago >= start_date) |
                                  ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -383,7 +391,7 @@ class ReportRepository:
         if vehicle_type != "all":
             q_refunds = q_refunds.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
         if sucursal:
-            q_refunds = q_refunds.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q_refunds = q_refunds.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
         if start_date:
             q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) |
                                          ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -413,7 +421,7 @@ class ReportRepository:
         """
         q = db.query(models.AccessLog)
         if sucursal:
-            q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
         if patente:
             q = q.filter(models.AccessLog.patente_detectada.like(f"%{patente.upper()}%"))
         return q.order_by(models.AccessLog.id.desc()).limit(limit).all()
@@ -423,7 +431,7 @@ class ReportRepository:
         """LOGS CON TIEMPO OCR MEDIDO (TOP `limit` DESCENDENTE o serie ASCENDENTE COMPLETA)."""
         q = db.query(models.AccessLog).filter(models.AccessLog.ocr_time.isnot(None))
         if sucursal:
-            q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
         if ascending:
             q = q.order_by(models.AccessLog.id.asc())
         else:
@@ -435,7 +443,7 @@ class ReportRepository:
         """PARES (fecha_hora, tipo_evento) DE TODOS LOS ACCESOS PARA LA SERIE TEMPORAL."""
         filters = []
         if sucursal:
-            filters.append(_branch_filter(models.AccessLog.sucursal, sucursal))
+            filters.append(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
         return db.query(models.AccessLog.fecha_hora, models.AccessLog.tipo_evento).filter(*filters).all()
 
     @staticmethod
@@ -449,7 +457,7 @@ class ReportRepository:
             models.Reservation.patente
         )
         if sucursal:
-            q = q.filter(_branch_filter(models.Reservation.sucursal_nombre, sucursal))
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
         if start_date:
             q = q.filter(models.Reservation.fecha_fin >= start_date)
         if end_date:
@@ -463,7 +471,7 @@ class ReportRepository:
             models.AccessLog.tipo_evento == AccessEventType.ENTRADA.value
         )
         if sucursal:
-            q = q.filter(_branch_filter(models.AccessLog.sucursal, sucursal))
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
         if start_date:
             q = q.filter(models.AccessLog.fecha_hora >= start_date)
         if end_date:

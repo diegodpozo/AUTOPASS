@@ -1,11 +1,40 @@
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import and_, func
+from sqlalchemy import and_, or_, func
 import models
 from models.enums import PaymentStatus, ReservationStatus
+from repositories.branch_repository import BranchRepository
 
 #--- REPOSITORIO DE RESERVAS (ACCESO UN DATOS) ---
 
 class ReservationRepository:
+    @staticmethod
+    def _sucursal_id_predicate(db: Session, sucursal_nombre: str, include_global: bool = False):
+        """PREDICADO SQL PARA FILTRAR RESERVAS POR SUCURSAL CON PRIORIDAD POR `sucursal_id` Y
+        FALLBACK POR NOMBRE (registros legacy/test sin id). Con `include_global` tambien incluye
+        reservas globales (sin sucursal), igual que la logica original por nombre."""
+        suc_id = models.Reservation.sucursal_id
+        name_col = models.Reservation.sucursal_nombre
+        if not sucursal_nombre:
+            return name_col.is_(None)
+        branch_id = BranchRepository.get_id_by_name(db, sucursal_nombre)
+        if branch_id:
+            if include_global:
+                return or_(suc_id == branch_id, and_(suc_id.is_(None), or_(name_col == sucursal_nombre, name_col.is_(None))))
+            return or_(suc_id == branch_id, and_(suc_id.is_(None), name_col == sucursal_nombre))
+        if include_global:
+            return or_(name_col == sucursal_nombre, name_col.is_(None))
+        return name_col == sucursal_nombre
+
+    @staticmethod
+    def _otra_sucursal_predicate(db: Session, sucursal_nombre: str):
+        """PREDICADO P/ RESERVAS DE OTRA SUCURSAL (excluye la sucursal target y las globales)."""
+        suc_id = models.Reservation.sucursal_id
+        name_col = models.Reservation.sucursal_nombre
+        branch_id = BranchRepository.get_id_by_name(db, sucursal_nombre)
+        if branch_id:
+            return ~or_(suc_id == branch_id, name_col == sucursal_nombre)
+        return name_col != sucursal_nombre
+
     @staticmethod
     def get_by_id(db: Session, res_id: int) -> models.Reservation:
         """BUSCA UNA RESERVA POR SU IDENTIFICADOR UNICO."""
@@ -38,7 +67,7 @@ class ReservationRepository:
     def get_active_overlapping(db: Session, sucursal_nombre: str, desde_str: str, hasta_str: str, exclude_id: int = None):
         """RESERVAS ACTIVAS/PENDIENTES SOLAPADAS EN EL RANGO [desde, hasta) DE UNA SUCURSAL."""
         q = db.query(models.Reservation).filter(
-            models.Reservation.sucursal_nombre == sucursal_nombre,
+            ReservationRepository._sucursal_id_predicate(db, sucursal_nombre),
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
             models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
             models.Reservation.fecha_inicio < hasta_str,
@@ -53,7 +82,7 @@ class ReservationRepository:
         """RESERVA ACTIVA DE UNA PATENTE (normalizada) QUE SE SUPERPONE CON EL RANGO EN LA SUCURSAL."""
         q = db.query(models.Reservation).filter(
             func.replace(func.upper(models.Reservation.patente), ' ', '') == patente_norm,
-            models.Reservation.sucursal_nombre == sucursal_nombre,
+            ReservationRepository._sucursal_id_predicate(db, sucursal_nombre),
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
             models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
             models.Reservation.fecha_inicio < hasta_str,
@@ -68,7 +97,7 @@ class ReservationRepository:
         """RESERVA ACTIVA/PENDIENTE DEL USUARIO QUE SE SUPERPONE CON EL RANGO EN OTRA SUCURSAL."""
         return db.query(models.Reservation).filter(
             models.Reservation.user_id == user_id,
-            models.Reservation.sucursal_nombre != sucursal_nombre,
+            ReservationRepository._otra_sucursal_predicate(db, sucursal_nombre),
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
             models.Reservation.estado_pago.in_([PaymentStatus.PENDIENTE.value, PaymentStatus.PAGADO.value]),
             models.Reservation.fecha_inicio < hasta_str,
@@ -87,7 +116,7 @@ class ReservationRepository:
     def get_paid_current_by_sucursal(db: Session, sucursal_nombre: str, now_str: str):
         """RESERVAS PAGADAS EN VIGENCIA (ACTIVAS O PENDIENTES CON SU HORARIO ACTUAL) DE UNA SUCURSAL."""
         return db.query(models.Reservation).filter(
-            models.Reservation.sucursal_nombre == sucursal_nombre,
+            ReservationRepository._sucursal_id_predicate(db, sucursal_nombre),
             models.Reservation.estado_pago == PaymentStatus.PAGADO,
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_inicio <= now_str,
@@ -144,7 +173,7 @@ class ReservationRepository:
     def get_active_by_sucursal(db: Session, sucursal_nombre: str, now_str: str) -> models.Reservation:
         """RESERVA VIGENTE (PENDIENTE/ACTIVA Y FECHA FIN AUN NO VENCIDA) EN UNA SUCURSAL."""
         return db.query(models.Reservation).filter(
-            models.Reservation.sucursal_nombre == sucursal_nombre,
+            ReservationRepository._sucursal_id_predicate(db, sucursal_nombre),
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA]),
             models.Reservation.fecha_fin >= now_str
         ).first()
@@ -173,7 +202,7 @@ class ReservationRepository:
             models.Reservation.fecha_inicio <= now_str,
             models.Reservation.fecha_fin >= now_str
         ).filter(
-            (models.Reservation.sucursal_nombre == sucursal) | (models.Reservation.sucursal_nombre == None)
+            ReservationRepository._sucursal_id_predicate(db, sucursal, include_global=True)
         ).first()
 
     @staticmethod
@@ -182,7 +211,10 @@ class ReservationRepository:
         if estado:
             q = q.filter(models.Reservation.estado_reserva == estado)
         if staff_sucursal is not None:
-            if normalized_staff:
+            branch_id = BranchRepository.get_id_by_name(db, staff_sucursal)
+            if branch_id:
+                q = q.filter(models.Reservation.sucursal_id == branch_id)
+            elif normalized_staff:
                 staff_suc = staff_sucursal or ""
                 norm_col = func.trim(func.replace(func.lower(models.Reservation.sucursal_nombre), 'autopass ', ''))
                 norm_staff = staff_suc.lower().replace('autopass ', '').strip()
@@ -190,7 +222,7 @@ class ReservationRepository:
             else:
                 q = q.filter(models.Reservation.sucursal_nombre == staff_sucursal)
         elif sucursal:
-            q = q.filter(models.Reservation.sucursal_nombre == sucursal)
+            q = q.filter(ReservationRepository._sucursal_id_predicate(db, sucursal))
         return q
 
     @staticmethod

@@ -4,10 +4,11 @@ from typing import List, Optional
 import models, schemas
 from models.enums import UserRole
 from core.time import localnow
-from core.normalize import normalize_branch_name, same_branch
+from core.normalize import normalize_branch_name
 from repositories.support_repository import SupportRepository
 from repositories.notification_repository import NotificationRepository
 from repositories.user_repository import UserRepository
+from repositories.branch_repository import BranchRepository
 
 TERMINAL_STATES = {"resuelto", "resuelta", "cerrado", "cancelado"}
 
@@ -26,11 +27,17 @@ class SupportService:
             from services.user_notification_service import UserNotificationService
             staff = UserRepository.get_staff(db)
             if ticket.sucursal and ticket.sucursal != "General":
-                user_suc_norm = normalize_branch_name(ticket.sucursal)
-                admins = [
-                    a for a in staff
-                    if normalize_branch_name(a.sucursal or "") == user_suc_norm or a.rol == UserRole.ADMIN
-                ]
+                if ticket.sucursal_id is not None:
+                    admins = [
+                        a for a in staff
+                        if a.sucursal_id == ticket.sucursal_id or a.rol == UserRole.ADMIN
+                    ]
+                else:
+                    user_suc_norm = normalize_branch_name(ticket.sucursal)
+                    admins = [
+                        a for a in staff
+                        if normalize_branch_name(a.sucursal or "") == user_suc_norm or a.rol == UserRole.ADMIN
+                    ]
             else:
                 admins = [a for a in staff if a.rol == UserRole.ADMIN]
             if not admins:
@@ -93,20 +100,28 @@ class SupportService:
         all_tickets = SupportRepository.get_all_with_user(db)
 
         if current_user.rol != UserRole.ADMIN:
-            user_suc_norm = normalize_branch_name(current_user.sucursal)
-            tickets = [
-                t for t in all_tickets
-                if user_suc_norm and normalize_branch_name(t.sucursal) == user_suc_norm
-            ]
+            staff_suc_id = getattr(current_user, "sucursal_id", None)
+            if staff_suc_id is not None:
+                tickets = [t for t in all_tickets if t.sucursal_id == staff_suc_id]
+            else:
+                user_suc_norm = normalize_branch_name(current_user.sucursal)
+                tickets = [
+                    t for t in all_tickets
+                    if user_suc_norm and normalize_branch_name(t.sucursal) == user_suc_norm
+                ]
         else:
             if sucursal_filter == "TODAS":
                 tickets = all_tickets
             elif sucursal_filter and sucursal_filter not in ["General"]:
-                filter_norm = normalize_branch_name(sucursal_filter)
-                tickets = [
-                    t for t in all_tickets
-                    if normalize_branch_name(t.sucursal) == filter_norm
-                ]
+                branch_id = BranchRepository.get_id_by_name(db, sucursal_filter)
+                if branch_id:
+                    tickets = [t for t in all_tickets if t.sucursal_id == branch_id]
+                else:
+                    filter_norm = normalize_branch_name(sucursal_filter)
+                    tickets = [
+                        t for t in all_tickets
+                        if normalize_branch_name(t.sucursal) == filter_norm
+                    ]
             else:
                 tickets = [
                     t for t in all_tickets
@@ -177,12 +192,18 @@ class SupportService:
         """TRUE SI EL USUARIO TIENE JURISDICCION SOBRE EL TICKET (MISMA REGLA QUE EL LISTADO ADMIN)."""
         if current_user.rol == UserRole.ADMIN:
             return True
-        return same_branch(current_user.sucursal, ticket.sucursal)
+        # Migración por id: si ambas sedes tienen id resuelto, comparar por id.
+        staff_suc_id = getattr(current_user, "sucursal_id", None)
+        if staff_suc_id is not None and ticket.sucursal_id is not None:
+            return staff_suc_id == ticket.sucursal_id
+        # Fallback legacy (nombres): datos de prueba sin rama real o tickets globales.
+        user_suc_norm = normalize_branch_name(current_user.sucursal or "")
+        return bool(user_suc_norm and normalize_branch_name(ticket.sucursal or "") == user_suc_norm)
 
     @staticmethod
     def mark_ticket_notifications_read(db: Session, current_user: models.User, ticket_id: int) -> int:
-        """MARCA COMO LEIDAS LAS NOTIFICACIONES DE UN TICKET PARA EL ADMIN ACTUAL.
-        Respeta la jurisdiccion por sucursal (misma regla que el listado/detail)."""
+        """MARCA COMO LEÍDAS LAS NOTIFICACIONES DE UN TICKET PARA EL ADMIN ACTUAL.
+        Respeta la jurisdicción por sucursal (misma regla que el listado/detail)."""
         ticket = SupportRepository.get_by_id(db, ticket_id)
         if ticket and not SupportService._can_access_ticket(db, current_user, ticket):
             raise HTTPException(status_code=403, detail="No tenés permisos sobre tickets de otra sucursal")
@@ -303,11 +324,15 @@ class SupportService:
         all_tickets = SupportRepository.get_all(db)
 
         if current_user.rol != UserRole.ADMIN:
-            user_suc_norm = normalize_branch_name(current_user.sucursal or "")
-            scoped = [
-                t for t in all_tickets
-                if user_suc_norm and normalize_branch_name(t.sucursal or "") == user_suc_norm
-            ]
+            staff_suc_id = getattr(current_user, "sucursal_id", None)
+            if staff_suc_id is not None:
+                scoped = [t for t in all_tickets if t.sucursal_id == staff_suc_id]
+            else:
+                user_suc_norm = normalize_branch_name(current_user.sucursal or "")
+                scoped = [
+                    t for t in all_tickets
+                    if user_suc_norm and normalize_branch_name(t.sucursal or "") == user_suc_norm
+                ]
         else:
             # El super admin por defecto ve los tickets generales o sin sucursal (misma regla que get_admin_tickets)
             scoped = [

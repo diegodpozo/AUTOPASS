@@ -15,6 +15,8 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 def db():
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
+    db.add(ParkingBranch(nombre="Centro", direccion="d", horario="24hs"))
+    db.add(ParkingBranch(nombre="Sede", direccion="d", horario="24hs"))
     db.add(Settings(clave="precio_hora", valor=1500.0, sucursal="Centro"))
     db.add(Settings(clave="precio_30min", valor=750.0, sucursal="Centro"))
     db.commit()
@@ -98,11 +100,11 @@ def test_ocupacion_reservas_vigentes_cuenta_por_tipo(db):
 
 
 def test_calculate_branch_capacities_incluye_reservas_vigentes(db):
-    branch = ParkingBranch(nombre="Sede", direccion="Dir", horario="24hs")
+    branch = ParkingBranch(nombre="Otra Sede", direccion="Dir", horario="24hs")
     db.add(branch)
     db.commit()
-    db.add(ParkingAforo(sucursal="Sede", capacidad_total=20, capacidad_motos=10))
-    _reserva(db, sucursal="Sede", tipo="Moto")
+    db.add(ParkingAforo(sucursal="Otra Sede", capacidad_total=20, capacidad_motos=10))
+    _reserva(db, sucursal="Otra Sede", tipo="Moto")
     db.commit()
 
     caps = OccupancyService.calculate_branch_capacities(db, branch)

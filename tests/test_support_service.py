@@ -12,6 +12,12 @@ def db_session():
     Session = sessionmaker(bind=engine)
     session = Session()
 
+    session.add_all([
+        models.ParkingBranch(nombre="AUTOPASS Belgrano", direccion="d", horario="24hs"),
+        models.ParkingBranch(nombre="AUTOPASS Castelar", direccion="d", horario="24hs"),
+    ])
+    session.commit()
+
     # Seed test user
     user = models.User(
         nombre="Test",

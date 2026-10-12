@@ -25,6 +25,7 @@ def db():
     db = TestingSessionLocal()
     branch = ParkingBranch(nombre="Sucursal Central", direccion="Av. Test 123", horario="24hs", is_24h=True)
     db.add(branch)
+    db.add(ParkingBranch(nombre="Sucursal Dos", direccion="Av. Test 456", horario="24hs", is_24h=True))
     db.add(ParkingAforo(sucursal="Sucursal Central", capacidad_reservas_autos=2))
     for suc in ("Sucursal Central", "Sucursal Dos"):
         db.add(Settings(clave="precio_hora", valor=1500.0, sucursal=suc))
@@ -144,7 +145,6 @@ def test_create_admin_reservation_staff_no_cambia_sucursal(db):
 
 
 def test_create_admin_reservation_admin_si_cambia_sucursal(db):
-    db.add(ParkingBranch(nombre="Sucursal Dos", direccion="Av. Test 456", horario="24hs", is_24h=True))
     db.add(ParkingAforo(sucursal="Sucursal Dos", capacidad_reservas_autos=2))
     db.commit()
 
@@ -341,7 +341,6 @@ def test_edit_completada_rechazada(db):
 
 
 def test_edit_staff_no_puede_editar_otra_sucursal(db):
-    db.add(ParkingBranch(nombre="Sucursal Dos", direccion="Av. Test 456", horario="24hs", is_24h=True))
     db.add(ParkingAforo(sucursal="Sucursal Dos", capacidad_reservas_autos=2))
     db.commit()
 

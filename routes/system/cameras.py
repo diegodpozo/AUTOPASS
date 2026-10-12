@@ -12,7 +12,7 @@ from core.database import get_db
 from core.security import get_operational_user
 from core.alpr_security import require_alpr_node
 from core.logger import get_logger
-from routes.system.common import CAMERA_PROCESSES, CameraConfig, normalize_system_name
+from routes.system.common import CAMERA_PROCESSES, CameraConfig, normalize_system_name, misma_sucursal
 from routes.system.common import manager as video_manager
 from repositories.camera_repository import CameraRepository
 from repositories.settings_repository import SettingsRepository
@@ -159,7 +159,7 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
 def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     query = CameraRepository.get_all(db)
     if staff.rol != UserRole.ADMIN and staff.sucursal:
-        query = [c for c in query if normalize_system_name(c.sucursal) == normalize_system_name(staff.sucursal)]
+        query = [c for c in query if misma_sucursal(c, staff)]
     cameras = query
     res = []
     for c in cameras:
@@ -205,7 +205,7 @@ def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depe
     camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
-    if staff.rol != UserRole.ADMIN and normalize_system_name(camera.sucursal) != normalize_system_name(staff.sucursal):
+    if staff.rol != UserRole.ADMIN and not misma_sucursal(camera, staff):
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
     camera.nombre = data.nombre
     camera.tipo = data.tipo.upper()
@@ -235,7 +235,7 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db), staff: models.U
     camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
-    if staff.rol != UserRole.ADMIN and normalize_system_name(camera.sucursal) != normalize_system_name(staff.sucursal):
+    if staff.rol != UserRole.ADMIN and not misma_sucursal(camera, staff):
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
         
     norm_suc = normalize_system_name(camera.sucursal) if camera.sucursal else "GLOBAL"
@@ -261,7 +261,7 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
     camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
-    if staff.rol != UserRole.ADMIN and normalize_system_name(camera.sucursal) != normalize_system_name(staff.sucursal):
+    if staff.rol != UserRole.ADMIN and not misma_sucursal(camera, staff):
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
         
     norm_suc = normalize_system_name(camera.sucursal) if camera.sucursal else "GLOBAL"
