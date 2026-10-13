@@ -89,9 +89,9 @@ class ReservationPaymentsMixin:
         return {"status": "ok", "message": "Pago registrado", "monto": res.monto_total, "monto_a_cobrar": monto_a_cobrar, "descuento": descuento, "metodo_pago": res.metodo_pago}
 
     @staticmethod
-    def redemption_sucursal_clause(sucursal):
+    def redemption_sucursal_clause(db: Session, sucursal):
         """CLÁUSULA DE FILTRADO DE REDEMPTION TICKET POR SUCURSAL (delegada al repositorio)."""
-        return RedemptionRepository.redemption_sucursal_clause(sucursal)
+        return RedemptionRepository.redemption_sucursal_clause(db, sucursal)
 
     @staticmethod
     def validate_redemption_ticket(db: Session, user_id: int, redemption_ticket_id: int, sucursal: str = None) -> models.RedemptionTicket:

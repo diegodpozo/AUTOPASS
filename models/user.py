@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, Chec
 from sqlalchemy.orm import relationship
 from core.database import Base
 from models.types import DateTimeAsStr
+from models.branch_ref import branch_ref_property
 import datetime
 
 
@@ -26,13 +27,16 @@ class User(Base):
     direccion = Column(String, nullable=True)
     password_hash = Column(String)
     rol = Column(String, default="user") #'ADMIN', 'LOCAL_ADMIN', 'STAFF', 'USER'
-    sucursal = Column(String, nullable=True) #NONE PARA ADMIN GLOBAL, O NOMBRE DE LA SEDE
+    sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_users_sucursal_id_branch",
+                                             onupdate="CASCADE"), nullable=True, index=True)
     puntos_acumulados = Column(Integer, default=0)
     saldo = Column(Float, default=0.0)
     is_blocked = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
 
     # RELACIONES
+    branch = relationship("ParkingBranch", lazy="joined")
+    sucursal = branch_ref_property()
     vehicles = relationship("Vehicle", back_populates="owner")
     reservations = relationship("Reservation", back_populates="user")
     points_logs = relationship("PointsLog", back_populates="user")
@@ -76,11 +80,8 @@ class Promotion(Base):
     icono = Column(String, default="fas fa-gift")
     categoria = Column(String, default="Beneficio")
     activa = Column(Boolean, default=True, server_default="1")
-    sucursal = Column(
-        String,
-        ForeignKey("parking_branches.nombre", name="fk_promotions_sucursal_branch",
-                   onupdate="CASCADE", ondelete="CASCADE"),
-        nullable=True) # NONE PARA GLOBAL, O NOMBRE DE LA SEDE
+    sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_promotions_sucursal_id_branch",
+                                             onupdate="CASCADE", ondelete="CASCADE"), nullable=True, index=True)
     # TIPO DE CANJE: 'descuento_reserva' (% de descuento en estacionamiento, impacta en pago)
     #                o 'voucher' (genera un ticket con QR, sin validación automática)
     tipo_canje = Column(String, default="voucher")
@@ -90,6 +91,9 @@ class Promotion(Base):
     direccion = Column(String, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+
+    branch = relationship("ParkingBranch", lazy="joined")
+    sucursal = branch_ref_property()
 
 class RedemptionTicket(Base):
     """VOUCHER/TICKET PERSISTENTE GENERADO AL CANJEAR PUNTOS POR UN BENEFICIO."""
@@ -103,7 +107,8 @@ class RedemptionTicket(Base):
     tipo_canje = Column(String, default="voucher")     # SNAPSHOT DEL TIPO DE CANJE
     valor_descuento = Column(Integer, nullable=True)   # SNAPSHOT DEL % SI APLICA
     icono = Column(String, default="fas fa-gift")
-    sucursal = Column(String, nullable=True)           # SEDE (global o especifica)
+    sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_redemption_tickets_sucursal_id_branch",
+                                             onupdate="CASCADE"), nullable=True, index=True)
     estado = Column(String, default="VIGENTE")         # VIGENTE / USADO / CANCELADO
     qr_data = Column(String)                           # CONTENIDO DEL QR (AUTOPASS_REDEMPTION|...)
     observacion = Column(String, nullable=True)        # 'Válido por 30 días' etc.
@@ -117,6 +122,8 @@ class RedemptionTicket(Base):
     longitude = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="redemption_tickets")
+    branch = relationship("ParkingBranch", lazy="joined")
+    sucursal = branch_ref_property()
 
     @property
     def fecha_vencimiento(self):

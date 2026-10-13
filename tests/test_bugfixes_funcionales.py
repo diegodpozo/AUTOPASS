@@ -26,6 +26,8 @@ def db(monkeypatch):
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     session = sessionmaker(bind=engine, autoflush=False, autocommit=False)()
     Base.metadata.create_all(bind=engine)
+    session.add(models.ParkingBranch(nombre=SUCURSAL, direccion="x", telefono="1", latitude=-34.6, longitude=-58.4))
+    session.flush()
     session.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal=SUCURSAL))
     session.add(models.Settings(clave="precio_30min", valor=750.0, sucursal=SUCURSAL))
     session.commit()
@@ -35,8 +37,9 @@ def db(monkeypatch):
 
 
 def _sucursal(db):
-    db.add(models.ParkingBranch(nombre=SUCURSAL, direccion="x", telefono="1", latitude=-34.6, longitude=-58.4))
-    db.commit()
+    if not db.query(models.ParkingBranch).filter(models.ParkingBranch.nombre == SUCURSAL).first():
+        db.add(models.ParkingBranch(nombre=SUCURSAL, direccion="x", telefono="1", latitude=-34.6, longitude=-58.4))
+        db.commit()
 
 
 def _usuario(db, puntos=0):

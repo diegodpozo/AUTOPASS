@@ -23,6 +23,10 @@ def session_factory():
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(bind=engine)
     S = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    _db = S()
+    _db.add(models.ParkingBranch(nombre="AUTOPASS Central", direccion="Av. Central 100", horario="24hs"))
+    _db.commit()
+    _db.close()
     yield S
     engine.dispose()
 
@@ -127,7 +131,7 @@ def test_lista_descuentos_devuelve_tickets_vigentes(session_factory):
 
 def test_clausula_sucursal_delegada_al_repo(session_factory):
     db = session_factory()
-    clause = ReservationPaymentsMixin.redemption_sucursal_clause("AUTOPASS Central")
+    clause = ReservationPaymentsMixin.redemption_sucursal_clause(db, "AUTOPASS Central")
     assert clause is not None
 
 
@@ -289,7 +293,7 @@ def test_pay_reserva_success_con_descuento(session_factory, monkeypatch):
     assert len(sent) == 1
     assert sent[0][0] == user.email
     assert sent[0][2]["costo"] == 900.0
-    assert sent[0][2]["direccion"] == "Dirección no disponible"
+    assert sent[0][2]["direccion"] == "Av. Central 100. 24hs."
 
 
 def test_pay_reserva_no_horaria_iniciada_reserva_plaza(session_factory, monkeypatch):

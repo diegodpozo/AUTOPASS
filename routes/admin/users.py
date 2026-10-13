@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from typing import List
 import models, schemas
 from core.database import get_db
 from core.limiter import limiter, admin_rate_limit
@@ -38,7 +39,7 @@ def validate_staff_role_assignment(admin: models.User, nuevo_rol):
         )
 
 
-@router.get("/users")
+@router.get("/users", response_model=List[schemas.UserBase])
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """RETORNA LA LISTA DE USUARIOS. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES REGISTRADOS."""
     all_users = UserRepository.get_all_active(db)
@@ -52,7 +53,7 @@ def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_l
     return all_users
 
 
-@router.post("/users", dependencies=[Depends(admin_rate_limit)])
+@router.post("/users", response_model=schemas.UserBase, dependencies=[Depends(admin_rate_limit)])
 def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """PERMITE AL ADMINISTRADOR CREAR UN NUEVO USUARIO. LOS LOCALES SOLO CREAN PARA SU SEDE."""
     if str(admin.rol) != UserRole.ADMIN.value:

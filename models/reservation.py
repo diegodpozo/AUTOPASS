@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, Chec
 from sqlalchemy.orm import relationship
 from core.database import Base
 from models.types import DateTimeAsStr
+from models.branch_ref import branch_ref_property
 
 class Reservation(Base):
     """REGISTRO DE ESTADIAS PROGRAMADAS O RECURRENTES."""
@@ -24,7 +25,8 @@ class Reservation(Base):
     mp_preference_id = Column(String, nullable=True) # ID DE INTEGRACION CON MERCADO PAGO
     estado_pago = Column(String, default="Pendiente")
     estado_reserva = Column(String, default="Pendiente")
-    sucursal_nombre = Column(String, nullable=True, index=True)
+    sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_reservations_sucursal_id_branch",
+                                             onupdate="CASCADE"), nullable=True, index=True)
     sucursal_info = Column(String, nullable=True)
     tipo_estadia = Column(String, default="hora")
     cliente_nombre = Column(String, nullable=True)
@@ -35,3 +37,5 @@ class Reservation(Base):
 
     user = relationship("User", back_populates="reservations")
     access_logs = relationship("AccessLog", back_populates="reservation")
+    branch = relationship("ParkingBranch", lazy="joined")
+    sucursal_nombre = branch_ref_property()

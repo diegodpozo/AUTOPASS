@@ -119,6 +119,11 @@ def client(node_secret):
     )
     Base.metadata.create_all(bind=engine)
     TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    _db = TestSession()
+    for _n in ("Centro", "Sur"):
+        _db.add(models.ParkingBranch(nombre=_n, direccion="d", horario="24hs"))
+    _db.commit()
+    _db.close()
 
     def override_get_db():
         db = TestSession()

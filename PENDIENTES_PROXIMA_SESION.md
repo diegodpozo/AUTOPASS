@@ -3,7 +3,7 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 12/10/2026
 
-## Popup de salida impaga (ALPR) — APLICADO 12/10/2026 (pendiente de commit/push)
+## Popup de salida impaga (ALPR) — APLICADO 12/10/2026 (COMMITEADO v9.34.89)
 
 - Pedido del usuario: cuando un vehículo intente salir **sin pago** por el **lector de
   patente (ALPR)**, mostrar en el dashboard un popup con: nombre del usuario (o
@@ -41,29 +41,70 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
   (813 + 9 tests nuevos en `test_access_flow.py`, `test_notifications.py`,
   `test_status_ws.py`).
 - **PENDIENTE**: verificación en runtime real (navegador) del popup end-to-end con el
-  nodo ALPR; commit/push. Mensaje propuesto: `v9.34.89: popup de salida impaga ALPR con
-  cobro en caja y apertura de barrera`.
+  nodo ALPR. Commit local hecho en `f4c44ce` (`v9.34.89`, integrado con el refactor de
+  `origin/main`).
 
-## Columnas legacy `sucursal_id` (Neon) — ANALIZADO Y RESTAURADO 11/10/2026 (pendiente decisión)
+## Refactor "sucursal por id" — APLICADO, PUSHEADO (`df7003c`) y Neon ALINEADA (12/10/2026)
 
-- **Hallazgo**: 9 tablas de Neon tenían una columna `sucursal_id` (+ índice
-  `ix_<tabla>_sucursal_id` + FK `fk_<tabla>_sucursal_id_branch` →
-  `parking_branches(id)` `ON UPDATE CASCADE`), heredada de ~v7.9.0. El código actual
-  **no la referencia en ningún punto** (búsqueda `sucursal_id` = 0 en py/js/html/json/md);
-  los modelos referencian la sede por **nombre** (`sucursal` con FK a
-  `parking_branches.nombre`).
-- Se **dropearon** las 9 (FK + índice + columna) como DDL out-of-band, y luego se
-  **restauraron** a pedido del usuario. Estado actual: **restauradas tal cual** (columna +
-  datos + FK + índice), idénticas al hallazgo.
-- **Backup** conservado: `backup_sucursal_id_legacy` (12.631 filas: `tabla, fila_id, sucursal_id`).
-- **Sin migración Alembic**: estas columnas nunca estuvieron en la cadena (una de drop
-  rompería la reproducibilidad desde cero).
-- **Refactor evaluado** (usar `id` en vez de `nombre`): ~1.780 refs en ~151 archivos
-  (models 4, services 14, repos 8, routes 18, schemas 4, static 44, templates 21, tests 35).
-  **Decisión pendiente**: refactor completo a `id` (alto esfuerzo) vs. endurecer el enfoque
-  por `nombre` (agregar FKs faltantes, bajo esfuerzo) vs. dejar el híbrido actual.
+- **Objetivo cumplido**: TODA referencia a sede en las tablas dependientes se guarda por
+  `sucursal_id`; el nombre vive SOLO en `parking_branches`. Se eliminó `propagate_rename`
+  (`repositories/branch_repository.py`, `services/branch_service.py`): renombrar una sede ya
+  no toca ninguna otra tabla.
+- **Traductor central** (`models/branch_ref.py`, nuevo): hybrid `branch_ref_property(default)`
+  expone el nombre para display y permite seguir haciendo `Modelo.sucursal == x` (se traduce a
+  un subselect sobre `parking_branches`); el setter posterga la traducción y un `before_flush`
+  resuelve nombre→id una sola vez por flush, **por nombre normalizado** (ignora prefijo
+  `AUTOPASS `, mayúsculas y acentos → "AUTOPASS Centro" y "Centro" apuntan a la misma sede).
+  Nombre inexistente → `sucursal_id = NULL`; queda un fallback en memoria
+  (`_sucursal_fallback`) para display/comparación dentro de la misma sesión.
+- **Modelos** (9) sin columnas de nombre, con `branch = relationship("ParkingBranch", lazy="joined")`:
+  `parking_aforo`, `settings`, `parking_cameras`, `promotions`, `reservations`, `access_logs`,
+  `support_tickets`, `support_ticket_messages`, `users`. Eliminado `models/branch_id_sync.py`.
+  `_sucursal_predicate` estricto (`false()` si la sede no existe) en `settings_repository` y
+  `promotion_repository`; serialización API por `response_model` (`routes/admin/users.py`).
+- **Migraciones nuevas** (aplicadas a Neon el 12/10/2026):
+  `d1e2f3a4b5c6_add_sucursal_id_dependencias`, `f5a6b7c8d9e0_add_sucursal_id_tablas_config`,
+  `c3d4e5f6a7b8_drop_sucursal_nombre_columns` (dropea las 9 columnas de nombre + índices/FKs por
+  nombre; recrea `ix_access_logs_pat_tipo_suc_fecha` y `uq_settings_clave_sucursal` sobre
+  `sucursal_id`) y `e1f2a3b4c5d6_merge_sucursal_id_chain_y_drop_legacy_` (merge de la cadena con la
+  de MarianoJAC). Backfill 100% verificado; head único; `test_schema_parity_p2` verde.
+- **Merge de `origin/main`** (12 commits, `8253ddc` → `8230f4c`): conflictos resueltos en
+  `services/support_service.py` (`_can_access_ticket` id-first + se conservó
+  `mark_ticket_notifications_read` de Mariano) y en este doc; revisados los archivos
+  auto-mergeados (reservation/promotion repositories, users, tests).
+- **Suite completa: 822 passed, 0 fallos** (los 5 archivos que antes colgaban por serial ya no
+  se excluyen; `tests/conftest.py` setea `SERIAL_ENABLED=False`). Fixtures sembradas con
+  `ParkingBranch` donde faltaba (reservas, ocupación, pagos, bugfixes, notificaciones,
+  promociones, settings, users, cámaras, health, soporte). Nota operación: `git stash@{0}`
+  (refactor WIP pre-merge) quedó retenido tras el `pop`; se puede dropear.
 
-## Paginador de reservas admin — APLICADO 11/10/2026 (pendiente de commit/push)
+### Estado (cerrado 12/10/2026)
+1. **Neon ALINEADA 12/10/2026** (autorizado por el usuario):
+   - **Backups ELIMINADOS 12/10/2026**: las 11 tablas `backup_refactor_id_*` (9 tablas + `branches`
+     + `alembic`, ~13210 filas) fueron **dropeadas** en Neon tras verificar el refactor (backfill
+     100%, head único, suite 822 passed y pruebas de movimientos OK). Ningún código las referenciaba.
+   - **Backfill**: 34 filas insertadas tras F1/F4 quedaron sin `sucursal_id` (14 `access_logs`
+     'Castelar', 20 `redemption_tickets` 'Morón') → se completaron con el id derivado del nombre
+     normalizado. Los 66 `support_tickets` 'General' quedan `sucursal_id NULL` (tickets globales,
+     centinela del hybrid `default="General"`), igual que users/settings/promotions/aforo globales.
+   - `alembic_version` pasó de `b8f1c2d3e4a5` (fantasma) a marcado doble `{f5a6b7c8d9e0,
+     f9a8b7c6d5e4}` (ambas ramas aplicadas) y `upgrade head` corrió `c3d4e5f6a7b8` + `e1f2a3b4c5d6`.
+   - Resultado: head único `e1f2a3b4c5d6`; las 9 columnas de NOMBRE eliminadas; `sucursal_id`
+     presente con FK por id en las 9 tablas; 0 huérfanos (`NOT EXISTS` a `parking_branches`);
+     `ix_access_logs_pat_tipo_suc_fecha` recreado sobre `sucursal_id` y `uq_settings_clave_sucursal`
+     sobre `COALESCE(sucursal_id,-1)`; conteos intactos (12298 logs, 175 reservas, etc.).
+     Así el `alembic upgrade head` ya NO falla (antes: `Can't locate revision 'b8f1c2d3e4a5'`).
+   - Nota: `parking_cameras.orden` sigue en Neon pero no está en el modelo (columna legacy previa;
+     SQLAlchemy la ignora — no es parte del refactor).
+2. **Commit/push** del refactor: **HECHO** en `df7003c` ("NORMALIZACION DE BASE CON ID PARA NOMBRES DE SUCURSALES").
+3. **Todos los backups `backup*` de Neon ELIMINADOS 12/10/2026** (15 tablas: `backup_refactor_id_*`
+   ×11, `backup_users`, `backup_vehicles`, `backup_reservations`, `backup_access_logs`,
+   `backup_parking_cameras`, `backup_support_tickets`, `backup_fechas_pre_ts`,
+   `backup_f9_support_reply`, `backup_h6_*` ×5, `backup_sucursal_id_legacy`). Verificado: ningún
+   código/dato las referenciaba (solo este doc) y el refactor quedó verificado (backfill 100% +
+   suite 822 passed + pruebas de movimientos OK).
+
+## Paginador de reservas admin — APLICADO Y PUSHEADO en v9.34.87 (`28b5045`, 11/10/2026)
 
 - Pedido del usuario: en "REGISTRO DE RESERVAS" (dashboard admin) reemplazar el toggle
   "Ver todas las reservas (N)" por una **barra navegadora de 10 por página**.
@@ -95,8 +136,8 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
   reales + 5 relleno (border suprimido, `borderBottomStyle: none`); búsqueda "AE114RA" → 4 páginas,
   "Teresa" → 2 páginas (sin relleno en página full), sin resultados → estado vacío sin pager.
   Guards 8/8 sin `--update`/`--allow` (color_equivalence exacto 0/255), suite **813 passed**.
-- **PENDIENTE**: commit/push. Mensaje propuesto: `v9.34.87: paginador de 10 por pagina en registro de
-  reservas admin (estilo del proyecto) y altura de card estable`.
+- **COMMITEADO y PUSHEADO en v9.34.87 (`28b5045`, 11/10/2026)**: mensaje `v9.34.87: paginador de 10
+  por pagina en registro de reservas admin (estilo del proyecto) y altura de card estable`.
 
 ## Follow-ups post v9.34.85 — APLICADO y PUSHEADO 11/10/2026 (v9.34.86, `8b04563`)
 
@@ -184,7 +225,7 @@ reportados; el usuario eligió **A1–A6** (B7/B8/B9/B10 NO se tocaron).
   `valor_descuento = Field(default=None, ge=1, le=100)`. Tests de 422 en
   `test_admin_promotions.py`.
 
-## F2 de AUDITORIA_VALIDACIONES — APLICADO 10/10/2026 (pendiente de commit/push)
+## F2 de AUDITORIA_VALIDACIONES — APLICADO Y PUSHEADO en `16ef01e` (10/10/2026)
 
 - **V4-whitelist**: `ALLOWED_SETTINGS_KEYS` en `routes/admin/settings.py` (18 tarifas
   `precio_*` × Auto/Moto/Camioneta + 7 claves `capacidad_*`); `update_price` rechaza claves
@@ -266,13 +307,14 @@ reportados; el usuario eligió **A1–A6** (B7/B8/B9/B10 NO se tocaron).
   `reservations`. `billing_service._tipo_key` y `report_repository` normalizan en comparaciones.
 - **Migración Neon aplicada** con backups por tabla (`backup_users`, `backup_vehicles`,
   `backup_reservations`, `backup_access_logs`, `backup_parking_cameras`, `backup_support_tickets`).
-  Antes de descartar los backups, confirmar que los reportes corren bien.
+  **Backups ELIMINADOS 12/10/2026**: reportes y suite OK → se dropearon estas 6 junto al resto de
+  las tablas `backup*` de Neon (ver sección del refactor `sucursal por id`).
 - Archivos backend/front/scripts/tests tocados (ver git log del commit). NADA de Arduino,
   firmware (`.ino`), `hardware_service`, MQTT, ALPR pipeline o config de cámaras fue modificado.
 
 ## H6 (datos Neon) — RESUELTO 08/10/2026 (los 7 ítems aplicados/decididos)
 
-Backups en Neon `backup_h6_*`:
+Backups en Neon `backup_h6_*` (ELIMINADOS 12/10/2026):
 
 1. **RESUELTO**: reservas huérfanas 79 y 84 eliminadas (0 referencias) → `backup_h6_reservaciones`.
 2. **RESUELTO**: 62 pagadas sin `fecha_pago` → completadas con `fecha_pago = fecha_inicio`
@@ -295,7 +337,7 @@ Backups en Neon `backup_h6_*`:
   estricto por sede → la modalidad quincena daba 409). Verificado: 15 filas quincena por sede.
 - La caché de tarifas (`ttl_cache`, 300 s) no cachea misses → los rates nuevos aplican ya.
 
-## Pendiente tests / CI (entorno)
+## Tests / CI (entorno) — RESUELTO 11/10/2026
 
 - **2 tests SI fallaban (pre-existentes, de commits remotos) — YA CORREGIDOS y pusheados en
   `f07494a`**:
@@ -316,7 +358,7 @@ Backups en Neon `backup_h6_*`:
   Verificado pasando con `MP_ACCESS_TOKEN=""` y suite completa `782 passed`.
   **Commiteado y pusheado en `2185ffe`.**
 
-## Pendiente auditorías: implementar remediación
+## Auditorías — remediación RESUELTA (VALIDACIONES F1–F3 y RBAC R1–R10)
 
 - **AUDITORIA_VALIDACIONES.md** (commit `e637bd4`): 12 hallazgos V1–V12 aún vigentes en el código.
   Plan F1 (críticos), F2 (simetría), F3 (defensa en profundidad) documentado. **No se tocó código
@@ -376,5 +418,7 @@ Backups en Neon `backup_h6_*`:
   migrate2.py, copy_tarifas.py, collision_check.py, migrate_orden.py, migrate_orden2.py,
   cams_final.py, verify_final.py, borrar_logs3.py, find_lost_cams.py, restore_cams.py).
   Recrearlos si se necesitan.
+- **Backups de Neon:** al 12/10/2026 **no queda ninguna tabla `backup*`** (todas dropeadas tras
+  verificar el refactor y las migraciones; ningún código ni modelo las referenciaba).
 - Regla AGENTS: no commitear/pushear sin pedido expreso. Antes de `git pull`, revisar si hay
   cambios de BD (`*.db`) en el remoto; si el schema NO cambió, preservar BD local.

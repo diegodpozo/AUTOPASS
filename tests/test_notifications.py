@@ -273,6 +273,9 @@ def test_onsite_stay_payment_emits_notifications(db_session: Session):
     db_session.add(vehicle)
     db_session.commit()
 
+    db_session.add(models.ParkingBranch(nombre="AUTOPASS Morén", direccion="x", telefono="1", latitude=-34.6, longitude=-58.4))
+    db_session.commit()
+
     now_str = (datetime.datetime.now() - datetime.timedelta(hours=2)).isoformat()
     log = models.AccessLog(patente_detectada="AC123BD", tipo_evento="ENTRADA", sucursal="AUTOPASS Morén", tipo_vehiculo="Auto", fecha_hora=now_str, pago_confirmado=False)
     db_session.add(log)

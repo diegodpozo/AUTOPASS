@@ -217,6 +217,7 @@ def test_rates_globales_deriva_30min_de_hora(client):
 def test_rates_sucursal_no_hereda_globales(client):
     c, db_factory = client
     db = db_factory()
+    db.add(models.ParkingBranch(nombre="Centro", direccion="d", horario="24hs"))
     db.add(models.Settings(clave="precio_hora", valor=1800.0, sucursal=None))
     db.add(models.Settings(clave="precio_hora", valor=2200.0, sucursal="Centro"))
     db.add(models.Settings(clave="precio_dia", valor=17000.0, sucursal="Centro"))
@@ -232,6 +233,7 @@ def test_rates_sucursal_no_hereda_globales(client):
 def test_rates_sucursal_sin_tarifario_devuelve_vacio(client):
     c, db_factory = client
     db = db_factory()
+    db.add(models.ParkingBranch(nombre="Centro", direccion="d", horario="24hs"))
     db.add(models.Settings(clave="precio_hora", valor=2200.0, sucursal="Centro"))
     db.commit()
     db.close()

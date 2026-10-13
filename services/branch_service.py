@@ -131,15 +131,10 @@ class BranchService:
         old_prefix = normalize_system_name(old_nombre)
         new_prefix = normalize_system_name(new_nombre)
 
-        # Renombrar la sede PRIMERO (+ flush) para que en Postgres el ON UPDATE CASCADE
-        # de las FKs (aforo, settings, camaras, promos) ya las deje en el nuevo nombre.
-        # Luego propagate_rename cubre el resto (users, reservations, access_logs,
-        # support_tickets) y, en SQLite (FKs no activas), tambien las tablas de config.
+        # El nombre vive SOLO en parking_branches; las tablas dependientes referencian
+        # por `sucursal_id` (no cambia), asi que basta con renombrar la sede.
         branch.nombre = new_nombre
         db.flush()
-
-        # Propagar el cambio de nombre a tablas dependientes
-        BranchRepository.propagate_rename(db, old_nombre, new_nombre)
 
         # El gate_id/WS de cada cámara se compone con el prefijo normalizado del nombre
         # de sucursal. Si el prefijo cambia, remapear las claves legacy CAMERA_SOURCE_* y

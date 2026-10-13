@@ -41,6 +41,7 @@ def test_calculate_total_amount_sin_tarifario_devuelve_none(db):
     assert monto is None
 
 def test_get_rate_estricta_por_sucursal(db):
+    db.add(models.ParkingBranch(nombre="Centro", direccion="d", horario="24hs"))
     db.add(models.Settings(clave="precio_hora", valor=1800.0, sucursal=None))
     db.add(models.Settings(clave="precio_hora", valor=2200.0, sucursal="Centro"))
     db.commit()
