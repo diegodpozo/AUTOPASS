@@ -2,6 +2,10 @@
   "_nota": "Archivos cuyo cambio de color es INTENCIONAL. check_color_equivalence.py los omite SOLO cuando --against es el padre del commit registrado, que es el caso en que se valida recien ese commit. En cualquier otra comparacion se comparan normales, para que una regresion posterior en el mismo archivo siga saltando.",
   "_schema": "Un solo registro por ruta. Si un archivo vuelve a cambiar de color a proposito, su registro anterior se REEMPLAZA: `files` es un dict, asi que la clave repetida se descarta en silencio al parsear. Por eso los motivos de un mismo archivo no se acumulan, y el commit del registro viejo sale del conjunto de padres que usa el guard. Para conservar el historial habria que pasar `files` a lista de entradas {commit, file, motivo} y ajustar committed_allowlist().",
   "files": {
+    "static/css/pages/dashboard/dashboard-admin-tour.css": {
+      "commit": "aa87495",
+      "motivo": "v9.34.91: se borraron .admin-help-modal-header/-icon-box/-title/-subtitle al migrar #modal-admin-help a la banda compartida de components/modal_header.html."
+    },
     "static/css/pages/dashboard/dashboard-settings.css": {
       "commit": "5c51f00",
       "motivo": "v9.34.90: se elimino el fondo azul #111424 (rgba(17,20,36)) de #camera-tipo/#camera-sucursal y el #fff de su texto, para que usen el .select-premium estandar. En el mismo commit los modales de camara/nivel se reescribieron con el shell de nueva reserva."
@@ -23,8 +27,8 @@
       "motivo": "v9.34.71: override de #section-puntos .welcome-msg h1 eliminado con el saludo unificado."
     },
     "static/css/pages/profile/profile-reservations.css": {
-      "commit": "327a762",
-      "motivo": "v9.34.73: .select-wrapper-premium se movio completo a components/select-field.css. De este archivo salen #111, #222 y #fff (el bloque entero de 57 lineas). Ningun color CAMBIO de valor, se fueron: multiset_delta empareja cada color con el mas cercano del otro lado, asi que una baja de conteo sin sustitucion da delta 0 y el guard lo cuenta como neutro. Esta entrada queda como registro, no se consulta."
+      "commit": "aa87495",
+      "motivo": "v9.34.91: se elimino el header propio del modal #modal-edit-resumo (.edit-resumo-header/-icon/-text*) al migrarlo a la banda compartida de components/modal_header.html; se quito tambien el padding:30px de su .modal-content, porque ahora la banda/body aportan el espaciado. Bajan los colores dorados/blancos que tenia ese header."
     },
     "static/css/pages/profile/profile-help.css": {
       "commit": "327a762",
