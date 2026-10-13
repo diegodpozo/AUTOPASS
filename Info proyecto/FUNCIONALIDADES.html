@@ -593,7 +593,7 @@
       <strong>services/billing_service.py</strong> &mdash; Motor de Tarifas y Fidelización
       <p>Contiene los algoritmos para calcular los precios de las estadías y gestionar la acreditación de puntos de beneficio.</p>
       <span class="func-detail"><strong>Cálculo de Deuda de Estadía (<code>calculate_debt</code>):</strong>
-        <br>Cuando un vehículo llega a la barrera de salida, el servicio calcula el tiempo transcurrido desde su entrada. Redondea el tiempo hacia arriba en fracciones de 1 hora (el mínimo a cobrar es 1 hora). Consulta las tarifas dinámicas vigentes de la sucursal y el tipo de vehículo (las motos tienen descuento, las camionetas un recargo) y devuelve el monto final a pagar.
+        <br>Cuando un vehículo llega a la barrera de salida, el servicio calcula el tiempo transcurrido desde su entrada. Aplica la <strong>regla escalonada por bloques de 30 min que alterna tarifa hora y fracción</strong>: <code>n = ceil(minutos / 30)</code> (mínimo 1); si <code>n == 1</code> cobra la fracción de 30 min, y si <code>n &gt;= 2</code> cobra <code>(n // 2) * hora + ((n - 1) // 2) * fraccion</code> (helper <code>hourly_amount_from_rates</code>). Consulta las tarifas dinámicas vigentes de la sucursal y el tipo de vehículo (las motos tienen descuento, las camionetas un recargo) y devuelve el monto final a pagar.
       </span>
       <span class="func-detail"><strong>Programa de puntos (Fidelización):</strong>
         <br>Al completarse un pago de estadía o reserva, el método <code>calculate_points()</code> acredita automáticamente 10 puntos de fidelidad en la cuenta del usuario por cada $1000 abonados (monto / 100).

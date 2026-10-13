@@ -672,13 +672,24 @@
             <tr><th>Concepto</th><th>Qué es</th></tr>
           </thead>
           <tbody>
-            <tr><td>Fracción 30 min</td><td>El precio del primer media hora. La estadía arranca con este valor.</td></tr>
-            <tr><td>Valor hora</td><td>Lo que se cobra por cada hora completa.</td></tr>
+            <tr><td>Fracción 30 min</td><td>El precio de la media hora. Se cobra en los primeros 30 min y en los tramos de 30 min que alternan con la hora.</td></tr>
+            <tr><td>Valor hora</td><td>El precio de la primera hora completa. La estadía arranca con la fracción, salta a la hora y después alterna: 30 min, 1 hora, 30 min…</td></tr>
             <tr><td>Estadía diaria</td><td>Tarifa por día.</td></tr>
             <tr><td>Abono semanal</td><td>Tarifa por semana.</td></tr>
             <tr><td>Abono mensual</td><td>Tarifa por mes.</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="aviso dato">
+        <span class="titulo">Cómo se cobra una estadía por hora</span>
+        <p>
+          El sistema cobra por bloques de media hora, pero combinando las dos tarifas: arranca con
+          la <strong>Fracción 30 min</strong>, a los 30 min salta al <strong>Valor hora</strong> y
+          después alterna media hora, una hora, media hora… Por ejemplo, con fracción de $500 y hora
+          de $1.300, una estadía de 1 h 30 min cuesta $1.800. Los períodos largos (día, semana,
+          quincena, mes) no usan esta regla.
+        </p>
       </div>
 
       <ol class="pasos">
@@ -757,7 +768,7 @@
         <li>Elegí la <strong>categoría o tipo</strong> (por ejemplo, entrada o salida).</li>
         <li>Cargá la <strong>dirección IP o origen del video</strong>.</li>
         <li>Elegí la <strong>sucursal o sede</strong>.</li>
-        <li>Presioná <strong>GUARDAR CÁMARA</strong>.</li>
+        <li>Presioná <strong>GUARDAR</strong> (si es una cámara nueva) o <strong>ACTUALIZAR</strong> (si la estás editando).</li>
       </ol>
 
       <p>

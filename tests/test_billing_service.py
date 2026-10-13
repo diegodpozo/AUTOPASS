@@ -30,8 +30,35 @@ def test_calculate_total_amount_hora(db):
         db, "hora", "2026-06-12T10:00:00", "2026-06-12T12:00:00", 
         tipo_vehiculo=VehicleType.AUTO
     )
-    #2 HORAS = 4 BLOQUES DE 30 MIN = 3000
-    assert monto == 3000.0
+    #2 HORAS = 4 BLOQUES -> 2 HORAS + 1 FRACCION = 2*1500 + 750
+    assert monto == 3750.0
+
+
+@pytest.mark.parametrize("horas,esperado", [
+    (0.5, 750.0),    # 1 BLOQUE -> FRACCION
+    (0.75, 1500.0),  # 2 BLOQUES -> HORA (REEMPLAZA LA FRACCION)
+    (1.0, 1500.0),   # 2 BLOQUES -> HORA
+    (1.25, 2250.0),  # 3 BLOQUES -> HORA + FRACCION
+    (1.5, 2250.0),   # 3 BLOQUES -> HORA + FRACCION
+    (2.0, 3750.0),   # 4 BLOQUES -> 2 HORAS + FRACCION
+    (2.5, 4500.0),   # 5 BLOQUES -> 2 HORAS + 2 FRACCIONES
+])
+def test_calculate_hourly_amount_escalonado(db, horas, esperado):
+    db.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal=None))
+    db.add(models.Settings(clave="precio_30min", valor=750.0, sucursal=None))
+    db.commit()
+    assert BillingService.calculate_hourly_amount(db, horas) == esperado
+
+
+def test_hourly_amount_from_rates_fallbacks(db):
+    # SOLO HORA -> FRACCION = HORA / 2
+    assert BillingService.hourly_amount_from_rates(0.5, 1000.0, None) == 500.0
+    assert BillingService.hourly_amount_from_rates(1.25, 1000.0, None) == 1500.0
+    # SOLO FRACCION -> HORA = FRACCION * 2
+    assert BillingService.hourly_amount_from_rates(1.25, None, 400.0) == 1200.0
+    # SIN TARIFAS -> NONE
+    assert BillingService.hourly_amount_from_rates(1.0, None, None) is None
+
 
 def test_calculate_total_amount_sin_tarifario_devuelve_none(db):
     monto = BillingService.calculate_total_amount(

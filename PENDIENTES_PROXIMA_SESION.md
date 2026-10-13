@@ -3,6 +3,54 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 13/10/2026
 
+## Configuración de Monitoreo (cards + modales de cámara/nivel) — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
+
+- Cards de cámaras (`static/js/modules/dashboard-cameras.js` + `dashboard-settings.css`): se quitó el
+  handle de arrastre (`.camera-drag-handle`, los "6 puntitos" `fa-grip-vertical`). El reordenar sigue
+  andando porque `enableDragSort` no usa `handleSelector`: la card entera es `draggable`.
+- Modales de cámara (`#modal-camera-config`; sirve alta y edición) y nivel (`#modal-add-floor`), cambios scopeados en CSS:
+  - Inputs 25% más angostos y centrados: `#form-camera-config .input-with-icon { width: 75%; margin: 0 auto; }`.
+  - Select TIPO/Sucursal sin el fondo azul: se eliminó la regla `#camera-tipo, #camera-sucursal { background:#111424; color:#fff; }`; ahora usan el `.select-premium` estándar (igual que los otros inputs).
+  - Barra de acciones sin fondo gris: `#modal-camera-config .modal-actions-sticky { background: transparent; border-color: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }`.
+  - Botón submit: **GUARDAR** en alta y **ACTUALIZAR** en edición (default del HTML = GUARDAR; el label lo setean `showCreateCameraModal`/`showEditCameraModal`).
+  - Shell de los modales de Cámara **y** Nivel igualado al modal `#modal-new-reservation` (crear nueva reserva del dashboard): `.modal-content` sin padding/fondo + `.modern-reservation-card` + header `.card-header-premium` full-width con `header-icon` + `header-text` + `modal-close-top modal-close-top--inline`, y cuerpo `.reservation-form-body-premium`. CSS en `dashboard-settings.css`: `#modal-add-floor .modal-content, #modal-camera-config .modal-content { max-width: 700px; padding: 0; background: transparent; border: none; }`. Nota: `.modern-reservation-card` / `.card-header-premium` (gradiente oscuro) y `.reservation-form-body-premium` se resuelven desde `profile-reservations.css`, que el dashboard carga vía `components/css_profile.html`.
+- Manual `manual/admin-sucursal.html` actualizado ("GUARDAR" / "ACTUALIZAR").
+- Verificación: suite **845 passed**, `node --check` OK, guards 7/8 verdes. `check_color_equivalence.py`
+  marca `dashboard-settings.css` como cambio de color **INTENCIONAL** (pasa con `--allow`).
+- **PENDIENTE**: `git commit` + `git push`; **subir `static/sw.js` a `v5`** (cambiaron JS/CSS/template);
+  al commitear, registrar `static/css/pages/dashboard/dashboard-settings.css` en
+  `_tools/color_equivalence_allowlist.json` (commit + motivo) para la validación `--against HEAD~1`.
+  Falta verificación **runtime** del modal y las cards en navegador.
+
+## Facturación escalonada 30 min / hora — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
+
+- Pedido del usuario: unificar el cobro de **estadías sin reserva y reservas por hora** (incluido
+  el **tiempo extra** al vencer una reserva) con una regla que **alterne tarifa hora y fracción de
+  30 min**. Fórmula: `n = ceil(minutos / 30)` (mínimo 1); `n == 1` → **fracción**; `n >= 2` →
+  `(n // 2) * hora + ((n - 1) // 2) * fraccion`. Aplica a **todas las sucursales**, con las tarifas
+  que cada sede tenga configuradas (`precio_hora`/`precio_30min` + `_moto`/`_camioneta`); criterio
+  estricto por sede (sin tarifa propia no hay precio; no hereda la global).
+- Backend (helper único, DRY):
+  - `services/billing_service.py`: `hourly_amount_from_rates(duration_hours, hora, fraccion)` (pura)
+    y `calculate_hourly_amount(db, duration_hours, sucursal, tipo_vehiculo)`; fallbacks
+    `fracción = hora/2` / `hora = fracción*2`; sin ninguna → `None`. `calculate_debt` y
+    `calculate_total_amount` (término `hora`) usan el helper.
+  - `services/reservation_service.py`: alta y edición de usuario usan `calculate_hourly_amount`
+    (se quitaron las 2 fórmulas inline de bloques).
+  - `services/report_service.py` (deuda proyectada) y `services/occupancy_service.py` (mapa en vivo)
+    usan el helper; se eliminaron sus cálculos locales y `import math`.
+- Frontend: `static/js/modules/utils.js` → `computeHourlyAmount(durationHours, hora, fraccion)`;
+  consumido por `reservas-form-price.js` (portal) y `reservations-admin-form.js` (admin).
+- Verificación: suite **845 passed** (antes 837), guards de `_tools/` **8/8**, `py_compile` OK.
+- **PENDIENTE**:
+  1. `git commit` + `git push` (aún local, no commiteado; el usuario no lo pidió todavía).
+  2. **`static/sw.js`: subir `CACHE_NAME`/`SHELL_CACHE` de `v4` a `v5`** al commitear (cambiaron
+     `utils.js`, `reservas-form-price.js` y `reservations-admin-form.js`, los tres en el precache).
+  3. Verificación en runtime (navegador) del precio mostrado en el form de reserva (portal y admin).
+- Documentación actualizada (13/10/2026): `Info proyecto/HISTORIAL.md`, `Info proyecto/FUNCIONALIDADES.html`,
+  `Info proyecto/CONTEXTO_SISTEMA.md`, `Info proyecto/ESTADO_PROYECTO.md`,
+  `Diseno_Proyecto/02_Elaboration/01_Requisitos_Funcionales.md` y `manual/admin-sucursal.html`.
+
 ## Integración de `origin/main` (refactor sucursal_id) — HECHO 13/10/2026
 
 - Merge de `origin/main` (`df7003c`, `cebae20`) sobre `v9.34.89` (`f4c44ce`) → merge commit

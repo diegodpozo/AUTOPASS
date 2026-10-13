@@ -1,9 +1,9 @@
 import datetime
-import math
 from typing import Dict
 from sqlalchemy.orm import Session
 import models
 from core.logger import get_logger
+from services.billing_service import BillingService
 from services.time_service import TimeService
 from models.enums import PaymentStatus, ReservationStatus
 from core.normalize import normalize_name
@@ -224,23 +224,12 @@ class OccupancyService:
             for r in SettingsRepository.get_rates_by_claves(db, todas_claves, sucursales)
         }
 
-        def rate30_for(suc, tipo):
-            clave30, clave_hora = RATE_CLAVES.get(tipo, ("precio_30min", "precio_hora"))
-            if (clave30, suc) in rate_map:
-                return rate_map[(clave30, suc)]
-            # FALLBACK: MITAD DE LA TARIFA HORA (solo propia de la sede; sin globales ni DEFAULT)
-            for c in (clave_hora,):
-                if (c, suc) in rate_map:
-                    return rate_map[(c, suc)] / 2
-            return None
-
         def calc_debt(entry_time_str, suc, tipo):
-            tarifa = rate30_for(suc, tipo)
-            if tarifa is None:
-                return None
+            clave30, clave_hora = RATE_CLAVES.get(tipo, ("precio_30min", "precio_hora"))
+            fraccion = rate_map.get((clave30, suc))
+            hora = rate_map.get((clave_hora, suc))
             delta = TimeService.now() - datetime.datetime.fromisoformat(entry_time_str)
-            bloques = max(1, math.ceil(delta.total_seconds() / 1800))
-            return float(bloques * tarifa)
+            return BillingService.hourly_amount_from_rates(delta.total_seconds() / 3600, hora, fraccion)
 
         res = []
         for e in entradas:

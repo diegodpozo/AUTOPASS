@@ -60,9 +60,6 @@ export function renderCameraSettingsTable(cameras) {
         const badgeText = cam.is_running ? 'ONLINE' : 'OFFLINE';
         return `
             <div class="camera-card-premium glass-premium" draggable="true" data-camera-id="${cam.id}">
-                <span class="camera-drag-handle" title="Arrastrar para reordenar">
-                    <i class="fas fa-grip-vertical"></i>
-                </span>
                 <div class="card-action-menu-wrapper">
                     <button class="card-action-trigger" data-camera-id="${cam.id}" aria-haspopup="true" aria-expanded="false" aria-label="Acciones de la cámara" title="Acciones">
                         <i class="fas fa-ellipsis-vertical"></i>
@@ -131,6 +128,9 @@ export async function showCreateCameraModal() {
     const modalTitle = document.getElementById('camera-modal-title');
     if (modalTitle) modalTitle.innerText = 'AGREGAR CÁMARA';
 
+    const btnSubmit = document.getElementById('btn-camera-submit');
+    if (btnSubmit) btnSubmit.innerText = 'GUARDAR';
+
     const form = document.getElementById('form-camera-config');
     if (form) form.reset();
 
@@ -168,6 +168,9 @@ export async function showCreateCameraModal() {
 export async function showEditCameraModal(cam) {
     const modalTitle = document.getElementById('camera-modal-title');
     if (modalTitle) modalTitle.innerText = 'EDITAR CÁMARA';
+
+    const btnSubmit = document.getElementById('btn-camera-submit');
+    if (btnSubmit) btnSubmit.innerText = 'ACTUALIZAR';
 
     const editIdInput = document.getElementById('edit-camera-id');
     if (editIdInput) editIdInput.value = cam.id;

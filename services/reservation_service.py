@@ -280,11 +280,9 @@ class ReservationService(ReservationPaymentsMixin):
                 raise HTTPException(status_code=400, detail="No hay días seleccionados dentro del rango")
             monto = count * rate
         elif data.tipo_estadia == "hora":
-            v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
-            tarifa_30min = BillingService.get_30min_rate(db, sucursal=data.sucursal_nombre, tipo_vehiculo=v_str)
-            if tarifa_30min is None:
+            monto = BillingService.calculate_hourly_amount(db, duration_hours, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
+            if monto is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-            monto = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
         elif data.tipo_estadia == "dia":
             monto = max(1, math.ceil(duration_hours / 24)) * rate
         elif data.tipo_estadia == "semana":
@@ -363,10 +361,9 @@ class ReservationService(ReservationPaymentsMixin):
             raise HTTPException(status_code=400, detail="Fechas inválidas")
         monto_nuevo = math.ceil(duration_hours) * rate
         if res.tipo_estadia == "hora":
-            tarifa_30min = BillingService.get_30min_rate(db, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
-            if tarifa_30min is None:
+            monto_nuevo = BillingService.calculate_hourly_amount(db, duration_hours, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+            if monto_nuevo is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-            monto_nuevo = max(1, math.ceil(duration_hours * 2)) * tarifa_30min
         elif res.tipo_estadia == "dia":
             monto_nuevo = max(1, math.ceil(duration_hours / 24)) * rate
         elif res.tipo_estadia == "semana":

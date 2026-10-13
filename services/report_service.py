@@ -1,5 +1,4 @@
 import datetime
-import math
 import re
 from sqlalchemy.orm import Session
 import models
@@ -150,18 +149,14 @@ class ReportService:
             db, sucursal=sucursal, vehicle_type=vehicle_type
         )
         deuda_proyectada = 0.0
-        # Cache de tarifas por (sucursal, tipo) para no repetir queries de Settings por vehículo
-        rate_cache = {}
         for e in entradas:
-            key = (e.sucursal, e.tipo_vehiculo)
-            if key not in rate_cache:
-                rate_cache[key] = BillingService.get_30min_rate(db, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo)
-            tarifa_30min = rate_cache[key]
-            if tarifa_30min is None:
-                continue
             delta = TimeService.now() - datetime.datetime.fromisoformat(e.fecha_hora)
-            bloques_a_cobrar = max(1, math.ceil(delta.total_seconds() / 1800))
-            deuda_proyectada += bloques_a_cobrar * tarifa_30min
+            monto = BillingService.calculate_hourly_amount(
+                db, delta.total_seconds() / 3600, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo
+            )
+            if monto is None:
+                continue
+            deuda_proyectada += monto
 
         # 5. Desglose por método de pago (estadías + reservas netas)
         desglose_metodos = {k: {"monto": 0.0, "cantidad": 0} for k in PAYMENT_METHOD_VARIANTS}

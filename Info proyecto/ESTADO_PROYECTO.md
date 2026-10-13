@@ -1,4 +1,4 @@
-# Estado del Proyecto: AUTOPASS (Actualizado 2026-10-11)
+# Estado del Proyecto: AUTOPASS (Actualizado 2026-10-13)
 
 ### 🚀 Estado actual (2026-10-11) - v9.34.87: soporte A1–A6, auditorías de validaciones (V1–V12) y RBAC (R1–R10) cerradas, escalabilidad de listados y suite 813 passed
 
@@ -9,6 +9,7 @@
 - [x] **Escalabilidad de listados**: helper `static/js/modules/list-pagination.js` (topes y paginación reutilizables, `.pagination-premium`); reservas admin con paginador de 10 y altura de card estable.
 - [x] **UX del portal (v9.34.81)**: stepper sticky, hamburguesa móvil anclada al header, nav inferior solo responsive y reloj virtual oculto a clientes.
 - [x] **Puntos 1–4 de mejoras BD resueltos (08/10/2026)**: fechas varchar→timestamp, 11 CheckConstraints, UNIQUE de settings y 4 FKs de sucursal en Neon (con backups previos). Puntos 5–6 descartados por decisión del usuario.
+- [x] **Facturación escalonada 30 min / hora (13/10/2026)**: las estadías y reservas **por hora** (incluido el tiempo extra al vencer una reserva) pasan a cobrarse **alternando tarifa hora y fracción** (`n = ceil(minutos/30)`, mínimo 1; `n==1` → fracción; `n>=2` → `(n//2)*hora + ((n-1)//2)*fracción`). Un único helper (`BillingService.hourly_amount_from_rates`/`calculate_hourly_amount`) reemplaza el cobro por bloques de solo fracción de v9.10.0 y se comparte en backend (`calculate_debt`, `calculate_total_amount`, `reservation_service`, `report_service`, `occupancy_service`) y en frontend (`utils.js::computeHourlyAmount` → `reservas-form-price.js`, `reservations-admin-form.js`). Misma fórmula en todas las sucursales; cada una cobra con sus tarifas (criterio estricto por sede). Suite **845 passed**, guards 8/8.
 
 ### 🚀 Estado previo (2026-09-30) - A1–A9 CERRADAS, suite 756 passed, cobertura 93%, CI activa, auditorías CSS AC-1 a AC-5 CERRADAS (ninguna abierta)
 

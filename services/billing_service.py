@@ -114,20 +114,42 @@ class BillingService:
         return val
 
     @staticmethod
-    def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
-        """CALCULA LA DEUDA ACUMULADA BASADA EN BLOQUES DE 30 MIN, SEDE Y TIPO DE VEHICULO.
-        Devuelve None si la sucursal no tiene tarifario configurado (no inventa precio)."""
-        tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
-        if tarifa_30min is None:
+    def hourly_amount_from_rates(duration_hours: float, hora: Optional[float], fraccion: Optional[float]) -> Optional[float]:
+        """REGLA ESCALONADA DE UNA ESTADIA/RESERVA POR HORA, DADAS LAS TARIFAS.
+
+        n = ceil(horas * 2) con minimo 1 bloque (cada bloque es de 30 min).
+        - n == 1 (hasta 30 min): se cobra la fraccion de 30 min.
+        - n >= 2: el primer bloque se reemplaza por la tarifa hora y desde ahi alterna
+          hora, fraccion, hora, fraccion...  => (n // 2) * hora + ((n - 1) // 2) * fraccion.
+        Si falta una tarifa se deriva de la otra (fraccion = hora / 2 o hora = fraccion * 2).
+        Devuelve None si no hay ninguna tarifa."""
+        if fraccion is None and hora is None:
             return None
+        if fraccion is None:
+            fraccion = hora / 2
+        elif hora is None:
+            hora = fraccion * 2
+        bloques = max(1, math.ceil((duration_hours or 0) * 2))
+        if bloques == 1:
+            return float(fraccion)
+        return float((bloques // 2) * hora + ((bloques - 1) // 2) * fraccion)
+
+    @staticmethod
+    def calculate_hourly_amount(db: Session, duration_hours: float, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
+        """MONTO DE UNA ESTADIA/RESERVA POR HORA (regla escalonada, ver hourly_amount_from_rates).
+        Devuelve None si la sucursal no tiene tarifario para el tipo de vehiculo."""
+        fraccion = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
+        hora = BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
+        return BillingService.hourly_amount_from_rates(duration_hours, hora, fraccion)
+
+    @staticmethod
+    def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
+        """CALCULA LA DEUDA ACUMULADA DE UNA ESTADIA, SEDE Y TIPO DE VEHICULO.
+        Devuelve None si la sucursal no tiene tarifario configurado (no inventa precio)."""
         entrada_dt = datetime.datetime.fromisoformat(entry_time_str)
-        
         delta = TimeService.now() - entrada_dt
         horas_transcurridas = delta.total_seconds() / 3600
-        
-        # COBRO POR BLOQUES DE 30 MIN (REDONDEO HACIA ARRIBA, MINIMO 1 BLOQUE)
-        bloques_a_cobrar = max(1, math.ceil(horas_transcurridas * 2))
-        return float(bloques_a_cobrar * tarifa_30min)
+        return BillingService.calculate_hourly_amount(db, horas_transcurridas, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
 
     @staticmethod
     def preview_pending_amount(db: Session, log: "models.AccessLog") -> Optional[float]:
@@ -156,15 +178,15 @@ class BillingService:
         
         if duration_hours <= 0:
             return 0.0
-            
+
+        if tipo_estadia == "hora":
+            return BillingService.calculate_hourly_amount(db, duration_hours, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
+
         rate = BillingService.get_rate(db, tipo_estadia, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
-        tarifa_30min = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
-        if rate is None or tarifa_30min is None:
+        if rate is None:
             return None
         
-        if tipo_estadia == "hora":
-            return float(max(1, math.ceil(duration_hours * 2)) * tarifa_30min)
-        elif tipo_estadia == "dia":
+        if tipo_estadia == "dia":
             return float(max(1, math.ceil(duration_hours / 24)) * rate)
         elif tipo_estadia == "semana":
             return float(math.ceil(duration_hours / (24 * 7)) * rate)

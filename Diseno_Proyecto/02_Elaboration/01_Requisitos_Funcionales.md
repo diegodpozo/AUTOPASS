@@ -55,8 +55,8 @@
 
 | ID | Nombre | Descripción | Prioridad |
 |----|--------|-------------|-----------|
-| RF-25 | Tarifas configurables | El LOCAL_ADMIN debe poder configurar tarifas por hora/día/semana/mes por tipo de vehículo | Alta |
-| RF-26 | Cálculo de estadía | El sistema debe calcular costo basado en tiempo real estacionado | Alta |
+| RF-25 | Tarifas configurables | El LOCAL_ADMIN debe poder configurar tarifas por fracción de 30 min/hora/día/semana/mes por tipo de vehículo | Alta |
+| RF-26 | Cálculo de estadía | El sistema debe calcular costo basado en tiempo real estacionado, con la regla escalonada 30 min/hora (alterna hora y fracción) para las estadías por hora | Alta |
 | RF-27 | Reportes financieros | El ADMIN debe ver ingresos filtrados por sucursal, fecha, tipo y método de pago | Alta |
 | RF-28 | Exportación CSV | El sistema debe permitir descargar reportes en CSV | Media |
 

@@ -5,7 +5,7 @@
  */
 
 import api from './api.js';
-import { formatNum } from './utils.js';
+import { formatNum, computeHourlyAmount } from './utils.js';
 import {
     getCurrentRates,
     setCurrentRates,
@@ -119,7 +119,7 @@ export function updateReservationPrice() {
             const rate = getCurrentRates()[key] || getCurrentRates()[type] || 0;
             const rate30 = getCurrentRates()[isMoto ? '30min_moto' : '30min'] || rate / 2;
             
-            if (type === 'hora') total = Math.max(1, Math.ceil(durationHours * 2)) * rate30;
+            if (type === 'hora') total = computeHourlyAmount(durationHours, rate, rate30);
             else if (type === 'dia') total = Math.max(1, Math.ceil(durationHours / 24)) * rate;
             else if (type === 'semana') total = Math.ceil(durationHours / (24 * 7)) * rate;
             else if (type === 'quincena') total = Math.ceil(durationHours / (24 * 15)) * rate;

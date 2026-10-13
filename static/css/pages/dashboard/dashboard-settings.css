@@ -331,19 +331,6 @@
     opacity: 0.45;
 }
 
-.camera-drag-handle {
-    position: absolute;
-    inset: 12px auto auto 12px;
-    cursor: grab;
-    opacity: 0.3;
-    font-size: 1rem;
-    padding: 4px;
-}
-
-.camera-drag-handle:hover {
-    opacity: 1;
-}
-
 .camera-card-premium:hover {
     background: rgba(223, 186, 107, 0.01);
     border-color: rgba(223, 186, 107, 0.35);
@@ -672,15 +659,21 @@
 /* CONTENEDOR DE LA SECCIÓN SISTEMA */
 #set-section-system .mx-auto { max-width: 650px; }
 
-/* MODAL DE PISO */
-#modal-add-floor .modal-content { max-width: 450px; }
-
-/* MODAL DE CÁMARA */
-#modal-camera-config .modal-content { max-width: 500px; }
-#camera-tipo,
-#camera-sucursal {
-    background: #111424;
-    color: #fff;
+/* MODAL DE PISO / CÁMARA: mismo shell que el modal de nueva reserva (header full-width) */
+#modal-add-floor .modal-content,
+#modal-camera-config .modal-content { max-width: 700px; padding: 0; background: transparent; border: none; }
+/* INPUTS 25% MÁS ANGOSTOS Y CENTRADOS */
+#form-camera-config .input-with-icon {
+    width: 75%;
+    margin: 0 auto;
+}
+/* SIN BARRA GRIS DETRÁS DE LOS BOTONES DE ACCIÓN */
+#modal-camera-config .modal-actions-sticky {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 #camera-source {
     font-family: var(--font-mono);
