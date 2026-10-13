@@ -12,7 +12,7 @@ from models.enums import VehicleType, AccessEventType, ReservationStatus, Paymen
 from services.access_occupancy import AccessOccupancyMixin
 from services.notification_service import NotificationService
 from services.time_service import TimeService
-from core.normalize import normalize_name, normalize_plate
+from core.normalize import normalize_name, normalize_plate, is_valid_plate
 from repositories.access_log_repository import AccessRepository
 from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
@@ -119,7 +119,12 @@ class AccessService(AccessOccupancyMixin):
             logger.warning("[ACCESS] Error logueando validate_plate", exc_info=True)
         p = normalize_plate(data.plate)
         sucursal = cls._branch_from_gate_id(db, data.gate_id)
-        
+
+        # RECHAZAR PATENTES CON FORMATO NO RECONOCIDO (NO GENERA REGISTRO)
+        if not is_valid_plate(p):
+            NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, "Formato de patente inválido", "error")
+            return {"status": "denied", "message": "Formato de patente inválido. Ingreso denegado"}
+
         ultima_entrada = cls._unclosed_last_entry(db, p, sucursal)
         if ultima_entrada:
             NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, "Vehículo ya dentro de esta sede", "error")
@@ -359,6 +364,8 @@ class AccessService(AccessOccupancyMixin):
     def manual_entry(cls, db: Session, plate: str, sucursal: str, tipo_vehiculo: str = "Auto", floor_id: int = None, request: Request = None) -> dict:
         """Registra un ingreso manual forzado por personal staff/admin."""
         p = normalize_plate(plate)
+        if not is_valid_plate(p):
+            raise HTTPException(status_code=400, detail="Formato de patente inválido.")
         now = TimeService.now()
         
         # Buscar la última ENTRADA y verificar si el vehículo sigue adentro

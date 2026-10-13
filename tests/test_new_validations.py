@@ -103,3 +103,52 @@ def test_delete_floor_with_occupancy_fails(db):
         delete_floor(floor.id, db, admin)
     assert exc.value.status_code == 400
     assert "vehículos actualmente estacionados" in exc.value.detail
+
+
+def test_is_valid_plate_formatos_latam_reconocidos():
+    from core.normalize import is_valid_plate
+    for p in ["ABC123", "AB123CD", "123ABC", "A123BCD", "ABC1234", "ABC1D23", "ABCD123", "1234ABC"]:
+        assert is_valid_plate(p), f"deberia ser valida: {p}"
+    for p in ["AC404", "AC404S", "MOTO12", "ZZ000", "AA123", "12345", "", "AB 1", "A123"]:
+        assert not is_valid_plate(p), f"deberia ser invalida: {p}"
+
+
+def test_add_vehicle_rechaza_formato_invalido(db):
+    from routes.user.vehicles import add_user_vehicle
+    from schemas import VehicleCreate
+    user = User(nombre="Ana", email="ana@test.com", password_hash="pwd", rol="user")
+    db.add(user)
+    db.commit()
+    with pytest.raises(HTTPException) as exc:
+        add_user_vehicle(VehicleCreate(patente="AC404", marca_modelo="Fiat", tipo="Auto"), db, user)
+    assert exc.value.status_code == 400
+    assert "Formato de patente inválido" in exc.value.detail
+    assert db.query(Vehicle).count() == 0
+
+
+def test_validate_plate_rechaza_formato_y_no_registra(db):
+    from services.access_service import AccessService
+    from schemas import PlateValidation
+    db.add(ParkingBranch(nombre="Centro", direccion="Av X", activa=True))
+    db.add(ParkingAforo(sucursal="Centro", capacidad_total=10, ocupacion_actual=0,
+                        capacidad_motos=5, ocupacion_motos=0))
+    db.commit()
+    res = AccessService.validate_plate(db, PlateValidation(plate="AC404", gate_id="Centro_ENTRADA"))
+    assert res["status"] == "denied"
+    assert "Formato de patente inválido" in res["message"]
+    assert db.query(AccessLog).count() == 0
+
+
+def test_manual_entry_rechaza_formato_invalido(db):
+    from services.access_service import AccessService
+    with pytest.raises(HTTPException) as exc:
+        AccessService.manual_entry(db, "MOTO12", "Centro")
+    assert exc.value.status_code == 400
+    assert "Formato de patente inválido" in exc.value.detail
+
+
+def test_process_payment_rechaza_formato_invalido(db):
+    from services.billing_service import BillingService
+    res = BillingService.process_payment(db, "AC404")
+    assert res["status"] == "error"
+    assert "Formato de patente inválido" in res["message"]

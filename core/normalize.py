@@ -31,6 +31,26 @@ def normalize_plate(p: str):
     return re.sub(r'[^A-Z0-9]', '', p.upper())
 
 
+# FORMATOS DE PATENTE RECONOCIDOS (LATAM): AR, BR, UY Y PY.
+PLATE_PATTERNS = (
+    r'^[A-Z]{3}\d{3}$',         # ARGENTINA AUTO CLASICO (ABC123)
+    r'^[A-Z]{2}\d{3}[A-Z]{2}$', # ARGENTINA AUTO MERCOSUR (AB123CD)
+    r'^\d{3}[A-Z]{3}$',         # ARGENTINA MOTO CLASICO (123ABC)
+    r'^[A-Z]\d{3}[A-Z]{3}$',    # ARGENTINA MOTO MERCOSUR (A123BCD)
+    r'^[A-Z]{3}\d{4}$',         # BRASIL / URUGUAY (ABC1234)
+    r'^[A-Z]{3}\d[A-Z]\d{2}$',  # BRASIL MERCOSUR (ABC1D23)
+    r'^[A-Z]{4}\d{3}$',         # PARAGUAY AUTO (ABCD123)
+    r'^\d{4}[A-Z]{3}$',         # PARAGUAY (1234ABC)
+)
+_PLATE_RE = re.compile("|".join(f"(?:{p})" for p in PLATE_PATTERNS))
+
+
+def is_valid_plate(p: str) -> bool:
+    """TRUE SI LA PATENTE (ya normalizada) COINCIDE CON UN FORMATO LATAM RECONOCIDO."""
+    clean = normalize_plate(p)
+    return bool(clean) and _PLATE_RE.match(clean) is not None
+
+
 def format_plate(p: str):
     """APLICA FORMATO VISUAL ESTANDAR A LA PATENTE MERCOSUR."""
     clean = normalize_plate(p)

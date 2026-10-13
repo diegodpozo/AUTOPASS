@@ -109,9 +109,9 @@ def test_valida_plate_capacidad_maxima_no_dispara_barrera(db, env):
 
 
 def test_valida_plate_moto_usa_capacidad_motos(db, env):
-    db.add(models.Vehicle(patente="MOTO12", tipo="Moto"))
+    db.add(models.Vehicle(patente="A123BCD", tipo="Moto"))
     db.commit()
-    result = AccessService.validate_plate(db, PlateValidation(plate="MOTO12", gate_id="Centro_ENTRADA"))
+    result = AccessService.validate_plate(db, PlateValidation(plate="A123BCD", gate_id="Centro_ENTRADA"))
     assert result["status"] == "allowed"
     aforo = db.query(models.ParkingAforo).filter_by(sucursal="Centro").first()
     assert aforo.ocupacion_motos == 1

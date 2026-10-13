@@ -3,6 +3,29 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 13/10/2026
 
+## Eliminación de patentes inválidas + bloqueo de formato en todo ingreso — APLICADO y PUSHEADO 13/10/2026
+
+- Pedido del usuario: (1) borrar de **todas las tablas** las patentes con formato inválido y
+  (2) que **ninguna patente pueda ingresar** si no encaja en un formato reconocido.
+- **Set de formatos reconocidos** (decisión del usuario: LATAM amplio): AR auto `ABC123`/`AB123CD`,
+  AR moto `123ABC`/`A123BCD`, BR/UY `ABC1234`, BR Mercosur `ABC1D23`, PY `ABCD123`/`1234ABC`.
+- **Validador único (DRY)**: `core/normalize.py` → `PLATE_PATTERNS` + `is_valid_plate()`.
+- **Bloqueo en TODOS los puntos de entrada**: ALPR `validate_plate` (devuelve `denied`, no registra),
+  `manual_entry` (400), `process_payment`/`pay_stay` (error), alta de vehículo (`add_vehicle`
+  refactorizado para usar el helper, se quitó el `import re` + 6 regex inline) y crear/editar reserva
+  (usuario y admin). Mensaje unificado: `"Formato de patente inválido."`.
+- **Limpieza**: nuevo `scripts/cleanup_invalid_plates.py` (idempotente, `--dry-run`, respaldo JSON
+  previo). Borradas **25 filas**, todas en `access_logs` (5203 → 5178); `vehicles`, `reservations`,
+  `users` y `mercadopago_payments` no tenían inválidas (0). Respaldo:
+  `data/pruebas/cleanup_invalid_plates_backup.json`.
+- **Nota**: los formatos LATAM reconocidos (p. ej. `ODM9957` UY, `GTNA957` PY, `IINA957` PY,
+  `M957SGN` AR-moto) se conservan; lo eliminado fue OCR roto (`AC404`, `AC404S`, `G536H`, `DN957`, etc.).
+- **Verificación**: suite **850 passed** (3 tests actualizados que usaban chapas sintéticas inválidas
+  + 5 tests nuevos). Sin cambios de CSS/JS/templates → **`sw.js` sin bump**.
+- **COMMITEADO y PUSHEADO**: commit `ELIMINACION PATENTES INVALIDAS`.
+- **Pendiente (fuera de este commit)**: `scripts/generate_reservation_test.py` (escenario
+  `--hora-saturacion` de la tanda anterior) quedó **local sin commitear**.
+
 ## Configuración de Monitoreo (cards + modales de cámara/nivel) — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
 
 - Cards de cámaras (`static/js/modules/dashboard-cameras.js` + `dashboard-settings.css`): se quitó el

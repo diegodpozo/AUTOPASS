@@ -125,7 +125,7 @@ def test_pay_stay_staff_sin_estadia_devuelve_400(client):
     tc, TestSession = client
     staff = _crear_usuario(TestSession, "staff", "staff3@test.com")
 
-    resp = tc.post(f"{URL}?plate=ZZ000",
+    resp = tc.post(f"{URL}?plate=ZZZ000",
                    headers={"Authorization": f"Bearer {_token(staff)}"})
     assert resp.status_code == 400
     assert "pendientes" in resp.json()["detail"]

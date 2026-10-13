@@ -10,6 +10,7 @@ from repositories.access_log_repository import AccessRepository
 from repositories.reservation_repository import ReservationRepository
 from repositories.settings_repository import SettingsRepository
 from repositories.vehicle_repository import VehicleRepository
+from core.normalize import normalize_plate, is_valid_plate
 
 # --- SERVICIO DE FACTURACION Y PUNTOS ---
 
@@ -278,6 +279,10 @@ class BillingService:
     def process_payment(db: Session, plate: str, metodo: str = "DIGITAL") -> dict:
         """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
         from models.enums import ReservationStatus, PaymentStatus
+
+        plate = normalize_plate(plate)
+        if not is_valid_plate(plate):
+            return {"status": "error", "message": "Formato de patente inválido."}
 
         log = AccessRepository.get_last_entry_by_patente(db, plate)
 

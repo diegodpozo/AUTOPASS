@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.logger import get_logger
-from core.normalize import normalize_plate, normalize_name as _normalizar_sucursal, same_branch
+from core.normalize import normalize_plate, is_valid_plate, normalize_name as _normalizar_sucursal, same_branch
 from models.enums import PaymentStatus, ReservationStatus, UserRole, VehicleType
 from repositories.access_log_repository import AccessRepository
 from repositories.branch_repository import BranchRepository
@@ -237,6 +237,8 @@ class ReservationService(ReservationPaymentsMixin):
         if not vehicle:
             raise HTTPException(status_code=400, detail="La patente no está vinculada a su cuenta")
         p_clean = normalize_plate(data.patente)
+        if not is_valid_plate(p_clean):
+            raise HTTPException(status_code=400, detail="Formato de patente inválido.")
         # LIMITACION: maximo 5 reservas activas o pendientes por usuario
         from models.reservation import Reservation
         from models.enums import ReservationStatus
@@ -346,6 +348,8 @@ class ReservationService(ReservationPaymentsMixin):
         if data.patente:
             if not VehicleRepository.get_by_patente_and_user(db, data.patente, user.id):
                 raise HTTPException(status_code=400, detail="Patente no vinculada")
+            if not is_valid_plate(data.patente):
+                raise HTTPException(status_code=400, detail="Formato de patente inválido.")
             res.patente = normalize_plate(data.patente)
         if data.tipo_estadia:
             res.tipo_estadia = data.tipo_estadia
@@ -467,6 +471,8 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def create_admin_reservation(db: Session, staff, data) -> dict:
         data.patente = normalize_plate(data.patente)
+        if not is_valid_plate(data.patente):
+            raise HTTPException(status_code=400, detail="Formato de patente inválido.")
         if staff.rol != UserRole.ADMIN:
             data.sucursal_nombre = staff.sucursal
         _, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)
@@ -508,6 +514,8 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def update_admin_reservation(db: Session, staff, res_id: int, data) -> dict:
         data.patente = normalize_plate(data.patente)
+        if not is_valid_plate(data.patente):
+            raise HTTPException(status_code=400, detail="Formato de patente inválido.")
         reserva = ReservationService.get_reservation_or_404(db, res_id)
         if (getattr(reserva, "origen", None) or "cliente") != "manual":
             raise HTTPException(status_code=400, detail="Solo se pueden editar reservas creadas por administración o empleados")

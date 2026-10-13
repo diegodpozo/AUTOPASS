@@ -4,7 +4,7 @@ import models
 import schemas
 from core.security import get_password_hash
 from core.logger import get_logger
-from core.normalize import normalize_user_name as normalize_name, normalize_dni, normalize_plate
+from core.normalize import normalize_user_name as normalize_name, normalize_dni, normalize_plate, is_valid_plate
 from models.enums import UserRole
 from repositories.user_repository import UserRepository
 from repositories.vehicle_repository import VehicleRepository
@@ -143,8 +143,6 @@ class UserService:
     @staticmethod
     def add_vehicle(db: Session, user, patente, marca_modelo, tipo="Auto"):
         """VINCULA UN NUEVO VEHÍCULO VALIDANDO BLOQUEO, TIPO Y FORMATO DE PATENTE."""
-        import re
-
         if user.is_blocked:
             raise HTTPException(status_code=403, detail="Su cuenta se encuentra bloqueada.")
 
@@ -156,13 +154,7 @@ class UserService:
             raise HTTPException(status_code=400, detail="EL LIMITE MAXIMO DE VEHICULOS GENERADOS ES DE 5")
 
         p_clean = normalize_plate(patente)
-        ar_old      = re.match(r'^[A-Z]{3}[0-9]{3}$', p_clean)
-        ar_new      = re.match(r'^[A-Z]{2}[0-9]{3}[A-Z]{2}$', p_clean)
-        ar_moto     = re.match(r'^[0-9]{3}[A-Z]{3}$', p_clean) or re.match(r'^[A-Z]{1}[0-9]{3}[A-Z]{3}$', p_clean)
-        br_old      = re.match(r'^[A-Z]{3}[0-9]{4}$', p_clean)
-        br_mercosur = re.match(r'^[A-Z]{3}[0-9][A-Z][0-9]{2}$', p_clean)
-        py_mercosur = re.match(r'^[0-9]{4}[A-Z]{3}$', p_clean)
-        if not ar_old and not ar_new and not ar_moto and not br_old and not br_mercosur and not py_mercosur:
+        if not is_valid_plate(p_clean):
             raise HTTPException(status_code=400, detail="Formato de patente inválido.")
 
         existing = VehicleRepository.get_by_normalized_patente(db, p_clean)

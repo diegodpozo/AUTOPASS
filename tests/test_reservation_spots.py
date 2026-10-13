@@ -60,7 +60,7 @@ def test_exclusive_reservation_spots_logic(db):
     check_fin = (now + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
 
     v_auto = Vehicle(patente="RES789", tipo=VehicleType.AUTO)
-    v_moto = Vehicle(patente="MOTO99", tipo=VehicleType.MOTO)
+    v_moto = Vehicle(patente="A123BCD", tipo=VehicleType.MOTO)
     db.add_all([v_auto, v_moto])
     
     reserva_auto = Reservation(
@@ -74,7 +74,7 @@ def test_exclusive_reservation_spots_logic(db):
         tipo_estadia="hora"
     )
     reserva_moto = Reservation(
-        patente="MOTO99",
+        patente="A123BCD",
         sucursal_nombre=branch_name,
         estado_pago=PaymentStatus.PAGADO,
         estado_reserva=ReservationStatus.PENDIENTE,
@@ -105,7 +105,7 @@ def test_exclusive_reservation_spots_logic(db):
     assert aforo.ocupacion_reservas == 1
     assert aforo.ocupacion_reservas_autos == 1
 
-    res_res_moto = AccessService.validate_plate(db, PlateValidation(plate="MOTO99", gate_id="AUTOPASS Test_ENTRADA"))
+    res_res_moto = AccessService.validate_plate(db, PlateValidation(plate="A123BCD", gate_id="AUTOPASS Test_ENTRADA"))
     assert res_res_moto["status"] == "allowed"
     db.refresh(aforo)
     assert aforo.ocupacion_motos == 0  # Rotative moto spot untouched!
@@ -119,7 +119,7 @@ def test_exclusive_reservation_spots_logic(db):
     assert aforo.ocupacion_reservas == 1
     assert aforo.ocupacion_reservas_autos == 0
 
-    res_exit_moto = AccessService.exit_plate(db, PlateValidation(plate="MOTO99", gate_id="AUTOPASS Test_SALIDA"))
+    res_exit_moto = AccessService.exit_plate(db, PlateValidation(plate="A123BCD", gate_id="AUTOPASS Test_SALIDA"))
     assert res_exit_moto["status"] == "allowed"
     db.refresh(aforo)
     assert aforo.ocupacion_reservas == 0
