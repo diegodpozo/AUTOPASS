@@ -1,7 +1,22 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 12/10/2026
+Última actualización: 13/10/2026
+
+## Integración de `origin/main` (refactor sucursal_id) — HECHO 13/10/2026
+
+- Merge de `origin/main` (`df7003c`, `cebae20`) sobre `v9.34.89` (`f4c44ce`) → merge commit
+  `54765f5`. Único conflicto real: este doc (resuelto conservando ambas secciones). Los otros 4
+  archivos auto-mergearon; ajuste manual en `routes/system/cameras.py` (el reorden de cámaras
+  pasó a usar `misma_sucursal`, alineado con el refactor por id).
+- **Alembic**: el merge dejó 2 heads (`b8f1c2d3e4a5` orden + `e1f2a3b4c5d6` sucursal_id). Se
+  agregó la migración de merge `c4d5e6f7a8b9` (`5f728f7`) → head único.
+- **Neon**: sellada con `alembic stamp c4d5e6f7a8b9` (la columna `parking_cameras.orden` ya
+  existía; no se corrió B8 para no duplicarla). `alembic current` = head.
+- `static/sw.js`: `CACHE_NAME`/`SHELL_CACHE` subidos a `v4` (se agregaron `action-menu.css`,
+  `drag-sort.js`, `action-menu.js`, `operator-alerts.js` al precache).
+- Verificación: guards 8/8 verdes; suite **837 passed**.
+- **Pendiente**: verificación en runtime (navegador) del popup ALPR; `git push`.
 
 ## Popup de salida impaga (ALPR) — APLICADO 12/10/2026 (COMMITEADO v9.34.89)
 
