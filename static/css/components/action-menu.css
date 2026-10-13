@@ -1,0 +1,78 @@
+/* --- COMPONENTE: MENÚ DE ACCIONES POR ELEMENTO (patrón "⋮" / overflow menu) ---
+   Colapsa acciones repetidas (Editar/Eliminar) de listas/tarjetas en un solo
+   ícono desplegable. Reutilizable: ver modules/action-menu.js.
+   El popover se posiciona con position:fixed desde JS para que no lo recorte un
+   ancestro con overflow:hidden. */
+
+.card-action-menu-wrapper {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: var(--z-nav-dropdown);
+}
+
+.card-action-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0.4rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.card-action-trigger:hover,
+.card-action-trigger[aria-expanded="true"] {
+    color: var(--dorado);
+    background: var(--dorado-glow);
+}
+
+.card-action-menu {
+    position: fixed;
+    display: none;
+    min-width: 10rem;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-15-35-b50);
+    z-index: var(--z-nav-dropdown);
+}
+
+.card-action-menu.is-open {
+    display: block;
+}
+
+.card-action-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.card-action-menu__item:hover {
+    color: var(--dorado);
+    background: var(--border-light);
+}
+
+.card-action-menu__item.danger {
+    color: var(--danger);
+}
+
+.card-action-menu__item.danger:hover {
+    color: var(--danger);
+    background: var(--border-light);
+}

@@ -130,6 +130,23 @@ class BillingService:
         return float(bloques_a_cobrar * tarifa_30min)
 
     @staticmethod
+    def preview_pending_amount(db: Session, log: "models.AccessLog") -> Optional[float]:
+        """CALCULA EL MONTO QUE UNA ESTADIA IMPAGA DEBERIA ABONAR, SIN MUTAR NADA.
+        Espeja la logica de cobro de process_payment para previsualizar el popup de caja.
+        Devuelve None si la sucursal no tiene tarifario configurado."""
+        from models.enums import PaymentStatus
+        r = ReservationRepository.get_by_id(db, log.reserva_id) if log.reserva_id else None
+        if r and r.estado_pago != PaymentStatus.PAGADO:
+            monto = float(r.monto_total or 0)
+            if r.fecha_fin < TimeService.now_str():
+                extra = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+                if extra is None:
+                    return None
+                monto += extra
+            return monto
+        return BillingService.calculate_debt(log.fecha_hora, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
+
+    @staticmethod
     def calculate_total_amount(db: Session, tipo_estadia: str, fecha_inicio: str, fecha_fin: str, sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> Optional[float]:
         """CALCULA EL MONTO TOTAL BASADO EN LA DURACION Y EL TIPO DE ESTADIA.
         Devuelve None si la sucursal no tiene tarifario configurado (no inventa precio)."""

@@ -13,6 +13,7 @@ import * as baseUi from './modules/ui.js';
 import * as utils from './modules/utils.js';
 import { initVirtualTime } from './modules/virtual-time.js';
 import './modules/notifications.js';
+import { initOperatorAlerts } from './modules/operator-alerts.js';
 
 /**
  * PUENTE / ORQUESTADOR: DASHBOARD.JS (v9.9.9)
@@ -76,6 +77,9 @@ window.payOccupancy = (plate, amount) => ops.payOccupancy(plate, amount, () => {
 window.cancelStay = stats.cancelStay;
 window.manualExit = ops.manualExit;
 window.showLogDetail = ops.showLogDetail;
+window.openPendingExitPopup = ops.openPendingExitPopup;
+window.confirmPendingExit = ops.confirmPendingExit;
+window.closePendingExitPopup = ops.closePendingExitPopup;
 
 // 4. RESERVAS ADMINISTRATIVAS
 window.loadAdminReservations = reservations.loadAdminReservations;
@@ -275,6 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         ui.initClock();
         initVirtualTime();
+        initOperatorAlerts();
         ui.checkSystemHealth();
         stats.initOccupancyWS();
         metricas.initMetricas();

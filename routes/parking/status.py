@@ -88,6 +88,29 @@ class OccupancyManager:
             if close_session:
                 db.close()
 
+    async def broadcast_event(self, sucursal_norm: str, event: dict):
+        """ENVIA UN EVENTO PUNTUAL (p.ej. PENDING_EXIT) A LOS SOCKETS DE LA SUCURSAL Y AL ADMIN GLOBAL.
+        A diferencia de broadcast_update, no recalcula aforo: manda el payload tal cual."""
+        targets = ["GLOBAL"]
+        if sucursal_norm and sucursal_norm != "GLOBAL":
+            targets.append(sucursal_norm)
+
+        for target in targets:
+            conns = self.active_connections.get(target)
+            if not conns:
+                continue
+
+            disconnected = []
+            async def _send(conn):
+                try:
+                    await conn.send_json(event)
+                except Exception:
+                    disconnected.append(conn)
+
+            await asyncio.gather(*(_send(c) for c in list(conns)))
+            for conn in disconnected:
+                self.disconnect(conn, target)
+
     def _get_global_status(self, db: Session):
         from core.cache import ttl_cache
         cached = ttl_cache.get("occupancy_ws_global")

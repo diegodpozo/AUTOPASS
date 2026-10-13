@@ -7,6 +7,7 @@ from services.user_notification_service import UserNotificationService
 from services.worker_service import WorkerService
 from services.reservation_service import ReservationService
 from services.support_service import SupportService
+from services.notification_service import NotificationService
 import schemas
 import models
 
@@ -430,5 +431,44 @@ def test_vehicle_registration_and_removal_notifications(db_session: Session):
     del_notifs = [n for n in notifs_after if n.tipo == models.NotificationType.VEHICLE_REMOVED]
     assert len(del_notifs) == 1
     assert "AA123CD" in del_notifs[0].mensaje
+
+
+# ---------------------------------------------------------------------------
+# NotificationService: store de salida impaga (popup PENDING_EXIT)
+# ---------------------------------------------------------------------------
+
+def test_pending_exit_set_get_clear():
+    NotificationService.clear_pending_exit("CENTRO")
+    assert NotificationService.get_pending_exit("CENTRO") is None
+
+    payload = {"patente": "AA123BB", "deuda": 250.0}
+    NotificationService.set_pending_exit("CENTRO", payload)
+    assert NotificationService.get_pending_exit("CENTRO") == payload
+
+    NotificationService.clear_pending_exit("CENTRO")
+    assert NotificationService.get_pending_exit("CENTRO") is None
+
+
+def test_pending_exit_expira_por_ttl(monkeypatch):
+    import services.notification_service as ns
+    NotificationService.set_pending_exit("CENTRO", {"patente": "AA123BB"})
+    # Simular que paso mas tiempo que el TTL
+    monkeypatch.setattr(ns.time, "time",
+                        lambda: NotificationService._pending_exits["CENTRO"]["timestamp"] + ns.NotificationService._PENDING_EXIT_TTL + 1)
+    assert NotificationService.get_pending_exit("CENTRO") is None
+    NotificationService.clear_pending_exit("CENTRO")
+
+
+def test_notify_pending_exit_guarda_aunque_no_haya_manager():
+    """Sin ocupancy_manager no rompe y deja el payload disponible para consulta."""
+    NotificationService.clear_pending_exit("CENTRO")
+    old = NotificationService._occupancy_manager
+    NotificationService._occupancy_manager = None
+    try:
+        NotificationService.notify_pending_exit("CENTRO", {"patente": "AA123BB"})
+        assert NotificationService.get_pending_exit("CENTRO") == {"patente": "AA123BB"}
+    finally:
+        NotificationService._occupancy_manager = old
+        NotificationService.clear_pending_exit("CENTRO")
 
 

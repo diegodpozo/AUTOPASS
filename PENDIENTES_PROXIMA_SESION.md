@@ -1,7 +1,48 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 11/10/2026
+Última actualización: 12/10/2026
+
+## Popup de salida impaga (ALPR) — APLICADO 12/10/2026 (pendiente de commit/push)
+
+- Pedido del usuario: cuando un vehículo intente salir **sin pago** por el **lector de
+  patente (ALPR)**, mostrar en el dashboard un popup con: nombre del usuario (o
+  "INVITADO" si no está registrado), **foto de la patente**, **monto a pagar** y
+  **método de pago**; al cobrar en caja, **abrir la barrera** automáticamente.
+  Aclaración del usuario: **solo para ALPR** (el sistema manual de salida ya existe y es
+  aparte).
+- Decisiones confirmadas por el usuario: disparo **automático** al denegar el ALPR,
+  **abrir la barrera** al cobrar, usar la **foto de la ENTRADA** (el sistema no guarda
+  foto de salida).
+- Backend:
+  - `services/notification_service.py`: store de salidas impagas
+    (`set/get/clear_pending_exit`, TTL 120 s) + `notify_pending_exit` que emite el evento
+    WS `PENDING_EXIT`. Refactor DRY: se extrajo `_dispatch(coro_builder)` reutilizado por
+    `notify_occupancy_change` y `notify_pending_exit` (mismo scheduling por
+    `run_coroutine_threadsafe` sobre el loop de Uvicorn).
+  - `routes/parking/status.py`: `OccupancyManager.broadcast_event(sucursal_norm, event)`
+    (manda un evento puntual a la sede + GLOBAL, sin recalcular aforo).
+  - `services/access_service.py`: al denegar la salida por deuda (>10 min) se llama
+    `_emit_pending_exit(...)` con `{patente, log_id (entrada), deuda, usuario,
+    es_registrado, tipo_vehiculo, sucursal, gate_id}`.
+  - `services/billing_service.py`: `preview_pending_amount(db, log)` (read-only, espeja
+    el monto de `process_payment`: `calculate_debt` o `monto_total` de reserva + extra).
+- Frontend:
+  - `templates/dashboard.html`: modal `#modal-pending-exit` (reusa `capture-audit-grid`,
+    `glass-premium`, `select-premium`), botones "COBRAR Y ABRIR BARRERA" y cerrar.
+  - `static/js/modules/dashboard-operations.js`: `openPendingExitPopup(data)`,
+    `confirmPendingExit()` (POST `/access/pay-stay` → POST `/admin/manual-exit` que
+    registra la salida y dispara la barrera), `closePendingExitPopup()`.
+  - `static/js/modules/dashboard-stats.js`: en `initOccupancyWS`, si llega
+    `data.type === 'PENDING_EXIT'` llama `window.openPendingExitPopup(data.data)`.
+  - `static/js/dashboard.js`: bindings `window.openPendingExitPopup/confirmPendingExit/
+    closePendingExitPopup`.
+- Verificación: `node --check` OK (3 módulos), 8 guards en verde, suite **822 passed**
+  (813 + 9 tests nuevos en `test_access_flow.py`, `test_notifications.py`,
+  `test_status_ws.py`).
+- **PENDIENTE**: verificación en runtime real (navegador) del popup end-to-end con el
+  nodo ALPR; commit/push. Mensaje propuesto: `v9.34.89: popup de salida impaga ALPR con
+  cobro en caja y apertura de barrera`.
 
 ## Columnas legacy `sucursal_id` (Neon) — ANALIZADO Y RESTAURADO 11/10/2026 (pendiente decisión)
 

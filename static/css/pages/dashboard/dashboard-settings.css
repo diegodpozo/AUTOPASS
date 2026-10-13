@@ -298,8 +298,14 @@
 /* CONFIGURACIÓN DE CÁMARAS IP & MONITOREO */
 .camera-settings-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
+}
+
+@media (max-width: 1024px) {
+    .camera-settings-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -309,11 +315,33 @@
 }
 
 .camera-card-premium {
+    position: relative;
     background: rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     padding: 22px 20px;
     transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.camera-card-premium[draggable="true"] {
+    cursor: grab;
+}
+
+.camera-card-premium.dragging {
+    opacity: 0.45;
+}
+
+.camera-drag-handle {
+    position: absolute;
+    inset: 12px auto auto 12px;
+    cursor: grab;
+    opacity: 0.3;
+    font-size: 1rem;
+    padding: 4px;
+}
+
+.camera-drag-handle:hover {
+    opacity: 1;
 }
 
 .camera-card-premium:hover {
@@ -459,10 +487,6 @@
         max-width: 260px;
         justify-content: center;
     }
-    .camera-card-actions {
-        justify-content: center;
-        width: 100%;
-    }
     .camera-settings-grid {
         grid-template-columns: 1fr;
     }
@@ -508,7 +532,7 @@
         flex-direction: column;
         gap: 12px;
     }
-    .modal-capacities-row .form-group-premium {
+    .modal-capacities-row .form-group {
         width: 100%;
     }
 }
@@ -672,3 +696,4 @@
     font-size: 0.85rem;
     color: #fff;
 }
+#form-camera-config .form-group > label { text-align: center; }

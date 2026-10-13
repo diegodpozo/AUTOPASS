@@ -152,3 +152,92 @@ export async function showLogDetail(logId) {
     
     if (baseUi.openModal) baseUi.openModal('modal-log-detail');
 }
+
+/**
+ * SALIDA IMPAGA POR LECTOR DE PATENTE (ALPR).
+ * El backend emite PENDING_EXIT al denegar la salida por deuda; este popup
+ * muestra usuario/foto/monto, permite elegir metodo de pago y al cobrar
+ * registra la salida y abre la barrera automaticamente.
+ */
+let pendingExitData = null;
+
+export function openPendingExitPopup(data) {
+    if (!data || !data.patente) return;
+    pendingExitData = data;
+
+    const plateEl = document.getElementById('pending-exit-plate');
+    if (plateEl) plateEl.innerText = utils.formatPlate(data.patente);
+
+    const userEl = document.getElementById('pending-exit-user');
+    if (userEl) userEl.innerText = data.es_registrado ? data.usuario : 'INVITADO';
+
+    const amountEl = document.getElementById('pending-exit-amount');
+    if (amountEl) {
+        amountEl.innerText = (data.deuda === null || data.deuda === undefined)
+            ? 'SIN TARIFARIO'
+            : `$${utils.formatNum(data.deuda)}`;
+    }
+
+    const imgEl = document.getElementById('pending-exit-image');
+    const placeholderEl = document.getElementById('pending-exit-placeholder');
+    if (imgEl && data.log_id) {
+        if (placeholderEl) placeholderEl.style.display = 'none';
+        imgEl.style.display = '';
+        imgEl.onerror = () => {
+            imgEl.style.display = 'none';
+            if (placeholderEl) placeholderEl.style.display = 'flex';
+        };
+        const token = localStorage.getItem('token');
+        imgEl.src = `/v1/system/capture/${data.log_id}?token=${encodeURIComponent(token || '')}&t=${Date.now()}`;
+    } else if (placeholderEl) {
+        placeholderEl.style.display = 'flex';
+    }
+
+    const methodEl = document.getElementById('pending-exit-method');
+    if (methodEl) methodEl.value = 'Efectivo';
+
+    const confirmBtn = document.getElementById('pending-exit-confirm');
+    if (confirmBtn) confirmBtn.disabled = false;
+
+    if (baseUi.openModal) baseUi.openModal('modal-pending-exit');
+}
+
+export function closePendingExitPopup() {
+    pendingExitData = null;
+    if (baseUi.closeModal) baseUi.closeModal('modal-pending-exit');
+}
+
+export async function confirmPendingExit() {
+    if (!pendingExitData || !pendingExitData.patente) return;
+    const plate = pendingExitData.patente;
+    const metodo = document.getElementById('pending-exit-method')?.value || 'Efectivo';
+    const confirmBtn = document.getElementById('pending-exit-confirm');
+
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+    }
+
+    // 1. COBRAR LA ESTADÍA EN CAJA
+    const pay = await api.post(`/access/pay-stay?plate=${encodeURIComponent(plate)}&metodo=${encodeURIComponent(metodo)}`);
+    if (!pay.ok) {
+        if (confirmBtn) confirmBtn.disabled = false;
+        utils.showToast(pay.error || 'Error al procesar el pago', 'error');
+        return;
+    }
+
+    // 2. REGISTRAR LA SALIDA Y ABRIR LA BARRERA
+    const exit = await api.post(`/admin/manual-exit?plate=${encodeURIComponent(plate)}`);
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (!exit.ok) {
+        utils.showToast(exit.error || 'Pago registrado, pero no se pudo abrir la barrera', 'error');
+        return;
+    }
+
+    closePendingExitPopup();
+    const cobrado = pay.data && pay.data.monto_cobrado;
+    utils.showToast(cobrado != null
+        ? `Pago de $${utils.formatNum(cobrado)} registrado. Barrera abierta.`
+        : 'Pago registrado. Barrera abierta.', 'success');
+    stats.loadOccupancy();
+    stats.loadLiveStats();
+}

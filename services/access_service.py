@@ -84,6 +84,32 @@ class AccessService(AccessOccupancyMixin):
         return normalize_name(sucursal) if sucursal else "GLOBAL"
 
     @classmethod
+    def _emit_pending_exit(cls, db: Session, log: models.AccessLog, plate: str, sucursal: str, data=None):
+        """Avisa al dashboard (popup de caja) que un vehiculo intento salir con deuda pendiente.
+        Incluye usuario registrado (o invitado), monto a cobrar, foto (id del log de entrada) y sucursal."""
+        from services.billing_service import BillingService
+        try:
+            deuda = BillingService.preview_pending_amount(db, log)
+            usuario = None
+            vehiculo = VehicleRepository.get_by_normalized_patente_with_active_owner(db, plate)
+            if vehiculo and vehiculo.owner:
+                usuario = " ".join(filter(None, [vehiculo.owner.nombre, vehiculo.owner.apellido])).strip() or vehiculo.owner.email
+            tipo = log.tipo_vehiculo.value if hasattr(log.tipo_vehiculo, "value") else str(log.tipo_vehiculo)
+            payload = {
+                "patente": plate,
+                "log_id": log.id,
+                "deuda": deuda,
+                "usuario": usuario,
+                "es_registrado": bool(usuario),
+                "tipo_vehiculo": tipo,
+                "sucursal": sucursal,
+                "gate_id": getattr(data, "gate_id", None) or "SALIDA",
+            }
+            NotificationService.notify_pending_exit(cls._suc_key(sucursal), payload)
+        except Exception:
+            logger.warning("[ACCESS] Error emitiendo evento de salida impaga", exc_info=True)
+
+    @classmethod
     def validate_plate(cls, db: Session, data: schemas.PlateValidation, request: Request = None) -> dict:
 
         # Log request for debugging ALPR integration
@@ -164,6 +190,7 @@ class AccessService(AccessOccupancyMixin):
             minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
             if minutos_transcurridos > 10:
                 NotificationService.set_last_event(cls._suc_key(sucursal), "error", p, f"Deuda pendiente ({int(minutos_transcurridos)} min)", "error")
+                cls._emit_pending_exit(db, ultimo, p, sucursal, data)
                 return {"status": "denied", "message": f"Deuda pendiente de pago en esta sede. Cortesía: 10 min, transcurridos: {int(minutos_transcurridos)} min"}
             
         now = TimeService.now()

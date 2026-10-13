@@ -1,5 +1,7 @@
 import api from './api.js';
 import { showToast, showConfirm, toTitle } from './utils.js';
+import { enableDragSort } from './drag-sort.js';
+import { enableActionMenu } from './action-menu.js';
 
 const CAMERA_DEFAULT_PORT = '8080';
 const CAMERA_DEFAULT_PATH = '/video';
@@ -53,24 +55,27 @@ export function renderCameraSettingsTable(cameras) {
         return;
     }
     
-    const typeLabels = {
-        'PATENTE_INGRESO': 'LECTURA DE PATENTE - ENTRADA',
-        'PATENTE_EGRESO': 'LECTURA DE PATENTE - SALIDA',
-        'QR_INGRESO': 'LECTOR DE QR - ENTRADA',
-        'QR_EGRESO': 'LECTOR DE QR - SALIDA',
-        'PREDIO': 'VIGILANCIA',
-        'ENTRADA': 'LECTURA DE PATENTE - ENTRADA',
-        'SALIDA': 'LECTURA DE PATENTE - SALIDA',
-        'PATENTE': 'LECTURA DE PATENTE - ENTRADA',
-        'QR': 'LECTOR DE QR - ENTRADA'
-    };
-
     listEl.innerHTML = cameras.map(cam => {
         const badgeClass = cam.is_running ? 'badge-success-light' : 'badge-danger-light';
         const badgeText = cam.is_running ? 'ONLINE' : 'OFFLINE';
-        const tipoLabel = typeLabels[(cam.tipo || '').toUpperCase()] || cam.tipo;
         return `
-            <div class="camera-card-premium glass-premium">
+            <div class="camera-card-premium glass-premium" draggable="true" data-camera-id="${cam.id}">
+                <span class="camera-drag-handle" title="Arrastrar para reordenar">
+                    <i class="fas fa-grip-vertical"></i>
+                </span>
+                <div class="card-action-menu-wrapper">
+                    <button class="card-action-trigger" data-camera-id="${cam.id}" aria-haspopup="true" aria-expanded="false" aria-label="Acciones de la cámara" title="Acciones">
+                        <i class="fas fa-ellipsis-vertical"></i>
+                    </button>
+                    <div class="card-action-menu" role="menu">
+                        <button class="card-action-menu__item" role="menuitem" data-action="edit">
+                            <i class="fas fa-pen-to-square"></i> Editar
+                        </button>
+                        <button class="card-action-menu__item danger" role="menuitem" data-action="delete">
+                            <i class="fas fa-trash-alt"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
                 <div class="flex-col items-center text-center gap-10 mb-15">
                     <div class="flex-row items-center justify-center gap-10">
                         <div class="header-icon-box sm">
@@ -84,34 +89,42 @@ export function renderCameraSettingsTable(cameras) {
                 </div>
                 
                 <div class="camera-card-info p-12 mb-15" style="background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid rgba(255,255,255,0.04);">
-                    <div class="flex-row justify-between items-center mb-10 flex-wrap gap-5">
-                        <span class="text-xxs text-muted uppercase fw-800">FUNCIÓN</span>
-                        <span class="badge-status badge-info-light" style="font-size: 0.68rem;">${tipoLabel}</span>
-                    </div>
-                    <div class="flex-row justify-between items-center flex-wrap gap-5">
-                        <span class="text-xxs text-muted uppercase fw-800">IP</span>
-                        <span class="text-xs font-mono text-white text-truncate" style="max-width: 220px;" title="${cam.source}">${cameraSourceToInput(cam.source)}</span>
+                    <div class="flex-row items-center justify-center">
+                        <span class="text-xs font-mono text-white" title="${cam.source}">${cameraSourceToInput(cam.source)}</span>
                     </div>
                 </div>
 
-                <div class="flex-row justify-center gap-10 camera-card-actions">
-                    <button class="btn-tab-sub btn-edit-cam" id="settings-cam-btn-edit-${cam.id}" style="padding: 6px 14px; font-size: 0.7rem;">
-                        <i class="fas fa-pen-to-square mr-5"></i> EDITAR
-                    </button>
-                    <button class="btn-tab-sub danger" onclick="deleteCamera(${cam.id})" style="padding: 6px 14px; font-size: 0.7rem; border-color: rgba(244, 63, 94, 0.4); color: #f43f5e;">
-                        <i class="fas fa-trash-alt mr-5"></i> ELIMINAR
-                    </button>
-                </div>
             </div>
         `;
     }).join('');
 
-    cameras.forEach(cam => {
-        const btnEdit = document.getElementById(`settings-cam-btn-edit-${cam.id}`);
-        if (btnEdit) {
-            btnEdit.addEventListener('click', () => showEditCameraModal(cam));
+    enableActionMenu(listEl, {
+        triggerSelector: '.card-action-trigger',
+        onSelect: (action, itemEl, triggerEl) => {
+            const id = parseInt((triggerEl || itemEl)?.dataset.cameraId, 10);
+            const cam = cameras.find(c => c.id === id);
+            if (action === 'edit' && cam) showEditCameraModal(cam);
+            else if (action === 'delete' && Number.isInteger(id)) deleteCamera(id);
         }
     });
+
+    enableDragSort(listEl, {
+        itemSelector: '.camera-card-premium',
+        onReorder: saveCameraOrder
+    });
+}
+
+export async function saveCameraOrder(items) {
+    const ids = items
+        .map(el => parseInt(el.dataset.cameraId, 10))
+        .filter(id => Number.isInteger(id));
+    if (ids.length === 0) return;
+
+    const res = await api.put('/system/cameras/order', { ids });
+    if (!res.ok) {
+        showToast(res.error || 'No se pudo guardar el orden', 'error');
+        loadCameraSettings();
+    }
 }
 
 export async function showCreateCameraModal() {

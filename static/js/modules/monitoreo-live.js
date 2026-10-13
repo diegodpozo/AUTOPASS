@@ -34,6 +34,14 @@ export function initMonitoreoLive() {
     }
 
     connectGeneralWS();
+
+    let cctvResizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(cctvResizeTimer);
+        cctvResizeTimer = setTimeout(() => {
+            if (camerasList.length > 0) applyCctvGridSize();
+        }, 150);
+    });
 }
 
 async function loadBranchesSelect() {
@@ -88,6 +96,55 @@ async function loadCameras() {
     }
 }
 
+/**
+ * Elige columnas/filas para que la grilla llene toda la pantalla (las celdas se
+ * reparten el espacio con 1fr) buscando que cada celda quede con una proporción
+ * parecida a la del video (16:9) y dejando la menor cantidad de huecos. Se
+ * pondera: primero la cercanía a 16:9 y, con menor peso, los espacios vacíos.
+ */
+function computeCctvGrid(n) {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const target = 16 / 9;
+    let best = null;
+    for (let cols = 1; cols <= n; cols++) {
+        const rows = Math.ceil(n / cols);
+        const empties = cols * rows - n;
+        const aspect = (W / cols) / (H / rows);
+        const score = Math.abs(aspect - target) + empties * 0.25;
+        if (!best || score < best.score) {
+            best = { cols, rows, score };
+        }
+    }
+    return best || { cols: 1, rows: 1 };
+}
+
+function applyCctvGridSize() {
+    const grid = document.getElementById('cctv-grid');
+    if (!grid || camerasList.length === 0) return;
+    const n = camerasList.length;
+    const { cols, rows } = computeCctvGrid(n);
+    grid.style.gridTemplateColumns = '';
+    grid.style.gridTemplateRows = '';
+    grid.style.setProperty('--cctv-cols', cols);
+    grid.style.setProperty('--cctv-rows', rows);
+
+    // Centrar la última fila cuando queda incompleta.
+    const boxes = grid.querySelectorAll('.cctv-box');
+    boxes.forEach(b => { b.style.gridRow = ''; b.style.gridColumn = ''; });
+    const rem = n % cols;
+    if (cols > 1 && rem > 0) {
+        const offset = Math.floor((cols - rem) / 2);
+        for (let i = 0; i < rem; i++) {
+            const box = boxes[n - rem + i];
+            if (box) {
+                box.style.gridRow = String(rows);
+                box.style.gridColumn = String(offset + i + 1);
+            }
+        }
+    }
+}
+
 function arrangeCctvGrid() {
     const grid = document.getElementById('cctv-grid');
     if (!grid) return;
@@ -106,27 +163,6 @@ function arrangeCctvGrid() {
         return;
     }
 
-    const N = camerasList.length;
-    let cols = 1;
-    let rows = 1;
-
-    if (N === 2) {
-        cols = 2;
-        rows = 1;
-    } else if (N > 2 && N <= 4) {
-        cols = 2;
-        rows = 2;
-    } else if (N > 4 && N <= 6) {
-        cols = 3;
-        rows = 2;
-    } else if (N > 6) {
-        cols = 3;
-        rows = 3;
-    }
-
-    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-
     camerasList.forEach((cam, idx) => {
         const slotId = idx + 1;
         const box = document.createElement('div');
@@ -135,6 +171,8 @@ function arrangeCctvGrid() {
         renderActiveSlot(box, slotId, cam);
         grid.appendChild(box);
     });
+
+    applyCctvGridSize();
 }
 
 function renderActiveSlot(box, slotId, cam) {

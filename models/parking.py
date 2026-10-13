@@ -70,6 +70,7 @@ class ParkingCamera(Base):
                    onupdate="CASCADE", ondelete="CASCADE"),
         nullable=True) # Aislamiento por sucursal
     activa = Column(Boolean, default=True)
+    orden = Column(Integer, nullable=True) # Posición manual en la grilla de monitoreo (NULL = sin ordenar, va al final)
 
 
 class AccessLog(Base):

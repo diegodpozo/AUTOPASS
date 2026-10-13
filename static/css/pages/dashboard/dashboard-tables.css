@@ -252,6 +252,56 @@ tr.row-refund:hover {
     .capture-audit-grid { grid-template-columns: 1fr; }
 }
 
+/* POPUP SALIDA IMPAGA (ALPR): variante compacta — foto chica y controles acotados */
+#modal-pending-exit .modal-content {
+    max-width: 380px;
+}
+
+#modal-pending-exit .capture-audit-grid {
+    gap: 14px;
+    padding: 0;
+}
+
+#modal-pending-exit .capture-image-container {
+    max-width: 150px;
+    margin: 0 auto;
+}
+
+#modal-pending-exit .capture-info-panel {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+#modal-pending-exit .info-grid-compact {
+    gap: 10px 14px;
+}
+
+#modal-pending-exit .info-item {
+    align-items: center;
+}
+
+#modal-pending-exit .info-grid-compact .info-item:last-child {
+    grid-column: 1 / -1;
+    justify-content: center;
+}
+
+#modal-pending-exit .info-item i {
+    margin-top: 0;
+}
+
+/* Sacar la barra gris del botón de cobro (la barra sticky queda sin fondo) */
+#modal-pending-exit .modal-actions-sticky {
+    position: static;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
 /* ICON PICKER */
 .icon-picker-grid {
     display: grid;

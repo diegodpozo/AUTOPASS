@@ -178,6 +178,72 @@
         </div>
     </div>
 
+    <!-- MODAL: SALIDA CON DEUDA PENDIENTE (LECTOR DE PATENTE / ALPR) -->
+    <div id="modal-pending-exit" class="modal">
+        <div class="modal-content modal-content-large glass-premium">
+            <div class="modal-header card-header-premium">
+                <div class="header-info-group">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <h3>SALIDA CON DEUDA PENDIENTE</h3>
+                </div>
+                <div class="header-actions">
+                    <span class="close-btn" onclick="closePendingExitPopup()"><i class="fas fa-xmark"></i></span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="capture-audit-grid">
+                    <div class="capture-image-container">
+                        <img id="pending-exit-image" src="" alt="Captura de patente" class="audit-img">
+                        <div id="pending-exit-placeholder" class="image-placeholder-premium">
+                            <i class="fas fa-camera-slash"></i>
+                            <span>IMAGEN NO DISPONIBLE</span>
+                        </div>
+                    </div>
+                    <div class="capture-info-panel">
+                        <div class="info-grid-compact">
+                            <div class="info-item">
+                                <i class="fas fa-car"></i>
+                                <div>
+                                    <label>PATENTE</label>
+                                    <span id="pending-exit-plate" class="plate-style">---</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-user"></i>
+                                <div>
+                                    <label>USUARIO</label>
+                                    <span id="pending-exit-user" class="text-dorado">---</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-hand-holding-dollar"></i>
+                                <div>
+                                    <label>MONTO A PAGAR</label>
+                                    <span id="pending-exit-amount" class="text-bold">---</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-20">
+                            <label class="text-muted text-small block mb-5">MÉTODO DE PAGO</label>
+                            <select id="pending-exit-method" class="select-premium">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Mercado Pago">Mercado Pago</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="modal-actions-sticky">
+                            <button id="pending-exit-confirm" class="btn btn--primary btn--full" onclick="confirmPendingExit()">
+                                <i class="fas fa-dollar-sign"></i> COBRAR Y ABRIR BARRERA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: DETALLE DE RESERVA -->
     <div id="modal-res-detail" class="modal">
         <div class="modal-content glass-premium">

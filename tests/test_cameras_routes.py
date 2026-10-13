@@ -149,10 +149,10 @@ def _reset_staff():
 
 
 def _seed_camera(db_factory, nombre="Entrada", tipo="ENTRADA", source="0",
-                 sucursal="Centro", activa=True, cam_id=None):
+                 sucursal="Centro", activa=True, cam_id=None, orden=None):
     db = db_factory()
     c = models.ParkingCamera(nombre=nombre, tipo=tipo, source=source,
-                             sucursal=sucursal, activa=activa)
+                             sucursal=sucursal, activa=activa, orden=orden)
     if cam_id is not None:
         c.id = cam_id
     db.add(c)
@@ -528,6 +528,70 @@ def test_get_cameras_staff_sin_sucursal_todas(client):
 def test_get_cameras_vacio(client):
     c, _ = client
     assert c.get("/cameras").json() == []
+
+
+def test_get_cameras_respeta_orden_manual(client):
+    c, db_factory = client
+    _seed_camera(db_factory, cam_id=1, tipo="ENTRADA", sucursal="Centro", orden=3)
+    _seed_camera(db_factory, cam_id=2, tipo="ENTRADA", sucursal="Centro", orden=1)
+    _seed_camera(db_factory, cam_id=3, tipo="ENTRADA", sucursal="Centro", orden=2)
+    rows = c.get("/cameras").json()
+    assert [r["id"] for r in rows] == [2, 3, 1]
+    assert rows[0]["orden"] == 1
+
+
+def test_get_cameras_orden_null_va_al_final(client):
+    c, db_factory = client
+    _seed_camera(db_factory, cam_id=1, tipo="ENTRADA", sucursal="Centro", orden=5)
+    _seed_camera(db_factory, cam_id=2, tipo="ENTRADA", sucursal="Centro", orden=None)
+    rows = c.get("/cameras").json()
+    assert [r["id"] for r in rows] == [1, 2]
+
+
+# ---------------------------------------------------------------------------
+# reorder_cameras (PUT /cameras/order)
+# ---------------------------------------------------------------------------
+
+def test_reorder_cameras_admin_asigna_orden_secuencial(client):
+    c, db_factory = client
+    _seed_camera(db_factory, cam_id=1, tipo="ENTRADA", sucursal="Centro")
+    _seed_camera(db_factory, cam_id=2, tipo="ENTRADA", sucursal="Centro")
+    _seed_camera(db_factory, cam_id=3, tipo="ENTRADA", sucursal="Centro")
+    resp = c.put("/cameras/order", json={"ids": [3, 1, 2]})
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
+    rows = c.get("/cameras").json()
+    assert [r["id"] for r in rows] == [3, 1, 2]
+    db = db_factory()
+    ordenes = {x.id: x.orden for x in db.query(models.ParkingCamera).all()}
+    db.close()
+    assert ordenes == {3: 1, 1: 2, 2: 3}
+
+
+def test_reorder_cameras_id_inexistente_404(client):
+    c, db_factory = client
+    _seed_camera(db_factory, cam_id=1, tipo="ENTRADA", sucursal="Centro")
+    resp = c.put("/cameras/order", json={"ids": [1, 999]})
+    assert resp.status_code == 404
+
+
+def test_reorder_cameras_staff_misma_sucursal_ok(client):
+    c, db_factory = client
+    _seed_camera(db_factory, cam_id=1, tipo="ENTRADA", sucursal="Centro")
+    _seed_camera(db_factory, cam_id=2, tipo="ENTRADA", sucursal="Centro")
+    _set_staff(sucursal="Centro")
+    resp = c.put("/cameras/order", json={"ids": [2, 1]})
+    assert resp.status_code == 200
+    rows = c.get("/cameras").json()
+    assert [r["id"] for r in rows] == [2, 1]
+
+
+def test_reorder_cameras_staff_otra_sucursal_403(client):
+    c, db_factory = client
+    _seed_camera(db_factory, cam_id=1, tipo="ENTRADA", sucursal="Sur")
+    _set_staff(sucursal="Centro")
+    resp = c.put("/cameras/order", json={"ids": [1]})
+    assert resp.status_code == 403
 
 
 # ---------------------------------------------------------------------------

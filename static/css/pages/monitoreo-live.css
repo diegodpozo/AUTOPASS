@@ -6,7 +6,12 @@
     }
 
     /* --- CCTV GRID LAYOUT --- */
+    /* La grilla ocupa SIEMPRE toda la pantalla: las columnas/filas se calculan
+       en JS según la cantidad de cámaras y las celdas se reparten el espacio
+       (1fr), achicándose a medida que se agregan cámaras. */
     .cctv-grid-container {
+        --cctv-cols: 1;
+        --cctv-rows: 1;
         display: grid;
         gap: 12px;
         padding: 12px;
@@ -15,6 +20,8 @@
         width: 100vw;
         background: #000000;
         overflow: hidden;
+        grid-template-columns: repeat(var(--cctv-cols), 1fr);
+        grid-template-rows: repeat(var(--cctv-rows), 1fr);
     }
 
     /* --- CAMERA DISPLAY BOX --- */

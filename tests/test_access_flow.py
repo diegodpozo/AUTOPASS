@@ -16,7 +16,9 @@ import models
 from models.enums import AccessEventType, PaymentStatus, ReservationStatus, VehicleType
 from schemas import PlateValidation, QRValidation
 from services.access_service import AccessService
+from services.billing_service import BillingService
 from services.hardware_service import HardwareService
+from services.notification_service import NotificationService
 from services.time_service import TimeService
 
 FIXED = datetime.datetime(2026, 9, 20, 12, 0, 0)
@@ -150,11 +152,58 @@ def test_exit_plate_cortesia_ok_y_dispara_barrera(db, env):
 
 
 def test_exit_plate_deuda_mayor_10min_rechaza_y_no_abre(db, env):
-    _log_entrada(db, "AA123BB", fecha_str=_hace(30), pago=False)
+    NotificationService.clear_pending_exit("CENTRO")
+    log = _log_entrada(db, "AA123BB", fecha_str=_hace(30), pago=False)
     result = AccessService.exit_plate(db, PlateValidation(plate="AA123BB", gate_id="Centro_SALIDA"))
     assert result["status"] == "denied"
     assert "Deuda pendiente" in result["message"]
     assert env["calls"] == []
+    # EMITE EL EVENTO PARA EL POPUP DE CAJA (usuario invitado, sin tarifario -> deuda None)
+    pending = NotificationService.get_pending_exit("CENTRO")
+    assert pending is not None
+    assert pending["patente"] == "AA123BB"
+    assert pending["log_id"] == log.id
+    assert pending["es_registrado"] is False
+    assert pending["usuario"] is None
+    assert pending["tipo_vehiculo"] == "Auto"
+    assert pending["sucursal"] == "Centro"
+    assert pending["gate_id"] == "Centro_SALIDA"
+    assert pending["deuda"] is None
+    NotificationService.clear_pending_exit("CENTRO")
+
+
+def test_exit_plate_deuda_con_tarifario_previsualiza_monto(db, env):
+    NotificationService.clear_pending_exit("CENTRO")
+    db.add(models.Settings(clave="precio_30min", valor="100", sucursal="Centro"))
+    db.commit()
+    _log_entrada(db, "AA123BB", fecha_str=_hace(30), pago=False)
+    AccessService.exit_plate(db, PlateValidation(plate="AA123BB", gate_id="Centro_SALIDA"))
+    pending = NotificationService.get_pending_exit("CENTRO")
+    assert pending["deuda"] == 100.0  # 30 min = 1 bloque
+    NotificationService.clear_pending_exit("CENTRO")
+
+
+def test_exit_plate_deuda_usuario_registrado_usa_nombre(db, env):
+    NotificationService.clear_pending_exit("CENTRO")
+    u = models.User(email="cli@example.com", nombre="Ana", apellido="Gomez", dni="12345678",
+                    rol="user", password_hash="x")
+    db.add(u)
+    db.commit()
+    db.add(models.Vehicle(patente="AA 123 BB", tipo="Auto", user_id=u.id))
+    db.commit()
+    _log_entrada(db, "AA123BB", fecha_str=_hace(30), pago=False)
+    AccessService.exit_plate(db, PlateValidation(plate="AA123BB", gate_id="Centro_SALIDA"))
+    pending = NotificationService.get_pending_exit("CENTRO")
+    assert pending["es_registrado"] is True
+    assert pending["usuario"] == "Ana Gomez"
+    NotificationService.clear_pending_exit("CENTRO")
+
+
+def test_exit_plate_cortesia_no_emite_pending_exit(db, env):
+    NotificationService.clear_pending_exit("CENTRO")
+    _log_entrada(db, "AA123BB", fecha_str=_hace(5), pago=False)
+    AccessService.exit_plate(db, PlateValidation(plate="AA123BB", gate_id="Centro_SALIDA"))
+    assert NotificationService.get_pending_exit("CENTRO") is None
 
 
 def test_exit_plate_sin_ingreso_error(db, env):

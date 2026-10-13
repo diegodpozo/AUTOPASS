@@ -1,6 +1,7 @@
 import api from './api.js';
 import { formatPlate, formatNum, toTitle, formatTime, parseFecha } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
+import { notifyOperator } from './operator-alerts.js';
 
 /**
  * PANEL ESTADISTICAS MODULO
@@ -37,6 +38,17 @@ export function initOccupancyWS() {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
+        // SALIDA IMPAGA DETECTADA POR ALPR: ABRIR POPUP DE COBRO EN CAJA
+        if (data.type === 'PENDING_EXIT' && typeof window.openPendingExitPopup === 'function') {
+            const pending = data.data || {};
+            notifyOperator({
+                title: 'Salida con deuda pendiente',
+                body: `Patente ${formatPlate(pending.patente || '')}: cobrar en caja para abrir la barrera.`,
+                tag: 'autopass-pending-exit'
+            });
+            window.openPendingExitPopup(pending);
+        }
+
         // REFRESCAR COMPONENTES CLAVE
         loadLiveStats();
         loadRecentLogs();

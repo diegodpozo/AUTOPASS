@@ -173,6 +173,7 @@ def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_
             source=c.source,
             activa=c.activa,
             sucursal=c.sucursal,
+            orden=c.orden,
             is_running=is_running
         ))
     return res
@@ -197,8 +198,29 @@ def create_camera(data: schemas.CameraCreate, db: Session = Depends(get_db), sta
         source=new_cam.source,
         activa=new_cam.activa,
         sucursal=new_cam.sucursal,
+        orden=new_cam.orden,
         is_running=False
     )
+
+@router.put("/cameras/order")
+def reorder_cameras(data: schemas.CameraOrderUpdate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
+    """GUARDA EL ORDEN MANUAL DE LAS CÁMARAS EN LA GRILLA DE MONITOREO.
+
+    Recibe la lista de ids en el orden deseado y asigna `orden` secuencial (1..N).
+    Un usuario no-admin solo puede reordenar cámaras de su sucursal.
+    """
+    cameras = []
+    for camera_id in data.ids:
+        camera = CameraRepository.get_by_id(db, camera_id)
+        if not camera:
+            raise HTTPException(status_code=404, detail=f"Cámara {camera_id} no encontrada")
+        if staff.rol != UserRole.ADMIN and normalize_system_name(camera.sucursal) != normalize_system_name(staff.sucursal):
+            raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
+        cameras.append(camera)
+    for index, camera in enumerate(cameras):
+        camera.orden = index + 1
+    db.commit()
+    return {"status": "ok", "message": "Orden actualizado"}
 
 @router.put("/cameras/{camera_id}", response_model=schemas.CameraResponse)
 def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
@@ -227,6 +249,7 @@ def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depe
         source=camera.source,
         activa=camera.activa,
         sucursal=camera.sucursal,
+        orden=camera.orden,
         is_running=is_running
     )
 

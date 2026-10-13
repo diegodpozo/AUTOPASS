@@ -164,6 +164,33 @@ def test_broadcast_global_envia_todas_sucursales(client):
     assert ws.sent[0]["branches"][0]["nombre"] == "Centro"
 
 
+def test_broadcast_event_envia_a_sucursal_y_global():
+    """PENDING_EXIT (popup de salida impaga) debe llegar a la sede y al admin global."""
+    m = OccupancyManager()
+    ws_branch = FakeWS()
+    ws_global = FakeWS()
+    m.active_connections["CENTRO"] = [ws_branch]
+    m.active_connections["GLOBAL"] = [ws_global]
+    event = {"type": "PENDING_EXIT", "data": {"patente": "AA123BB"}}
+    asyncio.run(m.broadcast_event("CENTRO", event))
+    assert ws_branch.sent == [event]
+    assert ws_global.sent == [event]
+
+
+def test_broadcast_event_global_no_duplica():
+    m = OccupancyManager()
+    ws_global = FakeWS()
+    m.active_connections["GLOBAL"] = [ws_global]
+    event = {"type": "PENDING_EXIT", "data": {}}
+    asyncio.run(m.broadcast_event("GLOBAL", event))
+    assert ws_global.sent == [event]
+
+
+def test_broadcast_event_sin_sockets_no_falla():
+    m = OccupancyManager()
+    asyncio.run(m.broadcast_event("NADIE", {"type": "PENDING_EXIT", "data": {}}))
+
+
 # ---------------------------------------------------------------------------
 # WebSocket endpoint (integración)
 # ---------------------------------------------------------------------------

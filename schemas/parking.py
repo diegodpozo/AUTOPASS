@@ -158,5 +158,9 @@ class CameraResponse(CameraBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    orden: Optional[int] = None
     is_running: bool = False
+
+class CameraOrderUpdate(BaseModel):
+    ids: List[int]
 
