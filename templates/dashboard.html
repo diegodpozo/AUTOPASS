@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/modal_header.html" import modal_header %}
 
 {% block title %}AUTOPASS Admin - Control Inteligente{% endblock %}
 
@@ -110,16 +111,8 @@
 
     <!-- MODAL: VISUALIZADOR DE CAPTURAS -->
     <div id="modal-log-detail" class="modal">
-        <div class="modal-content modal-content-large glass-premium">
-            <div class="modal-header card-header-premium">
-                <div class="header-info-group">
-                    <i class="fas fa-camera"></i>
-                    <h3>DETALLE</h3>
-                </div>
-                <div class="header-actions">
-                    <span class="close-btn" onclick="closeModal('modal-log-detail')"><i class="fas fa-xmark"></i></span>
-                </div>
-            </div>
+        <div class="modal-content modal-content-large modal-content--banded">
+            {{ modal_header('fas fa-camera', 'DETALLE', "closeModal('modal-log-detail')") }}
             <div class="modal-body">
                 <div class="capture-audit-grid">
                     <div class="capture-image-container">
@@ -180,16 +173,8 @@
 
     <!-- MODAL: SALIDA CON DEUDA PENDIENTE (LECTOR DE PATENTE / ALPR) -->
     <div id="modal-pending-exit" class="modal">
-        <div class="modal-content modal-content-large glass-premium">
-            <div class="modal-header card-header-premium">
-                <div class="header-info-group">
-                    <i class="fas fa-triangle-exclamation"></i>
-                    <h3>SALIDA CON DEUDA PENDIENTE</h3>
-                </div>
-                <div class="header-actions">
-                    <span class="close-btn" onclick="closePendingExitPopup()"><i class="fas fa-xmark"></i></span>
-                </div>
-            </div>
+        <div class="modal-content modal-content-large modal-content--banded">
+            {{ modal_header('fas fa-triangle-exclamation', 'SALIDA CON DEUDA PENDIENTE', 'closePendingExitPopup()') }}
             <div class="modal-body">
                 <div class="capture-audit-grid">
                     <div class="capture-image-container">
@@ -246,16 +231,8 @@
 
     <!-- MODAL: DETALLE DE RESERVA -->
     <div id="modal-res-detail" class="modal">
-        <div class="modal-content glass-premium">
-            <div class="modal-header">
-                <div class="flex-row items-center gap-10">
-                    <div class="header-icon-box sm">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <h3 class="text-dorado">DETALLE DE RESERVA</h3>
-                </div>
-                <span class="close-btn" onclick="closeModal('modal-res-detail')"><i class="fas fa-xmark"></i></span>
-            </div>
+        <div class="modal-content modal-content--banded">
+            {{ modal_header('fas fa-calendar-check', 'DETALLE DE RESERVA', "closeModal('modal-res-detail')") }}
             <div class="modal-body">
                 <div class="info-card-premium mb-20">
                     <label>COMPROBANTE DE RESERVA</label>

@@ -1,0 +1,29 @@
+{# =========================================================================
+   Banda de header estándar de los modales del dashboard.
+   Replica el header de #modal-new-reservation (icono + título + subtítulo
+   opcional + botón de cierre) para unificar TODOS los modales de contenido.
+
+   Uso:
+     {% from "components/modal_header.html" import modal_header %}
+     {{ modal_header('fas fa-camera', 'DETALLE', "closeModal('modal-log-detail')") }}
+   Params:
+     icon        clases del icono (ej. 'fas fa-camera')
+     title       texto del título (o valor por defecto si title_id se setea por JS)
+     close       expresión JS del onclick del botón de cierre (se emite sin escapar)
+     title_id    id del <h3> (opcional, para títulos dinámicos)
+     icon_id     id del <i> del icono (opcional, para iconos dinámicos)
+     subtitle    texto del subtítulo (opcional)
+     subtitle_id id del <p> del subtítulo (opcional)
+   ========================================================================= #}
+{% macro modal_header(icon, title, close, title_id='', icon_id='', subtitle='', subtitle_id='') -%}
+<div class="card-header-premium">
+    <div class="header-icon"><i class="{{ icon }}"{% if icon_id %} id="{{ icon_id }}"{% endif %}></i></div>
+    <div class="header-text">
+        <h3 class="text-dorado"{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}</h3>
+        {%- if subtitle %}
+        <p{% if subtitle_id %} id="{{ subtitle_id }}"{% endif %}>{{ subtitle }}</p>
+        {%- endif %}
+    </div>
+    <button type="button" class="modal-close-top modal-close-top--inline" onclick="{{ close|safe }}">&times;</button>
+</div>
+{%- endmacro %}

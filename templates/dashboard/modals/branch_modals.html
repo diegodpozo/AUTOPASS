@@ -1,15 +1,8 @@
+{% from "components/modal_header.html" import modal_header %}
 <!-- MODAL: VER NIVELES DE SUCURSAL -->
 <div id="modal-branch-floors" class="modal">
-    <div class="modal-content glass-premium">
-        <div class="modal-header">
-            <div class="flex-row items-center gap-10">
-                <div class="header-icon-box sm">
-                    <i class="fas fa-layer-group"></i>
-                </div>
-                <h3 class="text-dorado" id="branch-floors-title">NIVELES: SUCURSAL</h3>
-            </div>
-            <span class="close-btn" onclick="closeModal('modal-branch-floors')"><i class="fas fa-xmark"></i></span>
-        </div>
+    <div class="modal-content modal-content--banded">
+        {{ modal_header('fas fa-layer-group', 'NIVELES: SUCURSAL', "closeModal('modal-branch-floors')", title_id='branch-floors-title') }}
         <div class="modal-body">
             <div class="table-container">
                 <table class="table-premium">
@@ -36,16 +29,8 @@
 
 <!-- MODAL: AGREGAR SUCURSAL -->
 <div id="modal-add-branch" class="modal">
-    <div class="modal-content glass-premium">
-        <div class="modal-header">
-            <div class="flex-row items-center gap-10">
-                <div class="header-icon-box sm">
-                    <i class="fas fa-building" id="branch-modal-icon"></i>
-                </div>
-                <h3 class="text-dorado" id="branch-modal-title">NUEVA SUCURSAL</h3>
-            </div>
-            <span class="close-btn" onclick="closeModal('modal-add-branch')"><i class="fas fa-xmark"></i></span>
-        </div>
+    <div class="modal-content modal-content--banded">
+        {{ modal_header('fas fa-building', 'NUEVA SUCURSAL', "closeModal('modal-add-branch')", title_id='branch-modal-title', icon_id='branch-modal-icon') }}
         <div class="modal-body">
             <form id="form-add-branch">
                 <input type="hidden" id="branch-id-edit">

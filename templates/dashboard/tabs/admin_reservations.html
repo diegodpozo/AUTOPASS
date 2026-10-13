@@ -1,3 +1,4 @@
+{% from "components/modal_header.html" import modal_header %}
 <!-- PESTAÑA: RESERVAS DE USUARIOS -->
 <div id="tab-admin-reservations" class="tab-view">
     <!-- KPIS DE RESERVAS -->
@@ -84,14 +85,7 @@
 <div id="modal-new-reservation" class="modal">
     <div class="modal-content">
         <div class="modern-reservation-card">
-            <div class="card-header-premium">
-                <div class="header-icon"><i class="fas fa-calendar-plus"></i></div>
-                <div class="header-text">
-                    <h3 class="text-dorado" id="new-res-modal-title">NUEVA RESERVA MANUAL</h3>
-                    <p id="new-res-modal-subtitle">Reserva y pago en la sucursal asignada</p>
-                </div>
-                <button class="modal-close-top modal-close-top--inline" onclick="closeModal('modal-new-reservation')">&times;</button>
-            </div>
+            {{ modal_header('fas fa-calendar-plus', 'NUEVA RESERVA MANUAL', "closeModal('modal-new-reservation')", title_id='new-res-modal-title', subtitle='Reserva y pago en la sucursal asignada', subtitle_id='new-res-modal-subtitle') }}
 
             <div class="reservation-form-body-premium">
                 <form id="form-new-reservation" onsubmit="handleAdminNewReservation(event)">
@@ -248,17 +242,8 @@
 
 <!-- MODAL DE CONFIRMACIÓN DE EDICIÓN DE RESERVA (DIFERENCIA FINANCIERA) -->
 <div id="modal-edit-resumo" class="modal">
-    <div class="modal-content">
-        <div class="edit-resumo-header">
-            <div class="edit-resumo-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
-            </div>
-            <div class="edit-resumo-text">
-                <h3>CONFIRMAR EDICIÓN</h3>
-                <p>Revisá los datos antes de guardar los cambios</p>
-            </div>
-            <button class="modal-close-top modal-close-top--inline" onclick="cancelEditResumo()">&times;</button>
-        </div>
+    <div class="modal-content modal-content--banded">
+        {{ modal_header('fas fa-file-invoice-dollar', 'CONFIRMAR EDICIÓN', 'cancelEditResumo()', subtitle='Revisá los datos antes de guardar los cambios') }}
         <div class="edit-resumo-body">
             <div id="edit-confirm-resumo"></div>
             <div id="edit-confirm-diff"></div>

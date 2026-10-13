@@ -37,6 +37,19 @@
     color: var(--dorado);
 }
 
+.btn--secondary {
+    background: transparent;
+    color: var(--dorado);
+    border: 2px solid var(--dorado);
+}
+
+.btn--secondary:hover {
+    background: var(--dorado);
+    color: var(--negro);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-10-20-b30);
+}
+
 .btn--sm { padding: 8px 18px; font-size: 0.75rem; border-radius: var(--radius-full); }
 .btn--full { width: 100%; justify-content: center; }
 

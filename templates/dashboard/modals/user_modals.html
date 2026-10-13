@@ -1,10 +1,10 @@
+{% from "components/modal_header.html" import modal_header %}
 <!-- MODAL: CREAR USUARIO ADMIN/STAFF -->
 <div id="modal-create-user" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('modal-create-user')"><i class="fas fa-xmark"></i></span>
-        <h2 class="text-dorado">ALTA USUARIO</h2>
+    <div class="modal-content modal-content--banded">
+        {{ modal_header('fas fa-user-plus', 'ALTA USUARIO', "closeModal('modal-create-user')") }}
         
-        <form onsubmit="handleAdminCreateUser(event)">
+        <form class="modal-body" onsubmit="handleAdminCreateUser(event)">
             <div class="form-row">
                 <div class="form-group">
                     <label>Nombre</label>
@@ -96,11 +96,10 @@
 
 <!-- MODAL: EDITAR USUARIO -->
 <div id="modal-edit-user" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('modal-edit-user')"><i class="fas fa-xmark"></i></span>
-        <h2 class="text-dorado">EDITAR USUARIO</h2>
+    <div class="modal-content modal-content--banded">
+        {{ modal_header('fas fa-user-pen', 'EDITAR USUARIO', "closeModal('modal-edit-user')") }}
         
-        <form onsubmit="handleAdminEditUser(event)">
+        <form class="modal-body" onsubmit="handleAdminEditUser(event)">
             <input type="hidden" id="edit-user-id">
             <div class="form-row">
                 <div class="form-group">
@@ -184,9 +183,9 @@
 
 <!-- MODAL: CAMBIAR CONTRASEÑA (ADMIN) -->
 <div id="modal-change-password-admin" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('modal-change-password-admin')"><i class="fas fa-xmark"></i></span>
-        <h2 class="text-dorado">CAMBIAR CONTRASEÑA</h2>
+    <div class="modal-content modal-content--banded">
+        {{ modal_header('fas fa-key', 'CAMBIAR CONTRASEÑA', "closeModal('modal-change-password-admin')") }}
+        <div class="modal-body">
         <p class="text-small text-muted mb-20">Cambiar clave para: <b id="admin-pass-username" class="text-white">---</b></p>
         
         <form onsubmit="handleAdminChangePassword(event)">
@@ -209,5 +208,6 @@
                 <button type="submit" class="btn btn--primary">GUARDAR</button>
             </div>
         </form>
+        </div>
     </div>
 </div>

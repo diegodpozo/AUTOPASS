@@ -444,18 +444,6 @@ tr:hover .btn-delete-promo {
     overflow: hidden;
 }
 
-#modal-ticket-answer .modal-header {
-    flex-shrink: 0;
-    padding: 16px 25px;
-}
-
-#modal-ticket-answer .modal-header .close-btn {
-    position: static;
-    width: 34px;
-    height: 34px;
-    margin-right: -4px;
-}
-
 #modal-ticket-answer .modal-footer-buttons {
     flex-shrink: 0;
 }
@@ -476,6 +464,15 @@ tr:hover .btn-delete-promo {
 #tab-promotions .content-wrapper .card { max-width: 800px; overflow: hidden; }
 #tab-promotions .header-info-group { flex: 1; }
 #tab-promotions .table-container { padding: 0 10px 20px 10px; }
+
+/* TIPOGRAFÍA DE LA COLUMNA BENEFICIO (nombre, descripción y badge) */
+#tab-promotions td[data-label="Beneficio"] .text-small { font-size: 0.95rem; }
+#tab-promotions td[data-label="Beneficio"] .text-xs { font-size: 0.85rem; }
+#tab-promotions td[data-label="Beneficio"] .badge-voucher,
+#tab-promotions td[data-label="Beneficio"] .badge-discount { font-size: 0.7rem; }
+
+/* COLUMNA PUNTOS: centrar el contenido */
+#tab-promotions td[data-label="Puntos"] .points-badge-sm { display: inline-flex; }
 
 #modal-ticket-answer .modal-body {
     flex: 1;
@@ -673,53 +670,6 @@ tr:hover .btn-delete-promo {
         align-items: center;
         justify-content: center;
     }
-
-    /* HEADER DEL MODAL DE TICKET EN MÓVIL: mantiene la "X" arriba a la derecha */
-    #modal-ticket-answer .modal-header {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        padding: 14px 18px;
-        text-align: left;
-    }
-
-    #modal-ticket-answer .modal-header .header-info-group {
-        width: auto;
-        flex: 1;
-        justify-content: flex-start;
-        margin-left: 0;
-        text-align: left;
-        min-width: 0;
-    }
-
-    #modal-ticket-answer .modal-header .header-text {
-        text-align: left;
-        min-width: 0;
-    }
-
-    #modal-ticket-answer .modal-header .header-text h3 {
-        font-size: 0.9rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    #modal-ticket-answer .modal-header .header-actions {
-        width: auto;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-        flex: none;
-    }
-
-    #modal-ticket-answer .modal-header .close-btn {
-        width: 38px;
-        height: 38px;
-        margin-right: 0;
-        justify-content: center;
-    }
 }
 
 /* ==========================================================================
@@ -878,7 +828,13 @@ tr:hover .btn-delete-promo {
    ========================================================================== */
 
 /* ANCHO DEL MODAL DE PROMOCIONES */
-#modal-create-promotion .modal-content { max-width: 580px; }
+#modal-create-promotion .modal-content { max-width: 960px; }
+
+/* LAYOUT DE DOS COLUMNAS: datos del beneficio | ubicación y mapa */
+#modal-create-promotion .promo-form-layout { align-items: start; }
+
+/* SELECT DE TIPO DE CANJE MÁS ANGOSTO (60% del ancho de la columna) */
+#modal-create-promotion .promo-tipo-select { width: 60%; }
 
 /* TEXTAREA DE DESCRIPCIÓN CON ÍCONO */
 #form-create-promotion .input-with-icon i.fa-align-left {
@@ -938,5 +894,12 @@ tr:hover .btn-delete-promo {
     box-shadow: var(--shadow-20-inset-b40);
 }
 
-/* BOTONES DE ACCIÓN */
+/* BOTONES DE ACCIÓN: en línea, sin barra fija ni fondo gris */
+#form-create-promotion .modal-actions-sticky {
+    position: static;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
 #form-create-promotion .modal-actions-sticky .btn { min-width: 140px; }

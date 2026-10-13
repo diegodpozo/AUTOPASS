@@ -208,38 +208,6 @@
     overflow: hidden;
 }
 
-.admin-help-modal-header {
-    border-bottom: 1px solid rgba(223, 186, 107, 0.2);
-    padding: 20px 24px;
-    background: rgba(17, 20, 27, 0.95);
-}
-
-.admin-help-icon-box {
-    background: rgba(223, 186, 107, 0.12);
-    border: 1px solid rgba(223, 186, 107, 0.3);
-    color: var(--dorado);
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-}
-
-.admin-help-title {
-    color: #ffffff;
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-}
-
-.admin-help-subtitle {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-}
-
 .admin-help-modal-body {
     max-height: calc(82vh - 120px);
     overflow-y: auto;

@@ -1,3 +1,4 @@
+{% from "components/modal_header.html" import modal_header %}
 <div id="tab-tickets" class="tab-view">
     <!-- KPIS DE TICKETS DE SOPORTE -->
     <div class="kpi-grid">
@@ -82,19 +83,8 @@
 
 <!-- MODAL: ATENDER / RESPONDER TICKET -->
 <div id="modal-ticket-answer" class="modal">
-    <div class="modal-content modal-content-large glass-premium">
-        <div class="modal-header card-header-premium">
-            <div class="header-info-group">
-                <div class="header-icon"><i class="fas fa-headset"></i></div>
-                <div class="header-text">
-                    <h3 id="ticket-modal-title">ATENDER TICKET</h3>
-                    <p id="ticket-modal-nro">---</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <span class="close-btn" onclick="closeModal('modal-ticket-answer')"><i class="fas fa-xmark"></i></span>
-            </div>
-        </div>
+    <div class="modal-content modal-content-large modal-content--banded">
+        {{ modal_header('fas fa-headset', 'ATENDER TICKET', "closeModal('modal-ticket-answer')", title_id='ticket-modal-title', subtitle='---', subtitle_id='ticket-modal-nro') }}
         <div class="modal-body">
             <input type="hidden" id="ticket-modal-id">
 

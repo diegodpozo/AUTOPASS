@@ -1,18 +1,8 @@
+{% from "components/modal_header.html" import modal_header %}
 <!-- MODAL: CENTRO DE AYUDA OPERATIVA Y TOURS PARA EMPLEADOS Y ADMINS -->
 <div id="modal-admin-help" class="modal">
-    <div class="modal-content glass-premium admin-help-modal-content">
-        <div class="modal-header admin-help-modal-header">
-            <div class="flex-row items-center gap-12">
-                <div class="header-icon-box admin-help-icon-box">
-                    <i class="fas fa-life-ring"></i>
-                </div>
-                <div>
-                    <h2 class="admin-help-title">CENTRO DE AYUDA OPERATIVA & TOURS</h2>
-                    <span class="admin-help-subtitle">Instrucción técnica y resolución de contingencias para Staff y Administradores</span>
-                </div>
-            </div>
-            <span class="close-btn" onclick="closeModal('modal-admin-help')"><i class="fas fa-xmark"></i></span>
-        </div>
+    <div class="modal-content modal-content--banded admin-help-modal-content">
+        {{ modal_header('fas fa-life-ring', 'CENTRO DE AYUDA OPERATIVA & TOURS', "closeModal('modal-admin-help')", subtitle='Instrucción técnica y resolución de contingencias para Staff y Administradores') }}
 
         <div class="modal-body admin-help-modal-body">
             <!-- HERO BANNER CON BUSCADOR Y PILLS -->

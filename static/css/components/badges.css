@@ -64,6 +64,17 @@
 .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.25); }
 .badge-outline { background: transparent; color: #aaa; border: 1px solid rgba(255, 255, 255, 0.15); }
 
+/* --- BADGES DE TIPO DE BENEFICIO (sin fondo ni borde: solo ícono y texto en color) --- */
+.badge-voucher,
+.badge-discount {
+    background: transparent;
+    padding: 0;
+    margin-top: 4px;
+    font-size: 0.55rem;
+}
+.badge-voucher { color: var(--info); }
+.badge-discount { color: var(--secondary); }
+
 /* --- PATENTES --- */
 .plate-style {
     background: #1e293b;

@@ -659,9 +659,9 @@
 /* CONTENEDOR DE LA SECCIÓN SISTEMA */
 #set-section-system .mx-auto { max-width: 650px; }
 
-/* MODAL DE PISO / CÁMARA: mismo shell que el modal de nueva reserva (header full-width) */
+/* MODAL DE PISO / CÁMARA: header full-width (banda estándar), ancho propio */
 #modal-add-floor .modal-content,
-#modal-camera-config .modal-content { max-width: 700px; padding: 0; background: transparent; border: none; }
+#modal-camera-config .modal-content { max-width: 700px; }
 /* INPUTS 25% MÁS ANGOSTOS Y CENTRADOS */
 #form-camera-config .input-with-icon {
     width: 75%;

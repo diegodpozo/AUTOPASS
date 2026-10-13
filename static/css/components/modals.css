@@ -62,6 +62,29 @@
     overflow-y: auto;
 }
 
+/* BANDA DE HEADER ESTÁNDAR DE MODALES (full-width, estilo #modal-new-reservation).
+   .modal-content--banded cede su padding para que la banda .card-header-premium
+   llegue a los bordes; el contenido va en .modal-body, que recupera el padding. */
+.modal-content--banded {
+    padding: 0;
+}
+
+.modal-content--banded > .modal-body {
+    padding: 32px;
+}
+
+.modal-content--banded > .card-header-premium {
+    flex-shrink: 0;
+}
+
+/* Subtítulo opcional dentro de la banda de header de un modal */
+.card-header-premium .header-text p {
+    margin: 5px 0 0;
+    font-size: 0.78rem;
+    color: #888;
+    letter-spacing: 0.5px;
+}
+
 .close-btn { 
     position: absolute; 
     top: 12px; 

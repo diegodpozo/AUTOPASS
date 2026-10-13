@@ -162,8 +162,8 @@ function renderPromotionsTable() {
                    </div>`;
 
             const typeBadge = p.tipo_canje === 'descuento_reserva'
-                ? `<span class="badge" style="font-size:0.55rem;background:rgba(16, 185, 129,.15);color:#10b981;border:1px solid rgba(16, 185, 129,.3);padding:2px 7px;border-radius:5px;margin-top:4px;"><i class="fas fa-percent"></i> ${p.valor_descuento || 0}% DESC</span>`
-                : `<span class="badge" style="font-size:0.55rem;background:rgba(52,152,219,.15);color:#3498db;border:1px solid rgba(52,152,219,.3);padding:2px 7px;border-radius:5px;margin-top:4px;"><i class="fas fa-ticket"></i> VOUCHER</span>`;
+                ? `<span class="badge badge-discount">${p.valor_descuento || 0}% DESCUENTO</span>`
+                : `<span class="badge badge-voucher"><i class="fas fa-ticket"></i> VOUCHER</span>`;
 
             const branchTd = isAdmin ? `
                 <td data-label="Sucursal" class="text-center">
