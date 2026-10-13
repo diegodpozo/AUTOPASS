@@ -2,6 +2,10 @@
   "_nota": "Archivos cuyo cambio de color es INTENCIONAL. check_color_equivalence.py los omite SOLO cuando --against es el padre del commit registrado, que es el caso en que se valida recien ese commit. En cualquier otra comparacion se comparan normales, para que una regresion posterior en el mismo archivo siga saltando.",
   "_schema": "Un solo registro por ruta. Si un archivo vuelve a cambiar de color a proposito, su registro anterior se REEMPLAZA: `files` es un dict, asi que la clave repetida se descarta en silencio al parsear. Por eso los motivos de un mismo archivo no se acumulan, y el commit del registro viejo sale del conjunto de padres que usa el guard. Para conservar el historial habria que pasar `files` a lista de entradas {commit, file, motivo} y ajustar committed_allowlist().",
   "files": {
+    "static/css/pages/dashboard/dashboard-settings.css": {
+      "commit": "5c51f00",
+      "motivo": "v9.34.90: se elimino el fondo azul #111424 (rgba(17,20,36)) de #camera-tipo/#camera-sucursal y el #fff de su texto, para que usen el .select-premium estandar. En el mismo commit los modales de camara/nivel se reescribieron con el shell de nueva reserva."
+    },
     "static/css/components/select-field.css": {
       "commit": "cff10b3",
       "motivo": "v9.34.77: estado de error de campo obligatorio. El proyecto no tenia ninguna regla :invalid ni .is-invalid en ningun archivo, asi que un required sin tocar solo daba el tooltip nativo del navegador. Se agrega borde --danger (#f43f5e) con halo rgb(244,63,94), para :user-invalid y .is-invalid en los tres patrones, mas el icono leading en --danger cuando el select falla. Tambien entra el icono leading de .select-wrapper-premium en --dorado (venia de v9.34.76)."
