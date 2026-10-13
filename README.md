@@ -111,12 +111,13 @@ MP_PUBLIC_KEY=APP_USR-...     # Public Key de prueba
 MP_WEBHOOK_URL=https://tu-dominio.trycloudflare.com/v1/user/mercadopago/webhook
 MP_PREFERENCE_EXPIRE_MINUTES=45
 
-# Email (opcional)
+# Email (opcional). Gmail: requiere contrasena de aplicacion (ver INICIALIZACION.md)
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=tu_email@gmail.com
-SMTP_PASSWORD=tu_password
-SMTP_FROM=noreply@autopass.com.ar
+SMTP_PASSWORD=contrasena_de_aplicacion
+SMTP_FROM=tu_email@gmail.com
+SMTP_TLS=true
 
 # Base local aislada (opcional, solo desarrollo/tests; reemplaza la DATABASE_URL de arriba)
 # DATABASE_URL=sqlite:///./parking.db

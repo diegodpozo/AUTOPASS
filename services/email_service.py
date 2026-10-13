@@ -48,6 +48,8 @@ class EmailService:
             msg.attach(part)
 
             with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
+                if settings.SMTP_TLS:
+                    server.starttls()
                 if settings.SMTP_USER and settings.SMTP_PASSWORD:
                     server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 server.sendmail(settings.SMTP_FROM, to_email, msg.as_string())

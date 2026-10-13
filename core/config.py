@@ -94,11 +94,13 @@ class Settings:
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./parking.db")
     
     # SMTP (MAILTRAP POR DEFECTO PARA DESARROLLO)
+    # SMTP_TLS: STARTTLS antes del login. Mailtrap (2525) no lo usa; Gmail/Outlook (587) si.
     SMTP_SERVER: str = os.getenv("SMTP_SERVER", "sandbox.smtp.mailtrap.io")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", 2525))
     SMTP_USER: str = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_FROM: str = os.getenv("SMTP_FROM", "no-reply@autopass.com.ar")
+    SMTP_TLS: bool = os.getenv("SMTP_TLS", "false").lower() == "true"
     
     # RECUPERACION
     RECOVERY_TOKEN_EXPIRE_MINUTES: int = 30

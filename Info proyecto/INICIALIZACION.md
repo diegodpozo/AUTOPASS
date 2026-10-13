@@ -26,11 +26,14 @@ RESERVA_HORA_MIN_SEGUNDOS=1800  # Tiempo mínimo de anticipación para reservas 
 MAINTENANCE_INTERVAL_SECONDS=300  # Intervalo de limpieza de reservas vencidas
 
 # Email (para recuperación de contraseña y confirmaciones)
+# Gmail: usar una cuenta con verificación en 2 pasos y una contraseña de aplicación
+# (no la contraseña normal). SMTP_FROM debe coincidir con SMTP_USER.
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=tu_email@gmail.com
-SMTP_PASSWORD=tu_password
-SMTP_FROM=noreply@autopass.com.ar
+SMTP_PASSWORD=contrasena_de_aplicacion
+SMTP_FROM=tu_email@gmail.com
+SMTP_TLS=true
 
 # Mercado Pago (Checkout Pro) - ver Sección 7
 BASE_URL=https://xxxx.trycloudflare.com      # OBLIGATORIO https:// (MP lo exige en los back_urls)
