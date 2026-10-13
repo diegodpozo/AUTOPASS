@@ -198,8 +198,8 @@
                 Con el botón superior podés alternar entre el <strong>mapa de calor</strong> y un <strong>gráfico de barras</strong> con el total por tramo horario de cada día.
             </p>
             <div class="metricas-controls-row metricas-filters-row">
-                <span class="toolbar-label"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
-                <select id="hm-sucursal" class="input-premium">
+                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
+                <select id="hm-sucursal" class="input-premium super-admin-only">
                     <option value="">TODAS</option>
                 </select>
                 <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
@@ -245,8 +245,8 @@
                 Ocupación de plazas de reserva <strong>promedio por hora del día</strong> sobre la capacidad asignada, y KPIs de reservas de la sucursal.
             </p>
             <div class="metricas-controls-row metricas-filters-row">
-                <span class="toolbar-label"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
-                <select id="occ-sucursal" class="input-premium">
+                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
+                <select id="occ-sucursal" class="input-premium super-admin-only">
                     <option value="">TODAS</option>
                 </select>
                 <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
@@ -279,9 +279,14 @@
                 <span class="metrica-detail-breadcrumb">RECAUDACIÓN</span>
             </div>
             <p>
-                Resumen de recaudación de la sucursal (todas las sucursales si sos administrador general y no filtrás).
+                Resumen de recaudación de la sucursal. Si sos administrador general, con <strong>SUCURSAL: TODAS</strong>
+                ves la red completa y, además, el desglose de ventas por sucursal.
             </p>
             <div class="metricas-controls-row metricas-filters-row">
+                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
+                <select id="fin-sucursal" class="input-premium super-admin-only">
+                    <option value="">TODAS</option>
+                </select>
                 <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
                 <input type="date" id="fin-desde" class="input-premium-sm">
                 <span class="metricas-arrow">→</span>
@@ -298,6 +303,28 @@
                 <div class="channel-body">
                     <div class="metricas-chart-body">
                         <canvas id="finChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="fin-por-sucursal-card" class="card channel-card card--flush" hidden>
+                <div class="channel-header web-channel">
+                    <span><i class="fas fa-building"></i> VENTAS POR SUCURSAL</span>
+                </div>
+                <div class="channel-body">
+                    <div class="table-container">
+                        <table class="table-centered">
+                            <thead>
+                                <tr>
+                                    <th>SUCURSAL</th>
+                                    <th>RECAUDADO</th>
+                                    <th>PAGOS</th>
+                                    <th>TICKET PROM.</th>
+                                    <th>EFECTIVO</th>
+                                    <th>DIGITAL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fin-por-sucursal-body"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>

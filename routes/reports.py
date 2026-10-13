@@ -14,6 +14,7 @@ def get_financial_summary(
     end: str = None,
     vehicle_type: str = "all",
     payment_method: str = "all",
+    sucursal: str = None,
     db: Session = Depends(get_db),
     user: models.User = Depends(get_operational_user)
 ):
@@ -25,7 +26,8 @@ def get_financial_summary(
         start=start,
         end=end,
         vehicle_type=vehicle_type,
-        payment_method=payment_method
+        payment_method=payment_method,
+        sucursal=sucursal
     )
 
 @router.get("/payment-history")

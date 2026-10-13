@@ -3,6 +3,17 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 13/10/2026
 
+## Recaudación por sucursal para Admin General + corrección de manuales — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
+
+- Pedido del usuario: (1) el **admin general** debe poder ver las **ventas por sucursal** (encaje del rol para planes multi-sede) y (2) **corregir los manuales** (`manual/admin-general.html`, `manual/admin-sucursal.html`) para que reflejen el comportamiento real, manteniendo formato/estética.
+- Backend (DRY, `services/report_service.py`): `get_financial_summary` ahora acepta `sucursal` (filtro). El **ADMIN GENERAL** ve toda la red y puede filtrar por sede; **sin filtro agrega `por_sucursal`** (desglose por cada sede activa, ordenado por recaudación desc). El cálculo se extrajo a `_financial_summary_core(db, sucursal, ...)` y el desglose reutiliza ese core por sede (`_financial_summary_by_branch`). El **LOCAL_ADMIN** queda siempre acotado a su sede (el parámetro se ignora), igual que heatmap/ocupación.
+- Ruta `routes/reports.py::get_financial_summary`: nuevo query param `sucursal` (opcional), coherente con `/reports/metrics/*`.
+- Frontend: `templates/dashboard/tabs/metricas.html` → selector **SUCURSAL** en Recaudación (id `fin-sucursal`) + tarjeta **VENTAS POR SUCURSAL** (`#fin-por-sucursal-card`, `hidden` hasta tener datos) con tabla reutilizando `.table-container`/`.table-centered`. `static/js/modules/dashboard-informes.js`: `filtros.recaudacion.sucursal`, `cargarBranches` llena `fin-sucursal`, `cargarRecaudacion` manda `sucursal` y `_renderVentasPorSucursal()` pinta la tabla. **Sin CSS nuevo ni inline**; `static/sw.js` subido a `autopass-v7`/`autopass-shell-v7`.
+- Los tres selectores de sucursal de Métricas (heatmap, ocupación, recaudación) quedaron marcados `super-admin-only`: el local_admin no los ve (su efecto ya era nulo porque el backend fuerza su sede).
+- Tests: nuevo `tests/test_financial_summary_branch.py` (3 tests: desglose del admin, filtro del admin, y que el local_admin ignora el filtro). Suite **853 passed**.
+- Manuales: en `admin-general.html` se corrigió que "no ves datos financieros" (sí los ves, en **Métricas → Recaudación**, con desglose por sucursal), se describieron los **5 informes** reales y se ajustó la caption "agrupados por sede"; "cuatro tipos de cuenta" → "tres" en la intro de panel (los 4 roles siguen en la sección de alta de usuario). En `admin-sucursal.html` se amplió Métricas a los 5 informes (incluida Recaudación de su sede) y se quitó el "no es cuánto facturas".
+- **PENDIENTE**: `git commit` + `git push` (el usuario no lo pidió todavía). Verificación en runtime (navegador) del selector/desglose. Las capturas de los manuales no se regeneraron (siguen las existentes).
+
 ## Eliminación de patentes inválidas + bloqueo de formato en todo ingreso — APLICADO y PUSHEADO 13/10/2026
 
 - Pedido del usuario: (1) borrar de **todas las tablas** las patentes con formato inválido y

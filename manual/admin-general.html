@@ -55,7 +55,7 @@
       <h3>¿Qué puedo y qué no puedo hacer?</h3>
 
       <p>
-        El sistema distingue cuatro tipos de cuenta. Todos entran al mismo panel, pero cada una
+        El sistema distingue tres tipos de cuenta de panel. Todos entran al mismo panel, pero cada una
         ve solamente las pantallas que le corresponden:
       </p>
 
@@ -92,7 +92,7 @@
       <div class="pantallas">
         <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Sucursales</strong><span>Dar de alta, editar, suspender o eliminar las sedes de la red.</span></span></div>
         <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Gestión de Usuarios</strong><span>Todas las cuentas de la organización, de cualquier sucursal y cualquier rol.</span></span></div>
-        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Métricas</strong><span>Indicadores de uso y accesos de toda la red.</span></span></div>
+        <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Métricas</strong><span>Accesos y recaudación de toda la red, con desglose por sucursal.</span></span></div>
         <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Promociones</strong><span>Beneficios y campañas de la organización, vigentes en toda la red.</span></span></div>
         <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Soporte &amp; Tickets</strong><span>Consultas y problemas que envían los clientes de cualquier sede.</span></span></div>
         <div class="pantalla"><span class="ico">▸</span><span class="txt"><strong>Ayuda Operativa</strong><span>Centro de ayuda con recorridos guiados del panel.</span></span></div>
@@ -105,6 +105,17 @@
           <strong>Configuración</strong> no aparecen en tu menú. Son pantallas del administrador de
           sucursal, porque se usan en el día a día de una sede. Si tu rol es correcto y aun así
           las pedís, es porque te iniciaste sesión con otra cuenta: cerrá sesión y entrá de nuevo.
+        </p>
+      </div>
+
+      <div class="aviso dato">
+        <span class="titulo">Ojo: el dinero sí lo ves</span>
+        <p>
+          No tener <strong>Reporte Financiero</strong> no significa que no veas la recaudación:
+          dentro de <strong>Métricas</strong> está el informe <strong>Recaudación</strong>, con los
+          ingresos de <strong>toda la red</strong> y —si no filtrás una sede— el <strong>desglose de
+          ventas por sucursal</strong>. La pantalla de Reporte Financiero, en cambio, es la caja del
+          día a día de una sede y por eso queda en manos del administrador de sucursal.
         </p>
       </div>
 
@@ -441,22 +452,25 @@
       <h2><span class="num">4.</span> Métricas</h2>
 
       <p class="lead">
-        Indicadores de uso del sistema. A diferencia del administrador de sucursal, que los ve
-        filtrados por su sede, vos los ves <strong>consolidados de toda la red</strong>.
+        Indicadores de uso y de recaudación del sistema. A diferencia del administrador de
+        sucursal, que los ve acotados a su sede, vos ves <strong>toda la red</strong> y podés
+        bajar el detalle a una sucursal puntual.
       </p>
 
       <figure>
         <span class="numero">7</span>
         <img src="assets/img/general-metricas.png" alt="Pantalla de métricas con los indicadores de la red">
-        <figcaption><strong>Métricas de la red.</strong> Los mismos indicadores que ve el administrador de sucursal, pero agrupados por sede.</figcaption>
+        <figcaption><strong>Métricas de la red.</strong> Cinco informes sobre accesos, ocupación y recaudación; cada uno abre su propia vista de detalle.</figcaption>
       </figure>
 
-      <h3>Qué muestran</h3>
+      <h3>Los cinco informes</h3>
 
       <ul>
-        <li><strong>Actividad de accesos.</strong> Cuánta gente entrou al panel y desde qué roles.</li>
-        <li><strong>Uso por sucursal.</strong> Qué sede tiene más movimiento.</li>
-        <li><strong>Evolución en el tiempo.</strong> Permiten alternar entre el pasado y el presente.</li>
+        <li><strong>Actividad de accesos.</strong> Entradas y salidas por hora, con el total de movimientos.</li>
+        <li><strong>Mapa de calor de tráfico.</strong> Días del mes por hora de apertura para ver los picos; podés elegir la sucursal.</li>
+        <li><strong>Ocupación y reservas.</strong> Uso de las plazas de reserva por hora y conversión de reservas, por sucursal.</li>
+        <li><strong>Recaudación.</strong> Ingresos, ticket promedio y métodos de pago. Con <em>SUCURSAL: TODAS</em> ves la red completa y, además, la tabla de <strong>ventas por sucursal</strong>; elegí una sede para verla sola.</li>
+        <li><strong>Tiempos OCR &amp; ALPR.</strong> Latencia del reconocimiento de patentes: promedio, mínimo, máximo y percentil 90.</li>
       </ul>
 
       <div class="aviso dato">
@@ -599,6 +613,14 @@
       <p>
         Revisá que hayas entrado con la cuenta de administrador general. A ese rol no le
         aparecen Monitoreo, Reservas, Reporte Financiero ni Configuración: es lo esperado.
+      </p>
+
+      <h3>Veo recaudación y no tengo Reporte Financiero</h3>
+      <p>
+        Es lo normal. El dinero de la red se consulta en <strong>Métricas → Recaudación</strong>,
+        no en la pantalla Reporte Financiero (esa es la caja diaria de cada sede). Con
+        <em>SUCURSAL: TODAS</em> ves el total y la tabla de ventas por sucursal; elegí una sede
+        para verla sola.
       </p>
 
       <h3>Una sucursal nueva dice “Sin asignar”</h3>

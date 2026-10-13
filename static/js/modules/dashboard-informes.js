@@ -12,7 +12,7 @@ import { THEME } from './theme.js';
 const filtros = {
     heatmap: { sucursal: '', desde: '', hasta: '' },
     ocupacion: { sucursal: '', desde: '', hasta: '' },
-    recaudacion: { desde: '', hasta: '' }
+    recaudacion: { sucursal: '', desde: '', hasta: '' }
 };
 
 let branchesLoaded = false;
@@ -61,7 +61,7 @@ async function cargarBranches() {
     if (!res.ok || !Array.isArray(res.data)) return;
     const opts = ['<option value="">TODAS</option>']
         .concat(res.data.map(b => `<option value="${b.nombre}">${b.nombre}</option>`));
-    ['hm-sucursal', 'occ-sucursal'].forEach(id => {
+    ['hm-sucursal', 'occ-sucursal', 'fin-sucursal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = opts.join('');
     });
@@ -69,7 +69,7 @@ async function cargarBranches() {
 }
 
 export async function cargarInforme(key) {
-    if (key === 'heatmap' || key === 'ocupacion') await cargarBranches();
+    if (key === 'heatmap' || key === 'ocupacion' || key === 'recaudacion') await cargarBranches();
     if (key === 'heatmap') return cargarHeatmap();
     if (key === 'ocupacion') return cargarOcupacion();
     if (key === 'recaudacion') return cargarRecaudacion();
@@ -391,13 +391,21 @@ let finChart = null;
 
 async function cargarRecaudacion() {
     const f = filtros.recaudacion;
-    let qs = '';
+    const p = new URLSearchParams();
     if (f.desde || f.hasta) {
-        qs = `period=day&start=${f.desde || '1900-01-01'}T00:00:00&end=${f.hasta || '2099-12-31'}T23:59:59`;
+        p.set('period', 'day');
+        p.set('start', `${f.desde || '1900-01-01'}T00:00:00`);
+        p.set('end', `${f.hasta || '2099-12-31'}T23:59:59`);
     }
+    if (f.sucursal) p.set('sucursal', f.sucursal);
+    const qs = p.toString();
     const res = await api.get(`/reports/financial-summary${qs ? '?' + qs : ''}`);
     const kpis = document.getElementById('fin-kpis');
-    if (!res.ok) { if (kpis) kpis.innerHTML = '<div class="heatmap-vacio" style="color:var(--danger);"><i class="fas fa-exclamation-circle"></i>No se pudo cargar: ' + res.error + '</div>'; return; }
+    if (!res.ok) {
+        if (kpis) kpis.innerHTML = '<div class="heatmap-vacio" style="color:var(--danger);"><i class="fas fa-exclamation-circle"></i>No se pudo cargar: ' + res.error + '</div>';
+        _renderVentasPorSucursal(null);
+        return;
+    }
     const d = res.data;
     if (kpis) {
         kpis.innerHTML = _kpi('TOTAL RECAUDADO', `$${formatNum(d.total_recaudado)}`, 'fa-sack-dollar', 'highlight') +
@@ -409,6 +417,7 @@ async function cargarRecaudacion() {
             _kpi('PROYECTADO', `$${formatNum(d.ingresos_proyectados)}`, 'fa-chart-line') +
             _kpi('CANCELACIÓN', `${d.tasa_cancelacion || 0}%`, 'fa-percent');
     }
+    _renderVentasPorSucursal(d);
 
     const canvas = document.getElementById('finChart');
     if (!canvas || typeof window.Chart === 'undefined') return;
@@ -444,6 +453,28 @@ async function cargarRecaudacion() {
             }
         }
     });
+}
+
+// Tabla de ventas por sucursal (solo llega `por_sucursal` para el admin general sin filtro de sede)
+function _renderVentasPorSucursal(d) {
+    const card = document.getElementById('fin-por-sucursal-card');
+    const body = document.getElementById('fin-por-sucursal-body');
+    if (!card || !body) return;
+    const filas = d && Array.isArray(d.por_sucursal) ? d.por_sucursal : [];
+    if (!filas.length) {
+        body.innerHTML = '';
+        card.hidden = true;
+        return;
+    }
+    body.innerHTML = filas.map(f => `<tr>
+            <td data-label="Sucursal">${f.sucursal}</td>
+            <td data-label="Recaudado">$${formatNum(f.total_recaudado)}</td>
+            <td data-label="Pagos">${formatNum(f.cantidad_pagos)}</td>
+            <td data-label="Ticket prom.">$${formatNum(f.ticket_promedio)}</td>
+            <td data-label="Efectivo">$${formatNum(f.recaudado_efectivo)}</td>
+            <td data-label="Digital">$${formatNum(f.recaudado_digital)}</td>
+        </tr>`).join('');
+    card.hidden = false;
 }
 
 // ==========================================================================

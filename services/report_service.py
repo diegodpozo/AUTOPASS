@@ -68,11 +68,39 @@ class ReportService:
         start: str = None,
         end: str = None,
         vehicle_type: str = "all",
+        payment_method: str = "all",
+        sucursal: str = None
+    ) -> dict:
+        """Resumen de recaudación. El ADMIN GENERAL ve toda la red y puede filtrar por `sucursal`;
+        con el filtro vacío incluye `por_sucursal` (desglose por cada sede activa). El LOCAL_ADMIN
+        queda siempre acotado a su propia sucursal (el parámetro `sucursal` se ignora)."""
+        es_admin_global = str(user.rol) == UserRole.ADMIN.value
+        suc_real = (sucursal or None) if es_admin_global else (user.sucursal or None)
+
+        resultado = cls._financial_summary_core(
+            db, sucursal=suc_real, period=period, start=start, end=end,
+            vehicle_type=vehicle_type, payment_method=payment_method
+        )
+        if es_admin_global and not suc_real:
+            resultado["por_sucursal"] = cls._financial_summary_by_branch(
+                db, period=period, start=start, end=end,
+                vehicle_type=vehicle_type, payment_method=payment_method
+            )
+        return resultado
+
+    @classmethod
+    def _financial_summary_core(
+        cls,
+        db: Session,
+        sucursal: str,
+        period: str = "total",
+        start: str = None,
+        end: str = None,
+        vehicle_type: str = "all",
         payment_method: str = "all"
     ) -> dict:
-        """Calcula el resumen de recaudación unificado por sucursal, tipo de vehículo y método de pago."""
+        """Cálculo de recaudación para UNA sede (o toda la red si `sucursal` es None)."""
         start_date, end_date = get_date_range(period, start, end)
-        sucursal = user.sucursal if str(user.rol) != UserRole.ADMIN.value else None
 
         # 1. Recaudación de AccessLogs (Estadías ALPR)
         def _logs_agg(method: str = "all"):
@@ -209,6 +237,36 @@ class ReportService:
             },
             "desglose_metodos": desglose_metodos
         }
+
+    @classmethod
+    def _financial_summary_by_branch(
+        cls,
+        db: Session,
+        period: str = "total",
+        start: str = None,
+        end: str = None,
+        vehicle_type: str = "all",
+        payment_method: str = "all"
+    ) -> list:
+        """Desglose de recaudación por cada sede activa (reutiliza `_financial_summary_core`)."""
+        sedes = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa.is_(True)).all()
+        filas = []
+        for sede in sedes:
+            resumen = cls._financial_summary_core(
+                db, sucursal=sede.nombre, period=period, start=start, end=end,
+                vehicle_type=vehicle_type, payment_method=payment_method
+            )
+            filas.append({
+                "sucursal": sede.nombre,
+                "total_recaudado": resumen["total_recaudado"],
+                "cantidad_pagos": resumen["cantidad_pagos"],
+                "ticket_promedio": resumen["ticket_promedio"],
+                "recaudado_efectivo": resumen["recaudado_efectivo"],
+                "recaudado_digital": resumen["recaudado_digital"],
+                "total_reembolsado": resumen["total_reembolsado"],
+            })
+        filas.sort(key=lambda f: f["total_recaudado"], reverse=True)
+        return filas
 
     @classmethod
     def get_payment_history(
