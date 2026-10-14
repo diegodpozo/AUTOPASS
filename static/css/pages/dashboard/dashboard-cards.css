@@ -10,7 +10,16 @@
     justify-content: space-between;
     gap: 20px;
     border-bottom: 1px solid var(--border-card);
-    background: rgba(255, 255, 255, 0.01);
+    background: linear-gradient(90deg, #161616 0%, #000 100%);
+}
+
+/* Header a todo el ancho de la card: compensa el padding de .card para replicar
+   el look de la card de Métricas (.card--flush). El contenido sigue dentro del padding.
+   calc(-1 * 25px) mantiene el offset como derivado del padding (no un valor nuevo). */
+.card:not(.card--flush) > .card-header-premium {
+    margin: calc(-1 * 25px) calc(-1 * 25px) 25px;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
 }
 
 .header-info-group {
@@ -165,29 +174,6 @@
     transform: translateY(-2px);
     background: rgba(255, 255, 255, 0.03);
     box-shadow: var(--shadow-15-35-b40);
-}
-
-.channel-header {
-    padding: 15px 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    font-size: 0.75rem;
-    font-weight: 900;
-    letter-spacing: 2px;
-}
-
-.channel-header.stay-channel {
-    background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);
-    color: var(--secondary);
-    border-bottom: 1px solid rgba(16, 185, 129, 0.15);
-}
-
-.channel-header.web-channel {
-    background: linear-gradient(90deg, var(--border-light) 0%, transparent 100%);
-    color: var(--dorado);
-    border-bottom: 1px solid var(--dorado-glow);
 }
 
 .channel-body {

@@ -1,38 +1,37 @@
 <!-- MODALES Y OTROS COMPONENTES -->
+{% from "components/modal_header.html" import modal_header %}
 
 <!-- MODAL: DETALLE DE TICKET DE SOPORTE -->
 <div id="support-ticket-modal" class="onboarding-overlay-premium">
-    <div class="onboarding-card-premium">
-        <button class="modal-close-top" onclick="closeSupportTicketModal()" onmouseover="this.style.background='rgba(244, 63, 94,0.2)';this.style.color='var(--danger)'" onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.color='#aaa'"><i class="fas fa-times"></i></button>
-        <div class="onboarding-header-premium">
-            <span class="onboarding-badge-premium">Ticket #<span id="modal-ticket-id"></span></span>
-            <h3 id="modal-ticket-subject"></h3>
-            <p class="subtitle" id="modal-ticket-meta"></p>
-            <span id="modal-ticket-state" class="my-ticket-state"></span>
-        </div>
+    <div class="onboarding-card-premium modal-content--banded">
+        {% call modal_header('fas fa-headset', '', "closeSupportTicketModal()", title_id='modal-ticket-subject', subtitle_id='modal-ticket-meta', badge='Ticket #', badge_id='modal-ticket-id') %}
+        <span id="modal-ticket-state" class="my-ticket-state"></span>
+        {% endcall %}
 
-        <div id="modal-ticket-messages">
-        </div>
+        <div class="modal-body">
+            <div id="modal-ticket-messages">
+            </div>
 
-        <div id="modal-ticket-reply-box">
-            <div class="form-group-premium">
-                <textarea id="modal-ticket-reply-input" class="form-control-custom" rows="2" placeholder="Escribí tu respuesta..."></textarea>
-            </div>
-            <div class="ticket-attach-row">
-                <label for="modal-ticket-attach" class="btn btn--outline">
-                    <i class="fas fa-paperclip"></i> Adjuntar archivo
-                </label>
-                <input type="file" id="modal-ticket-attach" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" onchange="handleTicketAttach(this)">
-                <span id="modal-ticket-attach-name"></span>
-            </div>
-            <div class="ticket-attach-hint">
-                Permitidos: imágenes (PNG, JPG, GIF, WEBP) o PDF · Tamaño máximo: <b>1 MB</b>
-            </div>
-            <div class="ticket-reply-actions">
-                <button class="btn btn--outline" onclick="closeSupportTicketModal()">Cerrar</button>
-                <button id="modal-ticket-reply-btn" class="btn btn--primary" onclick="submitTicketReply()">
-                    <i class="fas fa-reply"></i> ENVIAR RESPUESTA
-                </button>
+            <div id="modal-ticket-reply-box">
+                <div class="form-group-premium">
+                    <textarea id="modal-ticket-reply-input" class="form-control-custom" rows="2" placeholder="Escribí tu respuesta..."></textarea>
+                </div>
+                <div class="ticket-attach-row">
+                    <label for="modal-ticket-attach" class="btn btn--outline">
+                        <i class="fas fa-paperclip"></i> Adjuntar archivo
+                    </label>
+                    <input type="file" id="modal-ticket-attach" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" onchange="handleTicketAttach(this)">
+                    <span id="modal-ticket-attach-name"></span>
+                </div>
+                <div class="ticket-attach-hint">
+                    Permitidos: imágenes (PNG, JPG, GIF, WEBP) o PDF · Tamaño máximo: <b>1 MB</b>
+                </div>
+                <div class="ticket-reply-actions">
+                    <button class="btn btn--outline" onclick="closeSupportTicketModal()">Cerrar</button>
+                    <button id="modal-ticket-reply-btn" class="btn btn--primary" onclick="submitTicketReply()">
+                        <i class="fas fa-reply"></i> ENVIAR RESPUESTA
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -134,35 +133,31 @@
 </div>
 
 <div id="rechargeModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('rechargeModal')"><i class="fas fa-xmark"></i></span>
-        <div class="text-center">
-            <i class="fas fa-wallet"></i>
-            <h2>CARGÁ TU SALDO</h2>
-            <p class="modal-subtitle">Ingresá el monto que deseás acreditar en tu cuenta.</p>
+    <div class="modal-content modal-content--banded">
+        {{ modal_header('fas fa-wallet', 'CARGÁ TU SALDO', "closeModal('rechargeModal')", subtitle='Ingresá el monto que deseás acreditar en tu cuenta.') }}
+        <div class="modal-body">
+            <form id="rechargeForm" onsubmit="processRecharge(event)">
+                <div class="form-group">
+                    <label>Monto a Cargar ($)</label>
+                    <div class="input-with-icon"><i class="fas fa-dollar-sign"></i><input type="number" id="recharge-amount" placeholder="0.00" min="100" step="100" required autofocus></div>
+                </div>
+                <div class="quick-amounts">
+                    <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(1000)">$1000</button>
+                    <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(5000)">$5000</button>
+                    <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(10000)">$10000</button>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-bolt"></i> ACREDITAR SALDO</button>
+            </form>
+            <div class="modal-text"><i class="fas fa-shield-halved"></i> Tu saldo se acredita al instante. Próximamente vas a poder cargarlo con Mercado Pago.</div>
         </div>
-        <form id="rechargeForm" onsubmit="processRecharge(event)">
-            <div class="form-group">
-                <label>Monto a Cargar ($)</label>
-                <div class="input-with-icon"><i class="fas fa-dollar-sign"></i><input type="number" id="recharge-amount" placeholder="0.00" min="100" step="100" required autofocus></div>
-            </div>
-            <div class="quick-amounts">
-                <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(1000)">$1000</button>
-                <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(5000)">$5000</button>
-                <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(10000)">$10000</button>
-            </div>
-            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-bolt"></i> ACREDITAR SALDO</button>
-        </form>
-        <div class="modal-text"><i class="fas fa-shield-halved"></i> Tu saldo se acredita al instante. Próximamente vas a poder cargarlo con Mercado Pago.</div>
     </div>
 </div>
 
 <!-- MODAL LEGAL (TÉRMINOS / PRIVACIDAD) -->
 <div id="modal-legal-terms" class="modal-premium">
-    <div class="modal-content-premium">
-        <button class="modal-close-top" onclick="closeLegalModal()"><i class="fas fa-times"></i></button>
-        <h2 id="legal-modal-title"></h2>
-        <div id="legal-modal-body" class="legal-body">
+    <div class="modal-content-premium modal-content--banded">
+        {{ modal_header('fas fa-scale-balanced', '', "closeLegalModal()", title_id='legal-modal-title') }}
+        <div id="legal-modal-body" class="legal-body modal-body">
             <!-- Carga de contenido dinámico -->
         </div>
     </div>

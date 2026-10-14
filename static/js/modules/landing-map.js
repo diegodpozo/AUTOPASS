@@ -118,7 +118,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
 
             const makeBranchIcon = (zoom, color) => L.divIcon({
                 className: 'branch-marker-logo',
-                html: `<div style="width:100%;height:100%;background:url('/static/images/logo.png') center/contain no-repeat;border-color:${color};"></div>`,
+                html: `<div style="width:100%;height:100%;border-color:${color};"></div>`,
                 iconSize: [zoomSizer(zoom), zoomSizer(zoom)],
                 iconAnchor: [zoomSizer(zoom) / 2, zoomSizer(zoom) / 2]
             });

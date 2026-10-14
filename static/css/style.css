@@ -141,7 +141,7 @@ nav a {
 }
 .branch-marker-logo > div {
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.6);
+    background: #000 url('/static/images/logo.png') center/contain no-repeat;
     border: 2px solid rgba(223, 186, 107, 0.6);
 }
 

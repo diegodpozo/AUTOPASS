@@ -596,7 +596,7 @@
 
 /* Pill de estado en el modal del chat de soporte (modals.html) */
 #modal-ticket-state {
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 #modal-ticket-state:empty {

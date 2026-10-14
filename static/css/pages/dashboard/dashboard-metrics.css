@@ -217,8 +217,7 @@
 .kpi-icon--success { color: var(--success); }
 .kpi-icon--danger { color: var(--danger); }
 
-/* Gráfico: cabecera y cuerpo (bloque para los controles) */
-#metricas-detail-wrap .channel-header.web-channel { justify-content: space-between; }
+/* Gráfico: cuerpo (bloque para los controles) */
 #metricas-detail-wrap .channel-body { display: block; }
 
 /* Leyenda del gráfico */

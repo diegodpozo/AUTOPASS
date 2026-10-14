@@ -126,12 +126,17 @@
 
             <!-- GRÁFICO MÓVIL -->
             <div class="card channel-card card--flush">
-                <div class="channel-header web-channel">
-                    <span><i class="fas fa-chart-line"></i> MOVIMIENTOS POR HORA</span>
-                    <span class="metricas-chart-legend">
-                        <span><span class="dot dot-success"></span>Entradas</span>
-                        <span><span class="dot dot-danger"></span>Salidas</span>
-                    </span>
+                <div class="card-header-premium">
+                    <div class="header-info-group">
+                        <div class="header-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="header-text"><h3>MOVIMIENTOS POR HORA</h3></div>
+                    </div>
+                    <div class="header-actions">
+                        <span class="metricas-chart-legend">
+                            <span><span class="dot dot-success"></span>Entradas</span>
+                            <span><span class="dot dot-danger"></span>Salidas</span>
+                        </span>
+                    </div>
                 </div>
                 <div class="channel-body">
                     <div class="metricas-chart-body">
@@ -211,18 +216,23 @@
                 <button class="btn btn--outline sm" onclick="limpiarInforme('heatmap')"><i class="fas fa-eraser"></i>LIMPIAR</button>
             </div>
             <div class="card channel-card card--flush">
-                <div class="channel-header web-channel">
-                    <span><i class="fas fa-fire"></i> TRÁFICO DIARIO POR HORA</span>
-                    <div class="hm-header-tools">
-                        <span id="hm-leyenda" class="metricas-chart-legend">
-                            <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Bajo</span>
-                            <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--m"></span>Medio</span>
-                            <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>
-                        </span>
-                        <span class="hm-view-toggle">
-                            <button type="button" class="hm-view-btn hm-view-btn--active" data-hm-view="calor" onclick="alternarHeatmapVista('calor')"><i class="fas fa-fire"></i> MAPA</button>
-                            <button type="button" class="hm-view-btn" data-hm-view="barras" onclick="alternarHeatmapVista('barras')"><i class="fas fa-chart-simple"></i> BARRAS</button>
-                        </span>
+                <div class="card-header-premium">
+                    <div class="header-info-group">
+                        <div class="header-icon"><i class="fas fa-fire"></i></div>
+                        <div class="header-text"><h3>TRÁFICO DIARIO POR HORA</h3></div>
+                    </div>
+                    <div class="header-actions">
+                        <div class="hm-header-tools">
+                            <span id="hm-leyenda" class="metricas-chart-legend">
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Bajo</span>
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--m"></span>Medio</span>
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>
+                            </span>
+                            <span class="hm-view-toggle">
+                                <button type="button" class="hm-view-btn hm-view-btn--active" data-hm-view="calor" onclick="alternarHeatmapVista('calor')"><i class="fas fa-fire"></i> MAPA</button>
+                                <button type="button" class="hm-view-btn" data-hm-view="barras" onclick="alternarHeatmapVista('barras')"><i class="fas fa-chart-simple"></i> BARRAS</button>
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div class="channel-body">
@@ -259,8 +269,11 @@
             </div>
             <div id="occ-kpis" class="kpi-grid"></div>
             <div class="card channel-card card--flush">
-                <div class="channel-header web-channel">
-                    <span><i class="fas fa-chart-column"></i> OCUPACIÓN DE RESERVAS VS CAPACIDAD %</span>
+                <div class="card-header-premium">
+                    <div class="header-info-group">
+                        <div class="header-icon"><i class="fas fa-chart-column"></i></div>
+                        <div class="header-text"><h3>OCUPACIÓN DE RESERVAS VS CAPACIDAD %</h3></div>
+                    </div>
                 </div>
                 <div class="channel-body">
                     <div class="metricas-chart-body">
@@ -297,8 +310,11 @@
             </div>
             <div id="fin-kpis" class="kpi-grid"></div>
             <div class="card channel-card card--flush">
-                <div class="channel-header web-channel">
-                    <span><i class="fas fa-chart-pie"></i> RECAUDACIÓN POR MÉTODO DE PAGO</span>
+                <div class="card-header-premium">
+                    <div class="header-info-group">
+                        <div class="header-icon"><i class="fas fa-chart-pie"></i></div>
+                        <div class="header-text"><h3>RECAUDACIÓN POR MÉTODO DE PAGO</h3></div>
+                    </div>
                 </div>
                 <div class="channel-body">
                     <div class="metricas-chart-body">
@@ -307,8 +323,11 @@
                 </div>
             </div>
             <div id="fin-por-sucursal-card" class="card channel-card card--flush" hidden>
-                <div class="channel-header web-channel">
-                    <span><i class="fas fa-building"></i> VENTAS POR SUCURSAL</span>
+                <div class="card-header-premium">
+                    <div class="header-info-group">
+                        <div class="header-icon"><i class="fas fa-building"></i></div>
+                        <div class="header-text"><h3>VENTAS POR SUCURSAL</h3></div>
+                    </div>
                 </div>
                 <div class="channel-body">
                     <div class="table-container">
@@ -343,8 +362,11 @@
             </p>
             <div id="ocr-kpis" class="kpi-grid"></div>
             <div class="card channel-card card--flush">
-                <div class="channel-header web-channel">
-                    <span><i class="fas fa-chart-line"></i> TIEMPO OCR POR EVENTO</span>
+                <div class="card-header-premium">
+                    <div class="header-info-group">
+                        <div class="header-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="header-text"><h3>TIEMPO OCR POR EVENTO</h3></div>
+                    </div>
                 </div>
                 <div class="channel-body">
                     <div class="metricas-chart-body">

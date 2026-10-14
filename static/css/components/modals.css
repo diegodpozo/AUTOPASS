@@ -85,6 +85,32 @@
     letter-spacing: 0.5px;
 }
 
+/* Estilos internos de la banda modal_header (el dashboard los redefine para
+   sus cards en dashboard-cards.css; acá quedan disponibles para todo el sitio). */
+.card-header-premium .header-icon i {
+    color: var(--dorado);
+    font-size: 1.1rem;
+}
+
+.card-header-premium .header-text h3 {
+    margin: 0;
+    color: var(--dorado);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.card-header-premium .header-badge {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--dorado);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
 .close-btn { 
     position: absolute; 
     top: 12px; 

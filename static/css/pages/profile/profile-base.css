@@ -839,6 +839,8 @@
 #support-ticket-modal .onboarding-card-premium {
     max-width: 520px;
     position: relative;
+    padding: 0;
+    overflow: hidden;
 }
 
 #support-ticket-modal .modal-close-top {
@@ -859,7 +861,7 @@
 }
 
 #modal-ticket-messages {
-    padding: 0 10px;
+    padding: 0;
     max-height: 45vh;
     overflow-y: auto;
     display: flex;
@@ -868,7 +870,8 @@
 }
 
 #modal-ticket-reply-box {
-    padding: 10px 22px 22px;
+    padding: 0;
+    margin-top: 12px;
 }
 
 #modal-ticket-reply-box .form-group-premium {
@@ -923,21 +926,6 @@
 }
 
 /* Recarga de saldo */
-#rechargeModal .text-center .fa-wallet {
-    font-size: 3rem;
-    color: var(--dorado);
-    margin-bottom: 15px;
-    opacity: 0.8;
-}
-
-#rechargeModal .text-center h2 {
-    margin-bottom: 5px;
-}
-
-#rechargeForm {
-    margin-top: 25px;
-}
-
 .quick-amounts {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -963,19 +951,10 @@
     border: 1px solid rgba(223, 186, 107, 0.35);
     border-radius: 16px;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95);
-    padding: 30px;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
-}
-
-#legal-modal-title {
-    margin: 0 0 20px 0;
-    font-weight: 800;
-    font-size: 1.3rem;
-    color: var(--dorado);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    overflow: hidden;
 }
 
 #legal-modal-body {
@@ -984,6 +963,5 @@
     line-height: 1.5;
     overflow-y: auto;
     flex: 1;
-    padding-right: 8px;
 }
 

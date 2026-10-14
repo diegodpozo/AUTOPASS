@@ -387,7 +387,7 @@ export async function openSupportTicketModal(ticketId) {
     modal.style.display = 'flex';
     modal.classList.add('active');
 
-    document.getElementById('modal-ticket-id').textContent = ticketId;
+    document.getElementById('modal-ticket-id').textContent = 'Ticket #' + ticketId;
     document.getElementById('modal-ticket-subject').textContent = 'Cargando...';
     document.getElementById('modal-ticket-meta').textContent = '';
     const stateEl = document.getElementById('modal-ticket-state');
@@ -409,7 +409,7 @@ export async function openSupportTicketModal(ticketId) {
             return;
         }
         const t = res.data;
-        document.getElementById('modal-ticket-id').textContent = t.id;
+        document.getElementById('modal-ticket-id').textContent = 'Ticket #' + t.id;
         document.getElementById('modal-ticket-subject').textContent = t.asunto;
         document.getElementById('modal-ticket-meta').textContent = `${toTitle(t.categoria)} · ${toTitle(t.sucursal)}`;
         const estado = t.estado || 'Pendiente';
