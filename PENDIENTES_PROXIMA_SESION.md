@@ -3,6 +3,22 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 14/10/2026
 
+## SUPER-ADMIN por organización principal — APLICADO 14/10/2026 (LOCAL, SIN COMMITEAR)
+
+- Problema: el Admin General fundador (`admin@autopass.com`, org principal) podía **invitar** nuevos Admin Generales (cada invite crea una org nueva) pero **no podía borrarlos/administrarlos nunca**: `enforce_organization_scope` le devolvía 403 al operar sobre otra org, y el invitado no puede auto-borrarse. No existía super-admin.
+- Decisión del usuario: **super-admin por organización principal** (opción elegida en `question`). El ADMIN de la organización marcada `es_principal` administra **todas** las organizaciones; el resto queda aislado como antes.
+- Implementación (DRY, tolerante):
+  - `models/user.py`: nueva relación `organization = relationship("Organization")` (schema-neutral, sin migración).
+  - `core/security.py`: nuevo `is_principal_org_admin(user)` (True solo si `rol == admin` y `user.organization.es_principal`; tolerante: sin rol/org/instancia desligada → False). `enforce_organization_scope` ahora hace bypass para el super-admin.
+  - `routes/admin/users.py::list_users`: el super-admin lista usuarios de **todas** las orgs (`get_all_active(db, None)`).
+- Efecto: el super-admin puede listar/editar/bloquear/cambiar rol/clave/saldo y **borrar** admins de cualquier org (el resto de los endpoints de branches/promotions/cameras también lo respetan al pasar por `enforce_organization_scope`).
+- Tests: `tests/test_multi_tenant_isolation.py` suma **4** (super-admin ve/edita/borra admin de otra org + admin no-principal sigue con 403). `_crear_org(..., es_principal=False)`. Suite **882 passed**; **8/8 guards OK**.
+- **PENDIENTES relacionados (NO hechos, por decisión/alcance)**:
+  - (a) Al borrar al único ADMIN de una org, la **organización queda huérfana** (0 usuarios) porque `delete_user` es soft-delete + anonimiza y no cascadea la org. El usuario NO eligió "borrado en cascada".
+  - (b) `get_super_admin` (invite/reset_system) sigue permitiendo invitar a **cualquier** ADMIN (no solo al de la org principal). El usuario NO eligió "restringir quién invita".
+  - (c) `git commit`/`push`: **el usuario no lo pidió**.
+- Limpieza puntual de datos (pedido del usuario, 14/10/2026): se borraron **hard-delete** el usuario real id **475** (`diegodpozo2332@gmail.com`, admin de prueba) y la organización id **2** (`AUTOPASSPRUEBA`), tras auditar que no quedaban filas derivadas (0 vehículos/reservas/logs/notificaciones/sesiones/tickets/sucursales/settings). Email liberado.
+
 ## FASE 4 — Aislamiento por organización de la OPERACIÓN — APLICADO 14/10/2026 (LOCAL, SIN COMMITEAR)
 
 - Objetivo: que un **Admin General nuevo vea el panel vacío de verdad**. Hasta Fase 3 las *tablas* (usuarios, sucursales, promos, settings) ya estaban aisladas, pero los **indicadores/cards del dashboard** seguían mostrando datos globales (fundamentalmente de la org principal).

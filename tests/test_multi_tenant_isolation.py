@@ -42,9 +42,9 @@ def client():
     limiter.reset()
 
 
-def _crear_org(TestSession, nombre):
+def _crear_org(TestSession, nombre, es_principal=False):
     db = TestSession()
-    org = models.Organization(nombre=nombre, es_principal=False, activa=True)
+    org = models.Organization(nombre=nombre, es_principal=es_principal, activa=True)
     db.add(org)
     db.commit()
     db.refresh(org)
@@ -470,4 +470,74 @@ def test_admin_no_puede_operar_camara_de_otra_organizacion(client):
         headers=_headers(tc, email_a),
         json={"nombre": "Hack", "tipo": "ENTRADA", "source": "rtsp://x", "activa": True},
     )
+    assert res.status_code == 403, res.text
+
+
+def test_super_admin_ve_usuarios_de_otra_organizacion(client):
+    tc, TS = client
+    org_principal = _crear_org(TS, "Org Principal", es_principal=True)
+    org_b = _crear_org(TS, "Org B")
+    email_super = f"super_{uuid.uuid4().hex[:8]}@test.com"
+    email_cli_b = f"cli_b_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_super, org_principal)
+    _crear_usuario(TS, "user", email_cli_b, org_b)
+
+    res = tc.get("/v1/admin/users", headers=_headers(tc, email_super))
+    assert res.status_code == 200, res.text
+    emails = {u["email"] for u in res.json()}
+    assert email_cli_b in emails
+
+
+def test_super_admin_puede_editar_usuario_de_otra_organizacion(client):
+    tc, TS = client
+    org_principal = _crear_org(TS, "Org Principal", es_principal=True)
+    org_b = _crear_org(TS, "Org B")
+    email_super = f"super_{uuid.uuid4().hex[:8]}@test.com"
+    email_b = f"cli_b_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_super, org_principal)
+    _crear_usuario(TS, "user", email_b, org_b)
+    user_b = _user_id(TS, email_b)
+
+    res = tc.patch(
+        f"/v1/admin/users/{user_b}",
+        headers=_headers(tc, email_super),
+        json={"nombre": "Gestionado"},
+    )
+    assert res.status_code == 200, res.text
+
+
+def test_super_admin_puede_borrar_admin_de_otra_organizacion(client):
+    tc, TS = client
+    org_principal = _crear_org(TS, "Org Principal", es_principal=True)
+    org_b = _crear_org(TS, "Org B")
+    email_super = f"super_{uuid.uuid4().hex[:8]}@test.com"
+    email_admin_b = f"admin_b_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_super, org_principal)
+    _crear_usuario(TS, "admin", email_admin_b, org_b)
+    admin_b = _user_id(TS, email_admin_b)
+
+    res = tc.delete(f"/v1/admin/users/{admin_b}", headers=_headers(tc, email_super))
+    assert res.status_code == 200, res.text
+
+    db = TS()
+    try:
+        borrado = db.query(models.User).filter(models.User.id == admin_b).first()
+        assert borrado is not None
+        assert borrado.is_deleted is True
+        assert borrado.email.startswith("eliminado-")
+    finally:
+        db.close()
+
+
+def test_admin_no_principal_no_puede_borrar_admin_de_otra_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_a = f"admin_a_{uuid.uuid4().hex[:8]}@test.com"
+    email_admin_b = f"admin_b_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_a, org_a)
+    _crear_usuario(TS, "admin", email_admin_b, org_b)
+    admin_b = _user_id(TS, email_admin_b)
+
+    res = tc.delete(f"/v1/admin/users/{admin_b}", headers=_headers(tc, email_a))
     assert res.status_code == 403, res.text

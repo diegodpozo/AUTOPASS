@@ -38,6 +38,7 @@ class User(Base):
 
     # RELACIONES
     branch = relationship("ParkingBranch", lazy="joined")
+    organization = relationship("Organization")
     sucursal = branch_ref_property()
     vehicles = relationship("Vehicle", back_populates="owner")
     reservations = relationship("Reservation", back_populates="user")

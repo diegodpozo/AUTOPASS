@@ -6,7 +6,7 @@ import models, schemas
 from core.database import get_db
 from core.config import settings
 from core.limiter import limiter, admin_rate_limit
-from core.security import get_local_manager, get_super_admin, get_password_hash, create_access_token, enforce_organization_scope
+from core.security import get_local_manager, get_super_admin, get_password_hash, create_access_token, enforce_organization_scope, is_principal_org_admin
 from core.normalize import normalize_branch_name
 from models.enums import UserRole, NotificationType
 from services.user_service import UserService
@@ -45,8 +45,10 @@ def validate_staff_role_assignment(admin: models.User, nuevo_rol):
 
 @router.get("/users", response_model=List[schemas.UserBase])
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """RETORNA LOS USUARIOS DE LA ORGANIZACION. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES."""
-    all_users = UserRepository.get_all_active(db, getattr(admin, "organization_id", None))
+    """RETORNA LOS USUARIOS DE LA ORGANIZACION. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES.
+    EL SUPER-ADMIN (ADMIN DE LA ORGANIZACION PRINCIPAL) VE LOS USUARIOS DE TODAS LAS ORGANIZACIONES."""
+    org_filter = None if is_principal_org_admin(admin) else getattr(admin, "organization_id", None)
+    all_users = UserRepository.get_all_active(db, org_filter)
     if str(admin.rol) != UserRole.ADMIN.value:
         admin_suc_norm = normalize_branch_name(admin.sucursal or "")
         filtered = []

@@ -150,15 +150,34 @@ def validate_local_admin_branch(admin: models.User, branch_nombre: str):
     if normalize_branch_name(branch_nombre or "") != admin_suc_norm:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre recursos de otra sucursal")
 
+def is_principal_org_admin(user) -> bool:
+    """True si el usuario es ADMIN de la organizacion principal (super-admin de plataforma).
+
+    El Admin General de la organizacion marcada como `es_principal` administra TODAS
+    las organizaciones: puede ver, editar y dar de baja a los Admin Generales que
+    invita. El resto de los administradores sigue aislado a su propia organizacion.
+    Es TOLERANTE: ante cualquier dato faltante (sin rol, sin organizacion o instancia
+    desligada de la sesion) retorna False en vez de fallar."""
+    if user is None or str(getattr(user, "rol", "")) != UserRole.ADMIN.value:
+        return False
+    try:
+        org = getattr(user, "organization", None)
+        return bool(getattr(org, "es_principal", False))
+    except Exception:
+        return False
+
 def enforce_organization_scope(actor, resource_organization_id, detail: str = "No tenés permisos sobre recursos de otra organización", status_code: int = 403):
     """AISLAMIENTO MULTIEMPRESA: un administrador solo opera recursos de SU organizacion.
 
     Centraliza la regla para no repetirla en cada endpoint que recibe un recurso por
     id (usuarios, sucursales, pisos, promociones, camaras). Es TOLERANTE: si el actor
     o el recurso no tienen organizacion asignada (datos legacy o de tests) no se
-    restringe, preservando el comportamiento single-tenant."""
+    restringe, preservando el comportamiento single-tenant. El super-admin (ADMIN de
+    la organizacion principal) queda exento para poder gestionar cualquier organizacion."""
     actor_org = getattr(actor, "organization_id", None)
     if actor_org is None or resource_organization_id is None:
+        return
+    if is_principal_org_admin(actor):
         return
     if resource_organization_id != actor_org:
         raise HTTPException(status_code=status_code, detail=detail)
