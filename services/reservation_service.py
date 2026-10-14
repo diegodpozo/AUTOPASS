@@ -189,8 +189,10 @@ class ReservationService(ReservationPaymentsMixin):
 
     @staticmethod
     def get_new_reservations_count(db: Session, staff, since_id: int = None) -> dict:
-        staff_sucursal = staff.sucursal if staff.rol != UserRole.ADMIN else None
-        latest_id, count = ReservationRepository.latest_id_and_count(db, since_id, staff_sucursal)
+        es_admin_global = staff.rol == UserRole.ADMIN
+        staff_sucursal = staff.sucursal if not es_admin_global else None
+        org = getattr(staff, "organization_id", None) if es_admin_global else None
+        latest_id, count = ReservationRepository.latest_id_and_count(db, since_id, staff_sucursal, organization_id=org)
         return {"count": count, "latest_id": latest_id}
 
     @staticmethod
@@ -448,8 +450,10 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def list_admin_reservations(db: Session, staff, estado: str = None, sucursal: str = None):
         ReservationService.cleanup_overdue_reservations(db)
-        staff_sucursal = staff.sucursal if staff.rol != UserRole.ADMIN else None
-        results = ReservationRepository.list_filtered(db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal)
+        es_admin_global = staff.rol == UserRole.ADMIN
+        staff_sucursal = staff.sucursal if not es_admin_global else None
+        org = getattr(staff, "organization_id", None) if es_admin_global else None
+        results = ReservationRepository.list_filtered(db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal, organization_id=org)
         en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in results])
         out = []
         for r in results:

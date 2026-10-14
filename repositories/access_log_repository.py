@@ -1,4 +1,4 @@
-from sqlalchemy import func, or_, and_
+from sqlalchemy import func, or_, and_, false
 from sqlalchemy.orm import Session, selectinload
 
 import models
@@ -10,18 +10,32 @@ from repositories.branch_repository import BranchRepository
 
 class AccessRepository:
     @staticmethod
-    def _sucursal_id_filter(db: Session, sucursal: str):
+    def _sucursal_id_filter(db: Session, sucursal: str, organization_id=None):
         """CONDICION SQL P/ FILTRAR LOGS POR SUCURSAL CON PRIORIDAD POR `sucursal_id` Y
-        FALLBACK LEGACY POR NOMBRE (registros de prueba/legacy sin id)."""
-        if not sucursal:
-            return None
-        branch_id = BranchRepository.get_id_by_name(db, sucursal)
-        if branch_id:
-            return or_(
-                models.AccessLog.sucursal_id == branch_id,
-                and_(models.AccessLog.sucursal_id.is_(None), models.AccessLog.sucursal == sucursal)
-            )
-        return models.AccessLog.sucursal == sucursal
+        FALLBACK LEGACY POR NOMBRE (registros de prueba/legacy sin id).
+
+        Con `organization_id` y sin `sucursal`, acota a TODAS las sedes de esa empresa
+        (y a ninguna si aun no tiene sucursales)."""
+        if sucursal:
+            branch_id = BranchRepository.get_id_by_name(db, sucursal, organization_id)
+            if branch_id:
+                return or_(
+                    models.AccessLog.sucursal_id == branch_id,
+                    and_(models.AccessLog.sucursal_id.is_(None), models.AccessLog.sucursal == sucursal)
+                )
+            if organization_id is not None:
+                return false()
+            return models.AccessLog.sucursal == sucursal
+        if organization_id is not None:
+            ids = [
+                r[0] for r in db.query(models.ParkingBranch.id).filter(
+                    models.ParkingBranch.organization_id == organization_id
+                ).all()
+            ]
+            if not ids:
+                return false()
+            return models.AccessLog.sucursal_id.in_(ids)
+        return None
 
     @staticmethod
     def get_by_id(db: Session, log_id: int) -> models.AccessLog:
@@ -173,9 +187,10 @@ class AccessRepository:
         )
 
     @staticmethod
-    def get_current_entries(db: Session, sucursal: str = None) -> list:
+    def get_current_entries(db: Session, sucursal: str = None, organization_id=None) -> list:
         """ENTRADAS MAS RECIENTES POR PATENTE EN LA SEDE (O TODAS SI `sucursal` ES None),
-        CON EL PISO CARGADO, ORDENADAS POR FECHA DESCENDENTE (SUBCONSULTA ID MAXIMO DE ENTRADA)."""
+        CON EL PISO CARGADO, ORDENADAS POR FECHA DESCENDENTE (SUBCONSULTA ID MAXIMO DE ENTRADA).
+        Con `organization_id` y sin `sucursal`, acota a las sedes de esa empresa."""
         subq = (
             db.query(
                 models.AccessLog.patente_detectada,
@@ -183,7 +198,7 @@ class AccessRepository:
             )
             .filter(models.AccessLog.tipo_evento == AccessEventType.ENTRADA)
         )
-        suc_filter = AccessRepository._sucursal_id_filter(db, sucursal or "")
+        suc_filter = AccessRepository._sucursal_id_filter(db, sucursal or "", organization_id)
         if suc_filter is not None:
             subq = subq.filter(suc_filter)
         subq = subq.group_by(models.AccessLog.patente_detectada).subquery()

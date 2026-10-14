@@ -9,7 +9,7 @@ import models
 import schemas
 from models.enums import UserRole
 from core.database import get_db
-from core.security import get_operational_user
+from core.security import get_operational_user, enforce_organization_scope
 from core.alpr_security import require_alpr_node
 from core.logger import get_logger
 from routes.system.common import CAMERA_PROCESSES, CameraConfig, normalize_system_name, misma_sucursal
@@ -58,6 +58,10 @@ def _stream_console_output(proc: subprocess.Popen, camera_id: str):
             pass
 
 router = APIRouter()
+
+def _enforce_camera_org(staff: models.User, camera: models.ParkingCamera):
+    """AISLAMIENTO MULTIEMPRESA: un Admin General solo opera camaras de sedes de SU empresa."""
+    enforce_organization_scope(staff, getattr(camera.branch, "organization_id", None))
 
 @router.get("/camera-config/{gate_id}")
 def get_camera_config(gate_id: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
@@ -158,7 +162,12 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
 @router.get("/cameras", response_model=List[schemas.CameraResponse])
 def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     query = CameraRepository.get_all(db)
-    if staff.rol != UserRole.ADMIN and staff.sucursal:
+    if staff.rol == UserRole.ADMIN:
+        org = getattr(staff, "organization_id", None)
+        if org is not None:
+            org_ids = {b.id for b in BranchRepository.get_all(db, org)}
+            query = [c for c in query if c.sucursal_id in org_ids]
+    elif staff.sucursal:
         query = [c for c in query if misma_sucursal(c, staff)]
     cameras = query
     res = []
@@ -181,13 +190,19 @@ def get_cameras(db: Session = Depends(get_db), staff: models.User = Depends(get_
 @router.post("/cameras", response_model=schemas.CameraResponse)
 def create_camera(data: schemas.CameraCreate, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     sucursal = staff.sucursal if staff.rol != UserRole.ADMIN else data.sucursal
+    org_id = getattr(staff, "organization_id", None)
+    branch_id = BranchRepository.get_id_by_name(db, sucursal, org_id) if sucursal else None
+    if staff.rol == UserRole.ADMIN and org_id is not None and sucursal and branch_id is None:
+        raise HTTPException(status_code=403, detail="No tenés acceso a esa sucursal")
     new_cam = models.ParkingCamera(
         nombre=data.nombre,
         tipo=data.tipo.upper(),
         source=data.source,
-        sucursal=sucursal,
+        sucursal_id=branch_id,
         activa=data.activa
     )
+    if branch_id is None and sucursal:
+        new_cam.__dict__["_sucursal_fallback"] = sucursal
     db.add(new_cam)
     db.commit()
     db.refresh(new_cam)
@@ -214,6 +229,7 @@ def reorder_cameras(data: schemas.CameraOrderUpdate, db: Session = Depends(get_d
         camera = CameraRepository.get_by_id(db, camera_id)
         if not camera:
             raise HTTPException(status_code=404, detail=f"Cámara {camera_id} no encontrada")
+        _enforce_camera_org(staff, camera)
         if staff.rol != UserRole.ADMIN and not misma_sucursal(camera, staff):
             raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
         cameras.append(camera)
@@ -227,6 +243,7 @@ def update_camera(camera_id: int, data: schemas.CameraCreate, db: Session = Depe
     camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
+    _enforce_camera_org(staff, camera)
     if staff.rol != UserRole.ADMIN and not misma_sucursal(camera, staff):
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
     camera.nombre = data.nombre
@@ -258,6 +275,7 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db), staff: models.U
     camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
+    _enforce_camera_org(staff, camera)
     if staff.rol != UserRole.ADMIN and not misma_sucursal(camera, staff):
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
         
@@ -284,6 +302,7 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
     camera = CameraRepository.get_by_id(db, camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail="Cámara no encontrada")
+    _enforce_camera_org(staff, camera)
     if staff.rol != UserRole.ADMIN and not misma_sucursal(camera, staff):
         raise HTTPException(status_code=403, detail="No tenés acceso a esta cámara")
         

@@ -188,11 +188,12 @@ class OccupancyService:
         }
 
     @staticmethod
-    def current_occupancy(db: Session, sucursal: str) -> list:
+    def current_occupancy(db: Session, sucursal: str, organization_id=None) -> list:
         """Lista vehículos estacionados en la sede (o todas si admin global) con deuda calculada.
-        Optimizado para unicidad y orden (una sola query por patente vía subconsulta)."""
+        Optimizado para unicidad y orden (una sola query por patente vía subconsulta).
+        Con `organization_id` y sin `sucursal`, acota a las sedes de esa empresa."""
         # 1. ENTRADAS MAS RECIENTES POR PATENTE EN LA SEDE (ID MAXIMO DE ENTRADA POR PATENTE)
-        entradas = AccessRepository.get_current_entries(db, sucursal=sucursal)
+        entradas = AccessRepository.get_current_entries(db, sucursal=sucursal, organization_id=organization_id)
 
         # 3. SALIDAS POSTERIORES POR (PATENTE, SUCURSAL): 1 SOLA QUERY AGRUPADA
         salida_max = {}

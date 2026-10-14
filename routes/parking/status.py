@@ -270,17 +270,22 @@ def list_public_branches(db: Session = Depends(get_db)):
 @router.get("/parking/status", response_model=schemas.ParkingStatus)
 def get_parking_status(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
     """RETORNA LA DISPONIBILIDAD ACTUAL DE PLAZAS. AISLAMIENTO POR SEDE Y SOPORTE PARA PISOS."""
-    sucursal_nombre = user.sucursal if user.rol != UserRole.ADMIN else None
-    
+    es_admin_global = user.rol == UserRole.ADMIN
+    sucursal_nombre = user.sucursal if not es_admin_global else None
+    org = getattr(user, "organization_id", None) if es_admin_global else None
+
     branch = None
     if sucursal_nombre:
-        branch = BranchRepository.get_by_name(db, sucursal_nombre)
+        branch = BranchRepository.get_by_name(db, sucursal_nombre, org)
     if not branch:
-        branch = BranchRepository.get_first_active(db)
+        branch = BranchRepository.get_first_active(db, org)
 
     if branch:
         return OccupancyService.calculate_branch_capacities(db, branch)
-    
+
+    if es_admin_global:
+        return OccupancyService.default_capacities()
+
     a = BranchRepository.get_aforo_by_sucursal(db, sucursal_nombre)
     if not a: 
         return OccupancyService.default_capacities()
@@ -290,5 +295,7 @@ def get_parking_status(db: Session = Depends(get_db), user: models.User = Depend
 @router.get("/parking/current-occupancy")
 def current_occupancy(db: Session = Depends(get_db), user: models.User = Depends(get_operational_user)):
     """LISTA VEHICULOS ESTACIONADOS EN LA SEDE DEL USUARIO CON DEUDA CALCULADA."""
-    sucursal = user.sucursal if user.rol != UserRole.ADMIN else None
-    return OccupancyService.current_occupancy(db, sucursal)
+    es_admin_global = user.rol == UserRole.ADMIN
+    sucursal = user.sucursal if not es_admin_global else None
+    org = getattr(user, "organization_id", None) if es_admin_global else None
+    return OccupancyService.current_occupancy(db, sucursal, organization_id=org)

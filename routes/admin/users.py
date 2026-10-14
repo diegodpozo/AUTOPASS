@@ -6,7 +6,7 @@ import models, schemas
 from core.database import get_db
 from core.config import settings
 from core.limiter import limiter, admin_rate_limit
-from core.security import get_local_manager, get_super_admin, get_password_hash, create_access_token
+from core.security import get_local_manager, get_super_admin, get_password_hash, create_access_token, enforce_organization_scope
 from core.normalize import normalize_branch_name
 from models.enums import UserRole, NotificationType
 from services.user_service import UserService
@@ -19,6 +19,7 @@ router = APIRouter()
 
 def validate_local_admin_user_permission(admin: models.User, target_user: models.User):
     """VERIFICA SI UN ADMINISTRADOR TIENE PERMISOS DE JURISDICCION SOBRE UN USUARIO OBJETIVO."""
+    enforce_organization_scope(admin, getattr(target_user, "organization_id", None))
     if str(admin.rol) == UserRole.ADMIN.value:
         return
     admin_suc_norm = normalize_branch_name(admin.sucursal or "")

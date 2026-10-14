@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, aliased
-from sqlalchemy import func, union_all, literal_column, or_, and_
+from sqlalchemy import func, union_all, literal_column, or_, and_, false
 
 import models
 from models.enums import ReservationStatus, PaymentStatus, AccessEventType
@@ -91,22 +91,41 @@ def _branch_key(name: str):
     return n
 
 
-def _branch_filter(db: Session, name_column, id_column, sucursal: str):
+def _branch_filter(db: Session, name_column, id_column, sucursal: str = None, organization_id=None):
     """FILTRO SQL DE ISOLAMIENTO POR SUCURSAL CON PRIORIDAD POR `sucursal_id` Y FALLBACK LEGACY
-    POR NOMBRE (LIKE leniente sin prefijo 'AUTOPASS ' ni acentos) para registros sin id."""
-    if not sucursal:
-        return None
-    legacy_cond = func.lower(_unaccent(name_column)).like(f"%{_branch_key(sucursal)}%")
-    branch_id = BranchRepository.get_id_by_name(db, sucursal)
-    if branch_id:
-        return or_(id_column == branch_id, and_(id_column.is_(None), legacy_cond))
-    return legacy_cond
+    POR NOMBRE (LIKE leniente sin prefijo 'AUTOPASS ' ni acentos) para registros sin id.
+
+    Si se indica `organization_id`, acota ademas a las sedes de esa organizacion (multi-tenant):
+    cuando no se pide una sede puntual, engloba TODAS las sedes de la organizacion (y ninguna
+    si la organizacion todavia no tiene sucursales)."""
+    if sucursal:
+        legacy_cond = func.lower(_unaccent(name_column)).like(f"%{_branch_key(sucursal)}%")
+        branch_id = BranchRepository.get_id_by_name(db, sucursal, organization_id)
+        if branch_id:
+            return or_(id_column == branch_id, and_(id_column.is_(None), legacy_cond))
+        if organization_id is not None:
+            return false()
+        return legacy_cond
+    if organization_id is not None:
+        branches = db.query(models.ParkingBranch.id, models.ParkingBranch.nombre).filter(
+            models.ParkingBranch.organization_id == organization_id
+        ).all()
+        if not branches:
+            return false()
+        conds = [id_column.in_([b.id for b in branches])]
+        for _, nombre in branches:
+            conds.append(and_(
+                id_column.is_(None),
+                func.lower(_unaccent(name_column)).like(f"%{_branch_key(nombre)}%")
+            ))
+        return or_(*conds)
+    return None
 
 
 class ReportRepository:
     @staticmethod
     def paid_logs_aggregate(db: Session, sucursal=None, vehicle_type="all",
-                            start_date=None, end_date=None, method="all"):
+                            start_date=None, end_date=None, method="all", organization_id=None):
         """RECAUDACION DE ESTADIAS ALPR: (suma, cantidad) DE PAGOS CONFIRMADOS CON COSTO MAYOR A 0."""
         q = db.query(
             func.sum(models.AccessLog.costo_estadia),
@@ -120,8 +139,8 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
 
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
 
         if start_date:
             q = q.filter((models.AccessLog.fecha_pago >= start_date) |
@@ -133,7 +152,7 @@ class ReportRepository:
 
     @staticmethod
     def paid_reservations_aggregate(db: Session, sucursal=None, vehicle_type="all",
-                                    start_date=None, end_date=None, method="all") -> tuple:
+                                    start_date=None, end_date=None, method="all", organization_id=None) -> tuple:
         """RECAUDACION DE RESERVAS (bruto, cantidad): (suma monto_total, count) DE PAGADAS/REEMBOLSADAS."""
         q = db.query(
             func.sum(models.Reservation.monto_total),
@@ -145,8 +164,8 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
 
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
@@ -163,7 +182,7 @@ class ReportRepository:
 
     @staticmethod
     def refunds_total(db: Session, sucursal=None, vehicle_type="all",
-                      start_date=None, end_date=None, method="all") -> float:
+                      start_date=None, end_date=None, method="all", organization_id=None) -> float:
         """SUMA DE REEMBOLSOS (parciales o completos) APLICANDO LOS MISMOS FILTROS DE RECAUDACION."""
         q = db.query(func.sum(models.Reservation.monto_reembolsado)).join(
             models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True
@@ -173,8 +192,8 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
 
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
@@ -191,7 +210,7 @@ class ReportRepository:
 
     @staticmethod
     def cancelled_reservations(db: Session, sucursal=None, vehicle_type="all",
-                               start_date=None, end_date=None) -> list:
+                               start_date=None, end_date=None, organization_id=None) -> list:
         """RESERVAS CANCELADAS (para tasa de cancelacion e ingresos por incumplimiento)."""
         q = db.query(models.Reservation).join(
             models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True
@@ -200,8 +219,8 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
 
         if start_date:
             q = q.filter(models.Reservation.fecha_inicio >= start_date)
@@ -212,7 +231,7 @@ class ReportRepository:
 
     @staticmethod
     def total_reservations_count(db: Session, sucursal=None, vehicle_type="all",
-                                 start_date=None, end_date=None) -> int:
+                                 start_date=None, end_date=None, organization_id=None) -> int:
         """TOTAL DE RESERVAS (denominador de la tasa de cancelacion)."""
         q = db.query(func.count(models.Reservation.id)).join(
             models.Vehicle, models.Reservation.patente == models.Vehicle.patente, isouter=True
@@ -221,8 +240,8 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
 
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
 
         if start_date:
             q = q.filter(models.Reservation.fecha_inicio >= start_date)
@@ -232,7 +251,7 @@ class ReportRepository:
         return q.scalar() or 0
 
     @staticmethod
-    def unpaid_entries_without_exit(db: Session, sucursal=None, vehicle_type="all") -> list:
+    def unpaid_entries_without_exit(db: Session, sucursal=None, vehicle_type="all", organization_id=None) -> list:
         """ENTRADAS SIN SALIDA POSTERIOR Y SIN PAGO CONFIRMADO (AUTOS FISICAMENTE PRESENTES, DEUDA PROYECTADA)."""
         Log = models.AccessLog
         Salida = aliased(models.AccessLog)
@@ -253,14 +272,14 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(Log.tipo_vehiculo, vehicle_type))
 
-        if sucursal:
-            q = q.filter(_branch_filter(db, Log.sucursal, Log.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, Log.sucursal, Log.sucursal_id, sucursal, organization_id))
 
         return q.all()
 
     @staticmethod
     def grouped_logs_by_method(db: Session, sucursal=None, vehicle_type="all",
-                               start_date=None, end_date=None) -> list:
+                               start_date=None, end_date=None, organization_id=None) -> list:
         """DESGLOSE DE ESTADIAS POR METODO DE PAGO: (metodo_pago, suma, cantidad)."""
         q = db.query(
             models.AccessLog.metodo_pago,
@@ -269,8 +288,8 @@ class ReportRepository:
         ).filter(models.AccessLog.pago_confirmado == True, models.AccessLog.costo_estadia > 0)
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
         if start_date:
             q = q.filter((models.AccessLog.fecha_pago >= start_date) |
                            ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
@@ -281,7 +300,7 @@ class ReportRepository:
 
     @staticmethod
     def grouped_reservations_by_method(db: Session, sucursal=None, vehicle_type="all",
-                                       start_date=None, end_date=None) -> list:
+                                       start_date=None, end_date=None, organization_id=None) -> list:
         """DESGLOSE DE RESERVAS PAGADAS/REEMBOLSADAS POR METODO: (metodo_pago, suma, cantidad)."""
         q = db.query(
             models.Reservation.metodo_pago,
@@ -291,8 +310,8 @@ class ReportRepository:
         q = q.filter(models.Reservation.estado_pago.in_([PaymentStatus.PAGADO, PaymentStatus.REEMBOLSADO]))
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
                            ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -303,7 +322,7 @@ class ReportRepository:
 
     @staticmethod
     def grouped_refunds_by_method(db: Session, sucursal=None, vehicle_type="all",
-                                  start_date=None, end_date=None) -> list:
+                                  start_date=None, end_date=None, organization_id=None) -> list:
         """DESGLOSE DE REEMBOLSOS POR METODO: (metodo_pago, suma reembolsada, cantidad)."""
         q = db.query(
             models.Reservation.metodo_pago,
@@ -313,8 +332,8 @@ class ReportRepository:
         q = q.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
         if start_date:
             q = q.filter((models.Reservation.fecha_pago >= start_date) |
                            ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -326,7 +345,7 @@ class ReportRepository:
     @staticmethod
     def payment_history(db: Session, sucursal=None, vehicle_type="all",
                         start_date=None, end_date=None, method="all",
-                        offset: int = 0, limit: int = 20) -> list:
+                        offset: int = 0, limit: int = 20, organization_id=None) -> list:
         """HISTORIAL UNIFICADO DE PAGOS (ESTADIAS + RESERVAS + REEMBOLSOS) PAGINADO."""
         # 1. ESTADIAS
         q_logs = db.query(
@@ -343,8 +362,8 @@ class ReportRepository:
         filtro_logs = _payment_method_filter(models.AccessLog.metodo_pago, method)
         if filtro_logs is not None:
             q_logs = q_logs.filter(filtro_logs)
-        if sucursal:
-            q_logs = q_logs.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q_logs = q_logs.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
         if start_date:
             q_logs = q_logs.filter((models.AccessLog.fecha_pago >= start_date) |
                                    ((models.AccessLog.fecha_pago == None) & (models.AccessLog.fecha_hora >= start_date)))
@@ -365,8 +384,8 @@ class ReportRepository:
         q_res = q_res.filter(models.Reservation.estado_pago == PaymentStatus.PAGADO)
         if vehicle_type != "all":
             q_res = q_res.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
-        if sucursal:
-            q_res = q_res.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q_res = q_res.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
         if start_date:
             q_res = q_res.filter((models.Reservation.fecha_pago >= start_date) |
                                  ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -390,8 +409,8 @@ class ReportRepository:
         q_refunds = q_refunds.filter(_es_reembolso_parcial(models.Reservation.estado_pago, models.Reservation.monto_reembolsado))
         if vehicle_type != "all":
             q_refunds = q_refunds.filter(_vehicle_type_condition(models.Vehicle.tipo, vehicle_type))
-        if sucursal:
-            q_refunds = q_refunds.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q_refunds = q_refunds.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
         if start_date:
             q_refunds = q_refunds.filter((models.Reservation.fecha_pago >= start_date) |
                                          ((models.Reservation.fecha_pago == None) & (models.Reservation.fecha_inicio >= start_date)))
@@ -412,7 +431,7 @@ class ReportRepository:
         return results
 
     @staticmethod
-    def access_logs_history(db: Session, sucursal=None, patente=None, limit: int = 300) -> list:
+    def access_logs_history(db: Session, sucursal=None, patente=None, limit: int = 300, organization_id=None) -> list:
         """HISTORIAL DE ACCESOS ALPR FILTRADO POR SUCURSAL Y PATENTE OPCIONAL.
 
         Limite server-side (default 300): evita traer la tabla completa en el
@@ -420,18 +439,18 @@ class ReportRepository:
         explota en SQLite (>999 vars) y bordea el limite de Postgres (65535).
         """
         q = db.query(models.AccessLog)
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
         if patente:
             q = q.filter(models.AccessLog.patente_detectada.like(f"%{patente.upper()}%"))
         return q.order_by(models.AccessLog.id.desc()).limit(limit).all()
 
     @staticmethod
-    def logs_with_ocr(db: Session, sucursal=None, limit=100, ascending=False) -> list:
+    def logs_with_ocr(db: Session, sucursal=None, limit=100, ascending=False, organization_id=None) -> list:
         """LOGS CON TIEMPO OCR MEDIDO (TOP `limit` DESCENDENTE o serie ASCENDENTE COMPLETA)."""
         q = db.query(models.AccessLog).filter(models.AccessLog.ocr_time.isnot(None))
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
         if ascending:
             q = q.order_by(models.AccessLog.id.asc())
         else:
@@ -439,15 +458,15 @@ class ReportRepository:
         return q.all()
 
     @staticmethod
-    def access_event_rows(db: Session, sucursal=None) -> list:
+    def access_event_rows(db: Session, sucursal=None, organization_id=None) -> list:
         """PARES (fecha_hora, tipo_evento) DE TODOS LOS ACCESOS PARA LA SERIE TEMPORAL."""
         filters = []
-        if sucursal:
-            filters.append(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            filters.append(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
         return db.query(models.AccessLog.fecha_hora, models.AccessLog.tipo_evento).filter(*filters).all()
 
     @staticmethod
-    def reservation_activity_rows(db: Session, sucursal=None, start_date=None, end_date=None) -> list:
+    def reservation_activity_rows(db: Session, sucursal=None, start_date=None, end_date=None, organization_id=None) -> list:
         """TUPLAS (fecha_inicio, fecha_fin, estado_reserva, estado_pago, monto_total, tipo_vehiculo, patente)
         DE RESERVAS QUE TOCAN EL RANGO [start_date, end_date]."""
         q = db.query(
@@ -456,8 +475,8 @@ class ReportRepository:
             models.Reservation.monto_total, models.Reservation.tipo_vehiculo,
             models.Reservation.patente
         )
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.Reservation.sucursal_nombre, models.Reservation.sucursal_id, sucursal, organization_id))
         if start_date:
             q = q.filter(models.Reservation.fecha_fin >= start_date)
         if end_date:
@@ -465,13 +484,13 @@ class ReportRepository:
         return q.all()
 
     @staticmethod
-    def entrance_patent_events(db: Session, sucursal=None, start_date=None, end_date=None) -> list:
+    def entrance_patent_events(db: Session, sucursal=None, start_date=None, end_date=None, organization_id=None) -> list:
         """PARES (normalized_patente, fecha_hora) DE EVENTOS ENTRADA ALPR (PARA DETECTAR NO-SHOW)."""
         q = db.query(models.AccessLog.normalized_patente, models.AccessLog.fecha_hora).filter(
             models.AccessLog.tipo_evento == AccessEventType.ENTRADA.value
         )
-        if sucursal:
-            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal))
+        if sucursal or organization_id is not None:
+            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
         if start_date:
             q = q.filter(models.AccessLog.fecha_hora >= start_date)
         if end_date:

@@ -16,6 +16,7 @@ y notificaciones quedan deshabilitados; el tiempo virtual se restaura al termina
 Uso:
     python scripts/generate_reservation_test.py NOMBRE -n 10            # 10 movimientos
     python scripts/generate_reservation_test.py NOMBRE -n 30 --solo-plan # solo muestra el plan
+    python scripts/generate_reservation_test.py NOMBRE --hora-saturacion # reservas por hora hoy + saturacion
 """
 
 import argparse
@@ -30,8 +31,9 @@ sys.path.insert(0, ROOT)
 
 from collections import Counter
 
+from core.config import settings
 from core.database import SessionLocal
-from core.normalize import normalize_plate
+from core.normalize import normalize_name, normalize_plate
 from models import AccessLog, User
 from models.enums import AccessEventType, PaymentStatus, ReservationStatus
 from models.notification import UserNotification
@@ -63,6 +65,20 @@ CREATE_SAFE_DT = datetime.datetime(2026, 8, 31, 0, 0)
 TIPOS = ("Auto", "Moto", "Camioneta")
 PRUEBAOC_PATTERN = "%@pruebaoc.com"
 SNAPSHOT_DIR = os.path.join(ROOT, "data", "pruebas")
+
+# Escenario "hora" (hoy) + saturacion de una sucursal:
+# todas las reservas son por hora (1h), 15 autos por sucursal. Las sucursales normales se
+# reparten en turnos escalonados (nunca superan el tope de autos, asi todas entran); en la
+# sucursal a saturar (Moron) los 15 intentos van en el MISMO turno: entran 5 (tope de autos)
+# y el resto da error de capacidad.
+HORA_TURNO_MIN = 30         # escalonado entre sucursales normales (minutos)
+HORA_MARGEN_MIN = 30        # margen extra sobre la anticipacion minima (evita fallar por demora)
+HORA_SEP_TURNOS_H = 2       # separacion entre turnos de una misma sucursal (horas)
+HORA_TURNOS = 3             # turnos por sucursal normal
+HORA_AUTOS_TURNO = 5        # autos por turno (= tope de autos de las sucursales normales)
+HORA_SATURAR = 15           # intentos de autos en la sucursal saturada (mismo turno)
+HORA_CIERRE = datetime.time(23, 0)   # fin de turno mas tardio permitido (cierre sucursales)
+MORON_KEY = "moron"
 
 
 def _snapshot_path(name: str) -> str:
@@ -223,6 +239,113 @@ def _print_plan(plan_obj):
         print("\n== SIN LUGAR ==")
         for x in unplaced:
             print(" ", x)
+
+
+# ---------------------------------------------------------------------------
+# 1b. PLAN ESCENARIO "HORA" (hoy) + SATURACION DE UNA SUCURSAL
+# ---------------------------------------------------------------------------
+def _auto_users(db):
+    """Usuarios pruebaoc cuyo vehiculo principal es Auto."""
+    users = sorted(db.query(User).filter(User.email.like(PRUEBAOC_PATTERN)).all(), key=lambda u: u.id)
+    return [u for u in users if _user_tipo(u) == "Auto"]
+
+
+def _hora_base_slot():
+    """Primer turno valido: ahora + anticipacion minima (con margen), redondeado al proximo multiplo de 30 min."""
+    base = datetime.datetime.now() + datetime.timedelta(
+        seconds=settings.RESERVA_HORA_MIN_SEGUNDOS, minutes=HORA_MARGEN_MIN)
+    delta = (HORA_TURNO_MIN - base.minute % HORA_TURNO_MIN) % HORA_TURNO_MIN
+    return (base + datetime.timedelta(minutes=delta)).replace(second=0, microsecond=0)
+
+
+def build_plan_hora(db):
+    """Plan de reservas por hora (1h) para hoy. Las sucursales normales reciben 15 autos en
+    turnos escalonados (nunca superan su tope, asi todas entran). La sucursal a saturar se llena
+    hasta su tope de autos en un mismo turno y suma intentos extra que dan error de capacidad."""
+    branch_names = _branch_names(db)
+    saturar = next((b for b in branch_names if MORON_KEY in normalize_name(b).lower()), None)
+    if not saturar:
+        sys.exit(f"No se encontro la sucursal a saturar ('{MORON_KEY}').")
+    normales = [b for b in branch_names if b != saturar]
+    autos = _auto_users(db)
+
+    cap_sat = capacidad_reservas(db, saturar, "Auto")
+    if cap_sat < 1:
+        sys.exit(f"{saturar} no tiene plazas de reserva de Auto configuradas.")
+    if HORA_SATURAR <= cap_sat:
+        sys.exit(f"HORA_SATURAR ({HORA_SATURAR}) debe superar el tope de autos de {saturar} ({cap_sat}).")
+    if len(autos) < HORA_AUTOS_TURNO + 1:
+        sys.exit(f"Se necesitan >= {HORA_AUTOS_TURNO + 1} usuarios Auto; hay {len(autos)}.")
+
+    base = _hora_base_slot()
+    dur = datetime.timedelta(hours=1)
+    fin_sat = base + dur
+
+    # Reservas REALES: sucursal saturada hasta su tope + 15 autos por sucursal normal.
+    reales = [(saturar, base)] * cap_sat
+    for j, b in enumerate(normales):
+        for k in range(HORA_TURNOS):
+            st = fin_sat + datetime.timedelta(minutes=j * HORA_TURNO_MIN + k * HORA_SEP_TURNOS_H * 60)
+            reales += [(b, st)] * HORA_AUTOS_TURNO
+    for b, st in reales:
+        if (st + dur).time() > HORA_CIERRE:
+            sys.exit(f"Turno fuera de horario de cierre ({HORA_CIERRE:%H:%M}): {b} {st:%Y-%m-%d %H:%M}. "
+                     f"Corra el script mas temprano.")
+
+    # Asignacion avida: cada reserva real toma el usuario Auto menos cargado sin solape (ni en otra sucursal).
+    busy, count, plan_reales = {u.id: [] for u in autos}, {u.id: 0 for u in autos}, []
+    for bname, st in reales:
+        end = st + dur
+        elegido = None
+        for u in sorted(autos, key=lambda x: count[x.id]):
+            if count[u.id] >= 5:
+                continue
+            if any(s < end and e > st for (s, e) in busy[u.id]):
+                continue
+            elegido = u
+            break
+        if elegido is None:
+            sys.exit(f"Sin usuario Auto libre para {bname} {st:%H:%M}. "
+                     f"counts={dict(sorted(count.items()))}")
+        busy[elegido.id].append((st, end))
+        count[elegido.id] += 1
+        plan_reales.append((elegido, bname, "hora", "Auto", st, end))
+
+    # Intentos "fantasma" en la sucursal ya llena: con el tope completo dan error de capacidad.
+    # Reutilizan un unico usuario Auto libre en ese turno (no crean nada, no consumen cupo).
+    fantasma = next((u for u in sorted(autos, key=lambda x: count[x.id])
+                     if count[u.id] < 5 and not any(s < fin_sat and e > base for (s, e) in busy[u.id])), None)
+    if fantasma is None:
+        sys.exit("Sin usuario Auto libre para los intentos de saturacion.")
+    fantasmas = [(fantasma, saturar, "hora", "Auto", base, fin_sat)] * (HORA_SATURAR - cap_sat)
+
+    # Orden de creacion: sucursal saturada (reales + fantasmas) primero, luego el resto.
+    plan = [p for p in plan_reales if p[1] == saturar] + fantasmas + [p for p in plan_reales if p[1] != saturar]
+
+    return {"plan": plan, "reales": plan_reales, "fantasmas": fantasmas, "users": autos,
+            "branch_names": branch_names, "saturar": saturar, "normales": normales,
+            "base": base, "fin_saturada": fin_sat, "cap_sat": cap_sat}
+
+
+def _print_plan_hora(plan_obj):
+    reales = plan_obj["reales"]
+    cb = Counter(p[1] for p in reales)
+    cu = Counter(p[0].id for p in reales)
+    print(f"ESCENARIO hora | base={plan_obj['base']:%Y-%m-%d %H:%M} | saturar={plan_obj['saturar']}")
+    print(f"USUARIOS Auto: {len(plan_obj['users'])} | reservas reales: {len(reales)} | "
+          f"intentos fantasma: {len(plan_obj['fantasmas'])}")
+    for b in plan_obj["branch_names"]:
+        n = cb.get(b, 0)
+        extra = f" + {HORA_SATURAR - plan_obj['cap_sat']} fantasma" if b == plan_obj["saturar"] else ""
+        print(f"  {b:20s} reales={n}{extra}")
+    print(f"  reservas por usuario (max 5): {dict(sorted(cu.items()))}")
+    print(f"  turno a saturar {plan_obj['saturar']}: {plan_obj['base']:%H:%M}-{plan_obj['fin_saturada']:%H:%M} "
+          f"(tope autos={plan_obj['cap_sat']})")
+    for j, b in enumerate(plan_obj["normales"]):
+        horas = [(plan_obj["fin_saturada"]
+                  + datetime.timedelta(minutes=j * HORA_TURNO_MIN + k * HORA_SEP_TURNOS_H * 60)).strftime("%H:%M")
+                 for k in range(HORA_TURNOS)]
+        print(f"  turnos {b:20s} {horas} x {HORA_AUTOS_TURNO}")
 
 
 # ---------------------------------------------------------------------------
@@ -515,6 +638,79 @@ def run(db, name, movimientos=10, only_plan=False):
     print(f"Snapshot guardado en {_snapshot_path(name)}")
 
 
+def run_hora(db, name):
+    """Escenario: reservas por HORA (hoy) + saturacion de una sucursal. Cada reserva creada se
+    abona con saldo y luego se hace ingreso (inicio+61s) y egreso (fin) con tiempo virtual."""
+    print("== 1/4 PLAN (reservas por HORA hoy + saturacion) ==")
+    plan_obj = build_plan_hora(db)
+    _print_plan_hora(plan_obj)
+
+    db.expire_all()
+    saldos_iniciales = {u.id: u.saldo for u in
+                        db.query(User).filter(User.email.like(PRUEBAOC_PATTERN)).all()}
+
+    print("\n== 2/4 CREAR + ABONAR ==")
+    TimeService.set_offset(0)
+    c = create_and_pay(db, plan_obj)
+    print(f"  creadas={c['creadas']} pagadas={c['pagadas']} acreditados={c['acreditados']} "
+          f"fallos={len(c['fallos'])}")
+    fm = Counter(f[-1] for f in c["fallos"])
+    for msg, n in fm.most_common():
+        print(f"  FALLO x{n}: {msg}")
+
+    print("\n== 3/4 SIMULACION (ingreso / egreso por hora) ==")
+    s = simulate(db, c["reservas"])
+    print(f"  entradas={s['entradas']} salidas={s['salidas']} fallos={len(s['fallos'])}")
+    for f in s["fallos"]:
+        print("  FALLO:", f)
+
+    print("\n== 4/4 FINALIZAR ==")
+    fin = finalize(db, c["reservas"])
+    print(f"  reservas COMPLETADA: {fin}")
+
+    intentos = Counter(p[1] for p in plan_obj["plan"])
+    creadas = Counter(r.sucursal_nombre for r in c["reservas"])
+    print("\n== CREADAS vs INTENTOS POR SUCURSAL ==")
+    for b in plan_obj["branch_names"]:
+        print(f"  {b:20s} creadas={creadas.get(b, 0):2d} intentos={intentos.get(b, 0):2d}")
+
+    print("\n== ERROR DE CAPACIDAD (agotamiento de plazas) ==")
+    err_cap = sum(n for m, n in fm.items() if "plazas exclusivas" in m)
+    for msg, n in fm.most_common():
+        if "plazas exclusivas" in msg:
+            print(f"  x{n}: {msg}")
+    if not err_cap:
+        print("  (no se produjo error de capacidad)")
+
+    saldos_finales = {u.id: u.saldo for u in
+                      db.query(User).filter(User.email.like(PRUEBAOC_PATTERN)).all()}
+    ids = [r.id for r in c["reservas"]]
+    st = db.query(Reservation).filter(Reservation.id.in_(ids)).all() if ids else []
+    cs = Counter(r.estado_reserva.value if hasattr(r.estado_reserva, "value") else str(r.estado_reserva) for r in st)
+    cp = Counter(r.estado_pago.value if hasattr(r.estado_pago, "value") else str(r.estado_pago) for r in st)
+    print(f"\n== ESTADO FINAL: total={len(st)} reserva={dict(cs)} pago={dict(cp)}")
+
+    os.makedirs(SNAPSHOT_DIR, exist_ok=True)
+    snap = {
+        "nombre": name,
+        "escenario": "hora_saturacion",
+        "generado": datetime.datetime.now().isoformat(),
+        "base": plan_obj["base"].strftime("%Y-%m-%d %H:%M:%S"),
+        "saldos_iniciales": {str(k): v for k, v in saldos_iniciales.items()},
+        "saldos_finales": {str(k): v for k, v in saldos_finales.items()},
+        "reservas": [{"id": r.id, "user_id": r.user_id, "patente": r.patente,
+                      "sucursal": r.sucursal_nombre, "modo": r.tipo_estadia,
+                      "inicio": r.fecha_inicio, "fin": r.fecha_fin} for r in c["reservas"]],
+        "access_log_ids": s["log_ids"],
+    }
+    with open(_snapshot_path(name), "w", encoding="utf-8") as f:
+        json.dump(snap, f, ensure_ascii=False, indent=1)
+
+    print(f"\nRESULTADO '{name}': creadas={c['creadas']} pagadas={c['pagadas']} "
+          f"entradas={s['entradas']} salidas={s['salidas']} errores_capacidad={err_cap} finalizadas={fin}")
+    print(f"Snapshot guardado en {_snapshot_path(name)}")
+
+
 def main():
     ap = argparse.ArgumentParser(
         description="Genera movimientos completos de reservas AUTOPASS (reserva + pago + entrada + salida).")
@@ -523,6 +719,8 @@ def main():
                     help="Cantidad de movimientos completos a generar (default: 10)")
     ap.add_argument("--solo-plan", action="store_true", help="Solo mostrar el plan, sin escribir en la BD")
     ap.add_argument("--limpiar", action="store_true", help="(NO usar: borra datos) Borra lo registrado en esa tanda")
+    ap.add_argument("--hora-saturacion", action="store_true",
+                    help="Escenario: reservas por HORA hoy + saturacion de una sucursal (genera error de capacidad)")
     args = ap.parse_args()
 
     _validar_nombre(args.nombre)
@@ -532,6 +730,8 @@ def main():
     try:
         if args.limpiar:
             _limpiar(db, args.nombre)
+        elif args.hora_saturacion:
+            run_hora(db, args.nombre)
         else:
             run(db, args.nombre, movimientos=args.movimientos, only_plan=args.solo_plan)
     finally:

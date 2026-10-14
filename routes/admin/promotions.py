@@ -5,7 +5,7 @@ import models, schemas
 from models.enums import UserRole
 from core.database import get_db
 from core.limiter import admin_rate_limit
-from core.security import get_local_manager
+from core.security import get_local_manager, enforce_organization_scope
 from core.normalize import same_branch
 from repositories.promotion_repository import PromotionRepository
 from repositories.redemption_repository import RedemptionRepository
@@ -16,10 +16,10 @@ router = APIRouter()
 def _check_promo_org(admin: models.User, promo: models.Promotion):
     """AISLAMIENTO MULTIEMPRESA: un admin solo opera promos de su organizacion.
     Tolerante cuando alguno de los dos no tiene organizacion (datos legacy/tests)."""
-    org_id = getattr(admin, "organization_id", None)
-    promo_org = getattr(promo, "organization_id", None)
-    if org_id is not None and promo_org is not None and promo_org != org_id:
-        raise HTTPException(status_code=404, detail="Promoción no encontrada")
+    enforce_organization_scope(
+        admin, getattr(promo, "organization_id", None),
+        detail="Promoción no encontrada", status_code=404,
+    )
 
 
 @router.get("/promotions", response_model=List[schemas.PromotionResponse])

@@ -76,15 +76,18 @@ class ReportService:
         queda siempre acotado a su propia sucursal (el parámetro `sucursal` se ignora)."""
         es_admin_global = str(user.rol) == UserRole.ADMIN.value
         suc_real = (sucursal or None) if es_admin_global else (user.sucursal or None)
+        org = getattr(user, "organization_id", None) if es_admin_global else None
 
         resultado = cls._financial_summary_core(
             db, sucursal=suc_real, period=period, start=start, end=end,
-            vehicle_type=vehicle_type, payment_method=payment_method
+            vehicle_type=vehicle_type, payment_method=payment_method,
+            organization_id=org
         )
         if es_admin_global and not suc_real:
             resultado["por_sucursal"] = cls._financial_summary_by_branch(
                 db, period=period, start=start, end=end,
-                vehicle_type=vehicle_type, payment_method=payment_method
+                vehicle_type=vehicle_type, payment_method=payment_method,
+                organization_id=org
             )
         return resultado
 
@@ -97,16 +100,19 @@ class ReportService:
         start: str = None,
         end: str = None,
         vehicle_type: str = "all",
-        payment_method: str = "all"
+        payment_method: str = "all",
+        organization_id=None
     ) -> dict:
-        """Cálculo de recaudación para UNA sede (o toda la red si `sucursal` es None)."""
+        """Cálculo de recaudación para UNA sede (o toda la red si `sucursal` es None).
+        Con `organization_id` la "red" queda acotada a las sedes de esa empresa."""
         start_date, end_date = get_date_range(period, start, end)
 
         # 1. Recaudación de AccessLogs (Estadías ALPR)
         def _logs_agg(method: str = "all"):
             total, count = ReportRepository.paid_logs_aggregate(
                 db, sucursal=sucursal, vehicle_type=vehicle_type,
-                start_date=start_date, end_date=end_date, method=method
+                start_date=start_date, end_date=end_date, method=method,
+                organization_id=organization_id
             )
             return (total or 0, count or 0)
 
@@ -130,7 +136,8 @@ class ReportService:
         # 2. Recaudación de Reservations (método real de pago; legacy NULL = DIGITAL)
         total_res_bruto, count_res = ReportRepository.paid_reservations_aggregate(
             db, sucursal=sucursal, vehicle_type=vehicle_type,
-            start_date=start_date, end_date=end_date, method=payment_method
+            start_date=start_date, end_date=end_date, method=payment_method,
+            organization_id=organization_id
         )
         total_res_bruto = float(total_res_bruto or 0.0)
         count_res = count_res or 0
@@ -139,7 +146,8 @@ class ReportService:
         total_refunds = float(
             ReportRepository.refunds_total(
                 db, sucursal=sucursal, vehicle_type=vehicle_type,
-                start_date=start_date, end_date=end_date, method=payment_method
+                start_date=start_date, end_date=end_date, method=payment_method,
+                organization_id=organization_id
             ) or 0.0
         )
 
@@ -152,12 +160,14 @@ class ReportService:
         else:
             cancelled_list = ReportRepository.cancelled_reservations(
                 db, sucursal=sucursal, vehicle_type=vehicle_type,
-                start_date=start_date, end_date=end_date
+                start_date=start_date, end_date=end_date,
+                organization_id=organization_id
             )
             count_cancelled = len(cancelled_list)
             count_total_res = ReportRepository.total_reservations_count(
                 db, sucursal=sucursal, vehicle_type=vehicle_type,
-                start_date=start_date, end_date=end_date
+                start_date=start_date, end_date=end_date,
+                organization_id=organization_id
             )
             tasa_cancelacion = round((count_cancelled / count_total_res * 100), 1) if count_total_res > 0 else 0
 
@@ -174,7 +184,8 @@ class ReportService:
         # 4. Ingresos Proyectados (autos físicamente presentes)
         #    UNA SOLA QUERY con NOT EXISTS: entradas sin salida posterior y sin pago confirmado.
         entradas = ReportRepository.unpaid_entries_without_exit(
-            db, sucursal=sucursal, vehicle_type=vehicle_type
+            db, sucursal=sucursal, vehicle_type=vehicle_type,
+            organization_id=organization_id
         )
         deuda_proyectada = 0.0
         for e in entradas:
@@ -191,7 +202,8 @@ class ReportService:
 
         for m, monto, cnt in ReportRepository.grouped_logs_by_method(
             db, sucursal=sucursal, vehicle_type=vehicle_type,
-            start_date=start_date, end_date=end_date
+            start_date=start_date, end_date=end_date,
+            organization_id=organization_id
         ):
             canon = _canonical_method(m)
             if canon in desglose_metodos:
@@ -200,7 +212,8 @@ class ReportService:
 
         for m, monto, cnt in ReportRepository.grouped_reservations_by_method(
             db, sucursal=sucursal, vehicle_type=vehicle_type,
-            start_date=start_date, end_date=end_date
+            start_date=start_date, end_date=end_date,
+            organization_id=organization_id
         ):
             canon = _canonical_method(m)
             if canon in desglose_metodos:
@@ -209,7 +222,8 @@ class ReportService:
 
         for m, monto, _cnt in ReportRepository.grouped_refunds_by_method(
             db, sucursal=sucursal, vehicle_type=vehicle_type,
-            start_date=start_date, end_date=end_date
+            start_date=start_date, end_date=end_date,
+            organization_id=organization_id
         ):
             canon = _canonical_method(m)
             if canon in desglose_metodos:
@@ -246,15 +260,20 @@ class ReportService:
         start: str = None,
         end: str = None,
         vehicle_type: str = "all",
-        payment_method: str = "all"
+        payment_method: str = "all",
+        organization_id=None
     ) -> list:
         """Desglose de recaudación por cada sede activa (reutiliza `_financial_summary_core`)."""
-        sedes = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa.is_(True)).all()
+        q_sedes = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa.is_(True))
+        if organization_id is not None:
+            q_sedes = q_sedes.filter(models.ParkingBranch.organization_id == organization_id)
+        sedes = q_sedes.all()
         filas = []
         for sede in sedes:
             resumen = cls._financial_summary_core(
                 db, sucursal=sede.nombre, period=period, start=start, end=end,
-                vehicle_type=vehicle_type, payment_method=payment_method
+                vehicle_type=vehicle_type, payment_method=payment_method,
+                organization_id=organization_id
             )
             filas.append({
                 "sucursal": sede.nombre,
@@ -283,13 +302,15 @@ class ReportService:
     ) -> list:
         """Obtiene el historial unificado de pagos (estadías, reservas y reembolsos)."""
         start_date, end_date = get_date_range(period, start, end)
-        sucursal = admin.sucursal if str(admin.rol) != UserRole.ADMIN.value else None
+        es_admin_global = str(admin.rol) == UserRole.ADMIN.value
+        sucursal = admin.sucursal if not es_admin_global else None
+        org = getattr(admin, "organization_id", None) if es_admin_global else None
         offset = (page - 1) * limit
 
         results = ReportRepository.payment_history(
             db, sucursal=sucursal, vehicle_type=vehicle_type,
             start_date=start_date, end_date=end_date, method=payment_method,
-            offset=offset, limit=limit
+            offset=offset, limit=limit, organization_id=org
         )
 
         return [{"id": r.id, "fecha_pago": r.fecha, "patente_detectada": r.patente, "costo_estadia": r.monto, "tipo": r.tipo, "metodo": r.metodo} for r in results]
@@ -297,8 +318,10 @@ class ReportService:
     @classmethod
     def get_access_logs(cls, db: Session, staff: models.User, patente: str = None, limit: int = 300) -> list:
         """Obtiene historial de accesos ALPR filtrado por sucursal y patente opcional."""
-        sucursal = staff.sucursal if str(staff.rol) != UserRole.ADMIN.value else None
-        logs = ReportRepository.access_logs_history(db, sucursal=sucursal, patente=patente, limit=limit)
+        es_admin_global = str(staff.rol) == UserRole.ADMIN.value
+        sucursal = staff.sucursal if not es_admin_global else None
+        org = getattr(staff, "organization_id", None) if es_admin_global else None
+        logs = ReportRepository.access_logs_history(db, sucursal=sucursal, patente=patente, limit=limit, organization_id=org)
 
         # RESOLVER USUARIO (REGISTRADO O INVITADO) POR PATENTE
         # OJO: los logs guardan la patente NORMALIZADA ("AB123CD") y el alta de vehiculo
@@ -335,8 +358,10 @@ class ReportService:
     @classmethod
     def get_ocr_stats(cls, db: Session, staff: models.User, limit: int = 100) -> dict:
         """Estadísticas de tiempos de procesamiento OCR."""
-        sucursal = staff.sucursal if str(staff.rol) != UserRole.ADMIN.value else None
-        logs = ReportRepository.logs_with_ocr(db, sucursal=sucursal, limit=limit, ascending=False)
+        es_admin_global = str(staff.rol) == UserRole.ADMIN.value
+        sucursal = staff.sucursal if not es_admin_global else None
+        org = getattr(staff, "organization_id", None) if es_admin_global else None
+        logs = ReportRepository.logs_with_ocr(db, sucursal=sucursal, limit=limit, ascending=False, organization_id=org)
 
         ocr_times = [l.ocr_time for l in logs if l.ocr_time is not None]
 
@@ -368,8 +393,10 @@ class ReportService:
     def get_ocr_activity(cls, db: Session, staff: models.User) -> dict:
         """Serie cronológica COMPLETA de tiempos OCR (desde el primer dato hasta el último),
         para el gráfico móvil de la página de estadísticas OCR."""
-        sucursal = staff.sucursal if str(staff.rol) != UserRole.ADMIN.value else None
-        logs = ReportRepository.logs_with_ocr(db, sucursal=sucursal, ascending=True)
+        es_admin_global = str(staff.rol) == UserRole.ADMIN.value
+        sucursal = staff.sucursal if not es_admin_global else None
+        org = getattr(staff, "organization_id", None) if es_admin_global else None
+        logs = ReportRepository.logs_with_ocr(db, sucursal=sucursal, ascending=True, organization_id=org)
 
         points = [{
             "fecha_hora": l.fecha_hora,
@@ -394,8 +421,10 @@ class ReportService:
         opcional desde/hasta (fechas YYYY-MM-DD o timestamps) para acotar la serie."""
         from core.time import localnow
 
-        sucursal = admin.sucursal if str(admin.rol) != UserRole.ADMIN.value and admin.sucursal else None
-        rows = ReportRepository.access_event_rows(db, sucursal=sucursal)
+        es_admin_global = str(admin.rol) == UserRole.ADMIN.value
+        sucursal = admin.sucursal if not es_admin_global and admin.sucursal else None
+        org = getattr(admin, "organization_id", None) if es_admin_global else None
+        rows = ReportRepository.access_event_rows(db, sucursal=sucursal, organization_id=org)
 
         def _hour_key(dt):
             return dt.strftime("%Y-%m-%d %H:00")
@@ -477,16 +506,22 @@ class ReportService:
         }
 
     @staticmethod
-    def _open_hours_de(db: Session, sucursal=None) -> tuple:
+    def _open_hours_de(db: Session, sucursal=None, organization_id=None) -> tuple:
         """HORAS DE APERTURA (apertura, cierre) DE LAS SUCURSALES SELECCIONADAS (union para TODAS).
         Parsing tolerante: '07:00 a 23:00', '07:00 UN 23:00' o '---' + flag is_24h. Cierre 00 => 23."""
         branches = []
         if sucursal:
-            branches = [db.query(models.ParkingBranch).filter(
+            q_b = db.query(models.ParkingBranch).filter(
                 models.ParkingBranch.nombre == sucursal,
-                models.ParkingBranch.activa.is_(True)).first()]
+                models.ParkingBranch.activa.is_(True))
+            if organization_id is not None:
+                q_b = q_b.filter(models.ParkingBranch.organization_id == organization_id)
+            branches = [q_b.first()]
         else:
-            branches = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa.is_(True)).all()
+            q = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa.is_(True))
+            if organization_id is not None:
+                q = q.filter(models.ParkingBranch.organization_id == organization_id)
+            branches = q.all()
 
         spans = []
         for b in branches:
@@ -515,10 +550,12 @@ class ReportService:
         """MAPA DE CALOR DIARIO: COLUMNAS = DIA DEL MES (1-31, agregado del rango), FILAS = HORAS DE APERTURA.
         Solo cuenta ENTRADAS. Para LOCAL_ADMIN queda acotado a su sede; el ADMIN global puede pedir una
         sucursal o todas. Incluye totales por día (abajo) y por hora (última columna)."""
-        suc_real = admin.sucursal if str(admin.rol) != UserRole.ADMIN.value and admin.sucursal else sucursal
-        h_ini, h_fin = cls._open_hours_de(db, sucursal=suc_real)
+        es_admin_global = str(admin.rol) == UserRole.ADMIN.value
+        suc_real = admin.sucursal if not es_admin_global and admin.sucursal else sucursal
+        org = getattr(admin, "organization_id", None) if es_admin_global else None
+        h_ini, h_fin = cls._open_hours_de(db, sucursal=suc_real, organization_id=org)
         n_horas = h_fin - h_ini + 1
-        rows = ReportRepository.access_event_rows(db, sucursal=suc_real)
+        rows = ReportRepository.access_event_rows(db, sucursal=suc_real, organization_id=org)
 
         entradas = []
         for fecha_hora, tipo_evento in rows:
@@ -594,7 +631,9 @@ class ReportService:
         Incluye no-show: reservas pagadas vencidas sin evento ENTRADA ALPR de esa patente en la sede."""
         from services.availability import capacidad_reservas
 
-        suc_real = admin.sucursal if str(admin.rol) != UserRole.ADMIN.value and admin.sucursal else sucursal
+        es_admin_global = str(admin.rol) == UserRole.ADMIN.value
+        suc_real = admin.sucursal if not es_admin_global and admin.sucursal else sucursal
+        org = getattr(admin, "organization_id", None) if es_admin_global else None
         f_desde = _boundary(desde, is_end=False)
         f_hasta = _boundary(hasta, is_end=True)
         if suc_real and f_desde and f_hasta and f_desde > f_hasta:
@@ -603,7 +642,8 @@ class ReportService:
         rows = ReportRepository.reservation_activity_rows(
             db, sucursal=suc_real,
             start_date=f_desde.strftime("%Y-%m-%d") if f_desde else None,
-            end_date=f_hasta.strftime("%Y-%m-%d") if f_hasta else None
+            end_date=f_hasta.strftime("%Y-%m-%d") if f_hasta else None,
+            organization_id=org
         )
 
         # --- KPIs DE RESERVAS ---
@@ -630,7 +670,8 @@ class ReportService:
                 for (p, f) in ReportRepository.entrance_patent_events(
                     db, sucursal=suc_real,
                     start_date=f"{f_desde.strftime('%Y-%m-%d')}" if f_desde else None,
-                    end_date=f"{f_hasta.strftime('%Y-%m-%d')}" if f_hasta else None
+                    end_date=f"{f_hasta.strftime('%Y-%m-%d')}" if f_hasta else None,
+                    organization_id=org
                 )
             }
             for r in pagadas_vencidas:
@@ -647,9 +688,13 @@ class ReportService:
                     no_show += 1
 
         # --- OCUPACION MEDIA POR HORA DEL DIA (PROMEDIADA SOBRE LOS DIAS DEL RANGO) ---
-        sucursales = [suc_real] if suc_real else [
-            b.nombre for b in db.query(models.ParkingBranch).filter(models.ParkingBranch.activa.is_(True)).all()
-        ]
+        if suc_real:
+            sucursales = [suc_real]
+        else:
+            q_suc = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa.is_(True))
+            if org is not None:
+                q_suc = q_suc.filter(models.ParkingBranch.organization_id == org)
+            sucursales = [b.nombre for b in q_suc.all()]
         hora_ini = f_desde.replace(minute=0, second=0, microsecond=0) if f_desde else ahora - datetime.timedelta(days=30)
         hora_fin = f_hasta.replace(minute=0, second=0, microsecond=0) if f_hasta else ahora
         if hora_fin <= hora_ini:

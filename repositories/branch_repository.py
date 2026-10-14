@@ -55,14 +55,17 @@ class BranchRepository:
         return query.scalar()
 
     @staticmethod
-    def get_first_active(db: Session) -> models.ParkingBranch:
-        """OBTIENE LA PRIMERA SUCURSAL ACTIVA (FALLBACK SIN NOMBRE ESPECIFICADO)."""
-        return db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).first()
+    def get_first_active(db: Session, organization_id=None) -> models.ParkingBranch:
+        """OBTIENE LA PRIMERA SUCURSAL ACTIVA (FALLBACK SIN NOMBRE ESPECIFICADO).
+        Con `organization_id` se acota a las sedes de esa empresa."""
+        query = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True)
+        return scope_by_organization(query, models.ParkingBranch, organization_id).first()
 
     @staticmethod
-    def get_all_active(db: Session) -> list:
-        """OBTIENE TODAS LAS SUCURSALES ACTIVAS."""
-        return db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True).all()
+    def get_all_active(db: Session, organization_id=None) -> list:
+        """OBTIENE TODAS LAS SUCURSALES ACTIVAS (opcionalmente de una organizacion)."""
+        query = db.query(models.ParkingBranch).filter(models.ParkingBranch.activa == True)
+        return scope_by_organization(query, models.ParkingBranch, organization_id).all()
 
     @staticmethod
     def get_all_active_with_location(db: Session) -> list:

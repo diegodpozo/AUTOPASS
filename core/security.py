@@ -150,6 +150,19 @@ def validate_local_admin_branch(admin: models.User, branch_nombre: str):
     if normalize_branch_name(branch_nombre or "") != admin_suc_norm:
         raise HTTPException(status_code=403, detail="No tenés permisos sobre recursos de otra sucursal")
 
+def enforce_organization_scope(actor, resource_organization_id, detail: str = "No tenés permisos sobre recursos de otra organización", status_code: int = 403):
+    """AISLAMIENTO MULTIEMPRESA: un administrador solo opera recursos de SU organizacion.
+
+    Centraliza la regla para no repetirla en cada endpoint que recibe un recurso por
+    id (usuarios, sucursales, pisos, promociones, camaras). Es TOLERANTE: si el actor
+    o el recurso no tienen organizacion asignada (datos legacy o de tests) no se
+    restringe, preservando el comportamiento single-tenant."""
+    actor_org = getattr(actor, "organization_id", None)
+    if actor_org is None or resource_organization_id is None:
+        return
+    if resource_organization_id != actor_org:
+        raise HTTPException(status_code=status_code, detail=detail)
+
 def authenticate_user(db: Session, email: str, password: str):
     """VERIFICA LAS CREDENCIALES DE UN USUARIO CONTRA LA BASE DE DATOS."""
     user = db.query(models.User).filter(models.User.email == email, models.User.is_deleted == False).first()

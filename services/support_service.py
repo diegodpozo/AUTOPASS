@@ -15,6 +15,22 @@ TERMINAL_STATES = {"resuelto", "resuelta", "cerrado", "cancelado"}
 class SupportService:
 
     @staticmethod
+    def _org_branch_ids(db: Session, user: models.User):
+        """IDS DE LAS SEDES DE LA ORGANIZACION DEL USUARIO (None si no tiene organizacion).
+
+        Se usa para el aislamiento multi-tenant de los tickets de soporte: un Admin General
+        solo ve/gestiona tickets de las sedes de SU empresa. Con None se mantiene el
+        comportamiento single-tenant (tickets 'General')."""
+        org_id = getattr(user, "organization_id", None)
+        if org_id is None:
+            return None
+        return [
+            r[0] for r in db.query(models.ParkingBranch.id).filter(
+                models.ParkingBranch.organization_id == org_id
+            ).all()
+        ]
+
+    @staticmethod
     def _branch_prefix(sucursal: Optional[str]) -> str:
         """PREFIJO CORTO DE LA SUCURSAL PARA NUMERACION CORRELATIVA (ej. CASTELAR -> CAST)."""
         norm = normalize_branch_name(sucursal or "") or "GENERAL"
@@ -26,6 +42,13 @@ class SupportService:
         try:
             from services.user_notification_service import UserNotificationService
             staff = UserRepository.get_staff(db)
+            # Aislamiento multiempresa: un ticket solo notifica al staff de su organizacion.
+            ticket_org = None
+            if ticket.sucursal_id is not None:
+                branch = BranchRepository.get_by_id(db, ticket.sucursal_id)
+                ticket_org = getattr(branch, "organization_id", None)
+            if ticket_org is not None:
+                staff = [a for a in staff if getattr(a, "organization_id", None) == ticket_org]
             if ticket.sucursal and ticket.sucursal != "General":
                 if ticket.sucursal_id is not None:
                     admins = [
@@ -110,7 +133,15 @@ class SupportService:
                     if user_suc_norm and normalize_branch_name(t.sucursal) == user_suc_norm
                 ]
         else:
-            if sucursal_filter == "TODAS":
+            org_ids = SupportService._org_branch_ids(db, current_user)
+            if org_ids is not None:
+                # ADMIN GENERAL multi-tenant: solo tickets de las sedes de su empresa.
+                if sucursal_filter and sucursal_filter not in ["General", "TODAS"]:
+                    branch_id = BranchRepository.get_id_by_name(db, sucursal_filter, getattr(current_user, "organization_id", None))
+                    tickets = [t for t in all_tickets if t.sucursal_id == branch_id] if branch_id else []
+                else:
+                    tickets = [t for t in all_tickets if t.sucursal_id in org_ids]
+            elif sucursal_filter == "TODAS":
                 tickets = all_tickets
             elif sucursal_filter and sucursal_filter not in ["General"]:
                 branch_id = BranchRepository.get_id_by_name(db, sucursal_filter)
@@ -191,7 +222,10 @@ class SupportService:
     def _can_access_ticket(db: Session, current_user: models.User, ticket: models.SupportTicket) -> bool:
         """TRUE SI EL USUARIO TIENE JURISDICCION SOBRE EL TICKET (MISMA REGLA QUE EL LISTADO ADMIN)."""
         if current_user.rol == UserRole.ADMIN:
-            return True
+            org_ids = SupportService._org_branch_ids(db, current_user)
+            if org_ids is None:
+                return True
+            return ticket.sucursal_id in org_ids
         # Migración por id: si ambas sedes tienen id resuelto, comparar por id.
         staff_suc_id = getattr(current_user, "sucursal_id", None)
         if staff_suc_id is not None and ticket.sucursal_id is not None:
@@ -334,13 +368,18 @@ class SupportService:
                     if user_suc_norm and normalize_branch_name(t.sucursal or "") == user_suc_norm
                 ]
         else:
-            # El super admin por defecto ve los tickets generales o sin sucursal (misma regla que get_admin_tickets)
-            scoped = [
-                t for t in all_tickets
-                if t.sucursal == "General"
-                or normalize_branch_name(t.sucursal or "") == "GENERAL"
-                or not t.sucursal
-            ]
+            org_ids = SupportService._org_branch_ids(db, current_user)
+            if org_ids is not None:
+                # ADMIN GENERAL multi-tenant: solo tickets de las sedes de su empresa.
+                scoped = [t for t in all_tickets if t.sucursal_id in org_ids]
+            else:
+                # Legacy single-tenant: el super admin ve los tickets generales o sin sucursal.
+                scoped = [
+                    t for t in all_tickets
+                    if t.sucursal == "General"
+                    or normalize_branch_name(t.sucursal or "") == "GENERAL"
+                    or not t.sucursal
+                ]
 
         return len([
             t for t in scoped

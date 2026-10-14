@@ -1,7 +1,28 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
-Última actualización: 13/10/2026
+Última actualización: 14/10/2026
+
+## FASE 4 — Aislamiento por organización de la OPERACIÓN — APLICADO 14/10/2026 (LOCAL, SIN COMMITEAR)
+
+- Objetivo: que un **Admin General nuevo vea el panel vacío de verdad**. Hasta Fase 3 las *tablas* (usuarios, sucursales, promos, settings) ya estaban aisladas, pero los **indicadores/cards del dashboard** seguían mostrando datos globales (fundamentalmente de la org principal).
+- Problema detectado: `/v1/parking/status`, `/v1/reports/financial-summary`, `/v1/reports/metrics/*`, `/v1/admin/support-tickets/pending-count`, `/v1/admin/reservations`, `/v1/parking/current-occupancy` y `/v1/system/cameras` respondían SIN acotar por org para el rol `admin`.
+- Mecanismo (DRY, aditivo y tolerante): se propaga `organization_id` **solo cuando el usuario lo tiene** (`getattr(user,"organization_id",None)`); con `None` nada cambia (single-tenant, tests/legacy). Para el rol `admin`, "toda la red" pasa a significar "todas las sedes de mi organización" (0 sedes ⇒ vacío).
+- `repositories/report_repository.py`: `_branch_filter(db, name_column, id_column, sucursal, organization_id=None)` ahora arma, si no hay sede puntual, un predicado `id_column IN (sedes de la org)` + fallback legacy por nombre; si la sede pedida no pertenece a la org ⇒ `false()`. Se agregó `organization_id=None` a los 15 métodos agregados (`paid_logs_aggregate`, `paid_reservations_aggregate`, `refunds_total`, `cancelled_reservations`, `total_reservations_count`, `unpaid_entries_without_exit`, `grouped_*_by_method`, `payment_history`, `access_logs_history`, `logs_with_ocr`, `access_event_rows`, `reservation_activity_rows`, `entrance_patent_events`) y se ampliaron los guards `if sucursal:` → `if sucursal or organization_id is not None:`.
+- `services/report_service.py`: `get_financial_summary` (+ `_financial_summary_core`/`_financial_summary_by_branch`), `get_payment_history`, `get_access_logs`, `get_ocr_stats`, `get_ocr_activity`, `get_access_activity`, `get_traffic_heatmap` (incl. `_open_hours_de`) y `get_occupancy_summary` derivan `org` para el `admin` y la pasan a los repos.
+- `repositories/branch_repository.py`: `get_first_active`/`get_all_active` aceptan `organization_id`. `routes/parking/status.py`: el `admin` usa la 1ª sede activa **de su org** (si no tiene sedes ⇒ `default_capacities()`); `/parking/current-occupancy` pasa la org.
+- `repositories/access_log_repository.py`: `_sucursal_id_filter(..., organization_id=None)` y `get_current_entries(..., organization_id=None)` acotan a las sedes de la org (sin sede pedida).
+- `repositories/reservation_repository.py`: nuevo `_org_branch_predicate`; `_sucursal_id_predicate(..., organization_id=None)`; `_filtered_base_query`/`list_filtered`/`latest_id_and_count` con `organization_id`. `services/reservation_service.py`: `list_admin_reservations` y `get_new_reservations_count` pasan la org.
+- `services/support_service.py`: nuevo `_org_branch_ids(db, user)`; `get_admin_tickets`, `get_admin_pending_count` y `_can_access_ticket` acotan a las sedes de la org del admin (los tickets `General`/NULL se ven solo cuando el admin NO tiene org, es decir legacy).
+- `routes/system/cameras.py`: `get_cameras` para `admin` lista solo cámaras de las sedes de su org (por `sucursal_id`).
+- Tests: `tests/test_multi_tenant_isolation.py` ahora con **14** (+5 Fase 4 +3 aislamiento por ID). Suite **878 passed**; **8 guards OK** (`check_color_equivalence.py` con `$env:PYTHONUTF8=1`).
+- **Aislamiento por ID y notificaciones (aplicado 14/10/2026)**: nuevo helper central `core/security.enforce_organization_scope(actor, resource_org, detail, status_code)` (tolerante: si actor o recurso no tienen org, no restringe). Aplicado en:
+  - `routes/admin/users.py::validate_local_admin_user_permission` (cubre update/rol/block/balance/password/delete).
+  - `routes/admin/branches.py` (add_floor, delete_floor, update_floor_capacity, delete/update/toggle branch).
+  - `routes/admin/promotions.py::_check_promo_org` (ahora delega en el helper, conserva 404).
+  - `routes/system/cameras.py` (`_enforce_camera_org` en update/delete/reorder/control) y `create_camera` ahora resuelve `sucursal_id` **acotado a la org** del admin (403 si la sede no es de su empresa; antes quedaba invisible por `sucursal_id` NULL).
+  - `services/support_service.py::_notify_admins`: los destinatarios se filtran por la org del ticket (via `sucursal_id` → sede). Se mantiene legacy cuando el ticket no tiene org.
+- **PENDIENTE F4**: (a) **websocket** `/parking/ws`: el admin se conecta con clave `"GLOBAL"` compartida (`OccupancyManager`) ⇒ el feed global no está aislado por org (poco crítico: Monitoreo live está oculto para admin); (b) revisar callers de `BranchRepository.get_id_by_name`/`get_by_name` sin org (`repositories/redemption_repository.py:24`, `repositories/report_repository.py:100`, `repositories/access_log_repository.py:18`, `services/support_service.py:140`, `routes/parking/status.py:277`, `services/reservation_service.py:200`, `services/access_service.py:243`, `services/branch_service.py:22,24`); (c) `git commit`/`push` (el usuario no lo pidió).
 
 ## Multiempresa / multi-tenant (organizaciones) — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
 

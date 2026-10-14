@@ -8,15 +8,32 @@ from repositories.branch_repository import BranchRepository
 
 class ReservationRepository:
     @staticmethod
-    def _sucursal_id_predicate(db: Session, sucursal_nombre: str, include_global: bool = False):
+    def _org_branch_predicate(db: Session, organization_id):
+        """PREDICADO SQL P/ RESERVAS DE TODAS LAS SEDES DE UNA ORGANIZACION (multi-tenant)."""
+        from sqlalchemy import false
+        ids = [
+            r[0] for r in db.query(models.ParkingBranch.id).filter(
+                models.ParkingBranch.organization_id == organization_id
+            ).all()
+        ]
+        if not ids:
+            return false()
+        return models.Reservation.sucursal_id.in_(ids)
+
+    @staticmethod
+    def _sucursal_id_predicate(db: Session, sucursal_nombre: str, include_global: bool = False, organization_id=None):
         """PREDICADO SQL PARA FILTRAR RESERVAS POR SUCURSAL CON PRIORIDAD POR `sucursal_id` Y
         FALLBACK POR NOMBRE (registros legacy/test sin id). Con `include_global` tambien incluye
-        reservas globales (sin sucursal), igual que la logica original por nombre."""
+        reservas globales (sin sucursal), igual que la logica original por nombre.
+        Con `organization_id` la sede debe pertenecer a esa empresa (evita cruzar organizaciones)."""
+        from sqlalchemy import false
         suc_id = models.Reservation.sucursal_id
         name_col = models.Reservation.sucursal_nombre
         if not sucursal_nombre:
             return name_col.is_(None)
-        branch_id = BranchRepository.get_id_by_name(db, sucursal_nombre)
+        branch_id = BranchRepository.get_id_by_name(db, sucursal_nombre, organization_id)
+        if not branch_id and organization_id is not None:
+            return false()
         if branch_id:
             if include_global:
                 return or_(suc_id == branch_id, and_(suc_id.is_(None), or_(name_col == sucursal_nombre, name_col.is_(None))))
@@ -206,7 +223,7 @@ class ReservationRepository:
         ).first()
 
     @staticmethod
-    def _filtered_base_query(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None, normalized_staff: bool = False):
+    def _filtered_base_query(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None, normalized_staff: bool = False, organization_id=None):
         q = db.query(models.Reservation)
         if estado:
             q = q.filter(models.Reservation.estado_reserva == estado)
@@ -222,20 +239,22 @@ class ReservationRepository:
             else:
                 q = q.filter(models.Reservation.sucursal_nombre == staff_sucursal)
         elif sucursal:
-            q = q.filter(ReservationRepository._sucursal_id_predicate(db, sucursal))
+            q = q.filter(ReservationRepository._sucursal_id_predicate(db, sucursal, organization_id=organization_id))
+        elif organization_id is not None:
+            q = q.filter(ReservationRepository._org_branch_predicate(db, organization_id))
         return q
 
     @staticmethod
-    def list_filtered(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None):
+    def list_filtered(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None, organization_id=None):
         """RESERVAS FILTRADAS POR ESTADO Y SUCURSAL (staff_sucursal primero, luego sucursal), ordenadas por id desc."""
         return ReservationRepository._filtered_base_query(
-            db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal
+            db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal, organization_id=organization_id
         ).options(selectinload(models.Reservation.user)).order_by(models.Reservation.id.desc()).all()
 
     @staticmethod
-    def latest_id_and_count(db: Session, since_id: int = None, staff_sucursal: str = None):
+    def latest_id_and_count(db: Session, since_id: int = None, staff_sucursal: str = None, organization_id=None):
         """(id_maximo, count_reservas_con_id > since_id) con filtro de sucursal normalizado si staff_sucursal."""
-        q = ReservationRepository._filtered_base_query(db, staff_sucursal=staff_sucursal, normalized_staff=True)
+        q = ReservationRepository._filtered_base_query(db, staff_sucursal=staff_sucursal, normalized_staff=True, organization_id=organization_id)
         latest_id = q.with_entities(func.max(models.Reservation.id)).scalar() or 0
         count = 0
         if since_id is not None:
