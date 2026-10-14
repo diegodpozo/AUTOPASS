@@ -37,7 +37,7 @@ def _crear_ticket(db: Session, user: models.User, promo: models.Promotion) -> mo
     longitude = promo.longitude
 
     if not (latitude and longitude) and promo.sucursal:
-        branch = BranchRepository.get_by_name(db, promo.sucursal)
+        branch = BranchRepository.get_by_name(db, promo.sucursal, getattr(promo, "organization_id", None))
         if branch:
             if not direccion:
                 direccion = branch.direccion
@@ -73,7 +73,7 @@ def _crear_ticket(db: Session, user: models.User, promo: models.Promotion) -> mo
 @router.get("/promotions", response_model=List[schemas.PromotionResponse])
 def get_promotions(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """LISTA LAS PROMOCIONES Y BENEFICIOS VIGENTES FILTRADOS POR LA SEDE DEL USUARIO."""
-    return PromotionRepository.get_active(db, sucursal=current_user.sucursal)
+    return PromotionRepository.get_active(db, sucursal=current_user.sucursal, organization_id=getattr(current_user, "organization_id", None))
 
 @router.post("/redeem/{promo_id}")
 def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -134,7 +134,7 @@ def get_user_redemption_tickets(db: Session = Depends(get_db), current_user: mod
                     longitude = promo.longitude
 
         if not (latitude and longitude) and t.sucursal:
-            branch = BranchRepository.get_by_name(db, t.sucursal)
+            branch = BranchRepository.get_by_name(db, t.sucursal, getattr(current_user, "organization_id", None))
             if branch:
                 if not direccion:
                     direccion = branch.direccion

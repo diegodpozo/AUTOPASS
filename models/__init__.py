@@ -1,4 +1,5 @@
 from core.database import Base
+from .organization import Organization
 from .user import User, Vehicle, PointsLog, Promotion, RedemptionTicket
 from .reservation import Reservation
 from .parking import ParkingAforo, Settings, AccessLog, ParkingBranch, ParkingFloor, ParkingCamera

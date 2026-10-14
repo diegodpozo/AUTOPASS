@@ -179,6 +179,36 @@ export function nextUserPage() {
     } 
 }
 
+function _applyInviteMode() {
+    const checkbox = document.getElementById('admin-user-invitar');
+    const passwordGroup = document.getElementById('admin-password-group');
+    const passwordInput = document.getElementById('admin-user-password');
+    const orgRow = document.getElementById('invite-org-row');
+    const invitando = !!(checkbox && checkbox.checked);
+
+    if (passwordGroup) passwordGroup.style.display = invitando ? 'none' : 'block';
+    if (orgRow) orgRow.style.display = invitando ? 'block' : 'none';
+    if (passwordInput) {
+        passwordInput.required = !invitando;
+        if (invitando) passwordInput.value = '';
+    }
+}
+
+function _setInviteRowVisible(visible) {
+    const inviteRow = document.getElementById('invite-row');
+    const inviteHint = document.getElementById('invite-hint');
+    const checkbox = document.getElementById('admin-user-invitar');
+
+    if (inviteRow) inviteRow.style.display = visible ? 'flex' : 'none';
+    if (inviteHint) inviteHint.style.display = visible ? 'block' : 'none';
+    if (!visible && checkbox) checkbox.checked = false;
+    _applyInviteMode();
+}
+
+export function toggleInviteMode() {
+    _applyInviteMode();
+}
+
 export async function showCreateUserModal() {
     const rol = localStorage.getItem('rol');
     const sucursal = localStorage.getItem('sucursal') || '';
@@ -218,6 +248,8 @@ export async function showCreateUserModal() {
         roleSelect.value = 'user';
     }
 
+    _setInviteRowVisible(false);
+
     if (window.openModal) window.openModal('modal-create-user');
 }
 
@@ -228,6 +260,8 @@ export async function toggleBranchSelection() {
     const userRol = localStorage.getItem('rol');
 
     if (userRol === 'local_admin') return;
+
+    _setInviteRowVisible(rol === 'admin');
 
     if (branchRow) {
         const show = (rol === 'staff' || rol === 'local_admin');
@@ -243,21 +277,23 @@ export async function handleAdminCreateUser(event) {
     const btn = event.target.querySelector('button[type="submit"]');
     const rol = document.getElementById('admin-user-rol').value;
     const sucursal = (rol === 'staff' || rol === 'local_admin') ? document.getElementById('admin-user-sucursal').value : null;
+    const invitando = rol === 'admin' && !!document.getElementById('admin-user-invitar')?.checked;
 
     const payload = {
         nombre: document.getElementById('admin-user-nombre').value,
         apellido: document.getElementById('admin-user-apellido').value,
         email: document.getElementById('admin-user-email').value,
         dni: document.getElementById('admin-user-dni').value,
-        password: document.getElementById('admin-user-password').value,
         telefono: "1112345678",
         sucursal: sucursal
     };
+    if (!invitando) payload.password = document.getElementById('admin-user-password').value;
+    else payload.organizacion = (document.getElementById('admin-user-organizacion')?.value || '').trim();
 
     btn.disabled = true;
-    const res = await api.post(`/admin/users?rol=${rol}`, payload);
+    const res = await api.post(invitando ? '/admin/users/invite' : `/admin/users?rol=${rol}`, payload);
     if (res && res.ok) {
-        showToast('Usuario creado.', 'success');
+        showToast(invitando ? 'Invitación enviada por correo.' : 'Usuario creado.', 'success');
         if (window.closeModal) window.closeModal('modal-create-user');
         event.target.reset();
         loadUsers(); 

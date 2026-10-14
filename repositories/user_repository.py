@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 import models
 from models.enums import UserRole
+from repositories.scoping import scope_by_organization
 
 #--- REPOSITORIO DE USUARIOS (ACCESO UN DATOS) ---
 
@@ -16,9 +17,10 @@ class UserRepository:
         return db.query(models.User).filter(models.User.id == user_id, models.User.is_deleted == False).first()
 
     @staticmethod
-    def get_all_active(db: Session) -> list:
-        """OBTIENE TODOS LOS USUARIOS NO ELIMINADOS."""
-        return db.query(models.User).filter(models.User.is_deleted == False).all()
+    def get_all_active(db: Session, organization_id=None) -> list:
+        """OBTIENE LOS USUARIOS NO ELIMINADOS (FILTRADOS POR ORGANIZACION SI SE INDICA)."""
+        query = db.query(models.User).filter(models.User.is_deleted == False)
+        return scope_by_organization(query, models.User, organization_id).all()
 
     @staticmethod
     def get_by_email(db: Session, email: str) -> models.User:
@@ -73,13 +75,14 @@ class UserRepository:
         return db.query(models.User).filter(models.User.id.in_(user_ids)).all()
 
     @staticmethod
-    def get_local_admin_by_sucursal(db: Session, sucursal: str) -> models.User:
-        """OBTIENE EL LOCAL_ADMIN NO ELIMINADO ASIGNADO A UNA SUCURSAL."""
-        return db.query(models.User).filter(
+    def get_local_admin_by_sucursal(db: Session, sucursal: str, organization_id=None) -> models.User:
+        """OBTIENE EL LOCAL_ADMIN NO ELIMINADO ASIGNADO A UNA SUCURSAL (OPCIONALMENTE POR ORGANIZACION)."""
+        query = db.query(models.User).filter(
             models.User.sucursal == sucursal,
             models.User.rol == UserRole.LOCAL_ADMIN,
             models.User.is_deleted == False
-        ).first()
+        )
+        return scope_by_organization(query, models.User, organization_id).first()
 
     @staticmethod
     def update_balance(db: Session, user: models.User, amount: float):

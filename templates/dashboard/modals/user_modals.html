@@ -54,13 +54,38 @@
                         <i class="fas fa-chevron-down select-caret"></i>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="admin-password-group">
                     <label>Contraseña Temporal</label>
                     <div class="input-with-icon">
                         <i class="fas fa-lock"></i>
                         <input type="password" id="admin-user-password" placeholder="Clave temporal" required>
                         <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('admin-user-password', this)"></i>
                     </div>
+                    <small class="modal-hint">Min. 8 caracteres, 1 mayúscula y 1 símbolo.</small>
+                </div>
+            </div>
+
+            <!-- INVITACION POR MAIL (solo para Administrador General) -->
+            <div id="invite-row" class="flex-row items-center justify-between mb-10">
+                <span class="text-xs font-bold">INVITAR POR MAIL</span>
+                <label class="switch-premium">
+                    <input type="checkbox" id="admin-user-invitar" onchange="toggleInviteMode()">
+                    <span class="slider-premium"></span>
+                </label>
+            </div>
+            <small class="field-hint" id="invite-hint">
+                Se enviará un correo para que el usuario configure su propia contraseña.
+            </small>
+
+            <!-- ORGANIZACION (solo al invitar un Administrador General) -->
+            <div id="invite-org-row" class="form-row">
+                <div class="form-group">
+                    <label>Empresa / Organización</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-building"></i>
+                        <input type="text" id="admin-user-organizacion" placeholder="Nombre de la empresa" maxlength="80">
+                    </div>
+                    <small class="field-hint">Si se deja vacío, se usará el nombre del administrador.</small>
                 </div>
             </div>
 
@@ -74,15 +99,6 @@
                         </select>
                         <i class="fas fa-chevron-down select-caret"></i>
                     </div>
-                </div>
-            </div>
-
-            <div class="form-row form-row-tight">
-                <div class="form-group"></div>
-                <div class="form-group">
-                    <small class="modal-hint">
-                        Min. 8 caracteres, 1 mayúscula y 1 símbolo.
-                    </small>
                 </div>
             </div>
 

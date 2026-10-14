@@ -90,11 +90,11 @@ def reset_password(request: Request, body: schemas.auth.ResetPasswordRequest, db
         email: str = payload.get("sub")
         purpose: str = payload.get("purpose")
         
-        if email is None or purpose != "recovery":
-            raise HTTPException(status_code=400, detail="Token de recuperación inválido o mal formado.")
+        if email is None or purpose not in ("recovery", "activation"):
+            raise HTTPException(status_code=400, detail="Token inválido o mal formado.")
             
     except JWTError:
-        raise HTTPException(status_code=400, detail="El enlace de recuperación ha expirado o es inválido.")
+        raise HTTPException(status_code=400, detail="El enlace ha expirado o es inválido.")
     
     user = UserRepository.get_active_by_email(db, email)
     if not user:
@@ -103,7 +103,11 @@ def reset_password(request: Request, body: schemas.auth.ResetPasswordRequest, db
     # ACTUALIZAR CONTRASENA
     user.password_hash = get_password_hash(body.new_password)
     db.commit()
-    
+
+    # EN UNA INVITACION, ESTE PASO TERMINA EL REGISTRO: SE AVISA POR CORREO
+    if purpose == "activation":
+        EmailService.send_registration_confirmation(user.email, user.nombre, f"{settings.BASE_URL}/")
+
     return {"status": "ok", "message": "Tu contraseña ha sido actualizada exitosamente. Ya podés iniciar sesión."}
 
 @router.post("/login")

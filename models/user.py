@@ -27,6 +27,8 @@ class User(Base):
     direccion = Column(String, nullable=True)
     password_hash = Column(String)
     rol = Column(String, default="user") #'ADMIN', 'LOCAL_ADMIN', 'STAFF', 'USER'
+    organization_id = Column(Integer, ForeignKey("organizations.id", name="fk_users_organization_id_org",
+                                                  onupdate="CASCADE"), nullable=True, index=True)
     sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_users_sucursal_id_branch",
                                              onupdate="CASCADE"), nullable=True, index=True)
     puntos_acumulados = Column(Integer, default=0)
@@ -80,6 +82,8 @@ class Promotion(Base):
     icono = Column(String, default="fas fa-gift")
     categoria = Column(String, default="Beneficio")
     activa = Column(Boolean, default=True, server_default="1")
+    organization_id = Column(Integer, ForeignKey("organizations.id", name="fk_promotions_organization_id_org",
+                                                 onupdate="CASCADE"), nullable=True, index=True)
     sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_promotions_sucursal_id_branch",
                                              onupdate="CASCADE", ondelete="CASCADE"), nullable=True, index=True)
     # TIPO DE CANJE: 'descuento_reserva' (% de descuento en estacionamiento, impacta en pago)

@@ -102,8 +102,10 @@ class Settings:
     SMTP_FROM: str = os.getenv("SMTP_FROM", "no-reply@autopass.com.ar")
     SMTP_TLS: bool = os.getenv("SMTP_TLS", "false").lower() == "true"
     
-    # RECUPERACION
+    # RECUPERACION / INVITACION
     RECOVERY_TOKEN_EXPIRE_MINUTES: int = 30
+    # Vigencia del enlace de invitacion para que un nuevo Admin General fije su clave.
+    ACTIVATION_TOKEN_EXPIRE_HOURS: int = int(os.getenv("ACTIVATION_TOKEN_EXPIRE_HOURS", 72))
     BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
     
     # MQTT

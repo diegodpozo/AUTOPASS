@@ -79,6 +79,28 @@ class EmailService:
         EmailService.send_async_email(to_email, subject, html_content)
 
     @staticmethod
+    def send_admin_invitation(to_email: str, user_name: str, activation_url: str):
+        """INVITA A UN NUEVO ADMINISTRADOR GENERAL A CONFIGURAR SU CLAVE."""
+        subject = "Configurá tu acceso de Admin General - AUTOPASS"
+        html_content = EmailService._render_template(
+            "admin_invitation.html",
+            user_name=user_name,
+            activation_url=activation_url
+        )
+        EmailService.send_async_email(to_email, subject, html_content)
+
+    @staticmethod
+    def send_registration_confirmation(to_email: str, user_name: str, login_url: str):
+        """CONFIRMA QUE EL REGISTRO TERMINO: EL USUARIO YA DEFINO SU CLAVE."""
+        subject = "Tu registro está confirmado - AUTOPASS"
+        html_content = EmailService._render_template(
+            "registration_confirmation.html",
+            user_name=user_name,
+            login_url=login_url
+        )
+        EmailService.send_async_email(to_email, subject, html_content)
+
+    @staticmethod
     def send_reservation_confirmation(to_email: str, user_name: str, res_data: dict):
         """ENVIA LA CONFIRMACION DE RESERVA CON EL LOGO CARGADO DINAMICAMENTE."""
         subject = f"Tu Pase Digital - Reserva #{res_data['id']} - AUTOPASS"

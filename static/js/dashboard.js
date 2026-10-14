@@ -141,6 +141,7 @@ window.toggleUserBlock = admin.toggleUserBlock;
 window.showCreateUserModal = admin.showCreateUserModal;
 window.deleteUserAdmin = admin.deleteUserAdmin;
 window.handleAdminCreateUser = admin.handleAdminCreateUser;
+window.toggleInviteMode = admin.toggleInviteMode;
 window.openPasswordModal = admin.openPasswordModal;
 window.handleAdminChangePassword = admin.handleAdminChangePassword;
 window.openEditUserModal = admin.openEditUserModal;

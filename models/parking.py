@@ -34,6 +34,8 @@ class ParkingAforo(Base):
     capacidad_reservas = Column(Integer, default=10)
     ocupacion_reservas = Column(Integer, default=0)
     ultima_actualizacion = Column(String)
+    organization_id = Column(Integer, ForeignKey("organizations.id", name="fk_parking_aforo_organization_id_org",
+                                                 onupdate="CASCADE"), nullable=True, index=True)
     sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_parking_aforo_sucursal_id_branch",
                                              onupdate="CASCADE", ondelete="CASCADE"), nullable=True, unique=True)
 
@@ -45,13 +47,18 @@ class Settings(Base):
     __tablename__ = "settings"
     __table_args__ = (
         CheckConstraint("COALESCE(valor, 0) >= 0", name="ck_settings_valor_nonneg"),
-        # UNICIDAD DE CLAVE POR SEDE: LA SUCURSAL NULL (GLOBAL) CUENTA COMO VALOR PROPIO
-        Index("uq_settings_clave_sucursal", text("clave"), text("COALESCE(sucursal_id, -1)"), unique=True),
+        # UNICIDAD DE CLAVE POR SEDE Y ORGANIZACION (MULTIEMPRESA): LA SUCURSAL/GLOBAL
+        # NULL CUENTA COMO VALOR PROPIO DE CADA ORGANIZACION, PARA QUE CADA EMPRESA
+        # TENGA SU PROPIO TARIFARIO GLOBAL SIN COLISIONAR CON OTRA.
+        Index("uq_settings_clave_sucursal_org", text("clave"), text("COALESCE(sucursal_id, -1)"),
+              text("COALESCE(organization_id, -1)"), unique=True),
     )
     id = Column(Integer, primary_key=True)
     clave = Column(String) # REMOVIDO UNIQUE=TRUE PARA PERMITIR VARIANTES POR SEDE
     valor = Column(Float, nullable=True)
     valor_str = Column(String, nullable=True) # PARA CONFIGURACIONES DE TEXTO (IPS, ETC)
+    organization_id = Column(Integer, ForeignKey("organizations.id", name="fk_settings_organization_id_org",
+                                                 onupdate="CASCADE"), nullable=True, index=True)
     sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_settings_sucursal_id_branch",
                                              onupdate="CASCADE", ondelete="CASCADE"), nullable=True, index=True)
 
@@ -108,8 +115,16 @@ class AccessLog(Base):
 class ParkingBranch(Base):
     """PUNTOS AUTOPASS (SEDES/SUCURSALES)"""
     __tablename__ = "parking_branches"
+    __table_args__ = (
+        # UNICIDAD DE NOMBRE POR ORGANIZACION (MULTIEMPRESA): DOS EMPRESAS PUEDEN
+        # TENER UNA SEDE CON EL MISMO NOMBRE; DENTRO DE UNA MISMA EMPRESA NO.
+        Index("uq_parking_branches_nombre_org", text("nombre"),
+              text("COALESCE(organization_id, -1)"), unique=True),
+    )
     id = Column(Integer, primary_key=True)
-    nombre = Column(String, unique=True, index=True)
+    nombre = Column(String, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", name="fk_parking_branches_organization_id_org",
+                                                 onupdate="CASCADE"), nullable=True, index=True)
     direccion = Column(String)
     telefono = Column(String)
     horario = Column(String) #EJ: "07:00 UN 23:00"

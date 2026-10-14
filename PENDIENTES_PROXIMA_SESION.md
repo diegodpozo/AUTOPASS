@@ -3,6 +3,48 @@
 Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 Última actualización: 13/10/2026
 
+## Multiempresa / multi-tenant (organizaciones) — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
+
+- Objetivo: convertir AUTOPASS en **multi-empresa real**. Cada **Admin General** administra una **organización** aislada (sus sucursales, personal y clientes) y arranca desde cero.
+- Decisiones del usuario: (1) los **clientes** (`user`) **pertenecen a una organización**; (2) el **sitio público** muestra **solo la organización principal**; (3) **cada Admin General ve solo su organización**, sin super-admin; (4) al invitar un Admin General se le **crea una organización nueva** con el **nombre cargado en el formulario** (si se deja vacío, se deriva `"<Nombre> <Apellido>"`); (5) las orgs nuevas usan **defaults propios, sin herencia** (no leen filas de otra org).
+- Estrategia de aislamiento: **aditiva y tolerante** — columnas `organization_id` **nullable** + filtro **solo cuando hay org** (`None` ⇒ comportamiento single-tenant, usado por tests/legacy). No romper los tests existentes.
+- FASE 1 (modelo+migración+seed) — APLICADA:
+  - `models/organization.py` (`Organization`); `organization_id` (FK, nullable, index) en `users` y `promotions` (`models/user.py`) y `parking_aforo`/`settings`/`parking_branches` (`models/parking.py`).
+  - `alembic/versions/a1c2e3f4b5d6_organizations_multi_tenant.py` (idempotente; backfill de la org principal `AUTOPASS`).
+  - `core/seed.py`: crea/reusa la org principal y la asigna a usuarios/aforo/settings/promos/sucursales semilla.
+- FASE 1b — APLICADA: `repositories/scoping.py` (`scope_by_organization`, filtra por `organization_id` o por join a `ParkingBranch.organization_id` vía `sucursal_id`) + `services/organization_service.py` (`get_principal`/`get_or_create_principal`/`create`/`get_by_id`/`get_by_nombre`).
+- FASE 2 (usuarios/sucursales) — APLICADA: `UserRepository.get_all_active(org)`; `BranchRepository.get_all(db, org)`; `BranchService.list_branches_with_summary(org)`; `UserService.create_user(..., organization_id)`; rutas `GET /admin/users`, `GET /admin/branches`, `POST /admin/users`, `POST /admin/branches` con org del admin (`getattr(admin,"organization_id",None)`, tolerante con mocks de test).
+- FASE 2b — APLICADA: `UserInvite.organizacion` (opcional) + `UserService.invite_admin` crea la `Organization` y la asigna; modal `templates/dashboard/modals/user_modals.html` con input **Empresa/Organización** (visible solo en modo invitar) y `static/js/modules/dashboard-admin-users.js` (`_applyInviteMode` muestra/oculta `#invite-org-row`, `handleAdminCreateUser` envía `organizacion`).
+- FASE 3 (config/promos por org) — APLICADA: `SettingsRepository` con `organization_id` opcional (`get_by_clave`/`get_by_clave_and_sucursal`/`get_all_by_sucursal`); `routes/admin/settings.py` scopa lectura/escritura por org (helper `_aforo_vigente` tolerante) y setea `organization_id` al crear; `PromotionRepository.get_all/get_active` con org y `routes/admin/promotions.py` con `_check_promo_org`; **índice único** `settings` cambiado a `uq_settings_clave_sucursal_org` (clave + COALESCE(sucursal_id,-1) + COALESCE(organization_id,-1)) en modelo + `alembic/versions/b2c3d4e5f6a7_settings_unique_per_org.py` (idempotente) para que cada org tenga su tarifario global.
+- Tests: `tests/test_admin_invite.py` (8, incluye creación de org y derivación del nombre) + `tests/test_multi_tenant_isolation.py` (4: usuarios/sucursales/promociones/configuraciones aisladas). Suite **868 passed**.
+- FASE 3b — **NOMBRE DE SUCURSAL ÚNICO POR ORGANIZACIÓN** (aplicado 13/10/2026): antes era único GLOBAL (`ix_parking_branches_nombre`), lo que impedía que una org nueva creara una sede con un nombre ya usado por otra.
+  - `models/parking.py`: `ParkingBranch.nombre` pasa a **no único** (`index=True`) + `__table_args__` con índice único por expresión `uq_parking_branches_nombre_org` sobre `(nombre, COALESCE(organization_id, -1))`.
+  - `alembic/versions/f7a8b9c0d1e2_parking_branch_name_per_org.py` (down_revision `b2c3d4e5f6a7`, **head actual**): dropea `ix_parking_branches_nombre`, recrea no único y crea `uq_parking_branches_nombre_org` (idempotente).
+  - `repositories/branch_repository.py`: `organization_id=None` en `get_by_name`, `get_by_name_like`, `get_by_name_with_floors`, `get_id_by_name`, `get_other_by_name` (si `None` no filtra: legacy single-tenant). Nuevo `get_aforo_by_branch_id(db, branch_id)`.
+  - `models/branch_ref.py`: resolutor nombre→id ahora **org-aware** (`_resolver_organizacion` deduce la org del objeto vía `organization_id`/`user_id`/`reservation_id`; `_elegir_sede` exige la sede **de la misma org** y NUNCA cruza de empresa; si no hay org usa el nombre solo si es globalmente único).
+  - `services/branch_service.py`: `get_branch_capacity_summary`/`has_physical_occupancy` usan `get_aforo_by_branch_id` (por id, no por nombre); `rename_branch` valida `get_other_by_name(..., branch.organization_id)`; `list_branches_with_summary` pasa la org a `get_local_admin_by_sucursal`.
+  - `repositories/settings_repository.py` y `promotion_repository.py`: `_sucursal_predicate` (+ `get_rates_by_claves`) aceptan `organization_id` y lo pasan a `get_id_by_name`.
+  - `routes/user/fidelization.py`: `get_by_name`/`get_active` pasan la org del usuario/promo.
+  - Tests: `tests/test_multi_tenant_isolation.py` ahora con **6** (`test_org_nueva_puede_crear_sucursal_con_nombre_ya_usado`, `test_sedes_con_mismo_nombre_no_se_cruzan_entre_orgs`). Suite **870 passed**; 8 guards OK (`check_color_equivalence.py` con `$env:PYTHONUTF8=1`).
+- **PENDIENTE (Fases 4-6)**: F4 operación por org (reservas, access_logs, soporte, cámaras, reportes, `status`, `health`, `video`); F5 sitio público + registro → org principal (billing público/`get_rate` con org principal); F6 completar tests de aislamiento + guards + suite. **Sin `git commit`/`push`** (el usuario no lo pidió).
+  - **F4 — callers de `get_id_by_name` aún sin `organization_id`** (nombres de sede repetidos pueden resolver a la sede equivocada; acotar por org cuando se toque cada dominio): `repositories/redemption_repository.py:24`, `repositories/report_repository.py:100`, `repositories/reservation_repository.py:19,33,214`, `repositories/access_log_repository.py:18`, `repositories/settings_repository.py` (ya acepta org; falta pasarlo desde `services/occupancy_service.py`), `services/support_service.py:116`, `repositories/promotion_repository.py` (ya scoped), `routes/parking/status.py:277`, `services/reservation_service.py:200`, `services/access_service.py:243`, `services/branch_service.py:22,24` (`get_branch_info_str`).
+  - **F4 — scoping por ID** (hueco de seguridad): `UserRepository.get_active_by_id` NO filtra por org ⇒ un admin podría acceder por id a datos de otra org. Revisar todos los `get_*_by_id` de rutas admin.
+
+## Invitación de Admin General por mail (fijar clave + confirmación) — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
+
+- Pedido: al entregar la app a un usuario que será **Admin General**, que la cuenta se cree sin clave usable, le llegue un mail para **configurar su propia contraseña** y, al hacerlo, reciba otro mail de **confirmación** que cierra el registro.
+- Decisiones del usuario: aplica **solo al rol `admin`**; alta **desde el panel** (modal de usuarios); la cuenta **no puede ingresar hasta activar** pero **sin tocar el esquema** (clave aleatoria desconocida); se **reutiliza la pantalla `/reset-password`**.
+- Backend:
+  - `core/config.py`: nueva var `ACTIVATION_TOKEN_EXPIRE_HOURS` (default 72).
+  - `schemas/user.py` + `schemas/__init__.py`: `UserInvite` (sin password).
+  - `services/user_service.py`: se extrajeron `_validate_new_user` y `_build_user` (DRY, los reutiliza `create_user`) y se agregó `invite_admin` (rol `ADMIN` + `secrets.token_urlsafe(32)`).
+  - `services/email_service.py`: `send_admin_invitation` (`admin_invitation.html`) y `send_registration_confirmation` (`registration_confirmation.html`).
+  - `routes/admin/users.py`: `POST /v1/admin/users/invite` (solo Admin General, vía `get_super_admin`): crea el usuario, genera token `purpose="activation"` y manda el mail con link `{BASE_URL}/reset-password?token=...`.
+  - `routes/auth.py::reset_password`: acepta `purpose` ∈ {`recovery`,`activation`}; si es `activation`, al fijar la clave envía la confirmación.
+- Frontend: modal de alta (`templates/dashboard/modals/user_modals.html`) con switch **INVITAR POR MAIL** (solo visible con rol Admin General); `static/js/modules/dashboard-admin-users.js` oculta la clave y hace `POST /admin/users/invite`; `templates/reset_password.html` con copy neutro y `static/js/modules/reset-password.js` que adapta el texto si el token es de activación (decodifica el `purpose`, que no es secreto). `static/sw.js` → `autopass-v8`.
+- Tests: `tests/test_admin_invite.py` (6: alta+mail, no ingresa antes de activar, 403 sin ser Admin General, email duplicado 400, activación fija clave + confirmación + login, purpose inválido 400). Suite **862 passed**; guards 8/8; 0 estilos inline.
+- **PENDIENTE**: `git commit` + `git push` (el usuario no lo pidió todavía); verificación en runtime del flujo completo (invitar → mail → fijar clave → confirmación). Capturas de manuales aún sin la nueva opción del modal.
+
 ## Recaudación por sucursal para Admin General + corrección de manuales — APLICADO 13/10/2026 (LOCAL, SIN COMMITEAR)
 
 - Pedido del usuario: (1) el **admin general** debe poder ver las **ventas por sucursal** (encaje del rol para planes multi-sede) y (2) **corregir los manuales** (`manual/admin-general.html`, `manual/admin-sucursal.html`) para que reflejen el comportamiento real, manteniendo formato/estética.
@@ -12,7 +54,7 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
 - Los tres selectores de sucursal de Métricas (heatmap, ocupación, recaudación) quedaron marcados `super-admin-only`: el local_admin no los ve (su efecto ya era nulo porque el backend fuerza su sede).
 - Tests: nuevo `tests/test_financial_summary_branch.py` (3 tests: desglose del admin, filtro del admin, y que el local_admin ignora el filtro). Suite **853 passed**.
 - Manuales: en `admin-general.html` se corrigió que "no ves datos financieros" (sí los ves, en **Métricas → Recaudación**, con desglose por sucursal), se describieron los **5 informes** reales y se ajustó la caption "agrupados por sede"; "cuatro tipos de cuenta" → "tres" en la intro de panel (los 4 roles siguen en la sección de alta de usuario). En `admin-sucursal.html` se amplió Métricas a los 5 informes (incluida Recaudación de su sede) y se quitó el "no es cuánto facturas".
-- **PENDIENTE**: `git commit` + `git push` (el usuario no lo pidió todavía). Verificación en runtime (navegador) del selector/desglose. Las capturas de los manuales no se regeneraron (siguen las existentes).
+- **PUSHEADO**: commit `MODIFICACION ALCANCE METRICAS E INFORMES $ A ADMIN GRAL` (`4211652`, incluye los PDF de manuales regenerados). Verificación en runtime (navegador) del selector/desglose pendiente. Las capturas de los manuales no se regeneraron (siguen las existentes).
 
 ## Eliminación de patentes inválidas + bloqueo de formato en todo ingreso — APLICADO y PUSHEADO 13/10/2026
 

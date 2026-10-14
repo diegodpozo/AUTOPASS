@@ -75,6 +75,61 @@ def register_branch_linked(*modelos):
     _LINKED.update(modelos)
 
 
+def _resolver_organizacion(session, obj):
+    """Deduce la organizacion del objeto pendiente para acotar el nombre de sede.
+
+    - Modelos con `organization_id` (User, Promotion, Settings, ParkingAforo): lo usan.
+    - Modelos con `user_id` (Reservation, SupportTicket, RedemptionTicket): via el usuario.
+    - AccessLog con `reservation_id`: via la reserva -> usuario.
+    - Si no se puede deducir (p.ej. ParkingCamera), devuelve None (se resuelve solo
+      si el nombre es globalmente unico, nunca cruzando de organizacion)."""
+    org = getattr(obj, "organization_id", None)
+    if org:
+        return org
+
+    from models.user import User
+    from models.reservation import Reservation
+
+    uid = getattr(obj, "user_id", None)
+    if uid:
+        org = session.execute(
+            select(User.organization_id).where(User.id == uid)
+        ).scalar()
+        if org:
+            return org
+
+    rid = getattr(obj, "reservation_id", None)
+    if rid:
+        uid = session.execute(
+            select(Reservation.user_id).where(Reservation.id == rid)
+        ).scalar()
+        if uid:
+            return session.execute(
+                select(User.organization_id).where(User.id == uid)
+            ).scalar()
+
+    return None
+
+
+def _elegir_sede(session, candidatas, obj):
+    """Elige la sede del MISMO origen que el objeto. Nunca cruza de organizacion.
+
+    Si el objeto tiene organizacion conocida, exige una sede de ESA empresa (aunque
+    el nombre sea unico en el sistema). Si no se conoce la organizacion, solo
+    resuelve cuando el nombre es globalmente unico (comportamiento single-tenant)."""
+    if not candidatas:
+        return None
+    org = _resolver_organizacion(session, obj)
+    if org is not None:
+        for branch in candidatas:
+            if getattr(branch, "organization_id", None) == org:
+                return branch
+        return None
+    if len(candidatas) == 1:
+        return candidatas[0]
+    return None
+
+
 @event.listens_for(Session, "before_flush")
 def _translate_branch_names(session, flush_context, instances):
     pendientes = [
@@ -92,18 +147,18 @@ def _translate_branch_names(session, flush_context, instances):
     for branch in session.execute(select(ParkingBranch)).scalars():
         clave = normalize_branch_name(branch.nombre)
         if clave:
-            por_nombre.setdefault(clave, branch)
+            por_nombre.setdefault(clave, []).append(branch)
     # Las sedes nuevas del MISMO flush aun no tienen id: se resuelven por objeto.
     for obj in session.new:
         if isinstance(obj, ParkingBranch):
             clave = normalize_branch_name(obj.nombre)
             if clave:
-                por_nombre[clave] = obj
+                por_nombre.setdefault(clave, []).append(obj)
 
     for obj in pendientes:
         nombre = obj.__dict__.pop("_sucursal_input")
         clave = normalize_branch_name(nombre or "")
-        branch = por_nombre.get(clave) if clave else None
+        branch = _elegir_sede(session, por_nombre.get(clave, []) if clave else [], obj)
         obj.branch = branch
         if branch is None and nombre:
             obj.__dict__["_sucursal_fallback"] = nombre

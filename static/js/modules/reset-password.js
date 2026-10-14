@@ -19,6 +19,23 @@ initPasswordValidation(
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token');
 
+// El link sirve tanto para recuperación como para la invitación de un Admin General.
+// El propósito viene en el payload del JWT (no es secreto): si es "activation",
+// se adapta el texto para dar la bienvenida en lugar del tono de recuperación.
+function leerProposito(jwt) {
+    try {
+        const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return payload.purpose;
+    } catch {
+        return null;
+    }
+}
+
+if (token && leerProposito(token) === 'activation') {
+    const subtitulo = document.getElementById('reset-subtitle');
+    if (subtitulo) subtitulo.innerText = 'Bienvenido/a a AUTOPASS. Configurá tu contraseña para empezar a usar el panel.';
+}
+
 if (!token) {
     document.getElementById('reset-error').innerText = "Falta el token de recuperación. El enlace es inválido.";
     form.style.opacity = "0.5";

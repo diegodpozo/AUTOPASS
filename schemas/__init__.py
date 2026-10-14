@@ -1,5 +1,5 @@
 from .user import (
-    UserBase, UserUpdate, UserAdminUpdate, UserCreate, ChangePassword, UserLogin, 
+    UserBase, UserUpdate, UserAdminUpdate, UserCreate, UserInvite, ChangePassword, UserLogin, 
     RechargeBalance, UserPasswordChange, PromotionResponse, PromotionCreate,
     RedemptionTicketResponse
 )

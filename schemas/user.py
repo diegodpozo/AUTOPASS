@@ -82,6 +82,32 @@ class UserCreate(UserBase):
     def validate_password(cls, v):
         return validate_password_strength(cls, v)
 
+class UserInvite(BaseModel):
+    """Alta de un usuario invitado (sin contrasena): la define el propio usuario
+    desde el enlace que recibe por correo. Al ser Admin General, da de alta su
+    propia organizacion (multiempresa)."""
+    nombre: str
+    apellido: str
+    dni: str
+    telefono: str
+    email: str
+    organizacion: Optional[str] = None
+
+    @field_validator('dni')
+    @classmethod
+    def validate_dni(cls, v):
+        return validate_dni_digits(v)
+
+    @field_validator('telefono')
+    @classmethod
+    def validate_telefono(cls, v):
+        return validate_phone_digits(v)
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        return validate_email_format(v)
+
 class ChangePassword(BaseModel):
     current_password: str
     new_password: str

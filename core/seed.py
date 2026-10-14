@@ -68,7 +68,16 @@ INITIAL_PROMOS = [
 def seed_initial_data(db: Session):
     """ORQUESTADOR DE SEEDING PARA DATOS MAESTROS."""
     logger.info("Iniciando proceso de Seeding...")
-    
+
+    # 0. ORGANIZACION PRINCIPAL (empresa dueña de los datos base y del sitio publico)
+    org = db.query(models.Organization).filter(models.Organization.es_principal == True).first()
+    if not org:
+        logger.info("Creando organizacion principal AUTOPASS")
+        org = models.Organization(nombre="AUTOPASS", es_principal=True, activa=True)
+        db.add(org)
+        db.flush()
+    org_id = org.id
+
     # 1. USUARIOS
     for u_data in INITIAL_USERS:
         exists = db.query(models.User).filter(models.User.email == u_data["email"]).first()
@@ -84,12 +93,15 @@ def seed_initial_data(db: Session):
                 telefono="1100000000",
                 puntos_acumulados=0,
                 saldo=0.0,
-                sucursal=u_data["sucursal"]
+                sucursal=u_data["sucursal"],
+                organization_id=org_id
             ))
         else:
             if "." in (exists.dni or ""):
                 exists.dni = exists.dni.replace(".", "")
                 logger.info(f"Normalizando DNI: {exists.email}")
+            if exists.organization_id is None:
+                exists.organization_id = org_id
 
     #2. AFORO GLOBAL
     aforo = db.query(models.ParkingAforo).filter(models.ParkingAforo.sucursal == None).first()
@@ -105,20 +117,25 @@ def seed_initial_data(db: Session):
             capacidad_reservas=5,
             ocupacion_reservas=0,
             ultima_actualizacion=datetime.datetime.now().isoformat(),
-            sucursal=None
+            sucursal=None,
+            organization_id=org_id
         ))
+    elif aforo.organization_id is None:
+        aforo.organization_id = org_id
 
     # 3. TARIFAS GLOBALES
     for clave, valor in DEFAULT_PRICES.items():
         exists = db.query(models.Settings).filter(models.Settings.clave == clave, models.Settings.sucursal == None).first()
         if not exists:
-            db.add(models.Settings(clave=clave, valor=valor, sucursal=None))
+            db.add(models.Settings(clave=clave, valor=valor, sucursal=None, organization_id=org_id))
+        elif exists.organization_id is None:
+            exists.organization_id = org_id
 
     # 4. PROMOCIONES
     if db.query(models.Promotion).count() == 0:
         logger.info("Cargando catálogo de beneficios")
         for p in INITIAL_PROMOS:
-            db.add(models.Promotion(**p))
+            db.add(models.Promotion(**p, organization_id=org_id))
 
     # 5. SUCURSALES (RED INICIAL)
     if db.query(models.ParkingBranch).count() == 0:
@@ -130,7 +147,7 @@ def seed_initial_data(db: Session):
         ]
         for s in red_inicial:
             logger.info(f"Agregando sucursal: {s['nombre']}")
-            db.add(models.ParkingBranch(**s, logo_url="/static/images/logo.png"))
+            db.add(models.ParkingBranch(**s, logo_url="/static/images/logo.png", organization_id=org_id))
 
     db.commit()
     logger.info("Seeding completado.")

@@ -44,8 +44,8 @@ def _save_branch_logo(logo_file: UploadFile) -> str:
 
 @router.get("/branches", response_model=List[schemas.BranchResponse])
 def list_branches(db: Session = Depends(get_db), current_user: models.User = Depends(get_operational_user)):
-    """RETORNA LA LISTA DE TODAS LAS SUCURSALES CON RESUMEN DE CAPACIDAD Y OCUPACION."""
-    return BranchService.list_branches_with_summary(db)
+    """RETORNA LAS SUCURSALES DE LA ORGANIZACION CON RESUMEN DE OCUPACION."""
+    return BranchService.list_branches_with_summary(db, organization_id=getattr(current_user, "organization_id", None))
 
 # --- GESTION DE PISOS ---
 
@@ -179,7 +179,7 @@ async def create_branch(
     admin: models.User = Depends(get_super_admin)
 ):
     nombre_clean = nombre.strip()
-    existing = BranchRepository.get_by_name(db, nombre_clean)
+    existing = BranchRepository.get_by_name(db, nombre_clean, getattr(admin, "organization_id", None))
     if existing:
         raise HTTPException(status_code=400, detail="La sucursal ya existe")
     
@@ -196,7 +196,8 @@ async def create_branch(
         logo_url=logo_url,
         activa=True,
         latitude=latitude,
-        longitude=longitude
+        longitude=longitude,
+        organization_id=getattr(admin, "organization_id", None)
     )
     db.add(new_branch)
     db.commit()

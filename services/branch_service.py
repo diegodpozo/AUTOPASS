@@ -52,7 +52,7 @@ class BranchService:
     @staticmethod
     def get_branch_capacity_summary(db: Session, branch: models.ParkingBranch) -> dict:
         """CALCULA LOS TOTALES DE CAPACIDAD Y OCUPACION (PB + PISOS)."""
-        pb_settings = BranchRepository.get_aforo_by_sucursal(db, branch.nombre)
+        pb_settings = BranchRepository.get_aforo_by_branch_id(db, branch.id)
         
         cap_autos_pb = pb_settings.capacidad_total if pb_settings else 20
         cap_motos_pb = pb_settings.capacidad_motos if pb_settings else 10
@@ -106,7 +106,7 @@ class BranchService:
     @staticmethod
     def has_physical_occupancy(db: Session, branch: models.ParkingBranch) -> bool:
         """RETORNA TRUE SI HAY VEHICULOS ESTACIONADOS FISICAMENTE EN LA SUCURSAL (PB + PISOS)."""
-        aforo = BranchRepository.get_aforo_by_sucursal(db, branch.nombre)
+        aforo = BranchRepository.get_aforo_by_branch_id(db, branch.id)
         if aforo and ((aforo.ocupacion_actual or 0) > 0 or (aforo.ocupacion_motos or 0) > 0 or (aforo.ocupacion_camionetas or 0) > 0 or (getattr(aforo, 'ocupacion_reservas', 0) or 0) > 0):
             return True
         if branch.floors:
@@ -124,7 +124,7 @@ class BranchService:
         if old_nombre == new_nombre:
             return
 
-        existing = BranchRepository.get_other_by_name(db, new_nombre, branch.id)
+        existing = BranchRepository.get_other_by_name(db, new_nombre, branch.id, branch.organization_id)
         if existing:
             raise HTTPException(status_code=400, detail="Ya existe una sucursal con ese nombre")
 
@@ -160,12 +160,12 @@ class BranchService:
                 CAMERA_PROCESSES.pop(gate_id, None)
 
     @staticmethod
-    def list_branches_with_summary(db: Session):
-        """LISTA TODAS LAS SUCURSALES CON SU RESUMEN ADMINISTRATIVO."""
-        branches = BranchRepository.get_all(db)
+    def list_branches_with_summary(db: Session, organization_id=None):
+        """LISTA LAS SUCURSALES CON SU RESUMEN ADMINISTRATIVO (FILTRADAS POR ORGANIZACION)."""
+        branches = BranchRepository.get_all(db, organization_id=organization_id)
         for b in branches:
             # ADMINISTRADOR
-            admin_sede = UserRepository.get_local_admin_by_sucursal(db, b.nombre)
+            admin_sede = UserRepository.get_local_admin_by_sucursal(db, b.nombre, b.organization_id)
             b.admin_name = f"{admin_sede.nombre} {admin_sede.apellido}" if admin_sede else "Sin asignar"
 
             # RESUMEN

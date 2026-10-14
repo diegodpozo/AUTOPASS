@@ -11,6 +11,15 @@ from repositories.branch_repository import BranchRepository
 
 router = APIRouter()
 
+
+def _aforo_vigente(db: Session, sucursal, organization_id):
+    """AFORO DE LA SEDE. SI ES LA FILA GLOBAL (sucursal=None), LA ACOTA A LA ORGANIZACION
+    DEL ADMIN PARA NO LEER LA DE OTRA EMPRESA. Tolerante con filas sin organizacion."""
+    aforo = BranchRepository.get_aforo_by_sucursal(db, sucursal)
+    if aforo is not None and organization_id is not None and getattr(aforo, "organization_id", None) not in (None, organization_id):
+        return None
+    return aforo
+
 # CLAVES PERMITIDAS PARA update_price: tarifas (por tipo de vehiculo) y
 # capacidades de aforo. Evita inyectar claves arbitrarias en la tabla Settings.
 ALLOWED_SETTINGS_KEYS = {
@@ -23,16 +32,17 @@ ALLOWED_SETTINGS_KEYS = {
 
 @router.get("/settings")
 def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """RETORNA LAS CONFIGURACIONES VIGENTES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
+    """RETORNA LAS CONFIGURACIONES VIGENTES DE LA ORGANIZACION. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
+    org_id = getattr(admin, "organization_id", None)
     q = SettingsRepository.get_all_by_sucursal(
-        db, sucursal=admin.sucursal if admin.rol != UserRole.ADMIN else None
+        db, sucursal=admin.sucursal if admin.rol != UserRole.ADMIN else None, organization_id=org_id
     )
     all_settings = q
     config_dict = {s.clave: s.valor for s in all_settings}
     config_dict["sucursal_nombre"] = admin.sucursal
 
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
-    aforo = BranchRepository.get_aforo_by_sucursal(db, sucursal)
+    aforo = _aforo_vigente(db, sucursal, org_id)
     if aforo:
         config_dict["capacidad_total"] = aforo.capacidad_total
         config_dict["capacidad_motos"] = aforo.capacidad_motos
@@ -53,7 +63,8 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
 
 @router.post("/settings/prices", dependencies=[Depends(admin_rate_limit)])
 def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA SEDE DEL ADMINISTRADOR."""
+    """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA ORGANIZACION DEL ADMINISTRADOR."""
+    org_id = getattr(admin, "organization_id", None)
     if valor < 0:
         raise HTTPException(status_code=400, detail="El valor no puede ser negativo")
     if clave not in ALLOWED_SETTINGS_KEYS:
@@ -61,7 +72,7 @@ def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin:
     sucursal = admin.sucursal if admin.rol != UserRole.ADMIN else None
 
     if clave in ["capacidad_total", "capacidad_motos", "capacidad_camionetas", "capacidad_reservas", "capacidad_reservas_autos", "capacidad_reservas_motos", "capacidad_reservas_camionetas"]:
-        aforo = BranchRepository.get_aforo_by_sucursal(db, sucursal)
+        aforo = _aforo_vigente(db, sucursal, org_id)
         if not aforo:
             aforo = models.ParkingAforo(
                 capacidad_total=20,
@@ -79,7 +90,8 @@ def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin:
                 ocupacion_reservas_motos=0,
                 ocupacion_reservas_camionetas=0,
                 ultima_actualizacion=datetime.datetime.now().isoformat(),
-                sucursal=sucursal
+                sucursal=sucursal,
+                organization_id=org_id
             )
             db.add(aforo)
 
@@ -103,12 +115,12 @@ def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin:
             pass
         return {"status": "ok"}
 
-    setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal)
+    setting = SettingsRepository.get_by_clave_and_sucursal(db, clave, sucursal=sucursal, organization_id=org_id)
     
     if setting: 
         setting.valor = valor
     else: 
-        db.add(models.Settings(clave=clave, valor=valor, sucursal=sucursal))
+        db.add(models.Settings(clave=clave, valor=valor, sucursal=sucursal, organization_id=org_id))
     
     db.commit()
     from core.cache import ttl_cache

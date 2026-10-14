@@ -12,11 +12,22 @@ from repositories.redemption_repository import RedemptionRepository
 
 router = APIRouter()
 
+
+def _check_promo_org(admin: models.User, promo: models.Promotion):
+    """AISLAMIENTO MULTIEMPRESA: un admin solo opera promos de su organizacion.
+    Tolerante cuando alguno de los dos no tiene organizacion (datos legacy/tests)."""
+    org_id = getattr(admin, "organization_id", None)
+    promo_org = getattr(promo, "organization_id", None)
+    if org_id is not None and promo_org is not None and promo_org != org_id:
+        raise HTTPException(status_code=404, detail="Promoción no encontrada")
+
+
 @router.get("/promotions", response_model=List[schemas.PromotionResponse])
 def list_promotions_admin(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """LISTA TODAS LAS PROMOCIONES. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
+    """LISTA LAS PROMOCIONES DE LA ORGANIZACION. LOS LOCALES SOLO VEN LAS DE SU SEDE."""
     promos = PromotionRepository.get_all(
-        db, sucursal=admin.sucursal if admin.rol != UserRole.ADMIN else None
+        db, sucursal=admin.sucursal if admin.rol != UserRole.ADMIN else None,
+        organization_id=getattr(admin, "organization_id", None)
     )
     for p in promos:
         if p.activa is None:
@@ -41,6 +52,7 @@ def create_promotion(data: schemas.PromotionCreate, db: Session = Depends(get_db
         direccion=data.direccion,
         latitude=data.latitude,
         longitude=data.longitude,
+        organization_id=getattr(admin, "organization_id", None),
     )
     db.add(new_promo)
     db.commit()
@@ -51,6 +63,7 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     """ACTIVA O DESACTIVA UNA PROMOCION."""
     promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
+    _check_promo_org(admin, promo)
     
     if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
@@ -66,6 +79,7 @@ def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session =
     if not promo:
         raise HTTPException(status_code=404, detail="Promoción no encontrada")
 
+    _check_promo_org(admin, promo)
     if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
 
@@ -91,6 +105,7 @@ def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     ya que los tickets guardan un snapshot del beneficio y no dependen de la promoción."""
     promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
+    _check_promo_org(admin, promo)
     
     if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")

@@ -1,3 +1,5 @@
+import secrets
+
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 import models
@@ -10,6 +12,7 @@ from repositories.user_repository import UserRepository
 from repositories.vehicle_repository import VehicleRepository
 from repositories.access_log_repository import AccessRepository
 from repositories.reservation_repository import ReservationRepository
+from services.organization_service import OrganizationService
 
 logger = get_logger("UserService")
 
@@ -25,27 +28,58 @@ class UserService:
         return UserRepository.get_by_id(db, user_id)
 
     @staticmethod
-    def create_user(db: Session, user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, sucursal: str = None) -> models.User:
-        """CREA UN NUEVO USUARIO EN EL SISTEMA."""
-        existing = UserRepository.get_by_email(db, user_data.email)
-        if existing:
+    def _validate_new_user(db: Session, email: str, dni: str):
+        """RECHAZA EL ALTA SI EL CORREO O EL DNI YA ESTAN REGISTRADOS."""
+        if UserRepository.get_by_email(db, email):
             raise HTTPException(status_code=400, detail="El correo ya está registrado")
-
-        existing_dni = UserRepository.get_active_by_dni(db, normalize_dni(user_data.dni))
-        if existing_dni:
+        if UserRepository.get_active_by_dni(db, normalize_dni(dni)):
             raise HTTPException(status_code=400, detail="El DNI ya está registrado por otro usuario.")
 
-        new_user = models.User(
+    @staticmethod
+    def _build_user(user_data, password_hash, rol, sucursal: str = None, organization_id=None) -> models.User:
+        """CONSTRUYE UN USUARIO NORMALIZANDO SUS DATOS (INCLUIDA SU ORGANIZACION)."""
+        return models.User(
             nombre=normalize_name(user_data.nombre),
             apellido=normalize_name(user_data.apellido),
             dni=normalize_dni(user_data.dni),
             telefono=user_data.telefono,
             email=user_data.email.lower().strip(),
-            password_hash=get_password_hash(user_data.password),
+            password_hash=password_hash,
             rol=rol,
-            sucursal=sucursal
+            sucursal=sucursal,
+            organization_id=organization_id
         )
-        
+
+    @staticmethod
+    def create_user(db: Session, user_data: schemas.UserCreate, rol: UserRole = UserRole.USER, sucursal: str = None, organization_id=None) -> models.User:
+        """CREA UN NUEVO USUARIO EN EL SISTEMA DENTRO DE UNA ORGANIZACION."""
+        UserService._validate_new_user(db, user_data.email.lower().strip(), user_data.dni)
+
+        new_user = UserService._build_user(user_data, get_password_hash(user_data.password), rol, sucursal, organization_id)
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+
+    @staticmethod
+    def invite_admin(db: Session, user_data: schemas.UserInvite) -> models.User:
+        """CREA UN ADMINISTRADOR GENERAL PENDIENTE DE ACTIVAR Y SU ORGANIZACION.
+
+        Se da de alta una organizacion nueva que el invitado administrara en
+        exclusiva. Se guarda una clave aleatoria que nadie conoce; el usuario
+        define la suya desde el enlace de invitacion (purpose='activation'). Asi
+        la cuenta no puede ingresar hasta completar el registro."""
+        UserService._validate_new_user(db, user_data.email.lower().strip(), user_data.dni)
+
+        nombre_org = (user_data.organizacion or "").strip() or (
+            f"{normalize_name(user_data.nombre)} {normalize_name(user_data.apellido)}".strip()
+        )
+        org = OrganizationService.create(db, nombre_org, commit=False)
+
+        new_user = UserService._build_user(
+            user_data, get_password_hash(secrets.token_urlsafe(32)), UserRole.ADMIN,
+            organization_id=org.id
+        )
         db.add(new_user)
         db.commit()
         db.refresh(new_user)

@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import List
+import datetime
 import models, schemas
 from core.database import get_db
+from core.config import settings
 from core.limiter import limiter, admin_rate_limit
-from core.security import get_local_manager, get_password_hash
+from core.security import get_local_manager, get_super_admin, get_password_hash, create_access_token
 from core.normalize import normalize_branch_name
 from models.enums import UserRole, NotificationType
 from services.user_service import UserService
+from services.email_service import EmailService
 from services.user_notification_service import UserNotificationService
 from repositories.user_repository import UserRepository
 
@@ -41,8 +44,8 @@ def validate_staff_role_assignment(admin: models.User, nuevo_rol):
 
 @router.get("/users", response_model=List[schemas.UserBase])
 def list_users(db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
-    """RETORNA LA LISTA DE USUARIOS. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES REGISTRADOS."""
-    all_users = UserRepository.get_all_active(db)
+    """RETORNA LOS USUARIOS DE LA ORGANIZACION. LOS ADMINISTRADORES LOCALES VEN PERSONAL DE SU SEDE Y CLIENTES."""
+    all_users = UserRepository.get_all_active(db, getattr(admin, "organization_id", None))
     if str(admin.rol) != UserRole.ADMIN.value:
         admin_suc_norm = normalize_branch_name(admin.sucursal or "")
         filtered = []
@@ -62,7 +65,21 @@ def create_user_admin(user_data: schemas.UserCreate, rol: UserRole = UserRole.US
         user_data.sucursal = admin.sucursal
     
     validate_staff_role_assignment(admin, rol)
-    return UserService.create_user(db, user_data, rol, user_data.sucursal)
+    return UserService.create_user(db, user_data, rol, user_data.sucursal, getattr(admin, "organization_id", None))
+
+
+@router.post("/users/invite", dependencies=[Depends(admin_rate_limit)])
+def invite_admin_user(user_data: schemas.UserInvite, db: Session = Depends(get_db), admin: models.User = Depends(get_super_admin)):
+    """INVITA A UN NUEVO ADMINISTRADOR GENERAL: SE CREA SIN CLAVE USABLE Y SE LE
+    ENVIA UN CORREO PARA QUE CONFIGURE LA SUYA Y TERMINE EL REGISTRO."""
+    user = UserService.invite_admin(db, user_data)
+    token = create_access_token(
+        data={"sub": user.email, "purpose": "activation"},
+        expires_delta=datetime.timedelta(hours=settings.ACTIVATION_TOKEN_EXPIRE_HOURS),
+    )
+    activation_url = f"{settings.BASE_URL}/reset-password?token={token}"
+    EmailService.send_admin_invitation(user.email, user.nombre, activation_url)
+    return {"status": "ok", "message": f"Invitación enviada a {user.email}"}
 
 
 @router.patch("/users/{user_id}", dependencies=[Depends(admin_rate_limit)])
