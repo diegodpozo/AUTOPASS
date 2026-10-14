@@ -6,9 +6,17 @@
       "commit": "aa87495",
       "motivo": "v9.34.91: se borraron .admin-help-modal-header/-icon-box/-title/-subtitle al migrar #modal-admin-help a la banda compartida de components/modal_header.html."
     },
+    "static/css/pages/dashboard/dashboard-cards.css": {
+      "commit": "ac20af4",
+      "motivo": "v9.34.92: la banda de header de las cards del dashboard pasa a full-bleed (.card:not(.card--flush) > .card-header-premium con margen negativo) y se borraron las clases legacy .channel-header/.stay-channel/.web-channel, que aportaban sus dorados/blancos/negros al header de las cards de Informes."
+    },
     "static/css/pages/dashboard/dashboard-settings.css": {
       "commit": "5c51f00",
       "motivo": "v9.34.90: se elimino el fondo azul #111424 (rgba(17,20,36)) de #camera-tipo/#camera-sucursal y el #fff de su texto, para que usen el .select-premium estandar. En el mismo commit los modales de camara/nivel se reescribieron con el shell de nueva reserva."
+    },
+    "static/css/style.css": {
+      "commit": "ac20af4",
+      "motivo": "v9.34.92: el marcador de sucursal del mapa recupera su fondo oscuro: en .branch-marker-logo > div se reemplazo rgba(0,0,0,0.6) por #000 url(logo.png). El !important que sostenia ese color se quito en v9.34.51 y el divIcon lo pisaba con su background inline (el shorthand resetea background-color), dejando el circulo transparente sobre el mapa claro."
     },
     "static/css/components/select-field.css": {
       "commit": "cff10b3",
