@@ -16,6 +16,9 @@ let branchesData = [];
 let currentReservationDiscount = { pct: 0, sucursal: '', fetchedFor: '' };
 // TOTALES DEL ÚLTIMO CÁLCULO ESTIMADO (original, descuento y final)
 let currentReservationTotals = { original: 0, discount: 0, final: 0 };
+// COTIZACIÓN VIGENTE DEL FORM (tarifas + duración + total base) que se envía al backend
+// para que revalide el precio y lo persista como foto histórica de la reserva.
+let currentReservationQuote = { base: 0, horas: 0, tarifaHora: 0, tarifaFraccion: 0, tarifaAplicada: 0 };
 // TOKEN ANTI-RACE PARA CONSULTAS CONCURRENTES DE DESCUENTO POR SUCURSAL
 let discountFetchToken = 0;
 // INSTANCIAS DE FLATPICKR DEL FORMULARIO (fechas deshabilitadas en la grilla)
@@ -38,6 +41,9 @@ export function setReservationDiscount(v) { currentReservationDiscount = v; }
 
 export function getReservationTotals() { return currentReservationTotals; }
 export function setReservationTotals(v) { currentReservationTotals = v; }
+
+export function getReservationQuote() { return currentReservationQuote; }
+export function setReservationQuote(v) { currentReservationQuote = v; }
 
 export function getDiscountToken() { return discountFetchToken; }
 export function bumpDiscountToken() { return ++discountFetchToken; }

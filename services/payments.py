@@ -51,6 +51,10 @@ class ReservationPaymentsMixin:
             porc = ticket_redencion.valor_descuento or 0
             descuento = round(monto_a_cobrar * porc / 100.0, 2)
             monto_a_cobrar = round(monto_a_cobrar - descuento, 2)
+            # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
+            if res.monto_calculado is None:
+                res.monto_calculado = res.monto_total or 0.0
+            res.descuento_pct = porc
             res.monto_total = monto_a_cobrar
             res.monto_reembolsado = 0.0
             ticket_redencion.estado = "USADO"
@@ -130,6 +134,10 @@ class ReservationPaymentsMixin:
             porc = ticket_redencion.valor_descuento or 0
             descuento = round(res.monto_total * porc / 100.0, 2)
             monto_a_cobrar = round(res.monto_total - descuento, 2)
+            # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
+            if res.monto_calculado is None:
+                res.monto_calculado = res.monto_total or 0.0
+            res.descuento_pct = porc
 
         if user.saldo < monto_a_cobrar:
             raise HTTPException(status_code=400, detail=f"Saldo insuficiente en su cuenta AutoPass (necesita ${monto_a_cobrar:,.2f})")
@@ -220,6 +228,10 @@ class ReservationPaymentsMixin:
         res.fecha_pago = datetime.datetime.now().isoformat()
         res.metodo_pago = "MERCADOPAGO"
         if ticket_redencion:
+            # FOTO DE PRECIO: el monto base es el total previo al descuento; se registra el %
+            if res.monto_calculado is None:
+                res.monto_calculado = res.monto_total or 0.0
+            res.descuento_pct = ticket_redencion.valor_descuento or 0
             res.monto_total = monto_a_cobrar
             res.monto_reembolsado = 0.0
             ticket_redencion.estado = "USADO"

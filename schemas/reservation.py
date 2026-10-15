@@ -1,7 +1,17 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
-class UserReservationCreate(BaseModel):
+class PriceQuoteInput(BaseModel):
+    """Tarifas y cálculo tal como los cotizó el front al crear/editar la reserva.
+    El backend revalida horas/total contra su propio cálculo (ver ReservationService)
+    y los persiste como foto histórica del precio. Opcionales por compatibilidad."""
+    tarifa_hora: Optional[float] = None
+    tarifa_fraccion: Optional[float] = None
+    tarifa_aplicada: Optional[float] = None
+    horas_calculadas: Optional[float] = None
+    monto_calculado: Optional[float] = None
+
+class UserReservationCreate(PriceQuoteInput):
     patente: str
     fecha_inicio: str
     fecha_fin: str
@@ -9,7 +19,7 @@ class UserReservationCreate(BaseModel):
     tipo_estadia: Optional[str] = "hora"
     dias_semana: Optional[str] = None
 
-class AdminReservationCreate(BaseModel):
+class AdminReservationCreate(PriceQuoteInput):
     user_id: Optional[int] = None
     cliente_nombre: Optional[str] = ""
     patente: str
@@ -24,7 +34,7 @@ class AdminReservationCreate(BaseModel):
     cobrar_diferencia_metodo: Optional[str] = None
     reembolsar_diferencia_metodo: Optional[str] = None
 
-class ReservationUpdate(BaseModel):
+class ReservationUpdate(PriceQuoteInput):
     fecha_inicio: Optional[str] = None
     fecha_fin: Optional[str] = None
     patente: Optional[str] = None
@@ -62,3 +72,11 @@ class UserReservationResponse(BaseModel):
     usuario_apellido: Optional[str] = None
     en_predio: bool = False
     origen: Optional[str] = "cliente"
+    # FOTO HISTÓRICA DE TARIFAS (trazabilidad del precio cotizado)
+    tarifa_hora: Optional[float] = None
+    tarifa_fraccion: Optional[float] = None
+    tarifa_aplicada: Optional[float] = None
+    horas_calculadas: Optional[float] = None
+    monto_calculado: Optional[float] = None
+    descuento_pct: Optional[float] = None
+    tarifa_fijada_en: Optional[str] = None

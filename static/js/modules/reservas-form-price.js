@@ -13,9 +13,19 @@ import {
     getReservationDiscount,
     setReservationDiscount,
     setReservationTotals,
+    setReservationQuote,
     getDiscountToken,
     bumpDiscountToken
 } from './reservas-form-state.js';
+
+// SUFIJO DE CLAVE DE TARIFA SEGUN EL TIPO DE VEHICULO ('' / '_moto' / '_camioneta').
+// Debe coincidir con BillingService._tipo_key del backend.
+function vehicleRateSuffix(vehiculo) {
+    const tipo = vehiculo?.tipo;
+    if (tipo === 'Moto') return '_moto';
+    if (tipo === 'Camioneta') return '_camioneta';
+    return '';
+}
 
 export async function fetchRates(sucursal = null) {
     const url = sucursal ? `/user/rates?sucursal=${sucursal}` : '/user/rates';
@@ -66,11 +76,14 @@ export function updateReservationPrice() {
     let total = 0;
 
     const vehiculo = getUserVehicles().find(v => v.patente === patente);
-    const isMoto = vehiculo && vehiculo.tipo === 'Moto';
+    const suffix = vehicleRateSuffix(vehiculo);
 
-    const key = isMoto ? `${type}_moto` : type;
-    const rate = getCurrentRates()[key] || getCurrentRates()[type] || 0;
-    const rate30 = getCurrentRates()[isMoto ? '30min_moto' : '30min'] || rate / 2;
+    const rates = getCurrentRates();
+    const rate = rates[`${type}${suffix}`] || rates[type] || 0;
+    const rate30 = rates[`30min${suffix}`] || rate / 2;
+    // TARIFAS DE REFERENCIA POR HORA/FRACCIÓN (para la foto histórica que enviamos al backend).
+    const tarifaHora = rates[`hora${suffix}`] || 0;
+    const tarifaFraccion = rates[`30min${suffix}`] || tarifaHora / 2;
 
     if (ratesDetailEl) {
         if (type === 'hora' && rate > 0) {
@@ -83,6 +96,7 @@ export function updateReservationPrice() {
     }
 
     let inicio, fin;
+    let durationHours = 0;
     try {
         if (type === 'hora') {
             const fecha = document.querySelector('.res-date-only')?.value;
@@ -107,17 +121,16 @@ export function updateReservationPrice() {
             const fechaInput = selector ? document.querySelector(selector) : null;
             const fecha = fechaInput?.value;
             if (fecha) {
+                /* El fin debe coincidir EXACTAMENTE con el que arma createReservation
+                   (inicio + (periodos-1) días, cerrando a las 23:59) para que la
+                   duración cotizada coincida con la que recalcula el backend. */
                 inicio = new Date(`${fecha}T00:00`);
-                fin = new Date(inicio.getTime() + periods[type] * 24 * 60 * 60 * 1000);
-                fin.setSeconds(fin.getSeconds() - 1);
+                fin = new Date(inicio.getTime() + ((periods[type] - 1) * 24 + 23) * 60 * 60 * 1000 + 59 * 60 * 1000);
             }
         }
 
         if (inicio && fin) {
-            const durationHours = (fin - inicio) / 3600000;
-            const key = isMoto ? `${type}_moto` : type;
-            const rate = getCurrentRates()[key] || getCurrentRates()[type] || 0;
-            const rate30 = getCurrentRates()[isMoto ? '30min_moto' : '30min'] || rate / 2;
+            durationHours = (fin - inicio) / 3600000;
             
             if (type === 'hora') total = computeHourlyAmount(durationHours, rate, rate30);
             else if (type === 'dia') total = Math.max(1, Math.ceil(durationHours / 24)) * rate;
@@ -127,6 +140,16 @@ export function updateReservationPrice() {
             else total = Math.ceil(durationHours) * rate;
         }
     } catch (e) { console.error("Error calculando precio:", e); }
+
+    // FOTO DE LA COTIZACIÓN VIGENTE: se envía al backend al confirmar la reserva para
+    // que revalide el total y la persista como registro histórico del precio.
+    setReservationQuote({
+        base: total,
+        horas: durationHours,
+        tarifaHora,
+        tarifaFraccion,
+        tarifaAplicada: rate
+    });
 
     const originalEl = document.getElementById('reserva-total-original');
     const discountLineEl = document.getElementById('reserva-discount-line');

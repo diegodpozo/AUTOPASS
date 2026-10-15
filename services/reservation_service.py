@@ -37,6 +37,44 @@ logger = get_logger("ReservationService")
 
 class ReservationService(ReservationPaymentsMixin):
 
+    # TOLERANCIAS DE LA COTIZACIÓN CLIENTE vs SERVIDOR
+    COTIZACION_HORAS_TOLERANCIA = 0.02   # ~1 minuto de duración
+    COTIZACION_MONTO_TOLERANCIA = 0.01   # 1 centavo de monto
+
+    @staticmethod
+    def _validar_cotizacion(data, horas_server: float, monto_server: float):
+        """Controla que el cálculo de horario y total que envió el front coincida con
+        el del servidor. Si difiere (tarifario desactualizado o cálculo alterado)
+        rechaza con 409 para no guardar una reserva con un precio inconsistente.
+        Si el front no envía los valores (None) no se valida (compatibilidad)."""
+        horas_cli = getattr(data, "horas_calculadas", None)
+        monto_cli = getattr(data, "monto_calculado", None)
+        if horas_cli is not None and abs(float(horas_cli) - horas_server) > ReservationService.COTIZACION_HORAS_TOLERANCIA:
+            raise HTTPException(status_code=409, detail="El horario cotizado no coincide con el vigente. Volvé a cotizar la reserva.")
+        if monto_cli is not None and abs(float(monto_cli) - monto_server) > ReservationService.COTIZACION_MONTO_TOLERANCIA:
+            raise HTTPException(status_code=409, detail="La tarifa cambió desde que se cotizó la reserva. Volvé a cotizar e intentá de nuevo.")
+
+    @staticmethod
+    def _preferir_cliente(cliente, servidor):
+        """Usa el valor cotizado por el front si vino informado; si no, el del servidor."""
+        return cliente if cliente is not None else servidor
+
+    @staticmethod
+    def _fijar_snapshot_tarifa(res, db, data, tipo_estadia, sucursal, tipo_vehiculo,
+                              duration_hours: float, monto_cotizado: float, descuento_pct: float = None):
+        """Persiste en la reserva la foto de tarifas/duración/total usados al cotizarla.
+        Las tarifas que envió el front se usan si están informadas (ya validadas contra
+        el total); si no, se guarda la tarifa autoritativa calculada por el servidor."""
+        snap = BillingService.snapshot_tarifas(db, tipo_estadia, sucursal, tipo_vehiculo, duration_hours)
+        res.tarifa_hora = ReservationService._preferir_cliente(getattr(data, "tarifa_hora", None), snap["tarifa_hora"])
+        res.tarifa_fraccion = ReservationService._preferir_cliente(getattr(data, "tarifa_fraccion", None), snap["tarifa_fraccion"])
+        res.tarifa_aplicada = ReservationService._preferir_cliente(getattr(data, "tarifa_aplicada", None), snap["tarifa_aplicada"])
+        res.horas_calculadas = duration_hours
+        res.monto_calculado = monto_cotizado
+        if descuento_pct is not None:
+            res.descuento_pct = descuento_pct
+        res.tarifa_fijada_en = TimeService.now_str()
+
     @staticmethod
     def create_reservation(db: Session, data: schemas.AdminReservationCreate) -> models.Reservation:
         """CREA UNA NUEVA RESERVA MANUAL DESDE EL PANEL ADMINISTRATIVO."""
@@ -50,6 +88,9 @@ class ReservationService(ReservationPaymentsMixin):
         )
         if monto is None:
             raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo. No se puede crear la reserva.")
+
+        duration_hours = (datetime.datetime.fromisoformat(data.fecha_fin) - datetime.datetime.fromisoformat(data.fecha_inicio)).total_seconds() / 3600
+        ReservationService._validar_cotizacion(data, duration_hours, monto)
 
         info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
 
@@ -68,6 +109,7 @@ class ReservationService(ReservationPaymentsMixin):
             tipo_vehiculo=tipo_v_str,
             origen="manual"
         )
+        ReservationService._fijar_snapshot_tarifa(new_res, db, data, data.tipo_estadia, data.sucursal_nombre, tipo_vehiculo, duration_hours, monto)
         db.add(new_res)
         db.commit()
         db.refresh(new_res)
@@ -297,6 +339,7 @@ class ReservationService(ReservationPaymentsMixin):
             monto = math.ceil(duration_hours / (24 * 30)) * rate
         else:
             monto = math.ceil(duration_hours) * rate
+        cls._validar_cotizacion(data, duration_hours, monto)
         estado_pago = PaymentStatus.PENDIENTE
         info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
         tipo_v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
@@ -306,6 +349,7 @@ class ReservationService(ReservationPaymentsMixin):
             sucursal_nombre=data.sucursal_nombre, sucursal_info=info_sede,
             dias_semana=data.dias_semana, tipo_vehiculo=tipo_v_str
         )
+        cls._fijar_snapshot_tarifa(new_res, db, data, data.tipo_estadia, data.sucursal_nombre, vehicle.tipo, duration_hours, monto)
         db.add(new_res)
         db.commit()
         db.refresh(new_res)
@@ -378,6 +422,8 @@ class ReservationService(ReservationPaymentsMixin):
             monto_nuevo = math.ceil(duration_hours / (24 * 15)) * rate
         elif res.tipo_estadia == "mes":
             monto_nuevo = math.ceil(duration_hours / (24 * 30)) * rate
+        cls._validar_cotizacion(data, duration_hours, monto_nuevo)
+        cls._fijar_snapshot_tarifa(res, db, data, res.tipo_estadia, res.sucursal_nombre, tipo_vehiculo_mod, duration_hours, monto_nuevo, descuento_pct=res.descuento_pct)
         if ya_pagado:
             diferencia = monto_nuevo - monto_anterior
             dif_puntos = BillingService.calculate_points(monto_nuevo) - BillingService.calculate_points(monto_anterior)
@@ -557,12 +603,18 @@ class ReservationService(ReservationPaymentsMixin):
             )
             if monto is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
+            duration_hours = (datetime.datetime.fromisoformat(data.fecha_fin) - datetime.datetime.fromisoformat(data.fecha_inicio)).total_seconds() / 3600
+            ReservationService._validar_cotizacion(data, duration_hours, monto)
+            monto_base = monto
+            porc_aplicado = None
             ticket_aplicado = None
             if reserva.estado_pago == PaymentStatus.PAGADO:
                 ticket_aplicado = RedemptionRepository.get_used_discount_for_reserva(db, reserva.id)
             if ticket_aplicado and ticket_aplicado.valor_descuento:
                 porc = ticket_aplicado.valor_descuento
                 monto = round(monto * (1 - porc / 100.0), 2)
+                porc_aplicado = porc
+            ReservationService._fijar_snapshot_tarifa(reserva, db, data, data.tipo_estadia, data.sucursal_nombre, tipo_v_str, duration_hours, monto_base, descuento_pct=porc_aplicado)
             monto_anterior = reserva.monto_total or 0.0
             reembolsado_previo = reserva.monto_reembolsado or 0.0
             valor_actual = round(monto_anterior - reembolsado_previo, 2)

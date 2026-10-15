@@ -19,6 +19,7 @@ import {
     setBranchesData,
     setReservationDiscount,
     getReservationTotals,
+    getReservationQuote,
     getFpInstances,
     bumpDiscountToken,
     RESERVA_MIN_MS,
@@ -727,7 +728,21 @@ export async function createReservation(e) {
     btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> PROCESANDO...';
     btn.disabled = true;
 
-    const payload = { patente, fecha_inicio: inicio, fecha_fin: fin, sucursal_nombre: sucursal, tipo_estadia: tipo };
+    // COTIZACIÓN: el backend recalcula horas/total con las tarifas vigentes y las compara
+    // con lo que enviamos (si no coinciden responde 409). También las persiste como foto histórica.
+    const quote = getReservationQuote();
+    const payload = {
+        patente,
+        fecha_inicio: inicio,
+        fecha_fin: fin,
+        sucursal_nombre: sucursal,
+        tipo_estadia: tipo,
+        horas_calculadas: quote.horas || null,
+        monto_calculado: quote.base || null,
+        tarifa_hora: quote.tarifaHora || null,
+        tarifa_fraccion: quote.tarifaFraccion || null,
+        tarifa_aplicada: quote.tarifaAplicada || null
+    };
     const result = getEditingReservaId() ? 
         await api.patch(`/user/reservations/${getEditingReservaId()}`, payload) : 
         await api.post('/user/reservations', payload);

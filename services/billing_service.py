@@ -199,6 +199,18 @@ class BillingService:
             return float(math.ceil(duration_hours) * rate)
 
     @staticmethod
+    def snapshot_tarifas(db: Session, tipo_estadia: str, sucursal: str, tipo_vehiculo, duration_hours: float) -> dict:
+        """FOTO AUTORITATIVA DE LAS TARIFAS CON LAS QUE SE COTIZÓ UNA RESERVA.
+        Devuelve las tarifas unitarias vigentes en la sede y la duración usada.
+        Se persiste en la reserva para reconstruir el precio histórico."""
+        return {
+            "tarifa_hora": BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo),
+            "tarifa_fraccion": BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo),
+            "tarifa_aplicada": BillingService.get_rate(db, tipo_estadia, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo),
+            "horas_calculadas": duration_hours,
+        }
+
+    @staticmethod
     def calculate_points(amount: float) -> int:
         """CALCULA LOS PUNTOS AUTOPASS GANADOS (10 PTS POR CADA $1000 ABONADOS)."""
         puntos = int(amount / 100) #EQUIVALE UN (MONTO / 1000) * 10

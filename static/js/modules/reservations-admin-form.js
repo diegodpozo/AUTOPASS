@@ -14,6 +14,11 @@ let newResBranches = [];
 let newResLinkedUserId = null;
 let newResPatenteLookupTimer = null;
 let newResRatesFallback = { hora: 1500, dia: 15000, semana: 70000, quincena: 120000, mes: 200000 };
+// TARIFAS AUTORITATIVAS POR SUCURSAL (fuente: /user/rates, igual que el front de usuario).
+// Evita divergencias con el backend (p.ej. fracción de 30 min configurada explícitamente).
+let newResRatesByBranch = {};
+// COTIZACIÓN VIGENTE DEL FORM MANUAL (se envía al backend para revalidar y persistir).
+let newResQuote = { base: 0, horas: 0, tarifaHora: 0, tarifaFraccion: 0, tarifaAplicada: 0 };
 let editingResId = null;
 let newResPickers = {};
 let editingOriginalReserva = null;
@@ -224,11 +229,12 @@ export async function openNewReservationModal() {
         sucursalInput.value = branch ? branch.nombre : (mySucursal || newResBranches[0]?.nombre || '');
         if (!newResSucursalListenerInit) {
             newResSucursalListenerInit = true;
-            sucursalInput.addEventListener('change', () => { refreshNewResLiveDiscount(); });
+            sucursalInput.addEventListener('change', () => { refreshNewResLiveDiscount(); loadNewResRates(sucursalInput.value); });
         }
     }
     updateNewHourlySlotsUI();
     refreshNewResLiveDiscount();
+    loadNewResRates(sucursalInput?.value);
 
     if (!newResPickersInitialized && window.flatpickr) {
         initNewReservationPickers();
@@ -457,6 +463,50 @@ export function updateNewPeriodEnd(startDateStr, days, targetSelector) {
     updateNewReservationPrice();
 }
 
+// CARGA (Y CACHEA) LAS TARIFAS AUTORITATIVAS DE LA SUCURSAL DESDE /user/rates,
+// la misma fuente que usa el front de usuario. Evita divergencias con el backend
+// (por ejemplo, una fracción de 30 min configurada distinta de la mitad de la hora).
+async function loadNewResRates(sucursal) {
+    if (!sucursal) return;
+    if (newResRatesByBranch[sucursal]) { updateNewReservationPrice(); return; }
+    try {
+        const res = await api.get('/user/rates', { params: { sucursal } });
+        if (res.ok && res.data) {
+            newResRatesByBranch[sucursal] = res.data;
+            updateNewReservationPrice();
+        }
+    } catch (e) { /* fallback: tarifas de la sucursal o valores por defecto */ }
+}
+
+// RESUELVE LAS TARIFAS DE UNA SUCURSAL PARA UN TIPO DE VEHÍCULO, priorizando /user/rates
+// (caché en newResRatesByBranch) y cayendo a las tarifas del DTO de sucursal.
+function _newResRatesFor(sucursal, tipoVehiculo) {
+    const suffix = tipoVehiculo === 'Moto' ? '_moto' : (tipoVehiculo === 'Camioneta' ? '_camioneta' : '');
+    const raw = sucursal ? newResRatesByBranch[sucursal] : null;
+    const branch = (newResBranches || []).find(b => b.nombre.trim() === (sucursal || '').trim());
+    const periodic = ['hora', 'dia', 'semana', 'quincena', 'mes'];
+    const out = { suffix };
+    for (const k of periodic) {
+        let val;
+        if (raw && (raw[k + suffix] !== undefined || raw[k] !== undefined)) {
+            val = parseFloat(raw[k + suffix] !== undefined ? raw[k + suffix] : raw[k]);
+        } else if (branch) {
+            val = parseFloat(branch['tarifa_' + k + suffix]) || parseFloat(branch['tarifa_' + k]);
+        }
+        out[k] = (val !== undefined && !isNaN(val) && val > 0) ? val : newResRatesFallback[k];
+    }
+    if (raw) {
+        const h = parseFloat(raw['hora' + suffix] !== undefined ? raw['hora' + suffix] : raw['hora']);
+        out.horaBase = (!isNaN(h) && h > 0) ? h : 0;
+        const f = parseFloat(raw['30min' + suffix] !== undefined ? raw['30min' + suffix] : raw['30min']);
+        out.fraccionBase = (!isNaN(f) && f > 0) ? f : out.horaBase / 2;
+    } else {
+        out.horaBase = out.hora;
+        out.fraccionBase = out.hora / 2;
+    }
+    return out;
+}
+
 export async function updateNewReservationPrice() {
     const typeEl = document.getElementById('new-res-tipo');
     if (!typeEl) return;
@@ -510,26 +560,10 @@ export async function updateNewReservationPrice() {
 
     const durationHours = (fin - inicio) / 3600000;
     const tipoVehiculo = document.getElementById('new-res-tipo-vehiculo')?.value || 'Auto';
-    const tarifaSuffix = tipoVehiculo === 'Moto' ? '_moto' : (tipoVehiculo === 'Camioneta' ? '_camioneta' : '');
-    const periodicKeys = ['hora', 'dia', 'semana', 'quincena', 'mes'];
-    let rates = { ...newResRatesFallback };
-
-    if (sucursal) {
-        const branch = (newResBranches || []).find(b => b.nombre.trim() === sucursal.trim());
-        if (branch) {
-            const nextRates = {};
-            for (const pk of periodicKeys) {
-                const baseKey = `tarifa_${pk}`;
-                const typedKey = baseKey + tarifaSuffix;
-                const val = parseFloat(branch[typedKey]) || parseFloat(branch[baseKey]) || newResRatesFallback[pk];
-                nextRates[pk] = val;
-            }
-            rates = { ...rates, ...nextRates };
-        }
-    }
+    const rates = _newResRatesFor(sucursal, tipoVehiculo);
 
     let total = 0;
-    if (type === 'hora') total = utils.computeHourlyAmount(durationHours, rates.hora, rates.hora / 2);
+    if (type === 'hora') total = utils.computeHourlyAmount(durationHours, rates.hora, rates.fraccionBase);
     else if (type === 'dia') total = Math.max(1, Math.ceil(durationHours / 24)) * rates.dia;
     else if (type === 'semana') total = Math.ceil(durationHours / (24 * 7)) * rates.semana;
     else if (type === 'quincena') total = Math.ceil(durationHours / (24 * 15)) * rates.quincena;
@@ -537,6 +571,15 @@ export async function updateNewReservationPrice() {
     else total = Math.ceil(durationHours) * rates.hora;
 
     const base = Math.round(total * 100) / 100;
+
+    // FOTO DE LA COTIZACIÓN (base pre-descuento) que se envía al backend al guardar.
+    newResQuote = {
+        base,
+        horas: durationHours,
+        tarifaHora: rates.horaBase,
+        tarifaFraccion: rates.fraccionBase,
+        tarifaAplicada: rates[type] || rates.hora
+    };
     const dis = newResLiveDiscount;
     const porc = dis && dis.porc > 0 ? dis.porc : 0;
     let desc = 0;
@@ -883,7 +926,12 @@ export async function handleAdminNewReservation(event) {
         fecha_inicio: inicio,
         fecha_fin: fin,
         sucursal_nombre: sucursal,
-        tipo_vehiculo: tipoVehiculo
+        tipo_vehiculo: tipoVehiculo,
+        horas_calculadas: newResQuote.horas || null,
+        monto_calculado: newResQuote.base || null,
+        tarifa_hora: newResQuote.tarifaHora || null,
+        tarifa_fraccion: newResQuote.tarifaFraccion || null,
+        tarifa_aplicada: newResQuote.tarifaAplicada || null
     };
 
     if (editingResId) {

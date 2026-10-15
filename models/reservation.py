@@ -34,6 +34,14 @@ class Reservation(Base):
     metodo_pago = Column(String, nullable=True)  # METODO DE PAGO UTILIZADO (EFECTIVO, TRANSFERENCIA, TARJETA, MP, ETC)
     tipo_vehiculo = Column(String, default="Auto")  # AUTO / MOTO / CAMIONETA
     origen = Column(String, default="cliente")  # 'cliente' (creada por el usuario) o 'manual' (creada por admin/empleado)
+    # FOTO DE TARIFAS AL COTIZAR/CREAR LA RESERVA (auditoría de precios históricos)
+    tarifa_hora = Column(Float, nullable=True)       # TARIFA POR HORA VIGENTE EN LA SEDE AL RESERVAR
+    tarifa_fraccion = Column(Float, nullable=True)   # TARIFA DE 30 MIN VIGENTE EN LA SEDE AL RESERVAR
+    tarifa_aplicada = Column(Float, nullable=True)   # TARIFA UNITARIA DE LA MODALIDAD (hora/día/semana/quincena/mes)
+    horas_calculadas = Column(Float, nullable=True)  # DURACIÓN COTIZADA (EN HORAS)
+    monto_calculado = Column(Float, nullable=True)   # TOTAL BASE COTIZADO, ANTES DE DESCUENTOS
+    descuento_pct = Column(Float, nullable=True)     # % DE DESCUENTO POR CANJE APLICADO AL PAGAR
+    tarifa_fijada_en = Column(DateTimeAsStr, nullable=True)  # MOMENTO EN QUE SE FIJÓ ESTA FOTO DE TARIFA
 
     user = relationship("User", back_populates="reservations")
     access_logs = relationship("AccessLog", back_populates="reservation")
