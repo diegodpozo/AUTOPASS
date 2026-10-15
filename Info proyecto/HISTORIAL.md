@@ -22,3 +22,10 @@ ole="dialog"+ria-modal="true", nombre accesible resoluble, cierre tabulable con
   * **Verificación real (Edge headless + CDP)**: login, /dashboard (modal-create-user → display lock, labelledby resuelve "ALTA USUARIO", foco entra a primer campo **visible** #admin-user-nombre, Escape cierra y devuelve foco), showConfirm → lex, Escape → resuelve alse, foco vuelve; showChoice → Escape → resuelve 
 ull; /perfil: onboarding se cierra con Escape vía "Omitir", 
 echargeModal foco en #recharge-amount, modal-pase-digital display lex con Tab encerrado, modal-canje atributos OK; t-modal abre por puerta única, reloj tickea mientras está abierto y **se frena** al cerrar, Escape/click en fondo/X cierran correctamente; **0 excepciones JS de la app** (6 descartadas, extensión del navegador).
+
+**v9.34.96 (15/10/2026) — Performance: CDN por página (Leaflet, Chart, Flatpickr, QRCode, html2canvas)**
+- Extraído de ase.html: Chart.js, Flatpickr (CSS + dark + JS + l10n ES), qrcodejs, html2canvas y Leaflet (CSS + JS) fueron movidos a las vistas que los usan. Font Awesome 6.5.1 se mantiene global (alto riesgo de ruptura de iconos).
+- Centralizado en macro DRY 	emplates/components/cdn_libs.html con cdn_head() y cdn_scripts() (una sola fuente de verdad, CSS en head, JS en body).
+- Declarado por vista: index.html → solo Leaflet (mapa); perfil.html → Leaflet + Flatpickr + qrcodejs + html2canvas (mapa, reservas, pase digital); dashboard.html → Leaflet + Chart.js + Flatpickr + qrcodejs (pickers, gráficos, reservas admin, tour); estadisticas_ocr.html → solo Chart.js (gráficos).
+- Páginas sin mapa/gráficos/fechas/QR ya no cargan esas librerías (verificado con Edge headless).
+- Añadido guard _tools/check_cdn_per_page.py que asegura el reparto por página, evita reintroducir cargas globales y valida la presencia de los macros/imports. Todos los guards siguen verdes; suite pytest: 891 passed.

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/cdn_libs.html" import cdn_head, cdn_scripts %}
 
 {% block title %}AUTOPASS - Estadísticas OCR & ALPR{% endblock %}
 
@@ -161,6 +162,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+{{ cdn_scripts(['chart']) }}
 <script type="module">
     import { actualizarEstadisticasOcr, filtrarTablaOcr, initEstadisticasOcr } from '/static/js/modules/estadisticas-ocr.js?v={{ cache_buster }}';
     window.actualizarEstadisticasOcr = actualizarEstadisticasOcr;

@@ -7,8 +7,9 @@
     
     <!-- FUENTES E ICONOS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+    <!-- Las librerias de CDN por pagina se declaran con el macro de
+         components/cdn_libs.html (ver su cabecera: quienes las necesitan). -->
+
     <!-- ESTILOS BASE MODULARES -->
     <link rel="stylesheet" href="/static/css/base/variables.css">
     <link rel="stylesheet" href="/static/css/base/reset.css">
@@ -38,15 +39,10 @@
     <!-- LEGACY (Se irá vaciando) -->
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="/static/css/pages/landing/landing-map.css?v={{ cache_buster }}">
-    
-    <!-- LIBRERÍAS PRO (GRAFICOS, CALENDARIOS, QR) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- LIBRERIAS PRO (graficos, calendarios, QR, mapas): NO van aca.
+         Cada pagina declara las que usa con el macro de components/cdn_libs.html,
+         para no bajar librerias que esa vista no necesita. -->
 
     <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link rel="stylesheet" href="/static/css/components/footer.css">
@@ -71,7 +67,6 @@
     {% include "components/modals_global.html" %}
 
     <!-- SCRIPTS BASE -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="/static/js/api_client.js"></script>
     <script type="module" src="/static/js/main.js"></script>
     {% block extra_scripts %}{% endblock %}

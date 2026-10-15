@@ -1,0 +1,57 @@
+{#- CDN POR PAGINA (v9.34.96) ----------------------------------------------
+   Antes estas librerias vivian en base.html y las bajaba TODAS las paginas,
+   aunque solo algunas las usaran. Ahora cada vista declara las que necesita:
+
+     {% from "components/cdn_libs.html" import cdn_head, cdn_scripts %}
+     {% block extra_head %}{{ cdn_head('leaflet', 'flatpickr') }}{% endblock %}
+     {% block extra_scripts %}{{ cdn_scripts('leaflet', 'flatpickr') }}{% endblock %}
+
+   cdn_head() va SIEMPRE en extra_head (antes del contenido) y cdn_scripts()
+   en extra_scripts (antes de los modulos de la pagina, que son diferidos).
+
+   Font Awesome NO esta aca: se usa en practicamente todas las vistas (clases
+   fas/far/fab), asi que sigue global en base.html.
+
+   Quien necesita cada una:
+     leaflet   -> index (mapa), perfil (mapa del portal), dashboard (pickers)
+     chart     -> dashboard (tabs metricas/finance), estadisticas_ocr.html
+     flatpickr -> perfil (form de reserva), dashboard (alta de reserva/filtros)
+     qrcode    -> perfil (pase digital), dashboard (tour de admin)
+     capture   -> perfil (imprimir/compartir el pase digital)
+   -------------------------------------------------------------------------- #}
+{% set CDN = {
+    'leaflet': {
+        'css': ['https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'],
+        'js':  ['https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'],
+    },
+    'chart': {
+        'css': [],
+        'js':  ['https://cdn.jsdelivr.net/npm/chart.js'],
+    },
+    'flatpickr': {
+        'css': ['https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css',
+                'https://npmcdn.com/flatpickr/dist/themes/dark.css'],
+        'js':  ['https://cdn.jsdelivr.net/npm/flatpickr',
+                'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js'],
+    },
+    'qrcode': {
+        'css': [],
+        'js':  ['https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'],
+    },
+    'capture': {
+        'css': [],
+        'js':  ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'],
+    },
+} %}
+
+{% macro cdn_head(libs) -%}
+{% for lib in libs %}{% for href in CDN[lib]['css'] %}
+    <link rel="stylesheet" href="{{ href }}">
+{% endfor %}{% endfor %}
+{%- endmacro %}
+
+{% macro cdn_scripts(libs) -%}
+{% for lib in libs %}{% for src in CDN[lib]['js'] %}
+    <script src="{{ src }}"></script>
+{% endfor %}{% endfor %}
+{%- endmacro %}

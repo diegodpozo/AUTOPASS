@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/cdn_libs.html" import cdn_head, cdn_scripts %}
 
 {% block title %}AUTOPASS - Mi Perfil{% endblock %}
 
@@ -7,6 +8,7 @@
     {# v9.34.71: el saludo unificado solo existe en /perfil. Va aca y no en
        css_profile.html porque ese include tambien lo carga dashboard.html. #}
     <link rel="stylesheet" href="/static/css/components/saludo.css?v={{ cache_buster }}">
+    {{ cdn_head(['leaflet', 'flatpickr']) }}
 {% endblock %}
 
 {% block body_class %}layout-with-sidebar{% endblock %}
@@ -122,6 +124,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+    {{ cdn_scripts(['leaflet', 'flatpickr', 'qrcode', 'capture']) }}
     <script>window.RESERVA_HORA_MIN_SEGUNDOS = {{ settings.RESERVA_HORA_MIN_SEGUNDOS }};</script>
     <script type="module" src="/static/js/landing.js?v={{ cache_buster }}"></script>
     <script type="module" src="/static/js/perfil.js?v={{ cache_buster }}"></script>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/cdn_libs.html" import cdn_head, cdn_scripts %}
 
 {% block title %}AUTOPASS - Estacionamiento Inteligente{% endblock %}
 
@@ -6,6 +7,7 @@
 
 {% block extra_head %}
     {% include "components/css_landing.html" %}
+    {{ cdn_head(['leaflet']) }}
 {% endblock %}
 
 {% block content %}
@@ -92,6 +94,7 @@
 
 
 {% block extra_scripts %}
+    {{ cdn_scripts(['leaflet']) }}
     <script type="module" src="/static/js/auth.js"></script>
     <script type="module" src="/static/js/landing.js?v={{ cache_buster }}"></script>
 {% endblock %}
