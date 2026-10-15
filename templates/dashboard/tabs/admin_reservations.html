@@ -82,7 +82,7 @@
 
 
 <!-- MODAL: NUEVA RESERVA MANUAL -->
-<div id="modal-new-reservation" class="modal">
+<div id="modal-new-reservation" class="modal" role="dialog" aria-modal="true" aria-labelledby="new-res-modal-title">
     <div class="modal-content">
         <div class="modern-reservation-card">
             {{ modal_header('fas fa-calendar-plus', 'NUEVA RESERVA MANUAL', "closeModal('modal-new-reservation')", title_id='new-res-modal-title', subtitle='Reserva y pago en la sucursal asignada', subtitle_id='new-res-modal-subtitle') }}
@@ -241,9 +241,9 @@
 </div>
 
 <!-- MODAL DE CONFIRMACIÓN DE EDICIÓN DE RESERVA (DIFERENCIA FINANCIERA) -->
-<div id="modal-edit-resumo" class="modal">
+<div id="modal-edit-resumo" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-resumo-modal-title">
     <div class="modal-content modal-content--banded">
-        {{ modal_header('fas fa-file-invoice-dollar', 'CONFIRMAR EDICIÓN', 'cancelEditResumo()', subtitle='Revisá los datos antes de guardar los cambios') }}
+        {{ modal_header('fas fa-file-invoice-dollar', 'CONFIRMAR EDICIÓN', 'cancelEditResumo()', subtitle='Revisá los datos antes de guardar los cambios', title_id='edit-resumo-modal-title') }}
         <div class="edit-resumo-body">
             <div id="edit-confirm-resumo"></div>
             <div id="edit-confirm-diff"></div>

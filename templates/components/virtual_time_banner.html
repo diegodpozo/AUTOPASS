@@ -3,16 +3,16 @@
     <span class="vt-fab-badge" id="vt-fab-badge">ON</span>
 </div>
 
-<div id="vt-modal" class="modal">
+<div id="vt-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="vt-modal-title">
     <div class="modal-content glass-premium">
         <div class="modal-header">
             <div class="flex-row items-center gap-10">
                 <div class="header-icon-box sm">
                     <i class="fas fa-clock"></i>
                 </div>
-                <h3 class="text-dorado">RELOJ VIRTUAL DEL SISTEMA</h3>
+                <h3 class="text-dorado" id="vt-modal-title">RELOJ VIRTUAL DEL SISTEMA</h3>
             </div>
-            <span class="close-btn" onclick="toggleVTModal()"><i class="fas fa-xmark"></i></span>
+            <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="toggleVTModal()"><i class="fas fa-xmark"></i></button>
         </div>
         <div class="modal-body">
             <div class="vt-big-clock">
@@ -131,19 +131,26 @@ async function updateVT() {
     }
 }
 
+// El cierre del reloj virtual pasa por la puerta unica (openModal/closeModal de
+// ui.js, cargado por base.html): es la que registra quien abrio el dialogo y le
+// devuelve el foco, y la que sabe que clase necesita cada contenedor para
+// centrarse. Siempre frena el refresco del reloj: ese intervalo corre solo
+// mientras el dialogo esta abierto.
+function cerrarVTModal() {
+    if (!document.getElementById('vt-modal')) return;
+    closeModal('vt-modal');
+    if (vtClockInterval) clearInterval(vtClockInterval);
+    vtClockInterval = null;
+}
+
 function toggleVTModal() {
     const modal = document.getElementById('vt-modal');
     if (!modal) return;
-    const open = modal.style.display === 'block';
-    modal.style.display = open ? 'none' : 'block';
-    if (!open) {
-        updateVT();
-        if (vtClockInterval) clearInterval(vtClockInterval);
-        vtClockInterval = setInterval(updateVT, 2000);
-    } else {
-        if (vtClockInterval) clearInterval(vtClockInterval);
-        vtClockInterval = null;
-    }
+    if (modal.style.display === 'block') { cerrarVTModal(); return; }
+    openModal('vt-modal');
+    updateVT();
+    if (vtClockInterval) clearInterval(vtClockInterval);
+    vtClockInterval = setInterval(updateVT, 2000);
 }
 
 function vtHeaders() {
@@ -224,15 +231,14 @@ async function resetVirtualTime() {
     }
 }
 
-// Close modal on overlay click
+// Cerrar al clickear el fondo: mismo camino que el boton X (cerrarVTModal), para
+// que el foco vuelva al disparador del reloj igual que en el resto de los dialogos.
 document.addEventListener('click', function(e) {
     const modal = document.getElementById('vt-modal');
     if (!modal || modal.style.display !== 'block') return;
     const content = modal.querySelector('.modal-content');
     if (content && !content.contains(e.target) && !e.target.closest('#vt-fab')) {
-        modal.style.display = 'none';
-        if (vtClockInterval) clearInterval(vtClockInterval);
-        vtClockInterval = null;
+        cerrarVTModal();
     }
 });
 </script>

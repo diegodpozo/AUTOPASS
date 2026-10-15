@@ -1,6 +1,6 @@
 {% from "components/modal_header.html" import modal_header %}
 <!-- MODAL: VER NIVELES DE SUCURSAL -->
-<div id="modal-branch-floors" class="modal">
+<div id="modal-branch-floors" class="modal" role="dialog" aria-modal="true" aria-labelledby="branch-floors-title">
     <div class="modal-content modal-content--banded">
         {{ modal_header('fas fa-layer-group', 'NIVELES: SUCURSAL', "closeModal('modal-branch-floors')", title_id='branch-floors-title') }}
         <div class="modal-body">
@@ -28,7 +28,7 @@
 </div>
 
 <!-- MODAL: AGREGAR SUCURSAL -->
-<div id="modal-add-branch" class="modal">
+<div id="modal-add-branch" class="modal" role="dialog" aria-modal="true" aria-labelledby="branch-modal-title">
     <div class="modal-content modal-content--banded">
         {{ modal_header('fas fa-building', 'NUEVA SUCURSAL', "closeModal('modal-add-branch')", title_id='branch-modal-title', icon_id='branch-modal-icon') }}
         <div class="modal-body">

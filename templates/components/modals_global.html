@@ -1,5 +1,5 @@
 <!-- SISTEMA DE NOTIFICACIONES Y MODALES GLOBALES -->
-<div id="modal-confirm" class="modal">
+<div id="modal-confirm" class="modal modal--centered" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
     <div class="modal-content confirm-modal-content">
         <div class="confirm-icon">
             <i class="fas fa-question-circle"></i>
@@ -7,7 +7,7 @@
         <h3 id="confirm-title">¿Estás seguro?</h3>
         <p id="confirm-msg" class="modal-text">Esta acción no se puede deshacer.</p>
         <div class="confirm-actions">
-            <button id="confirm-btn-cancel" class="btn btn--outline">CANCELAR</button>
+            <button id="confirm-btn-cancel" class="btn btn--outline" data-modal-close>CANCELAR</button>
             <button id="confirm-btn-ok" class="btn btn--primary">CONFIRMAR</button>
         </div>
     </div>
@@ -19,7 +19,7 @@
 <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <!-- MODAL: ELECCIÓN DE OPCIÓN -->
-<div id="modal-choice" class="modal">
+<div id="modal-choice" class="modal modal--centered" role="dialog" aria-modal="true" aria-labelledby="choice-title">
     <div class="modal-content confirm-modal-content choice-modal-content">
         <div class="confirm-icon">
             <i class="fas fa-money-bill-transfer"></i>
@@ -28,7 +28,7 @@
         <p id="choice-msg" class="modal-text"></p>
         <div id="choice-options" class="choice-grid"></div>
         <div class="confirm-actions">
-            <button id="choice-btn-cancel" class="btn btn--outline">CANCELAR</button>
+            <button id="choice-btn-cancel" class="btn btn--outline" data-modal-close>CANCELAR</button>
         </div>
     </div>
 </div>

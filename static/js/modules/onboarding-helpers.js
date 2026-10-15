@@ -1,4 +1,5 @@
 // Helpers for reservation onboarding modal and actions
+import { openModal, closeModal } from './ui.js';
 export function openReservationOnboarding() {
     const modal = document.getElementById('reservation-onboarding-modal');
     if (!modal) return;
@@ -8,7 +9,7 @@ export function openReservationOnboarding() {
     } catch (e) { console.warn('[ONBOARDING] no pude mover modal al body', e); }
 
     // asegurar que el modal sea visible y encima de todo mediante clase active
-    modal.style.display = 'flex';
+    openModal('reservation-onboarding-modal');
     setTimeout(() => {
         modal.classList.add('active');
     }, 15);
@@ -33,7 +34,7 @@ export function closeReservationOnboarding() {
     
     // esperar que termine la transición de opacidad antes de ocultar
     setTimeout(() => {
-        modal.style.display = 'none';
+        closeModal('reservation-onboarding-modal');
     }, 300);
     
     // quitar blur
@@ -149,7 +150,7 @@ export async function openLegalModal(type) {
     
     bodyEl.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem; color:var(--dorado);"></i></div>';
     titleEl.innerText = type === 'privacidad' ? 'Políticas de Privacidad' : 'Términos y Condiciones';
-    modal.style.display = 'flex';
+    openModal('modal-legal-terms');
     
     try {
         const res = await fetch(type === 'privacidad' ? '/privacidad' : '/terminos');
@@ -171,7 +172,6 @@ export async function openLegalModal(type) {
 }
 
 export function closeLegalModal() {
-    const modal = document.getElementById('modal-legal-terms');
-    if (modal) modal.style.display = 'none';
+    if (document.getElementById('modal-legal-terms')) closeModal('modal-legal-terms');
 }
 

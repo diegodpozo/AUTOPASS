@@ -110,9 +110,9 @@
     </main>
 
     <!-- MODAL: VISUALIZADOR DE CAPTURAS -->
-    <div id="modal-log-detail" class="modal">
+    <div id="modal-log-detail" class="modal" role="dialog" aria-modal="true" aria-labelledby="log-detail-modal-title">
         <div class="modal-content modal-content-large modal-content--banded">
-            {{ modal_header('fas fa-camera', 'DETALLE', "closeModal('modal-log-detail')") }}
+            {{ modal_header('fas fa-camera', 'DETALLE', "closeModal('modal-log-detail')", title_id='log-detail-modal-title') }}
             <div class="modal-body">
                 <div class="capture-audit-grid">
                     <div class="capture-image-container">
@@ -172,9 +172,9 @@
     </div>
 
     <!-- MODAL: SALIDA CON DEUDA PENDIENTE (LECTOR DE PATENTE / ALPR) -->
-    <div id="modal-pending-exit" class="modal">
+    <div id="modal-pending-exit" class="modal" role="dialog" aria-modal="true" aria-labelledby="pending-exit-modal-title">
         <div class="modal-content modal-content-large modal-content--banded">
-            {{ modal_header('fas fa-triangle-exclamation', 'SALIDA CON DEUDA PENDIENTE', 'closePendingExitPopup()') }}
+            {{ modal_header('fas fa-triangle-exclamation', 'SALIDA CON DEUDA PENDIENTE', 'closePendingExitPopup()', title_id='pending-exit-modal-title') }}
             <div class="modal-body">
                 <div class="capture-audit-grid">
                     <div class="capture-image-container">
@@ -230,9 +230,9 @@
     </div>
 
     <!-- MODAL: DETALLE DE RESERVA -->
-    <div id="modal-res-detail" class="modal">
+    <div id="modal-res-detail" class="modal" role="dialog" aria-modal="true" aria-labelledby="res-detail-modal-title">
         <div class="modal-content modal-content--banded">
-            {{ modal_header('fas fa-calendar-check', 'DETALLE DE RESERVA', "closeModal('modal-res-detail')") }}
+            {{ modal_header('fas fa-calendar-check', 'DETALLE DE RESERVA', "closeModal('modal-res-detail')", title_id='res-detail-modal-title') }}
             <div class="modal-body">
                 <div class="info-card-premium mb-20">
                     <label>COMPROBANTE DE RESERVA</label>

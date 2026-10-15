@@ -90,12 +90,6 @@ window.addEventListener('pageshow', () => {
     window.updateAuthNav();
 });
 
-// CERRAR MODALES CON TECLA ESCAPE
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal[style*="display: block"]').forEach(m => {
-            m.style.display = 'none';
-            m.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
-        });
-    }
-});
+// El cierre con Escape y el encierro del foco viven en modules/ui.js: hay un
+// solo listener para los 28 dialogos y resuelve el de arriba por DOM, asi que
+// antes esto no cubria los modales con display: flex ni devolvia el foco.

@@ -3,6 +3,10 @@
  * FUNCIONES DE UTILIDAD TRANSVERSALES PARA TODO EL SISTEMA.
  */
 
+// Los dialogos de confirmacion/eleccion se abren y cierran por la puerta unica
+// (ui.js) para que tengan encierro de foco, Escape y devolucion del foco.
+import { openModal, closeModal } from './ui.js';
+
 /**
  * CONVIERTE UN STRING A FORMATO DE TITULO (CAPITALIZACION DE CADA PALABRA).
  */
@@ -208,12 +212,10 @@ export function showConfirm(title, msg) {
             msgEl.innerText = msg || 'Esta acción no se puede deshacer.';
         }
         
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
+        openModal('modal-confirm');
 
         const handleResponse = (result) => {
-            modal.style.display = 'none';
+            closeModal('modal-confirm');
             btnOk.onclick = null;
             btnCancel.onclick = null;
             resolve(result);
@@ -250,12 +252,10 @@ export function showChoice(title, msg, options) {
             `;
         }).join('');
 
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
+        openModal('modal-choice');
 
         const cleanup = () => {
-            modal.style.display = 'none';
+            closeModal('modal-choice');
             btnCancel.onclick = null;
             optsEl.querySelectorAll('.choice-option').forEach((b) => { b.onclick = null; });
             modal.onclick = null;

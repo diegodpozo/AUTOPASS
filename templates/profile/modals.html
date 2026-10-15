@@ -2,7 +2,7 @@
 {% from "components/modal_header.html" import modal_header %}
 
 <!-- MODAL: DETALLE DE TICKET DE SOPORTE -->
-<div id="support-ticket-modal" class="onboarding-overlay-premium">
+<div id="support-ticket-modal" class="onboarding-overlay-premium" role="dialog" aria-modal="true" aria-labelledby="modal-ticket-subject">
     <div class="onboarding-card-premium modal-content--banded">
         {% call modal_header('fas fa-headset', '', "closeSupportTicketModal()", title_id='modal-ticket-subject', subtitle_id='modal-ticket-meta', badge='Ticket #', badge_id='modal-ticket-id') %}
         <span id="modal-ticket-state" class="my-ticket-state"></span>
@@ -37,9 +37,9 @@
     </div>
 </div>
 
-<div id="modal-pase-digital" class="modal-premium">
+<div id="modal-pase-digital" class="modal-premium" role="dialog" aria-modal="true" aria-label="Pase digital de la reserva">
     <div class="modal-content-premium ticket-container" id="ticket-to-capture">
-        <button class="modal-close-top no-print" onclick="closeDigitalPass()"><i class="fas fa-times"></i></button>
+        <button type="button" class="modal-close-top no-print" aria-label="Cerrar" onclick="closeDigitalPass()"><i class="fas fa-times"></i></button>
 
         <!-- COLUMNA IZQUIERDA: QR + ID -->
         <div class="ticket-left-col">
@@ -106,9 +106,9 @@
 </div>
 
 <!-- MODAL: TICKET DE CANJE (VOUCHER POR PUNTOS) -->
-<div id="modal-canje" class="modal-premium">
+<div id="modal-canje" class="modal-premium" role="dialog" aria-modal="true" aria-label="Ticket de canje del cupon">
     <div class="modal-content-premium ticket-container" id="canje-to-capture">
-        <button class="modal-close-top no-print" onclick="closeCanjeModal()"><i class="fas fa-times"></i></button>
+        <button type="button" class="modal-close-top no-print" aria-label="Cerrar" onclick="closeCanjeModal()"><i class="fas fa-times"></i></button>
         <div class="ticket-header">
             <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo">
             <div class="ticket-title-wrap"><span class="ticket-brand">AUTOPASS</span><span class="ticket-tagline">TICKET DE CANJE</span></div>
@@ -132,9 +132,9 @@
     </div>
 </div>
 
-<div id="rechargeModal" class="modal">
+<div id="rechargeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="recharge-modal-title">
     <div class="modal-content modal-content--banded">
-        {{ modal_header('fas fa-wallet', 'CARGÁ TU SALDO', "closeModal('rechargeModal')", subtitle='Ingresá el monto que deseás acreditar en tu cuenta.') }}
+        {{ modal_header('fas fa-wallet', 'CARGÁ TU SALDO', "closeModal('rechargeModal')", subtitle='Ingresá el monto que deseás acreditar en tu cuenta.', title_id='recharge-modal-title') }}
         <div class="modal-body">
             <form id="rechargeForm" onsubmit="processRecharge(event)">
                 <div class="form-group">
@@ -154,7 +154,7 @@
 </div>
 
 <!-- MODAL LEGAL (TÉRMINOS / PRIVACIDAD) -->
-<div id="modal-legal-terms" class="modal-premium">
+<div id="modal-legal-terms" class="modal-premium" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
     <div class="modal-content-premium modal-content--banded">
         {{ modal_header('fas fa-scale-balanced', '', "closeLegalModal()", title_id='legal-modal-title') }}
         <div id="legal-modal-body" class="legal-body modal-body">

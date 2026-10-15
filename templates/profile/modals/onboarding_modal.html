@@ -1,9 +1,9 @@
 <!-- ONBOARDING MODAL: GUÍA RÁPIDA PARA USUARIOS SIN VEHÍCULOS -->
-<div id="reservation-onboarding-modal" class="onboarding-overlay-premium">
+<div id="reservation-onboarding-modal" class="onboarding-overlay-premium" role="dialog" aria-modal="true" aria-labelledby="onboarding-modal-title">
     <div class="onboarding-card-premium">
         <div class="onboarding-header-premium">
             <span class="onboarding-badge-premium">Guía de Inicio</span>
-            <h3>BIENVENIDO A AUTOPASS</h3>
+            <h3 id="onboarding-modal-title">BIENVENIDO A AUTOPASS</h3>
             <p class="subtitle">Seguí estos simples pasos para registrar tu vehículo y realizar tu primera reserva.</p>
         </div>
         
@@ -49,7 +49,7 @@
         </p>
         
         <div class="onboarding-footer-premium">
-            <button class="btn btn--outline" onclick="skipReservationOnboarding()">Omitir</button>
+            <button type="button" class="btn btn--outline" data-modal-close onclick="skipReservationOnboarding()">Omitir</button>
             <button class="btn btn--primary" onclick="startReservationOnboarding()"><i class="fas fa-plus"></i> Registrar Vehículo</button>
         </div>
     </div>

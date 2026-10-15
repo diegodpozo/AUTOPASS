@@ -34,6 +34,15 @@
 #modal-confirm { z-index: var(--z-modal); }
 #modal-choice { z-index: 3200; }
 
+/* Modales que se centran con flex (confirmacion y eleccion): la clase aporta
+   solo el centrado; el display: flex lo pone ui.js al abrirlos (CLASES_FLEX),
+   para no pisar el display: none de .modal. Reemplaza el style inline que
+   showConfirm/showChoice escribian por JS. */
+.modal--centered {
+    align-items: center;
+    justify-content: center;
+}
+
 .modal-content { 
     background: #111; 
     margin: 5% auto; 
@@ -111,6 +120,8 @@
     text-transform: uppercase;
 }
 
+/* Cierre del modal: ahora es un <button> (era un <span onclick>, no se podia
+   tabular ni activar con teclado), asi que se le quita el cromo nativo. */
 .close-btn { 
     position: absolute; 
     top: 12px; 
@@ -124,6 +135,10 @@
     cursor: pointer; 
     color: #888; 
     transition: 0.3s;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
 }
 
 .close-btn:hover { 

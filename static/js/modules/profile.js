@@ -1,6 +1,7 @@
 import api from './api.js';
 import { toTitle, formatDate, formatNum, formatPlate, showToast, showConfirm } from './utils.js';
 import { renderCappedList, resetCappedState } from './list-pagination.js';
+import { openModal, closeModal } from './ui.js';
 
 /**
  * PERFIL MODULO
@@ -686,12 +687,11 @@ export function showCanjeTicket(t) {
             new QRCode(qrContainer, { text: t.qr_data || `AUTOPASS|ID:${t.id}|CODE:${t.codigo}`, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.H });
         }
     }
-    modal.style.display = 'flex';
+    openModal('modal-canje');
 }
 
 export function closeCanjeModal() {
-    const modal = document.getElementById('modal-canje');
-    if (modal) modal.style.display = 'none';
+    if (document.getElementById('modal-canje')) closeModal('modal-canje');
 }
 
 export async function shareCanjeTicket() {

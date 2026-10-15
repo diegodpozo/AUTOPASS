@@ -1,6 +1,6 @@
 {% from "components/modal_header.html" import modal_header %}
 <!-- MODAL: CREAR PROMOCIÓN -->
-<div id="modal-create-promotion" class="modal">
+<div id="modal-create-promotion" class="modal" role="dialog" aria-modal="true" aria-labelledby="promo-modal-title">
     <div class="modal-content modal-content--banded">
         {{ modal_header('fas fa-gift', 'NUEVA PROMOCIÓN', "closeModal('modal-create-promotion')", title_id='promo-modal-title') }}
         <div class="modal-body">

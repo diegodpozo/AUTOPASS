@@ -1,5 +1,6 @@
 import api from './api.js';
 import { formatDate, formatPlate, formatNum, showToast, showConfirm } from './utils.js';
+import { openModal, closeModal } from './ui.js';
 
 /**
  * MÓDULO RESERVAS - COMPROBANTE / PASE DIGITAL
@@ -205,20 +206,15 @@ export async function showDigitalPass(id) {
     document.getElementById('ticket-share-actions').style.display = !isCancelled ? 'flex' : 'none';
 
     /* ABRIR MODAL */
-    const modal = document.getElementById('modal-pase-digital');
-    if (modal) {
-        modal.style.display = 'flex';
-        try { document.dispatchEvent(new CustomEvent('digitalpass:open', { detail: { id } })); } catch (e) {}
-    }
+    openModal('modal-pase-digital');
+    try { document.dispatchEvent(new CustomEvent('digitalpass:open', { detail: { id } })); } catch (e) {}
 }
 
 export function closeDigitalPass() {
-    const modal = document.getElementById('modal-pase-digital');
-    if (modal) {
-        modal.style.display = 'none';
-        _currentPassResId = null;
-        try { document.dispatchEvent(new CustomEvent('digitalpass:closed')); } catch (e) {}
-    }
+    if (!document.getElementById('modal-pase-digital')) return;
+    closeModal('modal-pase-digital');
+    _currentPassResId = null;
+    try { document.dispatchEvent(new CustomEvent('digitalpass:closed')); } catch (e) {}
 }
 
 export async function shareTicket() {

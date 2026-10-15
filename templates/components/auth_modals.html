@@ -1,8 +1,8 @@
 <!-- MODAL: LOGIN -->
-<div id="loginModal" class="modal">
+<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('loginModal')"><i class="fas fa-xmark"></i></span>
-        <h2>INICIÁ SESIÓN</h2>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('loginModal')"><i class="fas fa-xmark"></i></button>
+        <h2 id="login-title">INICIÁ SESIÓN</h2>
         <div class="oauth-block">
             <div class="oauth-buttons">
                 <button type="button" class="btn-oauth btn-oauth-google" data-oauth-provider="google" onclick="startOAuth('google')">
@@ -43,10 +43,10 @@
 </div>
 
 <!-- MODAL: RECUPERACIÓN -->
-<div id="recoveryModal" class="modal">
+<div id="recoveryModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="recovery-title">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('recoveryModal')"><i class="fas fa-xmark"></i></span>
-        <h2>RECUPERÁ TU ACCESO</h2>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('recoveryModal')"><i class="fas fa-xmark"></i></button>
+        <h2 id="recovery-title">RECUPERÁ TU ACCESO</h2>
         <p class="modal-subtitle">Ingresá tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
 
         <div id="recovery-error" class="error-msg"></div>
@@ -69,10 +69,10 @@
 </div>
 
 <!-- MODAL: REGISTRO -->
-<div id="registerModal" class="modal">
+<div id="registerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="register-title">
     <div class="modal-content modal-content-wide">
-        <span class="close-btn" onclick="closeModal('registerModal')"><i class="fas fa-xmark"></i></span>
-        <h2>CREÁ TU CUENTA</h2>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('registerModal')"><i class="fas fa-xmark"></i></button>
+        <h2 id="register-title">CREÁ TU CUENTA</h2>
         
         <div class="oauth-block">
             <div class="oauth-buttons">
@@ -171,10 +171,10 @@
 </div>
 
 <!-- MODAL: COMPLETAR REGISTRO SOCIAL (OAUTH) -->
-<div id="oauthSignupModal" class="modal">
+<div id="oauthSignupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="oauth-signup-title">
     <div class="modal-content modal-content-wide">
-        <span class="close-btn" onclick="closeModal('oauthSignupModal')"><i class="fas fa-xmark"></i></span>
-        <h2>COMPLETÁ TU REGISTRO</h2>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('oauthSignupModal')"><i class="fas fa-xmark"></i></button>
+        <h2 id="oauth-signup-title">COMPLETÁ TU REGISTRO</h2>
         <p class="modal-subtitle">Casi listo. Solo nos faltan un par de datos para terminar tu cuenta con <strong id="oauth-signup-provider">tu red social</strong>.</p>
 
         <div id="oauth-signup-error" class="error-msg"></div>

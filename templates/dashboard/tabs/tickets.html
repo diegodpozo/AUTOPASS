@@ -82,7 +82,7 @@
 </div>
 
 <!-- MODAL: ATENDER / RESPONDER TICKET -->
-<div id="modal-ticket-answer" class="modal">
+<div id="modal-ticket-answer" class="modal" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title">
     <div class="modal-content modal-content-large modal-content--banded">
         {{ modal_header('fas fa-headset', 'ATENDER TICKET', "closeModal('modal-ticket-answer')", title_id='ticket-modal-title', subtitle='---', subtitle_id='ticket-modal-nro') }}
         <div class="modal-body">

@@ -32,6 +32,6 @@
         {%- endif %}
     </div>
     {%- if caller is defined %}{{ caller() }}{% endif %}
-    <button type="button" class="modal-close-top modal-close-top--inline" onclick="{{ close|safe }}">&times;</button>
+    <button type="button" class="modal-close-top modal-close-top--inline" data-modal-close aria-label="Cerrar" onclick="{{ close|safe }}">&times;</button>
 </div>
 {%- endmacro %}

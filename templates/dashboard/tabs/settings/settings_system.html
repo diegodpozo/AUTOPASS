@@ -72,7 +72,7 @@
 </div>
 
 <!-- MODAL: AGREGAR PISO -->
-<div id="modal-add-floor" class="modal">
+<div id="modal-add-floor" class="modal" role="dialog" aria-modal="true" aria-labelledby="floor-modal-title">
     <div class="modal-content modal-content--banded">
         {{ modal_header('fas fa-layer-group', 'NUEVO NIVEL', "closeModal('modal-add-floor')", title_id='floor-modal-title') }}
         <div class="modal-body">
@@ -141,7 +141,7 @@
 </div>
 
 <!-- MODAL: AGREGAR/EDITAR CÁMARA -->
-<div id="modal-camera-config" class="modal">
+<div id="modal-camera-config" class="modal" role="dialog" aria-modal="true" aria-labelledby="camera-modal-title">
     <div class="modal-content modal-content--banded">
         {{ modal_header('fas fa-video', 'AGREGAR CÁMARA', "closeModal('modal-camera-config')", title_id='camera-modal-title') }}
         <div class="modal-body">

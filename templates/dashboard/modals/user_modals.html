@@ -1,8 +1,8 @@
 {% from "components/modal_header.html" import modal_header %}
 <!-- MODAL: CREAR USUARIO ADMIN/STAFF -->
-<div id="modal-create-user" class="modal">
+<div id="modal-create-user" class="modal" role="dialog" aria-modal="true" aria-labelledby="create-user-modal-title">
     <div class="modal-content modal-content--banded">
-        {{ modal_header('fas fa-user-plus', 'ALTA USUARIO', "closeModal('modal-create-user')") }}
+        {{ modal_header('fas fa-user-plus', 'ALTA USUARIO', "closeModal('modal-create-user')", title_id='create-user-modal-title') }}
         
         <form class="modal-body" onsubmit="handleAdminCreateUser(event)" autocomplete="off">
             <div class="form-row">
@@ -111,9 +111,9 @@
 </div>
 
 <!-- MODAL: EDITAR USUARIO -->
-<div id="modal-edit-user" class="modal">
+<div id="modal-edit-user" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-user-modal-title">
     <div class="modal-content modal-content--banded">
-        {{ modal_header('fas fa-user-pen', 'EDITAR USUARIO', "closeModal('modal-edit-user')") }}
+        {{ modal_header('fas fa-user-pen', 'EDITAR USUARIO', "closeModal('modal-edit-user')", title_id='edit-user-modal-title') }}
         
         <form class="modal-body" onsubmit="handleAdminEditUser(event)" autocomplete="off">
             <input type="hidden" id="edit-user-id">
@@ -198,9 +198,9 @@
 </div>
 
 <!-- MODAL: CAMBIAR CONTRASEÑA (ADMIN) -->
-<div id="modal-change-password-admin" class="modal">
+<div id="modal-change-password-admin" class="modal" role="dialog" aria-modal="true" aria-labelledby="change-password-modal-title">
     <div class="modal-content modal-content--banded">
-        {{ modal_header('fas fa-key', 'CAMBIAR CONTRASEÑA', "closeModal('modal-change-password-admin')") }}
+        {{ modal_header('fas fa-key', 'CAMBIAR CONTRASEÑA', "closeModal('modal-change-password-admin')", title_id='change-password-modal-title') }}
         <div class="modal-body">
         <p class="text-small text-muted mb-20">Cambiar clave para: <b id="admin-pass-username" class="text-white">---</b></p>
         

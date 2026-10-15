@@ -233,10 +233,7 @@ window.changePassword = async function(e) {
     btn.disabled = false;
 };
 
-window.openRechargeModal = () => {
-    const m = document.getElementById('rechargeModal');
-    if (m) { m.style.display = 'block'; document.getElementById('recharge-amount').focus(); }
-};
+window.openRechargeModal = () => ui.openModal('rechargeModal');
 
 // P1.4 UX/UI: atajo "PASE QR" del bottom nav. Abre el Pase Digital de la reserva en curso,
 // si no hay ninguna, carga la lista y reintenta; en último caso informa al usuario.

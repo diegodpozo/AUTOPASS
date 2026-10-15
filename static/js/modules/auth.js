@@ -1,6 +1,6 @@
 import api from './api.js';
 import { toTitle, showToast } from './utils.js';
-import { switchModal, openModal } from './ui.js';
+import { switchModal, openModal, closeModal } from './ui.js';
 
 /**
  * AUTH MODULO
@@ -100,8 +100,7 @@ export async function handleLogin(e) {
         // Restablecer el estado del botón antes de navegar para evitar congelamientos en BFCache
         btn.innerHTML = originalText;
         btn.disabled = false;
-        const modal = document.getElementById('loginModal');
-        if (modal) modal.style.display = 'none';
+        closeModal('loginModal');
 
         if (data.nuevo_dispositivo) {
             sessionStorage.setItem('autopass_device_alert', '1');
@@ -348,8 +347,7 @@ export async function handleOAuthComplete(e) {
         localStorage.setItem('nombre', toTitle(data.nombre));
         localStorage.setItem('apellido', toTitle(data.apellido));
         localStorage.setItem('sucursal', data.sucursal || '');
-        const modal = document.getElementById('oauthSignupModal');
-        if (modal) modal.style.display = 'none';
+        closeModal('oauthSignupModal');
         window.location.href = '/perfil';
     } else {
         pendingOAuthCode = null;

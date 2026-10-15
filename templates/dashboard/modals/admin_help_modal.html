@@ -1,8 +1,8 @@
 {% from "components/modal_header.html" import modal_header %}
 <!-- MODAL: CENTRO DE AYUDA OPERATIVA Y TOURS PARA EMPLEADOS Y ADMINS -->
-<div id="modal-admin-help" class="modal">
+<div id="modal-admin-help" class="modal" role="dialog" aria-modal="true" aria-labelledby="admin-help-modal-title">
     <div class="modal-content modal-content--banded admin-help-modal-content">
-        {{ modal_header('fas fa-life-ring', 'CENTRO DE AYUDA OPERATIVA & TOURS', "closeModal('modal-admin-help')", subtitle='Instrucción técnica y resolución de contingencias para Staff y Administradores') }}
+        {{ modal_header('fas fa-life-ring', 'CENTRO DE AYUDA OPERATIVA & TOURS', "closeModal('modal-admin-help')", subtitle='Instrucción técnica y resolución de contingencias para Staff y Administradores', title_id='admin-help-modal-title') }}
 
         <div class="modal-body admin-help-modal-body">
             <!-- HERO BANNER CON BUSCADOR Y PILLS -->

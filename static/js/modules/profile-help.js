@@ -1,6 +1,7 @@
 import api from './api.js';
 import { showToast, toTitle, formatDayTime, escapeHtml } from './utils.js';
 import { renderCappedList, resetCappedState } from './list-pagination.js';
+import { closeModal } from './ui.js';
 
 /**
  * PERFIL HELP MODULE (v9.8.5)
@@ -384,6 +385,9 @@ export async function openSupportTicketModal(ticketId) {
 
     const modal = document.getElementById('support-ticket-modal');
     if (!modal) return;
+    // Se muestra a mano (y no por openModal) para no mover el scroll del ticket
+    // al enfocar la caja de respuesta. El encierro del foco y el cierre con
+    // Escape igual lo cubren: ui.js resuelve el dialogo visible por DOM.
     modal.style.display = 'flex';
     modal.classList.add('active');
 
@@ -437,7 +441,7 @@ export function closeSupportTicketModal() {
     const modal = document.getElementById('support-ticket-modal');
     if (modal) {
         modal.classList.remove('active');
-        modal.style.display = 'none';
+        closeModal('support-ticket-modal');
     }
     currentTicketId = null;
 };
