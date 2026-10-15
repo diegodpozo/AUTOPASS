@@ -165,13 +165,24 @@
     color: #888; 
 }
 
-.toggle-password { 
-    cursor: pointer; 
-    position: absolute; 
-    right: 15px; 
-    top: 50%; 
-    transform: translateY(-50%); 
-    color: #888; 
+/* Toggle de contrasena: ahora es un <button> (hay que poder tabularlo y que el
+   lector de pantalla lo anuncie), asi que se le quita el cromo nativo. Se centra
+   con flex y NO con transform: `button:active` de reset.css aplica
+   transform: scale(0.97) y pisaria el translateY(-50%), haciendo saltar el
+   boton medio alto al clickearlo. */
+.toggle-password {
+    cursor: pointer;
+    position: absolute;
+    right: 15px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: #888;
     transition: 0.3s;
     z-index: 10;
 }

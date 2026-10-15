@@ -136,8 +136,10 @@ export function showToast(msg, type = 'default', duration = 5000) {
     // CREAR ELEMENTO
     const t = document.createElement('div');
     t.className = `toast ${type}`;
-    // LOS TOASTS NO SE CIERRAN SOLOS: quedan visibles hasta que el usuario hace click
-    // en cualquier parte de la pantalla (ver handler global "click" abajo).
+    // El contenedor ya es una live region "polite" (ver modals_global.html); los
+    // error/warning se anuncian de inmediato con role="alert" para no quedar
+    // detras de otro mensaje en curso.
+    if (type === 'error' || type === 'warning') t.setAttribute('role', 'alert');
 
     // ASIGNAR ICONO SEGUN TIPO
     let icon = 'fa-bell';
@@ -152,17 +154,27 @@ export function showToast(msg, type = 'default', duration = 5000) {
     `;
 
     container.appendChild(t);
+
+    // Los informativos se van solos: antes exigian un click en cualquier parte
+    // de la pantalla para desaparecer. Los error/warning quedan fijos hasta que
+    // el usuario los descarte, porque suelen pedir una accion.
+    if (duration > 0 && type !== 'error' && type !== 'warning') {
+        setTimeout(() => _dismissToast(t), duration);
+    }
+}
+
+// DESCARTA UN TOAST CON SU ANIMACION DE SALIDA
+function _dismissToast(t) {
+    if (!t || t.classList.contains('hiding')) return;
+    t.classList.add('hiding');
+    setTimeout(() => { if (t.parentNode) t.remove(); }, 400);
 }
 
 // CERRAR TODOS LOS TOASTS AL HACER CLICK EN CUALQUIER LUGAR DE LA PANTALLA
 function _closeAllToasts() {
     const container = document.getElementById('toast-container');
     if (!container) return;
-    const toasts = Array.from(container.querySelectorAll('.toast:not(.hiding)'));
-    toasts.forEach(t => {
-        t.classList.add('hiding');
-        setTimeout(() => { if (t.parentNode) t.remove(); }, 400);
-    });
+    container.querySelectorAll('.toast:not(.hiding)').forEach(_dismissToast);
 }
 
 let _toastsClickBound = false;

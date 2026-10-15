@@ -72,10 +72,10 @@
                                      <div class="flex-col gap-10">
                                          <!-- Selector de Tipo -->
                                          <div class="form-group-premium gap-4 mb-5">
-                                            <label class="fg-label fg-label-xs">Tipo de Vehículo</label>
+                                            <label class="fg-label fg-label-xs" for="quick-veh-tipo">Tipo de Vehículo</label>
                                             <div class="select-wrapper-premium fg-auto">
                                                 <i id="quick-vehicle-type-icon" class="fas fa-car-side"></i>
-                                                <select name="tipo" class="input-premium-sm fg-pad-left" onchange="updateVehicleTypeIcon(this.value, 'quick-', this.form)">
+                                                <select name="tipo" class="input-premium-sm fg-pad-left" onchange="updateVehicleTypeIcon(this.value, 'quick-', this.form)" id="quick-veh-tipo">
                                                     <option value="Auto">Auto</option>
                                                     <option value="Moto">Moto</option>
                                                     <option value="Camioneta">Camioneta</option>
@@ -86,14 +86,14 @@
                                          <!-- Patente y Marca -->
                                          <div class="flex-row gap-8 flex-wrap-mobile justify-center">
                                              <div class="form-group-premium gap-4 flex-0-30">
-                                                 <label class="fg-label fg-label-xs">Patente</label>
+                                                 <label class="fg-label fg-label-xs" for="quick-veh-patente">Patente</label>
                                                   <div class="input-wrapper-premium">
-                                                      <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase fg-sm">
+                                                      <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase fg-sm" id="quick-veh-patente" autocapitalize="characters" spellcheck="false">
                                                   </div>
                                              </div>
                                              <div class="form-group-premium gap-4 flex-0-50">
-                                                 <label class="fg-label fg-label-xs">Marca / Modelo</label>
-                                                 <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm fg-sm">
+                                                 <label class="fg-label fg-label-xs" for="quick-veh-marca">Marca / Modelo</label>
+                                                 <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm fg-sm" id="quick-veh-marca">
                                              </div>
                                          </div>
                                      </div>
@@ -111,10 +111,10 @@
                             <div class="flex-col items-center gap-20">
                                 <!-- Vehículo centrado -->
                                 <div class="form-group-premium fg-280">
-                                    <label class="fg-label fg-label-md">Vehículo</label>
+                                    <label class="fg-label fg-label-md" for="res-vehicle">Vehículo</label>
                                     <div class="select-wrapper-premium fg-full">
                                         <i class="fas fa-car"></i>
-                                        <select class="res-vehicle fg-select" required>
+                                        <select class="res-vehicle fg-select" required id="res-vehicle">
                                             <option value="">Cargando flota...</option>
                                         </select>
                                     </div>
@@ -123,19 +123,19 @@
                                 <!-- Punto y Tipo centrados -->
                                 <div class="fg-row">
                                     <div class="form-group-premium fg-330">
-                                        <label class="fg-label">Punto AutoPass</label>
+                                        <label class="fg-label" for="res-sucursal">Punto AutoPass</label>
                                         <div class="select-wrapper-premium fg-full">
                                             <i class="fas fa-location-dot"></i>
-                                            <select class="res-sucursal fg-select" required>
+                                            <select class="res-sucursal fg-select" required id="res-sucursal">
                                                 <option value="">Cargando sucursales...</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="form-group-premium fg-144">
-                                        <label class="fg-label">Tipo de Estadía</label>
+                                        <label class="fg-label" for="res-type">Tipo de Estadía</label>
                                         <div class="select-wrapper-premium fg-full">
                                             <i class="fas fa-clock"></i>
-                                            <select class="res-type fg-select" required>
+                                            <select class="res-type fg-select" required id="res-type">
                                                 <option value="" selected disabled hidden>Seleccioná...</option>
                                                 <option value="hora">Hora</option>
                                                 <option value="dia">Día</option>
@@ -151,8 +151,8 @@
                                 <div id="dynamic-fields-premium">
                                     <div id="hourly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
                                         <div class="form-group-premium fg-170">
-                                            <label class="fg-label">Día y Horario</label>
-                                            <input type="text" class="res-date-only input-premium" placeholder="Fecha...">
+                                            <label class="fg-label" for="res-date-only">Día y Horario</label>
+                                            <input type="text" class="res-date-only input-premium" placeholder="Fecha..." id="res-date-only">
                                             <input type="hidden" class="res-time-only">
                                             <input type="hidden" class="res-hours-qty" value="1">
                                         </div>
@@ -160,50 +160,50 @@
                                     
                                     <div id="daily-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden">
                                         <div class="form-group-premium fg-col">
-                                            <label class="fg-label">Día de Estadía</label>
-                                            <input type="text" class="res-day-only input-premium" placeholder="Seleccioná día...">
+                                            <label class="fg-label" for="res-day-only">Día de Estadía</label>
+                                            <input type="text" class="res-day-only input-premium" placeholder="Seleccioná día..." id="res-day-only">
                                         </div>
                                     </div>
 
                                     <div id="weekly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
                                         <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm">Inicia el día</label>
-                                            <input type="text" class="res-week-start input-premium" placeholder="Fecha inicio...">
+                                            <label class="fg-label fg-label-sm" for="res-week-start">Inicia el día</label>
+                                            <input type="text" class="res-week-start input-premium" placeholder="Fecha inicio..." id="res-week-start">
                                         </div>
                                         <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm">Finaliza</label>
-                                            <input type="text" class="res-week-end input-premium-readonly" readonly>
+                                            <label class="fg-label fg-label-sm" for="res-week-end">Finaliza</label>
+                                            <input type="text" class="res-week-end input-premium-readonly" readonly id="res-week-end">
                                         </div>
                                     </div>
 
                                     <div id="fortnight-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
                                         <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm">Inicia el día</label>
-                                            <input type="text" class="res-fortnight-start input-premium" placeholder="Fecha inicio...">
+                                            <label class="fg-label fg-label-sm" for="res-fortnight-start">Inicia el día</label>
+                                            <input type="text" class="res-fortnight-start input-premium" placeholder="Fecha inicio..." id="res-fortnight-start">
                                         </div>
                                         <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm">Finaliza</label>
-                                            <input type="text" class="res-fortnight-end input-premium-readonly" readonly>
+                                            <label class="fg-label fg-label-sm" for="res-fortnight-end">Finaliza</label>
+                                            <input type="text" class="res-fortnight-end input-premium-readonly" readonly id="res-fortnight-end">
                                         </div>
                                     </div>
                                     <div id="month-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
                                         <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm">Inicia el día</label>
-                                            <input type="text" class="res-month-start input-premium" placeholder="Fecha inicio...">
+                                            <label class="fg-label fg-label-sm" for="res-month-start">Inicia el día</label>
+                                            <input type="text" class="res-month-start input-premium" placeholder="Fecha inicio..." id="res-month-start">
                                         </div>
                                         <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm">Finaliza</label>
-                                            <input type="text" class="res-month-end input-premium-readonly" readonly>
+                                            <label class="fg-label fg-label-sm" for="res-month-end">Finaliza</label>
+                                            <input type="text" class="res-month-end input-premium-readonly" readonly id="res-month-end">
                                         </div>
                                     </div>
                                     <div id="standard-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
                                         <div class="form-group-premium fg-200">
-                                            <label class="fg-label fg-label-sm">Inicio</label>
-                                            <input type="text" class="res-start input-premium" placeholder="Fecha y hora...">
+                                            <label class="fg-label fg-label-sm" for="res-start">Inicio</label>
+                                            <input type="text" class="res-start input-premium" placeholder="Fecha y hora..." id="res-start">
                                         </div>
                                         <div class="form-group-premium fg-200">
-                                            <label class="fg-label fg-label-sm">Fin</label>
-                                            <input type="text" class="res-end input-premium" placeholder="Fecha y hora...">
+                                            <label class="fg-label fg-label-sm" for="res-end">Fin</label>
+                                            <input type="text" class="res-end input-premium" placeholder="Fecha y hora..." id="res-end">
                                         </div>
                                     </div>
                                 </div>

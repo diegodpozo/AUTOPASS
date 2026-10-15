@@ -17,18 +17,18 @@
         <div id="login-error" class="error-msg"></div>
         <form id="loginForm">
             <div class="form-group">
-                <label>Correo Electrónico</label>
+                <label for="login-email">Correo Electrónico</label>
                 <div class="input-with-icon">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="login-email" placeholder="ejemplo@correo.com.ar" autofocus required>
+                    <input type="email" id="login-email" placeholder="ejemplo@correo.com.ar" autofocus required autocomplete="username">
                 </div>
             </div>
             <div class="form-group">
-                <label>Contraseña</label>
+                <label for="login-password">Contraseña</label>
                 <div class="input-with-icon">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="login-password" placeholder="********" required>
-                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('login-password', this)"></i>
+                    <input type="password" id="login-password" placeholder="********" required autocomplete="current-password">
+                    <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('login-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                 </div>
             </div>
             <div class="text-right mb-25">
@@ -54,10 +54,10 @@
 
         <form id="recoveryForm">
             <div class="form-group">
-                <label>Correo Electrónico</label>
+                <label for="recovery-email">Correo Electrónico</label>
                 <div class="input-with-icon">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="recovery-email" placeholder="ejemplo@correo.com.ar" required>
+                    <input type="email" id="recovery-email" placeholder="ejemplo@correo.com.ar" required autocomplete="email">
                 </div>
             </div>
             <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-paper-plane"></i> Enviar Enlace</button>
@@ -91,60 +91,60 @@
         <form id="registerForm">
             <div class="form-row">
                 <div class="form-group">
-                    <label>Nombre/s</label>
+                    <label for="reg-nombre">Nombre/s</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user"></i>
-                        <input type="text" id="reg-nombre" placeholder="Tu nombre/s" required>
+                        <input type="text" id="reg-nombre" placeholder="Tu nombre/s" required autocomplete="given-name">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Apellido</label>
+                    <label for="reg-apellido">Apellido</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user-tag"></i>
-                        <input type="text" id="reg-apellido" placeholder="Tu apellido" required>
+                        <input type="text" id="reg-apellido" placeholder="Tu apellido" required autocomplete="family-name">
                     </div>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>DNI</label>
+                    <label for="reg-dni">DNI</label>
                     <div class="input-with-icon">
                         <i class="fas fa-id-card"></i>
-                        <input type="text" id="reg-dni" class="digits-only" placeholder="12345678" maxlength="8" required>
+                        <input type="text" id="reg-dni" class="digits-only" placeholder="12345678" maxlength="8" required inputmode="numeric" autocomplete="off">
                     </div>
                     <small class="field-hint">Solo números, sin puntos.</small>
                 </div>
                 <div class="form-group">
-                    <label>Teléfono</label>
+                    <label for="reg-tel">Teléfono</label>
                     <div class="input-with-icon">
                         <i class="fas fa-phone"></i>
-                        <input type="tel" id="reg-tel" class="digits-only" placeholder="1122334455" maxlength="13" required>
+                        <input type="tel" id="reg-tel" class="digits-only" placeholder="1122334455" maxlength="13" required inputmode="tel" autocomplete="tel">
                     </div>
                     <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                 </div>
             </div>
             <div class="form-group">
-                <label>Correo Electrónico</label>
+                <label for="reg-email">Correo Electrónico</label>
                 <div class="input-with-icon">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="reg-email" placeholder="ejemplo@correo.com.ar" required>
+                    <input type="email" id="reg-email" placeholder="ejemplo@correo.com.ar" required autocomplete="email">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Contraseña</label>
+                    <label for="reg-password">Contraseña</label>
                     <div class="input-with-icon">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="reg-password" placeholder="Clave segura" required>
-                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('reg-password', this)"></i>
+                        <input type="password" id="reg-password" placeholder="Clave segura" required autocomplete="new-password">
+                        <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('reg-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Confirmar Contraseña</label>
+                    <label for="reg-password-confirm">Confirmar Contraseña</label>
                     <div class="input-with-icon">
                         <i class="fas fa-shield-halved"></i>
-                        <input type="password" id="reg-password-confirm" placeholder="Repetí la clave" required>
-                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('reg-password-confirm', this)"></i>
+                        <input type="password" id="reg-password-confirm" placeholder="Repetí la clave" required autocomplete="new-password">
+                        <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('reg-password-confirm', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                     </div>
                 </div>
             </div>
@@ -181,7 +181,7 @@
 
         <form id="oauthSignupForm">
             <div class="form-group">
-                <label>Correo Electrónico</label>
+                <label for="oauth-signup-email">Correo Electrónico</label>
                 <div class="input-with-icon">
                     <i class="fas fa-envelope"></i>
                     <input type="email" id="oauth-signup-email" readonly>
@@ -189,14 +189,14 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Nombre/s</label>
+                    <label for="oauth-signup-nombre">Nombre/s</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user"></i>
                         <input type="text" id="oauth-signup-nombre" readonly>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Apellido</label>
+                    <label for="oauth-signup-apellido">Apellido</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user-tag"></i>
                         <input type="text" id="oauth-signup-apellido" readonly>
@@ -205,18 +205,18 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>DNI</label>
+                    <label for="oauth-signup-dni">DNI</label>
                     <div class="input-with-icon">
                         <i class="fas fa-id-card"></i>
-                        <input type="text" id="oauth-signup-dni" class="digits-only" placeholder="12345678" maxlength="8" required>
+                        <input type="text" id="oauth-signup-dni" class="digits-only" placeholder="12345678" maxlength="8" required inputmode="numeric">
                     </div>
                     <small class="field-hint">Solo números, sin puntos.</small>
                 </div>
                 <div class="form-group">
-                    <label>Teléfono</label>
+                    <label for="oauth-signup-tel">Teléfono</label>
                     <div class="input-with-icon">
                         <i class="fas fa-phone"></i>
-                        <input type="tel" id="oauth-signup-tel" class="digits-only" placeholder="1122334455" maxlength="13" required>
+                        <input type="tel" id="oauth-signup-tel" class="digits-only" placeholder="1122334455" maxlength="13" required inputmode="tel">
                     </div>
                     <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                 </div>

@@ -4,17 +4,17 @@
     <div class="modal-content modal-content--banded">
         {{ modal_header('fas fa-user-plus', 'ALTA USUARIO', "closeModal('modal-create-user')") }}
         
-        <form class="modal-body" onsubmit="handleAdminCreateUser(event)">
+        <form class="modal-body" onsubmit="handleAdminCreateUser(event)" autocomplete="off">
             <div class="form-row">
                 <div class="form-group">
-                    <label>Nombre</label>
+                    <label for="admin-user-nombre">Nombre</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user"></i>
                         <input type="text" id="admin-user-nombre" placeholder="Nombre/s" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Apellido</label>
+                    <label for="admin-user-apellido">Apellido</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user-tag"></i>
                         <input type="text" id="admin-user-apellido" placeholder="Apellido" required>
@@ -24,17 +24,17 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Correo Electrónico</label>
+                    <label for="admin-user-email">Correo Electrónico</label>
                     <div class="input-with-icon">
                         <i class="fas fa-envelope"></i>
                         <input type="email" id="admin-user-email" placeholder="ejemplo@correo.com" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>DNI</label>
+                    <label for="admin-user-dni">DNI</label>
                     <div class="input-with-icon">
                         <i class="fas fa-id-card"></i>
-                        <input type="text" id="admin-user-dni" class="digits-only" placeholder="12345678" maxlength="8" required>
+                        <input type="text" id="admin-user-dni" class="digits-only" placeholder="12345678" maxlength="8" required inputmode="numeric">
                     </div>
                     <small class="field-hint">Solo números, sin puntos.</small>
                 </div>
@@ -42,7 +42,7 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Rol</label>
+                    <label for="admin-user-rol">Rol</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user-shield"></i>
                         <select id="admin-user-rol" class="select-premium" onchange="toggleBranchSelection()">
@@ -55,11 +55,11 @@
                     </div>
                 </div>
                 <div class="form-group" id="admin-password-group">
-                    <label>Contraseña Temporal</label>
+                    <label for="admin-user-password">Contraseña Temporal</label>
                     <div class="input-with-icon">
                         <i class="fas fa-lock"></i>
                         <input type="password" id="admin-user-password" placeholder="Clave temporal" required>
-                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('admin-user-password', this)"></i>
+                        <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('admin-user-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                     </div>
                     <small class="modal-hint">Min. 8 caracteres, 1 mayúscula y 1 símbolo.</small>
                 </div>
@@ -80,7 +80,7 @@
             <!-- ORGANIZACION (solo al invitar un Administrador General) -->
             <div id="invite-org-row" class="form-row">
                 <div class="form-group">
-                    <label>Empresa / Organización</label>
+                    <label for="admin-user-organizacion">Empresa / Organización</label>
                     <div class="input-with-icon">
                         <i class="fas fa-building"></i>
                         <input type="text" id="admin-user-organizacion" placeholder="Nombre de la empresa" maxlength="80">
@@ -92,7 +92,7 @@
             <!-- SELECCIÓN DE SUCURSAL (Solo para Staff o Admin Local) -->
             <div id="branch-selection-row" class="form-row">
                 <div class="form-group">
-                    <label>Sucursal Asignada</label>
+                    <label for="admin-user-sucursal">Sucursal Asignada</label>
                     <div class="input-with-icon">
                         <i class="fas fa-location-dot"></i>
                         <select id="admin-user-sucursal" class="select-premium">
@@ -115,18 +115,18 @@
     <div class="modal-content modal-content--banded">
         {{ modal_header('fas fa-user-pen', 'EDITAR USUARIO', "closeModal('modal-edit-user')") }}
         
-        <form class="modal-body" onsubmit="handleAdminEditUser(event)">
+        <form class="modal-body" onsubmit="handleAdminEditUser(event)" autocomplete="off">
             <input type="hidden" id="edit-user-id">
             <div class="form-row">
                 <div class="form-group">
-                    <label>Nombre</label>
+                    <label for="edit-user-nombre">Nombre</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user"></i>
                         <input type="text" id="edit-user-nombre" placeholder="Nombre/s" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Apellido</label>
+                    <label for="edit-user-apellido">Apellido</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user-tag"></i>
                         <input type="text" id="edit-user-apellido" placeholder="Apellido" required>
@@ -136,17 +136,17 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Correo Electrónico</label>
+                    <label for="edit-user-email">Correo Electrónico</label>
                     <div class="input-with-icon">
                         <i class="fas fa-envelope"></i>
                         <input type="email" id="edit-user-email" placeholder="ejemplo@correo.com" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>DNI</label>
+                    <label for="edit-user-dni">DNI</label>
                     <div class="input-with-icon">
                         <i class="fas fa-id-card"></i>
-                        <input type="text" id="edit-user-dni" class="digits-only" placeholder="12345678" maxlength="8" required>
+                        <input type="text" id="edit-user-dni" class="digits-only" placeholder="12345678" maxlength="8" required inputmode="numeric">
                     </div>
                     <small class="field-hint">Solo números, sin puntos.</small>
                 </div>
@@ -154,15 +154,15 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Teléfono</label>
+                    <label for="edit-user-tel">Teléfono</label>
                     <div class="input-with-icon">
                         <i class="fas fa-phone"></i>
-                        <input type="text" id="edit-user-tel" class="digits-only" placeholder="1122334455" maxlength="13" required>
+                        <input type="text" id="edit-user-tel" class="digits-only" placeholder="1122334455" maxlength="13" required inputmode="tel">
                     </div>
                     <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                 </div>
                 <div class="form-group">
-                    <label>Rol</label>
+                    <label for="edit-user-rol">Rol</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user-shield"></i>
                         <select id="edit-user-rol" class="select-premium" onchange="toggleEditBranchSelection()">
@@ -179,7 +179,7 @@
             <!-- SELECCIÓN DE SUCURSAL (Solo para Staff o Admin Local) -->
             <div id="edit-branch-selection-row" class="form-row">
                 <div class="form-group">
-                    <label>Sucursal Asignada</label>
+                    <label for="edit-user-sucursal">Sucursal Asignada</label>
                     <div class="input-with-icon">
                         <i class="fas fa-location-dot"></i>
                         <select id="edit-user-sucursal" class="select-premium">
@@ -204,15 +204,15 @@
         <div class="modal-body">
         <p class="text-small text-muted mb-20">Cambiar clave para: <b id="admin-pass-username" class="text-white">---</b></p>
         
-        <form onsubmit="handleAdminChangePassword(event)">
+        <form onsubmit="handleAdminChangePassword(event)" autocomplete="off">
             <input type="hidden" id="admin-pass-userid">
             
             <div class="form-group">
-                <label>Nueva Contraseña</label>
+                <label for="admin-new-password">Nueva Contraseña</label>
                 <div class="input-with-icon">
                     <i class="fas fa-lock"></i>
                     <input type="password" id="admin-new-password" placeholder="Mín. 8 caracteres" required>
-                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('admin-new-password', this)"></i>
+                    <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('admin-new-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                 </div>
                 <small class="modal-hint">
                     Debe incluir Mayúscula y Símbolo.

@@ -19,6 +19,69 @@ Recordatorio de trabajo pendiente para continuar en una próxima sesión.
   - (c) `git commit`/`push`: **el usuario no lo pidió**.
 - Limpieza puntual de datos (pedido del usuario, 14/10/2026): se borraron **hard-delete** el usuario real id **475** (`diegodpozo2332@gmail.com`, admin de prueba) y la organización id **2** (`AUTOPASSPRUEBA`), tras auditar que no quedaban filas derivadas (0 vehículos/reservas/logs/notificaciones/sesiones/tickets/sucursales/settings). Email liberado.
 
+## Accesibilidad de formularios: labels asociados, autofill, ojo de contraseña y toasts anunciables — APLICADO y PUSHEADO 14/10/2026 (v9.34.93)
+
+- **Origen**: pedido del usuario ("¿qué recomendás para mejorar la experiencia del usuario?"). Se entregó
+  un diagnóstico **medido** y el usuario aprobó **solo** los quick wins 1·2·3·5 + guard. Quedaron **fuera**
+  (offers para cuando quiera): modales con `role="dialog"`+focus trap+Escape unificado, mover los CDN
+  pesados a la página que los usa (`base.html` carga Chart.js, flatpickr, qrcodejs, html2canvas y Leaflet
+  en **todas** las páginas, y `instalar.html:108` recarga qrcodejs), y los menores
+  (`prefers-reduced-motion` en más lugares, error por campo con `aria-describedby`).
+- **Medición previa (el "antes")**: 179 `<label>` en `templates/` y solo **8** con `for=`; `autocomplete=` **1** uso
+  en templates (6 en todo el repo); `inputmode=` **0** en templates (2 en todo el repo); los "ojitos" de contraseña
+  eran `<i onclick>` (no tabulables, sin nombre ni estado); `#toast-container` sin live region con **206**
+  llamadas a `showToast`; `role="dialog"` 0.
+- **1) Label→campo**: `_tools/migrate_label_association.py` (dry-run por defecto, `--apply`, idempotente,
+  preserva el fin de línea) → **+121 `for=`** (8 → **129**) y **+23 `id=`** (618 → **641**, delta exacto) en
+  **17 templates**. Los controles sin `id` recibieron uno **con prefijo por formulario** (`quick-veh-*` ×3,
+  `add-veh-*` ×3, `res-*` ×13, `contact-*` ×4) porque `perfil.html` incluye juntos `inicio.html` y
+  `vehiculos.html` (los dos traen el form "NUEVO VEHÍCULO"). Se saltean los labels que envuelven su control
+  (asociación implícita) y los que rotulan un valor (no hay campo que asociar). Re-corrida en dry-run: 0 pendientes.
+- **2) Autofill/teclado**: `_tools/migrate_form_attributes.py` → medido en `templates/`: `autocomplete=` **1 → 24**,
+  `inputmode=` **0 → 9** (`numeric` en DNI, `tel` en teléfono), `autocapitalize="characters"` y
+  `spellcheck="false"` **0 → 2** cada uno (patentes), y `autocomplete="off"` a nivel `<form>` en los 3 formularios
+  de **datos de terceros** del panel de usuarios (no son datos del usuario del navegador). Re-corrida: 0 pendientes.
+- **3) Ojo de contraseña**: los **10** `<i class="... toggle-password onclick=...">` pasaron a
+  `<button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">`.
+  `ui.js::togglePasswordVisibility` acepta el botón y mantiene `aria-pressed`/`aria-label`. El
+  `type="button"` no es cosmético: sin él, un botón dentro del form es submit y clickear el ojo enviaría
+  el formulario.
+- **4) CSS, dos trampas resueltas**: (a) `.input-with-icon i:not(.toggle-password)` pasó a **hijo directo**
+  (`>`) en `forms.css` y `profile-base.css`, porque el `<i>` de adentro del botón matcheaba el selector
+  descendiente y se iba a la izquierda; (b) el centrado del toggle abandonó `transform: translateY(-50%)`
+  por `top:0; bottom:0; display:flex; align-items:center`, porque `button:active { transform: scale(0.97) }`
+  de `reset.css` (especificidad 0,3,1) pisa el `translateY` y el botón saltaba medio alto al clickearlo.
+  Sin `!important`.
+- **5) Toasts**: `#toast-container` es live region (`role="status" aria-live="polite" aria-atomic="false"`)
+  y `showToast` marca `error`/`warning` con `role="alert"`. Además los informativos **se auto-cierran** a
+  los `duration` ms (parámetro que ya existía sin usarse, default 5000) reutilizando el nuevo
+  `_dismissToast` (que ahora también usa `_closeAllToasts`); error/warning siguen fijos.
+- **Guard nuevo**: `_tools/check_a11y_forms.py`, registrado en `Info proyecto/AUDITORIAS.md`, con 4 reglas
+  (label asociado / `for=` no huérfano / toggle `<button type=button>` con aria / toast live region).
+  Encontró **2 toggles más** en `reset_password.html` que una búsqueda truncada mía no había visto.
+- **Verificación (toda real, no supuesta)**: `node --check` OK en `ui.js`/`utils.js`; **9/9 guards de Python en
+  verde** (los 8 previos + el nuevo) y el scan XSS de PowerShell en exit 0; suite **878 passed** (medida antes de integrar `701c49f`; el árbol integrado da **882**) sin regresiones. Runtime (server propio en **:8013** +
+  Edge headless por CDP): **0 ids duplicados** en las 10 páginas servidas (el riesgo real era
+  `inicio.html`+`vehiculos.html` conviviendo en `/perfil`), 0 labels que rotulan un campo sin asociarlo, y
+  los **11 toggles** de las 4 páginas (landing/login, reset, perfil, dashboard) con fondo transparente,
+  borde y padding 0, tipografía heredada (14px, no los 13.33px del UA), icono `static` y **centrado
+  exacto** (dy=0, a 15px del borde derecho del input). **Enter y Space** activan el toggle sin enviar el
+  formulario. La variante `.edit-mode` del perfil se midió con **sesión real** (token de `/v1/auth/login`
+  puesto en localStorage, porque sin token `/perfil` redirige al landing): font 14.4px (0.9rem), color
+  `var(--text-muted)` y el icono guía dorado sigue en `left:15px`.
+- **DOCUMENTADO Y COMMITEADO EN ESTA TANDA**: entradas nuevas en `HISTORIAL.md` (v9.34.93), `ESTADO_PROYECTO.md`
+  (bullet del 14/10) y la tabla de guards de `AUDITORIAS.md` (el guard nuevo + las 2 migraciones).
+  `static/sw.js` subido de `v8` a `v9` (`CACHE_NAME`/`SHELL_CACHE`) porque `forms.css`, `modals.css`,
+  `profile-base.css`, `ui.js` y `utils.js` están en `PRECACHE`. Los CSS tocados no cambian color (solo suman
+  propiedades de layout) → nada que declarar en `color_equivalence_allowlist.json`.
+- **PENDIENTE (no urgente)**: documentar en `HISTORIAL.md`/`ESTADO_PROYECTO.md` la tanda de **`v9.34.91`/`v9.34.92`**,
+  que se commiteó sin entrada. Y, cuando el usuario quiera, los 2 quick wins que quedaron afuera: modales con
+  `role="dialog"` + focus trap + Escape unificado, y mover los CDN pesados (`base.html`) a la página que los usa.
+- **Nota para la próxima sesión**: los encabezados "(LOCAL, SIN COMMITEAR)" y los "PENDIENTE: commit" de
+  las secciones **más abajo** —incluida la de SUPER-ADMIN, que ya se pusheó como `701c49f`— son
+  **históricos**: todo lo aplicado hasta `3a80ed2` y `701c49f` está en `origin/main`. No re-verificar
+  sección por sección.
+
 ## FASE 4 — Aislamiento por organización de la OPERACIÓN — APLICADO 14/10/2026 (LOCAL, SIN COMMITEAR)
 
 - Objetivo: que un **Admin General nuevo vea el panel vacío de verdad**. Hasta Fase 3 las *tablas* (usuarios, sucursales, promos, settings) ya estaban aisladas, pero los **indicadores/cards del dashboard** seguían mostrando datos globales (fundamentalmente de la org principal).

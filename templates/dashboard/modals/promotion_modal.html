@@ -10,14 +10,14 @@
                     <div class="flex-col gap-15">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Título del Beneficio</label>
+                                <label for="promo-titulo">Título del Beneficio</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-tag"></i>
                                     <input type="text" id="promo-titulo" placeholder="Ej: 1 Hora Gratis" required>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Puntos necesarios</label>
+                                <label for="promo-costo">Puntos necesarios</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-star"></i>
                                     <input type="number" id="promo-costo" placeholder="500" required>
@@ -26,7 +26,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Descripción del Beneficio</label>
+                            <label for="promo-descripcion">Descripción del Beneficio</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-align-left"></i>
                                 <textarea id="promo-descripcion" rows="2" placeholder="Detalles del beneficio..." required></textarea>
@@ -34,7 +34,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Seleccionar Ícono Visual</label>
+                            <label for="promo-icono">Seleccionar Ícono Visual</label>
                             <div class="icon-picker-grid">
                                 <div class="icon-option active" data-icon="fas fa-gift" onclick="selectPromoIcon(this)"><i class="fas fa-gift"></i></div>
                                 <div class="icon-option" data-icon="fas fa-car" onclick="selectPromoIcon(this)"><i class="fas fa-car"></i></div>
@@ -53,7 +53,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Tipo de Canje</label>
+                            <label for="promo-tipo-canje">Tipo de Canje</label>
                             <div class="input-with-icon promo-tipo-select">
                                 <i class="fas fa-tags"></i>
                                 <select id="promo-tipo-canje" class="select-premium" onchange="togglePromoTipoCanje(this)">
@@ -65,7 +65,7 @@
                         </div>
 
                         <div class="form-group" id="promo-descuento-field">
-                            <label>% de Descuento en Estacionamiento</label>
+                            <label for="promo-valor-descuento">% de Descuento en Estacionamiento</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-percent"></i>
                                 <input type="number" id="promo-valor-descuento" placeholder="Ej: 10" min="1" max="100">
@@ -73,7 +73,7 @@
                         </div>
 
                         <div class="form-group admin-only-field">
-                            <label>Sucursal Asignada</label>
+                            <label for="promo-sucursal">Sucursal Asignada</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-location-dot"></i>
                                 <select id="promo-sucursal" class="select-premium">
@@ -87,7 +87,7 @@
                     <!-- COLUMNA 2: UBICACIÓN Y MAPA -->
                     <div class="flex-col gap-15">
                         <div class="form-group">
-                            <label>Dirección donde se canjea</label>
+                            <label for="promo-direccion">Dirección donde se canjea</label>
                             <div class="flex-row gap-10">
                                 <div class="input-with-icon">
                                     <i class="fas fa-map-location-dot"></i>

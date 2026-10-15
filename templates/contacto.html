@@ -48,22 +48,22 @@
             </div>
             <form id="contactForm" class="premium-form">
                 <div class="form-group">
-                    <label>Nombre y Apellido</label>
+                    <label for="contact-nombre">Nombre y Apellido</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user"></i>
-                        <input type="text" placeholder="Ej: Juan Pérez" required>
+                        <input type="text" placeholder="Ej: Juan Pérez" required id="contact-nombre">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Correo Electrónico</label>
+                    <label for="contact-email">Correo Electrónico</label>
                     <div class="input-with-icon">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" placeholder="juan@ejemplo.com" required>
+                        <input type="email" placeholder="juan@ejemplo.com" required id="contact-email">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Motivo de Consulta</label>
-                    <select required>
+                    <label for="contact-motivo">Motivo de Consulta</label>
+                    <select required id="contact-motivo">
                         <option value="">Seleccioná una opción</option>
                         <option value="usuario">Soy Usuario (Soporte/Dudas)</option>
                         <option value="dueno">Soy Dueño de Estacionamiento</option>
@@ -72,8 +72,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Mensaje</label>
-                    <textarea rows="5" placeholder="Escribí tu mensaje aquí..." required></textarea>
+                    <label for="contact-mensaje">Mensaje</label>
+                    <textarea rows="5" placeholder="Escribí tu mensaje aquí..." required id="contact-mensaje"></textarea>
                 </div>
                 <button type="submit" class="btn btn--primary btn--full">Enviar Mensaje</button>
             </form>

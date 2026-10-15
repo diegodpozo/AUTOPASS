@@ -14,10 +14,10 @@
                     <div class="flex-col gap-15">
                         <!-- Selector de Tipo -->
                         <div class="form-group-premium">
-                            <label>Tipo de Vehículo</label>
+                            <label for="add-veh-tipo">Tipo de Vehículo</label>
                             <div class="select-wrapper-premium fg-auto">
                                 <i id="vehicle-type-icon" class="fas fa-car-side vehicle-type-icon"></i>
-                                <select name="tipo" class="input-premium-sm fg-pad-left" onchange="updateVehicleTypeIcon(this.value, '', this.form)">
+                                <select name="tipo" class="input-premium-sm fg-pad-left" onchange="updateVehicleTypeIcon(this.value, '', this.form)" id="add-veh-tipo">
                                     <option value="Auto">Auto</option>
                                     <option value="Moto">Moto</option>
                                     <option value="Camioneta">Camioneta</option>
@@ -28,14 +28,14 @@
                         <!-- Patente y Marca -->
                         <div class="flex-row gap-10 flex-wrap-mobile">
                             <div class="form-group-premium">
-                                <label>Patente</label>
+                                <label for="add-veh-patente">Patente</label>
                                 <div class="input-wrapper-premium">
-                                    <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase">
+                                    <input type="text" name="patente" placeholder="ABC 123" required class="input-premium-sm uppercase" id="add-veh-patente" autocapitalize="characters" spellcheck="false">
                                 </div>
                             </div>
                             <div class="form-group-premium">
-                                <label>Marca / Modelo</label>
-                                <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm">
+                                <label for="add-veh-marca">Marca / Modelo</label>
+                                <input type="text" name="marca_modelo" placeholder="Ej: VW Gol" required class="input-premium-sm" id="add-veh-marca">
                             </div>
                         </div>
                     </div>

@@ -42,8 +42,8 @@ clase_lead="saludo-lead--avatar",
                                 </div>
                             </div>
                             <div class="edit-mode">
-                                <label>Editar Nombre</label>
-                                <input type="text" id="input-nombre" class="input-premium-sm" placeholder="Tu nombre">
+                                <label for="input-nombre">Editar Nombre</label>
+                                <input type="text" id="input-nombre" class="input-premium-sm" placeholder="Tu nombre" autocomplete="given-name">
                                 <div class="edit-actions">
                                     <button class="btn btn--sm btn--outline" onclick="exitEditMode('nombre')">Cancelar</button>
                                     <button class="btn btn--sm btn--primary" onclick="saveField('nombre', event)">Guardar</button>
@@ -66,8 +66,8 @@ clase_lead="saludo-lead--avatar",
                                 </div>
                             </div>
                             <div class="edit-mode">
-                                <label>Editar Apellido</label>
-                                <input type="text" id="input-apellido" class="input-premium-sm" placeholder="Tu apellido">
+                                <label for="input-apellido">Editar Apellido</label>
+                                <input type="text" id="input-apellido" class="input-premium-sm" placeholder="Tu apellido" autocomplete="family-name">
                                 <div class="edit-actions">
                                     <button class="btn btn--sm btn--outline" onclick="exitEditMode('apellido')">Cancelar</button>
                                     <button class="btn btn--sm btn--primary" onclick="saveField('apellido', event)">Guardar</button>
@@ -90,8 +90,8 @@ clase_lead="saludo-lead--avatar",
                                 </div>
                             </div>
                             <div class="edit-mode">
-                                <label>Editar DNI</label>
-                                <input type="text" id="input-dni" class="input-premium-sm digits-only" placeholder="Tu DNI">
+                                <label for="input-dni">Editar DNI</label>
+                                <input type="text" id="input-dni" class="input-premium-sm digits-only" placeholder="Tu DNI" inputmode="numeric" autocomplete="off">
                                 <small class="field-hint">Solo números, sin puntos.</small>
                                 <div class="edit-actions">
                                     <button class="btn btn--sm btn--outline" onclick="exitEditMode('dni')">Cancelar</button>
@@ -115,8 +115,8 @@ clase_lead="saludo-lead--avatar",
                                 </div>
                             </div>
                             <div class="edit-mode">
-                                <label>Editar Email</label>
-                                <input type="email" id="input-email" class="input-premium-sm" placeholder="ejemplo@correo.com">
+                                <label for="input-email">Editar Email</label>
+                                <input type="email" id="input-email" class="input-premium-sm" placeholder="ejemplo@correo.com" autocomplete="email">
                                 <div class="edit-actions">
                                     <button class="btn btn--sm btn--outline" onclick="exitEditMode('email')">Cancelar</button>
                                     <button class="btn btn--sm btn--primary" onclick="saveField('email', event)">Guardar</button>
@@ -139,8 +139,8 @@ clase_lead="saludo-lead--avatar",
                                 </div>
                             </div>
                             <div class="edit-mode">
-                                <label>Editar Teléfono</label>
-                                <input type="tel" id="input-telefono" class="input-premium-sm digits-only" placeholder="1122334455" maxlength="13">
+                                <label for="input-telefono">Editar Teléfono</label>
+                                <input type="tel" id="input-telefono" class="input-premium-sm digits-only" placeholder="1122334455" maxlength="13" inputmode="tel" autocomplete="tel">
                                 <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                                 <div class="edit-actions">
                                     <button class="btn btn--sm btn--outline" onclick="exitEditMode('telefono')">Cancelar</button>
@@ -161,29 +161,29 @@ clase_lead="saludo-lead--avatar",
                 
                 <form onsubmit="changePassword(event)" class="form-security-premium">
                     <div class="form-group-premium mb-15">
-                        <label>Contraseña Actual</label>
+                        <label for="current-password">Contraseña Actual</label>
                         <div class="input-with-icon">
                             <i class="fas fa-lock"></i>
-                            <input type="password" id="current-password" class="input-premium-sm" placeholder="********" required>
-                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('current-password', this)"></i>
+                            <input type="password" id="current-password" class="input-premium-sm" placeholder="********" required autocomplete="current-password">
+                            <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('current-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                         </div>
                     </div>
                     
                     <div class="form-group-premium mb-15">
-                        <label>Nueva Contraseña</label>
+                        <label for="new-password">Nueva Contraseña</label>
                         <div class="input-with-icon">
                             <i class="fas fa-key"></i>
-                            <input type="password" id="new-password" class="input-premium-sm" placeholder="********" required>
-                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('new-password', this)"></i>
+                            <input type="password" id="new-password" class="input-premium-sm" placeholder="********" required autocomplete="new-password">
+                            <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('new-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                         </div>
                     </div>
                     
                     <div class="form-group-premium mb-20">
-                        <label>Confirmar Nueva</label>
+                        <label for="confirm-new-password">Confirmar Nueva</label>
                         <div class="input-with-icon">
                             <i class="fas fa-check-double"></i>
-                            <input type="password" id="confirm-new-password" class="input-premium-sm" placeholder="********" required>
-                            <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('confirm-new-password', this)"></i>
+                            <input type="password" id="confirm-new-password" class="input-premium-sm" placeholder="********" required autocomplete="new-password">
+                            <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('confirm-new-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                         </div>
                     </div>
 

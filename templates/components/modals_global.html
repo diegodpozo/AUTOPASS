@@ -13,7 +13,10 @@
     </div>
 </div>
 
-<div id="toast-container"></div>
+<!-- role="status" + aria-live: showToast es la unica salida de exito/error de la
+     app y sin live region el lector de pantalla no se enteraba de nada.
+     aria-atomic="false" evita releer todo el contenedor al sumar un toast. -->
+<div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <!-- MODAL: ELECCIÓN DE OPCIÓN -->
 <div id="modal-choice" class="modal">

@@ -4,7 +4,10 @@
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
 .input-with-icon { position: relative; display: flex; align-items: center; }
-.input-with-icon i:not(.toggle-password) { position: absolute; left: 15px; color: var(--dorado); font-size: 0.85rem; pointer-events: none; }
+/* Icono guia: hijo DIRECTO de .input-with-icon. El toggle de contrasena es un
+   <button> que envuelve su propio <i>, asi que un selector descendiente lo
+   alcanzaria y lo mandaria a la izquierda del campo. */
+.input-with-icon > i:not(.toggle-password) { position: absolute; left: 15px; color: var(--dorado); font-size: 0.85rem; pointer-events: none; }
 .input-with-icon input { padding-left: 45px; }
 
 /* --- TEXTO DE AYUDA DE CAMPOS DE FORMULARIO (EJ: "Solo números, sin puntos") --- */

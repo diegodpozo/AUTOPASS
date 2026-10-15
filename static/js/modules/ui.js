@@ -51,19 +51,27 @@ export function switchModal(oldId, newId) {
 
 /**
  * ALTERNA VISIBILIDAD DE CAMPOS DE CONTRASENA.
+ * `triggerEl` es el <button class="toggle-password"> que envuelve al icono
+ * (accesible por teclado); se acepta tambien el <i> suelto por compatibilidad.
+ * Mantiene aria-pressed/aria-label para que el cambio de estado se anuncie.
  */
-export function togglePasswordVisibility(inputId, iconEl) {
+export function togglePasswordVisibility(inputId, triggerEl) {
     const input = document.getElementById(inputId);
-    if (!input || !iconEl) return;
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        iconEl.classList.remove('fa-eye');
-        iconEl.classList.add('fa-eye-slash');
-    } else {
-        input.type = 'password';
-        iconEl.classList.remove('fa-eye-slash');
-        iconEl.classList.add('fa-eye');
+    if (!input || !triggerEl) return;
+
+    const icon = triggerEl.tagName === 'BUTTON' ? triggerEl.querySelector('i') : triggerEl;
+
+    const wasHidden = input.type === 'password';
+    input.type = wasHidden ? 'text' : 'password';
+
+    if (icon) {
+        icon.classList.toggle('fa-eye', !wasHidden);
+        icon.classList.toggle('fa-eye-slash', wasHidden);
+    }
+
+    if (triggerEl.hasAttribute('aria-pressed')) {
+        triggerEl.setAttribute('aria-pressed', String(wasHidden));
+        triggerEl.setAttribute('aria-label', wasHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
     }
 }
 
