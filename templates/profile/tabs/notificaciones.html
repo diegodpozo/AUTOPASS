@@ -6,30 +6,30 @@
     <div class="notif-filter-bar">
         <div class="notif-filter-chips">
             <button class="notif-chip active" data-filter="ALL" onclick="filterNotifs('ALL', this)">
-                <i class="fas fa-layer-group"></i> Todas
+                <i class="fas fa-layer-group" aria-hidden="true"></i> Todas
             </button>
             <button class="notif-chip" data-filter="UNREAD" onclick="filterNotifs('UNREAD', this)">
-                <i class="fas fa-envelope"></i> No leídas
+                <i class="fas fa-envelope" aria-hidden="true"></i> No leídas
             </button>
             <button class="notif-chip" data-filter="RESERVATION" onclick="filterNotifs('RESERVATION', this)">
-                <i class="fas fa-calendar-alt"></i> Reservas
+                <i class="fas fa-calendar-alt" aria-hidden="true"></i> Reservas
             </button>
             <button class="notif-chip" data-filter="FINANCE" onclick="filterNotifs('FINANCE', this)">
-                <i class="fas fa-wallet"></i> Pagos & Saldo
+                <i class="fas fa-wallet" aria-hidden="true"></i> Pagos & Saldo
             </button>
             <button class="notif-chip" data-filter="SUPPORT" onclick="filterNotifs('SUPPORT', this)">
-                <i class="fas fa-headset"></i> Soporte
+                <i class="fas fa-headset" aria-hidden="true"></i> Soporte
             </button>
             <button class="notif-chip" data-filter="SECURITY" onclick="filterNotifs('SECURITY', this)">
-                <i class="fas fa-shield-halved"></i> Seguridad
+                <i class="fas fa-shield-halved" aria-hidden="true"></i> Seguridad
             </button>
         </div>
         <div class="notif-filter-actions">
             <button class="btn-notif-mark-read" onclick="markAllNotifRead()" id="btn-mark-all-read" disabled>
-                <i class="fas fa-check"></i> Marcar como leídas
+                <i class="fas fa-check" aria-hidden="true"></i> Marcar como leídas
             </button>
             <button class="btn-notif-clear-read" onclick="clearReadNotifs()" id="btn-clear-read-notifs" disabled>
-                <i class="fas fa-trash-alt"></i> Borrar notificaciones
+                <i class="fas fa-trash-alt" aria-hidden="true"></i> Borrar notificaciones
             </button>
         </div>
     </div>

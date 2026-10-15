@@ -4,49 +4,49 @@
         <!-- KPIS Y MÉTRICAS FINANCIERAS (COLAPSIBLE EN MÓVIL) -->
         <div class="finance-stats-collapsible">
             <button type="button" class="user-stats-trigger" onclick="toggleFinanceStatsCollapsible(this)" title="Mostrar u ocultar resumen financiero">
-                <span><i class="fas fa-chart-pie mr-8"></i> RESUMEN Y MÉTRICAS FINANCIERAS</span>
-                <i class="fas fa-chevron-down trigger-icon"></i>
+                <span><i class="fas fa-chart-pie mr-8" aria-hidden="true"></i> RESUMEN Y MÉTRICAS FINANCIERAS</span>
+                <i class="fas fa-chevron-down trigger-icon" aria-hidden="true"></i>
             </button>
             <div class="user-stats-content" id="finance-stats-collapsible-content">
                 <!-- SECCIÓN SUPERIOR: KPIS RÁPIDOS -->
                 <div class="kpi-grid kpi-grid-6">
                     <div class="kpi-card">
-                        <div class="kpi-icon"><i class="fas fa-money-bill-trend-up"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-money-bill-trend-up" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Recaudación Neta</span>
                             <span class="value" id="fin-total">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-icon"><i class="fas fa-money-bill"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-money-bill" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Recaudación en Efectivo</span>
                             <span class="value" id="fin-cash">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-icon"><i class="fas fa-credit-card"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-credit-card" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Recaudación Digital</span>
                             <span class="value" id="fin-digital">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card danger-light">
-                        <div class="kpi-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-hand-holding-dollar" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Total Reembolsado</span>
                             <span class="value" id="fin-refunded">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-icon"><i class="fas fa-receipt"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-receipt" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Tickets Emitidos</span>
                             <span class="value" id="fin-count">0</span>
                         </div>
                     </div>
                     <div class="kpi-card highlight">
-                        <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Ticket Promedio</span>
                             <span class="value" id="fin-avg">$0</span>
@@ -57,21 +57,21 @@
                 <!-- SEGUNDA FILA DE KPIS: MÉTRICAS DE EFICIENCIA -->
                 <div class="kpi-grid kpi-grid-3 mt-20">
                     <div class="kpi-card">
-                        <div class="kpi-icon"><i class="fas fa-sack-dollar"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-sack-dollar" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Ingresos Proyectados</span>
                             <span class="value" id="fin-proyectado">$0</span>
                         </div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-icon"><i class="fas fa-calendar-xmark"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-calendar-xmark" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Tasa de Cancelación</span>
                             <span class="value" id="fin-cancel-rate">0%</span>
                         </div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-icon"><i class="fas fa-ghost"></i></div>
+                        <div class="kpi-icon"><i class="fas fa-ghost" aria-hidden="true"></i></div>
                         <div class="kpi-data">
                             <span class="label">Incumplimiento de Reservas</span>
                             <span class="value" id="fin-noshow">$0</span>
@@ -84,7 +84,7 @@
                     <div class="card channel-card">
                         <div class="card-header-premium">
                             <div class="header-info-group">
-                                <div class="header-icon"><i class="fas fa-car-side"></i></div>
+                                <div class="header-icon"><i class="fas fa-car-side" aria-hidden="true"></i></div>
                                 <div class="header-text"><h3>ESTADÍAS</h3></div>
                             </div>
                         </div>
@@ -106,7 +106,7 @@
                     <div class="card channel-card">
                         <div class="card-header-premium">
                             <div class="header-info-group">
-                                <div class="header-icon"><i class="fas fa-globe"></i></div>
+                                <div class="header-icon"><i class="fas fa-globe" aria-hidden="true"></i></div>
                                 <div class="header-text"><h3>RESERVAS</h3></div>
                             </div>
                         </div>
@@ -131,17 +131,17 @@
                 <div class="card channel-card mt-20" id="metodos-breakdown">
                     <div class="card-header-premium">
                         <div class="header-info-group">
-                            <div class="header-icon"><i class="fas fa-credit-card"></i></div>
+                            <div class="header-icon"><i class="fas fa-credit-card" aria-hidden="true"></i></div>
                             <div class="header-text"><h3>DESGLOSE POR MÉTODO DE PAGO</h3></div>
                         </div>
                     </div>
                     <div class="method-tabs">
-                        <button type="button" class="method-tab active" data-method="CAJA" onclick="switchMethodTab('CAJA')"><i class="fas fa-money-bill-wave"></i> Efectivo</button>
-                        <button type="button" class="method-tab" data-method="DIGITAL" onclick="switchMethodTab('DIGITAL')"><i class="fas fa-wallet"></i> Billetera</button>
-                        <button type="button" class="method-tab" data-method="MERCADOPAGO" onclick="switchMethodTab('MERCADOPAGO')"><i class="fas fa-hand-holding-dollar"></i> Mercado Pago</button>
-                        <button type="button" class="method-tab" data-method="TRANSFERENCIA" onclick="switchMethodTab('TRANSFERENCIA')"><i class="fas fa-building-columns"></i> Transferencia</button>
-                        <button type="button" class="method-tab" data-method="TARJETA" onclick="switchMethodTab('TARJETA')"><i class="fas fa-credit-card"></i> Tarjeta</button>
-                        <button type="button" class="method-tab" data-method="OTRO" onclick="switchMethodTab('OTRO')"><i class="fas fa-circle-question"></i> Otro</button>
+                        <button type="button" class="method-tab active" data-method="CAJA" onclick="switchMethodTab('CAJA')"><i class="fas fa-money-bill-wave" aria-hidden="true"></i> Efectivo</button>
+                        <button type="button" class="method-tab" data-method="DIGITAL" onclick="switchMethodTab('DIGITAL')"><i class="fas fa-wallet" aria-hidden="true"></i> Billetera</button>
+                        <button type="button" class="method-tab" data-method="MERCADOPAGO" onclick="switchMethodTab('MERCADOPAGO')"><i class="fas fa-hand-holding-dollar" aria-hidden="true"></i> Mercado Pago</button>
+                        <button type="button" class="method-tab" data-method="TRANSFERENCIA" onclick="switchMethodTab('TRANSFERENCIA')"><i class="fas fa-building-columns" aria-hidden="true"></i> Transferencia</button>
+                        <button type="button" class="method-tab" data-method="TARJETA" onclick="switchMethodTab('TARJETA')"><i class="fas fa-credit-card" aria-hidden="true"></i> Tarjeta</button>
+                        <button type="button" class="method-tab" data-method="OTRO" onclick="switchMethodTab('OTRO')"><i class="fas fa-circle-question" aria-hidden="true"></i> Otro</button>
                     </div>
                     <div class="method-panels">
                         <div class="method-panel active" data-panel="CAJA">
@@ -214,13 +214,13 @@
             <div class="card chart-card">
                 <div class="card-header-premium">
                     <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="header-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></div>
                         <div class="header-text"><h3>TENDENCIA DE INGRESOS</h3></div>
                     </div>
                     <div class="header-actions flex-row gap-10">
                         <!-- Filtro de Método de Pago -->
                         <div class="filter-group-premium">
-                            <i class="fas fa-wallet"></i>
+                            <i class="fas fa-wallet" aria-hidden="true"></i>
                             <select id="fin-payment-method" class="select-premium-sm" onchange="loadFinanceData()" title="Filtrar por método de pago">
                                 <option value="all">TODOS LOS PAGOS</option>
                                 <option value="DIGITAL">SOLO DIGITALES</option>
@@ -234,7 +234,7 @@
 
                         <!-- Filtro de Tipo de Vehículo -->
                         <div class="filter-group-premium">
-                            <i class="fas fa-car-side"></i>
+                            <i class="fas fa-car-side" aria-hidden="true"></i>
                             <select id="fin-vehicle-type" class="select-premium-sm" onchange="loadFinanceData()" title="Filtrar por tipo de vehículo">
                                 <option value="all">TODOS LOS VEHÍCULOS</option>
                                 <option value="Auto">SOLO AUTOS</option>
@@ -248,7 +248,7 @@
                             <input type="date" id="fin-date" class="input-premium-sm" onchange="loadFinanceData()" title="Seleccionar fecha exacta">
                         </div>
                         <div class="filter-group-premium">
-                            <i class="fas fa-calendar-alt"></i>
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                             <select id="fin-period" class="select-premium-sm" onchange="toggleFinanceDateFilter()" title="Seleccionar período del reporte">
                                 <option value="day">HOY</option>
                                 <option value="specific">FECHA EXACTA</option>
@@ -269,12 +269,12 @@
         <div class="card mt-25">
             <div class="card-header-premium">
                 <div class="header-info-group">
-                    <div class="header-icon"><i class="fas fa-list-check"></i></div>
+                    <div class="header-icon"><i class="fas fa-list-check" aria-hidden="true"></i></div>
                     <div class="header-text"><h3>HISTORIAL DE PAGOS</h3></div>
                 </div>
                 <div class="header-actions">
                     <button class="btn btn--outline btn--sm" onclick="exportFinanceData()" title="Exportar historial de pagos a Excel/CSV">
-                        <i class="fas fa-download"></i> EXPORTAR
+                        <i class="fas fa-download" aria-hidden="true"></i> EXPORTAR
                     </button>
                 </div>
             </div>
@@ -299,11 +299,11 @@
             <!-- PAGINACIÓN -->
             <div class="pagination-premium flex-row items-center justify-center gap-20 py-20">
                 <button class="btn--icon sm" onclick="prevFinancePage()" id="prev-fin-btn" disabled title="Página anterior">
-                    <i class="fas fa-chevron-left"></i>
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
                 </button>
                 <span id="fin-page-info" class="text-small text-muted font-bold">Página 1</span>
                 <button class="btn--icon sm" onclick="nextFinancePage()" id="next-fin-btn" title="Página siguiente">
-                    <i class="fas fa-chevron-right"></i>
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
                 </button>
             </div>
         </div>

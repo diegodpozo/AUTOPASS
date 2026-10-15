@@ -15,19 +15,19 @@
             </select>
         </div>
         <div class="chart-window-nav-group">
-            <button type="button" id="{{ prefix }}-chart-ir-inicio" class="btn btn--outline sm"><i class="fas fa-backward-fast"></i>INICIO</button>
-            <button type="button" id="{{ prefix }}-chart-ir-final" class="btn btn--primary sm"><i class="fas fa-forward-fast"></i>FINAL</button>
+            <button type="button" id="{{ prefix }}-chart-ir-inicio" class="btn btn--outline sm"><i class="fas fa-backward-fast" aria-hidden="true"></i>INICIO</button>
+            <button type="button" id="{{ prefix }}-chart-ir-final" class="btn btn--primary sm"><i class="fas fa-forward-fast" aria-hidden="true"></i>FINAL</button>
         </div>
     </div>
 
     <div class="chart-window-range-wrap">
-        <span class="chart-window-range-hint"><i class="fas fa-flag-checkered text-dorado"></i></span>
+        <span class="chart-window-range-hint"><i class="fas fa-flag-checkered text-dorado" aria-hidden="true"></i></span>
         <input type="range" id="{{ prefix }}-chart-range" class="chart-window-range" min="0" max="0" value="0" disabled>
-        <span class="chart-window-range-hint"><i class="fas fa-clock"></i></span>
+        <span class="chart-window-range-hint"><i class="fas fa-clock" aria-hidden="true"></i></span>
     </div>
 
     <div class="chart-window-helper">
-        <i class="fas fa-circle-info mr-6"></i>
+        <i class="fas fa-circle-info mr-6" aria-hidden="true"></i>
         El gráfico avanza solo con el paso del tiempo. Desactivá el seguimiento o mové el deslizador para recorrer hasta el primer dato; presioná <strong>FINAL</strong> para volver a seguirlo en vivo.
     </div>
 </div>

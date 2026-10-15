@@ -5,66 +5,66 @@
         <div class="card card--flush">
             <div class="card-header-premium">
                 <div class="header-info-group">
-                    <i class="fas fa-chart-simple"></i>
+                    <i class="fas fa-chart-simple" aria-hidden="true"></i>
                     <div class="header-text">
                         <h3>MÉTRICAS DEL SISTEMA</h3>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <span class="badge badge-success"><i class="fas fa-circle"></i> MÉTRICAS EN VIVO</span>
+                    <span class="badge badge-success"><i class="fas fa-circle" aria-hidden="true"></i> MÉTRICAS EN VIVO</span>
                 </div>
             </div>
             <div class="card-body">
                 <p>Indicadores del sistema. Elegí un informe para visualizarlo.</p>
                 <div class="metricas-grid">
                     <button type="button" class="metrica-card" onclick="abrirMetrica('accesos')">
-                        <div class="metrica-card-icon"><i class="fas fa-right-left"></i></div>
+                        <div class="metrica-card-icon"><i class="fas fa-right-left" aria-hidden="true"></i></div>
                         <div>
                             <div class="metrica-card-title">ACTIVIDAD DE ACCESOS</div>
                             <div class="metrica-sub">ENTRADAS Y SALIDAS POR HORA</div>
                         </div>
                         <div class="metrica-card-desc">Movimientos registrados por hora desde el primer dato hasta ahora. El gráfico avanza solo con el tiempo; deslizá para volver hasta el inicio.</div>
-                        <div class="metrica-card-badge disponible"><i class="fas fa-circle"></i> DISPONIBLE</div>
+                        <div class="metrica-card-badge disponible"><i class="fas fa-circle" aria-hidden="true"></i> DISPONIBLE</div>
                     </button>
 
                     <button type="button" class="metrica-card" onclick="abrirMetrica('heatmap')">
-                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-fire"></i></div>
+                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-fire" aria-hidden="true"></i></div>
                         <div>
                             <div class="metrica-card-title">MAPA DE CALOR DE TRÁFICO</div>
                             <div class="metrica-sub">DÍA DE LA SEMANA × HORA POR SUCURSAL</div>
                         </div>
                         <div class="metrica-card-desc">Matriz de 7 días por 24 horas con las horas de mayor movimiento de vehículos en cada sucursal. Ideales para planificar personal y horarios pico.</div>
-                        <div class="metrica-card-badge disponible"><i class="fas fa-circle"></i> DISPONIBLE</div>
+                        <div class="metrica-card-badge disponible"><i class="fas fa-circle" aria-hidden="true"></i> DISPONIBLE</div>
                     </button>
 
                     <button type="button" class="metrica-card" onclick="abrirMetrica('ocupacion')">
-                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-car"></i></div>
+                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-car" aria-hidden="true"></i></div>
                         <div>
                             <div class="metrica-card-title">OCUPACIÓN Y RESERVAS</div>
                             <div class="metrica-sub">CAPACIDAD VS RESERVAS POR HORA</div>
                         </div>
                         <div class="metrica-card-desc">Ocupación de plazas de reserva por hora del día, conversión de pagos, cancelación y no-show de reservas por sucursal.</div>
-                        <div class="metrica-card-badge disponible"><i class="fas fa-circle"></i> DISPONIBLE</div>
+                        <div class="metrica-card-badge disponible"><i class="fas fa-circle" aria-hidden="true"></i> DISPONIBLE</div>
                     </button>
 
                     <button type="button" class="metrica-card" onclick="abrirMetrica('recaudacion')">
-                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-money-bill-trend-up"></i></div>
+                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-money-bill-trend-up" aria-hidden="true"></i></div>
                         <div>
                             <div class="metrica-card-title">RECAUDACIÓN</div>
                             <div class="metrica-sub">INGRESOS EN EL TIEMPO</div>
                         </div>
                         <div class="metrica-card-desc">Evolución de la recaudación, ticket promedio, métodos de pago e ingresos proyectados.</div>
-                        <div class="metrica-card-badge disponible"><i class="fas fa-circle"></i> DISPONIBLE</div>
+                        <div class="metrica-card-badge disponible"><i class="fas fa-circle" aria-hidden="true"></i> DISPONIBLE</div>
                     </button>
 
                     <button type="button" class="metrica-card" onclick="abrirMetrica('ocr')">
-                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-microchip"></i></div>
+                        <div class="metrica-card-icon metrica-card-icon--violet"><i class="fas fa-microchip" aria-hidden="true"></i></div>
                         <div>
                             <div class="metrica-card-title">TIEMPOS OCR &amp; ALPR</div>
                             <div class="metrica-sub">LATENCIA DE PROCESAMIENTO</div>
                         </div>
                         <div class="metrica-card-desc">Rendimiento del motor de reconocimiento de patentes: promedio, mínimo, máximo y percentil 90.</div>
-                        <div class="metrica-card-badge disponible"><i class="fas fa-circle"></i> DISPONIBLE</div>
+                        <div class="metrica-card-badge disponible"><i class="fas fa-circle" aria-hidden="true"></i> DISPONIBLE</div>
                     </button>
                 </div>
             </div>
@@ -77,7 +77,7 @@
         <div id="metricas-detail">
             <div class="metricas-detail-top">
                 <button class="btn btn--outline sm metricas-back-btn" onclick="volverMetricas()">
-                    <i class="fas fa-arrow-left"></i> VOLVER
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
             </div>
 
@@ -88,35 +88,35 @@
             <!-- KPIS -->
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-hourglass-start"></i></div>
+                    <div class="kpi-icon"><i class="fas fa-hourglass-start" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">PRIMER DATO</span>
                         <span class="value" id="kpi-primer-dato">--</span>
                     </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-hourglass-end"></i></div>
+                    <div class="kpi-icon"><i class="fas fa-hourglass-end" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">ÚLTIMA HORA</span>
                         <span class="value" id="kpi-ultima-hora">--</span>
                     </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-icon kpi-icon--success"><i class="fas fa-sign-in-alt"></i></div>
+                    <div class="kpi-icon kpi-icon--success"><i class="fas fa-sign-in-alt" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">ENTRADAS</span>
                         <span class="value" id="kpi-entradas">--</span>
                     </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-icon kpi-icon--danger"><i class="fas fa-sign-out-alt"></i></div>
+                    <div class="kpi-icon kpi-icon--danger"><i class="fas fa-sign-out-alt" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">SALIDAS</span>
                         <span class="value" id="kpi-salidas">--</span>
                     </div>
                 </div>
                 <div class="kpi-card highlight">
-                    <div class="kpi-icon"><i class="fas fa-arrows-left-right"></i></div>
+                    <div class="kpi-icon"><i class="fas fa-arrows-left-right" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">TOTAL</span>
                         <span class="value" id="kpi-total">--</span>
@@ -128,7 +128,7 @@
             <div class="card channel-card card--flush">
                 <div class="card-header-premium">
                     <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="header-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></div>
                         <div class="header-text"><h3>MOVIMIENTOS POR HORA</h3></div>
                     </div>
                     <div class="header-actions">
@@ -145,13 +145,13 @@
 
                     <div class="metricas-controls">
                         <div class="metricas-controls-row metricas-filters-row">
-                            <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
+                            <span class="toolbar-label"><i class="fas fa-calendar-days" aria-hidden="true"></i> DESDE:</span>
                             <input type="date" id="metricas-desde" class="input-premium-sm" title="Fecha inicial del rango">
                             <span class="metricas-arrow">→</span>
                             <span class="toolbar-label">HASTA:</span>
                             <input type="date" id="metricas-hasta" class="input-premium-sm" title="Fecha final del rango">
-                            <button class="btn btn--primary sm" onclick="aplicarFiltroMetricas()"><i class="fas fa-magnifying-glass"></i>APLICAR</button>
-                            <button class="btn btn--outline sm" onclick="limpiarFiltroMetricas()"><i class="fas fa-eraser"></i>LIMPIAR</button>
+                            <button class="btn btn--primary sm" onclick="aplicarFiltroMetricas()"><i class="fas fa-magnifying-glass" aria-hidden="true"></i>APLICAR</button>
+                            <button class="btn btn--outline sm" onclick="limpiarFiltroMetricas()"><i class="fas fa-eraser" aria-hidden="true"></i>LIMPIAR</button>
                         </div>
                         <div class="metricas-controls-row">
                             <label class="metricas-live-toggle">
@@ -170,19 +170,19 @@
                                 </select>
                             </div>
                             <div class="metricas-nav-buttons">
-                                <button class="btn btn--outline sm" onclick="irAlInicio()"><i class="fas fa-backward-fast"></i>INICIO</button>
-                                <button class="btn btn--primary sm" onclick="irAlFinal()"><i class="fas fa-forward-fast"></i>FINAL</button>
+                                <button class="btn btn--outline sm" onclick="irAlInicio()"><i class="fas fa-backward-fast" aria-hidden="true"></i>INICIO</button>
+                                <button class="btn btn--primary sm" onclick="irAlFinal()"><i class="fas fa-forward-fast" aria-hidden="true"></i>FINAL</button>
                             </div>
                         </div>
 
                         <div class="metricas-range-wrap">
-                            <span class="metricas-range-hint"><i class="fas fa-flag-checkered text-dorado"></i></span>
+                            <span class="metricas-range-hint"><i class="fas fa-flag-checkered text-dorado" aria-hidden="true"></i></span>
                             <input type="range" id="metricas-range" class="metricas-range" min="0" max="0" value="0">
-                            <span class="metricas-range-hint"><i class="fas fa-clock"></i></span>
+                            <span class="metricas-range-hint"><i class="fas fa-clock" aria-hidden="true"></i></span>
                         </div>
 
                         <div class="metricas-helper">
-                            <i class="fas fa-circle-info"></i>
+                            <i class="fas fa-circle-info" aria-hidden="true"></i>
                             El gráfico avanza solo a medida que pasa el tiempo. Si querés recorrer hasta el primer dato, desactivá el seguimiento o mové el deslizador; luego presioná <strong>FINAL</strong> para volver a seguirlo en vivo.
                         </div>
                     </div>
@@ -194,7 +194,7 @@
         <div id="metricas-detail-heatmap" class="metrica-detail-view">
             <div class="metricas-detail-top">
                 <button class="btn btn--outline sm metricas-back-btn" onclick="volverMetricas()">
-                    <i class="fas fa-arrow-left"></i> VOLVER
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">MAPA DE CALOR DE TRÁFICO</span>
             </div>
@@ -203,22 +203,22 @@
                 Con el botón superior podés alternar entre el <strong>mapa de calor</strong> y un <strong>gráfico de barras</strong> con el total por tramo horario de cada día.
             </p>
             <div class="metricas-controls-row metricas-filters-row">
-                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
+                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot" aria-hidden="true"></i> SUCURSAL:</span>
                 <select id="hm-sucursal" class="input-premium super-admin-only">
                     <option value="">TODAS</option>
                 </select>
-                <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
+                <span class="toolbar-label"><i class="fas fa-calendar-days" aria-hidden="true"></i> DESDE:</span>
                 <input type="date" id="hm-desde" class="input-premium-sm">
                 <span class="metricas-arrow">→</span>
                 <span class="toolbar-label">HASTA:</span>
                 <input type="date" id="hm-hasta" class="input-premium-sm">
-                <button class="btn btn--primary sm" onclick="aplicarInforme('heatmap')"><i class="fas fa-magnifying-glass"></i>APLICAR</button>
-                <button class="btn btn--outline sm" onclick="limpiarInforme('heatmap')"><i class="fas fa-eraser"></i>LIMPIAR</button>
+                <button class="btn btn--primary sm" onclick="aplicarInforme('heatmap')"><i class="fas fa-magnifying-glass" aria-hidden="true"></i>APLICAR</button>
+                <button class="btn btn--outline sm" onclick="limpiarInforme('heatmap')"><i class="fas fa-eraser" aria-hidden="true"></i>LIMPIAR</button>
             </div>
             <div class="card channel-card card--flush">
                 <div class="card-header-premium">
                     <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-fire"></i></div>
+                        <div class="header-icon"><i class="fas fa-fire" aria-hidden="true"></i></div>
                         <div class="header-text"><h3>TRÁFICO DIARIO POR HORA</h3></div>
                     </div>
                     <div class="header-actions">
@@ -229,15 +229,15 @@
                                 <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>
                             </span>
                             <span class="hm-view-toggle">
-                                <button type="button" class="hm-view-btn hm-view-btn--active" data-hm-view="calor" onclick="alternarHeatmapVista('calor')"><i class="fas fa-fire"></i> MAPA</button>
-                                <button type="button" class="hm-view-btn" data-hm-view="barras" onclick="alternarHeatmapVista('barras')"><i class="fas fa-chart-simple"></i> BARRAS</button>
+                                <button type="button" class="hm-view-btn hm-view-btn--active" data-hm-view="calor" onclick="alternarHeatmapVista('calor')"><i class="fas fa-fire" aria-hidden="true"></i> MAPA</button>
+                                <button type="button" class="hm-view-btn" data-hm-view="barras" onclick="alternarHeatmapVista('barras')"><i class="fas fa-chart-simple" aria-hidden="true"></i> BARRAS</button>
                             </span>
                         </div>
                     </div>
                 </div>
                 <div class="channel-body">
                     <div id="hm-contenido" class="heatmap-wrap">
-                        <div class="heatmap-vacio"><i class="fas fa-fire"></i> Cargando mapa de calor…</div>
+                        <div class="heatmap-vacio"><i class="fas fa-fire" aria-hidden="true"></i> Cargando mapa de calor…</div>
                     </div>
                 </div>
             </div>
@@ -247,7 +247,7 @@
         <div id="metricas-detail-ocupacion" class="metrica-detail-view">
             <div class="metricas-detail-top">
                 <button class="btn btn--outline sm metricas-back-btn" onclick="volverMetricas()">
-                    <i class="fas fa-arrow-left"></i> VOLVER
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">OCUPACIÓN Y RESERVAS</span>
             </div>
@@ -255,23 +255,23 @@
                 Ocupación de plazas de reserva <strong>promedio por hora del día</strong> sobre la capacidad asignada, y KPIs de reservas de la sucursal.
             </p>
             <div class="metricas-controls-row metricas-filters-row">
-                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
+                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot" aria-hidden="true"></i> SUCURSAL:</span>
                 <select id="occ-sucursal" class="input-premium super-admin-only">
                     <option value="">TODAS</option>
                 </select>
-                <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
+                <span class="toolbar-label"><i class="fas fa-calendar-days" aria-hidden="true"></i> DESDE:</span>
                 <input type="date" id="occ-desde" class="input-premium-sm">
                 <span class="metricas-arrow">→</span>
                 <span class="toolbar-label">HASTA:</span>
                 <input type="date" id="occ-hasta" class="input-premium-sm">
-                <button class="btn btn--primary sm" onclick="aplicarInforme('ocupacion')"><i class="fas fa-magnifying-glass"></i>APLICAR</button>
-                <button class="btn btn--outline sm" onclick="limpiarInforme('ocupacion')"><i class="fas fa-eraser"></i>LIMPIAR</button>
+                <button class="btn btn--primary sm" onclick="aplicarInforme('ocupacion')"><i class="fas fa-magnifying-glass" aria-hidden="true"></i>APLICAR</button>
+                <button class="btn btn--outline sm" onclick="limpiarInforme('ocupacion')"><i class="fas fa-eraser" aria-hidden="true"></i>LIMPIAR</button>
             </div>
             <div id="occ-kpis" class="kpi-grid"></div>
             <div class="card channel-card card--flush">
                 <div class="card-header-premium">
                     <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-chart-column"></i></div>
+                        <div class="header-icon"><i class="fas fa-chart-column" aria-hidden="true"></i></div>
                         <div class="header-text"><h3>OCUPACIÓN DE RESERVAS VS CAPACIDAD %</h3></div>
                     </div>
                 </div>
@@ -287,7 +287,7 @@
         <div id="metricas-detail-recaudacion" class="metrica-detail-view">
             <div class="metricas-detail-top">
                 <button class="btn btn--outline sm metricas-back-btn" onclick="volverMetricas()">
-                    <i class="fas fa-arrow-left"></i> VOLVER
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">RECAUDACIÓN</span>
             </div>
@@ -296,23 +296,23 @@
                 ves la red completa y, además, el desglose de ventas por sucursal.
             </p>
             <div class="metricas-controls-row metricas-filters-row">
-                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot"></i> SUCURSAL:</span>
+                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot" aria-hidden="true"></i> SUCURSAL:</span>
                 <select id="fin-sucursal" class="input-premium super-admin-only">
                     <option value="">TODAS</option>
                 </select>
-                <span class="toolbar-label"><i class="fas fa-calendar-days"></i> DESDE:</span>
+                <span class="toolbar-label"><i class="fas fa-calendar-days" aria-hidden="true"></i> DESDE:</span>
                 <input type="date" id="fin-desde" class="input-premium-sm">
                 <span class="metricas-arrow">→</span>
                 <span class="toolbar-label">HASTA:</span>
                 <input type="date" id="fin-hasta" class="input-premium-sm">
-                <button class="btn btn--primary sm" onclick="aplicarInforme('recaudacion')"><i class="fas fa-magnifying-glass"></i>APLICAR</button>
-                <button class="btn btn--outline sm" onclick="limpiarInforme('recaudacion')"><i class="fas fa-eraser"></i>LIMPIAR</button>
+                <button class="btn btn--primary sm" onclick="aplicarInforme('recaudacion')"><i class="fas fa-magnifying-glass" aria-hidden="true"></i>APLICAR</button>
+                <button class="btn btn--outline sm" onclick="limpiarInforme('recaudacion')"><i class="fas fa-eraser" aria-hidden="true"></i>LIMPIAR</button>
             </div>
             <div id="fin-kpis" class="kpi-grid"></div>
             <div class="card channel-card card--flush">
                 <div class="card-header-premium">
                     <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-chart-pie"></i></div>
+                        <div class="header-icon"><i class="fas fa-chart-pie" aria-hidden="true"></i></div>
                         <div class="header-text"><h3>RECAUDACIÓN POR MÉTODO DE PAGO</h3></div>
                     </div>
                 </div>
@@ -325,7 +325,7 @@
             <div id="fin-por-sucursal-card" class="card channel-card card--flush" hidden>
                 <div class="card-header-premium">
                     <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-building"></i></div>
+                        <div class="header-icon"><i class="fas fa-building" aria-hidden="true"></i></div>
                         <div class="header-text"><h3>VENTAS POR SUCURSAL</h3></div>
                     </div>
                 </div>
@@ -353,7 +353,7 @@
         <div id="metricas-detail-ocr" class="metrica-detail-view">
             <div class="metricas-detail-top">
                 <button class="btn btn--outline sm metricas-back-btn" onclick="volverMetricas()">
-                    <i class="fas fa-arrow-left"></i> VOLVER
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">TIEMPOS OCR &amp; ALPR</span>
             </div>
@@ -364,7 +364,7 @@
             <div class="card channel-card card--flush">
                 <div class="card-header-premium">
                     <div class="header-info-group">
-                        <div class="header-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="header-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></div>
                         <div class="header-text"><h3>TIEMPO OCR POR EVENTO</h3></div>
                     </div>
                 </div>

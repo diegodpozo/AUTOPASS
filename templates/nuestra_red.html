@@ -21,9 +21,9 @@
             <h2>Innovación en cada plaza</h2>
             <p>AUTOPASS no es solo un sistema de estacionamiento; es un ecosistema diseñado para eliminar las fricciones del día a día. Nuestra red de estacionamientos inteligentes usa cámaras que reconocen tu vehículo al instante, para que entres y salgas sin tener que hacer nada.</p>
             <ul class="feature-list-horizontal">
-                <li><i class="fas fa-check"></i> Sin tickets de papel</li>
-                <li><i class="fas fa-check"></i> Pagos automatizados</li>
-                    <li><i class="fas fa-check"></i> Seguridad garantizada con reconocimiento de patentes</li>
+                <li><i class="fas fa-check" aria-hidden="true"></i> Sin tickets de papel</li>
+                <li><i class="fas fa-check" aria-hidden="true"></i> Pagos automatizados</li>
+                    <li><i class="fas fa-check" aria-hidden="true"></i> Seguridad garantizada con reconocimiento de patentes</li>
             </ul>
         </div>
 
@@ -36,7 +36,7 @@
                     <div class="branch-item-modern">
                         <div class="branch-brand-side">
                             <div class="branch-logo-large">
-                                <img src="{{ branch.logo_url if branch.logo_url else '/static/images/logo.png' }}" alt="{{ branch.nombre }}">
+                                <img src="{{ branch.logo_url if branch.logo_url else '/static/images/logo.png' }}" alt="{{ branch.nombre }}" loading="lazy" decoding="async">
                             </div>
                         </div>
                         
@@ -48,16 +48,16 @@
                             
                             <div class="branch-info-content">
                                 <div class="info-block">
-                                    <i class="fas fa-location-dot"></i>
+                                    <i class="fas fa-location-dot" aria-hidden="true"></i>
                                     <p>{{ branch.direccion }}</p>
                                 </div>
                                 <div class="info-meta-row">
                                     <div class="info-block">
-                                        <i class="fas fa-phone"></i>
+                                        <i class="fas fa-phone" aria-hidden="true"></i>
                                         <p>{{ branch.telefono }}</p>
                                     </div>
                                     <div class="info-block">
-                                        <i class="fas fa-clock"></i>
+                                        <i class="fas fa-clock" aria-hidden="true"></i>
                                         <p>{{ 'Abierto 24hs' if branch.is_24h else branch.horario }}</p>
                                     </div>
                                 </div>
@@ -66,7 +66,7 @@
 
                         <div class="branch-action-side">
                             <a href="/?branch={{ branch.nombre }}#map" class="btn-minimal-locate" title="Ver en mapa">
-                                <i class="fas fa-arrow-right-long"></i>
+                                <i class="fas fa-arrow-right-long" aria-hidden="true"></i>
                             </a>
                         </div>
                     </div>
@@ -75,20 +75,20 @@
                     <!-- Fallback Minimal -->
                     <div class="branch-item-modern">
                         <div class="branch-brand-side">
-                            <div class="branch-logo-large"><img src="/static/images/logo.png" alt="AutoPass"></div>
+                            <div class="branch-logo-large"><img src="/static/images/logo.png" alt="AutoPass" loading="lazy" decoding="async"></div>
                         </div>
                         <div class="branch-details-side">
                             <div class="branch-header-main"><h3 class="branch-title-text">AUTOPASS CENTRAL</h3><span class="branch-status-dot active"></span></div>
                             <div class="branch-info-content">
-                                <div class="info-block"><i class="fas fa-location-dot"></i><p>Av. del Libertador 1200, CABA</p></div>
+                                <div class="info-block"><i class="fas fa-location-dot" aria-hidden="true"></i><p>Av. del Libertador 1200, CABA</p></div>
                                 <div class="info-meta-row">
-                                    <div class="info-block"><i class="fas fa-phone"></i><p>11 4567-8900</p></div>
-                                    <div class="info-block"><i class="fas fa-clock"></i><p>Abierto 24hs</p></div>
+                                    <div class="info-block"><i class="fas fa-phone" aria-hidden="true"></i><p>11 4567-8900</p></div>
+                                    <div class="info-block"><i class="fas fa-clock" aria-hidden="true"></i><p>Abierto 24hs</p></div>
                                 </div>
                             </div>
                         </div>
                         <div class="branch-action-side">
-                            <a href="/#map" class="btn-minimal-locate"><i class="fas fa-location-crosshairs"></i></a>
+                            <a href="/#map" class="btn-minimal-locate"><i class="fas fa-location-crosshairs" aria-hidden="true"></i></a>
                         </div>
                     </div>
                 {% endif %}

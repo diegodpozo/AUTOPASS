@@ -12,14 +12,14 @@
                             <div class="form-group">
                                 <label for="promo-titulo">Título del Beneficio</label>
                                 <div class="input-with-icon">
-                                    <i class="fas fa-tag"></i>
+                                    <i class="fas fa-tag" aria-hidden="true"></i>
                                     <input type="text" id="promo-titulo" placeholder="Ej: 1 Hora Gratis" required>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="promo-costo">Puntos necesarios</label>
                                 <div class="input-with-icon">
-                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star" aria-hidden="true"></i>
                                     <input type="number" id="promo-costo" placeholder="500" required>
                                 </div>
                             </div>
@@ -28,7 +28,7 @@
                         <div class="form-group">
                             <label for="promo-descripcion">Descripción del Beneficio</label>
                             <div class="input-with-icon">
-                                <i class="fas fa-align-left"></i>
+                                <i class="fas fa-align-left" aria-hidden="true"></i>
                                 <textarea id="promo-descripcion" rows="2" placeholder="Detalles del beneficio..." required></textarea>
                             </div>
                         </div>
@@ -36,18 +36,18 @@
                         <div class="form-group">
                             <label for="promo-icono">Seleccionar Ícono Visual</label>
                             <div class="icon-picker-grid">
-                                <div class="icon-option active" data-icon="fas fa-gift" onclick="selectPromoIcon(this)"><i class="fas fa-gift"></i></div>
-                                <div class="icon-option" data-icon="fas fa-car" onclick="selectPromoIcon(this)"><i class="fas fa-car"></i></div>
-                                <div class="icon-option" data-icon="fas fa-clock" onclick="selectPromoIcon(this)"><i class="fas fa-clock"></i></div>
-                                <div class="icon-option" data-icon="fas fa-soap" onclick="selectPromoIcon(this)"><i class="fas fa-soap"></i></div>
-                                <div class="icon-option" data-icon="fas fa-coffee" onclick="selectPromoIcon(this)"><i class="fas fa-coffee"></i></div>
-                                <div class="icon-option" data-icon="fas fa-gas-pump" onclick="selectPromoIcon(this)"><i class="fas fa-gas-pump"></i></div>
-                                <div class="icon-option" data-icon="fas fa-star" onclick="selectPromoIcon(this)"><i class="fas fa-star"></i></div>
-                                <div class="icon-option" data-icon="fas fa-crown" onclick="selectPromoIcon(this)"><i class="fas fa-crown"></i></div>
-                                <div class="icon-option" data-icon="fas fa-ticket" onclick="selectPromoIcon(this)"><i class="fas fa-ticket"></i></div>
-                                <div class="icon-option" data-icon="fas fa-wrench" onclick="selectPromoIcon(this)"><i class="fas fa-wrench"></i></div>
-                                <div class="icon-option" data-icon="fas fa-percent" onclick="selectPromoIcon(this)"><i class="fas fa-percent"></i></div>
-                                <div class="icon-option" data-icon="fas fa-calendar-check" onclick="selectPromoIcon(this)"><i class="fas fa-calendar-check"></i></div>
+                                <div class="icon-option active" data-icon="fas fa-gift" onclick="selectPromoIcon(this)"><i class="fas fa-gift" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-car" onclick="selectPromoIcon(this)"><i class="fas fa-car" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-clock" onclick="selectPromoIcon(this)"><i class="fas fa-clock" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-soap" onclick="selectPromoIcon(this)"><i class="fas fa-soap" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-coffee" onclick="selectPromoIcon(this)"><i class="fas fa-coffee" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-gas-pump" onclick="selectPromoIcon(this)"><i class="fas fa-gas-pump" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-star" onclick="selectPromoIcon(this)"><i class="fas fa-star" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-crown" onclick="selectPromoIcon(this)"><i class="fas fa-crown" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-ticket" onclick="selectPromoIcon(this)"><i class="fas fa-ticket" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-wrench" onclick="selectPromoIcon(this)"><i class="fas fa-wrench" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-percent" onclick="selectPromoIcon(this)"><i class="fas fa-percent" aria-hidden="true"></i></div>
+                                <div class="icon-option" data-icon="fas fa-calendar-check" onclick="selectPromoIcon(this)"><i class="fas fa-calendar-check" aria-hidden="true"></i></div>
                             </div>
                             <input type="hidden" id="promo-icono" value="fas fa-gift">
                         </div>
@@ -55,19 +55,19 @@
                         <div class="form-group">
                             <label for="promo-tipo-canje">Tipo de Canje</label>
                             <div class="input-with-icon promo-tipo-select">
-                                <i class="fas fa-tags"></i>
+                                <i class="fas fa-tags" aria-hidden="true"></i>
                                 <select id="promo-tipo-canje" class="select-premium" onchange="togglePromoTipoCanje(this)">
                                     <option value="voucher">VOUCHER (ticket con QR)</option>
                                     <option value="descuento_reserva">DESCUENTO DE RESERVA (%)</option>
                                 </select>
-                                <i class="fas fa-chevron-down select-caret"></i>
+                                <i class="fas fa-chevron-down select-caret" aria-hidden="true"></i>
                             </div>
                         </div>
 
                         <div class="form-group" id="promo-descuento-field">
                             <label for="promo-valor-descuento">% de Descuento en Estacionamiento</label>
                             <div class="input-with-icon">
-                                <i class="fas fa-percent"></i>
+                                <i class="fas fa-percent" aria-hidden="true"></i>
                                 <input type="number" id="promo-valor-descuento" placeholder="Ej: 10" min="1" max="100">
                             </div>
                         </div>
@@ -75,11 +75,11 @@
                         <div class="form-group admin-only-field">
                             <label for="promo-sucursal">Sucursal Asignada</label>
                             <div class="input-with-icon">
-                                <i class="fas fa-location-dot"></i>
+                                <i class="fas fa-location-dot" aria-hidden="true"></i>
                                 <select id="promo-sucursal" class="select-premium">
                                     <option value="">Cargando sucursales...</option>
                                 </select>
-                                <i class="fas fa-chevron-down select-caret"></i>
+                                <i class="fas fa-chevron-down select-caret" aria-hidden="true"></i>
                             </div>
                         </div>
                     </div>
@@ -90,11 +90,11 @@
                             <label for="promo-direccion">Dirección donde se canjea</label>
                             <div class="flex-row gap-10">
                                 <div class="input-with-icon">
-                                    <i class="fas fa-map-location-dot"></i>
+                                    <i class="fas fa-map-location-dot" aria-hidden="true"></i>
                                     <input type="text" id="promo-direccion" placeholder="Ej: Av. del Libertador 1200, CABA">
                                 </div>
                                 <button type="button" class="btn btn--secondary sm" onclick="searchPromoAddress()">
-                                    <i class="fas fa-search-location"></i> BUSCAR
+                                    <i class="fas fa-search-location" aria-hidden="true"></i> BUSCAR
                                 </button>
                             </div>
                             <small class="promo-form-hint">Buscá la dirección o tocá el mapa para marcar el punto exacto de canje.</small>

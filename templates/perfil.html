@@ -27,11 +27,11 @@
         <header>
             <div class="header-left">
                 <button class="mobile-nav-toggle no-print" onclick="toggleMobileNav()">
-                    <i class="fas fa-bars"></i>
+                    <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <div class="header-title-premium">
                     <div class="header-icon-box">
-                        <i class="fas fa-id-badge"></i>
+                        <i class="fas fa-id-badge" aria-hidden="true"></i>
                     </div>
                     <div class="header-text-info">
                         <h1 class="header-main-title">PORTAL DE CLIENTE</h1>
@@ -40,7 +40,7 @@
             </div>
             <div class="header-right">
                 <div class="notif-header-bell" onclick="toggleNotifDropdown(event)" title="Notificaciones">
-                    <i class="fas fa-bell"></i>
+                    <i class="fas fa-bell" aria-hidden="true"></i>
                     <span id="notif-badge-header" class="notif-badge">0</span>
                     <div class="notif-dropdown" id="notif-dropdown">
                         <div class="notif-dropdown-header">
@@ -48,17 +48,17 @@
                             <button class="notif-dropdown-view-all" onclick="showSection('notificaciones', document.querySelector('.notification-nav-item')); closeNotifDropdown();">Ver todas</button>
                         </div>
                         <div class="notif-dropdown-body" id="notif-dropdown-body">
-                            <div class="notif-dropdown-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+                            <div class="notif-dropdown-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Cargando...</div>
                         </div>
                     </div>
                 </div>
                 <div class="balance-badge" onclick="openRechargeModal()" title="Hacé click para cargar saldo">
-                    <i class="fas fa-wallet"></i>
+                    <i class="fas fa-wallet" aria-hidden="true"></i>
                     <span id="balance-val" class="text-bold">$0.00</span>
                     <span class="text-label">Mi Saldo</span>
                 </div>
                 <div class="points-badge">
-                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star" aria-hidden="true"></i>
                     <span id="points-val" class="text-bold">0</span>
                     <span class="text-label">Puntos AutoPass</span>
                 </div>
@@ -79,20 +79,20 @@
     <!-- OVERLAY MAPA EN PANTALLA COMPLETA -->
     <div id="map-fullscreen-overlay" class="map-fullscreen-overlay">
         <div class="map-fullscreen-header">
-            <span class="map-fs-title"><i class="fas fa-map-marked-alt"></i> MAPA DE SUCURSALES</span>
+            <span class="map-fs-title"><i class="fas fa-map-marked-alt" aria-hidden="true"></i> MAPA DE SUCURSALES</span>
             <div class="map-fs-actions">
                 <button class="map-fs-nav-btn" onclick="closeFullMap(); showSection('inicio')" title="Nueva reserva">
-                    <i class="fas fa-plus-circle"></i><span>RESERVAR</span>
+                    <i class="fas fa-plus-circle" aria-hidden="true"></i><span>RESERVAR</span>
                 </button>
                 <button class="map-fs-nav-btn" onclick="closeFullMap(); showSection('reservas')" title="Mis reservas">
-                    <i class="fas fa-calendar-check"></i><span>MIS RESERVAS</span>
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i><span>MIS RESERVAS</span>
                 </button>
-                <button class="map-fs-close" onclick="closeFullMap()" title="Cerrar"><i class="fas fa-times"></i></button>
+                <button class="map-fs-close" onclick="closeFullMap()" title="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
         </div>
         <div id="portal-map-fullscreen" class="portal-map-fullscreen"></div>
         <div class="map-overlay map-overlay-fullscreen">
-            <h4><i class="fas fa-building"></i> Playa</h4>
+            <h4><i class="fas fa-building" aria-hidden="true"></i> Playa</h4>
             <p>Cargando dirección...</p>
         </div>
     </div>
@@ -100,19 +100,19 @@
     <!-- BARRA DE NAVEGACION INFERIOR -->
     <nav class="user-footer-nav">
         <button class="uf-btn" onclick="showSection('inicio', document.querySelector('.nav-item[onclick*=\'inicio\']'))">
-            <i class="fas fa-house-user"></i>
+            <i class="fas fa-house-user" aria-hidden="true"></i>
             <span>INICIO</span>
         </button>
         <button class="uf-btn" onclick="showSection('reservas', document.querySelector('.nav-item[onclick*=\'reservas\']'))">
-            <i class="fas fa-calendar-check"></i>
+            <i class="fas fa-calendar-check" aria-hidden="true"></i>
             <span>RESERVAS</span>
         </button>
         <button class="uf-btn uf-btn-reserva" onclick="openCurrentPass()">
-            <i class="fas fa-qrcode"></i>
+            <i class="fas fa-qrcode" aria-hidden="true"></i>
             <span>PASE QR</span>
         </button>
         <button class="uf-btn" onclick="showSection('notificaciones', document.querySelector('.notification-nav-item')); loadNotifications()">
-            <i class="fas fa-bell"></i>
+            <i class="fas fa-bell" aria-hidden="true"></i>
             <span>NOTIF.</span>
         </button>
     </nav>

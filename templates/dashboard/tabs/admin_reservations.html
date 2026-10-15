@@ -4,21 +4,21 @@
     <!-- KPIS DE RESERVAS -->
     <div class="kpi-grid">
         <div class="kpi-card">
-            <div class="kpi-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="kpi-icon"><i class="fas fa-calendar-check" aria-hidden="true"></i></div>
             <div class="kpi-data">
                 <span class="label">Total Reservas</span>
                 <span class="value" id="admin-res-stat-total">0</span>
             </div>
         </div>
         <div class="kpi-card highlight">
-            <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+            <div class="kpi-icon"><i class="fas fa-clock" aria-hidden="true"></i></div>
             <div class="kpi-data">
                 <span class="label">Pendientes Hoy</span>
                 <span class="value" id="admin-res-stat-pending">0</span>
             </div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon"><i class="fas fa-calendar-day"></i></div>
+            <div class="kpi-icon"><i class="fas fa-calendar-day" aria-hidden="true"></i></div>
             <div class="kpi-data">
                 <span class="label">Reservas Hoy</span>
                 <span class="value" id="admin-res-stat-today">0</span>
@@ -29,17 +29,17 @@
     <div class="card">
         <div class="card-header-premium">
             <div class="header-info-group">
-                <div class="header-icon"><i class="fas fa-list-check"></i></div>
+                <div class="header-icon"><i class="fas fa-list-check" aria-hidden="true"></i></div>
                 <div class="header-text">
                     <h3>REGISTRO DE RESERVAS</h3>
                 </div>
             </div>
             <div class="header-actions">
                 <button class="btn--premium sm" onclick="openNewReservationModal()" title="Crear una reserva manual y registrar el pago">
-                    <i class="fas fa-plus"></i> <span class="nav-text">NUEVA RESERVA</span>
+                    <i class="fas fa-plus" aria-hidden="true"></i> <span class="nav-text">NUEVA RESERVA</span>
                 </button>
                 <div class="filter-group-premium" title="Filtrar por estado de la reserva">
-                    <i class="fas fa-filter"></i>
+                    <i class="fas fa-filter" aria-hidden="true"></i>
                     <select id="admin-res-filter-status" class="select-premium-sm" onchange="loadAdminReservations()">
                         <option value="">Todos los Estados</option>
                         <option value="Pendiente">Pendientes</option>
@@ -49,7 +49,7 @@
                     </select>
                 </div>
                 <div class="search-box-premium" title="Buscar por patente, nombre o apellido">
-                    <i class="fas fa-search"></i>
+                    <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="text" placeholder="Buscar patente..." onkeyup="onAdminResSearch(this.value)">
                 </div>
             </div>
@@ -96,15 +96,15 @@
                             <label for="new-res-patente">Patente</label>
                             <input type="text" id="new-res-patente" class="input-premium uppercase" placeholder="ABC 123" required maxlength="10" autocomplete="off">
                             <div id="new-res-patente-owner-badge" onclick="clearNewResPatenteLookup()" title="Hacer clic para desvincular">
-                                <i class="fas fa-user-check"></i>
+                                <i class="fas fa-user-check" aria-hidden="true"></i>
                                 <span></span>
-                                <i class="fas fa-times"></i>
+                                <i class="fas fa-times" aria-hidden="true"></i>
                             </div>
                         </div>
                         <div class="form-group-premium">
                             <label for="new-res-tipo-vehiculo">Tipo de Vehículo</label>
                             <div class="select-wrapper-premium">
-                                <i id="new-res-veh-icon" class="fas fa-car-side"></i>
+                                <i id="new-res-veh-icon" class="fas fa-car-side" aria-hidden="true"></i>
                                 <select id="new-res-tipo-vehiculo" required onchange="updateNewVehicleTypeIcon(this.value)">
                                     <option value="Auto">AUTO</option>
                                     <option value="Moto">MOTO</option>
@@ -116,7 +116,7 @@
                             <label for="new-res-tipo">Tipo de Estadía</label>
                             <div id="new-res-estadia-row">
                                 <div class="select-wrapper-premium">
-                                    <i class="fas fa-clock"></i>
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
                                     <select id="new-res-tipo" required onchange="updateNewFormGroups(this.value)">
                                         <option value="hora">HORA</option>
                                         <option value="dia">DÍA</option>
@@ -207,7 +207,7 @@
                             <div class="form-group-premium" id="new-res-metodo-pago-group">
                                 <label for="new-res-metodo-pago">Método de Pago</label>
                                 <div class="select-wrapper-premium">
-                                    <i class="fas fa-money-bill-transfer"></i>
+                                    <i class="fas fa-money-bill-transfer" aria-hidden="true"></i>
                                     <select id="new-res-metodo-pago" required>
                                         <option value="Efectivo">EFECTIVO</option>
                                         <option value="Mercado Pago">MERCADO PAGO</option>
@@ -230,7 +230,7 @@
                             <button type="button" class="btn btn--outline" onclick="closeModal('modal-new-reservation')">DESCARTAR</button>
                             <button type="submit" class="btn-confirm-premium" id="new-res-submit-btn">
                                 <span>CREAR Y PAGAR</span>
-                                <i class="fas fa-check"></i>
+                                <i class="fas fa-check" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
@@ -251,7 +251,7 @@
             <div id="edit-confirm-method-group" class="form-group-premium full-width-premium">
                 <label for="edit-confirm-metodo">Método</label>
                 <div class="select-wrapper-premium">
-                    <i class="fas fa-money-bill-transfer"></i>
+                    <i class="fas fa-money-bill-transfer" aria-hidden="true"></i>
                     <select id="edit-confirm-metodo">
                         <option value="Efectivo">EFECTIVO</option>
                         <option value="Mercado Pago">MERCADO PAGO</option>
@@ -268,7 +268,7 @@
                 <button type="button" class="btn btn--outline" onclick="cancelEditResumo()">CANCELAR</button>
                 <button type="button" class="btn-confirm-premium" onclick="confirmEditResumoProceed()">
                     <span>CONFIRMAR EDICIÓN</span>
-                    <i class="fas fa-check"></i>
+                    <i class="fas fa-check" aria-hidden="true"></i>
                 </button>
             </div>
         </div>

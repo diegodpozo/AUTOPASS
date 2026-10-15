@@ -1,5 +1,5 @@
 <div id="vt-fab" class="vt-fab" onclick="toggleVTModal()" title="Control de tiempo virtual">
-    <i class="fas fa-clock"></i>
+    <i class="fas fa-clock" aria-hidden="true"></i>
     <span class="vt-fab-badge" id="vt-fab-badge">ON</span>
 </div>
 
@@ -8,11 +8,11 @@
         <div class="modal-header">
             <div class="flex-row items-center gap-10">
                 <div class="header-icon-box sm">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-clock" aria-hidden="true"></i>
                 </div>
                 <h3 class="text-dorado" id="vt-modal-title">RELOJ VIRTUAL DEL SISTEMA</h3>
             </div>
-            <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="toggleVTModal()"><i class="fas fa-xmark"></i></button>
+            <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="toggleVTModal()"><i class="fas fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div class="modal-body">
             <div class="vt-big-clock">
@@ -56,7 +56,7 @@
             </div>
 
             <div class="vt-reset-row">
-                <button class="vt-btn vt-btn-full vt-btn-danger" onclick="resetVirtualTime()"><i class="fas fa-undo"></i> RESTAURAR TIEMPO REAL</button>
+                <button class="vt-btn vt-btn-full vt-btn-danger" onclick="resetVirtualTime()"><i class="fas fa-undo" aria-hidden="true"></i> RESTAURAR TIEMPO REAL</button>
             </div>
 
             <div id="vt-feedback" class="vt-feedback"></div>

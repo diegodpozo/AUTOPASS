@@ -10,7 +10,7 @@
                 <span class="points-label">Puntos Disponibles</span>
             </div>
             <div class="points-info-footer">
-                <i class="fas fa-info-circle"></i>
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
                 <span>Sumás 10 puntos por cada $1000 abonados en estadías.</span>
             </div>
         </div>
@@ -28,42 +28,42 @@
     </div>
 
     <div id="vouchers-section-wrapper">
-        <div class="section-subtitle"><i class="fas fa-ticket"></i> MIS VOUCHERS Y BENEFICIOS</div>
+        <div class="section-subtitle"><i class="fas fa-ticket" aria-hidden="true"></i> MIS VOUCHERS Y BENEFICIOS</div>
         
         <!-- PESTAÑAS DE VOUCHERS -->
         <div class="voucher-tabs-bar" id="voucher-tabs-bar">
             <button class="voucher-tab-btn active" id="btn-vouchers-vigentes" onclick="switchVoucherTab('VIGENTES')">
-                <i class="fas fa-circle-check"></i> Vigentes <span class="voucher-tab-count" id="count-vouchers-vigentes">0</span>
+                <i class="fas fa-circle-check" aria-hidden="true"></i> Vigentes <span class="voucher-tab-count" id="count-vouchers-vigentes">0</span>
             </button>
             <button class="voucher-tab-btn" id="btn-vouchers-finalizados" onclick="switchVoucherTab('FINALIZADOS')">
-                <i class="fas fa-clock-rotate-left"></i> Finalizados <span class="voucher-tab-count" id="count-vouchers-finalizados">0</span>
+                <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Finalizados <span class="voucher-tab-count" id="count-vouchers-finalizados">0</span>
             </button>
         </div>
 
         <div id="vouchers-container">
             <div id="vouchers-grid" class="vouchers-grid">
                 <div class="loading-spinner">
-                    <i class="fas fa-circle-notch fa-spin"></i> Cargando vouchers...
+                    <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Cargando vouchers...
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="section-subtitle"><i class="fas fa-tags"></i> PROMOCIONES Y BENEFICIOS</div>
+    <div class="section-subtitle"><i class="fas fa-tags" aria-hidden="true"></i> PROMOCIONES Y BENEFICIOS</div>
     <div class="promo-filter-bar" id="promo-filter-bar">
-        <span class="promo-filter-label"><i class="fas fa-location-dot"></i> Sucursal</span>
+        <span class="promo-filter-label"><i class="fas fa-location-dot" aria-hidden="true"></i> Sucursal</span>
         <select id="promo-branch-filter" class="promo-branch-select" onchange="window.applyPromoBranchFilter(this.value)">
             <option value="">Todas las sucursales</option>
         </select>
     </div>
     <div id="promotions-grid" class="promotions-grid">
         <div class="loading-spinner">
-            <i class="fas fa-circle-notch fa-spin"></i> Cargando promociones...
+            <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Cargando promociones...
         </div>
     </div>
 
     <div class="section-subtitle">
-        <i class="fas fa-clock-rotate-left"></i> HISTORIAL DE PUNTOS
+        <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> HISTORIAL DE PUNTOS
     </div>
 
     <div id="pts-history-container">
@@ -74,11 +74,11 @@
             <!-- NAVEGACIÓN DE HISTORIAL -->
             <div class="pagination-premium" id="pts-pagination">
                 <button class="btn-pagination" id="btn-pts-prev" onclick="changePtsPage(-1)">
-                    <i class="fas fa-chevron-left"></i> Anterior
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i> Anterior
                 </button>
                 <span class="page-info" id="pts-page-info">Página 1 de 1</span>
                 <button class="btn-pagination" id="btn-pts-next" onclick="changePtsPage(1)">
-                    Siguiente <i class="fas fa-chevron-right"></i>
+                    Siguiente <i class="fas fa-chevron-right" aria-hidden="true"></i>
                 </button>
             </div>
         </div>

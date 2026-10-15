@@ -6,14 +6,14 @@
     <div class="reserva-stats-grid">
         <div class="res-stat-card">
             <div class="res-stat-value-wrap">
-                <i class="fas fa-car-side"></i>
+                <i class="fas fa-car-side" aria-hidden="true"></i>
                 <span class="res-stat-value" id="stat-res-active">0</span>
             </div>
             <span class="res-stat-label">En Curso</span>
         </div>
         <div class="res-stat-card">
             <div class="res-stat-value-wrap">
-                <i class="fas fa-calendar-check"></i>
+                <i class="fas fa-calendar-check" aria-hidden="true"></i>
                 <span class="res-stat-value" id="stat-res-upcoming">0</span>
             </div>
             <span class="res-stat-label">Próximas</span>
@@ -22,11 +22,11 @@
 
     <div class="flex-col">
         <div id="container-res-featured">
-            <div class="section-subtitle"><i class="fas fa-star"></i> ESTADÍA ACTUAL</div>
+            <div class="section-subtitle"><i class="fas fa-star" aria-hidden="true"></i> ESTADÍA ACTUAL</div>
             <div id="reservation-featured-list"></div>
         </div>
 
-        <div class="section-subtitle"><i class="fas fa-calendar-list"></i> TUS PRÓXIMAS RESERVAS</div>
+        <div class="section-subtitle"><i class="fas fa-calendar-list" aria-hidden="true"></i> TUS PRÓXIMAS RESERVAS</div>
         <div id="reservation-list-active" class="reserva-grid-modern">
             <div class="skeleton-grid" aria-hidden="true">
                 <div class="skeleton skeleton-card"></div>
@@ -36,7 +36,7 @@
         </div>
 
         <div class="section-subtitle subtitle-spaced">
-            <i class="fas fa-clock-rotate-left"></i> HISTORIAL DE ESTADÍAS
+            <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> HISTORIAL DE ESTADÍAS
         </div>
 
         <div id="historial-container">
@@ -51,8 +51,8 @@
                         <input type="date" id="history-filter-to" class="filter-input-premium">
                     </div>
                     <div class="filter-actions-premium">
-                        <button class="btn btn--primary btn--sm" onclick="applyHistoryFilters()" title="Filtrar"><i class="fas fa-arrow-right"></i></button>
-                        <button class="btn btn--outline btn--sm" onclick="resetHistoryFilters()" title="Limpiar"><i class="fas fa-rotate-left"></i></button>
+                        <button class="btn btn--primary btn--sm" onclick="applyHistoryFilters()" title="Filtrar"><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                        <button class="btn btn--outline btn--sm" onclick="resetHistoryFilters()" title="Limpiar"><i class="fas fa-rotate-left" aria-hidden="true"></i></button>
                     </div>
                 </div>
                 <div id="reservation-list-history" class="flex-col">
@@ -64,11 +64,11 @@
                 </div>
                 <div id="historial-pagination" class="pagination">
                     <button class="btn-pagination" onclick="historialPage(-1)" id="historial-prev">
-                        <i class="fas fa-chevron-left"></i> ANTERIOR
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i> ANTERIOR
                     </button>
                     <span id="historial-page-info" class="page-info">Página 1</span>
                     <button class="btn-pagination" onclick="historialPage(1)" id="historial-next">
-                        SIGUIENTE <i class="fas fa-chevron-right"></i>
+                        SIGUIENTE <i class="fas fa-chevron-right" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>

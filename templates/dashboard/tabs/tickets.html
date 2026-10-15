@@ -3,28 +3,28 @@
     <!-- KPIS DE TICKETS DE SOPORTE -->
     <div class="kpi-grid">
         <div class="kpi-card highlight">
-            <div class="kpi-icon"><i class="fas fa-inbox"></i></div>
+            <div class="kpi-icon"><i class="fas fa-inbox" aria-hidden="true"></i></div>
             <div class="kpi-data">
                 <span class="label">Total Tickets</span>
                 <span class="value" id="stat-tickets-total">0</span>
             </div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="kpi-icon"><i class="fas fa-hourglass-half" aria-hidden="true"></i></div>
             <div class="kpi-data">
                 <span class="label">Pendientes</span>
                 <span class="value" id="stat-tickets-pending">0</span>
             </div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon"><i class="fas fa-spinner"></i></div>
+            <div class="kpi-icon"><i class="fas fa-spinner" aria-hidden="true"></i></div>
             <div class="kpi-data">
                 <span class="label">En Proceso</span>
                 <span class="value" id="stat-tickets-process">0</span>
             </div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="kpi-icon"><i class="fas fa-check-circle" aria-hidden="true"></i></div>
             <div class="kpi-data">
                 <span class="label">Resueltos</span>
                 <span class="value" id="stat-tickets-resolved">0</span>
@@ -36,14 +36,14 @@
     <div class="card">
         <div class="card-header-premium">
             <div class="header-info-group">
-                <div class="header-icon"><i class="fas fa-headset"></i></div>
+                <div class="header-icon"><i class="fas fa-headset" aria-hidden="true"></i></div>
                 <div class="header-text">
                     <h3>GESTIÓN DE TICKETS DE SOPORTE</h3>
                 </div>
             </div>
             <div class="header-actions">
                 <div class="filter-group-premium" title="Filtrar por estado del ticket">
-                    <i class="fas fa-filter"></i>
+                    <i class="fas fa-filter" aria-hidden="true"></i>
                     <select id="ticket-admin-status-filter" class="select-premium-sm" onchange="loadAdminTickets()">
                         <option value="TODOS">Todos</option>
                         <option value="PENDIENTE">Pendientes</option>
@@ -53,7 +53,7 @@
                     </select>
                 </div>
                 <div class="search-box-premium" title="Buscar por asunto, cliente o categoría">
-                    <i class="fas fa-search"></i>
+                    <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="text" id="ticket-admin-search" placeholder="Buscar ticket..." onkeyup="filterTicketList(this.value)">
                 </div>
             </div>
@@ -90,21 +90,21 @@
 
             <div class="info-grid-compact mb-5">
                 <div class="info-item">
-                    <i class="fas fa-user"></i>
+                    <i class="fas fa-user" aria-hidden="true"></i>
                     <div>
                         <label>CLIENTE</label>
                         <span id="ticket-modal-client" class="text-bold">---</span>
                     </div>
                 </div>
                 <div class="info-item">
-                    <i class="fas fa-envelope"></i>
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
                     <div>
                         <label>EMAIL</label>
                         <span id="ticket-modal-email" class="ticket-email-text">---</span>
                     </div>
                 </div>
                 <div class="info-item">
-                    <i class="fas fa-tag"></i>
+                    <i class="fas fa-tag" aria-hidden="true"></i>
                     <div>
                         <label>CATEGORÍA</label>
                         <span id="ticket-modal-category" class="text-bold">---</span>
@@ -113,7 +113,7 @@
             </div>
 
             <div class="info-item mb-5 ticket-subject-info">
-                <i class="fas fa-heading"></i>
+                <i class="fas fa-heading" aria-hidden="true"></i>
                 <div>
                     <label>ASUNTO</label>
                     <span id="ticket-modal-subject" class="text-bold">---</span>
@@ -124,7 +124,7 @@
 
             <form onsubmit="submitTicketAnswer(event)">
                 <div id="ticket-answer-locked" class="ticket-answer-locked">
-                    <i class="fas fa-lock"></i> Ticket cerrado y bloqueado. Solo visualización.
+                    <i class="fas fa-lock" aria-hidden="true"></i> Ticket cerrado y bloqueado. Solo visualización.
                 </div>
                 <div class="form-group mb-10">
                     <label for="ticket-answer-text" class="text-muted text-small text-bold block mb-5">RESPUESTA</label>
@@ -142,7 +142,7 @@
                                 <option value="Resuelto">Resuelto</option>
                                 <option value="Cancelado">Cancelado</option>
                             </select>
-                            <i class="fas fa-chevron-down select-premium-chevron"></i>
+                            <i class="fas fa-chevron-down select-premium-chevron" aria-hidden="true"></i>
                         </div>
                     </div>
 

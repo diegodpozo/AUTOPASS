@@ -1,15 +1,15 @@
 <!-- MODAL: LOGIN -->
 <div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
     <div class="modal-content">
-        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('loginModal')"><i class="fas fa-xmark"></i></button>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('loginModal')"><i class="fas fa-xmark" aria-hidden="true"></i></button>
         <h2 id="login-title">INICIÁ SESIÓN</h2>
         <div class="oauth-block">
             <div class="oauth-buttons">
                 <button type="button" class="btn-oauth btn-oauth-google" data-oauth-provider="google" onclick="startOAuth('google')">
-                    <i class="fab fa-google"></i><span>Continuar con Google</span>
+                    <i class="fab fa-google" aria-hidden="true"></i><span>Continuar con Google</span>
                 </button>
                 <button type="button" class="btn-oauth btn-oauth-facebook" data-oauth-provider="facebook" onclick="startOAuth('facebook')">
-                    <i class="fab fa-facebook-f"></i><span>Continuar con Facebook</span>
+                    <i class="fab fa-facebook-f" aria-hidden="true"></i><span>Continuar con Facebook</span>
                 </button>
             </div>
             <div class="oauth-divider"><span>o usá tu correo</span></div>
@@ -19,15 +19,15 @@
             <div class="form-group">
                 <label for="login-email">Correo Electrónico</label>
                 <div class="input-with-icon">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="login-email" placeholder="ejemplo@correo.com.ar" autofocus required autocomplete="username">
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                    <input type="email" id="login-email" aria-describedby="login-error" placeholder="ejemplo@correo.com.ar" autofocus required autocomplete="username">
                 </div>
             </div>
             <div class="form-group">
                 <label for="login-password">Contraseña</label>
                 <div class="input-with-icon">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="login-password" placeholder="********" required autocomplete="current-password">
+                    <i class="fas fa-lock" aria-hidden="true"></i>
+                    <input type="password" id="login-password" aria-describedby="login-error" placeholder="********" required autocomplete="current-password">
                     <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('login-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                 </div>
             </div>
@@ -45,7 +45,7 @@
 <!-- MODAL: RECUPERACIÓN -->
 <div id="recoveryModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="recovery-title">
     <div class="modal-content">
-        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('recoveryModal')"><i class="fas fa-xmark"></i></button>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('recoveryModal')"><i class="fas fa-xmark" aria-hidden="true"></i></button>
         <h2 id="recovery-title">RECUPERÁ TU ACCESO</h2>
         <p class="modal-subtitle">Ingresá tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
 
@@ -56,11 +56,11 @@
             <div class="form-group">
                 <label for="recovery-email">Correo Electrónico</label>
                 <div class="input-with-icon">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="recovery-email" placeholder="ejemplo@correo.com.ar" required autocomplete="email">
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                    <input type="email" id="recovery-email" aria-describedby="recovery-error" placeholder="ejemplo@correo.com.ar" required autocomplete="email">
                 </div>
             </div>
-            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-paper-plane"></i> Enviar Enlace</button>
+            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-paper-plane" aria-hidden="true"></i> Enviar Enlace</button>
         </form>
         <div class="modal-text">
             ¿Recordaste tu clave? <a href="javascript:void(0)" onclick="switchModal('recoveryModal', 'loginModal')" class="modal-link">Volver al Login</a>
@@ -71,16 +71,16 @@
 <!-- MODAL: REGISTRO -->
 <div id="registerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="register-title">
     <div class="modal-content modal-content-wide">
-        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('registerModal')"><i class="fas fa-xmark"></i></button>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('registerModal')"><i class="fas fa-xmark" aria-hidden="true"></i></button>
         <h2 id="register-title">CREÁ TU CUENTA</h2>
         
         <div class="oauth-block">
             <div class="oauth-buttons">
                 <button type="button" class="btn-oauth btn-oauth-google" data-oauth-provider="google" onclick="startOAuth('google')">
-                    <i class="fab fa-google"></i><span>Registrate con Google</span>
+                    <i class="fab fa-google" aria-hidden="true"></i><span>Registrate con Google</span>
                 </button>
                 <button type="button" class="btn-oauth btn-oauth-facebook" data-oauth-provider="facebook" onclick="startOAuth('facebook')">
-                    <i class="fab fa-facebook-f"></i><span>Registrate con Facebook</span>
+                    <i class="fab fa-facebook-f" aria-hidden="true"></i><span>Registrate con Facebook</span>
                 </button>
             </div>
             <div class="oauth-divider"><span>o registrate con tu correo</span></div>
@@ -93,14 +93,14 @@
                 <div class="form-group">
                     <label for="reg-nombre">Nombre/s</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-user"></i>
+                        <i class="fas fa-user" aria-hidden="true"></i>
                         <input type="text" id="reg-nombre" placeholder="Tu nombre/s" required autocomplete="given-name">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="reg-apellido">Apellido</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-user-tag"></i>
+                        <i class="fas fa-user-tag" aria-hidden="true"></i>
                         <input type="text" id="reg-apellido" placeholder="Tu apellido" required autocomplete="family-name">
                     </div>
                 </div>
@@ -109,7 +109,7 @@
                 <div class="form-group">
                     <label for="reg-dni">DNI</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-id-card"></i>
+                        <i class="fas fa-id-card" aria-hidden="true"></i>
                         <input type="text" id="reg-dni" class="digits-only" placeholder="12345678" maxlength="8" required inputmode="numeric" autocomplete="off">
                     </div>
                     <small class="field-hint">Solo números, sin puntos.</small>
@@ -117,7 +117,7 @@
                 <div class="form-group">
                     <label for="reg-tel">Teléfono</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-phone"></i>
+                        <i class="fas fa-phone" aria-hidden="true"></i>
                         <input type="tel" id="reg-tel" class="digits-only" placeholder="1122334455" maxlength="13" required inputmode="tel" autocomplete="tel">
                     </div>
                     <small class="field-hint">Solo números, máximo 13 dígitos.</small>
@@ -126,7 +126,7 @@
             <div class="form-group">
                 <label for="reg-email">Correo Electrónico</label>
                 <div class="input-with-icon">
-                    <i class="fas fa-envelope"></i>
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
                     <input type="email" id="reg-email" placeholder="ejemplo@correo.com.ar" required autocomplete="email">
                 </div>
             </div>
@@ -134,7 +134,7 @@
                 <div class="form-group">
                     <label for="reg-password">Contraseña</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-lock"></i>
+                        <i class="fas fa-lock" aria-hidden="true"></i>
                         <input type="password" id="reg-password" placeholder="Clave segura" required autocomplete="new-password">
                         <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('reg-password', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                     </div>
@@ -142,7 +142,7 @@
                 <div class="form-group">
                     <label for="reg-password-confirm">Confirmar Contraseña</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-shield-halved"></i>
+                        <i class="fas fa-shield-halved" aria-hidden="true"></i>
                         <input type="password" id="reg-password-confirm" placeholder="Repetí la clave" required autocomplete="new-password">
                         <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePasswordVisibility('reg-password-confirm', this)"><i class="fas fa-eye" aria-hidden="true"></i></button>
                     </div>
@@ -151,17 +151,17 @@
             
             <div class="password-validation-area">
                 <div class="password-requirements">
-                    <div id="reg-req-len" class="req-item"><i class="far fa-circle"></i> 8+ caracteres</div>
-                    <div id="reg-req-up" class="req-item"><i class="far fa-circle"></i> Una mayúscula</div>
-                    <div id="reg-req-spec" class="req-item"><i class="far fa-circle"></i> Un símbolo (!@#)</div>
-                    <div id="reg-req-match" class="req-item"><i class="far fa-circle"></i> Coinciden</div>
+                    <div id="reg-req-len" class="req-item"><i class="far fa-circle" aria-hidden="true"></i> 8+ caracteres</div>
+                    <div id="reg-req-up" class="req-item"><i class="far fa-circle" aria-hidden="true"></i> Una mayúscula</div>
+                    <div id="reg-req-spec" class="req-item"><i class="far fa-circle" aria-hidden="true"></i> Un símbolo (!@#)</div>
+                    <div id="reg-req-match" class="req-item"><i class="far fa-circle" aria-hidden="true"></i> Coinciden</div>
                 </div>
                 <div class="strength-meter-container">
                     <div id="reg-password-strength" class="strength-meter"></div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-user-plus"></i> Finalizá tu Registro</button>
+            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-user-plus" aria-hidden="true"></i> Finalizá tu Registro</button>
         </form>
 
         <div class="modal-text">
@@ -173,7 +173,7 @@
 <!-- MODAL: COMPLETAR REGISTRO SOCIAL (OAUTH) -->
 <div id="oauthSignupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="oauth-signup-title">
     <div class="modal-content modal-content-wide">
-        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('oauthSignupModal')"><i class="fas fa-xmark"></i></button>
+        <button type="button" class="close-btn" data-modal-close aria-label="Cerrar" onclick="closeModal('oauthSignupModal')"><i class="fas fa-xmark" aria-hidden="true"></i></button>
         <h2 id="oauth-signup-title">COMPLETÁ TU REGISTRO</h2>
         <p class="modal-subtitle">Casi listo. Solo nos faltan un par de datos para terminar tu cuenta con <strong id="oauth-signup-provider">tu red social</strong>.</p>
 
@@ -183,22 +183,22 @@
             <div class="form-group">
                 <label for="oauth-signup-email">Correo Electrónico</label>
                 <div class="input-with-icon">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="oauth-signup-email" readonly>
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                    <input type="email" id="oauth-signup-email" aria-describedby="oauth-signup-error" readonly>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="oauth-signup-nombre">Nombre/s</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-user"></i>
+                        <i class="fas fa-user" aria-hidden="true"></i>
                         <input type="text" id="oauth-signup-nombre" readonly>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="oauth-signup-apellido">Apellido</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-user-tag"></i>
+                        <i class="fas fa-user-tag" aria-hidden="true"></i>
                         <input type="text" id="oauth-signup-apellido" readonly>
                     </div>
                 </div>
@@ -207,7 +207,7 @@
                 <div class="form-group">
                     <label for="oauth-signup-dni">DNI</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-id-card"></i>
+                        <i class="fas fa-id-card" aria-hidden="true"></i>
                         <input type="text" id="oauth-signup-dni" class="digits-only" placeholder="12345678" maxlength="8" required inputmode="numeric">
                     </div>
                     <small class="field-hint">Solo números, sin puntos.</small>
@@ -215,15 +215,15 @@
                 <div class="form-group">
                     <label for="oauth-signup-tel">Teléfono</label>
                     <div class="input-with-icon">
-                        <i class="fas fa-phone"></i>
+                        <i class="fas fa-phone" aria-hidden="true"></i>
                         <input type="tel" id="oauth-signup-tel" class="digits-only" placeholder="1122334455" maxlength="13" required inputmode="tel">
                     </div>
                     <small class="field-hint">Solo números, máximo 13 dígitos.</small>
                 </div>
             </div>
-            <p class="oauth-note"><i class="fas fa-shield-halved"></i> No necesitás contraseña: vas a ingresar siempre con tu red social.</p>
+            <p class="oauth-note"><i class="fas fa-shield-halved" aria-hidden="true"></i> No necesitás contraseña: vas a ingresar siempre con tu red social.</p>
 
-            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-user-check"></i> Finalizá tu Registro</button>
+            <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-user-check" aria-hidden="true"></i> Finalizá tu Registro</button>
         </form>
     </div>
 </div>

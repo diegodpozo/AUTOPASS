@@ -3,34 +3,34 @@
     <!-- KPIS DE USUARIOS (COLAPSIBLE EN MÓVIL) -->
     <div class="user-stats-collapsible">
         <button type="button" class="user-stats-trigger" onclick="toggleUserStatsCollapsible(this)" title="Mostrar u ocultar estadísticas de usuarios">
-            <span><i class="fas fa-chart-pie mr-8"></i> RESUMEN DE USUARIOS</span>
-            <i class="fas fa-chevron-down trigger-icon"></i>
+            <span><i class="fas fa-chart-pie mr-8" aria-hidden="true"></i> RESUMEN DE USUARIOS</span>
+            <i class="fas fa-chevron-down trigger-icon" aria-hidden="true"></i>
         </button>
         <div class="user-stats-content" id="user-stats-collapsible-content">
             <div class="kpi-grid kpi-grid-4">
                 <div class="kpi-card highlight">
-                    <div class="kpi-icon"><i class="fas fa-users"></i></div>
+                    <div class="kpi-icon"><i class="fas fa-users" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">Totales</span>
                         <span class="value" id="stat-total-users">0</span>
                     </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-user-shield"></i></div>
+                    <div class="kpi-icon"><i class="fas fa-user-shield" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">Administradores</span>
                         <span class="value" id="stat-admin-users">0</span>
                     </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-user-gear"></i></div>
+                    <div class="kpi-icon"><i class="fas fa-user-gear" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">Empleados</span>
                         <span class="value" id="stat-staff-users">0</span>
                     </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-user"></i></div>
+                    <div class="kpi-icon"><i class="fas fa-user" aria-hidden="true"></i></div>
                     <div class="kpi-data">
                         <span class="label">Clientes</span>
                         <span class="value" id="stat-customer-users">0</span>
@@ -43,18 +43,18 @@
     <div class="card">
         <div class="card-header-premium">
             <div class="header-info-group">
-                <div class="header-icon"><i class="fas fa-address-book"></i></div>
+                <div class="header-icon"><i class="fas fa-address-book" aria-hidden="true"></i></div>
                 <div class="header-text">
                     <h3>LISTA DE USUARIOS</h3>
                 </div>
             </div>
             <div class="header-actions">
                 <div class="search-box-premium" title="Buscar por nombre, apellido, DNI o email">
-                    <i class="fas fa-search"></i>
+                    <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="text" id="user-search" placeholder="Nombre, DNI o Email..." onkeyup="filterUserList()">
                 </div>
                 <div class="filter-group-premium" title="Filtrar por rol de usuario">
-                    <i class="fas fa-user-tag"></i>
+                    <i class="fas fa-user-tag" aria-hidden="true"></i>
                     <select id="user-filter-rol" class="select-premium-sm" onchange="filterUserList()">
                         <option value="">TODOS</option>
                         <option value="user">CLIENTES</option>
@@ -64,7 +64,7 @@
                     </select>
                 </div>
                 <button class="btn--premium sm btn-new-user-mobile-fix" onclick="showCreateUserModal()" title="Dar de alta un nuevo usuario o empleado">
-                    <i class="fas fa-plus"></i> NUEVO USUARIO
+                    <i class="fas fa-plus" aria-hidden="true"></i> NUEVO USUARIO
                 </button>
             </div>
         </div>
@@ -91,11 +91,11 @@
             <!-- PAGINACIÓN -->
             <div class="pagination-premium flex-row items-center justify-center gap-20 py-20">
                 <button class="btn--icon sm" onclick="prevUserPage()" id="prev-user-btn" disabled title="Página anterior">
-                    <i class="fas fa-chevron-left"></i>
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
                 </button>
                 <span id="user-page-info" class="text-small text-muted font-bold">Página 1 de 1</span>
                 <button class="btn--icon sm" onclick="nextUserPage()" id="next-user-btn" disabled title="Página siguiente">
-                    <i class="fas fa-chevron-right"></i>
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
                 </button>
             </div>
         </div>

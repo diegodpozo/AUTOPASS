@@ -18,7 +18,7 @@
                 </div>
                 <div class="ticket-attach-row">
                     <label for="modal-ticket-attach" class="btn btn--outline">
-                        <i class="fas fa-paperclip"></i> Adjuntar archivo
+                        <i class="fas fa-paperclip" aria-hidden="true"></i> Adjuntar archivo
                     </label>
                     <input type="file" id="modal-ticket-attach" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf" onchange="handleTicketAttach(this)">
                     <span id="modal-ticket-attach-name"></span>
@@ -29,7 +29,7 @@
                 <div class="ticket-reply-actions">
                     <button class="btn btn--outline" onclick="closeSupportTicketModal()">Cerrar</button>
                     <button id="modal-ticket-reply-btn" class="btn btn--primary" onclick="submitTicketReply()">
-                        <i class="fas fa-reply"></i> ENVIAR RESPUESTA
+                        <i class="fas fa-reply" aria-hidden="true"></i> ENVIAR RESPUESTA
                     </button>
                 </div>
             </div>
@@ -39,12 +39,12 @@
 
 <div id="modal-pase-digital" class="modal-premium" role="dialog" aria-modal="true" aria-label="Pase digital de la reserva">
     <div class="modal-content-premium ticket-container" id="ticket-to-capture">
-        <button type="button" class="modal-close-top no-print" aria-label="Cerrar" onclick="closeDigitalPass()"><i class="fas fa-times"></i></button>
+        <button type="button" class="modal-close-top no-print" aria-label="Cerrar" onclick="closeDigitalPass()"><i class="fas fa-times" aria-hidden="true"></i></button>
 
         <!-- COLUMNA IZQUIERDA: QR + ID -->
         <div class="ticket-left-col">
             <div class="ticket-brand-row">
-                <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo">
+                <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo" loading="lazy" decoding="async">
                 <span class="ticket-brand">AUTOPASS</span>
             </div>
             <div id="ticket-status-banner" class="ticket-status-banner"></div>
@@ -52,7 +52,7 @@
                 <div id="ticket-qr" class="qr-canvas"></div>
             </div>
             <div id="ticket-no-qr-section" class="ticket-no-qr-section">
-                <div class="ticket-no-qr-icon"><i class="fas fa-lock"></i></div>
+                <div class="ticket-no-qr-icon"><i class="fas fa-lock" aria-hidden="true"></i></div>
             </div>
             <div class="ticket-id" id="ticket-id-display">#000000</div>
             <div class="ticket-id" id="ticket-id-display-alt">#000000</div>
@@ -92,11 +92,11 @@
             <div class="ticket-footer">
                 <div class="ticket-instructions" id="ticket-instructions">Presentá este código en el lector de la entrada.</div>
                 <div id="ticket-payment-actions" class="ticket-actions ticket-payment-actions no-print">
-                    <button class="btn-ticket btn-pay-wallet" onclick="payReservationFromPass()"><i class="fas fa-wallet"></i> SALDO</button>
-                    <button class="btn-ticket btn-pay-mp" onclick="payReservationMpFromPass()"><i class="fab fa-google-pay"></i> MERCADO PAGO</button>
+                    <button class="btn-ticket btn-pay-wallet" onclick="payReservationFromPass()"><i class="fas fa-wallet" aria-hidden="true"></i> SALDO</button>
+                    <button class="btn-ticket btn-pay-mp" onclick="payReservationMpFromPass()"><i class="fab fa-google-pay" aria-hidden="true"></i> MERCADO PAGO</button>
                 </div>
                 <div id="ticket-share-actions" class="ticket-actions no-print">
-                    <button class="btn-ticket btn-download" onclick="shareTicket()"><i class="fas fa-share-nodes"></i> COMPARTIR</button>
+                    <button class="btn-ticket btn-download" onclick="shareTicket()"><i class="fas fa-share-nodes" aria-hidden="true"></i> COMPARTIR</button>
                 </div>
             </div>
         </div>
@@ -108,9 +108,9 @@
 <!-- MODAL: TICKET DE CANJE (VOUCHER POR PUNTOS) -->
 <div id="modal-canje" class="modal-premium" role="dialog" aria-modal="true" aria-label="Ticket de canje del cupon">
     <div class="modal-content-premium ticket-container" id="canje-to-capture">
-        <button type="button" class="modal-close-top no-print" aria-label="Cerrar" onclick="closeCanjeModal()"><i class="fas fa-times"></i></button>
+        <button type="button" class="modal-close-top no-print" aria-label="Cerrar" onclick="closeCanjeModal()"><i class="fas fa-times" aria-hidden="true"></i></button>
         <div class="ticket-header">
-            <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo">
+            <img src="/static/images/logo.png" alt="AutoPass Logo" class="ticket-logo" loading="lazy" decoding="async">
             <div class="ticket-title-wrap"><span class="ticket-brand">AUTOPASS</span><span class="ticket-tagline">TICKET DE CANJE</span></div>
         </div>
         <div class="ticket-body">
@@ -126,7 +126,7 @@
         </div>
         <div class="ticket-footer">
             <div class="ticket-instructions" id="canje-observacion">Presentá este código para efectivizar tu beneficio.</div>
-            <div class="ticket-actions no-print"><button class="btn-ticket btn-download" onclick="shareCanjeTicket()"><i class="fas fa-share-nodes"></i> COMPARTIR TICKET</button></div>
+            <div class="ticket-actions no-print"><button class="btn-ticket btn-download" onclick="shareCanjeTicket()"><i class="fas fa-share-nodes" aria-hidden="true"></i> COMPARTIR TICKET</button></div>
         </div>
         <div class="ticket-cutout left"></div><div class="ticket-cutout right"></div><div class="ticket-perf"></div>
     </div>
@@ -139,16 +139,16 @@
             <form id="rechargeForm" onsubmit="processRecharge(event)">
                 <div class="form-group">
                     <label for="recharge-amount">Monto a Cargar ($)</label>
-                    <div class="input-with-icon"><i class="fas fa-dollar-sign"></i><input type="number" id="recharge-amount" placeholder="0.00" min="100" step="100" required autofocus></div>
+                    <div class="input-with-icon"><i class="fas fa-dollar-sign" aria-hidden="true"></i><input type="number" id="recharge-amount" placeholder="0.00" min="100" step="100" required autofocus></div>
                 </div>
                 <div class="quick-amounts">
                     <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(1000)">$1000</button>
                     <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(5000)">$5000</button>
                     <button type="button" class="btn btn--outline btn--sm" onclick="setRechargeAmount(10000)">$10000</button>
                 </div>
-                <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-bolt"></i> ACREDITAR SALDO</button>
+                <button type="submit" class="btn btn--primary btn--full"><i class="fas fa-bolt" aria-hidden="true"></i> ACREDITAR SALDO</button>
             </form>
-            <div class="modal-text"><i class="fas fa-shield-halved"></i> Tu saldo se acredita al instante. Próximamente vas a poder cargarlo con Mercado Pago.</div>
+            <div class="modal-text"><i class="fas fa-shield-halved" aria-hidden="true"></i> Tu saldo se acredita al instante. Próximamente vas a poder cargarlo con Mercado Pago.</div>
         </div>
     </div>
 </div>

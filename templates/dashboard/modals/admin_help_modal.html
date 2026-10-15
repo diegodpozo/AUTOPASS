@@ -9,39 +9,39 @@
             <div class="admin-help-hero-card">
                 <div class="admin-help-hero-content">
                     <div class="admin-help-hero-badge">
-                        <i class="fas fa-shield-halved"></i> ASISTENCIA OPERATIVA & CAPACITACIÓN
+                        <i class="fas fa-shield-halved" aria-hidden="true"></i> ASISTENCIA OPERATIVA & CAPACITACIÓN
                     </div>
                     <h2 class="admin-help-hero-title">¿En qué necesitas asistencia operativa hoy?</h2>
                     <p class="admin-help-hero-subtitle">Buscá guías rápidas paso a paso, procedimientos de emergencia en barreras, acreditaciones de saldo y cobros manuales.</p>
                     
                     <!-- BUSCADOR INTERACTIVO -->
                     <div class="admin-help-search-wrapper">
-                        <i class="fas fa-search admin-help-search-icon"></i>
+                        <i class="fas fa-search admin-help-search-icon" aria-hidden="true"></i>
                         <input type="text" class="admin-help-search-input" placeholder="Buscar tour, falla ALPR, barrera MQTT, saldo, cobro manual..." oninput="filterAdminHelpSearch(this.value)">
                     </div>
 
                     <!-- PILLS DE CATEGORIA -->
                     <div class="admin-help-category-pills">
                         <button class="admin-help-pill active" onclick="filterAdminHelpCategory('all', this)">
-                            <i class="fas fa-th-large"></i> Todas
+                            <i class="fas fa-th-large" aria-hidden="true"></i> Todas
                         </button>
                         <button class="admin-help-pill" onclick="filterAdminHelpCategory('cctv', this)">
-                            <i class="fas fa-video"></i> CCTV & ALPR
+                            <i class="fas fa-video" aria-hidden="true"></i> CCTV & ALPR
                         </button>
                         <button class="admin-help-pill" onclick="filterAdminHelpCategory('reservas', this)">
-                            <i class="fas fa-calendar-check"></i> Reservas & Cobros
+                            <i class="fas fa-calendar-check" aria-hidden="true"></i> Reservas & Cobros
                         </button>
                         <button class="admin-help-pill" onclick="filterAdminHelpCategory('users', this)">
-                            <i class="fas fa-users-gear"></i> Usuarios & Saldo
+                            <i class="fas fa-users-gear" aria-hidden="true"></i> Usuarios & Saldo
                         </button>
                         <button class="admin-help-pill" onclick="filterAdminHelpCategory('finance', this)">
-                            <i class="fas fa-chart-line"></i> Finanzas
+                            <i class="fas fa-chart-line" aria-hidden="true"></i> Finanzas
                         </button>
                         <button class="admin-help-pill" onclick="filterAdminHelpCategory('support', this)">
-                            <i class="fas fa-headset"></i> Soporte & Tickets
+                            <i class="fas fa-headset" aria-hidden="true"></i> Soporte & Tickets
                         </button>
                         <button class="admin-help-pill" onclick="filterAdminHelpCategory('settings', this)">
-                            <i class="fas fa-gears"></i> Sucursales & Tarifas
+                            <i class="fas fa-gears" aria-hidden="true"></i> Sucursales & Tarifas
                         </button>
                     </div>
                 </div>
@@ -49,20 +49,20 @@
 
             <!-- SECCIÓN 1: TOURS GUIADOS INTERACTIVOS -->
             <div class="admin-help-section-title">
-                <i class="fas fa-route"></i> TOURS GUIADOS INTERACTIVOS E INSTRUCCIÓN TÉCNICA
+                <i class="fas fa-route" aria-hidden="true"></i> TOURS GUIADOS INTERACTIVOS E INSTRUCCIÓN TÉCNICA
             </div>
             
             <div class="admin-help-quick-grid">
                 <!-- Tour 0: Recorrido Completo -->
                 <div class="admin-help-quick-card hero-tour-card" data-category="all">
                     <div class="admin-help-quick-icon icon-tour">
-                        <i class="fas fa-play-circle"></i>
+                        <i class="fas fa-play-circle" aria-hidden="true"></i>
                     </div>
                     <div class="admin-help-quick-body">
                         <h3>Recorrido Completo Dashboard</h3>
                         <p>Tour guiado por todas las funciones de administración, monitoreo, aforo y reportes.</p>
                         <button class="btn-help-action highlight-gold" onclick="startAdminFullDashboardTour()">
-                            <i class="fas fa-play"></i> Iniciar Tour General
+                            <i class="fas fa-play" aria-hidden="true"></i> Iniciar Tour General
                         </button>
                     </div>
                 </div>
@@ -70,13 +70,13 @@
                 <!-- Tour 1: Monitoreo CCTV & ALPR -->
                 <div class="admin-help-quick-card" data-category="cctv">
                     <div class="admin-help-quick-icon icon-cctv">
-                        <i class="fas fa-video"></i>
+                        <i class="fas fa-video" aria-hidden="true"></i>
                     </div>
                     <div class="admin-help-quick-body">
                         <h3>Monitoreo CCTV & ALPR</h3>
                         <p>Grilla de cámaras en vivo, consola OCR, aforo físico trimodal y comandos de barreras.</p>
                         <button class="btn-help-action" onclick="startAdminLiveTour()">
-                            <i class="fas fa-arrow-right"></i> Tour Monitoreo
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i> Tour Monitoreo
                         </button>
                     </div>
                 </div>
@@ -84,13 +84,13 @@
                 <!-- Tour 2: Reservas -->
                 <div class="admin-help-quick-card" data-category="reservas">
                     <div class="admin-help-quick-icon icon-reserva">
-                        <i class="fas fa-calendar-check"></i>
+                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
                     </div>
                     <div class="admin-help-quick-body">
                         <h3>Gestión de Reservas</h3>
                         <p>Búsqueda por patente/comprobante, cobro en caja, auditoría y cancelaciones.</p>
                         <button class="btn-help-action" onclick="startAdminReservationsTour()">
-                            <i class="fas fa-arrow-right"></i> Tour Reservas
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i> Tour Reservas
                         </button>
                     </div>
                 </div>
@@ -98,13 +98,13 @@
                 <!-- Tour 3: Usuarios & Billetera -->
                 <div class="admin-help-quick-card hide-staff" data-category="users">
                     <div class="admin-help-quick-icon icon-users">
-                        <i class="fas fa-users-gear"></i>
+                        <i class="fas fa-users-gear" aria-hidden="true"></i>
                     </div>
                     <div class="admin-help-quick-body">
                         <h3>Usuarios & Billetera</h3>
                         <p>Directorio de clientes, recarga manual de Saldo AutoPass, suspensión y permisos.</p>
                         <button class="btn-help-action" onclick="startAdminUsersTour()">
-                            <i class="fas fa-arrow-right"></i> Tour Usuarios
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i> Tour Usuarios
                         </button>
                     </div>
                 </div>
@@ -112,13 +112,13 @@
                 <!-- Tour 4: Analítica Financiera -->
                 <div class="admin-help-quick-card hide-staff" data-category="finance">
                     <div class="admin-help-quick-icon icon-finance">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-chart-line" aria-hidden="true"></i>
                     </div>
                     <div class="admin-help-quick-body">
                         <h3>Analítica Financiera</h3>
                         <p>KPIs de recaudación, ingresos por método de pago, desglose trimodal y CSV.</p>
                         <button class="btn-help-action" onclick="startAdminFinanceTour()">
-                            <i class="fas fa-arrow-right"></i> Tour Finanzas
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i> Tour Finanzas
                         </button>
                     </div>
                 </div>
@@ -126,13 +126,13 @@
                 <!-- Tour 5: Soporte & Tickets -->
                 <div class="admin-help-quick-card hide-staff" data-category="support">
                     <div class="admin-help-quick-icon icon-tickets">
-                        <i class="fas fa-headset"></i>
+                        <i class="fas fa-headset" aria-hidden="true"></i>
                     </div>
                     <div class="admin-help-quick-body">
                         <h3>Soporte & Tickets</h3>
                         <p>Bandeja de reclamos, respuesta directa en tiempo real y notificaciones WebSockets.</p>
                         <button class="btn-help-action" onclick="startAdminTicketsTour()">
-                            <i class="fas fa-arrow-right"></i> Tour Soporte
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i> Tour Soporte
                         </button>
                     </div>
                 </div>
@@ -140,13 +140,13 @@
                 <!-- Tour 6: Sucursales & Tarifas -->
                 <div class="admin-help-quick-card hide-staff" data-category="settings">
                     <div class="admin-help-quick-icon icon-settings">
-                        <i class="fas fa-gears"></i>
+                        <i class="fas fa-gears" aria-hidden="true"></i>
                     </div>
                     <div class="admin-help-quick-body">
                         <h3>Sucursales, Pisos & Tarifas</h3>
                         <p>Gestión multi-piso (ParkingFloor), cuadro tarifario trimodal y cámaras IP.</p>
                         <button class="btn-help-action" onclick="startAdminBranchesSettingsTour()">
-                            <i class="fas fa-arrow-right"></i> Tour Configuración
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i> Tour Configuración
                         </button>
                     </div>
                 </div>
@@ -154,20 +154,20 @@
 
             <!-- SECCIÓN 2: RESOLUCIÓN RÁPIDA DE CONTINGENCIAS (FAQ OPERATIVA EN ACORDEÓN) -->
             <div class="admin-help-section-title">
-                <i class="fas fa-shield-halved"></i> RESOLUCIÓN RÁPIDA DE CONTINGENCIAS (FAQ OPERATIVA)
+                <i class="fas fa-shield-halved" aria-hidden="true"></i> RESOLUCIÓN RÁPIDA DE CONTINGENCIAS (FAQ OPERATIVA)
             </div>
 
             <div class="admin-help-faq-container">
                 <!-- GRUPO: CCTV & ALPR -->
                 <div class="admin-faq-category-group" data-category="cctv">
                     <div class="admin-faq-category-header">
-                        <i class="fas fa-video"></i> Lectura de Patentes (ALPR) & Barreras Físicas
+                        <i class="fas fa-video" aria-hidden="true"></i> Lectura de Patentes (ALPR) & Barreras Físicas
                     </div>
 
                     <div class="admin-faq-item">
                         <button class="admin-faq-question" onclick="toggleAdminFaq(this)">
-                            <span><i class="fas fa-triangle-exclamation text-amber"></i> ¿Qué hacer si la cámara ALPR no detecta la patente al ingresar?</span>
-                            <i class="fas fa-chevron-down admin-faq-icon"></i>
+                            <span><i class="fas fa-triangle-exclamation text-amber" aria-hidden="true"></i> ¿Qué hacer si la cámara ALPR no detecta la patente al ingresar?</span>
+                            <i class="fas fa-chevron-down admin-faq-icon" aria-hidden="true"></i>
                         </button>
                         <div class="admin-faq-answer">
                             <p>1. Ingresá a la pestaña <strong>Monitoreo</strong>.</p>
@@ -178,8 +178,8 @@
 
                     <div class="admin-faq-item">
                         <button class="admin-faq-question" onclick="toggleAdminFaq(this)">
-                            <span><i class="fas fa-door-open text-amber"></i> ¿Cómo forzar la apertura manual de la barrera física (MQTT)?</span>
-                            <i class="fas fa-chevron-down admin-faq-icon"></i>
+                            <span><i class="fas fa-door-open text-amber" aria-hidden="true"></i> ¿Cómo forzar la apertura manual de la barrera física (MQTT)?</span>
+                            <i class="fas fa-chevron-down admin-faq-icon" aria-hidden="true"></i>
                         </button>
                         <div class="admin-faq-answer">
                             <p>En la pestaña <strong>Monitoreo</strong>, utilizá los botones con icono de barrera o presioná <strong>Abrir Barrera Entrada/Salida</strong>. Se transmitirá una orden directa vía broker MQTT al microcontrolador ESP32 de la barrera.</p>
@@ -188,8 +188,8 @@
 
                     <div class="admin-faq-item">
                         <button class="admin-faq-question" onclick="toggleAdminFaq(this)">
-                            <span><i class="fas fa-camera text-amber"></i> ¿Cómo cambiar la IP o fuente RTSP/MJPEG de una cámara?</span>
-                            <i class="fas fa-chevron-down admin-faq-icon"></i>
+                            <span><i class="fas fa-camera text-amber" aria-hidden="true"></i> ¿Cómo cambiar la IP o fuente RTSP/MJPEG de una cámara?</span>
+                            <i class="fas fa-chevron-down admin-faq-icon" aria-hidden="true"></i>
                         </button>
                         <div class="admin-faq-answer">
                             <p>Dirigite a <strong>Configuración</strong> → <strong>Monitoreo & Cámaras IP</strong>. Editá la URL del dispositivo, asigná su rol (Patente Entrada, Patente Salida, QR Entrada, QR Salida o Predio) y guardá los cambios. El servicio ALPR se reiniciará automáticamente.</p>
@@ -200,13 +200,13 @@
                 <!-- GRUPO: RESERVAS & COBROS -->
                 <div class="admin-faq-category-group" data-category="reservas">
                     <div class="admin-faq-category-header">
-                        <i class="fas fa-calendar-check"></i> Reservas, Cobros & Egresos Manuales
+                        <i class="fas fa-calendar-check" aria-hidden="true"></i> Reservas, Cobros & Egresos Manuales
                     </div>
 
                     <div class="admin-faq-item">
                         <button class="admin-faq-question" onclick="toggleAdminFaq(this)">
-                            <span><i class="fas fa-ticket text-amber"></i> ¿Cómo cobrar y registrar el egreso a un cliente sin ticket o falla ALPR?</span>
-                            <i class="fas fa-chevron-down admin-faq-icon"></i>
+                            <span><i class="fas fa-ticket text-amber" aria-hidden="true"></i> ¿Cómo cobrar y registrar el egreso a un cliente sin ticket o falla ALPR?</span>
+                            <i class="fas fa-chevron-down admin-faq-icon" aria-hidden="true"></i>
                         </button>
                         <div class="admin-faq-answer">
                             <p>En <strong>Monitoreo</strong> → <strong>Operaciones Manuales</strong>, ingresá la patente en <em>Cobrar / Egreso Manual</em>. El sistema calculará el costo acumulado considerando si aplica la cortesía de 10 minutos. Una vez confirmado el pago, presioná <strong>EGRESAR Y LIBERAR</strong> para actualizar la ocupación física.</p>
@@ -215,8 +215,8 @@
 
                     <div class="admin-faq-item">
                         <button class="admin-faq-question" onclick="toggleAdminFaq(this)">
-                            <span><i class="fas fa-undo text-amber"></i> ¿Cómo cancelar una reserva y procesar un reembolso?</span>
-                            <i class="fas fa-chevron-down admin-faq-icon"></i>
+                            <span><i class="fas fa-undo text-amber" aria-hidden="true"></i> ¿Cómo cancelar una reserva y procesar un reembolso?</span>
+                            <i class="fas fa-chevron-down admin-faq-icon" aria-hidden="true"></i>
                         </button>
                         <div class="admin-faq-answer">
                             <p>En la pestaña <strong>Reservas</strong>, buscá el comprobante o patente del cliente. Hacé click en <strong>Cancelar Reserva</strong>. El sistema simulará y acreditará el monto reembolsable de forma directa en el Saldo AutoPass del cliente.</p>
@@ -227,13 +227,13 @@
                 <!-- GRUPO: USUARIOS & SALDO -->
                 <div class="admin-faq-category-group" data-category="users">
                     <div class="admin-faq-category-header">
-                        <i class="fas fa-users-gear"></i> Gestión de Usuarios & Billetera Virtual
+                        <i class="fas fa-users-gear" aria-hidden="true"></i> Gestión de Usuarios & Billetera Virtual
                     </div>
 
                     <div class="admin-faq-item">
                         <button class="admin-faq-question" onclick="toggleAdminFaq(this)">
-                            <span><i class="fas fa-wallet text-amber"></i> ¿Cómo cargar saldo manualmente a la Billetera Virtual de un cliente?</span>
-                            <i class="fas fa-chevron-down admin-faq-icon"></i>
+                            <span><i class="fas fa-wallet text-amber" aria-hidden="true"></i> ¿Cómo cargar saldo manualmente a la Billetera Virtual de un cliente?</span>
+                            <i class="fas fa-chevron-down admin-faq-icon" aria-hidden="true"></i>
                         </button>
                         <div class="admin-faq-answer">
                             <p>Ir a <strong>Gestión de Usuarios</strong>, ubicar al cliente y presionar el botón <strong>Cargar Saldo ($)</strong>. Ingresá el monto abonado en efectivo/transferencia y confirmá la recarga. El saldo estará disponible al instante.</p>
@@ -242,8 +242,8 @@
 
                     <div class="admin-faq-item">
                         <button class="admin-faq-question" onclick="toggleAdminFaq(this)">
-                            <span><i class="fas fa-user-slash text-amber"></i> ¿Cómo suspender o bloquear a un usuario por morosidad o mal uso?</span>
-                            <i class="fas fa-chevron-down admin-faq-icon"></i>
+                            <span><i class="fas fa-user-slash text-amber" aria-hidden="true"></i> ¿Cómo suspender o bloquear a un usuario por morosidad o mal uso?</span>
+                            <i class="fas fa-chevron-down admin-faq-icon" aria-hidden="true"></i>
                         </button>
                         <div class="admin-faq-answer">
                             <p>En la tabla de <strong>Gestión de Usuarios</strong>, utilizá el interruptor <strong>Bloquear / Desbloquear</strong>. Una cuenta bloqueada no podrá iniciar sesión ni generar nuevas reservas en la red.</p>
@@ -255,7 +255,7 @@
 
         <div class="modal-footer admin-help-modal-footer">
             <button class="btn-help-action highlight-gold" onclick="closeModal('modal-admin-help')">
-                <i class="fas fa-check"></i> ENTENDIDO
+                <i class="fas fa-check" aria-hidden="true"></i> ENTENDIDO
             </button>
         </div>
     </div>

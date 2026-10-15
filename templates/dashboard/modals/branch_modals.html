@@ -44,7 +44,7 @@
                         <div class="form-group">
                             <label for="branch-nombre">Nombre de Sucursal</label>
                             <div class="input-with-icon">
-                                <i class="fas fa-tag"></i>
+                                <i class="fas fa-tag" aria-hidden="true"></i>
                                 <input type="text" id="branch-nombre" placeholder="Ej: Central" required>
                             </div>
                         </div>
@@ -52,7 +52,7 @@
                         <div class="form-group">
                             <label for="branch-telefono">Teléfono de Contacto</label>
                             <div class="input-with-icon">
-                                <i class="fas fa-phone"></i>
+                                <i class="fas fa-phone" aria-hidden="true"></i>
                                 <input type="text" id="branch-telefono" placeholder="0800-444-AUTO" required>
                             </div>
                         </div>
@@ -61,11 +61,11 @@
                             <label for="branch-direccion">Dirección</label>
                             <div class="flex-row gap-10 branch-address-row">
                                 <div class="input-with-icon">
-                                    <i class="fas fa-map-location-dot"></i>
+                                    <i class="fas fa-map-location-dot" aria-hidden="true"></i>
                                     <input type="text" id="branch-direccion" placeholder="Ej: Av. del Libertador 1200, CABA" required>
                                 </div>
                                 <button type="button" class="btn btn--secondary sm btn--geo" onclick="searchAddress()">
-                                    <i class="fas fa-search-location"></i>
+                                    <i class="fas fa-search-location" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -87,13 +87,13 @@
                             <div class="flex-row gap-15 items-center mt-5 branch-logo-row">
                                 <div class="branch-logo-wrap">
                                     <div id="branch-logo-preview">
-                                        <img src="/static/images/logo.png">
+                                        <img src="/static/images/logo.png" alt="Logo de la sucursal" loading="lazy" decoding="async">
                                     </div>
-                                    <button type="button" id="btn-clear-logo" onclick="clearBranchLogo()" title="Eliminar logo"><i class="fas fa-xmark"></i></button>
+                                    <button type="button" id="btn-clear-logo" onclick="clearBranchLogo()" title="Eliminar logo"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                                 </div>
                                 <div class="flex-col flex-1">
                                     <label for="branch-logo-file" class="btn btn--outline sm branch-logo-upload">
-                                        <i class="fas fa-upload"></i> SUBIR IMAGEN
+                                        <i class="fas fa-upload" aria-hidden="true"></i> SUBIR IMAGEN
                                     </label>
                                     <input type="file" id="branch-logo-file" accept="image/*" onchange="previewBranchLogo(this)">
                                 </div>
@@ -105,7 +105,7 @@
                             <div class="flex-col gap-10">
                                 <div>
                                     <div class="input-with-icon">
-                                        <i class="fas fa-clock"></i>
+                                        <i class="fas fa-clock" aria-hidden="true"></i>
                                         <input type="text" id="branch-horario" placeholder="07:00 a 23:00">
                                     </div>
                                 </div>
@@ -120,7 +120,7 @@
                         </div>
                         
                         <p class="text-xs text-muted branch-geo-hint">
-                            <i class="fas fa-info-circle text-dorado"></i> 
+                            <i class="fas fa-info-circle text-dorado" aria-hidden="true"></i> 
                             Asegurate de que la ubicación en el mapa sea exacta para los reportes de geolocalización.
                         </p>
                     </div>
@@ -129,7 +129,7 @@
                 <div class="flex-row justify-center gap-20 modal-actions-sticky branch-actions">
                     <button type="button" class="btn btn--outline" onclick="closeModal('modal-add-branch')">CANCELAR</button>
                     <button type="submit" class="btn btn--primary">
-                        <i class="fas fa-save"></i> GUARDAR SUCURSAL
+                        <i class="fas fa-save" aria-hidden="true"></i> GUARDAR SUCURSAL
                     </button>
                 </div>
             </form>

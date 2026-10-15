@@ -2,7 +2,7 @@
 {% from "components/saludo.html" import saludo %}
 <div id="section-vehiculos" class="profile-section">
     {% call saludo(icono="fa-car-side", titulo="MIS VEHÍCULOS") %}
-        <button class="btn-new-reserva" id="vehicle-form-trigger" onclick="toggleVehicleForm()"><i class="fas fa-plus-circle"></i> NUEVO VEHÍCULO</button>
+        <button class="btn-new-reserva" id="vehicle-form-trigger" onclick="toggleVehicleForm()"><i class="fas fa-plus-circle" aria-hidden="true"></i> NUEVO VEHÍCULO</button>
     {% endcall %}
     <div class="flex-col items-center mt-10">
 
@@ -16,7 +16,7 @@
                         <div class="form-group-premium">
                             <label for="add-veh-tipo">Tipo de Vehículo</label>
                             <div class="select-wrapper-premium fg-auto">
-                                <i id="vehicle-type-icon" class="fas fa-car-side vehicle-type-icon"></i>
+                                <i id="vehicle-type-icon" class="fas fa-car-side vehicle-type-icon" aria-hidden="true"></i>
                                 <select name="tipo" class="input-premium-sm fg-pad-left" onchange="updateVehicleTypeIcon(this.value, '', this.form)" id="add-veh-tipo">
                                     <option value="Auto">Auto</option>
                                     <option value="Moto">Moto</option>
