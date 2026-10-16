@@ -19,6 +19,13 @@
     z-index: var(--z-fab);
     box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
     transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+    /* v9.34.97: es un <button> (antes <div onclick>), asi que se le quita el
+       cromo nativo del navegador y el padding propio; el tamano lo fija
+       width/height con box-sizing: border-box. */
+    padding: 0;
+    line-height: 1;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .vt-fab:hover {

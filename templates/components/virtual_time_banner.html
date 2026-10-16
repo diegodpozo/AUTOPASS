@@ -1,7 +1,11 @@
-<div id="vt-fab" class="vt-fab" onclick="toggleVTModal()" title="Control de tiempo virtual">
+{# v9.34.97: era un <div onclick>, o sea no se podia tabular ni activar con
+   teclado y no tenia nombre. Ahora es un <button> real: se enfoca, se activa
+   con Enter/Espacio y anuncia su nombre (el icono y el badge son decorativos). #}
+<button type="button" id="vt-fab" class="vt-fab" onclick="toggleVTModal()"
+        title="Control de tiempo virtual" aria-label="Control de tiempo virtual">
     <i class="fas fa-clock" aria-hidden="true"></i>
-    <span class="vt-fab-badge" id="vt-fab-badge">ON</span>
-</div>
+    <span class="vt-fab-badge" id="vt-fab-badge" aria-hidden="true">ON</span>
+</button>
 
 <div id="vt-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="vt-modal-title">
     <div class="modal-content glass-premium">

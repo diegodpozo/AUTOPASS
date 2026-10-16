@@ -140,8 +140,11 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                 localitiesSet.add(loc);
                 p._locality = loc;
 
-                // Color del marcador en el mapa basado en disponibilidad de autos
-                const statusColor = '#22c55e';
+                // v9.34.97: el borde del marcador usa el dorado del sistema
+                // (theme.js). Antes era un verde #22c55e suelto, que no
+                // pertenecia a ninguna paleta y contradecia el borde dorado
+                // que define style.css para .branch-marker-logo.
+                const markerColor = THEME.gold;
 
                 const formattedAddr = formatAddress(p.direccion);
                 const horarioText = p.is_24h ? '24 HORAS' : (p.horario ? p.horario.replace(' UN ', ' a ') : 'Consultar');
@@ -179,8 +182,8 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                 `;
                 
                 const marker = L.marker([p.latitude, p.longitude], {
-                    icon: makeBranchIcon(newMapInstance.getZoom(), statusColor),
-                    color: statusColor
+                    icon: makeBranchIcon(newMapInstance.getZoom(), markerColor),
+                    color: markerColor
                 })
                     .addTo(newMapInstance)
                     .bindPopup(popupContent);
