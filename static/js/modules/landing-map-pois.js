@@ -86,22 +86,41 @@ export function loadTheaters(mapObj, containerId) {
 
     const query = `[out:json][timeout:60];(node["amenity"="theatre"](${bbox});way["amenity"="theatre"](${bbox});node["tourism"="museum"](${bbox});node["amenity"="cinema"](${bbox});way["amenity"="cinema"](${bbox}););out center 100;`;
 
-    function doFetch(retries, delay) {
-        const d = delay || 2000;
-        return fetch(OVERPASS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(query),
-            signal: controller.signal
-        })
-        .then(res => {
-            if ((res.status === 429 || res.status === 504) && retries > 0) {
-                console.warn(`[OVERPASS] HTTP ${res.status}, reintentando en ${d}ms... (${retries} restantes)`);
-                return new Promise(r => setTimeout(r, d)).then(() => doFetch(retries - 1, Math.min(d * 2, 60000)));
+    // REINTENTO: 429 (rate-limit) y 5xx (Overpass saturado) son transitorios.
+    // OJO: cuando Overpass responde 429/5xx su nginx omite las cabeceras CORS, asi
+    // que el navegador rechaza el fetch con TypeError ("Failed to fetch") y NUNCA
+    // llega un status HTTP; por eso tambien se reintenta ante errores de red/CORS.
+    function esReintentable(err) {
+        if (err.name === 'AbortError') return false;
+        if (err instanceof TypeError) return true;
+        const m = /^HTTP (\d+)$/.exec(err.message || '');
+        if (!m) return false;
+        const code = Number(m[1]);
+        return code === 429 || code >= 500;
+    }
+
+    async function doFetch(retries, delay) {
+        let d = delay || 2000;
+        let ultimo;
+        for (let intento = 0; intento <= retries; intento++) {
+            try {
+                const res = await fetch(OVERPASS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'data=' + encodeURIComponent(query),
+                    signal: controller.signal
+                });
+                if (res.ok) return await res.json();
+                throw new Error('HTTP ' + res.status);
+            } catch (err) {
+                ultimo = err;
+                if (!esReintentable(err) || intento === retries) throw err;
+                console.warn(`[OVERPASS] ${err.message}, reintentando en ${d}ms... (${retries - intento} restantes)`);
+                await new Promise(r => setTimeout(r, d));
+                d = Math.min(d * 2, 60000);
             }
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-        });
+        }
+        throw ultimo;
     }
 
     doFetch(6, 3000).then(data => {
