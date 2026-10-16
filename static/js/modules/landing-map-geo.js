@@ -5,6 +5,7 @@
  */
 
 import { lmState } from './landing-map-state.js';
+import { mapMotionOptions } from './utils.js';
 
 let _userMarker = null;
 let _userCircle = null;
@@ -80,7 +81,7 @@ export function findNearestBranch(targetMap = null) {
         if (nearest && activeMap) {
             // AJUSTAR VISTA PARA MOSTRAR AMBOS PUNTOS
             const bounds = L.latLngBounds(L.latLng(myLat, myLng), L.latLng(nearest.latitude, nearest.longitude));
-            activeMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+            activeMap.fitBounds(bounds, mapMotionOptions({ padding: [60, 60], maxZoom: 16 }));
 
             nearest.markers && Object.values(nearest.markers).forEach(m => {
                 if (m._map === activeMap) {

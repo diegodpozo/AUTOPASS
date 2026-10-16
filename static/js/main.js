@@ -6,6 +6,13 @@ import * as ui from './modules/ui.js';
  * EXPONE UTILIDADES AL AMBITO GLOBAL PARA COMPATIBILIDAD CON EVENTOS INLINE (ONCLICK).
  */
 
+// MOVIMIENTO ACCESIBLE: los graficos de Chart.js se dibujan en <canvas> y el
+// bloque CSS de `prefers-reduced-motion` no los alcanza. Se aplica aca, unico
+// punto que corre en todas las paginas ANTES de que cada vista cree sus graficos
+// (los CDN son <script> clasicos, se ejecutan durante el parseo; los modulos de
+// pagina son diferidos). En paginas sin Chart.js no hace nada.
+utils.applyReducedMotionToCharts();
+
 // UTILIDADES
 window.toTitle = utils.toTitle;
 window.formatDate = utils.formatDate;

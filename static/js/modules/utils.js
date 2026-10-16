@@ -446,6 +446,23 @@ export function prefersReducedMotion() {
     return !!(_motionQuery && _motionQuery.matches);
 }
 
+/**
+ * OPCIONES DE CAMARA DE LEAFLET SEGUN LA PREFERENCIA DE MOVIMIENTO (WCAG 2.3.3).
+ *
+ * Los vuelos (`flyTo`/`flyToBounds`) y el paneo (`setView` cuando el zoom no
+ * cambia) de Leaflet animan por requestAnimationFrame, asi que el bloque de
+ * `base/animations.css` NO los alcanza. Se decide aca una sola vez para que los
+ * 16 llamados de camara del proyecto no repitan la condicion.
+ *
+ * Sin la preferencia devuelve solo `extra` (identico a no pasar opciones); con
+ * la preferencia fuerza `animate: false` y `duration: 0`, que en Leaflet llevan
+ * a un salto instantaneo por `_resetView` sin perder el encuadre final.
+ */
+export function mapMotionOptions(extra = {}) {
+    if (!prefersReducedMotion()) return { ...extra };
+    return { ...extra, animate: false, duration: 0 };
+}
+
 export function scrollToElement(el, options = {}) {
     if (!el || typeof el.scrollIntoView !== 'function') return;
     // `behavior` va DESPUES del spread a proposito: si un llamador pasa uno,
@@ -455,3 +472,45 @@ export function scrollToElement(el, options = {}) {
         behavior: prefersReducedMotion() ? 'auto' : 'smooth'
     });
 }
+
+/**
+ * CHART.JS QUIETO CUANDO EL USUARIO PIDE MENOS MOVIMIENTO (WCAG 2.3.3).
+ *
+ * El bloque de `base/animations.css` no llega hasta aca: los graficos se
+ * dibujan en un <canvas> y Chart.js anima por su cuenta (requestAnimationFrame)
+ * en cada render. Igual que con `scrollToElement()`, la preferencia se resuelve
+ * UNA vez en este modulo y los 8 `new window.Chart(...)` del proyecto no tienen
+ * que saber que esto existe.
+ *
+ * Se cambia el default (los graficos que se creen despues ya nacen quietos) y
+ * ademas se sincronizan los que ya existen, porque `_motionQuery` es vivo: si
+ * la persona cambia la preferencia con la pagina abierta, se aplica sin
+ * recargar. Si la pagina no cargo Chart.js, no hace nada.
+ */
+let _chartAnimationDefault;
+
+export function applyReducedMotionToCharts() {
+    const Chart = typeof window !== 'undefined' ? window.Chart : null;
+    if (!Chart || !Chart.defaults) return;
+    if (_chartAnimationDefault === undefined) {
+        // Se guarda el default real para poder restaurarlo si la preferencia
+        // se apaga de nuevo (no se asume cual es).
+        _chartAnimationDefault = Chart.defaults.animation;
+    }
+
+    const sincronizar = () => {
+        Chart.defaults.animation = prefersReducedMotion() ? false : _chartAnimationDefault;
+        document.querySelectorAll('canvas').forEach((canvas) => {
+            const chart = typeof Chart.getChart === 'function' ? Chart.getChart(canvas) : null;
+            if (!chart) return;
+            chart.options.animation = Chart.defaults.animation;
+            chart.update('none');
+        });
+    };
+
+    sincronizar();
+    if (_motionQuery && typeof _motionQuery.addEventListener === 'function') {
+        _motionQuery.addEventListener('change', sincronizar);
+    }
+}
+

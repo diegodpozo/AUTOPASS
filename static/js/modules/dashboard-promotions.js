@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm } from './utils.js';
+import { showToast, showConfirm, mapMotionOptions } from './utils.js';
 import { renderCappedList, resetCappedState } from './list-pagination.js';
 
 /**
@@ -17,7 +17,7 @@ export function initPromoMap() {
     const mapEl = document.getElementById('promo-map-picker');
     if (!mapEl || promoMap || !window.L) return;
 
-    promoMap = window.L.map('promo-map-picker').setView([-34.5888, -58.3900], 13);
+    promoMap = window.L.map('promo-map-picker').setView([-34.5888, -58.3900], 13, mapMotionOptions());
 
     const googleStreets = window.L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
@@ -77,7 +77,7 @@ function _resetPromoMap() {
         promoMap.removeLayer(promoMarker);
         promoMarker = null;
     }
-    if (promoMap) promoMap.setView([-34.5888, -58.3900], 13);
+    if (promoMap) promoMap.setView([-34.5888, -58.3900], 13, mapMotionOptions());
 }
 
 export async function searchPromoAddress() {
@@ -95,7 +95,7 @@ export async function searchPromoAddress() {
 
             initPromoMap();
             updatePromoMarker(lat, lng);
-            if (promoMap) promoMap.setView([lat, lng], 16);
+            if (promoMap) promoMap.setView([lat, lng], 16, mapMotionOptions());
             showToast('Ubicación encontrada', 'success');
         } else {
             showToast('No se encontró la dirección. Intentá ser más específico.', 'error');
@@ -322,7 +322,7 @@ export async function editPromotion(id) {
         initPromoMap();
         if (p.latitude && p.longitude) {
             updatePromoMarker(parseFloat(p.latitude), parseFloat(p.longitude));
-            if (promoMap) promoMap.setView([parseFloat(p.latitude), parseFloat(p.longitude)], 15);
+            if (promoMap) promoMap.setView([parseFloat(p.latitude), parseFloat(p.longitude)], 15, mapMotionOptions());
         } else {
             _resetPromoMap();
         }

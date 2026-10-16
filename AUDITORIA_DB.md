@@ -14,7 +14,7 @@
 - **Sucursales sin aforo**: 4 branches creados en seed (AUTOPASS Castelar, Central, Ituzaingó, Morón) no tienen registro en parking_aforo. Pueden faltar filas esperadas o seed incompleto para aforo por sucursal.
 
 ## Notas de normalización
-- Patentes limpias (sin espacios) y ccess_logs.normalized_patente poblado. OK.
+- Patentes limpias (sin espacios) y access_logs.normalized_patente poblado. OK.
 - settings.sucursal NULL = global (uso correcto según modelo). OK.
 - No hay claves compuestas duplicadas críticas.
 

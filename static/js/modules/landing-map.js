@@ -10,7 +10,7 @@
  */
 
 import { getDirectionsTo, extractLocality, formatAddress } from './landing-map-data.js';
-import { escapeHtml } from './utils.js';
+import { escapeHtml, prefersReducedMotion, mapMotionOptions } from './utils.js';
 import { loadTheaters, loadStadiums } from './landing-map-pois.js';
 import { findNearestBranch } from './landing-map-geo.js';
 import { filterMapByLocality } from './landing-map-locality.js';
@@ -27,7 +27,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
 
     const hqCoords = [-34.5888, -58.3900];
     const defaultZoom = (containerId === 'portal-map' || containerId === 'portal-map-fullscreen') ? 12 : 14;
-    const newMapInstance = L.map(containerId).setView(hqCoords, defaultZoom);
+    const newMapInstance = L.map(containerId).setView(hqCoords, defaultZoom, mapMotionOptions());
 
     // MOSAICO BASE GOOGLE CALLES (100% GRATUITO)
     const googleStreets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -319,14 +319,18 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                                         inputEl.value = nombre;
                                         dropdownEl.style.display = 'none';
 
-                                        // VOLAR AL PUNTO Y ABRIR POPUP
-                                        newMapInstance.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
+                                        // VOLAR AL PUNTO Y ABRIR POPUP. Las opciones
+                                        // las decide `mapMotionOptions()`: el vuelo de
+                                        // Leaflet anima por rAF y el bloque CSS de
+                                        // `prefers-reduced-motion` no lo alcanza.
+                                        const quieto = prefersReducedMotion();
+                                        newMapInstance.flyTo([lat, lng], 16, mapMotionOptions({ duration: 1.2 }));
                                         
                                         const targetBranch = branches.find(b => b.nombre === nombre);
                                         if (targetBranch && targetBranch.markers && targetBranch.markers[containerId]) {
                                             setTimeout(() => {
                                                 targetBranch.markers[containerId].openPopup();
-                                            }, 700);
+                                            }, quieto ? 0 : 700);
                                         }
 
                                         if (window.showToast) {
@@ -374,7 +378,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                 if (branchToFind) {
                     const found = branches.find(b => b.nombre.toLowerCase() === branchToFind.toLowerCase());
                     if (found && found.markers && found.markers[containerId]) {
-                        newMapInstance.setView([found.latitude, found.longitude], 16);
+                        newMapInstance.setView([found.latitude, found.longitude], 16, mapMotionOptions());
                         setTimeout(() => {
                             found.markers[containerId].openPopup();
                         }, 500);
@@ -388,7 +392,7 @@ export function initMap(containerId = 'map', overlaySelector = null, loadPOIs = 
                     b.nombre && b.nombre.toLowerCase().includes('ituzaing')
                 );
                 if (ituzaingo && ituzaingo.latitude && ituzaingo.longitude) {
-                    newMapInstance.setView([ituzaingo.latitude, ituzaingo.longitude], 14);
+                    newMapInstance.setView([ituzaingo.latitude, ituzaingo.longitude], 14, mapMotionOptions());
                 }
             }
         })

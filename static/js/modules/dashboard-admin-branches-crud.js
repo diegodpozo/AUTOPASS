@@ -1,5 +1,5 @@
 import api from './api.js';
-import { showToast, showConfirm, formatNum } from './utils.js';
+import { showToast, showConfirm, formatNum, mapMotionOptions } from './utils.js';
 
 /**
  * MÓDULO SUCURSALES - CRUD Y GEOLOCALIZACIÓN (MAPA LEAFLET)
@@ -23,7 +23,7 @@ export function initBranchMap() {
     if (!mapEl || branchMap || !window.L) return;
 
     const initialCoords = [-34.5888, -58.3900];
-    branchMap = window.L.map('branch-map-picker').setView(initialCoords, 13);
+    branchMap = window.L.map('branch-map-picker').setView(initialCoords, 13, mapMotionOptions());
 
     const googleStreets = window.L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
@@ -74,7 +74,7 @@ export async function searchAddress() {
 
             initBranchMap();
             updateBranchMarker(lat, lng);
-            if (branchMap) branchMap.setView([lat, lng], 16);
+            if (branchMap) branchMap.setView([lat, lng], 16, mapMotionOptions());
             showToast('Ubicación encontrada', 'success');
         } else {
             showToast('No se encontró la dirección. Intentá ser más específico.', 'error');
@@ -138,7 +138,7 @@ export function showCreateBranchModal() {
             branchMap.removeLayer(branchMarker);
             branchMarker = null;
         }
-        if (branchMap) branchMap.setView([-34.6508, -58.6228], 13);
+        if (branchMap) branchMap.setView([-34.6508, -58.6228], 13, mapMotionOptions());
     }, 300);
 }
 
@@ -275,7 +275,7 @@ export function editBranch(id) {
     setTimeout(() => {
         initBranchMap();
         updateBranchMarker(lat, lng);
-        if (branchMap) branchMap.setView([lat, lng], 15);
+        if (branchMap) branchMap.setView([lat, lng], 15, mapMotionOptions());
     }, 300);
 }
 

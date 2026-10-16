@@ -407,6 +407,96 @@ def check_js_scroll_motion():
     return problemas
 
 
+# El bloque CSS de reduced-motion tampoco llega a lo que se dibuja FUERA del DOM:
+# Chart.js anima dentro de un <canvas> y Leaflet mueve la camara con
+# requestAnimationFrame, asi que `transition-duration: 0.01ms` no los toca. Igual
+# que el scroll, eso solo se resuelve en JS. La decision vive en dos helpers de
+# modules/utils.js para no repetirla en los 16 llamados de camara ni en los 8
+# graficos: `mapMotionOptions()` (vuelos y paneos de Leaflet) y
+# `applyReducedMotionToCharts()` (default de Chart.js, aplicado desde main.js).
+CAMERA_CALL = re.compile(
+    r"\.(flyToBounds|flyTo|fitBounds|setView|setZoomAround|setZoom|panTo|panBy"
+    r"|zoomIn|zoomOut)\s*\(")
+# `animate` solo lo puede nombrar el helper: es el unico lugar que decide.
+ANIMATE_LITERAL = re.compile(r"\banimate\s*:")
+
+
+def _call_arguments(txt, start):
+    """Devuelve el texto de los argumentos de la llamada que abre en `start`."""
+    depth = 0
+    for i in range(start, len(txt)):
+        if txt[i] == "(":
+            depth += 1
+        elif txt[i] == ")":
+            depth -= 1
+            if depth == 0:
+                return txt[start:i + 1]
+    return txt[start:]
+
+
+def check_js_motion_gaps():
+    """Graficos y camara de mapa tienen que respetar `prefers-reduced-motion`.
+
+    `check_reduced_motion()` cubre el CSS y `check_js_scroll_motion()` el scroll;
+    este cubre el resto de la animacion en JS, que el CSS no puede apagar:
+    Chart.js (rAF dentro de <canvas>) y la camara de Leaflet (flyTo/setView, rAF).
+    """
+    problemas = []
+    for path, txt in iter_js():
+        rel = path.relative_to(ROOT).as_posix()
+        en_utils = path.name == "utils.js"
+
+        # 1) Nadie fuera del helper decide `animate`.
+        if not en_utils:
+            for m in ANIMATE_LITERAL.finditer(txt):
+                linea = txt.count("\n", 0, m.start()) + 1
+                problemas.append("%s:%d decide `animate` a mano; la camara de "
+                                 "Leaflet pasa por mapMotionOptions() de "
+                                 "modules/utils.js" % (rel, linea))
+
+        # 2) Toda llamada de camara de Leaflet tiene que pasar por el helper.
+        for m in CAMERA_CALL.finditer(txt):
+            if "mapMotionOptions" in _call_arguments(txt, m.end() - 1):
+                continue
+            linea = txt.count("\n", 0, m.start()) + 1
+            problemas.append("%s:%d mueve la camara de Leaflet sin "
+                             "mapMotionOptions(): animaria aunque el usuario "
+                             "pida menos movimiento" % (rel, linea))
+
+    utils = ROOT / "static" / "js" / "modules" / "utils.js"
+    if utils.exists():
+        u = utils.read_text(encoding="utf-8", errors="replace")
+        for helper in ("mapMotionOptions", "applyReducedMotionToCharts"):
+            if "export function " + helper not in u:
+                problemas.append("modules/utils.js ya no exporta %s(): se "
+                                 "perdio el unico lugar que decide el "
+                                 "movimiento en JS" % helper)
+        if "prefers-reduced-motion" not in u:
+            problemas.append("modules/utils.js no consulta "
+                             "'prefers-reduced-motion'")
+    else:
+        problemas.append("falta modules/utils.js")
+
+    # 3) El default de Chart.js se fija UNA vez, desde main.js (lo unico que corre
+    #    en todas las paginas y antes de que cada vista cree sus graficos).
+    main_js = ROOT / "static" / "js" / "main.js"
+    if main_js.exists():
+        m = main_js.read_text(encoding="utf-8", errors="replace")
+        if m.count("applyReducedMotionToCharts()") != 1:
+            problemas.append("main.js debe llamar applyReducedMotionToCharts() "
+                             "exactamente una vez")
+    else:
+        problemas.append("falta static/js/main.js")
+
+    base = ROOT / "templates" / "base.html"
+    if base.exists() and "/static/js/main.js" not in base.read_text(
+            encoding="utf-8", errors="replace"):
+        problemas.append("base.html ya no carga main.js: el default de Chart.js "
+                         "no llegaria a ninguna pagina")
+
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--report", action="store_true")
@@ -453,6 +543,15 @@ def main():
     if js:
         print("FALLA: scroll programatico con 'smooth' fijo (WCAG 2.3.3)")
         for p in js:
+            print("  - " + p)
+        print("")
+
+    # ...ni los graficos de Chart.js (dibujan en <canvas>) ni la camara de
+    # Leaflet (flyTo/setView se mueven por requestAnimationFrame).
+    mg = check_js_motion_gaps()
+    if mg:
+        print("FALLA: graficos o mapa animando sin via de escape (WCAG 2.3.3)")
+        for p in mg:
             print("  - " + p)
         print("")
 
@@ -522,6 +621,12 @@ def main():
     if js:
         print("REGRESIONES de accesibilidad:")
         for p in js:
+            print("  %s" % p)
+        return 1
+
+    if mg:
+        print("REGRESIONES de accesibilidad:")
+        for p in mg:
             print("  %s" % p)
         return 1
 
