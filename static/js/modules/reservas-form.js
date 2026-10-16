@@ -363,7 +363,7 @@ export async function refreshReservationFormState() {
         const sucursalSelects = document.querySelectorAll('.res-sucursal');
         sucursalSelects.forEach(select => {
             const currentVal = select.value;
-            select.innerHTML = '<option value="" selected disabled hidden>Seleccioná sucursal...</option>' + 
+            select.innerHTML = '<option value="" selected disabled hidden>Seleccioná...</option>' + 
                 getBranchesData().map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
