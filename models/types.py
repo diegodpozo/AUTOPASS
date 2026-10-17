@@ -43,6 +43,6 @@ class DateTimeAsStr(TypeDecorator):
         return parse_fecha(value)
 
     def process_result_value(self, value, dialect):
-        if value is None:
-            return None
-        return value.strftime(_FORMATO)
+        # El valor puede volver como datetime (columnas TIMESTAMP) o como string
+        # (columnas VARCHAR que igual guardan fecha canonica); formatear_fecha cubre ambos.
+        return formatear_fecha(value)
