@@ -1,6 +1,7 @@
 import api from './api.js';
-import { formatNum, formatDate } from './utils.js';
+import { formatNum, formatDate, formatDateTime, parseFecha } from './utils.js';
 import { THEME } from './theme.js';
+import { WindowedChart } from './chart-window.js';
 
 /**
  * Módulo de Informes del Dashboard (Métricas)
@@ -480,8 +481,21 @@ function _renderVentasPorSucursal(d) {
 // ==========================================================================
 // 4) TIEMPOS OCR & ALPR
 // ==========================================================================
-let ocrChart = null;
-let serieOcrSerial = [];
+let ocrWindowed = null;
+
+function _buildOcrDatasets(pts) {
+    return [{
+        label: 'Tiempo OCR (s)',
+        data: pts,
+        borderColor: THEME.accent,
+        backgroundColor: 'rgba(56,189,248,0.08)',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        fill: true,
+        tension: 0.25
+    }];
+}
 
 async function cargarOcr() {
     const kpis = document.getElementById('ocr-kpis');
@@ -505,39 +519,23 @@ async function cargarOcr() {
     }
 
     if (resSerie.ok && resSerie.data && canvas && typeof window.Chart !== 'undefined') {
-        serieOcrSerial = (resSerie.data.points || []).slice(0, 500);
-        if (window.Chart.getChart(canvas)) window.Chart.getChart(canvas).destroy();
-        ocrChart = new window.Chart(canvas, {
-            type: 'line',
-            data: {
-                labels: serieOcrSerial.map(p => p.fecha_hora || ''),
-                datasets: [{
-                    label: 'Tiempo OCR (s)',
-                    data: serieOcrSerial.map(p => parseFloat(p.ocr_time)),
-                    borderColor: THEME.accent,
-                    backgroundColor: 'rgba(56,189,248,0.08)',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    pointHoverRadius: 3,
-                    fill: true,
-                    tension: 0.25
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: THEME.bgSoft, titleColor: THEME.gold,
-                        bodyColor: THEME.textPrimary, borderColor: THEME.goldBorder, borderWidth: 1,
-                        callbacks: { label: (c) => ` ${c.parsed.y?.toFixed(3)}s` }
-                    }
+        const points = (resSerie.data.points || [])
+            .map(p => ({ x: parseFecha(p.fecha_hora).getTime(), y: parseFloat(p.ocr_time) }))
+            .filter(p => !isNaN(p.x) && !isNaN(p.y));
+        if (!ocrWindowed) {
+            ocrWindowed = new WindowedChart({
+                prefix: 'ocrm',
+                canvasId: 'ocrChart',
+                defaultSpanH: 24,
+                buildDatasets: _buildOcrDatasets,
+                yExtra: {
+                    title: { display: true, text: 'Segundos', color: THEME.textMuted, font: { size: 10 } },
+                    ticks: { color: THEME.textMuted, font: { size: 10 }, callback: (v) => v + 's' }
                 },
-                scales: {
-                    x: { grid: { color: THEME.grid, drawBorder: false }, ticks: { color: THEME.textMuted, font: { size: 9 }, maxTicksLimit: 12 } },
-                    y: { title: { display: true, text: 'Segundos', color: THEME.textMuted, font: { size: 10 } }, grid: { color: THEME.grid, drawBorder: false }, ticks: { color: THEME.textMuted, font: { size: 10 }, callback: (v) => v + 's' } }
-                }
-            }
-        });
+                tooltipTitle: (item) => formatDateTime(new Date(item.parsed.x)),
+                tooltipLabel: (c) => ` ${(c.parsed.y || 0).toFixed(3)}s`
+            });
+        }
+        ocrWindowed.setSeries(points);
     }
 }

@@ -372,6 +372,10 @@
                     <div class="metricas-chart-body">
                         <canvas id="ocrChart"></canvas>
                     </div>
+
+                    {% set prefix = "ocrm" %}
+                    {% set default_span = "24" %}
+                    {% include "components/chart_window_controls.html" %}
                 </div>
             </div>
         </div>
