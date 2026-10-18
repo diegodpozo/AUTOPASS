@@ -1674,8 +1674,8 @@
 .form-group-premium.fg-170 { max-width: 170px; align-items: center; }
 .form-group-premium.fg-200 { max-width: 200px; align-items: center; }
 .form-group-premium.fg-280 { width: 100%; max-width: 280px; align-items: center; }
-.form-group-premium.fg-330 { margin-bottom: 0; flex: 1 1 150px; min-width: 120px; max-width: 180px; align-items: center; }
-.form-group-premium.fg-144 { margin-bottom: 0; flex: 0 1 130px; min-width: 100px; max-width: 150px; align-items: center; }
+.form-group-premium.fg-330 { margin-bottom: 0; flex: 1 1 130px; min-width: 110px; max-width: 160px; align-items: center; }
+.form-group-premium.fg-144 { margin-bottom: 0; flex: 0 0 140px; min-width: 110px; max-width: 150px; align-items: center; }
 .form-group-premium.fg-col { display: flex; flex-direction: column; width: 100%; max-width: 350px; align-items: center; }
 
 /* Form directo (quick add) */
