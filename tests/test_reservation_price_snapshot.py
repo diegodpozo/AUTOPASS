@@ -75,18 +75,19 @@ def _ticket(db, user, porc=10, sucursal=None):
 # --- FOTO DE TARIFAS: ALTA ADMIN ---
 
 def test_admin_create_persiste_foto_tarifas(db):
-    # 10:00 → 12:00 (2h) con hora=1500 y fracción=750 => 2*1500 + 1*750 = 3750
+    # 10:00 → 12:00 (2h) con hora=1500 y fracción=750 => 2*1500 = 3000
     data = AdminReservationCreate(
         patente="ABC123", fecha_inicio="2030-06-20T10:00:00", fecha_fin="2030-06-20T12:00:00",
         tipo_estadia="hora", sucursal_nombre="TestBranch", cliente_nombre="Juan Test",
-        horas_calculadas=2.0, monto_calculado=3750.0,
+        horas_calculadas=2.0, monto_calculado=3000.0,
     )
     res = ReservationService.create_reservation(db, data)
     assert res.tarifa_hora == 1500.0
     assert res.tarifa_fraccion == 750.0
     assert res.tarifa_aplicada == 1500.0
+    assert res.monto_calculado == 3000.0
+    assert res.monto_total == 3000.0
     assert res.horas_calculadas == 2.0
-    assert res.monto_calculado == 3750.0
     assert res.tarifa_fijada_en is not None
 
 
@@ -96,8 +97,8 @@ def test_admin_create_sin_cotizacion_no_valida(db):
         tipo_estadia="hora", sucursal_nombre="TestBranch", cliente_nombre="Juan Test",
     )
     res = ReservationService.create_reservation(db, data)
-    assert res.monto_total == 3750.0
-    assert res.monto_calculado == 3750.0  # snapshot calculado por el servidor
+    assert res.monto_total == 3000.0
+    assert res.monto_calculado == 3000.0  # snapshot calculado por el servidor
 
 
 def test_admin_create_monto_discrepante_409(db):

@@ -24,13 +24,14 @@ export const formatNum = (n) => {
 /**
  * MONTO DE UNA ESTADIA/RESERVA POR HORA (REGLA ESCALONADA POR BLOQUES DE 30 MIN).
  * n = ceil(horas * 2) con minimo 1 bloque. n == 1 -> fraccion de 30 min.
- * n >= 2 -> (n // 2) * hora + ((n - 1) // 2) * fraccion (alterna hora, fraccion...).
+ * n >= 2 -> cada par de bloques (1 hora) vale la hora; si sobra medio bloque (n impar)
+ * se suma la fraccion: Math.floor(n / 2) * hora + (n % 2) * fraccion.
  * Debe espejar BillingService.hourly_amount_from_rates del backend.
  */
 export function computeHourlyAmount(durationHours, hora, fraccion) {
     const n = Math.max(1, Math.ceil((durationHours || 0) * 2));
     if (n === 1) return fraccion;
-    return Math.floor(n / 2) * hora + Math.floor((n - 1) / 2) * fraccion;
+    return Math.floor(n / 2) * hora + (n % 2) * fraccion;
 }
 
 export const toTitle = s => {

@@ -120,8 +120,9 @@ class BillingService:
 
         n = ceil(horas * 2) con minimo 1 bloque (cada bloque es de 30 min).
         - n == 1 (hasta 30 min): se cobra la fraccion de 30 min.
-        - n >= 2: el primer bloque se reemplaza por la tarifa hora y desde ahi alterna
-          hora, fraccion, hora, fraccion...  => (n // 2) * hora + ((n - 1) // 2) * fraccion.
+        - n >= 2: cada par de bloques (1 hora completa) vale la tarifa hora; si sobra
+          medio bloque (n impar) se suma la fraccion de 30 min.
+          => (n // 2) * hora + (n % 2) * fraccion.
         Si falta una tarifa se deriva de la otra (fraccion = hora / 2 o hora = fraccion * 2).
         Devuelve None si no hay ninguna tarifa."""
         if fraccion is None and hora is None:
@@ -133,7 +134,7 @@ class BillingService:
         bloques = max(1, math.ceil((duration_hours or 0) * 2))
         if bloques == 1:
             return float(fraccion)
-        return float((bloques // 2) * hora + ((bloques - 1) // 2) * fraccion)
+        return float((bloques // 2) * hora + (bloques % 2) * fraccion)
 
     @staticmethod
     def calculate_hourly_amount(db: Session, duration_hours: float, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
