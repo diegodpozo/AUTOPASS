@@ -289,15 +289,26 @@ class BillingService:
         return pago_dt > fin_dt
 
     @staticmethod
-    def process_payment(db: Session, plate: str, metodo: str = "DIGITAL") -> dict:
-        """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
+    def process_payment(db: Session, plate: str, metodo: str = "DIGITAL", organization_id=None, sucursal_id=None) -> dict:
+        """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE DENTRO DEL ALCANCE DEL OPERADOR.
+
+        `organization_id` acota a la empresa del staff y `sucursal_id` (no ADMIN global)
+        a su sede: sin alcance resoluble en modo multi-tenant activo se rechaza
+        (fail-closed) y nunca se cobra una estadia registrada por otra organizacion."""
         from models.enums import ReservationStatus, PaymentStatus
+        from core.security import require_tenant_scope
+
+        require_tenant_scope(db, organization_id, detail="No tenés permisos sobre estadías de otra organización")
 
         plate = normalize_plate(plate)
         if not is_valid_plate(plate):
             return {"status": "error", "message": "Formato de patente inválido."}
 
-        log = AccessRepository.get_last_entry_by_patente(db, plate)
+        log = AccessRepository.get_last_entry_by_patente(
+            db, plate, organization_id=organization_id, sucursal_id=sucursal_id
+        )
+        if log is not None and not AccessRepository.log_in_scope(db, log, organization_id, sucursal_id):
+            log = None
 
         if not log:
             return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}

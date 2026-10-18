@@ -155,7 +155,7 @@ def test_validate_plate_403_secret_malo(client, monkeypatch):
 
 
 def test_validate_plate_ok_con_secret(client, monkeypatch):
-    monkeypatch.setattr(AccessService, "validate_plate", staticmethod(lambda db, data, request: _ok_access()))
+    monkeypatch.setattr(AccessService, "validate_plate", staticmethod(lambda db, data, request, organization_id=None: _ok_access()))
     resp = client.post(
         "/v1/access/validate-plate",
         json={"plate": "AA123BB", "gate_id": "Centro_ENTRADA"},
@@ -166,7 +166,7 @@ def test_validate_plate_ok_con_secret(client, monkeypatch):
 
 
 def test_exit_plate_ok_con_secret(client, monkeypatch):
-    monkeypatch.setattr(AccessService, "exit_plate", staticmethod(lambda db, data, request: _ok_access()))
+    monkeypatch.setattr(AccessService, "exit_plate", staticmethod(lambda db, data, request, organization_id=None: _ok_access()))
     resp = client.post(
         "/v1/access/exit-plate",
         json={"plate": "AA123BB", "gate_id": "Centro_SALIDA"},
@@ -187,7 +187,7 @@ def test_validate_qr_403_sin_secret(client):
 
 
 def test_validate_qr_ok_con_secret(client, monkeypatch):
-    monkeypatch.setattr(AccessService, "validate_qr", staticmethod(lambda db, data, request: _ok_access()))
+    monkeypatch.setattr(AccessService, "validate_qr", staticmethod(lambda db, data, request, organization_id=None: _ok_access()))
     resp = client.post(
         "/v1/access/validate-qr",
         json={"qr_data": "AUTOPASS|id:1|patente:AA123BB", "gate_id": "Centro_ENTRADA"},

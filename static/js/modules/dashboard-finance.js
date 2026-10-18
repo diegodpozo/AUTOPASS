@@ -65,7 +65,7 @@ export function switchMethodTab(method) {
 
 export async function loadFinanceData(resetPage = true) {
     if (resetPage) currentFinancePage = 1;
-    const period = document.getElementById('fin-period')?.value || 'month';
+    const period = document.getElementById('fin-period')?.value || 'total';
     const specificDate = document.getElementById('fin-date')?.value;
     const vehicleType = document.getElementById('fin-vehicle-type')?.value || 'all';
     const paymentMethod = document.getElementById('fin-payment-method')?.value || 'all';
@@ -285,3 +285,4 @@ export function renderRevenueChart(data, period) {
         });
     }
 }
+

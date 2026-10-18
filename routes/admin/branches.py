@@ -56,7 +56,7 @@ def add_floor(branch_id: int, data: schemas.FloorCreate, db: Session = Depends(g
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
     validate_local_admin_branch(admin, branch.nombre)
-    enforce_organization_scope(admin, getattr(branch, "organization_id", None))
+    enforce_organization_scope(admin, getattr(branch, "organization_id", None), db=db)
     
     cap_res_autos = getattr(data, 'capacidad_reservas_autos', 0) or 0
     cap_res_motos = getattr(data, 'capacidad_reservas_motos', 0) or 0
@@ -97,7 +97,7 @@ def delete_floor(floor_id: int, db: Session = Depends(get_db), admin: models.Use
     branch = BranchRepository.get_by_id(db, branch_id)
     if branch:
         validate_local_admin_branch(admin, branch.nombre)
-        enforce_organization_scope(admin, getattr(branch, "organization_id", None))
+        enforce_organization_scope(admin, getattr(branch, "organization_id", None), db=db)
   
     db.delete(floor)
     db.commit()
@@ -126,7 +126,7 @@ def update_floor_capacity(
     floor = BranchRepository.get_floor_by_id(db, floor_id)
     if not floor: raise HTTPException(status_code=404, detail="Piso no encontrado")
     validate_local_admin_branch(admin, floor.branch.nombre if floor.branch else "")
-    enforce_organization_scope(admin, getattr(floor.branch, "organization_id", None))
+    enforce_organization_scope(admin, getattr(floor.branch, "organization_id", None), db=db)
     
     if cap_autos < (floor.ocupacion_actual or 0):
         raise HTTPException(status_code=400, detail=f"La capacidad de autos ({cap_autos}) no puede ser menor a la ocupación actual ({floor.ocupacion_actual}).")
@@ -214,7 +214,7 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), admin: models.U
     branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
-    enforce_organization_scope(admin, getattr(branch, "organization_id", None))
+    enforce_organization_scope(admin, getattr(branch, "organization_id", None), db=db)
     
     # 1. VALIDAR OCUPACION FISICA
     if BranchService.has_physical_occupancy(db, branch):
@@ -258,7 +258,7 @@ async def update_branch(
     branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
-    enforce_organization_scope(admin, getattr(branch, "organization_id", None))
+    enforce_organization_scope(admin, getattr(branch, "organization_id", None), db=db)
     
     new_nombre = nombre.strip()
     old_nombre = branch.nombre
@@ -299,7 +299,7 @@ def toggle_branch_status(branch_id: int, db: Session = Depends(get_db), admin: m
     branch = BranchRepository.get_by_id(db, branch_id)
     if not branch:
         raise HTTPException(status_code=404, detail="Sucursal no encontrada")
-    enforce_organization_scope(admin, getattr(branch, "organization_id", None))
+    enforce_organization_scope(admin, getattr(branch, "organization_id", None), db=db)
     
     if branch.activa and BranchService.has_physical_occupancy(db, branch):
         raise HTTPException(status_code=400, detail="No se puede desactivar una sucursal con vehículos en su interior.")

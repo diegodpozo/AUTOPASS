@@ -46,15 +46,33 @@ class BranchRepository:
         """DEVUELVE EL ID DE LA SUCURSAL POR NOMBRE EXACTO (None si no existe).
 
         Si se indica organizacion, acota la busqueda a esa empresa (necesario al
-        permitir nombres repetidos entre organizaciones distintas)."""
+        permitir nombres repetidos entre organizaciones distintas). Sin
+        organizacion, si el nombre es ambiguo (dos empresas con la misma sede)
+        devuelve None en vez de elegir una al azar: no es atribuible a nadie."""
         if not nombre:
             return None
         query = db.query(models.ParkingBranch.id).filter(models.ParkingBranch.nombre == nombre)
         if organization_id is not None:
             query = query.filter(models.ParkingBranch.organization_id == organization_id)
-        return query.scalar()
+        filas = query.limit(2).all()
+        return filas[0][0] if len(filas) == 1 else None
 
     @staticmethod
+    def resolve_id_by_name(db: Session, nombre: str, organization_id=None):
+        """RESUELVE UNA SEDE POR NOMBRE NORMALIZADO SIN CRUZAR ORGANIZACIONES."""
+        from core.normalize import normalize_branch_name
+        if not nombre:
+            return None
+        exact = BranchRepository.get_id_by_name(db, nombre, organization_id)
+        if exact is not None:
+            return exact
+        clave = normalize_branch_name(nombre)
+        query = db.query(models.ParkingBranch)
+        if organization_id is not None:
+            query = query.filter(models.ParkingBranch.organization_id == organization_id)
+        matches = [b for b in query.all() if normalize_branch_name(b.nombre) == clave]
+        return matches[0].id if len(matches) == 1 else None
+
     def get_first_active(db: Session, organization_id=None) -> models.ParkingBranch:
         """OBTIENE LA PRIMERA SUCURSAL ACTIVA (FALLBACK SIN NOMBRE ESPECIFICADO).
         Con `organization_id` se acota a las sedes de esa empresa."""

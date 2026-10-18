@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AUTOPASS · ESTRUCTURA DE BASE DE DATOS Y PANTALLAS DE TABLAS</title>
+<link rel="stylesheet" href="EXPLICACION DE CODIGO/assets/code-docs.css">
+<style>
+/* ==========================================================================
+   ESTILOS ESPECIFICOS PARA EL VISOR DE BASE DE DATOS Y PANTALLAS DE TABLAS
+   TODO EL TEXTO VISUAL Y COMENTARIOS CUMPLEN LA REGLA DE MAYUSCULAS SIN ACENTOS
+   ========================================================================== */
+
+.bd-contenedor {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 32px 90px;
+}
+
+/* HERO SUPERIOR */
+.bd-hero {
+    background: linear-gradient(135deg, rgba(223, 186, 107, 0.14), rgba(17, 20, 27, 0.96));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 30px 36px;
+    margin-bottom: 32px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    position: relative;
+    overflow: hidden;
+}
+
+.bd-hero::after {
+    content: "";
+    position: absolute;
+    right: -60px;
+    top: -60px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(223, 186, 107, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.bd-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    background: rgba(223, 186, 107, 0.18);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--dorado);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+}
+
+.bd-hero h1 {
+    margin: 0 0 12px;
+    font-size: 26px;
+    color: var(--text-primary);
+    letter-spacing: -.3px;
+    text-transform: uppercase;
+}
+
+.bd-hero p {
+    margin: 0 0 20px;
+    color: var(--text-secondary);
+    font-size: 14.5px;
+    line-height: 1.65;
+    max-width: 1050px;
+    text-transform: uppercase;
+}
+
+.bd-nav-rapida {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.bd-btn-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 11.5px;
+    font-weight: 700;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    transition: all .2s ease;
+}
+
+.bd-btn-nav:hover {
+    border-color: var(--dorado);
+    background: #191e28;
+    color: var(--dorado);
+    transform: translateY(-2px);
+}
+
+.bd-btn-nav-destacado {
+    background: linear-gradient(135deg, rgba(223, 186, 107, 0.25), rgba(184, 137, 42, 0.35));
+    border-color: var(--dorado);
+    color: var(--dorado);
+}
+
+/* SECCIONES GENERALES */
+.bd-seccion {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    margin-bottom: 34px;
+    scroll-margin-top: 80px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.bd-seccion-header {
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.bd-seccion-titulo-grupo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.bd-seccion-icono {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--dorado), var(--dorado-dark));
+    color: #0d0f14;
+    font-size: 18px;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 0 16px var(--dorado-glow);
+}
+
+.bd-seccion-categoria {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    font-weight: 700;
+}
+
+.bd-seccion-titulo {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 4px 0 0;
+    text-transform: uppercase;
+}
+
+/* CARDS DE PILARES ARQUITECTONICOS */
+.bd-pilares-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 26px;
+}
+
+.bd-pilar-card {
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: all .2s ease;
+}
+
+.bd-pilar-card:hover {
+    border-color: var(--dorado);
+    transform: translateY(-2px);
+}
+
+.bd-pilar-tag {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--dorado);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.bd-pilar-titulo {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.bd-pilar-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+/* FLUJO DE COMUNICACION - PASOS */
+.bd-flujo-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.bd-flujo-paso {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 18px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    position: relative;
+    transition: all .2s ease;
+}
+
+.bd-flujo-paso:hover {
+    border-color: var(--dorado);
+    background: #171b23;
+}
+
+.bd-flujo-numero {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(223, 186, 107, 0.15);
+    border: 2px solid var(--dorado);
+    color: var(--dorado);
+    font-size: 16px;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+}
+
+.bd-flujo-cuerpo h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+.bd-flujo-cuerpo p {
+    margin: 0 0 12px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    text-transform: uppercase;
+}
+
+.bd-flujo-archivos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.bd-flujo-archivos span {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.bd-archivo-badge {
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    color: var(--dorado);
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all .15s ease;
+}
+
+.bd-archivo-badge:hover {
+    background: var(--dorado);
+    color: #0d0f14;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   MOCKUP SCREENSHOT DE GESTOR DE BASE DE DATOS (ESTILO DBEAVER / DATAGRIP)
+   ========================================================================== */
+
+.bd-screen-marco {
+    background: #0b0d11;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    margin-top: 24px;
+}
+
+.bd-screen-barra-superior {
+    background: #14171e;
+    border-bottom: 1px solid var(--border-light);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.bd-screen-controles {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bd-screen-circulo {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+}
+.bd-circulo-rojo { background: #ff5f56; }
+.bd-circulo-amarillo { background: #ffbd2e; }
+.bd-circulo-verde { background: #27c93f; }
+
+.bd-screen-titulo-sesion {
+    font-family: Consolas, monospace;
+    font-size: 11.5px;
+    color: var(--dorado);
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bd-screen-query-barra {
+    background: #0e1117;
+    border-bottom: 1px solid #1f242d;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    color: #a4b1cd;
+}
+
+.bd-query-texto {
+    color: #82aaff;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bd-query-texto span.kw { color: #c792ea; font-weight: 700; }
+.bd-query-texto span.tbl { color: #ecc48d; font-weight: 700; }
+.bd-query-texto span.num { color: #f78c6c; }
+
+.bd-query-metricas {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 10.5px;
+    color: #5c677d;
+    text-transform: uppercase;
+}
+
+.bd-query-metricas strong {
+    color: #38bdf8;
+}
+
+/* SELECTOR DE PESTANAS DE TABLAS */
+.bd-screen-pestanas {
+    display: flex;
+    flex-wrap: wrap;
+    background: #11141b;
+    border-bottom: 1px solid var(--border-light);
+    padding: 6px 12px 0;
+    gap: 4px;
+}
+
+.bd-tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    padding: 8px 14px;
+    font-family: Consolas, monospace;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bd-tab-btn:hover {
+    color: var(--text-primary);
+    background: #171b24;
+}
+
+.bd-tab-btn.activo {
+    background: #0b0d11;
+    color: var(--dorado);
+    border-color: var(--border-light);
+    border-bottom: 2px solid var(--dorado);
+}
+
+.bd-tab-contador {
+    background: rgba(223, 186, 107, 0.15);
+    color: var(--dorado);
+    font-size: 9.5px;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+
+/* CUERPO DEL SCREEN Y TABLA DE DATOS */
+.bd-screen-cuerpo {
+    padding: 0;
+    overflow-x: auto;
+}
+
+.bd-tabla-visor {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    font-family: Consolas, "JetBrains Mono", monospace;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.bd-tabla-visor thead th {
+    background: #141720;
+    color: #a4b1cd;
+    border-bottom: 2px solid var(--border-light);
+    border-right: 1px solid #1f242d;
+    padding: 10px 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    position: sticky;
+    top: 0;
+}
+
+.bd-tabla-visor tbody td {
+    border-bottom: 1px solid #1a1e28;
+    border-right: 1px solid #171a22;
+    padding: 9px 14px;
+    color: #e2e8f0;
+}
+
+.bd-tabla-visor tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.bd-tabla-visor tbody tr:hover {
+    background: rgba(223, 186, 107, 0.07);
+}
+
+/* FORMATOS ESPECIALES DE CELDAS */
+.bd-th-tipo {
+    display: block;
+    font-size: 9px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.bd-th-pk {
+    color: var(--dorado) !important;
+}
+
+.bd-th-fk {
+    color: #38bdf8 !important;
+}
+
+.bd-badge-pk {
+    display: inline-block;
+    background: rgba(223, 186, 107, 0.2);
+    color: var(--dorado);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 8.5px;
+    font-weight: 800;
+    margin-right: 4px;
+}
+
+.bd-badge-fk {
+    display: inline-block;
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 8.5px;
+    font-weight: 800;
+    margin-right: 4px;
+}
+
+.bd-valor-null {
+    color: #475569;
+    font-style: italic;
+}
+
+.bd-valor-num {
+    color: #f78c6c;
+}
+
+.bd-valor-bool {
+    font-weight: 700;
+}
+.bd-bool-true { color: #4ade80; }
+.bd-bool-false { color: #f87171; }
+
+.bd-tag-estado {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.bd-estado-aprobado { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
+.bd-estado-pendiente { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+.bd-estado-admin { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+.bd-estado-cliente { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+
+.bd-patente-box {
+    background: #000;
+    border: 1.5px solid #fff;
+    border-radius: 4px;
+    padding: 2px 7px;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 1px;
+    display: inline-block;
+}
+
+/* PIE DE SCREEN CON METADATOS Y RELACIONES */
+.bd-screen-pie {
+    background: #0e1117;
+    border-top: 1px solid var(--border-light);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    font-size: 12px;
+}
+
+.bd-meta-col h4 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    color: var(--dorado);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+}
+
+.bd-meta-col p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    text-transform: uppercase;
+}
+
+.bd-meta-col ul {
+    margin: 0;
+    padding-left: 16px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.bd-meta-col li {
+    margin-bottom: 4px;
+}
+
+/* ACCIONES SCREEN: VER DDL SQL */
+.bd-btn-sql-toggle {
+    background: #171b24;
+    border: 1px solid var(--border-light);
+    color: var(--dorado);
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: all .2s;
+}
+
+.bd-btn-sql-toggle:hover {
+    background: var(--dorado);
+    color: #0b0d11;
+}
+
+.bd-bloque-ddl {
+    display: none;
+    background: #080a0e;
+    border-top: 1px dashed var(--border-light);
+    padding: 16px 20px;
+    font-family: Consolas, monospace;
+    font-size: 11.5px;
+    color: #cbd5e1;
+    overflow-x: auto;
+}
+
+/* MAPA DE RELACIONES ERD */
+.bd-erd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.bd-erd-tarjeta {
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    transition: all .2s ease;
+}
+
+.bd-erd-tarjeta:hover {
+    border-color: var(--dorado);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.bd-erd-tarjeta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.bd-erd-nombre-tabla {
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--dorado);
+    text-transform: uppercase;
+}
+
+.bd-erd-grupo-tag {
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(223, 186, 107, 0.15);
+    color: var(--dorado);
+    text-transform: uppercase;
+}
+
+.bd-erd-relacion-linea {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.bd-erd-flecha {
+    color: #38bdf8;
+    font-weight: 800;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+    .bd-contenedor {
+        padding: 16px;
+    }
+    .bd-seccion {
+        padding: 18px;
+    }
+    .bd-flujo-paso {
+        grid-template-columns: 1fr;
+    }
+    .bd-screen-barra-superior {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+</head>
+<body class="theme-dark">
+
+<div class="bd-contenedor">
+
+    <!-- HERO PRINCIPAL -->
+    <header class="bd-hero">
+        <div class="bd-hero-badge">ARQUITECTURA DE DATOS · AUTOPASS</div>
+        <h1>ESTRUCTURA DE BASE DE DATOS Y COMUNICACION CON LA APLICACION</h1>
+        <p>
+            ESTA GUIA PRESENTA LA ESTRUCTURA COMPLETA DE TABLAS, EL MODELO RELACIONAL Y EL CIRCUITO DE PERSISTENCIA
+            DE AUTOPASS. INCLUYE SCREENS Y MOCKUPS VISUALES REALISTAS DE CADA TABLA, DESCRIPCION DE COLUMNAS, CLAVES FORANEAS,
+            Y EL CIRCUITO DE INYECCION DE DEPENDENCIAS Y REPOSITORIOS QUE CONECTA EL CODIGO CON LA BASE DE DATOS.
+        </p>
+        <div class="bd-nav-rapida">
+            <a href="EXPLICACION DE CODIGO/index.html" class="bd-btn-nav">← VOLVER AL VISOR GENERAL</a>
+            <a href="EXPLICACION DE CODIGO/recorrido_camaras.html" class="bd-btn-nav">RECORRIDO LOGICO DE CAMARAS</a>
+            <a href="#seccion-pantallas-tablas" class="bd-btn-nav bd-btn-nav-destacado">PANTALLAS DE TABLAS (SCREENS)</a>
+            <a href="#seccion-comunicacion" class="bd-btn-nav">COMO SE COMUNICA CON EL CODIGO</a>
+            <a href="#seccion-erd" class="bd-btn-nav">MAPA DE RELACIONES (ERD)</a>
+            <a href="#seccion-diccionario" class="bd-btn-nav">DICCIONARIO DE 18 TABLAS</a>
+        </div>
+    </header>
+
+    <!-- PILARES DEL SISTEMA DE BASE DE DATOS -->
+    <div class="bd-pilares-grid">
+        <div class="bd-pilar-card">
+            <div class="bd-pilar-tag">MOTOR DUAL DE PERSISTENCIA</div>
+            <div class="bd-pilar-titulo">POSTGRESQL NEON + SQLITE</div>
+            <p class="bd-pilar-desc">
+                SOPORTE NATIVO PARA POSTGRESQL (NEON CLOUD CON DRIVER PSYCOPG 3 Y POOL DE CONEXIONES) EN PRODUCCION
+                Y SQLITE EMBEBIDO LOCAL (PARKING.DB) PARA PRUEBAS SIN DEPENDENCIAS EXTERNAS.
+            </p>
+        </div>
+        <div class="bd-pilar-card">
+            <div class="bd-pilar-tag">MAPEO OBJETO RELACIONAL</div>
+            <div class="bd-pilar-titulo">SQLALCHEMY 2.0 ORM</div>
+            <p class="bd-pilar-desc">
+                TODAS LAS CONSULTAS Y ACTUALIZACIONES SE REALIZAN MEDIANTE OBJETOS PYTHON TIPADOS, EVITANDO
+                INYECCION SQL Y GARANTIZANDO INTEGRIDAD TRANSACCIONAL CON COMMIT Y ROLLBACK AUTOMATICOS.
+            </p>
+        </div>
+        <div class="bd-pilar-card">
+            <div class="bd-pilar-tag">ORGANIZACION EN CAPAS</div>
+            <div class="bd-pilar-titulo">PATTERN REPOSITORY + SCOPING</div>
+            <p class="bd-pilar-desc">
+                LOS CONTROLADORES NO TOCAN SQL DIRECTO: DELEGAN EN REPOSITORIOS ESPECIALIZADOS QUE APLICAN
+                FILTROS MULTITENANT Y SEGURIDAD POR SUCURSAL ANTES DE EJECUTAR CUALQUIER CONSULTA.
+            </p>
+        </div>
+        <div class="bd-pilar-card">
+            <div class="bd-pilar-tag">VERSIONADO CONTINUO</div>
+            <div class="bd-pilar-titulo">MIGRACIONES CON ALEMBIC</div>
+            <p class="bd-pilar-desc">
+                CADA CAMBIO DE TABLAS O COLUMNAS QUEDA REGISTRADO EN HISTORIALES DE REVISION EN LA CARPETA
+                ALEMBIC, ASEGURANDO LA REPRODUCIBILIDAD EXACTA DEL ESQUEMA EN CUALQUIER COMPUTADORA.
+            </p>
+        </div>
+    </div>
+
+    <!-- SECCION: SCREENS DE PANTALLA DE LAS TABLAS (LO PEDIDO POR EL USUARIO) -->
+    <section id="seccion-pantallas-tablas" class="bd-seccion">
+        <div class="bd-seccion-header">
+            <div class="bd-seccion-titulo-grupo">
+                <div class="bd-seccion-icono">🖥️</div>
+                <div>
+                    <div class="bd-seccion-categoria">VISOR GRAFICO DE DATOS REALES</div>
+                    <h2 class="bd-seccion-titulo">SCREENS DE PANTALLA DE LAS TABLAS PRINCIPALES</h2>
+                </div>
+            </div>
+            <div>
+                <button type="button" class="bd-btn-sql-toggle" onclick="AlternarVistaDdlActual()">VER SENTENCIA DDL (SQL)</button>
+            </div>
+        </div>
+
+        <p style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; margin-top: 0; text-transform: uppercase;">
+            SELECCIONE UNA TABLA DE LAS PESTANAS INFERIORES PARA VISUALIZAR EL MOCKUP EXACTO EN PANTALLA,
+            CON SU CONSULTA SQL DE CONSULTA, SUS METADATOS DE COLUMNAS, REGISTROS DE EJEMPLO DE AUTOPASS,
+            CLAVES FORANEAS Y FUNCION EN LA APLICACION:
+        </p>
+
+        <!-- CONTENEDOR MARCO DE VENTANA TIPO DBEAVER / DATAGRIP -->
+        <div class="bd-screen-marco">
+            <!-- BARRA SUPERIOR DE VENTANA -->
+            <div class="bd-screen-barra-superior">
+                <div class="bd-screen-controles">
+                    <span class="bd-screen-circulo bd-circulo-rojo"></span>
+                    <span class="bd-screen-circulo bd-circulo-amarillo"></span>
+                    <span class="bd-screen-circulo bd-circulo-verde"></span>
+                </div>
+                <div class="bd-screen-titulo-sesion">
+                    <span>⚡ AUTOPASS_DB</span>
+                    <span style="color: #64748b;">|</span>
+                    <span style="color: #4ade80;">CONECTADO: NEON_POSTGRESQL (SA-EAST-1)</span>
+                    <span style="color: #64748b;">|</span>
+                    <span style="color: #cbd5e1;">SSL: REQUIRE</span>
+                </div>
+                <div style="font-family: Consolas, monospace; font-size: 11px; color: #94a3b8; text-transform: uppercase;">
+                    ESQUEMA: PUBLIC · TABLAS: 18
+                </div>
+            </div>
+
+            <!-- BARRA DE CONSULTA SQL -->
+            <div class="bd-screen-query-barra">
+                <div class="bd-query-texto" id="visor-query-actual">
+                    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl" id="lbl-tabla-sql">users</span> <span class="kw">ORDER BY</span> id <span class="kw">ASC LIMIT</span> <span class="num">5</span>;
+                </div>
+                <div class="bd-query-metricas">
+                    <span>ESTADO: <strong style="color: #4ade80;">200 OK</strong></span>
+                    <span>TIEMPO: <strong>18 MS</strong></span>
+                    <span>REGISTROS: <strong id="lbl-reg-count">4</strong></span>
+                </div>
+            </div>
+
+            <!-- SELECTOR DE PESTANAS DE TABLAS -->
+            <div class="bd-screen-pestanas">
+                <button type="button" class="bd-tab-btn activo" onclick="SeleccionarPantallaTabla('users')">
+                    USERS <span class="bd-tab-contador">4</span>
+                </button>
+                <button type="button" class="bd-tab-btn" onclick="SeleccionarPantallaTabla('access_logs')">
+                    ACCESS_LOGS <span class="bd-tab-contador">HISTORICO</span>
+                </button>
+                <button type="button" class="bd-tab-btn" onclick="SeleccionarPantallaTabla('reservations')">
+                    RESERVATIONS <span class="bd-tab-contador">RESERVAS</span>
+                </button>
+                <button type="button" class="bd-tab-btn" onclick="SeleccionarPantallaTabla('parking_branches')">
+                    PARKING_BRANCHES <span class="bd-tab-contador">4</span>
+                </button>
+                <button type="button" class="bd-tab-btn" onclick="SeleccionarPantallaTabla('parking_aforo')">
+                    PARKING_AFORO <span class="bd-tab-contador">VIVO</span>
+                </button>
+                <button type="button" class="bd-tab-btn" onclick="SeleccionarPantallaTabla('mercadopago_payments')">
+                    MERCADOPAGO_PAYMENTS <span class="bd-tab-contador">COBROS</span>
+                </button>
+                <button type="button" class="bd-tab-btn" onclick="SeleccionarPantallaTabla('promotions')">
+                    PROMOTIONS <span class="bd-tab-contador">3</span>
+                </button>
+                <button type="button" class="bd-tab-btn" onclick="SeleccionarPantallaTabla('settings')">
+                    SETTINGS <span class="bd-tab-contador">18</span>
+                </button>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 1: USERS -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-users">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>nombre<span class="bd-th-tipo">VARCHAR(80)</span></th>
+                            <th>apellido<span class="bd-th-tipo">VARCHAR(80)</span></th>
+                            <th>email<span class="bd-th-tipo">VARCHAR(120)</span></th>
+                            <th>dni<span class="bd-th-tipo">VARCHAR(20)</span></th>
+                            <th>rol<span class="bd-th-tipo">VARCHAR(30)</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>sucursal_id<span class="bd-th-tipo">INT -> BRANCHES</span></th>
+                            <th>puntos_acumulados<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>saldo<span class="bd-th-tipo">FLOAT</span></th>
+                            <th>is_blocked<span class="bd-th-tipo">BOOLEAN</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">1</td>
+                            <td>ADMIN</td>
+                            <td>GLOBAL</td>
+                            <td style="color: var(--dorado);">admin@autopass.com</td>
+                            <td>00000001</td>
+                            <td><span class="bd-tag-estado bd-estado-admin">ADMIN</span></td>
+                            <td class="bd-valor-null">NULL (GLOBAL)</td>
+                            <td class="bd-valor-num">0</td>
+                            <td class="bd-valor-num">$ 0.00</td>
+                            <td class="bd-valor-bool bd-bool-false">FALSE</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">2</td>
+                            <td>PABLO</td>
+                            <td>VALENTE</td>
+                            <td style="color: var(--dorado);">admcastelar@autopass.com</td>
+                            <td>11232444</td>
+                            <td><span class="bd-tag-estado bd-estado-admin">LOCAL_ADMIN</span></td>
+                            <td class="bd-valor-num">3 (CASTELAR)</td>
+                            <td class="bd-valor-num">0</td>
+                            <td class="bd-valor-num">$ 0.00</td>
+                            <td class="bd-valor-bool bd-bool-false">FALSE</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">3</td>
+                            <td>LUIS</td>
+                            <td>LOPEZ</td>
+                            <td style="color: var(--dorado);">admituzaingo@autopass.com</td>
+                            <td>33202942</td>
+                            <td><span class="bd-tag-estado bd-estado-admin">LOCAL_ADMIN</span></td>
+                            <td class="bd-valor-num">2 (ITUZAINGO)</td>
+                            <td class="bd-valor-num">0</td>
+                            <td class="bd-valor-num">$ 0.00</td>
+                            <td class="bd-valor-bool bd-bool-false">FALSE</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">4</td>
+                            <td>CARLOS</td>
+                            <td>GOMEZ</td>
+                            <td style="color: var(--dorado);">carlos.gomez@cliente.com</td>
+                            <td>35889102</td>
+                            <td><span class="bd-tag-estado bd-estado-cliente">CLIENT</span></td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-num">650</td>
+                            <td class="bd-valor-num">$ 4500.00</td>
+                            <td class="bd-valor-bool bd-bool-false">FALSE</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 2: ACCESS_LOGS -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-access_logs" style="display: none;">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>patente_detectada<span class="bd-th-tipo">VARCHAR(15)</span></th>
+                            <th>tipo_evento<span class="bd-th-tipo">VARCHAR(10)</span></th>
+                            <th>tipo_vehiculo<span class="bd-th-tipo">VARCHAR(20)</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>reserva_id<span class="bd-th-tipo">INT -> RESERVATIONS</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>sucursal_id<span class="bd-th-tipo">INT -> BRANCHES</span></th>
+                            <th>fecha_hora<span class="bd-th-tipo">DATETIME</span></th>
+                            <th>pago_confirmado<span class="bd-th-tipo">BOOLEAN</span></th>
+                            <th>costo_estadia<span class="bd-th-tipo">FLOAT</span></th>
+                            <th>ocr_time<span class="bd-th-tipo">FLOAT (SEG)</span></th>
+                            <th>imagen_path<span class="bd-th-tipo">VARCHAR(255)</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">101</td>
+                            <td><span class="bd-patente-box">AE 450 ZX</span></td>
+                            <td><span class="bd-tag-estado bd-estado-aprobado">ENTRADA</span></td>
+                            <td>AUTO</td>
+                            <td class="bd-valor-num">14</td>
+                            <td class="bd-valor-num">1 (CENTRAL)</td>
+                            <td>2026-10-17 14:15:22</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                            <td class="bd-valor-num">$ 0.00 (RESERVA)</td>
+                            <td class="bd-valor-num">0.038 s</td>
+                            <td style="color: #64748b;">captured_images/in_101.jpg</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">102</td>
+                            <td><span class="bd-patente-box">AF 892 CC</span></td>
+                            <td><span class="bd-tag-estado bd-estado-pendiente">SALIDA</span></td>
+                            <td>CAMIONETA</td>
+                            <td class="bd-valor-null">NULL (POR HORA)</td>
+                            <td class="bd-valor-num">3 (CASTELAR)</td>
+                            <td>2026-10-17 14:40:05</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                            <td class="bd-valor-num">$ 4000.00</td>
+                            <td class="bd-valor-num">0.042 s</td>
+                            <td style="color: #64748b;">captured_images/out_102.jpg</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">103</td>
+                            <td><span class="bd-patente-box">A 123 BCD</span></td>
+                            <td><span class="bd-tag-estado bd-estado-aprobado">ENTRADA</span></td>
+                            <td>MOTO</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-num">2 (ITUZAINGO)</td>
+                            <td>2026-10-17 14:55:10</td>
+                            <td class="bd-valor-bool bd-bool-false">FALSE</td>
+                            <td class="bd-valor-num">$ 0.00</td>
+                            <td class="bd-valor-num">0.035 s</td>
+                            <td style="color: #64748b;">captured_images/in_103.jpg</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 3: RESERVATIONS -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-reservations" style="display: none;">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>user_id<span class="bd-th-tipo">INT -> USERS</span></th>
+                            <th>patente<span class="bd-th-tipo">VARCHAR(15)</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>sucursal_id<span class="bd-th-tipo">INT -> BRANCHES</span></th>
+                            <th>fecha_inicio<span class="bd-th-tipo">DATETIME</span></th>
+                            <th>fecha_fin<span class="bd-th-tipo">DATETIME</span></th>
+                            <th>monto_total<span class="bd-th-tipo">FLOAT</span></th>
+                            <th>estado_pago<span class="bd-th-tipo">VARCHAR(20)</span></th>
+                            <th>estado_reserva<span class="bd-th-tipo">VARCHAR(20)</span></th>
+                            <th>tipo_estadia<span class="bd-th-tipo">VARCHAR(20)</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">14</td>
+                            <td class="bd-valor-num">4</td>
+                            <td><span class="bd-patente-box">AE 450 ZX</span></td>
+                            <td class="bd-valor-num">1 (CENTRAL)</td>
+                            <td>2026-10-17 14:00:00</td>
+                            <td>2026-10-17 18:00:00</td>
+                            <td class="bd-valor-num">$ 6000.00</td>
+                            <td><span class="bd-tag-estado bd-estado-aprobado">PAID</span></td>
+                            <td><span class="bd-tag-estado bd-estado-aprobado">ACTIVA</span></td>
+                            <td>POR HORA (4 HS)</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">15</td>
+                            <td class="bd-valor-num">4</td>
+                            <td><span class="bd-patente-box">AD 331 KL</span></td>
+                            <td class="bd-valor-num">2 (ITUZAINGO)</td>
+                            <td>2026-10-18 08:00:00</td>
+                            <td>2026-10-18 20:00:00</td>
+                            <td class="bd-valor-num">$ 15000.00</td>
+                            <td><span class="bd-tag-estado bd-estado-pendiente">PENDING</span></td>
+                            <td><span class="bd-tag-estado bd-estado-pendiente">PENDIENTE</span></td>
+                            <td>ESTADIA DIARIA</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 4: PARKING_BRANCHES -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-parking_branches" style="display: none;">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>nombre<span class="bd-th-tipo">VARCHAR(100)</span></th>
+                            <th>direccion<span class="bd-th-tipo">VARCHAR(200)</span></th>
+                            <th>telefono<span class="bd-th-tipo">VARCHAR(50)</span></th>
+                            <th>horario<span class="bd-th-tipo">VARCHAR(50)</span></th>
+                            <th>is_24h<span class="bd-th-tipo">BOOLEAN</span></th>
+                            <th>latitude<span class="bd-th-tipo">FLOAT</span></th>
+                            <th>longitude<span class="bd-th-tipo">FLOAT</span></th>
+                            <th>activa<span class="bd-th-tipo">BOOLEAN</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">1</td>
+                            <td style="color: var(--dorado); font-weight: 700;">AUTOPASS CENTRAL</td>
+                            <td>AV. DEL LIBERTADOR 1200, CABA</td>
+                            <td>11 4567-8900</td>
+                            <td>24HS</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                            <td class="bd-valor-num">-34.5888</td>
+                            <td class="bd-valor-num">-58.3900</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">2</td>
+                            <td style="color: var(--dorado); font-weight: 700;">AUTOPASS ITUZAINGO</td>
+                            <td>MARIANO ACOSTA 50, ITUZAINGO</td>
+                            <td>11 4567-8901</td>
+                            <td>07:00 A 23:00</td>
+                            <td class="bd-valor-bool bd-bool-false">FALSE</td>
+                            <td class="bd-valor-num">-34.6585</td>
+                            <td class="bd-valor-num">-58.6685</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">3</td>
+                            <td style="color: var(--dorado); font-weight: 700;">AUTOPASS CASTELAR</td>
+                            <td>MONTES DE OCA 1220, CASTELAR</td>
+                            <td>11 4567-8902</td>
+                            <td>24HS</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                            <td class="bd-valor-num">-34.6485</td>
+                            <td class="bd-valor-num">-58.6350</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">4</td>
+                            <td style="color: var(--dorado); font-weight: 700;">AUTOPASS MORON</td>
+                            <td>AV. J. M. DE ROSAS 658, MORON</td>
+                            <td>11 4567-8903</td>
+                            <td>07:00 A 00:00</td>
+                            <td class="bd-valor-bool bd-bool-false">FALSE</td>
+                            <td class="bd-valor-num">-34.6508</td>
+                            <td class="bd-valor-num">-58.6228</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 5: PARKING_AFORO -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-parking_aforo" style="display: none;">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>sucursal_id<span class="bd-th-tipo">INT -> BRANCHES</span></th>
+                            <th>capacidad_total<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>ocupacion_actual<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>capacidad_motos<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>ocupacion_motos<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>capacidad_camionetas<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>ocupacion_camionetas<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>capacidad_reservas<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>ocupacion_reservas<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>ultima_actualizacion<span class="bd-th-tipo">VARCHAR</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">1</td>
+                            <td class="bd-valor-num">1 (CENTRAL)</td>
+                            <td class="bd-valor-num">80</td>
+                            <td class="bd-valor-num" style="color: #38bdf8; font-weight: 700;">45 (56%)</td>
+                            <td class="bd-valor-num">20</td>
+                            <td class="bd-valor-num">8</td>
+                            <td class="bd-valor-num">15</td>
+                            <td class="bd-valor-num">9</td>
+                            <td class="bd-valor-num">25</td>
+                            <td class="bd-valor-num">12</td>
+                            <td>2026-10-17 14:58:30</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">2</td>
+                            <td class="bd-valor-num">2 (ITUZAINGO)</td>
+                            <td class="bd-valor-num">40</td>
+                            <td class="bd-valor-num" style="color: #38bdf8; font-weight: 700;">18 (45%)</td>
+                            <td class="bd-valor-num">10</td>
+                            <td class="bd-valor-num">3</td>
+                            <td class="bd-valor-num">8</td>
+                            <td class="bd-valor-num">4</td>
+                            <td class="bd-valor-num">10</td>
+                            <td class="bd-valor-num">5</td>
+                            <td>2026-10-17 14:59:10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 6: MERCADOPAGO_PAYMENTS -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-mercadopago_payments" style="display: none;">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>user_id<span class="bd-th-tipo">INT -> USERS</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>reserva_id<span class="bd-th-tipo">INT -> RESERVATIONS</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>access_log_id<span class="bd-th-tipo">INT -> ACCESS_LOGS</span></th>
+                            <th>patente<span class="bd-th-tipo">VARCHAR(15)</span></th>
+                            <th>monto<span class="bd-th-tipo">FLOAT</span></th>
+                            <th>preference_id<span class="bd-th-tipo">VARCHAR(100)</span></th>
+                            <th>payment_id<span class="bd-th-tipo">VARCHAR(100)</span></th>
+                            <th>estado<span class="bd-th-tipo">VARCHAR(20)</span></th>
+                            <th>fecha_confirmacion<span class="bd-th-tipo">DATETIME</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">1</td>
+                            <td class="bd-valor-num">4</td>
+                            <td class="bd-valor-num">14</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td><span class="bd-patente-box">AE 450 ZX</span></td>
+                            <td class="bd-valor-num">$ 6000.00</td>
+                            <td style="color: #64748b;">3659113074-d3bd1820...</td>
+                            <td style="color: var(--dorado);">9845214023</td>
+                            <td><span class="bd-tag-estado bd-estado-aprobado">APPROVED</span></td>
+                            <td>2026-10-17 13:58:12</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">2</td>
+                            <td class="bd-valor-null">NULL (TOTEM)</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-num">102</td>
+                            <td><span class="bd-patente-box">AF 892 CC</span></td>
+                            <td class="bd-valor-num">$ 4000.00</td>
+                            <td style="color: #64748b;">3659113074-f9aa2101...</td>
+                            <td style="color: var(--dorado);">9845233190</td>
+                            <td><span class="bd-tag-estado bd-estado-aprobado">APPROVED</span></td>
+                            <td>2026-10-17 14:38:50</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 7: PROMOTIONS -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-promotions" style="display: none;">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>titulo<span class="bd-th-tipo">VARCHAR(100)</span></th>
+                            <th>descripcion<span class="bd-th-tipo">VARCHAR(255)</span></th>
+                            <th>costo_puntos<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>categoria<span class="bd-th-tipo">VARCHAR(50)</span></th>
+                            <th>activa<span class="bd-th-tipo">BOOLEAN</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>sucursal_id<span class="bd-th-tipo">INT -> BRANCHES</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">1</td>
+                            <td style="color: var(--dorado); font-weight: 700;">DIA LIBRE</td>
+                            <td>24HS DE ESTACIONAMIENTO BONIFICADO</td>
+                            <td class="bd-valor-num">500 PTS</td>
+                            <td>ESTADIA</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                            <td class="bd-valor-null">NULL (TODAS)</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">2</td>
+                            <td style="color: var(--dorado); font-weight: 700;">LAVADO PREMIUM</td>
+                            <td>LAVADO COMPLETO Y ENCERADO ARTESANAL</td>
+                            <td class="bd-valor-num">300 PTS</td>
+                            <td>SERVICIO</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                            <td class="bd-valor-null">NULL (TODAS)</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">3</td>
+                            <td style="color: var(--dorado); font-weight: 700;">CAFE EXPRESS</td>
+                            <td>COMBO CAFE Y SNACK EN GAFETERIA DE SUCURSAL</td>
+                            <td class="bd-valor-num">100 PTS</td>
+                            <td>GASTRONOMIA</td>
+                            <td class="bd-valor-bool bd-bool-true">TRUE</td>
+                            <td class="bd-valor-null">NULL (TODAS)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CUERPO DE TABLA: PANTALLA 8: SETTINGS -->
+            <div class="bd-screen-cuerpo" id="screen-tabla-settings" style="display: none;">
+                <table class="bd-tabla-visor">
+                    <thead>
+                        <tr>
+                            <th class="bd-th-pk"><span class="bd-badge-pk">PK</span>id<span class="bd-th-tipo">INTEGER</span></th>
+                            <th>clave<span class="bd-th-tipo">VARCHAR(60)</span></th>
+                            <th>valor<span class="bd-th-tipo">FLOAT</span></th>
+                            <th>valor_str<span class="bd-th-tipo">VARCHAR(255)</span></th>
+                            <th class="bd-th-fk"><span class="bd-badge-fk">FK</span>sucursal_id<span class="bd-th-tipo">INT -> BRANCHES</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="bd-valor-num">1</td>
+                            <td style="color: var(--dorado);">precio_30min</td>
+                            <td class="bd-valor-num">$ 750.00</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-null">NULL (TARIFA BASE)</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">2</td>
+                            <td style="color: var(--dorado);">precio_hora</td>
+                            <td class="bd-valor-num">$ 1500.00</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-null">NULL (TARIFA BASE)</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">3</td>
+                            <td style="color: var(--dorado);">precio_dia</td>
+                            <td class="bd-valor-num">$ 15000.00</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-null">NULL (TARIFA BASE)</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">4</td>
+                            <td style="color: var(--dorado);">precio_hora_moto</td>
+                            <td class="bd-valor-num">$ 800.00</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-null">NULL (TARIFA BASE)</td>
+                        </tr>
+                        <tr>
+                            <td class="bd-valor-num">5</td>
+                            <td style="color: var(--dorado);">precio_hora_camioneta</td>
+                            <td class="bd-valor-num">$ 2000.00</td>
+                            <td class="bd-valor-null">NULL</td>
+                            <td class="bd-valor-null">NULL (TARIFA BASE)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- BLOQUE DE SENTENCIA DDL (SQL CREATE TABLE) -->
+            <div class="bd-bloque-ddl" id="bloque-ddl-sql">
+                <pre id="codigo-ddl" style="margin: 0; color: #a5b4fc;"></pre>
+            </div>
+
+            <!-- PIE DE SCREEN CON DETALLE Y RELACIONES -->
+            <div class="bd-screen-pie">
+                <div class="bd-meta-col">
+                    <h4>PROPOSITO DE LA TABLA</h4>
+                    <p id="lbl-proposito-tabla">
+                        ALMACENA LA CUENTA CENTRAL DE CADA USUARIO CON CREDENCIALES HASHEADAS BCRYPT, PERFIL, SUCURSAL ASIGNADA Y SALDO MONETARIO.
+                    </p>
+                </div>
+                <div class="bd-meta-col">
+                    <h4>CLAVES FORANEAS Y DEPENDENCIAS</h4>
+                    <ul id="lbl-fks-tabla">
+                        <li><strong>ORGANIZATION_ID:</strong> VINCULA CON LA EMPRESA MATRIZ MULTITENANT</li>
+                        <li><strong>SUCURSAL_ID:</strong> RESTRINGE AL LOCAL_ADMIN A SU SUCURSAL CORRESPONDIENTE</li>
+                    </ul>
+                </div>
+                <div class="bd-meta-col">
+                    <h4>ARCHIVOS DEL CODIGO QUE INTERACTUAN</h4>
+                    <div id="lbl-archivos-tabla" style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                        <a href="EXPLICACION DE CODIGO/index.html#/models/user.py" target="_blank" class="bd-archivo-badge">models/user.py</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/repositories/user_repository.py" target="_blank" class="bd-archivo-badge">repositories/user_repository.py</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCION: COMO SE COMUNICA LA BASE DE DATOS CON EL PROGRAMA -->
+    <section id="seccion-comunicacion" class="bd-seccion">
+        <div class="bd-seccion-header">
+            <div class="bd-seccion-titulo-grupo">
+                <div class="bd-seccion-icono">🔄</div>
+                <div>
+                    <div class="bd-seccion-categoria">FLUJO DE DATOS PASO A PASO</div>
+                    <h2 class="bd-seccion-titulo">COMO SE COMUNICA LA BASE DE DATOS CON EL PROGRAMA</h2>
+                </div>
+            </div>
+        </div>
+
+        <p style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; text-transform: uppercase;">
+            LA COMUNICACION ENTRE EL PROGRAMA PYTHON (FASTAPI Y SERVICIOS DE VISION) Y LA BASE DE DATOS SIGUE UN CIRCUITO
+            ESTRICTAMENTE CONTROLADO EN CAPAS. NINGUN CONTROLADOR ACCEDE AL MOTOR A CIEGAS; TODO VIAJA A TRAVES DE
+            SESIONES AISLADAS, INYECCION DE DEPENDENCIAS Y EL PATRON REPOSITORIO:
+        </p>
+
+        <div class="bd-flujo-lista">
+
+            <!-- PASO 1 -->
+            <div class="bd-flujo-paso">
+                <div class="bd-flujo-numero">1</div>
+                <div class="bd-flujo-cuerpo">
+                    <h3>DISPARO DEL EVENTO: SOLICITUD WEB O DETECCION DE CAMARA</h3>
+                    <p>
+                        EL RECORRIDO COMIENZA CUANDO UN NAVEGADOR HACE UN PEDIDO HTTP (POR EJEMPLO, CREAR UNA RESERVA EN <code>/API/RESERVATIONS/</code>)
+                        O CUANDO EL HILO DE VISION ARTIFICIAL (OPENCV) RECONOCE UNA PATENTE EN EL VIDEO DE ENTRADA Y DISPARA EL INGRESO DEL AUTO.
+                    </p>
+                    <div class="bd-flujo-archivos">
+                        <span>ARCHIVOS:</span>
+                        <a href="EXPLICACION DE CODIGO/index.html#/routes/reservations.py" target="_blank" class="bd-archivo-badge">routes/reservations.py</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/alpr/core.py" target="_blank" class="bd-archivo-badge">alpr/core.py</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 2 -->
+            <div class="bd-flujo-paso">
+                <div class="bd-flujo-numero">2</div>
+                <div class="bd-flujo-cuerpo">
+                    <h3>INYECCION DE DEPENDENCIAS: CREACION DE SESION LIMPIA (GET_DB)</h3>
+                    <p>
+                        FASTAPI INVOCA LA FUNCION GENERADORA <code>GET_DB()</code> DEFINIDA EN <code>CORE/DATABASE.PY</code>.
+                        ESTA FUNCION TOMA UNA CONEXION PREPARADA DEL POOL DE SQLALCHEMY, ABRE UNA SESION AISLADA (<code>DB = SESSIONLOCAL()</code>)
+                        Y SE LA ENTREGA AL CONTROLADOR MEDIANTE <code>DEPENDS(GET_DB)</code>. SI OCURRE UN ERROR O CUANDO EL ENDPOINT TERMINA,
+                        EL BLOQUE <code>FINALLY: DB.CLOSE()</code> CIERRA LA SESION Y DEVUELVE LA CONEXION AL POOL SIN DEJAR RECURSOS ABIERTOS.
+                    </p>
+                    <div class="bd-flujo-archivos">
+                        <span>ARCHIVOS:</span>
+                        <a href="EXPLICACION DE CODIGO/index.html#/core/database.py" target="_blank" class="bd-archivo-badge">core/database.py</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/core/config.py" target="_blank" class="bd-archivo-badge">core/config.py</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 3 -->
+            <div class="bd-flujo-paso">
+                <div class="bd-flujo-numero">3</div>
+                <div class="bd-flujo-cuerpo">
+                    <h3>CAPA DE SERVICIOS: LOGICA DE NEGOCIO Y VALIDACIONES</h3>
+                    <p>
+                        EL ENDPOINT DERIVA LA TAREA AL SERVICIO CORRESPONDIENTE (EJEMPLO: <code>RESERVATION_SERVICE.PY</code> O <code>ACCESS_SERVICE.PY</code>).
+                        ACA SE VERIFICAN LAS CONDICIONES: ¿HAY COCHERA DISPONIBLE EN EL AFORO? ¿EL VEHICULO TIENE MULTAS?
+                        ¿EL CLIENTE DISPONE DE SALDO SUFICIENTE O PAGO CON MERCADO PAGO?
+                    </p>
+                    <div class="bd-flujo-archivos">
+                        <span>ARCHIVOS:</span>
+                        <a href="EXPLICACION DE CODIGO/index.html#/services/reservation_service.py" target="_blank" class="bd-archivo-badge">services/reservation_service.py</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/services/access_service.py" target="_blank" class="bd-archivo-badge">services/access_service.py</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 4 -->
+            <div class="bd-flujo-paso">
+                <div class="bd-flujo-numero">4</div>
+                <div class="bd-flujo-cuerpo">
+                    <h3>CAPA DE REPOSITORIOS: CONSULTAS ORM Y SEGURIDAD MULTITENANT</h3>
+                    <p>
+                        EL SERVICIO NUNCA ARMA CONSULTAS A MANO; LLAMA A LOS REPOSITORIOS (EJEMPLO: <code>RESERVATION_REPOSITORY.PY</code>).
+                        EL REPOSITORIO EJECUTA SENTENCIAS ORM COMO <code>DB.QUERY(RESERVATION).FILTER(...)</code>.
+                        ADEMAS, EL MODULO <code>REPOSITORIES/SCOPING.PY</code> APLICA AUTOMATICAMENTE EL FILTRO DE SUCURSAL PARA QUE NINGUN
+                        OPERADOR DE UNA SEDE PUEDA LEER O MODIFICAR DATOS DE OTRA SUCURSAL.
+                    </p>
+                    <div class="bd-flujo-archivos">
+                        <span>ARCHIVOS:</span>
+                        <a href="EXPLICACION DE CODIGO/index.html#/repositories/reservation_repository.py" target="_blank" class="bd-archivo-badge">repositories/reservation_repository.py</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/repositories/access_log_repository.py" target="_blank" class="bd-archivo-badge">repositories/access_log_repository.py</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/repositories/scoping.py" target="_blank" class="bd-archivo-badge">repositories/scoping.py</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 5 -->
+            <div class="bd-flujo-paso">
+                <div class="bd-flujo-numero">5</div>
+                <div class="bd-flujo-cuerpo">
+                    <h3>MOTOR SQLALCHEMY: TRADUCCION A SQL NATIVO Y POOL DE CONEXIONES</h3>
+                    <p>
+                        SQLALCHEMY TOMA EL MODELO DECLARATIVO DE <code>MODELS/</code>, VALIDA LOS TIPOS DE DATOS Y CONVIERTE LA CONSULTA
+                        A SENTENCIAS SQL NATIVAS (SELECT, INSERT, UPDATE) OPTIMIZADAS PARA EL MOTOR ACTIVO.
+                        UTILIZA PARAMETRIZACION ESTRICTA, HACIENDO IMPOSIBLE CUALQUIER ATAQUE DE INYECCION SQL.
+                        EL POOL GESTIONA 20 CONEXIONES PERMANENTES (CON CAPACIDAD DE DESBORDE DE HASTA 40) Y EJECUTA PINGS PREVIOS
+                        PARA COMPROBAR QUE LA CONEXION CLOUD CON NEON EN SAO PAULO SIGA VIVA ANTES DE ENVIAR LA CONSULTA.
+                    </p>
+                    <div class="bd-flujo-archivos">
+                        <span>ARCHIVOS:</span>
+                        <a href="EXPLICACION DE CODIGO/index.html#/models/__init__.py" target="_blank" class="bd-archivo-badge">models/__init__.py</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/models/parking.py" target="_blank" class="bd-archivo-badge">models/parking.py</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 6 -->
+            <div class="bd-flujo-paso">
+                <div class="bd-flujo-numero">6</div>
+                <div class="bd-flujo-cuerpo">
+                    <h3>BASE DE DATOS RELACIONAL: TRANSACCIONES ACID Y INTEGRIDAD</h3>
+                    <p>
+                        EL MOTOR DE BASE DE DATOS (POSTGRESQL O SQLITE) EJECUTA EL COMANDO. SI SE TRATA DE UN ALTA (INSERT)
+                        O MODIFICACION (UPDATE), SE APLICA EL <code>DB.COMMIT()</code>. SI CUALQUIER VALIDACION FALLA EN EL MEDIO,
+                        SE DISPARA <code>DB.ROLLBACK()</code> DEJANDO LA BASE DE DATOS EXACTAMENTE EN EL ESTADO ANTERIOR, SIN CORRUPCIONES NI REGISTROS HUERFANOS.
+                    </p>
+                    <div class="bd-flujo-archivos">
+                        <span>BASE DE DATOS:</span>
+                        <span class="bd-archivo-badge">POSTGRESQL NEON (NUBE)</span>
+                        <span class="bd-archivo-badge">PARKING.DB (LOCAL)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 7 -->
+            <div class="bd-flujo-paso">
+                <div class="bd-flujo-numero">7</div>
+                <div class="bd-flujo-cuerpo">
+                    <h3>SERIALIZACION Y RESPUESTA FINAL</h3>
+                    <p>
+                        LOS OBJETOS RETORNADOS POR LA BASE DE DATOS SE CONVIERTEN EN ESQUEMAS PYDANTIC TIPADOS Y SALEN EN FORMATO JSON
+                        HACIA LA INTERFAZ WEB, O EMITEN UN MENSAJE POR WEBSOCKET / SSE PARA QUE LA BARRERA VIRTUAL SE LEVANTE EN PANTALLA.
+                    </p>
+                    <div class="bd-flujo-archivos">
+                        <span>ARCHIVOS:</span>
+                        <a href="EXPLICACION DE CODIGO/index.html#/schemas/" target="_blank" class="bd-archivo-badge">schemas/ (PYDANTIC)</a>
+                        <a href="EXPLICACION DE CODIGO/index.html#/core/mqtt.py" target="_blank" class="bd-archivo-badge">core/mqtt.py</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECCION: MAPA DE RELACIONES ERD (18 TABLAS) -->
+    <section id="seccion-erd" class="bd-seccion">
+        <div class="bd-seccion-header">
+            <div class="bd-seccion-titulo-grupo">
+                <div class="bd-seccion-icono">🗺️</div>
+                <div>
+                    <div class="bd-seccion-categoria">MODELO ENTIDAD RELACION</div>
+                    <h2 class="bd-seccion-titulo">MAPA DE VINCULACIONES ENTRE TABLAS</h2>
+                </div>
+            </div>
+        </div>
+
+        <p style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; text-transform: uppercase;">
+            LAS 18 TABLAS DE AUTOPASS SE ORGANIZAN EN 6 GRUPOS MODULARES CONECTADOS MEDIANTE CLAVES FORANEAS (FOREIGN KEYS)
+            QUE ASEGURAN QUE NO EXISTA INFORMACION HUERFANA Y QUE TODO REGISTRO ESTE RESPALDADO:
+        </p>
+
+        <div class="bd-erd-grid">
+
+            <!-- MODULO 1: SEDES Y ORGANIZACION -->
+            <div class="bd-erd-tarjeta">
+                <div class="bd-erd-tarjeta-header">
+                    <span class="bd-erd-nombre-tabla">1. ORGANIZACION Y SEDES</span>
+                    <span class="bd-erd-grupo-tag">INFRAESTRUCTURA</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">●</span>
+                    <span><strong>ORGANIZATIONS:</strong> EMPRESA MATRIZ DUENA DEL SISTEMA.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>PARKING_BRANCHES:</strong> SUCURSALES (CENTRAL, CASTELAR, MORON, ITUZAINGO).</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>PARKING_FLOORS:</strong> PISOS O SECTORES INTERNOS POR SEDE.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>SETTINGS:</strong> TARIFAS Y REGLAS DE TIEMPO GLOBALES O POR SUCURSAL.</span>
+                </div>
+            </div>
+
+            <!-- MODULO 2: USUARIOS Y VEHICULOS -->
+            <div class="bd-erd-tarjeta">
+                <div class="bd-erd-tarjeta-header">
+                    <span class="bd-erd-nombre-tabla">2. USUARIOS Y VEHICULOS</span>
+                    <span class="bd-erd-grupo-tag">ACCESO Y ROLES</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">●</span>
+                    <span><strong>USERS:</strong> ADMINISTRADORES, ENCARGADOS DE SEDE Y CLIENTES.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>VEHICLES:</strong> AUTOS, MOTOS Y CAMIONETAS VINCULADOS A CADA USUARIO.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>USER_SESSIONS:</strong> REGISTRO DE TOKENS, IPS Y DISPOSITIVOS ACTIVOS.</span>
+                </div>
+            </div>
+
+            <!-- MODULO 3: VISION ARTIFICIAL Y ACCESOS -->
+            <div class="bd-erd-tarjeta">
+                <div class="bd-erd-tarjeta-header">
+                    <span class="bd-erd-nombre-tabla">3. CONTROL DE ACCESOS Y VISION</span>
+                    <span class="bd-erd-grupo-tag">OPERACION ALPR</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">●</span>
+                    <span><strong>PARKING_CAMERAS:</strong> CAMARAS ASIGNADAS A CARRILES DE ENTRADA O SALIDA.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>ACCESS_LOGS:</strong> CADA EVENTO DE PASO DETECTADO CON FOTO, HORA Y ESTADO.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>PARKING_AFORO:</strong> CONTADOR EN TIEMPO REAL DE PLAZAS LIBRES Y OCUPADAS.</span>
+                </div>
+            </div>
+
+            <!-- MODULO 4: RESERVAS Y PAGOS -->
+            <div class="bd-erd-tarjeta">
+                <div class="bd-erd-tarjeta-header">
+                    <span class="bd-erd-nombre-tabla">4. RESERVAS Y FINANZAS</span>
+                    <span class="bd-erd-grupo-tag">MONETIZACION</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">●</span>
+                    <span><strong>RESERVATIONS:</strong> APARTADO DE COCHERA POR FECHA, PATENTE Y TIPO DE ESTADIA.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>MERCADOPAGO_PAYMENTS:</strong> PAGOS DIGITALES CON CHECKOUT PRO Y WEBHOOKS.</span>
+                </div>
+            </div>
+
+            <!-- MODULO 5: BENEFICIOS Y PUNTOS -->
+            <div class="bd-erd-tarjeta">
+                <div class="bd-erd-tarjeta-header">
+                    <span class="bd-erd-nombre-tabla">5. FIDELIZACION Y CANJES</span>
+                    <span class="bd-erd-grupo-tag">BENEFICIOS</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">●</span>
+                    <span><strong>PROMOTIONS:</strong> BENEFICIOS DISPONIBLES (DIAS LIBRES, LAVADOS, CAFES).</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>REDEMPTION_TICKETS:</strong> CUPONES Y TICKETS CON QR GENERADOS POR CLIENTES.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>POINTS_LOG:</strong> HISTORIAL DE PUNTOS GANADOS Y CONSUMIDOS POR USUARIO.</span>
+                </div>
+            </div>
+
+            <!-- MODULO 6: SOPORTE Y NOTIFICACIONES -->
+            <div class="bd-erd-tarjeta">
+                <div class="bd-erd-tarjeta-header">
+                    <span class="bd-erd-nombre-tabla">6. ATENCION Y MENSAJERIA</span>
+                    <span class="bd-erd-grupo-tag">SOPORTE</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">●</span>
+                    <span><strong>SUPPORT_TICKETS:</strong> CONSULTAS Y RECLAMOS DE CLIENTES A LA ADMINISTRACION.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>SUPPORT_TICKET_MESSAGES:</strong> CONVERSACION Y ADJUNTOS EN CADA TICKET.</span>
+                </div>
+                <div class="bd-erd-relacion-linea">
+                    <span class="bd-erd-flecha">↳</span>
+                    <span><strong>USER_NOTIFICATIONS:</strong> ALERTAS IN-APP Y AVISOS DE ENTRADA, SALIDA Y PAGOS.</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECCION: DICCIONARIO COMPLETO DE LAS 18 TABLAS -->
+    <section id="seccion-diccionario" class="bd-seccion">
+        <div class="bd-seccion-header">
+            <div class="bd-seccion-titulo-grupo">
+                <div class="bd-seccion-icono">📖</div>
+                <div>
+                    <div class="bd-seccion-categoria">CATALOGO COMPLETO</div>
+                    <h2 class="bd-seccion-titulo">DICCIONARIO DE LAS 18 TABLAS DEL SISTEMA</h2>
+                </div>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="bd-tabla-visor">
+                <thead>
+                    <tr>
+                        <th style="width: 200px;">TABLA SQL</th>
+                        <th style="width: 140px;">MODULO</th>
+                        <th>DESCRIPCION FUNCIONAL</th>
+                        <th style="width: 250px;">CLAVES FORANEAS</th>
+                        <th style="width: 160px;">MODELO ASOCIADO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">ORGANIZATIONS</td>
+                        <td>ORGANIZACION</td>
+                        <td>EMPRESA PRINCIPAL O CLIENTES CORPORATIVOS MULTITENANT</td>
+                        <td class="bd-valor-null">NINGUNA (TABLA RAIZ)</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/organization.py" class="bd-archivo-badge">models/organization.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">PARKING_BRANCHES</td>
+                        <td>ORGANIZACION</td>
+                        <td>RED DE SUCURSALES (CENTRAL, CASTELAR, ITUZAINGO, MORON) CON COORDENADAS Y HORARIOS</td>
+                        <td>ORGANIZATION_ID -> ORGANIZATIONS</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/parking.py" class="bd-archivo-badge">models/parking.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">PARKING_FLOORS</td>
+                        <td>ORGANIZACION</td>
+                        <td>PISOS, SECTORES Y CAPACIDADES DISCRIMINADAS DENTRO DE CADA SUCURSAL</td>
+                        <td>BRANCH_ID -> PARKING_BRANCHES</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/parking.py" class="bd-archivo-badge">models/parking.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">SETTINGS</td>
+                        <td>CONFIGURACION</td>
+                        <td>TARIFAS (FRACCION, HORA, DIA) Y TIEMPOS DE TOLERANCIA GLOBALES O POR SUCURSAL</td>
+                        <td>SUCURSAL_ID -> PARKING_BRANCHES</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/parking.py" class="bd-archivo-badge">models/parking.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">USERS</td>
+                        <td>SEGURIDAD</td>
+                        <td>CUENTAS DE USUARIOS: ADMINISTRADORES, OPERADORES LOCALES Y CLIENTES</td>
+                        <td>SUCURSAL_ID -> PARKING_BRANCHES</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/user.py" class="bd-archivo-badge">models/user.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">VEHICLES</td>
+                        <td>SEGURIDAD</td>
+                        <td>VEHICULOS VINCULADOS A USUARIOS (PATENTE, TIPO AUTO/MOTO/CAMIONETA, FAVORITO)</td>
+                        <td>USER_ID -> USERS</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/user.py" class="bd-archivo-badge">models/user.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">USER_SESSIONS</td>
+                        <td>SEGURIDAD</td>
+                        <td>AUDITORIA DE SESIONES ACTIVAS, DISPOSITIVOS, IPS Y REFRESH TOKENS</td>
+                        <td>USER_ID -> USERS</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/user_session.py" class="bd-archivo-badge">models/user_session.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">PARKING_CAMERAS</td>
+                        <td>VISION ALPR</td>
+                        <td>CAMARAS DE CIRCUITO CERRADO Y FUENTES RTSP VINCULADAS A CARRILES</td>
+                        <td>SUCURSAL_ID -> PARKING_BRANCHES</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/parking.py" class="bd-archivo-badge">models/parking.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">ACCESS_LOGS</td>
+                        <td>OPERACION</td>
+                        <td>HISTORIAL INMUTABLE DE ENTRADAS Y SALIDAS DETECTADAS POR CAMARAS CON FOTOS</td>
+                        <td>RESERVA_ID, SUCURSAL_ID, FLOOR_ID</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/parking.py" class="bd-archivo-badge">models/parking.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">PARKING_AFORO</td>
+                        <td>OPERACION</td>
+                        <td>ESTADO DE OCUPACION EN TIEMPO REAL DESGLOSADO POR TIPO DE VEHICULO</td>
+                        <td>SUCURSAL_ID -> PARKING_BRANCHES</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/parking.py" class="bd-archivo-badge">models/parking.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">RESERVATIONS</td>
+                        <td>RESERVAS</td>
+                        <td>CONTRATOS DE RESERVAS DE PLAZAS, FRANJAS HORARIAS, PATENTE Y ESTADO DE PAGO</td>
+                        <td>USER_ID, SUCURSAL_ID</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/reservation.py" class="bd-archivo-badge">models/reservation.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">MERCADOPAGO_PAYMENTS</td>
+                        <td>PAGOS</td>
+                        <td>TRANSACCIONES PROCESADAS MEDIANTE MERCADO PAGO CHECKOUT PRO Y WEBHOOKS</td>
+                        <td>USER_ID, RESERVA_ID, ACCESS_LOG_ID</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/mercadopago.py" class="bd-archivo-badge">models/mercadopago.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">PROMOTIONS</td>
+                        <td>PUNTOS</td>
+                        <td>CATALOGO DE BENEFICIOS CANJEABLES POR PUNTOS (DIAS LIBRES, LAVADOS, COMBOS)</td>
+                        <td>SUCURSAL_ID -> PARKING_BRANCHES</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/user.py" class="bd-archivo-badge">models/user.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">REDEMPTION_TICKETS</td>
+                        <td>PUNTOS</td>
+                        <td>TICKETS DE CANJE GENERADOS CON CODIGO QR PARA MOSTRAR EN CAJA O TOTEM</td>
+                        <td>USER_ID, PROMOTION_ID</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/user.py" class="bd-archivo-badge">models/user.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">POINTS_LOG</td>
+                        <td>PUNTOS</td>
+                        <td>LIBRO MAYOR DE PUNTOS GANADOS POR ESTADIAS Y GASTADOS EN RECOMPENSAS</td>
+                        <td>USER_ID -> USERS</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/user.py" class="bd-archivo-badge">models/user.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">SUPPORT_TICKETS</td>
+                        <td>SOPORTE</td>
+                        <td>TICKETS DE ATENCION AL CLIENTE, RECLAMOS, CONSULTAS Y REPORTES DE ERRORES</td>
+                        <td>USER_ID, SUCURSAL_ID</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/support.py" class="bd-archivo-badge">models/support.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">SUPPORT_TICKET_MESSAGES</td>
+                        <td>SOPORTE</td>
+                        <td>MENSAJES ENVIADOS POR EL CLIENTE O EL OPERADOR DENTRO DEL HILO DEL TICKET</td>
+                        <td>TICKET_ID, USER_ID</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/support.py" class="bd-archivo-badge">models/support.py</a></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: 700;">USER_NOTIFICATIONS</td>
+                        <td>NOTIFICACIONES</td>
+                        <td>ALERTAS PUSH Y MENSAJES DE BANDEJA IN-APP DIRIGIDOS A CADA USUARIO</td>
+                        <td>USER_ID, RESERVA_ID, TICKET_ID</td>
+                        <td><a href="EXPLICACION DE CODIGO/index.html#/models/notification.py" class="bd-archivo-badge">models/notification.py</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- FOOTER FINAL CON ENLACES -->
+    <footer style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px; text-align: center; margin-top: 40px;">
+        <div style="color: var(--dorado); font-weight: 800; font-size: 15px; margin-bottom: 8px; letter-spacing: 1px;">
+            SISTEMA DE PERSISTENCIA COMPLETAMENTE CONFIGURADO Y HOMOGENEO
+        </div>
+        <p style="color: var(--text-secondary); font-size: 13px; max-width: 850px; margin: 0 auto 18px; text-transform: uppercase;">
+            LA BASE DE DATOS TRABAJA DE MANERA TOTALMENTE INTEGRADA CON EL BACKEND FASTAPI Y LOS MOTORES DE VISION ARTIFICIAL ALPR.
+            CADA ACCION EN PANTALLA QUEDA RESPALDADA BAJO CRITERIOS ESTRICTOS DE TRANSACCIONALIDAD Y SEGURIDAD.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <a href="EXPLICACION DE CODIGO/index.html" class="bd-btn-nav bd-btn-nav-destacado">← VOLVER AL VISOR GENERAL</a>
+            <a href="EXPLICACION DE CODIGO/recorrido_camaras.html" class="bd-btn-nav">RECORRIDO DE CAMARAS</a>
+        </div>
+    </footer>
+
+</div>
+
+<!-- SCRIPT DE INTERACTIVIDAD PARA LAS SCREENS DE TABLAS -->
+<script>
+/* DICCIONARIO DE METADATOS Y DDL DE LAS TABLAS */
+var DatosTablas = {
+    users: {
+        sql: "SELECT * FROM users ORDER BY id ASC LIMIT 5;",
+        count: "4",
+        proposito: "ALMACENA LA CUENTA CENTRAL DE CADA USUARIO CON CREDENCIALES HASHEADAS BCRYPT, PERFIL, SUCURSAL ASIGNADA Y SALDO MONETARIO.",
+        fks: [
+            "ORGANIZATION_ID: VINCULA CON LA EMPRESA MATRIZ MULTITENANT",
+            "SUCURSAL_ID: RESTRINGE AL LOCAL_ADMIN A SU SUCURSAL CORRESPONDIENTE"
+        ],
+        archivos: [
+            { nombre: "models/user.py", url: "EXPLICACION DE CODIGO/index.html#/models/user.py" },
+            { nombre: "repositories/user_repository.py", url: "EXPLICACION DE CODIGO/index.html#/repositories/user_repository.py" }
+        ],
+        ddl: "CREATE TABLE users (\n    id SERIAL PRIMARY KEY,\n    nombre VARCHAR(80) NOT NULL,\n    apellido VARCHAR(80) NOT NULL,\n    email VARCHAR(120) UNIQUE NOT NULL,\n    dni VARCHAR(20) UNIQUE NOT NULL,\n    password_hash VARCHAR(255) NOT NULL,\n    rol VARCHAR(30) DEFAULT 'client',\n    sucursal_id INTEGER REFERENCES parking_branches(id),\n    organization_id INTEGER REFERENCES organizations(id),\n    puntos_acumulados INTEGER DEFAULT 0,\n    saldo FLOAT DEFAULT 0.0,\n    is_blocked BOOLEAN DEFAULT FALSE,\n    is_deleted BOOLEAN DEFAULT FALSE\n);"
+    },
+    access_logs: {
+        sql: "SELECT * FROM access_logs ORDER BY fecha_hora DESC LIMIT 5;",
+        count: "3",
+        proposito: "LIBRO INMUTABLE DE TODAS LAS ENTRADAS Y SALIDAS VEHICULARES REGISTRADAS POR LAS CAMARAS DE VISION ARTIFICIAL.",
+        fks: [
+            "RESERVA_ID: ASOCIA EL EVENTO CON UNA RESERVA PREVIA PAGADA (SI EXISTE)",
+            "SUCURSAL_ID: SUCURSAL DONDE OCURRIO LA DETECCION",
+            "FLOOR_ID: SECTOR O PISO ESPECIFICO DEL ACCESO"
+        ],
+        archivos: [
+            { nombre: "models/parking.py", url: "EXPLICACION DE CODIGO/index.html#/models/parking.py" },
+            { nombre: "repositories/access_log_repository.py", url: "EXPLICACION DE CODIGO/index.html#/repositories/access_log_repository.py" },
+            { nombre: "services/access_service.py", url: "EXPLICACION DE CODIGO/index.html#/services/access_service.py" }
+        ],
+        ddl: "CREATE TABLE access_logs (\n    id SERIAL PRIMARY KEY,\n    patente_detectada VARCHAR(15) NOT NULL,\n    normalized_patente VARCHAR(15),\n    tipo_evento VARCHAR(10) NOT NULL,\n    tipo_vehiculo VARCHAR(20) DEFAULT 'auto',\n    reserva_id INTEGER REFERENCES reservations(id),\n    floor_id INTEGER REFERENCES parking_floors(id),\n    sucursal_id INTEGER REFERENCES parking_branches(id),\n    fecha_hora TIMESTAMP NOT NULL,\n    pago_confirmado BOOLEAN DEFAULT FALSE,\n    costo_estadia FLOAT DEFAULT 0.0,\n    ocr_time FLOAT,\n    imagen_path VARCHAR(255)\n);"
+    },
+    reservations: {
+        sql: "SELECT * FROM reservations ORDER BY id DESC LIMIT 5;",
+        count: "2",
+        proposito: "REGISTRA LOS CONTRATOS DE RESERVA TEMPORAL O DIARIA DE ESPACIO DE ESTACIONAMIENTO ADQUIRIDOS POR LOS CLIENTES.",
+        fks: [
+            "USER_ID: CLIENTE TITULAR QUE CONTRATO LA RESERVA",
+            "SUCURSAL_ID: SUCURSAL SELECCIONADA PARA ESTACIONAR"
+        ],
+        archivos: [
+            { nombre: "models/reservation.py", url: "EXPLICACION DE CODIGO/index.html#/models/reservation.py" },
+            { nombre: "repositories/reservation_repository.py", url: "EXPLICACION DE CODIGO/index.html#/repositories/reservation_repository.py" },
+            { nombre: "services/reservation_service.py", url: "EXPLICACION DE CODIGO/index.html#/services/reservation_service.py" }
+        ],
+        ddl: "CREATE TABLE reservations (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER REFERENCES users(id) NOT NULL,\n    patente VARCHAR(15) NOT NULL,\n    sucursal_id INTEGER REFERENCES parking_branches(id) NOT NULL,\n    fecha_inicio TIMESTAMP NOT NULL,\n    fecha_fin TIMESTAMP NOT NULL,\n    monto_total FLOAT NOT NULL,\n    estado_pago VARCHAR(20) DEFAULT 'pending',\n    estado_reserva VARCHAR(20) DEFAULT 'activa',\n    tipo_estadia VARCHAR(20) NOT NULL,\n    tarifa_aplicada FLOAT\n);"
+    },
+    parking_branches: {
+        sql: "SELECT * FROM parking_branches ORDER BY id ASC LIMIT 5;",
+        count: "4",
+        proposito: "CATALOGO DE TODAS LAS SUCURSALES FISICAS DE LA RED AUTOPASS CON UBICACION GEOGRAFICA, CONTACTO Y ESTADO.",
+        fks: [
+            "ORGANIZATION_ID: EMPRESA PROPIETARIA DE LA CADENA"
+        ],
+        archivos: [
+            { nombre: "models/parking.py", url: "EXPLICACION DE CODIGO/index.html#/models/parking.py" },
+            { nombre: "repositories/branch_repository.py", url: "EXPLICACION DE CODIGO/index.html#/repositories/branch_repository.py" }
+        ],
+        ddl: "CREATE TABLE parking_branches (\n    id SERIAL PRIMARY KEY,\n    nombre VARCHAR(100) NOT NULL,\n    direccion VARCHAR(200) NOT NULL,\n    telefono VARCHAR(50),\n    horario VARCHAR(50),\n    is_24h BOOLEAN DEFAULT TRUE,\n    logo_url VARCHAR(255),\n    latitude FLOAT,\n    longitude FLOAT,\n    activa BOOLEAN DEFAULT TRUE,\n    organization_id INTEGER REFERENCES organizations(id)\n);"
+    },
+    parking_aforo: {
+        sql: "SELECT * FROM parking_aforo ORDER BY id ASC LIMIT 5;",
+        count: "2",
+        proposito: "MANTIENE EL COMPUTO EN VIVO DE PLAZAS TOTALES Y OCUPADAS DISCRIMINADO POR TIPO DE VEHICULO Y RESERVAS.",
+        fks: [
+            "SUCURSAL_ID: SUCURSAL CUYO AFORO SE ESTA COMPUTANDO"
+        ],
+        archivos: [
+            { nombre: "models/parking.py", url: "EXPLICACION DE CODIGO/index.html#/models/parking.py" },
+            { nombre: "services/occupancy_service.py", url: "EXPLICACION DE CODIGO/index.html#/services/occupancy_service.py" }
+        ],
+        ddl: "CREATE TABLE parking_aforo (\n    id SERIAL PRIMARY KEY,\n    sucursal_id INTEGER REFERENCES parking_branches(id) NOT NULL,\n    capacidad_total INTEGER NOT NULL,\n    ocupacion_actual INTEGER DEFAULT 0,\n    capacidad_motos INTEGER DEFAULT 0,\n    ocupacion_motos INTEGER DEFAULT 0,\n    capacidad_camionetas INTEGER DEFAULT 0,\n    ocupacion_camionetas INTEGER DEFAULT 0,\n    capacidad_reservas INTEGER DEFAULT 0,\n    ocupacion_reservas INTEGER DEFAULT 0,\n    ultima_actualizacion VARCHAR(60)\n);"
+    },
+    mercadopago_payments: {
+        sql: "SELECT * FROM mercadopago_payments ORDER BY fecha_confirmacion DESC LIMIT 5;",
+        count: "2",
+        proposito: "AUDITORIA DE TODAS LAS OPERACIONES MONETARIAS PROCESADAS A TRAVES DE LA PASARELA MERCADO PAGO.",
+        fks: [
+            "USER_ID: CLIENTE QUE EMITIO EL PAGO",
+            "RESERVA_ID: RESERVA PAGADA (SI APLICA)",
+            "ACCESS_LOG_ID: REGISTRO DE SALIDA DE COCHERA PAGADO (SI APLICA)"
+        ],
+        archivos: [
+            { nombre: "models/mercadopago.py", url: "EXPLICACION DE CODIGO/index.html#/models/mercadopago.py" },
+            { nombre: "services/mercadopago_service.py", url: "EXPLICACION DE CODIGO/index.html#/services/mercadopago_service.py" }
+        ],
+        ddl: "CREATE TABLE mercadopago_payments (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER REFERENCES users(id),\n    reserva_id INTEGER REFERENCES reservations(id),\n    access_log_id INTEGER REFERENCES access_logs(id),\n    patente VARCHAR(15),\n    monto FLOAT NOT NULL,\n    preference_id VARCHAR(100),\n    payment_id VARCHAR(100),\n    estado VARCHAR(20) NOT NULL,\n    fecha_confirmacion TIMESTAMP\n);"
+    },
+    promotions: {
+        sql: "SELECT * FROM promotions ORDER BY id ASC LIMIT 5;",
+        count: "3",
+        proposito: "CATALOGO DE BENEFICIOS DEL PROGRAMA DE PUNTOS QUE LOS CLIENTES PUEDEN CANJEAR DESDE LA APP MOVIL O WEB.",
+        fks: [
+            "SUCURSAL_ID: RESTRICCION A UNA SEDE ESPECIFICA (O NULL PARA TODAS)"
+        ],
+        archivos: [
+            { nombre: "models/user.py", url: "EXPLICACION DE CODIGO/index.html#/models/user.py" },
+            { nombre: "repositories/promotion_repository.py", url: "EXPLICACION DE CODIGO/index.html#/repositories/promotion_repository.py" }
+        ],
+        ddl: "CREATE TABLE promotions (\n    id SERIAL PRIMARY KEY,\n    titulo VARCHAR(100) NOT NULL,\n    descripcion VARCHAR(255) NOT NULL,\n    costo_puntos INTEGER NOT NULL,\n    categoria VARCHAR(50) NOT NULL,\n    icono VARCHAR(60),\n    activa BOOLEAN DEFAULT TRUE,\n    sucursal_id INTEGER REFERENCES parking_branches(id)\n);"
+    },
+    settings: {
+        sql: "SELECT * FROM settings ORDER BY id ASC LIMIT 5;",
+        count: "5",
+        proposito: "PARAMETROS DE CONFIGURACION DINAMICA: TARIFAS HORARIAS, MULTAS, PERIODOS DE GRACIA Y REGLAS DE SUCURSAL.",
+        fks: [
+            "SUCURSAL_ID: VALOR ESPECIFICO PARA UNA SUCURSAL (O NULL PARA EL VALOR BASE)"
+        ],
+        archivos: [
+            { nombre: "models/parking.py", url: "EXPLICACION DE CODIGO/index.html#/models/parking.py" },
+            { nombre: "repositories/settings_repository.py", url: "EXPLICACION DE CODIGO/index.html#/repositories/settings_repository.py" }
+        ],
+        ddl: "CREATE TABLE settings (\n    id SERIAL PRIMARY KEY,\n    clave VARCHAR(60) NOT NULL,\n    valor FLOAT,\n    valor_str VARCHAR(255),\n    sucursal_id INTEGER REFERENCES parking_branches(id)\n);"
+    }
+};
+
+var TablaActivaActual = "users";
+
+function SeleccionarPantallaTabla(NombreTabla) {
+    TablaActivaActual = NombreTabla;
+    var ListaBotones = document.querySelectorAll(".bd-tab-btn");
+    ListaBotones.forEach(function(Boton) {
+        if (Boton.innerText.toUpperCase().indexOf(NombreTabla.toUpperCase()) !== -1) {
+            Boton.classList.add("activo");
+        } else {
+            Boton.classList.remove("activo");
+        }
+    });
+
+    var ListaScreens = document.querySelectorAll(".bd-screen-cuerpo");
+    ListaScreens.forEach(function(Screen) {
+        Screen.style.display = "none";
+    });
+
+    var ScreenDestino = document.getElementById("screen-tabla-" + NombreTabla);
+    if (ScreenDestino) {
+        ScreenDestino.style.display = "block";
+    }
+
+    var Info = DatosTablas[NombreTabla];
+    if (Info) {
+        document.getElementById("lbl-tabla-sql").innerText = NombreTabla;
+        document.getElementById("lbl-reg-count").innerText = Info.count;
+        document.getElementById("lbl-proposito-tabla").innerText = Info.proposito;
+
+        var UlFks = document.getElementById("lbl-fks-tabla");
+        UlFks.innerHTML = "";
+        Info.fks.forEach(function(FkTexto) {
+            var Li = document.createElement("li");
+            Li.innerText = FkTexto;
+            UlFks.appendChild(Li);
+        });
+
+        var ContenedorArchivos = document.getElementById("lbl-archivos-tabla");
+        ContenedorArchivos.innerHTML = "";
+        Info.archivos.forEach(function(Arch) {
+            var Link = document.createElement("a");
+            Link.href = Arch.url;
+            Link.target = "_blank";
+            Link.className = "bd-archivo-badge";
+            Link.innerText = Arch.nombre;
+            ContenedorArchivos.appendChild(Link);
+        });
+
+        document.getElementById("codigo-ddl").innerText = Info.ddl;
+    }
+}
+
+function AlternarVistaDdlActual() {
+    var BloqueDdl = document.getElementById("bloque-ddl-sql");
+    var Boton = document.querySelector(".bd-btn-sql-toggle");
+    if (BloqueDdl.style.display === "block") {
+        BloqueDdl.style.display = "none";
+        Boton.innerText = "VER SENTENCIA DDL (SQL)";
+    } else {
+        BloqueDdl.style.display = "block";
+        Boton.innerText = "OCULTAR SENTENCIA DDL";
+    }
+}
+
+// INICIALIZACION
+SeleccionarPantallaTabla("users");
+</script>
+
+</body>
+</html>

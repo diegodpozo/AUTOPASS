@@ -13,11 +13,11 @@ from repositories.redemption_repository import RedemptionRepository
 router = APIRouter()
 
 
-def _check_promo_org(admin: models.User, promo: models.Promotion):
+def _check_promo_org(admin: models.User, promo: models.Promotion, db: Session = None):
     """AISLAMIENTO MULTIEMPRESA: un admin solo opera promos de su organizacion.
     Tolerante cuando alguno de los dos no tiene organizacion (datos legacy/tests)."""
     enforce_organization_scope(
-        admin, getattr(promo, "organization_id", None),
+        admin, getattr(promo, "organization_id", None), db=db,
         detail="Promoción no encontrada", status_code=404,
     )
 
@@ -63,7 +63,7 @@ def toggle_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     """ACTIVA O DESACTIVA UNA PROMOCION."""
     promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
-    _check_promo_org(admin, promo)
+    _check_promo_org(admin, promo, db=db)
     
     if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
@@ -79,7 +79,7 @@ def update_promotion(promo_id: int, data: schemas.PromotionCreate, db: Session =
     if not promo:
         raise HTTPException(status_code=404, detail="Promoción no encontrada")
 
-    _check_promo_org(admin, promo)
+    _check_promo_org(admin, promo, db=db)
     if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")
 
@@ -105,7 +105,7 @@ def delete_promotion(promo_id: int, db: Session = Depends(get_db), admin: models
     ya que los tickets guardan un snapshot del beneficio y no dependen de la promoción."""
     promo = PromotionRepository.get_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
-    _check_promo_org(admin, promo)
+    _check_promo_org(admin, promo, db=db)
     
     if admin.rol != UserRole.ADMIN and not same_branch(promo.sucursal, admin.sucursal):
         raise HTTPException(status_code=403, detail="No tenés permisos sobre esta promoción")

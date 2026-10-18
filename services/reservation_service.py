@@ -10,11 +10,13 @@ from sqlalchemy.orm import Session
 from core.config import settings
 from core.logger import get_logger
 from core.normalize import normalize_plate, is_valid_plate, normalize_name as _normalizar_sucursal, same_branch
+from core.security import enforce_organization_scope, require_tenant_scope, resolve_actor_organization_id
 from models.enums import PaymentStatus, ReservationStatus, UserRole, VehicleType
 from repositories.access_log_repository import AccessRepository
 from repositories.branch_repository import BranchRepository
 from repositories.redemption_repository import RedemptionRepository
 from repositories.reservation_repository import ReservationRepository
+from repositories.scoping import multi_organization_active, organization_of_sede
 from repositories.user_repository import UserRepository
 from repositories.vehicle_repository import VehicleRepository
 from services.availability import (
@@ -195,12 +197,47 @@ class ReservationService(ReservationPaymentsMixin):
         return res
 
     @staticmethod
+    def check_reserva_scope(db: Session, staff, res):
+        """JURISDICCION DE UNA RESERVA PARA EL OPERADOR: ORGANIZACION Y SEDE.
+
+        El aislamiento por organizacion va primero y es FAIL-CLOSED con multi-tenant
+        activo (una reserva sin sede atribuible o de otra empresa se rechaza); recien
+        despues aplica la regla historica de sede para staff/local admin."""
+        enforce_organization_scope(
+            staff,
+            organization_of_sede(db, branch_id=res.sucursal_id, branch_name=res.sucursal_nombre),
+            detail="No tenés permisos sobre esta reserva",
+            db=db,
+        )
+        if staff.rol != UserRole.ADMIN and not same_branch(res.sucursal_nombre, staff.sucursal):
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+
+    @staticmethod
     def get_permissioned_reservation(db: Session, staff, res_id: int):
         """Obtiene una reserva validando que el operador tenga acceso (admin == todas)."""
         res = ReservationService.get_reservation_or_404(db, res_id)
-        if staff.rol != UserRole.ADMIN and not same_branch(res.sucursal_nombre, staff.sucursal):
-            raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+        ReservationService.check_reserva_scope(db, staff, res)
         return res
+
+    @staticmethod
+    def _sucursal_admin(db: Session, staff, sucursal_nombre):
+        """VALIDA QUE LA SEDE DE UNA RESERVA MANUAL PERTENEZCA A LA EMPRESA DEL OPERADOR.
+
+        Solo rige con multi-tenant activo (si no, se conserva el comportamiento actual):
+        si el nombre no se puede atribuir a ninguna empresa se rechaza con 404 y si
+        pertenece a otra organizacion con 403 (evita crear/editar reservas ajenas)."""
+        if not sucursal_nombre:
+            return sucursal_nombre
+        organizacion = resolve_actor_organization_id(db, staff)
+        require_tenant_scope(db, organizacion, detail="No tenés permisos sobre recursos de otra organización")
+        if not multi_organization_active(db):
+            return sucursal_nombre
+        sede_org = organization_of_sede(db, branch_name=sucursal_nombre)
+        if sede_org is None:
+            raise HTTPException(status_code=404, detail="Sucursal no encontrada")
+        if sede_org != organizacion:
+            raise HTTPException(status_code=403, detail="No tenés permisos sobre recursos de otra organización")
+        return sucursal_nombre
 
     @staticmethod
     def lookup_patente(db: Session, patente: str) -> dict:
@@ -233,7 +270,8 @@ class ReservationService(ReservationPaymentsMixin):
     def get_new_reservations_count(db: Session, staff, since_id: int = None) -> dict:
         es_admin_global = staff.rol == UserRole.ADMIN
         staff_sucursal = staff.sucursal if not es_admin_global else None
-        org = getattr(staff, "organization_id", None) if es_admin_global else None
+        org = resolve_actor_organization_id(db, staff)
+        require_tenant_scope(db, org, detail="No tenés permisos sobre reservas de otra organización")
         latest_id, count = ReservationRepository.latest_id_and_count(db, since_id, staff_sucursal, organization_id=org)
         return {"count": count, "latest_id": latest_id}
 
@@ -498,7 +536,10 @@ class ReservationService(ReservationPaymentsMixin):
         ReservationService.cleanup_overdue_reservations(db)
         es_admin_global = staff.rol == UserRole.ADMIN
         staff_sucursal = staff.sucursal if not es_admin_global else None
-        org = getattr(staff, "organization_id", None) if es_admin_global else None
+        # ORGANIZACION DEL OPERADOR PARA TODOS LOS ROLES (sede -> sucursal -> empresa):
+        # sin ella, en multi-tenant activo, no hay forma segura de acotar la lista.
+        org = resolve_actor_organization_id(db, staff)
+        require_tenant_scope(db, org, detail="No tenés permisos sobre reservas de otra organización")
         results = ReservationRepository.list_filtered(db, estado=estado, sucursal=sucursal, staff_sucursal=staff_sucursal, organization_id=org)
         en_predio = ReservationService.get_en_predio_ids(db, [r.id for r in results])
         out = []
@@ -525,6 +566,7 @@ class ReservationService(ReservationPaymentsMixin):
             raise HTTPException(status_code=400, detail="Formato de patente inválido.")
         if staff.rol != UserRole.ADMIN:
             data.sucursal_nombre = staff.sucursal
+        data.sucursal_nombre = ReservationService._sucursal_admin(db, staff, data.sucursal_nombre)
         _, vehicle = ReservationService.validate_manual_vinculacion(db, data.user_id, data.patente)
         tipo_v = data.tipo_vehiculo or "Auto"
         if vehicle:
@@ -567,14 +609,14 @@ class ReservationService(ReservationPaymentsMixin):
         if not is_valid_plate(data.patente):
             raise HTTPException(status_code=400, detail="Formato de patente inválido.")
         reserva = ReservationService.get_reservation_or_404(db, res_id)
+        ReservationService.check_reserva_scope(db, staff, reserva)
         if (getattr(reserva, "origen", None) or "cliente") != "manual":
             raise HTTPException(status_code=400, detail="Solo se pueden editar reservas creadas por administración o empleados")
         if reserva.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
             raise HTTPException(status_code=400, detail="No se puede editar una reserva completada o cancelada")
-        if staff.rol != UserRole.ADMIN and not same_branch(reserva.sucursal_nombre, staff.sucursal):
-            raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
         if staff.rol != UserRole.ADMIN:
             data.sucursal_nombre = staff.sucursal
+        data.sucursal_nombre = ReservationService._sucursal_admin(db, staff, data.sucursal_nombre)
         if data.fecha_fin <= data.fecha_inicio:
             raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
         existing_overlap = ReservationRepository.get_overlap_by_patente(db, data.patente, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, exclude_id=reserva.id)
@@ -707,8 +749,7 @@ class ReservationService(ReservationPaymentsMixin):
     @staticmethod
     def confirm_reservation_payment(db: Session, staff, res_id: int, data=None) -> dict:
         reserva = ReservationService.get_reservation_or_404(db, res_id)
-        if staff.rol != UserRole.ADMIN and not same_branch(reserva.sucursal_nombre, staff.sucursal):
-            raise HTTPException(status_code=403, detail="No tenés permisos sobre esta reserva")
+        ReservationService.check_reserva_scope(db, staff, reserva)
         metodo = (data.metodo_pago if data else None) or "Caja"
         redemption_ticket_id = (data.redemption_ticket_id if data else None)
         result = ReservationService.pay_reservation_manual(db, reserva, metodo, redemption_ticket_id)

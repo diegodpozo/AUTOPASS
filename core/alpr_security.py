@@ -1,5 +1,7 @@
 import ipaddress
 import secrets as _secrets
+from typing import Optional
+
 from fastapi import HTTPException, Request
 from core.config import settings
 
@@ -26,3 +28,13 @@ def require_alpr_node(request: Request) -> None:
     host = request.client.host if request.client else ""
     if not is_trusted_alpr_node(host, node_secret):
         raise HTTPException(status_code=403, detail="Nodo ALPR no autorizado")
+
+
+def require_alpr_node_org(request: Request) -> Optional[int]:
+    """Dependencia: valida el nodo ALPR y devuelve la ORGANIZACION A LA QUE ESTA LIGADO.
+
+    `ALPR_NODE_ORG_ID` bindea el nodo con una empresa (0 = sin binding): los flujos
+    de acceso usan ese valor para acotar gate -> sede -> empresa y rechazar gates
+    que no pertenezcan a la organizacion del nodo."""
+    require_alpr_node(request)
+    return settings.ALPR_NODE_ORG_ID or None

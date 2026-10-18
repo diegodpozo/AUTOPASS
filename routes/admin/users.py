@@ -17,9 +17,9 @@ from repositories.user_repository import UserRepository
 router = APIRouter()
 
 
-def validate_local_admin_user_permission(admin: models.User, target_user: models.User):
+def validate_local_admin_user_permission(admin: models.User, target_user: models.User, db: Session = None):
     """VERIFICA SI UN ADMINISTRADOR TIENE PERMISOS DE JURISDICCION SOBRE UN USUARIO OBJETIVO."""
-    enforce_organization_scope(admin, getattr(target_user, "organization_id", None))
+    enforce_organization_scope(admin, getattr(target_user, "organization_id", None), db=db)
     if str(admin.rol) == UserRole.ADMIN.value:
         return
     admin_suc_norm = normalize_branch_name(admin.sucursal or "")
@@ -92,7 +92,7 @@ def update_user_admin(user_id: int, user_data: schemas.UserAdminUpdate, db: Sess
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    validate_local_admin_user_permission(admin, user)
+    validate_local_admin_user_permission(admin, user, db=db)
     if user_data.rol:
         validate_staff_role_assignment(admin, user_data.rol)
     if str(admin.rol) != UserRole.ADMIN.value:
@@ -122,7 +122,7 @@ def change_user_role(request: Request, user_id: int, nuevo_rol: UserRole, db: Se
     user = UserRepository.get_active_by_id(db, user_id)
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    validate_local_admin_user_permission(admin, user)
+    validate_local_admin_user_permission(admin, user, db=db)
     validate_staff_role_assignment(admin, nuevo_rol)
     if str(admin.rol) != UserRole.ADMIN.value and nuevo_rol == UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="No tenés permisos para asignar o modificar el rol de Administrador Global")
@@ -149,7 +149,7 @@ def toggle_user_block(request: Request, user_id: int, db: Session = Depends(get_
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    validate_local_admin_user_permission(admin, user)
+    validate_local_admin_user_permission(admin, user, db=db)
 
     if user.id == admin.id:
         raise HTTPException(status_code=400, detail="No podés bloquear tu propia cuenta")
@@ -177,7 +177,7 @@ def adjust_user_balance(request: Request, user_id: int, monto: float, db: Sessio
     user = UserRepository.get_active_by_id(db, user_id)
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    validate_local_admin_user_permission(admin, user)
+    validate_local_admin_user_permission(admin, user, db=db)
 
     if monto < 0:
         raise HTTPException(status_code=400, detail="El saldo no puede ser negativo")
@@ -203,7 +203,7 @@ def change_user_password(request: Request, user_id: int, payload: schemas.UserPa
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-    validate_local_admin_user_permission(admin, user)
+    validate_local_admin_user_permission(admin, user, db=db)
 
     user.password_hash = get_password_hash(payload.new_password)
     db.commit()
@@ -231,7 +231,7 @@ def delete_user(request: Request, user_id: int, db: Session = Depends(get_db), a
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    validate_local_admin_user_permission(admin, user)
+    validate_local_admin_user_permission(admin, user, db=db)
 
     if UserService.delete_user(db, user_id):
         return {"status": "ok"}

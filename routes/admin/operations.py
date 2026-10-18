@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 import models
 from core.database import get_db
 from core.limiter import limiter
-from core.security import get_operational_user
+from core.security import get_operational_user, resolve_actor_organization_id
 from core.logger import get_logger
 
 logger = get_logger("AdminOps")
@@ -29,19 +29,22 @@ def open_barrier(request: Request, gate_id: str, command: str = "OPEN", db: Sess
 def manual_entry(request: Request, plate: str, tipo_vehiculo: str = "Auto", floor_id: int = None, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """REGISTRA UN INGRESO FORZADO AL PREDIO DE LA SEDE."""
     from services.access_service import AccessService
-    return AccessService.manual_entry(db, plate=plate, sucursal=staff.sucursal, tipo_vehiculo=tipo_vehiculo, floor_id=floor_id, request=request)
+    org = resolve_actor_organization_id(db, staff)
+    return AccessService.manual_entry(db, plate=plate, sucursal=staff.sucursal, tipo_vehiculo=tipo_vehiculo, floor_id=floor_id, request=request, organization_id=org)
 
 @router.post("/manual-exit")
 @limiter.limit("30/minute")
 def manual_exit(request: Request, plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """REGISTRA UNA SALIDA MANUAL DE LA SEDE."""
     from services.access_service import AccessService
-    return AccessService.manual_exit(db, plate=plate, sucursal=staff.sucursal, request=request)
+    org = resolve_actor_organization_id(db, staff)
+    return AccessService.manual_exit(db, plate=plate, sucursal=staff.sucursal, request=request, organization_id=org)
 
 @router.post("/cancel-stay")
 @limiter.limit("30/minute")
 def cancel_stay(request: Request, plate: str, db: Session = Depends(get_db), staff: models.User = Depends(get_operational_user)):
     """CANCELA UNA ESTADIA ACTUAL. SI ESTA DENTRO DE LOS 10 MIN DE CORTESIA, NO COBRA."""
     from services.access_service import AccessService
-    return AccessService.cancel_stay(db, plate=plate, sucursal=staff.sucursal)
+    org = resolve_actor_organization_id(db, staff)
+    return AccessService.cancel_stay(db, plate=plate, sucursal=staff.sucursal, organization_id=org)
 

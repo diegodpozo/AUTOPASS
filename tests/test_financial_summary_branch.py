@@ -59,6 +59,14 @@ def test_admin_general_desglosa_por_sucursal_activa(db):
     assert por["Sede"]["cantidad_pagos"] == 1
 
 
+@pytest.mark.parametrize("nombre_consulta", ["Centro", "AUTOPASS Centro", "centro"])
+def test_admin_general_filtra_por_sucursal_normalizada(db, nombre_consulta):
+    _pago(db, 1, "AAA111", "Centro", 1500.0, "CAJA")
+    result = ReportService.get_financial_summary(db, _admin(), period="total", sucursal=nombre_consulta)
+    assert result["total_recaudado"] == 1500.0
+    assert result["recaudado_efectivo"] == 1500.0
+
+
 def test_admin_general_filtra_por_sucursal(db):
     _pago(db, 1, "AAA111", "Centro", 1500.0)
     _pago(db, 2, "CCC333", "Sede", 3000.0)

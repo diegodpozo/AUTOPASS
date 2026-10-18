@@ -12,6 +12,7 @@ from core.config import settings
 from core.time import utcnow
 from core.normalize import normalize_branch_name
 from models.enums import UserRole
+from repositories.scoping import multi_organization_active, organization_of_sede
 
 # --- CONFIGURACION DE SEGURIDAD ---
 SECRET_KEY = settings.SECRET_KEY
@@ -166,18 +167,64 @@ def is_principal_org_admin(user) -> bool:
     except Exception:
         return False
 
-def enforce_organization_scope(actor, resource_organization_id, detail: str = "No tenés permisos sobre recursos de otra organización", status_code: int = 403):
+def resolve_actor_organization_id(db, actor) -> Optional[int]:
+    """ORGANIZACION DEL ACTOR: la propia, o la de su sede si no tiene asignada.
+
+    Muchos usuarios operativos llegaron sin `organization_id` pero con una sede:
+    la jurisdiccion efectiva es la de esa sucursal (`sucursal_id` -> branch, o el
+    nombre como fallback). Devuelve None si no hay forma de atribuirlo."""
+    if actor is None:
+        return None
+    org = getattr(actor, "organization_id", None)
+    if org is not None:
+        return org
+    if db is None:
+        return None
+    return organization_of_sede(
+        db,
+        branch_id=getattr(actor, "sucursal_id", None),
+        branch_name=getattr(actor, "sucursal", None),
+    )
+
+def require_tenant_scope(db, organization_id, detail: str = "No tenés permisos sobre recursos de otra organización"):
+    """MODO ESTRICTO FAIL-CLOSED: exige organizacion cuando el multi-tenant esta activo.
+
+    Con mas de una organizacion en la base, operar sin organizacion resoluble
+    (actor o recurso sin atribucion) es un error de seguridad, no un caso tolerable.
+    En single-tenant no hace nada (preserva datos legacy y tests)."""
+    if organization_id is None and multi_organization_active(db):
+        raise HTTPException(status_code=403, detail=detail)
+
+def enforce_organization_scope(actor, resource_organization_id, detail: str = "No tenés permisos sobre recursos de otra organización", status_code: int = 403, db: Session = None, organization_id: int = None):
     """AISLAMIENTO MULTIEMPRESA: un administrador solo opera recursos de SU organizacion.
 
     Centraliza la regla para no repetirla en cada endpoint que recibe un recurso por
-    id (usuarios, sucursales, pisos, promociones, camaras). Es TOLERANTE: si el actor
-    o el recurso no tienen organizacion asignada (datos legacy o de tests) no se
-    restringe, preservando el comportamiento single-tenant. El super-admin (ADMIN de
-    la organizacion principal) queda exento para poder gestionar cualquier organizacion."""
-    actor_org = getattr(actor, "organization_id", None)
-    if actor_org is None or resource_organization_id is None:
-        return
+    id (usuarios, sucursales, pisos, promociones, camaras, reservas). El super-admin
+    (ADMIN de la organizacion principal) queda exento para poder gestionar cualquier
+    organizacion.
+
+    Con `db` y/o `organization_id` ademas resuelve la organizacion del actor
+    (`resolve_actor_organization_id`) y aplica modo estricto FAIL-CLOSED: si hay mas
+    de una organizacion en la base, no poder atribuir el actor o el recurso a una
+    empresa se rechaza con 403 en vez de dejar pasar. Sin `db` se conserva el
+    comportamiento tolerante original (datos legacy/tests)."""
     if is_principal_org_admin(actor):
+        return
+
+    actor_org = organization_id
+    if actor_org is None and db is not None:
+        actor_org = resolve_actor_organization_id(db, actor)
+    if actor_org is None:
+        actor_org = getattr(actor, "organization_id", None)
+
+    estricto = db is not None and multi_organization_active(db)
+
+    if actor_org is None or resource_organization_id is None:
+        if estricto:
+            detail_final = detail
+            if actor_org is None:
+                detail_final = "Tu usuario no tiene una organización asignada"
+            raise HTTPException(status_code=status_code, detail=detail_final)
         return
     if resource_organization_id != actor_org:
         raise HTTPException(status_code=status_code, detail=detail)
