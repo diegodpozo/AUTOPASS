@@ -181,7 +181,8 @@ def adjust_user_balance(request: Request, user_id: int, monto: float, db: Sessio
 
     if monto < 0:
         raise HTTPException(status_code=400, detail="El saldo no puede ser negativo")
-    user.saldo = monto
+    # FASE 1: set atomico del saldo (un solo UPDATE, sin leer-modificar-escribir)
+    UserRepository.fijar_saldo(db, user, monto)
     db.commit()
 
     if user.rol == UserRole.USER:

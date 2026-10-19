@@ -10,6 +10,7 @@ from repositories.access_log_repository import AccessRepository
 from repositories.reservation_repository import ReservationRepository
 from repositories.settings_repository import SettingsRepository
 from repositories.vehicle_repository import VehicleRepository
+from repositories.user_repository import UserRepository
 from core.normalize import normalize_plate, is_valid_plate
 
 # --- SERVICIO DE FACTURACION Y PUNTOS ---
@@ -232,7 +233,8 @@ class BillingService:
         vehiculo = VehicleRepository.get_by_patente(db, log.patente_detectada)
         puntos_ganados = BillingService.calculate_points(monto)
         if vehiculo and vehiculo.owner:
-            vehiculo.owner.puntos_acumulados += puntos_ganados
+            # FASE 1: acreditacion atomica de puntos
+            UserRepository.sumar_puntos(db, vehiculo.owner, puntos_ganados)
             db.add(models.PointsLog(
                 user_id=vehiculo.owner.id,
                 cantidad=puntos_ganados,
@@ -240,7 +242,7 @@ class BillingService:
                 fecha=datetime.datetime.now().isoformat()
             ))
         elif user:
-            user.puntos_acumulados += puntos_ganados
+            UserRepository.sumar_puntos(db, user, puntos_ganados)
             db.add(models.PointsLog(
                 user_id=user.id,
                 cantidad=puntos_ganados,
@@ -336,7 +338,7 @@ class BillingService:
                     vehiculo = VehicleRepository.get_by_patente(db, plate)
                     if vehiculo and vehiculo.owner:
                         puntos_ganados = BillingService.calculate_points(monto_real)
-                        vehiculo.owner.puntos_acumulados += puntos_ganados
+                        UserRepository.sumar_puntos(db, vehiculo.owner, puntos_ganados)
                         db.add(models.PointsLog(
                             user_id=vehiculo.owner.id,
                             cantidad=puntos_ganados,
@@ -388,7 +390,7 @@ class BillingService:
         puntos_ganados = 0
         if vehiculo and vehiculo.owner:
             puntos_ganados = BillingService.calculate_points(monto_real)
-            vehiculo.owner.puntos_acumulados += puntos_ganados
+            UserRepository.sumar_puntos(db, vehiculo.owner, puntos_ganados)
             
             db.add(models.PointsLog(
                 user_id=vehiculo.owner.id,

@@ -11,6 +11,7 @@ from repositories.promotion_repository import PromotionRepository
 from repositories.redemption_repository import RedemptionRepository
 from repositories.branch_repository import BranchRepository
 from repositories.points_repository import PointsRepository
+from repositories.user_repository import UserRepository
 
 router = APIRouter()
 
@@ -82,9 +83,12 @@ def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: mo
     - tipo_canje == 'voucher': genera un ticket con QR persistente (válido por 30 días), sin validación automática."""
     promo = PromotionRepository.get_active_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
-    if current_user.puntos_acumulados < promo.costo_puntos: raise HTTPException(status_code=400, detail="Puntos insuficientes")
+    # FASE 1: el chequeo de puntos suficientes y el descuento son UNA sola sentencia.
+    # Si no alcanzan, no descuenta y devuelve None -> 400 (antes habia una ventana
+    # entre el chequeo y el descuento donde dos canjes simultaneos pasaban los dos).
+    if UserRepository.canjear_puntos(db, current_user, promo.costo_puntos) is None:
+        raise HTTPException(status_code=400, detail="Puntos insuficientes")
 
-    current_user.puntos_acumulados -= promo.costo_puntos
     db.add(models.PointsLog(user_id=current_user.id, cantidad=-promo.costo_puntos, motivo=f"Canje: {promo.titulo}", fecha=datetime.datetime.now().isoformat()))
 
     ticket = _crear_ticket(db, current_user, promo)
@@ -168,7 +172,7 @@ def cancel_redemption_ticket(ticket_id: int, db: Session = Depends(get_db), curr
 
     ticket.estado = "CANCELADO"
     if costo > 0:
-        current_user.puntos_acumulados += costo
+        UserRepository.sumar_puntos(db, current_user, costo)
         db.add(models.PointsLog(user_id=current_user.id, cantidad=costo, motivo=f"Anulación de canje: {ticket.titulo}", fecha=datetime.datetime.now().isoformat()))
 
     try:

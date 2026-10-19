@@ -516,16 +516,21 @@ class ReservationService(ReservationPaymentsMixin):
                 diferencia = monto_nuevo - monto_anterior
                 dif_puntos = BillingService.calculate_points(monto_nuevo) - BillingService.calculate_points(monto_anterior)
                 if dif_puntos != 0:
-                    if user.puntos_acumulados + dif_puntos < 0:
+                    # FASE 1: ajuste atomico. Si el ajuste es a favor se acredita; si es
+                    # en contra, el descuento falla (None) cuando no alcanzan los puntos.
+                    if dif_puntos > 0:
+                        ajuste_puntos = UserRepository.sumar_puntos(db, user, dif_puntos)
+                    else:
+                        ajuste_puntos = UserRepository.canjear_puntos(db, user, -dif_puntos)
+                    if ajuste_puntos is None:
                         raise HTTPException(status_code=400, detail="Puntos insuficientes para el ajuste")
-                    user.puntos_acumulados += dif_puntos
                     db.add(models.PointsLog(user_id=user.id, cantidad=dif_puntos, motivo=f"Ajuste Reserva: {res.patente}", fecha=datetime.datetime.now().isoformat()))
                 if diferencia > 0:
-                    if user.saldo < diferencia:
+                    # FASE 1: el chequeo de saldo suficiente y el descuento son una sola sentencia
+                    if UserRepository.descontar_saldo(db, user, diferencia) is None:
                         raise HTTPException(status_code=400, detail=f"Saldo insuficiente (+${diferencia})")
-                    user.saldo -= diferencia
                 else:
-                    user.saldo += abs(diferencia)
+                    UserRepository.sumar_saldo(db, user, abs(diferencia))
             else:
                 res.estado_pago = PaymentStatus.PENDIENTE
             res.monto_total = monto_nuevo
@@ -743,9 +748,9 @@ class ReservationService(ReservationPaymentsMixin):
                     norm_metodo = re.sub(r'[^A-Z]', '', str(metodo_ajuste).upper())
                     devolucion_a_saldo = norm_metodo in ("SALDO", "DIGITAL", "BILLETERA", "BILLETERAAUTOPASS")
                     if devolucion_a_saldo and reserva.user_id and reserva.user:
-                        reserva.user.saldo += reembolso
+                        UserRepository.sumar_saldo(db, reserva.user, reembolso)
                         puntos_desc = BillingService.calculate_points(reembolso)
-                        reserva.user.puntos_acumulados = max(0, reserva.user.puntos_acumulados - puntos_desc)
+                        UserRepository.descontar_puntos_tope_cero(db, reserva.user, puntos_desc)
                         db.add(models.PointsLog(
                             user_id=reserva.user_id, cantidad=-puntos_desc,
                             motivo=f"Reembolso por Edición de Reserva: {reserva.patente}",

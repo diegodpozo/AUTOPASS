@@ -8,6 +8,7 @@ from core.normalize import normalize_plate
 from services.billing_service import BillingService
 from repositories.access_log_repository import AccessRepository
 from repositories.settings_repository import SettingsRepository
+from repositories.user_repository import UserRepository
 
 logger = get_logger("UserBalance")
 
@@ -88,7 +89,8 @@ def get_current_rates(sucursal: str = None, db: Session = Depends(get_db)):
 def recharge_balance(data: schemas.RechargeBalance, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """SIMULA LA CARGA DE SALDO EN LA CUENTA DEL USUARIO."""
     if data.monto <= 0: raise HTTPException(status_code=400, detail="Monto inválido")
-    current_user.saldo += data.monto
+    # FASE 1: acreditacion atomica (no se pierde si hay otra operacion simultanea)
+    UserRepository.sumar_saldo(db, current_user, data.monto)
     db.commit()
 
     try:

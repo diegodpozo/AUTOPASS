@@ -13,6 +13,7 @@ from models.enums import PaymentStatus, ReservationStatus
 from repositories.access_log_repository import AccessRepository
 from repositories.redemption_repository import RedemptionRepository
 from repositories.reservation_repository import ReservationRepository
+from repositories.user_repository import UserRepository
 
 logger = get_logger("Payments")
 from services.billing_service import BillingService
@@ -76,7 +77,8 @@ class ReservationPaymentsMixin:
 
             if res.user:
                 puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
-                res.user.puntos_acumulados += puntos_ganados
+                # FASE 1: acreditacion atomica (no se pierde si hay otro request en paralelo)
+                UserRepository.sumar_puntos(db, res.user, puntos_ganados)
                 db.add(models.PointsLog(
                     user_id=res.user.id,
                     cantidad=puntos_ganados,
@@ -156,11 +158,10 @@ class ReservationPaymentsMixin:
                     res.monto_calculado = res.monto_total or 0.0
                 res.descuento_pct = porc
 
-            if user.saldo < monto_a_cobrar:
+            # DEDUCCION DE SALDO Y ACTUALIZACION DE ESTADO (FASE 1: el chequeo de saldo
+            # suficiente y el descuento son UNA sola sentencia; 0 filas = no alcanza)
+            if UserRepository.descontar_saldo(db, user, monto_a_cobrar) is None:
                 raise HTTPException(status_code=400, detail=f"Saldo insuficiente en su cuenta AutoPass (necesita ${monto_a_cobrar:,.2f})")
-
-            # DEDUCCION DE SALDO Y ACTUALIZACION DE ESTADO
-            user.saldo -= monto_a_cobrar
             res.estado_pago = PaymentStatus.PAGADO
             res.estado_reserva = ReservationStatus.ACTIVA
             res.fecha_pago = datetime.datetime.now().isoformat()
@@ -172,7 +173,7 @@ class ReservationPaymentsMixin:
 
             # ACREDITACION DE PUNTOS POR LEALTAD (SOBRE LO EFECTIVAMENTE ABONADO)
             puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
-            user.puntos_acumulados += puntos_ganados
+            UserRepository.sumar_puntos(db, user, puntos_ganados)
 
             db.add(models.PointsLog(
                 user_id=user.id,
@@ -258,7 +259,7 @@ class ReservationPaymentsMixin:
 
         # ACREDITACION DE PUNTOS POR LEALTAD (SOBRE LO EFECTIVAMENTE ABONADO)
         puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
-        user.puntos_acumulados += puntos_ganados
+        UserRepository.sumar_puntos(db, user, puntos_ganados)
 
         db.add(models.PointsLog(
             user_id=user.id,
@@ -374,11 +375,11 @@ class ReservationPaymentsMixin:
 
             # 3. EJECUCION DEL REEMBOLSO
             if monto_a_reembolsar > 0 and target_user:
-                target_user.saldo += monto_a_reembolsar
+                UserRepository.sumar_saldo(db, target_user, monto_a_reembolsar)
 
                 # AJUSTE DE PUNTOS (SOLO SOBRE LO REEMBOLSADO)
                 puntos_a_descontar = BillingService.calculate_points(monto_a_reembolsar)
-                target_user.puntos_acumulados = max(0, target_user.puntos_acumulados - puntos_a_descontar)
+                UserRepository.descontar_puntos_tope_cero(db, target_user, puntos_a_descontar)
 
                 db.add(models.PointsLog(
                     user_id=target_user.id,
