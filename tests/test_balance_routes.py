@@ -72,6 +72,22 @@ def _set_user(patente="ABC123", saldo=0.0):
     CURRENT["user"] = FakeUser(vehicles=[SimpleVehicle(patente)], saldo=saldo)
 
 
+def _seed_user_saldo(db_factory, user_id=1, saldo=0.0):
+    """CREA LA FILA REAL DEL USUARIO.
+
+    El saldo ya no se modifica en memoria: `UserRepository.sumar_saldo` hace un
+    UPDATE atomico sobre `users`, asi que el usuario tiene que existir en la base
+    (en produccion `current_user` sale de la base; aca el saldo inicial de la fila
+    se deja igual al del FakeUser para que el resultado coincida)."""
+    db = db_factory()
+    db.add(models.User(
+        id=user_id, nombre="Cliente", apellido="Saldo",
+        email=f"saldo{user_id}@test.com", password_hash="x", rol="user", saldo=saldo,
+    ))
+    db.commit()
+    db.close()
+
+
 def _seed_log(db_factory, patente, tipo, fecha_hora, pago=False, costo=0.0):
     db = db_factory()
     log = models.AccessLog(
@@ -251,6 +267,7 @@ def test_recharge_balance_monto_invalido(client):
 def test_recharge_balance_ok_con_notificacion(client, monkeypatch):
     c, db_factory = client
     _set_user(patente="ABC123", saldo=100.0)
+    _seed_user_saldo(db_factory, user_id=1, saldo=100.0)
     notificados = []
     from services.user_notification_service import UserNotificationService
 
@@ -271,6 +288,7 @@ def test_recharge_balance_ok_con_notificacion(client, monkeypatch):
 def test_recharge_balance_notificacion_que_falla_devuelve_ok(client, monkeypatch):
     c, db_factory = client
     _set_user(patente="ABC123", saldo=0.0)
+    _seed_user_saldo(db_factory, user_id=1, saldo=0.0)
     from services.user_notification_service import UserNotificationService
 
     def boom(db, uid, tipo, titulo, msg):
