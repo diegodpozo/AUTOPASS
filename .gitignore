@@ -37,3 +37,8 @@ tests_output.txt
 AUDITORIA_COMPLETA.md
 INFORME_AUDITORIA_INTERNO.md
 Info proyecto/AUDITORIA_COMPLETA.md
+
+# Paquetes de defensa locales (no versionar, nunca pushear)
+DEFENSA_FASE1/
+DEFENSA_FASE2/
+
