@@ -569,7 +569,7 @@ class ReportService:
         f_hasta = _boundary(hasta, is_end=True)
         if entradas:
             if f_desde is None:
-                f_desde = entradas[0].replace(hour=0, minute=0, second=0, microsecond=0)
+                f_desde = min(entradas).replace(hour=0, minute=0, second=0, microsecond=0)
             if f_hasta is None:
                 f_hasta = max(e for e in entradas)
         if f_desde is None:
@@ -695,7 +695,9 @@ class ReportService:
             if org is not None:
                 q_suc = q_suc.filter(models.ParkingBranch.organization_id == org)
             sucursales = [b.nombre for b in q_suc.all()]
-        hora_ini = f_desde.replace(minute=0, second=0, microsecond=0) if f_desde else ahora - datetime.timedelta(days=30)
+        inicios = [d for d in (_parse(r[0]) for r in rows) if d is not None]
+        hora_ini = (f_desde.replace(minute=0, second=0, microsecond=0) if f_desde
+                    else (min(inicios).replace(minute=0, second=0, microsecond=0) if inicios else ahora))
         hora_fin = f_hasta.replace(minute=0, second=0, microsecond=0) if f_hasta else ahora
         if hora_fin <= hora_ini:
             hora_fin = hora_ini + datetime.timedelta(days=30)

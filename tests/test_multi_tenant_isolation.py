@@ -3,21 +3,30 @@
 Verifica que un Admin General de una organizacion NO ve ni opera datos de otra:
 usuarios, sucursales, promociones y configuraciones quedan aislados por
 `organization_id`.
+
+Ademas cubre los P1 de la auditoria multi-org: reservas (IDOR cross-org),
+cobro de estadias (`process_payment`), validacion de la sucursal al crear/editar
+reservas manuales y los flujos de acceso fisico (ALPR/QR/manual) con el
+gate -> sede -> empresa derivado del binding del nodo.
 """
 import datetime
 import uuid
 
 import pytest
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import models
+from core.config import settings
 from core.database import Base, get_db
 from core.limiter import limiter
 from core.security import get_password_hash
 from main import app
+from schemas.parking import PlateValidation, QRValidation
+from services.access_service import AccessService
 
 
 @pytest.fixture
@@ -541,3 +550,396 @@ def test_admin_no_principal_no_puede_borrar_admin_de_otra_organizacion(client):
 
     res = tc.delete(f"/v1/admin/users/{admin_b}", headers=_headers(tc, email_a))
     assert res.status_code == 403, res.text
+
+
+# ---------------------------------------------------------------------------
+# RESERVAS: IDOR cross-org (P1)
+# ---------------------------------------------------------------------------
+
+def _crear_reserva_rango(TestSession, branch_id, patente, inicio, fin, origen="cliente"):
+    """Reserva en una sede concreta devolviendo su id."""
+    db = TestSession()
+    try:
+        res = models.Reservation(
+            patente=patente, fecha_inicio=inicio, fecha_fin=fin, monto_total=50.0,
+            estado_pago="Pagado", estado_reserva="Activa", tipo_estadia="hora",
+            tipo_vehiculo="Auto", sucursal_id=branch_id, origen=origen,
+        )
+        db.add(res)
+        db.commit()
+        db.refresh(res)
+        return res.id
+    finally:
+        db.close()
+
+
+def _payload_reserva(sucursal_nombre, patente="AB123CD"):
+    ahora = datetime.datetime.now()
+    return {
+        "patente": patente,
+        "fecha_inicio": (ahora + datetime.timedelta(hours=1)).isoformat(),
+        "fecha_fin": (ahora + datetime.timedelta(hours=2)).isoformat(),
+        "sucursal_nombre": sucursal_nombre,
+        "tipo_estadia": "hora",
+        "tipo_vehiculo": "Auto",
+    }
+
+
+def test_admin_no_puede_editar_reserva_de_otra_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_a = f"admin_a_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_a, org_a)
+    _crear_branch(TS, "SEDE A", org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+    branch_b = _branch_id(TS, "SEDE B", org_b)
+    ahora = datetime.datetime.now()
+    res_b = _crear_reserva_rango(TS, branch_b, "AB123CD",
+                                 (ahora + datetime.timedelta(hours=1)).isoformat(),
+                                 (ahora + datetime.timedelta(hours=2)).isoformat())
+
+    out = tc.put(f"/v1/admin/reservations/{res_b}", headers=_headers(tc, email_a),
+                 json=_payload_reserva("SEDE B"))
+    assert out.status_code == 403, out.text
+
+
+def test_admin_no_puede_confirmar_pago_de_reserva_de_otra_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_a = f"admin_a_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_a, org_a)
+    _crear_branch(TS, "SEDE A", org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+    branch_b = _branch_id(TS, "SEDE B", org_b)
+    ahora = datetime.datetime.now()
+    res_b = _crear_reserva_rango(TS, branch_b, "CD345EF",
+                                 (ahora + datetime.timedelta(hours=1)).isoformat(),
+                                 (ahora + datetime.timedelta(hours=2)).isoformat())
+
+    out = tc.post(f"/v1/admin/reservations/{res_b}/confirm-payment",
+                  headers=_headers(tc, email_a), json={"metodo_pago": "Caja"})
+    assert out.status_code == 403, out.text
+
+
+def test_admin_no_puede_crear_reserva_en_sucursal_de_otra_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_a = f"admin_a_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_a, org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+
+    out = tc.post("/v1/admin/reservations", headers=_headers(tc, email_a),
+                  json=_payload_reserva("SEDE B"))
+    assert out.status_code == 403, out.text
+
+    # Sede que no pertenece a ninguna empresa: 404 (fail-closed, no la inventa).
+    out_fantasma = tc.post("/v1/admin/reservations", headers=_headers(tc, email_a),
+                           json=_payload_reserva("SEDE FANTASMA"))
+    assert out_fantasma.status_code == 404, out_fantasma.text
+
+
+def test_admin_no_puede_mover_reserva_propia_a_sucursal_de_otra_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_a = f"admin_a_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_a, org_a)
+    _crear_branch(TS, "SEDE A", org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+    branch_a = _branch_id(TS, "SEDE A", org_a)
+    ahora = datetime.datetime.now()
+    res_a = _crear_reserva_rango(TS, branch_a, "EF567GH",
+                                 (ahora + datetime.timedelta(hours=1)).isoformat(),
+                                 (ahora + datetime.timedelta(hours=2)).isoformat(),
+                                 origen="manual")
+
+    out = tc.put(f"/v1/admin/reservations/{res_a}", headers=_headers(tc, email_a),
+                 json=_payload_reserva("SEDE B"))
+    assert out.status_code == 403, out.text
+
+
+def test_admin_sin_organizacion_no_opera_reservas_con_multitenant(client):
+    """Fail-closed: con multi-tenant activo no se puede operar sin organizacion."""
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_sin_org = f"admin_sinorg_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_sin_org, None)
+    _crear_branch(TS, "SEDE A", org_a)
+    branch_a = _branch_id(TS, "SEDE A", org_a)
+    ahora = datetime.datetime.now()
+    res_a = _crear_reserva_rango(TS, branch_a, "IJ789KL",
+                                 (ahora + datetime.timedelta(hours=1)).isoformat(),
+                                 (ahora + datetime.timedelta(hours=2)).isoformat())
+
+    out = tc.put(f"/v1/admin/reservations/{res_a}", headers=_headers(tc, email_sin_org),
+                 json=_payload_reserva("SEDE A"))
+    assert out.status_code == 403, out.text
+    assert "organización" in out.json()["detail"]
+
+
+# ---------------------------------------------------------------------------
+# COBRO DE ESTADIAS (process_payment acotado a la empresa/sede del operador)
+# ---------------------------------------------------------------------------
+
+def _crear_entrada_en(TestSession, branch_id, patente, sucursal_nombre, hace_horas=2):
+    db = TestSession()
+    try:
+        db.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal=sucursal_nombre))
+        db.add(models.Settings(clave="precio_30min", valor=750.0, sucursal=sucursal_nombre))
+        db.add(models.AccessLog(
+            patente_detectada=patente, normalized_patente=patente, tipo_evento="ENTRADA",
+            tipo_vehiculo="Auto",
+            fecha_hora=(datetime.datetime.now() - datetime.timedelta(hours=hace_horas)).isoformat(),
+            pago_confirmado=False, sucursal_id=branch_id,
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+
+def test_pay_stay_no_cobra_estadia_de_otra_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_a = f"admin_a_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_a, org_a)
+    _crear_branch(TS, "SEDE A", org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+    branch_b = _branch_id(TS, "SEDE B", org_b)
+    _crear_entrada_en(TS, branch_b, "MN345OP", "SEDE B")
+
+    out = tc.post("/v1/access/pay-stay?plate=MN345OP", headers=_headers(tc, email_a))
+    assert out.status_code == 400, out.text
+    assert "pendientes" in out.json()["detail"]
+
+    db = TS()
+    try:
+        log = db.query(models.AccessLog).filter(models.AccessLog.patente_detectada == "MN345OP").first()
+        assert log.pago_confirmado is False
+    finally:
+        db.close()
+
+
+def test_pay_stay_cobra_estadia_de_su_propia_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    email_a = f"admin_a_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "admin", email_a, org_a)
+    _crear_branch(TS, "SEDE A", org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+    branch_a = _branch_id(TS, "SEDE A", org_a)
+    _crear_entrada_en(TS, branch_a, "QR678ST", "SEDE A")
+
+    out = tc.post("/v1/access/pay-stay?plate=QR678ST", headers=_headers(tc, email_a))
+    assert out.status_code == 200, out.text
+    assert out.json()["status"] == "ok"
+    assert out.json()["monto_cobrado"] > 0
+
+    db = TS()
+    try:
+        log = db.query(models.AccessLog).filter(models.AccessLog.patente_detectada == "QR678ST").first()
+        assert log.pago_confirmado is True
+    finally:
+        db.close()
+
+
+def test_pay_stay_staff_sin_organizacion_es_403_con_multitenant(client):
+    """Fail-closed: sin organizacion resoluble no se cobra nada con multi-tenant activo."""
+    tc, TS = client
+    _crear_org(TS, "Org A")
+    _crear_org(TS, "Org B")
+    email_staff = f"staff_sinorg_{uuid.uuid4().hex[:8]}@test.com"
+    _crear_usuario(TS, "staff", email_staff, None)
+
+    out = tc.post("/v1/access/pay-stay?plate=UV123WX", headers=_headers(tc, email_staff))
+    assert out.status_code == 403, out.text
+    assert "organización" in out.json()["detail"]
+
+
+# ---------------------------------------------------------------------------
+# ACCESO FISICO: gate -> sede -> empresa (binding del nodo ALPR)
+# ---------------------------------------------------------------------------
+
+def test_alpr_gate_de_otra_organizacion_se_rechaza_con_binding(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    _crear_branch(TS, "SEDE A", org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+
+    db = TS()
+    try:
+        out = AccessService.validate_plate(
+            db, PlateValidation(plate="AB123CD", gate_id="SEDE B_ENTRADA"),
+            organization_id=org_a,
+        )
+        assert out["status"] == "denied"
+        assert "organización" in out["message"]
+        assert db.query(models.AccessLog).count() == 0
+    finally:
+        db.close()
+
+
+def test_alpr_no_ve_estadia_de_otra_organizacion_en_sede_homonima(client):
+    """Sedes con el mismo nombre en dos empresas: el binding del nodo acota los logs."""
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    _crear_branch(TS, "SEDE X", org_a)
+    _crear_branch(TS, "SEDE X", org_b)
+    branch_b = _branch_id(TS, "SEDE X", org_b)
+    # El vehiculo esta dentro en la SEDE X de la ORGANIZACION B.
+    _crear_access_log(TS, branch_b, patente="AB123CD")
+
+    db = TS()
+    try:
+        out = AccessService.validate_plate(
+            db, PlateValidation(plate="AB123CD", gate_id="SEDE X_ENTRADA"),
+            organization_id=org_a,
+        )
+        assert out["status"] == "allowed", out
+        # Se registro la entrada en la sede de la org A (no la reutilizo la de org B).
+        entradas = db.query(models.AccessLog).filter(
+            models.AccessLog.normalized_patente == "AB123CD",
+            models.AccessLog.tipo_evento == "ENTRADA",
+        ).count()
+        assert entradas == 2
+    finally:
+        db.close()
+
+
+def test_alpr_qr_de_reserva_de_otra_organizacion_se_rechaza(client):
+    """Sede homonima en dos empresas: el QR de org B no abre el gate de org A."""
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    _crear_branch(TS, "SEDE X", org_a)
+    _crear_branch(TS, "SEDE X", org_b)
+    branch_b = _branch_id(TS, "SEDE X", org_b)
+    ahora = datetime.datetime.now()
+    res_b = _crear_reserva_rango(TS, branch_b, "CD345EF",
+                                 (ahora - datetime.timedelta(minutes=30)).isoformat(),
+                                 (ahora + datetime.timedelta(hours=1)).isoformat())
+
+    db = TS()
+    try:
+        out = AccessService.validate_qr(
+            db,
+            QRValidation(qr_data=f"AUTOPASS|id:{res_b}|patente:CD345EF",
+                         gate_id="SEDE X_ENTRADA"),
+            organization_id=org_a,
+        )
+        assert out["status"] == "denied"
+        assert out["message"] == "Esta reserva no pertenece a esta organización"
+        assert db.query(models.AccessLog).count() == 0
+    finally:
+        db.close()
+
+
+def test_alpr_qr_de_reserva_propia_se_acepta(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    _crear_branch(TS, "SEDE A", org_a)
+    _crear_branch(TS, "SEDE B", org_b)
+    branch_a = _branch_id(TS, "SEDE A", org_a)
+    ahora = datetime.datetime.now()
+    res_a = _crear_reserva_rango(TS, branch_a, "FG567HI",
+                                 (ahora - datetime.timedelta(minutes=30)).isoformat(),
+                                 (ahora + datetime.timedelta(hours=1)).isoformat())
+
+    db = TS()
+    try:
+        out = AccessService.validate_qr(
+            db,
+            QRValidation(qr_data=f"AUTOPASS|id:{res_a}|patente:FG567HI",
+                         gate_id="SEDE A_ENTRADA"),
+            organization_id=org_a,
+        )
+        assert out["status"] == "allowed", out
+    finally:
+        db.close()
+
+
+def test_manual_entry_no_reutiliza_estadia_de_otra_organizacion(client):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    org_b = _crear_org(TS, "Org B")
+    _crear_branch(TS, "SEDE X", org_a)
+    _crear_branch(TS, "SEDE X", org_b)
+    branch_b = _branch_id(TS, "SEDE X", org_b)
+    # Ingreso registrado en la SEDE X de la ORGANIZACION B.
+    _crear_access_log(TS, branch_b, patente="JK789MN")
+
+    db = TS()
+    try:
+        out_a = AccessService.manual_entry(db, "JK789MN", "SEDE X", organization_id=org_a)
+        assert out_a["status"] == "ok"
+        assert "ya figura" not in out_a["message"]
+        entradas = db.query(models.AccessLog).filter(
+            models.AccessLog.normalized_patente == "JK789MN",
+            models.AccessLog.tipo_evento == "ENTRADA",
+        ).count()
+        assert entradas == 2
+
+        # La empresa dueña de la sede donde esta adentro si lo ve como ingresado.
+        out_b = AccessService.manual_entry(db, "JK789MN", "SEDE X", organization_id=org_b)
+        assert out_b["status"] == "ok"
+        assert "ya figura" in out_b["message"]
+    finally:
+        db.close()
+
+
+def test_ruta_alpr_pasa_el_binding_de_organizacion(client, monkeypatch):
+    tc, TS = client
+    org_a = _crear_org(TS, "Org A")
+    capturado = {}
+
+    def _stub(db, data, request, organization_id=None):
+        capturado["organization_id"] = organization_id
+        return {"status": "ok", "message": "stub"}
+
+    monkeypatch.setattr(AccessService, "validate_plate", staticmethod(_stub))
+    monkeypatch.setattr(settings, "ALPR_NODE_SECRET", "s3cret")
+    monkeypatch.setattr(settings, "ALPR_NODE_ORG_ID", org_a)
+
+    out = tc.post("/v1/access/validate-plate",
+                  json={"plate": "AB123CD", "gate_id": "SEDE A_ENTRADA"},
+                  headers={"X-Node-Secret": "s3cret"})
+    assert out.status_code == 200, out.text
+    assert capturado["organization_id"] == org_a
+
+
+def _fake_request(host):
+    scope = {
+        "type": "http",
+        "method": "POST",
+        "path": "/v1/access/validate-plate",
+        "query_string": b"",
+        "headers": [],
+        "client": (host, 12345),
+        "server": ("testserver", 80),
+    }
+    return Request(scope)
+
+
+def test_require_alpr_node_org_devuelve_el_binding(monkeypatch):
+    from core.alpr_security import require_alpr_node_org
+
+    monkeypatch.setattr(settings, "ALPR_NODE_SECRET", "")
+    req_local = _fake_request("127.0.0.1")
+
+    monkeypatch.setattr(settings, "ALPR_NODE_ORG_ID", 0)
+    assert require_alpr_node_org(req_local) is None
+
+    monkeypatch.setattr(settings, "ALPR_NODE_ORG_ID", 7)
+    assert require_alpr_node_org(req_local) == 7
+
+    with pytest.raises(HTTPException) as exc:
+        require_alpr_node_org(_fake_request("200.100.10.1"))
+    assert exc.value.status_code == 403

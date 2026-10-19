@@ -31,17 +31,17 @@ def test_calculate_total_amount_hora(db):
         tipo_vehiculo=VehicleType.AUTO
     )
     #2 HORAS = 4 BLOQUES -> 2 HORAS + 1 FRACCION = 2*1500 + 750
-    assert monto == 3750.0
+    assert monto == 3000.0
 
 
 @pytest.mark.parametrize("horas,esperado", [
     (0.5, 750.0),    # 1 BLOQUE -> FRACCION
     (0.75, 1500.0),  # 2 BLOQUES -> HORA (REEMPLAZA LA FRACCION)
     (1.0, 1500.0),   # 2 BLOQUES -> HORA
-    (1.25, 2250.0),  # 3 BLOQUES -> HORA + FRACCION
-    (1.5, 2250.0),   # 3 BLOQUES -> HORA + FRACCION
-    (2.0, 3750.0),   # 4 BLOQUES -> 2 HORAS + FRACCION
-    (2.5, 4500.0),   # 5 BLOQUES -> 2 HORAS + 2 FRACCIONES
+    (1.25, 2250.0),  # 3 BLOQUES -> 1 HORA + FRACCION
+    (1.5, 2250.0),   # 3 BLOQUES -> 1 HORA + FRACCION
+    (2.0, 3000.0),   # 4 BLOQUES -> 2 HORAS
+    (2.5, 3750.0),   # 5 BLOQUES -> 2 HORAS + FRACCION
 ])
 def test_calculate_hourly_amount_escalonado(db, horas, esperado):
     db.add(models.Settings(clave="precio_hora", valor=1500.0, sucursal=None))

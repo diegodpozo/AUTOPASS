@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, selectinload
 import models
 from models.enums import AccessEventType
 from repositories.branch_repository import BranchRepository
+from repositories.scoping import organization_of_sede, sede_ids_and_names
 
 #--- REPOSITORIO DE LOGS DE ACCESO (INGRESOS/SALIDAS FISICAS) ---
 
@@ -15,27 +16,51 @@ class AccessRepository:
         FALLBACK LEGACY POR NOMBRE (registros de prueba/legacy sin id).
 
         Con `organization_id` y sin `sucursal`, acota a TODAS las sedes de esa empresa
-        (y a ninguna si aun no tiene sucursales)."""
+        (y a ninguna si aun no tiene sucursales); el fallback por nombre solo incluye
+        nombres no repetidos entre organizaciones (los ambiguos no son atribuibles)."""
         if sucursal:
             branch_id = BranchRepository.get_id_by_name(db, sucursal, organization_id)
             if branch_id:
-                return or_(
-                    models.AccessLog.sucursal_id == branch_id,
-                    and_(models.AccessLog.sucursal_id.is_(None), models.AccessLog.sucursal == sucursal)
-                )
+                legado = and_(models.AccessLog.sucursal_id.is_(None), models.AccessLog.sucursal == sucursal)
+                if organization_id is None or organization_of_sede(db, branch_name=sucursal) == organization_id:
+                    return or_(models.AccessLog.sucursal_id == branch_id, legado)
+                # NOMBRE REPITIDO EN OTRA ORGANIZACION: solo las filas con id (ya acotadas arriba).
+                return models.AccessLog.sucursal_id == branch_id
             if organization_id is not None:
                 return false()
             return models.AccessLog.sucursal == sucursal
         if organization_id is not None:
-            ids = [
-                r[0] for r in db.query(models.ParkingBranch.id).filter(
-                    models.ParkingBranch.organization_id == organization_id
-                ).all()
-            ]
-            if not ids:
+            ids, nombres = sede_ids_and_names(db, organization_id)
+            if not ids and not nombres:
                 return false()
-            return models.AccessLog.sucursal_id.in_(ids)
+            partes = []
+            if ids:
+                partes.append(models.AccessLog.sucursal_id.in_(ids))
+            if nombres:
+                partes.append(and_(
+                    models.AccessLog.sucursal_id.is_(None),
+                    models.AccessLog.sucursal.in_(nombres)
+                ))
+            return or_(*partes)
         return None
+
+    @staticmethod
+    def log_in_scope(db: Session, log: models.AccessLog, organization_id=None, sucursal_id=None) -> bool:
+        """VERIFICA EN MEMORIA QUE UN LOG PERTENEZCA AL ALCANCE ORGANIZACION/SEDE.
+
+        Es la validacion explicita (fail-closed) del alcance de cobro: ademas del
+        filtro SQL, ninguna fila fuera de la sede/empresa pasa el control.
+        Sin alcance configurado no restringe (single-tenant)."""
+        if log is None or (organization_id is None and sucursal_id is None):
+            return log is not None
+        if sucursal_id is not None and log.sucursal_id is not None:
+            if log.sucursal_id != sucursal_id:
+                return False
+        if organization_id is not None:
+            log_org = organization_of_sede(db, branch_id=log.sucursal_id, branch_name=log.sucursal)
+            if log_org != organization_id:
+                return False
+        return True
 
     @staticmethod
     def get_by_id(db: Session, log_id: int) -> models.AccessLog:
@@ -43,26 +68,26 @@ class AccessRepository:
         return db.query(models.AccessLog).filter(models.AccessLog.id == log_id).first()
 
     @staticmethod
-    def get_last_by_patente_and_sucursal(db: Session, normalized_patente: str, sucursal: str) -> models.AccessLog:
+    def get_last_by_patente_and_sucursal(db: Session, normalized_patente: str, sucursal: str, organization_id=None) -> models.AccessLog:
         """ULTIMO EVENTO FISICO (CUALQUIER TIPO) DE UNA PATENTE NORMALIZADA EN UNA SUCURSAL."""
         return (
             db.query(models.AccessLog)
             .filter(
                 models.AccessLog.normalized_patente == normalized_patente,
-                AccessRepository._sucursal_id_filter(db, sucursal)
+                AccessRepository._sucursal_id_filter(db, sucursal, organization_id)
             )
             .order_by(models.AccessLog.id.desc())
             .first()
         )
 
     @staticmethod
-    def get_last_detected_by_patente_and_sucursal(db: Session, patente_detectada: str, sucursal: str) -> models.AccessLog:
+    def get_last_detected_by_patente_and_sucursal(db: Session, patente_detectada: str, sucursal: str, organization_id=None) -> models.AccessLog:
         """ULTIMO EVENTO FISICO (CUALQUIER TIPO) DE UNA PATENTE DETECTADA EN UNA SUCURSAL."""
         return (
             db.query(models.AccessLog)
             .filter(
                 models.AccessLog.patente_detectada == patente_detectada,
-                AccessRepository._sucursal_id_filter(db, sucursal)
+                AccessRepository._sucursal_id_filter(db, sucursal, organization_id)
             )
             .order_by(models.AccessLog.id.desc())
             .first()
@@ -103,34 +128,57 @@ class AccessRepository:
         return {row[0] for row in rows}
 
     @staticmethod
-    def get_last_entry(db: Session, normalized_patente: str, sucursal: str) -> models.AccessLog:
+    def get_last_entry(db: Session, normalized_patente: str, sucursal: str, organization_id=None) -> models.AccessLog:
         """ULTIMO INGRESO FISICO DE UNA PATENTE NORMALIZADA EN UNA SUCURSAL."""
         return (
             db.query(models.AccessLog)
             .filter(
                 models.AccessLog.normalized_patente == normalized_patente,
                 models.AccessLog.tipo_evento == AccessEventType.ENTRADA,
-                AccessRepository._sucursal_id_filter(db, sucursal)
+                AccessRepository._sucursal_id_filter(db, sucursal, organization_id)
             )
             .order_by(models.AccessLog.id.desc())
             .first()
         )
 
     @staticmethod
-    def get_last_entry_by_patente(db: Session, patente_detectada: str) -> models.AccessLog:
-        """ULTIMO INGRESO FISICO (ENTRADA) DE UNA PATENTE DETECTADA, SIN FILTRO DE SUCURSAL."""
-        return (
-            db.query(models.AccessLog)
-            .filter(
-                models.AccessLog.patente_detectada == patente_detectada,
-                models.AccessLog.tipo_evento == AccessEventType.ENTRADA
-            )
-            .order_by(models.AccessLog.id.desc())
-            .first()
+    def get_last_entry_by_patente(db: Session, patente_detectada: str, organization_id=None, sucursal_id=None) -> models.AccessLog:
+        """ULTIMO INGRESO FISICO (ENTRADA) DE UNA PATENTE DETECTADA, ACOTADO AL ALCANCE INDICADO.
+
+        `organization_id`/`sucursal_id` limitan el cobro a la empresa (y a la sede del
+        operador si no es ADMIN global); sin alcance mantiene el filtro original."""
+        query = db.query(models.AccessLog).filter(
+            models.AccessLog.patente_detectada == patente_detectada,
+            models.AccessLog.tipo_evento == AccessEventType.ENTRADA
         )
+        alcance = AccessRepository._scope_filter(db, organization_id=organization_id, sucursal_id=sucursal_id)
+        if alcance is not None:
+            query = query.filter(alcance)
+        return query.order_by(models.AccessLog.id.desc()).first()
 
     @staticmethod
-    def get_exit_after(db: Session, patente_detectada: str, after_id: int, sucursal: str) -> models.AccessLog:
+    def _scope_filter(db: Session, organization_id=None, sucursal_id=None):
+        """PREDICADO SQL DE PERTENENCIA (ORGANIZACION Y/O SEDAD DEL OPERADOR) P/ LOGS.
+        Devuelve None cuando no hay alcance (single-tenant)."""
+        condiciones = []
+        if organization_id is not None:
+            condiciones.append(AccessRepository._sucursal_id_filter(db, None, organization_id))
+        if sucursal_id is not None:
+            branch = BranchRepository.get_by_id(db, sucursal_id)
+            if branch is None:
+                condiciones.append(false())
+            else:
+                condiciones.append(or_(
+                    models.AccessLog.sucursal_id == sucursal_id,
+                    and_(models.AccessLog.sucursal_id.is_(None), models.AccessLog.sucursal == branch.nombre)
+                ))
+        condiciones = [c for c in condiciones if c is not None]
+        if not condiciones:
+            return None
+        return and_(*condiciones)
+
+    @staticmethod
+    def get_exit_after(db: Session, patente_detectada: str, after_id: int, sucursal: str, organization_id=None) -> models.AccessLog:
         """PRIMERA SALIDA DE UNA PATENTE DETECTADA POSTERIOR A UN EVENTO EN LA MISMA SUCURSAL."""
         return (
             db.query(models.AccessLog)
@@ -138,7 +186,7 @@ class AccessRepository:
                 models.AccessLog.patente_detectada == patente_detectada,
                 models.AccessLog.tipo_evento == AccessEventType.SALIDA,
                 models.AccessLog.id > after_id,
-                AccessRepository._sucursal_id_filter(db, sucursal)
+                AccessRepository._sucursal_id_filter(db, sucursal, organization_id)
             )
             .first()
         )

@@ -120,8 +120,9 @@ class BillingService:
 
         n = ceil(horas * 2) con minimo 1 bloque (cada bloque es de 30 min).
         - n == 1 (hasta 30 min): se cobra la fraccion de 30 min.
-        - n >= 2: el primer bloque se reemplaza por la tarifa hora y desde ahi alterna
-          hora, fraccion, hora, fraccion...  => (n // 2) * hora + ((n - 1) // 2) * fraccion.
+        - n >= 2: cada par de bloques (1 hora completa) vale la tarifa hora; si sobra
+          medio bloque (n impar) se suma la fraccion de 30 min.
+          => (n // 2) * hora + (n % 2) * fraccion.
         Si falta una tarifa se deriva de la otra (fraccion = hora / 2 o hora = fraccion * 2).
         Devuelve None si no hay ninguna tarifa."""
         if fraccion is None and hora is None:
@@ -133,7 +134,7 @@ class BillingService:
         bloques = max(1, math.ceil((duration_hours or 0) * 2))
         if bloques == 1:
             return float(fraccion)
-        return float((bloques // 2) * hora + ((bloques - 1) // 2) * fraccion)
+        return float((bloques // 2) * hora + (bloques % 2) * fraccion)
 
     @staticmethod
     def calculate_hourly_amount(db: Session, duration_hours: float, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
@@ -288,15 +289,26 @@ class BillingService:
         return pago_dt > fin_dt
 
     @staticmethod
-    def process_payment(db: Session, plate: str, metodo: str = "DIGITAL") -> dict:
-        """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE EN LA SEDE CORRESPONDIENTE."""
+    def process_payment(db: Session, plate: str, metodo: str = "DIGITAL", organization_id=None, sucursal_id=None) -> dict:
+        """PROCESA EL COBRO DE UNA ESTADIA PENDIENTE DENTRO DEL ALCANCE DEL OPERADOR.
+
+        `organization_id` acota a la empresa del staff y `sucursal_id` (no ADMIN global)
+        a su sede: sin alcance resoluble en modo multi-tenant activo se rechaza
+        (fail-closed) y nunca se cobra una estadia registrada por otra organizacion."""
         from models.enums import ReservationStatus, PaymentStatus
+        from core.security import require_tenant_scope
+
+        require_tenant_scope(db, organization_id, detail="No tenés permisos sobre estadías de otra organización")
 
         plate = normalize_plate(plate)
         if not is_valid_plate(plate):
             return {"status": "error", "message": "Formato de patente inválido."}
 
-        log = AccessRepository.get_last_entry_by_patente(db, plate)
+        log = AccessRepository.get_last_entry_by_patente(
+            db, plate, organization_id=organization_id, sucursal_id=sucursal_id
+        )
+        if log is not None and not AccessRepository.log_in_scope(db, log, organization_id, sucursal_id):
+            log = None
 
         if not log:
             return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}

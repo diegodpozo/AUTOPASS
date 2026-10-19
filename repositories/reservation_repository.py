@@ -3,6 +3,7 @@ from sqlalchemy import and_, or_, func
 import models
 from models.enums import PaymentStatus, ReservationStatus
 from repositories.branch_repository import BranchRepository
+from repositories.scoping import organization_of_sede
 
 #--- REPOSITORIO DE RESERVAS (ACCESO UN DATOS) ---
 
@@ -25,7 +26,9 @@ class ReservationRepository:
         """PREDICADO SQL PARA FILTRAR RESERVAS POR SUCURSAL CON PRIORIDAD POR `sucursal_id` Y
         FALLBACK POR NOMBRE (registros legacy/test sin id). Con `include_global` tambien incluye
         reservas globales (sin sucursal), igual que la logica original por nombre.
-        Con `organization_id` la sede debe pertenecer a esa empresa (evita cruzar organizaciones)."""
+        Con `organization_id` la sede debe pertenecer a esa empresa (evita cruzar organizaciones)
+        y el fallback por nombre solo aplica si el nombre es atribuible a esa empresa (si se repite
+        entre organizaciones no se puede decidir de quien es la fila legacy)."""
         from sqlalchemy import false
         suc_id = models.Reservation.sucursal_id
         name_col = models.Reservation.sucursal_nombre
@@ -34,10 +37,17 @@ class ReservationRepository:
         branch_id = BranchRepository.get_id_by_name(db, sucursal_nombre, organization_id)
         if not branch_id and organization_id is not None:
             return false()
+        legacy = None
         if branch_id:
+            atribuible = organization_id is None or organization_of_sede(db, branch_name=sucursal_nombre) == organization_id
+            if atribuible:
+                legacy = and_(suc_id.is_(None), name_col == sucursal_nombre)
+            partes = [suc_id == branch_id]
+            if legacy is not None:
+                partes.append(legacy)
             if include_global:
-                return or_(suc_id == branch_id, and_(suc_id.is_(None), or_(name_col == sucursal_nombre, name_col.is_(None))))
-            return or_(suc_id == branch_id, and_(suc_id.is_(None), name_col == sucursal_nombre))
+                partes.append(and_(suc_id.is_(None), name_col.is_(None)))
+            return or_(*partes)
         if include_global:
             return or_(name_col == sucursal_nombre, name_col.is_(None))
         return name_col == sucursal_nombre
@@ -211,26 +221,34 @@ class ReservationRepository:
         return q.first()
 
     @staticmethod
-    def get_active_in_range_by_normalized_patente(db: Session, patente_norm: str, now_str: str, sucursal: str) -> models.Reservation:
-        """RESERVA PENDIENTE/ACTIVA DE UNA PATENTE NORMALIZADA VIGENTE EN EL RANGO EN LA SUCURSAL (o global)."""
+    def get_active_in_range_by_normalized_patente(db: Session, patente_norm: str, now_str: str, sucursal: str, organization_id=None) -> models.Reservation:
+        """RESERVA PENDIENTE/ACTIVA DE UNA PATENTE NORMALIZADA VIGENTE EN EL RANGO EN LA SUCURSAL (o global).
+
+        Con `organization_id` (atribucion gate -> sede -> empresa) acota tambien por empresa,
+        para que un gate de una organizacion nunca active una reserva de otra."""
         return db.query(models.Reservation).filter(
             func.replace(func.upper(models.Reservation.patente), ' ', '') == patente_norm,
             models.Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE.value, ReservationStatus.ACTIVA.value]),
             models.Reservation.fecha_inicio <= now_str,
             models.Reservation.fecha_fin >= now_str
         ).filter(
-            ReservationRepository._sucursal_id_predicate(db, sucursal, include_global=True)
+            ReservationRepository._sucursal_id_predicate(db, sucursal, include_global=True, organization_id=organization_id)
         ).first()
 
     @staticmethod
     def _filtered_base_query(db: Session, estado: str = None, sucursal: str = None, staff_sucursal: str = None, normalized_staff: bool = False, organization_id=None):
+        from sqlalchemy import false
         q = db.query(models.Reservation)
         if estado:
             q = q.filter(models.Reservation.estado_reserva == estado)
         if staff_sucursal is not None:
-            branch_id = BranchRepository.get_id_by_name(db, staff_sucursal)
+            branch_id = BranchRepository.get_id_by_name(db, staff_sucursal, organization_id)
             if branch_id:
                 q = q.filter(models.Reservation.sucursal_id == branch_id)
+            elif organization_id is not None:
+                # Sede del staff inexistente en su empresa: no hay forma segura de
+                # atribuir filas con ese nombre (podrian ser de otra organizacion).
+                q = q.filter(false())
             elif normalized_staff:
                 staff_suc = staff_sucursal or ""
                 norm_col = func.trim(func.replace(func.lower(models.Reservation.sucursal_nombre), 'autopass ', ''))

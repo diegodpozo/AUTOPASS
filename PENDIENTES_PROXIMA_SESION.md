@@ -1,14 +1,25 @@
 ﻿# PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una proxima sesion.
-Ultima actualizacion: 16/10/2026
+Ultima actualizacion: 19/10/2026
 
 ## Sin commitear en este momento
 
-- Nada: v9.34.96 a v9.34.99 quedaron commiteados Y PUSHEADOS en esta sesion (`c60e087`, `b1288be`, `e0449b3`, `f652832`; `origin/main` = `f652832`; medido con fetch: ahead 0 / behind 0).
+- Nada pendiente en el arbol de trabajo: la Fase 2 (bloqueo transaccional) quedo en `c408507` y el paquete `DEFENSA_FASE2/` en `e743ecb`; la tanda multi-org del remoto (`2b7d0d6`, `51acaf1`, `ccc0328`, `d858a57`) quedo mergeada en este pull.
+- Falta pushear: la rama local queda 12 commits adelante de `origin/main` y 0 atras (el merge de este pull suma 1).
 - Archivos de v9.34.99: `static/js/modules/landing-map-pois.js`, `static/sw.js` y los 4 documentos.
 
 ## Cerrado recientemente
+
+### 18/10/2026 - tanda multi-org: 5 P1 de aislamiento (commiteada en el remoto, mergeada en este pull)
+- **Nucleo** (`repositories/scoping.py` + `core/security.py`): `multi_organization_active`, `organization_of_sede` (sede -> empresa; homonimo = no atribuible), `sede_ids_and_names`; `resolve_actor_organization_id`, `require_tenant_scope` y `enforce_organization_scope(..., db=, organization_id=)` ahora FAIL-CLOSED en multi-org (actor o recurso sin org -> 403; exencion de super-admin primero; sin `db` conserva la tolerancia vieja). Dos modos: <=1 org = comportamiento actual intacto.
+- **Reservas (IDOR)**: listado/conteo acotados por org para todos los roles; `check_reserva_scope` (org vía `organization_of_sede` + `same_branch` despues) en editar/confirmar/cancelar; `_sucursal_admin` valida la sede al crear/editar (404 no atribuible, 403 ajena).
+- **Cobro**: `BillingService.process_payment(db, plate, metodo, organization_id, sucursal_id)` + `require_tenant_scope` + `get_last_entry_by_patente`/`log_in_scope`; `pay_stay` calcula org (y sede si no es ADMIN).
+- **ALPR**: `ALPR_NODE_ORG_ID` (env) + `require_alpr_node_org` (binding nodo -> empresa) en validate-plate/exit-plate/validate-qr; `access_service` con `_sede_desde_gate`/`_alcance_gate`/`_alcance_logs` (gate ligado sin sede propia -> denied), QR exige reserva de la misma org, `manual_entry/exit/cancel_stay` reciben `organization_id`.
+- **Rutas delgadas**: helpers `_check_promo_org`, `_enforce_camera_org`, `validate_local_admin_user_permission` ahora reciben `db` y lo pasan a `enforce_organization_scope` (16 call sites actualizados).
+- **Fix colateral**: `BranchRepository.get_id_by_name` con nombre ambiguo devolvia `MultipleResultsFound` (500) con sedes homonimas; ahora devuelve `None` (no atribuible).
+- **Docs**: `AISLAMIENTO_MULTIORG.md` (modelo de datos, nucleo, regla legacy, flujos, dos modos, tests, limites).
+- **Verificacion**: suite `906 passed`; guards 11/11 OK; sin conflict markers. Ya commiteada en el remoto y mergeada en este pull.
 
 ### 16/10/2026 - v9.34.99: fix del reintento de Overpass en los POIs (commit `f652832`, pusheado)
 - Sintoma: los POIs del mapa no cargaban; consola con `[OVERPASS] Error: TypeError: Failed to fetch` en `landing-map-pois.js` (doFetch -> loadTheaters).

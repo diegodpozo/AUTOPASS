@@ -89,6 +89,10 @@ class Settings:
     # Secreto compartido de los nodos ALPR para el WS de video y update-frame.
     # Vacio: solo se aceptan nodos desde red local/loopback (recomendado para ALPR en la misma maquina).
     ALPR_NODE_SECRET: str = os.getenv("ALPR_NODE_SECRET", "")
+    # ORGANIZACION A LA QUE ESTA LIGADO ESTE NODO ALPR (0 = sin binding).
+    # Atribucion gate -> sede -> empresa: con binding, un gate que no pertenece a
+    # ninguna sede de esa organizacion se rechaza (fail-closed).
+    ALPR_NODE_ORG_ID: int = int(os.getenv("ALPR_NODE_ORG_ID", "0") or 0)
     
     # BASE DE DATOS
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./parking.db")

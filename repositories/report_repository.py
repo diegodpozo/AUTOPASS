@@ -7,7 +7,7 @@ from repositories.branch_repository import BranchRepository
 
 #--- REPOSITORIO DE REPORTES E INTELIGENCIA DE NEGOCIO (CONSULTAS AGREGADAS) ---
 
-CASH_METHODS = ("CAJA", "Caja", "Efectivo")
+CASH_METHODS = ("CAJA", "Caja", "Efectivo", "EFECTIVO")
 
 PAYMENT_METHOD_VARIANTS = {
     "CAJA": CASH_METHODS,
@@ -100,7 +100,7 @@ def _branch_filter(db: Session, name_column, id_column, sucursal: str = None, or
     si la organizacion todavia no tiene sucursales)."""
     if sucursal:
         legacy_cond = func.lower(_unaccent(name_column)).like(f"%{_branch_key(sucursal)}%")
-        branch_id = BranchRepository.get_id_by_name(db, sucursal, organization_id)
+        branch_id = BranchRepository.resolve_id_by_name(db, sucursal, organization_id)
         if branch_id:
             return or_(id_column == branch_id, and_(id_column.is_(None), legacy_cond))
         if organization_id is not None:
