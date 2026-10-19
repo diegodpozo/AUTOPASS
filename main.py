@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from core.config import settings
 from core.logger import setup_logging, get_logger
@@ -30,6 +30,21 @@ app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.mqtt_client = mqtt_client #INYECCION PARA ACCESO GLOBAL
+
+# CONCURRENCIA (FASE 2): un unico punto de traduccion LockTimeoutError -> HTTP 409.
+# Preferido a try/except en cada ruta (DRY): cualquier endpoint que entre en una
+# seccion critica sin poder obtener el lock responde 409 con mensaje de reintento.
+from core.db_lock import LockTimeoutError
+
+
+@app.exception_handler(LockTimeoutError)
+async def lock_timeout_handler(request, exc):
+    """HTTP 409 cuando la seccion critica esta tomada por otra operacion concurrente."""
+    logger.warning(f"Lock transaccional no obtenido: {exc}")
+    return JSONResponse(
+        status_code=409,
+        content={"detail": "La operación está siendo procesada por otro proceso. Reintentá en unos segundos."},
+    )
 
 # --- GUARD DE SEGURIDAD: SECRET_KEY DEMO (SOLO FALLA EN PRODUCCION) ---
 if settings.ENVIRONMENT == "production" and settings.SECRET_KEY == "tu_super_secreto_para_produccion":

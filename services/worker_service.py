@@ -4,6 +4,7 @@ import time
 import datetime
 from core.database import SessionLocal
 from core.config import settings
+from core.db_lock import bloqueo_transaccional, clave_reserva, refrescar
 from core.logger import get_logger, mask_email
 from services.reservation_service import ReservationService
 from services.user_notification_service import UserNotificationService
@@ -210,19 +211,28 @@ class WorkerService:
         # BATCH: una sola query con todos los ids (rutas A5) en vez de 1 query por reserva
         ingresaron = AccessRepository.get_reserva_ids_with_entry(db, [res.id for res in candidatas])
 
-        for res in candidatas:
+        for res in sorted(candidatas, key=lambda x: x.id):
             try:
-                # VERIFICAR SI EL VEHICULO INGRESO
-                if res.id in ingresaron:
-                    continue  # YA INGRESO, NO CANCELAR
+                # FASE 2 (R5): lock de la reserva en orden de id (anti-deadlock); bajo
+                # el lock RE-LEEMOS su estado: si mientras esperabamos el turno un
+                # request la pago o la cerro, ya no es cancelable y la salteamos. El
+                # commit de abajo --dentro del with-- libera ese lock.
+                with bloqueo_transaccional(db, clave_reserva(res.id)):
+                    # VERIFICAR SI EL VEHICULO INGRESO
+                    if res.id in ingresaron:
+                        continue  # YA INGRESO, NO CANCELAR
 
-                # CANCELAR LA RESERVA
-                res.estado_reserva = ReservationStatus.CANCELADA
-                res.estado_pago = PaymentStatus.FALLIDO
+                    refrescar(db, res)
+                    if res.estado_reserva not in (ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA) or res.estado_pago != PaymentStatus.PENDIENTE or res.fecha_inicio >= fmt_grace:
+                        continue
 
-                db.commit()
+                    # CANCELAR LA RESERVA
+                    res.estado_reserva = ReservationStatus.CANCELADA
+                    res.estado_pago = PaymentStatus.FALLIDO
 
-                # NOTIFICAR AL USUARIO
+                    db.commit()
+
+                # NOTIFICAR AL USUARIO (fuera del lock: sin mails ni notifs con el lock puesto)
                 user = res.user
                 if user:
                     UserNotificationService.create_notification(

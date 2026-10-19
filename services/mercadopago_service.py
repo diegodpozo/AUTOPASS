@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import models
 from core.config import settings
+from core.db_lock import bloqueo_transaccional, clave_reserva, clave_usuario
 from core.logger import get_logger
 from core.normalize import normalize_plate
 from models.enums import PaymentStatus, ReservationStatus
@@ -257,29 +258,45 @@ def confirm_payment(db: Session, external_reference: str, payment_id=None) -> di
 
 def _aplicar_pago(db: Session, pago: "models.MercadoPagoPayment", payment_id: str) -> dict:
     """APLICA LA ACREDITACION REAL DEL PAGO (RESERVA O ESTADIA) SIN TOCAR EL SALDO DEL USUARIO."""
-    user = UserRepository.get_by_id(db, pago.user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    # SECCION CRITICA (FASE 2): aqui llegan los webhooks de Mercado Pago, que pueden
+    # repetirse. El lock de cuenta (+ reserva, si la hay) serializa los duplicados, y
+    # RE-LEEMOS el registro de pago bajo el lock: si otro webhook lo aplico mientras
+    # esperabamos el turno, salimos sin acreditar (idempotencia bajo lock, R4).
+    # OJO: la llamada HTTP a la API de MP NO entra aqui a proposito (puede tardar
+    # hasta 15s); vive en confirm_payment, FUERA del lock.
+    with bloqueo_transaccional(db, clave_reserva(pago.reserva_id), clave_usuario(pago.user_id)):
+        # RE-VALIDACION BAJO LOCK (regla critica del informe): releemos solo la
+        # columna de estado --sin refrescar el objeto entero-- para conservar los
+        # cambios sin flush que hizo confirm_payment antes de llamarnos
+        # (payment_id / mp_status / mp_payment_status).
+        estado_reg = db.query(models.MercadoPagoPayment.estado).filter(models.MercadoPagoPayment.id == pago.id).scalar()
+        if estado_reg == _APROBADO:
+            return {"status": "ok", "message": "Pago ya confirmado", "aplicado": True}
 
-    if pago.tipo == "reserva":
-        res = ReservationRepository.get_by_id(db, pago.reserva_id)
-        if not res:
-            raise HTTPException(status_code=404, detail="Reserva no encontrada")
-        from services.reservation_service import ReservationService
-        resultado = ReservationService.pay_reservation_mp(db, user, res, pago.monto, pago.redemption_ticket_id)
-    elif pago.tipo == "estadia":
-        log = AccessRepository.get_by_id(db, pago.access_log_id)
-        if not log:
-            raise HTTPException(status_code=404, detail="Estadía no encontrada")
-        from services.billing_service import BillingService
-        resultado = BillingService.apply_stay_mp_payment(db, user, log, pago.monto)
-    else:
-        raise HTTPException(status_code=400, detail="Tipo de pago inválido")
+        user = UserRepository.get_by_id(db, pago.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    pago.estado = _APROBADO
-    pago.mp_status = "approved"
-    pago.payment_id = str(payment_id or "")
-    pago.fecha_confirmacion = datetime.datetime.now().isoformat()
-    db.commit()
+        if pago.tipo == "reserva":
+            res = ReservationRepository.get_by_id(db, pago.reserva_id)
+            if not res:
+                raise HTTPException(status_code=404, detail="Reserva no encontrada")
+            from services.reservation_service import ReservationService
+            resultado = ReservationService.pay_reservation_mp(db, user, res, pago.monto, pago.redemption_ticket_id)
+        elif pago.tipo == "estadia":
+            log = AccessRepository.get_by_id(db, pago.access_log_id)
+            if not log:
+                raise HTTPException(status_code=404, detail="Estadía no encontrada")
+            from services.billing_service import BillingService
+            resultado = BillingService.apply_stay_mp_payment(db, user, log, pago.monto)
+        else:
+            raise HTTPException(status_code=400, detail="Tipo de pago inválido")
+
+        pago.estado = _APROBADO
+        pago.mp_status = "approved"
+        pago.payment_id = str(payment_id or "")
+        pago.fecha_confirmacion = datetime.datetime.now().isoformat()
+        # El commit cierra la seccion critica: a partir de ahi el lock queda libre.
+        db.commit()
 
     return {"status": "ok", "message": "Pago acreditado con éxito", "aplicado": True, **resultado}

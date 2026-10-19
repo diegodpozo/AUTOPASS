@@ -6,6 +6,7 @@ import re
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from core.db_lock import bloqueo_transaccional, clave_reserva, clave_usuario, refrescar
 from core.logger import get_logger
 import models
 from models.enums import PaymentStatus, ReservationStatus
@@ -38,58 +39,66 @@ class ReservationPaymentsMixin:
         Si se indica un redemption_ticket_id (descuento % de reserva) vigente del usuario
         y de la misma sucursal (o global) se aplica el descuento sobre el monto total
         y la reserva queda pagada por el valor final descontado."""
-        if res.estado_pago == PaymentStatus.PAGADO:
-            return {"status": "ok", "message": "La reserva ya se encuentra pagada", "monto": res.monto_total, "monto_a_cobrar": res.monto_total, "descuento": 0.0, "metodo_pago": res.metodo_pago}
+        # SECCION CRITICA (FASE 2): el caller (caja/admin) carga res ANTES de entrar,
+        # asi que bajo el lock RE-LEEMOS la reserva y su usuario antes del chequeo
+        # "ya pagada": sin esto, dos cobros simultaneos pasan el guard y acreditan
+        # puntos dos veces (carrera R3 del informe). Pide las mismas claves que los
+        # demas caminos de pago/cancelacion, asi que todos quedan serializados entre si.
+        with bloqueo_transaccional(db, clave_reserva(res.id), clave_usuario(res.user_id)):
+            refrescar(db, res, res.user)
+            if res.estado_pago == PaymentStatus.PAGADO:
+                return {"status": "ok", "message": "La reserva ya se encuentra pagada", "monto": res.monto_total, "monto_a_cobrar": res.monto_total, "descuento": 0.0, "metodo_pago": res.metodo_pago}
 
-        # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
-        descuento = 0.0
-        monto_a_cobrar = res.monto_total or 0.0
-        if redemption_ticket_id:
-            if not res.user_id:
-                raise HTTPException(status_code=400, detail="La reserva no tiene un usuario vinculado para aplicar el descuento")
-            ticket_redencion = ReservationPaymentsMixin.validate_redemption_ticket(db, res.user_id, redemption_ticket_id, res.sucursal_nombre)
-            porc = ticket_redencion.valor_descuento or 0
-            descuento = round(monto_a_cobrar * porc / 100.0, 2)
-            monto_a_cobrar = round(monto_a_cobrar - descuento, 2)
-            # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
-            if res.monto_calculado is None:
-                res.monto_calculado = res.monto_total or 0.0
-            res.descuento_pct = porc
-            res.monto_total = monto_a_cobrar
-            res.monto_reembolsado = 0.0
-            ticket_redencion.estado = "USADO"
-            ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
-            ticket_redencion.reserva_id = res.id
+            # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
+            descuento = 0.0
+            monto_a_cobrar = res.monto_total or 0.0
+            if redemption_ticket_id:
+                if not res.user_id:
+                    raise HTTPException(status_code=400, detail="La reserva no tiene un usuario vinculado para aplicar el descuento")
+                ticket_redencion = ReservationPaymentsMixin.validate_redemption_ticket(db, res.user_id, redemption_ticket_id, res.sucursal_nombre)
+                porc = ticket_redencion.valor_descuento or 0
+                descuento = round(monto_a_cobrar * porc / 100.0, 2)
+                monto_a_cobrar = round(monto_a_cobrar - descuento, 2)
+                # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
+                if res.monto_calculado is None:
+                    res.monto_calculado = res.monto_total or 0.0
+                res.descuento_pct = porc
+                res.monto_total = monto_a_cobrar
+                res.monto_reembolsado = 0.0
+                ticket_redencion.estado = "USADO"
+                ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
+                ticket_redencion.reserva_id = res.id
 
-        res.estado_pago = PaymentStatus.PAGADO
-        res.estado_reserva = ReservationStatus.ACTIVA
-        res.fecha_pago = datetime.datetime.now().isoformat()
-        res.metodo_pago = metodo_pago
+            res.estado_pago = PaymentStatus.PAGADO
+            res.estado_reserva = ReservationStatus.ACTIVA
+            res.fecha_pago = datetime.datetime.now().isoformat()
+            res.metodo_pago = metodo_pago
 
-        if res.user:
-            puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
-            res.user.puntos_acumulados += puntos_ganados
-            db.add(models.PointsLog(
-                user_id=res.user.id,
-                cantidad=puntos_ganados,
-                motivo=f"Abono Manual Reserva: {res.patente}",
-                fecha=datetime.datetime.now().isoformat()
-            ))
-            if puntos_ganados > 0:
-                try:
-                    from services.user_notification_service import UserNotificationService
-                    UserNotificationService.create_notification(
-                        db, res.user.id,
-                        tipo=models.NotificationType.POINTS_EARNED,
-                        titulo="¡Puntos AutoPass!",
-                        mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente})!",
-                        reserva_id=res.id
-                    )
-                except Exception:
-                    logger.warning(f"[PAYMENTS] Error notificando puntos ganados en reserva #{res.id}", exc_info=True)
+            if res.user:
+                puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
+                res.user.puntos_acumulados += puntos_ganados
+                db.add(models.PointsLog(
+                    user_id=res.user.id,
+                    cantidad=puntos_ganados,
+                    motivo=f"Abono Manual Reserva: {res.patente}",
+                    fecha=datetime.datetime.now().isoformat()
+                ))
+                if puntos_ganados > 0:
+                    try:
+                        from services.user_notification_service import UserNotificationService
+                        UserNotificationService.create_notification(
+                            db, res.user.id,
+                            tipo=models.NotificationType.POINTS_EARNED,
+                            titulo="¡Puntos AutoPass!",
+                            mensaje=f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente})!",
+                            reserva_id=res.id
+                        )
+                    except Exception:
+                        logger.warning(f"[PAYMENTS] Error notificando puntos ganados en reserva #{res.id}", exc_info=True)
 
-        db.commit()
-        db.refresh(res)
+            # El commit cierra la seccion critica: a partir de ahi el lock queda libre.
+            db.commit()
+            db.refresh(res)
         return {"status": "ok", "message": "Pago registrado", "monto": res.monto_total, "monto_a_cobrar": monto_a_cobrar, "descuento": descuento, "metodo_pago": res.metodo_pago}
 
     @staticmethod
@@ -113,64 +122,73 @@ class ReservationPaymentsMixin:
         Si se indica un redemption_ticket_id (descuento % de reserva) vigente del usuario
         y de la misma sucursal (o global), se aplica el descuento sobre el monto total
         y el resto se paga con saldo."""
-        res = ReservationRepository.get_by_user_and_id(db, user.id, res_id)
+        # SECCION CRITICA (FASE 2): la carrera clasica de saldo (R3): dos abonos
+        # simultaneos leian el mismo saldo y ambos restaban. Bajo el lock de reserva +
+        # cuenta RE-LEEMOS el usuario (saldo y puntos frescos, pudieron cambiar mientras
+        # esperabamos el lock), y TODO el flujo --carga de reserva, guardas, chequeo de
+        # saldo insuficiente, descuento, deduccion y acreditacion-- ocurre DENTRO de la
+        # seccion. El mail y las notificaciones salen despues del commit, fuera del lock.
+        with bloqueo_transaccional(db, clave_reserva(res_id), clave_usuario(user.id)):
+            refrescar(db, user)
+            res = ReservationRepository.get_by_user_and_id(db, user.id, res_id)
 
-        if not res:
-            raise HTTPException(status_code=404, detail="Reserva no encontrada")
+            if not res:
+                raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
-        if res.estado_reserva in [ReservationStatus.CANCELADA, ReservationStatus.COMPLETADA]:
-            raise HTTPException(status_code=400, detail=f"No se puede abonar una reserva en estado '{res.estado_reserva}'")
+            if res.estado_reserva in [ReservationStatus.CANCELADA, ReservationStatus.COMPLETADA]:
+                raise HTTPException(status_code=400, detail=f"No se puede abonar una reserva en estado '{res.estado_reserva}'")
 
-        if res.estado_pago == PaymentStatus.PAGADO:
-            return {"status": "ok", "message": "La reserva ya ha sido abonada"}
+            if res.estado_pago == PaymentStatus.PAGADO:
+                return {"status": "ok", "message": "La reserva ya ha sido abonada"}
 
-        # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
-        descuento = 0.0
-        ticket_redencion = None
-        monto_a_cobrar = res.monto_total
+            # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
+            descuento = 0.0
+            ticket_redencion = None
+            monto_a_cobrar = res.monto_total
 
-        if redemption_ticket_id:
-            ticket_redencion = ReservationPaymentsMixin.validate_redemption_ticket(db, user.id, redemption_ticket_id, res.sucursal_nombre)
-            porc = ticket_redencion.valor_descuento or 0
-            descuento = round(res.monto_total * porc / 100.0, 2)
-            monto_a_cobrar = round(res.monto_total - descuento, 2)
-            # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
-            if res.monto_calculado is None:
-                res.monto_calculado = res.monto_total or 0.0
-            res.descuento_pct = porc
+            if redemption_ticket_id:
+                ticket_redencion = ReservationPaymentsMixin.validate_redemption_ticket(db, user.id, redemption_ticket_id, res.sucursal_nombre)
+                porc = ticket_redencion.valor_descuento or 0
+                descuento = round(res.monto_total * porc / 100.0, 2)
+                monto_a_cobrar = round(res.monto_total - descuento, 2)
+                # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
+                if res.monto_calculado is None:
+                    res.monto_calculado = res.monto_total or 0.0
+                res.descuento_pct = porc
 
-        if user.saldo < monto_a_cobrar:
-            raise HTTPException(status_code=400, detail=f"Saldo insuficiente en su cuenta AutoPass (necesita ${monto_a_cobrar:,.2f})")
+            if user.saldo < monto_a_cobrar:
+                raise HTTPException(status_code=400, detail=f"Saldo insuficiente en su cuenta AutoPass (necesita ${monto_a_cobrar:,.2f})")
 
-        # DEDUCCION DE SALDO Y ACTUALIZACION DE ESTADO
-        user.saldo -= monto_a_cobrar
-        res.estado_pago = PaymentStatus.PAGADO
-        res.estado_reserva = ReservationStatus.ACTIVA
-        res.fecha_pago = datetime.datetime.now().isoformat()
-        res.metodo_pago = "SALDO"
-        # SI SE APLICO DESCUENTO, LA RESERVA QUEDA CON SU VALOR FINAL
-        if ticket_redencion:
-            res.monto_total = monto_a_cobrar
-            res.monto_reembolsado = 0.0
+            # DEDUCCION DE SALDO Y ACTUALIZACION DE ESTADO
+            user.saldo -= monto_a_cobrar
+            res.estado_pago = PaymentStatus.PAGADO
+            res.estado_reserva = ReservationStatus.ACTIVA
+            res.fecha_pago = datetime.datetime.now().isoformat()
+            res.metodo_pago = "SALDO"
+            # SI SE APLICO DESCUENTO, LA RESERVA QUEDA CON SU VALOR FINAL
+            if ticket_redencion:
+                res.monto_total = monto_a_cobrar
+                res.monto_reembolsado = 0.0
 
-        # ACREDITACION DE PUNTOS POR LEALTAD (SOBRE LO EFECTIVAMENTE ABONADO)
-        puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
-        user.puntos_acumulados += puntos_ganados
+            # ACREDITACION DE PUNTOS POR LEALTAD (SOBRE LO EFECTIVAMENTE ABONADO)
+            puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
+            user.puntos_acumulados += puntos_ganados
 
-        db.add(models.PointsLog(
-            user_id=user.id,
-            cantidad=puntos_ganados,
-            motivo=f"Reserva: {res.patente}",
-            fecha=datetime.datetime.now().isoformat()
-        ))
+            db.add(models.PointsLog(
+                user_id=user.id,
+                cantidad=puntos_ganados,
+                motivo=f"Reserva: {res.patente}",
+                fecha=datetime.datetime.now().isoformat()
+            ))
 
-        # MARCAR EL TICKET DE DESCUENTO COMO USADO (si aplico descuento)
-        if ticket_redencion:
-            ticket_redencion.estado = "USADO"
-            ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
-            ticket_redencion.reserva_id = res.id
+            # MARCAR EL TICKET DE DESCUENTO COMO USADO (si aplico descuento)
+            if ticket_redencion:
+                ticket_redencion.estado = "USADO"
+                ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
+                ticket_redencion.reserva_id = res.id
 
-        db.commit()
+            # El commit cierra la seccion critica: a partir de ahi el lock queda libre.
+            db.commit()
 
         # ENVIAR MAIL DE CONFIRMACION
         dir_info = res.sucursal_info
@@ -333,43 +351,51 @@ class ReservationPaymentsMixin:
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
-        if res.estado_reserva == ReservationStatus.CANCELADA:
-            return {"status": "ok", "message": "La reserva ya se encuentra cancelada"}
-
-        if res.estado_reserva == ReservationStatus.COMPLETADA:
-            return {"status": "error", "message": "La reserva ya finalizó y no puede cancelarse"}
-
-        # USAMOS LA SIMULACION PARA OBTENER EL MONTO
-        sim = ReservationPaymentsMixin.simulate_refund(db, res)
-        if sim["error"]:
-            raise HTTPException(status_code=400, detail=sim["error"])
-
-        monto_a_reembolsar = sim["reembolso"]
-
-        # 3. EJECUCION DEL REEMBOLSO
         target_user = user or res.user
-        if monto_a_reembolsar > 0 and target_user:
-            target_user.saldo += monto_a_reembolsar
+        # SECCION CRITICA (FASE 2): cancelar concurrentemente es doblemente peligroso
+        # (doble reembolso, o pisar un pago que acaba de entrar). Bajo el lock de
+        # reserva + cuenta RE-LEEMOS la reserva y el usuario (el saldo que vamos a
+        # acreditar tiene que ser el fresco) y recien ahi repetimos los chequeos de
+        # estado, simulamos el reembolso y ejecutamos; el commit libera el lock.
+        with bloqueo_transaccional(db, clave_reserva(res_id), clave_usuario(target_user.id if target_user else None)):
+            refrescar(db, res, target_user)
+            if res.estado_reserva == ReservationStatus.CANCELADA:
+                return {"status": "ok", "message": "La reserva ya se encuentra cancelada"}
 
-            # AJUSTE DE PUNTOS (SOLO SOBRE LO REEMBOLSADO)
-            puntos_a_descontar = BillingService.calculate_points(monto_a_reembolsar)
-            target_user.puntos_acumulados = max(0, target_user.puntos_acumulados - puntos_a_descontar)
+            if res.estado_reserva == ReservationStatus.COMPLETADA:
+                return {"status": "error", "message": "La reserva ya finalizó y no puede cancelarse"}
 
-            db.add(models.PointsLog(
-                user_id=target_user.id,
-                cantidad=-puntos_a_descontar,
-                motivo=f"Reembolso por Cancelación (Proporcional): {res.patente}",
-                fecha=datetime.datetime.now().isoformat()
-            ))
+            # USAMOS LA SIMULACION PARA OBTENER EL MONTO
+            sim = ReservationPaymentsMixin.simulate_refund(db, res)
+            if sim["error"]:
+                raise HTTPException(status_code=400, detail=sim["error"])
 
-        res.estado_reserva = ReservationStatus.CANCELADA
-        res.estado_pago = PaymentStatus.REEMBOLSADO if monto_a_reembolsar > 0 else PaymentStatus.CANCELADO
-        res.monto_reembolsado = float(monto_a_reembolsar)
+            monto_a_reembolsar = sim["reembolso"]
 
-        if monto_a_reembolsar > 0:
-            res.fecha_pago = datetime.datetime.now().isoformat()
+            # 3. EJECUCION DEL REEMBOLSO
+            if monto_a_reembolsar > 0 and target_user:
+                target_user.saldo += monto_a_reembolsar
 
-        db.commit()
+                # AJUSTE DE PUNTOS (SOLO SOBRE LO REEMBOLSADO)
+                puntos_a_descontar = BillingService.calculate_points(monto_a_reembolsar)
+                target_user.puntos_acumulados = max(0, target_user.puntos_acumulados - puntos_a_descontar)
+
+                db.add(models.PointsLog(
+                    user_id=target_user.id,
+                    cantidad=-puntos_a_descontar,
+                    motivo=f"Reembolso por Cancelación (Proporcional): {res.patente}",
+                    fecha=datetime.datetime.now().isoformat()
+                ))
+
+            res.estado_reserva = ReservationStatus.CANCELADA
+            res.estado_pago = PaymentStatus.REEMBOLSADO if monto_a_reembolsar > 0 else PaymentStatus.CANCELADO
+            res.monto_reembolsado = float(monto_a_reembolsar)
+
+            if monto_a_reembolsar > 0:
+                res.fecha_pago = datetime.datetime.now().isoformat()
+
+            # El commit cierra la seccion critica: a partir de ahi el lock queda libre.
+            db.commit()
 
         msg = f"Reserva cancelada. Reembolso: ${monto_a_reembolsar}" if monto_a_reembolsar > 0 else "Reserva cancelada sin reembolso."
 

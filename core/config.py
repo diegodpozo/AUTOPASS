@@ -136,6 +136,10 @@ class Settings:
     MAINTENANCE_INTERVAL_SECONDS: int = int(os.getenv("MAINTENANCE_INTERVAL_SECONDS", 300))
     HEARTBEAT_TIMEOUT_SECONDS: int = int(os.getenv("HEARTBEAT_TIMEOUT_SECONDS", 90))
 
+    # CONCURRENCIA (FASE 2): timeout maximo para adquirir un lock transaccional
+    # (pg_advisory_xact_lock). Al expirar, el endpoint responde HTTP 409.
+    LOCK_TIMEOUT_SECONDS: int = int(os.getenv("LOCK_TIMEOUT_SECONDS", 10))
+
     # MERCADO PAGO (CHECKOUT PRO)
     # Credenciales de prueba (sandbox): https://www.mercadopago.com.ar/developers/panel/apps
     # MP_ACCESS_TOKEN: Access Token de la cuenta de prueba (test seller).

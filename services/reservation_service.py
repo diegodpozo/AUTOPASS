@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from core.config import settings
+from core.db_lock import bloqueo_transaccional, clave_aforo, clave_patente, clave_reserva, clave_usuario, refrescar
 from core.logger import get_logger
 from core.normalize import normalize_plate, is_valid_plate, normalize_name as _normalizar_sucursal, same_branch
 from models.enums import PaymentStatus, ReservationStatus, UserRole, VehicleType
@@ -134,12 +135,21 @@ class ReservationService(ReservationPaymentsMixin):
             logger.info(f"Cancelando {len(overdue)} reservas impagas vencidas. Cutoff: {cutoff_str}")
             # BATCH: una sola query con todos los ids (rutas A5) en vez de 1 query por reserva
             ingresaron = AccessRepository.get_reserva_ids_with_entry(db, [r.id for r in overdue])
-            for r in overdue:
-                # SI EL VEHICULO YA INGRESO AL PREDIO CON SU RESERVA, NO CANCELAR
-                if r.id in ingresaron:
-                    continue
-                r.estado_reserva = ReservationStatus.CANCELADA
-                r.estado_pago = PaymentStatus.FALLIDO
+            # FASE 2 (R5): por cada candidata tomamos SU lock de reserva --siempre en
+            # orden de id para no generar deadlocks entre pasadas-- y RE-LEEMOS el
+            # estado bajo el lock: si mientras esperabamos un request la pago o alguien
+            # la cerro, ya no califica y la salteamos. Los locks se retienen hasta el
+            # commit final, que los libera.
+            for r in sorted(overdue, key=lambda x: x.id):
+                with bloqueo_transaccional(db, clave_reserva(r.id)):
+                    refrescar(db, r)
+                    if r.estado_reserva not in (ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA) or r.estado_pago != PaymentStatus.PENDIENTE or r.fecha_inicio >= cutoff_str:
+                        continue
+                    # SI EL VEHICULO YA INGRESO AL PREDIO CON SU RESERVA, NO CANCELAR
+                    if r.id in ingresaron:
+                        continue
+                    r.estado_reserva = ReservationStatus.CANCELADA
+                    r.estado_pago = PaymentStatus.FALLIDO
             db.commit()
             return len(overdue)
         return 0
@@ -150,8 +160,15 @@ class ReservationService(ReservationPaymentsMixin):
         now_str = TimeService.now_str()
         past_reservations = ReservationRepository.get_past_reservations(db, user_id, now_str)
         if past_reservations:
-            for r in past_reservations:
-                r.estado_reserva = ReservationStatus.COMPLETADA
+            # FASE 2 (R5): mismo patron que cleanup --lock por reserva en orden de id y
+            # relectura de estado/fecha_fin bajo el lock-- para no pisar una cancelacion
+            # o modificacion hecha por otro proceso mientras esperabamos.
+            for r in sorted(past_reservations, key=lambda x: x.id):
+                with bloqueo_transaccional(db, clave_reserva(r.id)):
+                    refrescar(db, r)
+                    if r.estado_reserva not in (ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA) or r.fecha_fin >= now_str:
+                        continue
+                    r.estado_reserva = ReservationStatus.COMPLETADA
             db.commit()
 
     @staticmethod
@@ -163,8 +180,14 @@ class ReservationService(ReservationPaymentsMixin):
         
         if vencidas:
             logger.info(f"Finalizando {len(vencidas)} reservas vencidas.")
-            for r in vencidas:
-                r.estado_reserva = ReservationStatus.COMPLETADA
+            # FASE 2 (R5): lock por reserva en orden de id + relectura bajo el lock
+            # (estado y fecha_fin) antes de completar; ver cleanup_overdue_reservations.
+            for r in sorted(vencidas, key=lambda x: x.id):
+                with bloqueo_transaccional(db, clave_reserva(r.id)):
+                    refrescar(db, r)
+                    if r.estado_reserva not in (ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA) or r.fecha_fin >= now_str:
+                        continue
+                    r.estado_reserva = ReservationStatus.COMPLETADA
             db.commit()
             # NOTIFICAR A LOS DASHBOARDS PARA QUE REFLEJEN LA DEUDA ACUMULADA TRAS EL VENCIMIENTO
             try:
@@ -283,76 +306,90 @@ class ReservationService(ReservationPaymentsMixin):
         p_clean = normalize_plate(data.patente)
         if not is_valid_plate(p_clean):
             raise HTTPException(status_code=400, detail="Formato de patente inválido.")
-        # LIMITACION: maximo 5 reservas activas o pendientes por usuario
-        from models.reservation import Reservation
-        from models.enums import ReservationStatus
-        activas = db.query(Reservation).filter(Reservation.user_id==user.id, Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA])).count()
-        if activas >= 5:
-            raise HTTPException(status_code=400, detail="MAXIMO DE RESERVAS PERMITIDAS POR USUARIO ES DE 5")
+        # SECCION CRITICA (FASE 2): desde la primera lectura de decision (limite de 5
+        # reservas) hasta el commit, TODO corre bajo los locks de aforo (sede+tipo),
+        # patente (solape en sede) y usuario (limite por cuenta). Asi dos requests
+        # simultaneos no pueden pasar los mismos chequeos e insertar de mas
+        # (carreras check-then-act R1/R2 del informe de concurrencia). El lock es
+        # transaccional: se libera solo en este commit, o en el rollback si algo
+        # falla; no se libera a mano. Todas las validaciones de decision quedan
+        # adentro, por lo que ya no hace falta "revalidar" nada.
+        with bloqueo_transaccional(
+            db,
+            clave_aforo(data.sucursal_nombre, vehicle.tipo),
+            clave_patente(p_clean, data.sucursal_nombre),
+            clave_usuario(user.id),
+        ):
+            # LIMITACION: maximo 5 reservas activas o pendientes por usuario
+            from models.reservation import Reservation
+            from models.enums import ReservationStatus
+            activas = db.query(Reservation).filter(Reservation.user_id==user.id, Reservation.estado_reserva.in_([ReservationStatus.PENDIENTE, ReservationStatus.ACTIVA])).count()
+            if activas >= 5:
+                raise HTTPException(status_code=400, detail="MAXIMO DE RESERVAS PERMITIDAS POR USUARIO ES DE 5")
 
-        existing_overlap = ReservationRepository.get_overlap_by_patente(db, p_clean, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
-        if existing_overlap:
-            raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")
-        other_branch_overlap = ReservationRepository.get_user_overlap_other_branch(db, user.id, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
-        if other_branch_overlap:
-            raise HTTPException(status_code=400, detail="YA HAY RESERVAS EN ESE HORARIO EN OTRA SUCURSAL")
-        rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
-        if rate is None:
-            raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-        start = datetime.datetime.fromisoformat(data.fecha_inicio)
-        end = datetime.datetime.fromisoformat(data.fecha_fin)
-        max_future = datetime.datetime.now() + datetime.timedelta(days=90)
-        if start > max_future:
-            raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
-        if data.tipo_estadia == "hora":
-            min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
-            if (start - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
-                raise HTTPException(status_code=400, detail=f"Las reservas por hora deben realizarse con al menos {min_antelacion_min} minutos de anticipación.")
-            cls.validar_horario_sucursal(db, data.sucursal_nombre, start, end)
-        disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, tipo_vehiculo=vehicle.tipo)
-        if not disp["disponible"]:
-            raise HTTPException(status_code=400, detail=disp["mensaje"])
-        duration_hours = (end - start).total_seconds() / 3600
-        if duration_hours <= 0:
-            raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
-        if data.tipo_estadia == "dia" and data.dias_semana:
-            dias_seleccionados = [int(d.strip()) for d in data.dias_semana.split(",") if d.strip()]
-            count, d = 0, start
-            while d <= end:
-                if d.weekday() in dias_seleccionados:
-                    count += 1
-                d += datetime.timedelta(days=1)
-            if count == 0:
-                raise HTTPException(status_code=400, detail="No hay días seleccionados dentro del rango")
-            monto = count * rate
-        elif data.tipo_estadia == "hora":
-            monto = BillingService.calculate_hourly_amount(db, duration_hours, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
-            if monto is None:
+            existing_overlap = ReservationRepository.get_overlap_by_patente(db, p_clean, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
+            if existing_overlap:
+                raise HTTPException(status_code=400, detail=f"El vehículo patente {data.patente} ya posee otra reserva en la sucursal {data.sucursal_nombre} en el período solicitado.")
+            other_branch_overlap = ReservationRepository.get_user_overlap_other_branch(db, user.id, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin)
+            if other_branch_overlap:
+                raise HTTPException(status_code=400, detail="YA HAY RESERVAS EN ESE HORARIO EN OTRA SUCURSAL")
+            rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
+            if rate is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-        elif data.tipo_estadia == "dia":
-            monto = max(1, math.ceil(duration_hours / 24)) * rate
-        elif data.tipo_estadia == "semana":
-            monto = math.ceil(duration_hours / (24 * 7)) * rate
-        elif data.tipo_estadia == "quincena":
-            monto = math.ceil(duration_hours / (24 * 15)) * rate
-        elif data.tipo_estadia == "mes":
-            monto = math.ceil(duration_hours / (24 * 30)) * rate
-        else:
-            monto = math.ceil(duration_hours) * rate
-        cls._validar_cotizacion(data, duration_hours, monto)
-        estado_pago = PaymentStatus.PENDIENTE
-        info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
-        tipo_v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
-        new_res = models.Reservation(
-            user_id=user.id, patente=normalize_plate(data.patente), fecha_inicio=data.fecha_inicio, fecha_fin=data.fecha_fin,
-            tipo_estadia=data.tipo_estadia, monto_total=monto, estado_pago=estado_pago, estado_reserva=ReservationStatus.PENDIENTE,
-            sucursal_nombre=data.sucursal_nombre, sucursal_info=info_sede,
-            dias_semana=data.dias_semana, tipo_vehiculo=tipo_v_str
-        )
-        cls._fijar_snapshot_tarifa(new_res, db, data, data.tipo_estadia, data.sucursal_nombre, vehicle.tipo, duration_hours, monto)
-        db.add(new_res)
-        db.commit()
-        db.refresh(new_res)
+            start = datetime.datetime.fromisoformat(data.fecha_inicio)
+            end = datetime.datetime.fromisoformat(data.fecha_fin)
+            max_future = datetime.datetime.now() + datetime.timedelta(days=90)
+            if start > max_future:
+                raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
+            if data.tipo_estadia == "hora":
+                min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
+                if (start - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+                    raise HTTPException(status_code=400, detail=f"Las reservas por hora deben realizarse con al menos {min_antelacion_min} minutos de anticipación.")
+                cls.validar_horario_sucursal(db, data.sucursal_nombre, start, end)
+            disp = verificar_disponibilidad(db, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, tipo_vehiculo=vehicle.tipo)
+            if not disp["disponible"]:
+                raise HTTPException(status_code=400, detail=disp["mensaje"])
+            duration_hours = (end - start).total_seconds() / 3600
+            if duration_hours <= 0:
+                raise HTTPException(status_code=400, detail="La fecha de fin debe ser posterior a la de inicio")
+            if data.tipo_estadia == "dia" and data.dias_semana:
+                dias_seleccionados = [int(d.strip()) for d in data.dias_semana.split(",") if d.strip()]
+                count, d = 0, start
+                while d <= end:
+                    if d.weekday() in dias_seleccionados:
+                        count += 1
+                    d += datetime.timedelta(days=1)
+                if count == 0:
+                    raise HTTPException(status_code=400, detail="No hay días seleccionados dentro del rango")
+                monto = count * rate
+            elif data.tipo_estadia == "hora":
+                monto = BillingService.calculate_hourly_amount(db, duration_hours, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
+                if monto is None:
+                    raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
+            elif data.tipo_estadia == "dia":
+                monto = max(1, math.ceil(duration_hours / 24)) * rate
+            elif data.tipo_estadia == "semana":
+                monto = math.ceil(duration_hours / (24 * 7)) * rate
+            elif data.tipo_estadia == "quincena":
+                monto = math.ceil(duration_hours / (24 * 15)) * rate
+            elif data.tipo_estadia == "mes":
+                monto = math.ceil(duration_hours / (24 * 30)) * rate
+            else:
+                monto = math.ceil(duration_hours) * rate
+            cls._validar_cotizacion(data, duration_hours, monto)
+            estado_pago = PaymentStatus.PENDIENTE
+            info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
+            tipo_v_str = vehicle.tipo.value if hasattr(vehicle.tipo, "value") else str(vehicle.tipo)
+            new_res = models.Reservation(
+                user_id=user.id, patente=normalize_plate(data.patente), fecha_inicio=data.fecha_inicio, fecha_fin=data.fecha_fin,
+                tipo_estadia=data.tipo_estadia, monto_total=monto, estado_pago=estado_pago, estado_reserva=ReservationStatus.PENDIENTE,
+                sucursal_nombre=data.sucursal_nombre, sucursal_info=info_sede,
+                dias_semana=data.dias_semana, tipo_vehiculo=tipo_v_str
+            )
+            cls._fijar_snapshot_tarifa(new_res, db, data, data.tipo_estadia, data.sucursal_nombre, vehicle.tipo, duration_hours, monto)
+            db.add(new_res)
+            db.commit()
+            db.refresh(new_res)
         try:
             NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
         except Exception as e:
@@ -366,82 +403,95 @@ class ReservationService(ReservationPaymentsMixin):
         res = ReservationRepository.get_by_user_and_id(db, user.id, res_id)
         if not res:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
-        if res.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
-            raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva en estado '{res.estado_reserva}'.")
-        tipo_efectivo = data.tipo_estadia if data.tipo_estadia else res.tipo_estadia
-        suc_efectivo = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
-        start_efectivo = datetime.datetime.fromisoformat(data.fecha_inicio) if data.fecha_inicio else datetime.datetime.fromisoformat(res.fecha_inicio)
-        end_efectivo = datetime.datetime.fromisoformat(data.fecha_fin) if data.fecha_fin else datetime.datetime.fromisoformat(res.fecha_fin)
-        max_future = datetime.datetime.now() + datetime.timedelta(days=90)
-        if start_efectivo > max_future:
-            raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
-        if tipo_efectivo == "hora":
-            min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
-            if (start_efectivo - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
-                raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva por hora con menos de {min_antelacion_min} minutos de antelación")
-            cls.validar_horario_sucursal(db, suc_efectivo, start_efectivo, end_efectivo)
-        fec_ini = data.fecha_inicio if data.fecha_inicio else res.fecha_inicio
-        fec_fin = data.fecha_fin if data.fecha_fin else res.fecha_fin
-        suc_efect = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
-        disp = verificar_disponibilidad(db, suc_efect, fec_ini, fec_fin, exclude_id=res.id)
-        if not disp["disponible"]:
-            raise HTTPException(status_code=400, detail=disp["mensaje"])
-        monto_anterior, ya_pagado = res.monto_total, res.estado_pago == PaymentStatus.PAGADO
-        if data.fecha_inicio:
-            res.fecha_inicio = data.fecha_inicio
-        if data.fecha_fin:
-            res.fecha_fin = data.fecha_fin
-        if data.patente:
-            if not VehicleRepository.get_by_patente_and_user(db, data.patente, user.id):
-                raise HTTPException(status_code=400, detail="Patente no vinculada")
-            if not is_valid_plate(data.patente):
-                raise HTTPException(status_code=400, detail="Formato de patente inválido.")
-            res.patente = normalize_plate(data.patente)
-        if data.tipo_estadia:
-            res.tipo_estadia = data.tipo_estadia
-        if data.sucursal_nombre:
-            res.sucursal_nombre = data.sucursal_nombre
-        vehiculo_mod = VehicleRepository.get_by_patente(db, res.patente)
-        tipo_vehiculo_mod = vehiculo_mod.tipo if vehiculo_mod else "Auto"
-        rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
-        if rate is None:
-            raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-        duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
-        if duration_hours <= 0:
-            raise HTTPException(status_code=400, detail="Fechas inválidas")
-        monto_nuevo = math.ceil(duration_hours) * rate
-        if res.tipo_estadia == "hora":
-            monto_nuevo = BillingService.calculate_hourly_amount(db, duration_hours, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
-            if monto_nuevo is None:
+        # SECCION CRITICA (FASE 2): el chequeo de estado, la validacion de
+        # disponibilidad y toda la reescritura (incluidos los ajustes de saldo y
+        # puntos) quedan serializados por reserva + aforo de la sede + cuenta del
+        # usuario. Bajo el lock RE-LEEMOS la reserva y el usuario con refrescar():
+        # pudieron cambiar mientras esperabamos el lock (regla critica del informe:
+        # la decision se toma siempre con datos leidos DENTRO de la seccion).
+        with bloqueo_transaccional(
+            db,
+            clave_reserva(res.id),
+            clave_aforo(data.sucursal_nombre or res.sucursal_nombre, res.tipo_vehiculo),
+            clave_usuario(user.id),
+        ):
+            refrescar(db, res, user)
+            if res.estado_reserva in (ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA):
+                raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva en estado '{res.estado_reserva}'.")
+            tipo_efectivo = data.tipo_estadia if data.tipo_estadia else res.tipo_estadia
+            suc_efectivo = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
+            start_efectivo = datetime.datetime.fromisoformat(data.fecha_inicio) if data.fecha_inicio else datetime.datetime.fromisoformat(res.fecha_inicio)
+            end_efectivo = datetime.datetime.fromisoformat(data.fecha_fin) if data.fecha_fin else datetime.datetime.fromisoformat(res.fecha_fin)
+            max_future = datetime.datetime.now() + datetime.timedelta(days=90)
+            if start_efectivo > max_future:
+                raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
+            if tipo_efectivo == "hora":
+                min_antelacion_min = settings.RESERVA_HORA_MIN_SEGUNDOS // 60
+                if (start_efectivo - datetime.datetime.now()).total_seconds() < settings.RESERVA_HORA_MIN_SEGUNDOS:
+                    raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva por hora con menos de {min_antelacion_min} minutos de antelación")
+                cls.validar_horario_sucursal(db, suc_efectivo, start_efectivo, end_efectivo)
+            fec_ini = data.fecha_inicio if data.fecha_inicio else res.fecha_inicio
+            fec_fin = data.fecha_fin if data.fecha_fin else res.fecha_fin
+            suc_efect = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
+            disp = verificar_disponibilidad(db, suc_efect, fec_ini, fec_fin, exclude_id=res.id)
+            if not disp["disponible"]:
+                raise HTTPException(status_code=400, detail=disp["mensaje"])
+            monto_anterior, ya_pagado = res.monto_total, res.estado_pago == PaymentStatus.PAGADO
+            if data.fecha_inicio:
+                res.fecha_inicio = data.fecha_inicio
+            if data.fecha_fin:
+                res.fecha_fin = data.fecha_fin
+            if data.patente:
+                if not VehicleRepository.get_by_patente_and_user(db, data.patente, user.id):
+                    raise HTTPException(status_code=400, detail="Patente no vinculada")
+                if not is_valid_plate(data.patente):
+                    raise HTTPException(status_code=400, detail="Formato de patente inválido.")
+                res.patente = normalize_plate(data.patente)
+            if data.tipo_estadia:
+                res.tipo_estadia = data.tipo_estadia
+            if data.sucursal_nombre:
+                res.sucursal_nombre = data.sucursal_nombre
+            vehiculo_mod = VehicleRepository.get_by_patente(db, res.patente)
+            tipo_vehiculo_mod = vehiculo_mod.tipo if vehiculo_mod else "Auto"
+            rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+            if rate is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-        elif res.tipo_estadia == "dia":
-            monto_nuevo = max(1, math.ceil(duration_hours / 24)) * rate
-        elif res.tipo_estadia == "semana":
-            monto_nuevo = math.ceil(duration_hours / (24 * 7)) * rate
-        elif res.tipo_estadia == "quincena":
-            monto_nuevo = math.ceil(duration_hours / (24 * 15)) * rate
-        elif res.tipo_estadia == "mes":
-            monto_nuevo = math.ceil(duration_hours / (24 * 30)) * rate
-        cls._validar_cotizacion(data, duration_hours, monto_nuevo)
-        cls._fijar_snapshot_tarifa(res, db, data, res.tipo_estadia, res.sucursal_nombre, tipo_vehiculo_mod, duration_hours, monto_nuevo, descuento_pct=res.descuento_pct)
-        if ya_pagado:
-            diferencia = monto_nuevo - monto_anterior
-            dif_puntos = BillingService.calculate_points(monto_nuevo) - BillingService.calculate_points(monto_anterior)
-            if dif_puntos != 0:
-                if user.puntos_acumulados + dif_puntos < 0:
-                    raise HTTPException(status_code=400, detail="Puntos insuficientes para el ajuste")
-                user.puntos_acumulados += dif_puntos
-                db.add(models.PointsLog(user_id=user.id, cantidad=dif_puntos, motivo=f"Ajuste Reserva: {res.patente}", fecha=datetime.datetime.now().isoformat()))
-            if diferencia > 0:
-                if user.saldo < diferencia:
-                    raise HTTPException(status_code=400, detail=f"Saldo insuficiente (+${diferencia})")
-                user.saldo -= diferencia
+            duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
+            if duration_hours <= 0:
+                raise HTTPException(status_code=400, detail="Fechas inválidas")
+            monto_nuevo = math.ceil(duration_hours) * rate
+            if res.tipo_estadia == "hora":
+                monto_nuevo = BillingService.calculate_hourly_amount(db, duration_hours, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
+                if monto_nuevo is None:
+                    raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
+            elif res.tipo_estadia == "dia":
+                monto_nuevo = max(1, math.ceil(duration_hours / 24)) * rate
+            elif res.tipo_estadia == "semana":
+                monto_nuevo = math.ceil(duration_hours / (24 * 7)) * rate
+            elif res.tipo_estadia == "quincena":
+                monto_nuevo = math.ceil(duration_hours / (24 * 15)) * rate
+            elif res.tipo_estadia == "mes":
+                monto_nuevo = math.ceil(duration_hours / (24 * 30)) * rate
+            cls._validar_cotizacion(data, duration_hours, monto_nuevo)
+            cls._fijar_snapshot_tarifa(res, db, data, res.tipo_estadia, res.sucursal_nombre, tipo_vehiculo_mod, duration_hours, monto_nuevo, descuento_pct=res.descuento_pct)
+            if ya_pagado:
+                diferencia = monto_nuevo - monto_anterior
+                dif_puntos = BillingService.calculate_points(monto_nuevo) - BillingService.calculate_points(monto_anterior)
+                if dif_puntos != 0:
+                    if user.puntos_acumulados + dif_puntos < 0:
+                        raise HTTPException(status_code=400, detail="Puntos insuficientes para el ajuste")
+                    user.puntos_acumulados += dif_puntos
+                    db.add(models.PointsLog(user_id=user.id, cantidad=dif_puntos, motivo=f"Ajuste Reserva: {res.patente}", fecha=datetime.datetime.now().isoformat()))
+                if diferencia > 0:
+                    if user.saldo < diferencia:
+                        raise HTTPException(status_code=400, detail=f"Saldo insuficiente (+${diferencia})")
+                    user.saldo -= diferencia
+                else:
+                    user.saldo += abs(diferencia)
             else:
-                user.saldo += abs(diferencia)
-        else:
-            res.estado_pago = PaymentStatus.PENDIENTE
-        res.monto_total = monto_nuevo
-        db.commit()
+                res.estado_pago = PaymentStatus.PENDIENTE
+            res.monto_total = monto_nuevo
+            db.commit()
         try:
             from services.user_notification_service import UserNotificationService
             msg_detalle = f"Tu reserva #{res.id} ({res.patente}) en {res.sucursal_nombre} fue modificada exitosamente."
