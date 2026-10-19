@@ -235,6 +235,12 @@ escritura sea agregar una línea, no repetir lógica.
 
 ### Fase 0 — Test de reproducción (RED)
 
+> **Estado (19/10/2026): R3 IMPLEMENTADA; R1/R2 pendientes.** Los tests de R3
+> (`tests/test_concurrencia_saldo_puntos.py`, SQLite de archivo con WAL y `busy_timeout`)
+> están escritos y verificados en **RED** contra `95aca58` (3 fallos deterministas); quedan
+> en verde con la Fase 1. Los de R1/R2 se escriben junto con la Fase 3: hasta que la cache
+> de disponibilidad no se invalide, fallan (y son la prueba de ese arreglo).
+
 Antes de tocar producción, tests que **demuestren** que las carreras existen. Sin esto, el fix
 no es verificable y puede revertirse en silencio.
 
@@ -249,6 +255,11 @@ no es verificable y puede revertirse en silencio.
 **Criterio de salida:** los tests fallan de forma determinista contra el código actual.
 
 ### Fase 1 — Aritmética atómica de saldo y puntos (dinero, riesgo bajo)
+
+> **Estado (19/10/2026): IMPLEMENTADA** en `960e3a9` (código) y `a9f3a5e` (tests). Los
+> helpers viven en `repositories/user_repository.py` (6 sentencias `UPDATE ... RETURNING` +
+> 6 métodos) y los 20 puntos de escritura de 6 archivos ya los usan: no quedan `+=`/`-=`
+> sobre saldo/puntos en procesos de negocio.
 
 Elimina los read-modify-write con una operación atómica de SQL, sin depender de locks. Es la
 capa con mejor relación esfuerzo/beneficio y ataca el daño monetario directo.
@@ -267,6 +278,11 @@ capa con mejor relación esfuerzo/beneficio y ataca el daño monetario directo.
 procesos de negocio. Los tests de Fase 0 de R3 pasan.
 
 ### Fase 2 — Helper único de bloqueo transaccional (núcleo de la solución)
+
+> **Estado (19/10/2026): IMPLEMENTADA** en `c408507` (código). `core/db_lock.py` con
+> `bloqueo_transaccional` y `refrescar`, timeout
+> configurable (`LOCK_TIMEOUT_SECONDS`) y handler HTTP 409; aplicado en los 6 puntos de
+> entrada críticos.
 
 Nuevo módulo `core/db_lock.py`:
 

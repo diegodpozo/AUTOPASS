@@ -5,11 +5,18 @@ Ultima actualizacion: 19/10/2026
 
 ## Sin commitear en este momento
 
-- Nada pendiente en el arbol de trabajo: la Fase 2 (bloqueo transaccional) quedo en `c408507` y el paquete `DEFENSA_FASE2/` en `e743ecb`; la tanda multi-org del remoto (`2b7d0d6`, `51acaf1`, `ccc0328`, `d858a57`) quedo mergeada en este pull.
-- Falta pushear: la rama local queda 12 commits adelante de `origin/main` y 0 atras (el merge de este pull suma 1).
+- Nada pendiente en el arbol de trabajo: la Fase 1 del plan de concurrencia (aritmetica atomica de saldo y puntos) quedo en `960e3a9` (codigo), `a9f3a5e` (tests) y un commit de docs con el informe y este archivo. La Fase 2 ya estaba en `c408507`, y la tanda multi-org del remoto (`2b7d0d6`, `51acaf1`, `ccc0328`, `d858a57`) quedo mergeada en el pull anterior.
+- Falta pushear: nada; el push del 19/10/2026 dejo la rama local al dia con `origin/main` (0 adelante / 0 atras, verificado con `git fetch` + `git rev-list --left-right --count origin/main...HEAD`).
 - Archivos de v9.34.99: `static/js/modules/landing-map-pois.js`, `static/sw.js` y los 4 documentos.
 
 ## Cerrado recientemente
+
+### 19/10/2026 - Fase 1 del plan de concurrencia: aritmetica atomica de saldo y puntos
+- **Que se hizo**: todos los ajustes de saldo/puntos pasan por 6 helpers de `repositories/user_repository.py` que ejecutan UN solo `UPDATE ... RETURNING` (`sumar_saldo`, `descontar_saldo`, `fijar_saldo`, `sumar_puntos`, `canjear_puntos`, `descontar_puntos_tope_cero`). Las condiciones (saldo/puntos suficientes, tope cero, `COALESCE` para columnas en NULL) viajan dentro de la sentencia: 0 filas = no alcanzaba (se lee como `None`), asi que desaparece la ventana entre el chequeo y el descuento. Ningun helper hace commit: lo decide el flujo, tipicamente dentro del lock de la Fase 2.
+- **Sitios migrados**: 20 en 6 archivos - `services/payments.py` (6: descuento de saldo, acreditacion de puntos en los 3 caminos de pago, reembolso de saldo y de puntos con tope cero), `services/billing_service.py` (4: puntos por estadias), `services/reservation_service.py` (6: ajuste por edicion de reserva + reembolso admin), `routes/user/fidelization.py` (2: canje y anulacion), `routes/user/balance.py` (1: recarga) y `routes/admin/users.py` (1: set del admin). `update_balance`/`add_points` (que eran codigo muerto) ahora delegan en los helpers.
+- **Tests**: `tests/test_concurrencia_saldo_puntos.py` (3 tests de carrera real: hilos + `threading.Barrier` sobre SQLite de archivo con WAL y `busy_timeout`) y `tests/test_user_repository_atomic.py` (10 unitarios del contrato: valor devuelto, no alcanza, tope cero, columnas NULL). `tests/test_balance_routes.py` suma `_seed_user_saldo(...)` en los 2 tests de recarga, porque el saldo dejo de actualizarse en memoria y el `UPDATE` necesita la fila (no se cambio ninguna asercion).
+- **Verificacion**: RED reproducido contra `95aca58` en un worktree temporal (3 failed: doble gasto de saldo, 10 puntos en vez de 20, dos tickets con 80 puntos) -> GREEN con el fix (3 passed). Suite completa `927 passed, 9 warnings`; guards 11/11; `py_compile` y `git diff --check` en 0; grep sin `+=`/`-=` sobre saldo/puntos en codigo de negocio.
+- **Material de defensa**: los paquetes de cada fase (codigo ANTES/DESPUES y explicaciones) quedan solo en local, fuera de git. Falta generar los PDFs del paquete de la Fase 1 (se arman con el mismo procedimiento que los de la Fase 2).
 
 ### 18/10/2026 - tanda multi-org: 5 P1 de aislamiento (commiteada en el remoto, mergeada en este pull)
 - **Nucleo** (`repositories/scoping.py` + `core/security.py`): `multi_organization_active`, `organization_of_sede` (sede -> empresa; homonimo = no atribuible), `sede_ids_and_names`; `resolve_actor_organization_id`, `require_tenant_scope` y `enforce_organization_scope(..., db=, organization_id=)` ahora FAIL-CLOSED en multi-org (actor o recurso sin org -> 403; exencion de super-admin primero; sin `db` conserva la tolerancia vieja). Dos modos: <=1 org = comportamiento actual intacto.
@@ -57,7 +64,8 @@ Ultima actualizacion: 19/10/2026
 
 ## Pendientes abiertos
 
-- **git push**: AL DIA. `c60e087` (v9.34.96), `b1288be` (v9.34.97), `e0449b3` (v9.34.98) y `f652832` (v9.34.99) pusheados; `origin/main` = `f652832` (verificado con fetch: ahead 0 / behind 0, sin marcadores de conflicto). No queda nada por pushear salvo un commit de docs posterior si el usuario lo pidiera.
+- **Plan de concurrencia (continuacion)**: hechas la Fase 1 y la Fase 2. Sigue la **Fase 3** (invalidar la cache de disponibilidad despues del commit en crear/modificar/cancelar reserva; es la que cierra R1/R2 y con la que se escriben sus tests RED), despues la **Fase 5** (idempotencia de webhooks por `payment_id`) y la **Fase 4** (constraints en Postgres, requiere ventana de migracion). Referencia: `Info proyecto/INFORME_CONCURRENCIA_RESERVAS.md` (seccion 7).
+- **git push**: AL DIA. `c60e087` (v9.34.96), `b1288be` (v9.34.97), `e0449b3` (v9.34.98), `f652832` (v9.34.99) y la Fase 1 + Fase 2 del plan de concurrencia pusheados; `origin/main` al dia (verificado con fetch: ahead 0 / behind 0, sin marcadores de conflicto).
 - **Performance parte 2 (CSS/JS local por pagina)**: mover `landing-map.css` (12 KB), `chart-window.css`, `sidebar.css`, `tables.css`, `badges.css` y `action-menu.css` fuera de base.html hacia las paginas que las usan, mas el `style.css` legacy (3.8 KB). Ganancia modesta: ya estan en el precache del service worker, asi que no elimina descargas de red. Exige verificar los estilos computados antes/despues en navegador real.
 - **Nominatim (revision, no tocado)**: `dashboard-admin-branches-crud.js` y `dashboard-promotions.js` hacen fetch cross-origin a nominatim SIN reintento; mismo patron de riesgo (un error sin CORS llega como TypeError). Se puede reutilizar el patron de `esReintentable()`.
 - **POIs/Overpass (opcional, no tocado)**: la consulta tarda ~30-45 s (bbox CABA/GBA, `[timeout:60]`, `out center 100`). Se podria acotar el bbox o bajar el tope; alternativa: espejo `overpass.kumi.systems` (requiere sumarlo a `connect-src` en main.py y al test `tests/test_security_headers.py`).
@@ -67,7 +75,8 @@ Ultima actualizacion: 19/10/2026
 ## Verificacion usada en esta tanda
 
 - Guards: 11/11 en verde (`Get-ChildItem _tools -Filter "check_*.py"` corridos con `.\venv\Scripts\python.exe`).
-- Suite: 891 passed, 9 warnings (siempre con el python del venv; el python global del sistema no tiene alembic).
+- Suite: 927 passed, 9 warnings (ultima corrida, 19/10/2026, con la Fase 1 aplicada). Todos los tests y guards se corren con el python del venv; el python global del sistema no tiene alembic.
+- Fase 1 (19/10/2026): RED reproducido en un worktree temporal sobre `95aca58` (3 failed) y GREEN con el fix (3 passed); `py_compile` y `git diff --check` en 0.
 - `node --check` en `static/js/modules/landing-map-pois.js` y `static/sw.js`.
 - Runtime: Edge headless + CDP contra el server local (puerto 8013). FASE A: 2 fallos CORS simulados -> 2 warns de reintento -> HTTP 200 -> 100 POIs y cache creada. FASE B: saturacion real de Overpass -> 1 fallo real 502-sin-CORS -> reintento -> 100 POIs, 0 errores OVERPASS. La senal de exito es la cache POI (los 5 `poi-marker` fijos son estadios).
 - Script: `C:\Users\usuario.DESKTOP-P7MEQGK\AppData\Local\Temp\opencode\verify_poi_retry.py` (diagnostico previo: `diag_poi_cdp.py` y `diag_overpass_429.py`).
