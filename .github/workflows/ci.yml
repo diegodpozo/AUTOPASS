@@ -10,6 +10,31 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    # Postgres de servicio para el grupo `postgres` de pytest (R1/R2 y los constraints
+    # de la Fase 4 del plan de concurrencia). La imagen trae la extension `btree_gist`
+    # en `postgresql-contrib`, y los tests se crean su propio schema efimero, asi que no
+    # tocan nada mas que ese schema.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: autopass
+          POSTGRES_PASSWORD: autopass
+          POSTGRES_DB: autopass_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Los tests leen la base de `settings.DATABASE_URL`. NO se pone aca a nivel de job:
+      # solo el paso del grupo `postgres` la define (mas abajo), para que la suite normal
+      # siga corriendo igual que siempre. Sin la variable, el grupo `postgres` se salta solo.
+      PYTHONPATH: .
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -39,3 +64,17 @@ jobs:
           PYTHONPATH: .
         run: |
           python -m pytest tests/ --verbose --cov=services --cov=routes --cov=repositories --cov=alpr --cov=core --cov-report=term-missing --cov-fail-under=82
+
+      # Grupo `postgres`: R1/R2 y los constraints de la Fase 4. Se corre APARTE y al final,
+      # porque el `init_db.py` de arriba dejo el schema `public` con las tablas del modelo;
+      # estos tests usan un schema efimero propio y no dependen de ese estado.
+      - name: Run Postgres Concurrency Tests
+        env:
+          PYTHONPATH: .
+          # Apunta al servicio Postgres de arriba.
+          DATABASE_URL: postgresql://autopass:autopass@localhost:5432/autopass_test
+          # Si el servicio no responde, el paso FALLA en vez de saltear los tests en verde
+          # (sin esto, 15 skips darian CI verde sin haber corrido nada).
+          REQUIRE_POSTGRES: '1'
+        run: |
+          python -m pytest -m postgres tests/ --verbose

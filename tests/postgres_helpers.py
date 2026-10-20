@@ -15,6 +15,7 @@ Es la base comun de `test_concurrencia_reservas.py` (R1/R2) y
 `test_concurrencia_constraints_postgres.py` (Fase 4).
 """
 import importlib.util
+import os
 import pathlib
 import uuid
 
@@ -55,8 +56,13 @@ def _resolver_url() -> str | None:
 
 POSTGRES_URL = _resolver_url()
 
+# Con REQUIRE_POSTGRES=1 (lo usa el CI) un Postgres ausente NO es un skip: es un fallo.
+# De lo contrario el paso de CI daria verde con el grupo entero salteado, o sea los tests
+# de concurrencia no habrian corrido y nadie se enteraria.
+_REQUIERE_POSTGRES = os.getenv("REQUIRE_POSTGRES") == "1"
+
 pg_only = pytest.mark.skipif(
-    POSTGRES_URL is None,
+    POSTGRES_URL is None and not _REQUIERE_POSTGRES,
     reason="Requiere Postgres real (el lock advisory y el EXCLUDE no existen en SQLite).",
 )
 
@@ -77,10 +83,24 @@ def postgres_responde(url: str = None) -> bool:
 
 
 def solo_si_postgres_esta_vivo() -> None:
-    """Salta el test si no hay Postgres configurado o no responde."""
-    if POSTGRES_URL is None:
+    """Salta el test si no hay Postgres configurado o no responde.
+
+    Con `REQUIRE_POSTGRES=1` (que usa el CI) NO se salta: falla. Sin eso, un servicio
+    de Postgres caido en CI daria la suite en VERDE con todo el grupo salteado, o sea
+    los tests de concurrencia no habrian corrido y nadie se enteraria.
+    """
+    requerido = os.getenv("REQUIRE_POSTGRES") == "1"
+    url = _resolver_url()  # se re-resuelve ahora, no confia en el valor de import
+    if url is None:
+        if requerido:
+            pytest.fail(
+                "REQUIRE_POSTGRES=1 pero DATABASE_URL no es Postgres "
+                f"(valor actual: {settings.DATABASE_URL!r})"
+            )
         pytest.skip("Sin DATABASE_URL de Postgres")
-    if not postgres_responde():
+    if not postgres_responde(url):
+        if requerido:
+            pytest.fail(f"REQUIRE_POSTGRES=1 pero Postgres no responde ({url})")
         pytest.skip("Postgres no responde (¿sin red?)")
 
 

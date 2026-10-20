@@ -161,6 +161,58 @@ Las barras de progreso fueron removidas completamente (`progress-bar`, `progress
 4. **Video WebSocket**: Los frames se envían a `/v1/system/ws/video/{gate_id}` con token JWT como query param.
 5. **Virtual Time**: Para testing, usar los endpoints de virtual time (`/v1/admin/virtual-time/*`) en lugar de alterar el reloj del sistema.
 
+## Convenciones de Concurrencia (Secciones Críticas)
+
+> Explicación en lenguaje llano (sin código): `Info proyecto/BLOQUEO_TRANSACCIONAL_PARA_DUMMIES.md`.
+
+Regla de oro: **toda escritura que dependa de un `SELECT` anterior debe abrirse con
+`bloqueo_transaccional`**. Si leés un dato, decidis en base a él y después escribís, entre la
+lectura y la escritura hay una ventana en la que otro request puede cambiar el mundo: eso es
+una carrera *check-then-act*. El helper `core/db_lock.py` la cierra.
+
+```python
+from core.db_lock import bloqueo_transaccional, clave_aforo, refrescar
+
+with bloqueo_transaccional(db, clave_aforo(sucursal, tipo_vehiculo)):
+    disp = verificar_disponibilidad(...)   # se RE-evalúa DENTRO del lock
+    if not disp["disponible"]:
+        raise HTTPException(status_code=409, detail="...")
+    db.add(reserva); db.commit()
+```
+
+**Contrato del helper** (`bloqueo_transaccional(db, *claves)`):
+- Las claves se adquieren **ordenadas alfabéticamente** (anti-deadlock).
+- El lock vive **hasta el fin de la transacción** (commit/rollback); no se libera a mano.
+- Dentro del `with` hay que **(re)ejecutar las validaciones de decisión**: no reutilizar un
+  valor leído *antes* de entrar. Si el objeto ya estaba cargado en la sesión, usar
+  `refrescar(db, obj)` para releerlo bajo el lock.
+- Claves vacías se ignoran; sin claves válidas el bloque es no-op.
+- En **PostgreSQL** usa `pg_advisory_xact_lock` (a nivel de transacción, seguro con el pooler
+  de Neon). En **SQLite** (dev/tests) es un **no-op documentado**: los tests secuenciales no
+  cambian, pero por eso los tests de concurrencia real corren en Postgres (ver más abajo).
+- `LockTimeoutError` → `main.py` lo traduce a **HTTP 409** ("reintentá").
+
+**Claves canónicas** (no inventar strings sueltos): `clave_aforo(sucursal, tipo)` (R1),
+`clave_patente(patente_norm, sucursal)` (R2), `clave_usuario(user_id)` (R3),
+`clave_reserva(res_id)` (R3/R5).
+
+**Redes de seguridad en la base** (no reemplazan al lock; lo hacen redundante en lo que cubren):
+- **Fase 4** (migración `b1c2d3e4f5a6`, **solo Postgres**): un `EXCLUDE USING gist` impide dos
+  reservas vigentes de la misma patente solapadas en la misma sede, aunque la escritura esquive
+  el servicio. En SQLite no existe: ahí el guard de aplicación es la única defensa.
+- **Fase 5** (migración `e5f6a7b8c9d0`): `mercadopago_payments.payment_id` es `UNIQUE` (clave de
+  idempotencia de los webhooks de MP; los pagos sin id de MP guardan `NULL`, que no colisiona).
+- **Fase 1**: los ajustes de saldo/puntos usan un único `UPDATE ... RETURNING` con la condición
+  adentro (`repositories/user_repository.py`); nunca leer-y-después-escribir el saldo.
+
+**Tests de concurrencia**: los que necesitan Postgres real están marcados con
+`pytest.mark.postgres` y **deseleccionados por defecto** (`addopts = -m "not postgres"` en
+`pytest.ini`), para que la suite normal sea rápida y offline. Se corren aparte
+(`python -m pytest -m postgres`) y **en CI ya corren contra un servicio Postgres**. Usar el
+andamiaje compartido `tests/postgres_helpers.py` (schema efímero aislado) para no tocar datos.
+Si no hay Postgres, se **saltan** (skip); con `REQUIRE_POSTGRES=1` (lo usa el CI) en cambio
+**fallan**, para que un CI verde no oculte que los tests nunca corrieron.
+
 ---
 
 ## Pruebas (Tests)
@@ -168,7 +220,9 @@ Para correr las pruebas tras un cambio:
 ```bash
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-Tests disponibles en `tests/` (**756 pruebas en 56 archivos**; abajo se listan los 21 principales):
+Tests disponibles en `tests/` (**956 pruebas en 72 archivos**; abajo se listan los 21 principales).
+Los tests que necesitan Postgres real van marcados `postgres` y no entran en ese comando
+(ver "Convenciones de Concurrencia"): se corren con `-m postgres`.
 - `test_access_service.py`: Validación de placas, entrada/salida
 - `test_admin_reservations.py`: CRUD de reservas admin (búsqueda, creación, edición, confirmación de pago con método, simulación y reembolso de cancelación)
 - `test_alpr_aspect_ratio_filter.py`: Filtro de aspecto (área de placa)
@@ -228,3 +282,14 @@ Para mantener la integridad del sistema a futuro, todo nuevo desarrollo DEBE cum
 7. **Consistencia JS:**
    - No modificar `window.*` desde módulos ES6. Solo los scripts puente asignan al scope global.
    - Validar que los módulos pasen `node --check` antes de commitear.
+
+8. **Concurrencia (v9.34.99+):**
+   - Toda escritura que dependa de un `SELECT` previo DEBE envolverse en
+     `bloqueo_transaccional(db, ...)` (ver "Convenciones de Concurrencia"), y las validaciones de
+     decisión se **re-ejecutan dentro** del bloque (usar `refrescar` si el objeto ya estaba cargado).
+   - No inventar claves de lock: usar las canónicas de `core/db_lock.py` (`clave_aforo`,
+     `clave_patente`, `clave_usuario`, `clave_reserva`).
+   - No escribir saldo/puntos con read-then-write: usar los helpers atómicos de
+     `repositories/user_repository.py`.
+   - Los tests que necesitan Postgres real van marcados `@pytest.mark.postgres` y usan
+     `tests/postgres_helpers.py` (schema efímero); nunca tocar tablas reales.

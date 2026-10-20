@@ -2,9 +2,11 @@
 
 **Fecha:** 2026-09-29
 **Alcance:** backend FastAPI + ALPR + worker de fondo
-**Estado:** plan **en ejecución**. Fases 1, 2, 3, 4 y 5 implementadas y verificadas; queda la
-Fase 6 (hardening y cierre). Ver el estado puntual de cada fase en las secciones de abajo.
+**Estado:** plan **COMPLETO**. Fases 0 a 6 implementadas y verificadas. Ver el estado puntual de
+cada fase en las secciones de abajo.
 **Severidad global:** ALTA (afecta dinero y disponibilidad de plazas)
+**Versión sin tecnicismos:** `Info proyecto/BLOQUEO_TRANSACCIONAL_PARA_DUMMIES.md` explica el
+mismo plan en lenguaje llano (analogías, sin código), para defensa o para quien no programa.
 
 ---
 
@@ -438,12 +440,27 @@ acreditación; el índice único rechaza el duplicado a nivel de motor.
 
 ### Fase 6 — Hardening y cierre
 
-- `tests/test_concurrencia_reservas.py` pasa de forma determinista (grupo `postgres`) y queda en CI.
-- Suite completa sin regresiones (baseline actual: **941 passed, 15 deselected**; los 15 del grupo
-  `postgres` son R1/R2 (4) y los constraints de la Fase 4 (11)).
-- `check_consistencia_frontend` y `check_css_huerfano` siguen en verde.
-- Documentar en `Info proyecto/GUIA_DESARROLLO.md` el contrato de `bloqueo_transaccional` y la
-  regla: **toda escritura que dependa de un `SELECT` anterior debe abrir sección crítica**.
+> **Estado (20/10/2026): IMPLEMENTADA.** Cierre del plan. Los 4 puntos verificados con output real.
+
+- **Tests de concurrencia en CI**: el workflow (`.github/workflows/ci.yml`) suma un **servicio
+  Postgres 16** y un paso final que corre `pytest -m postgres tests/` con `DATABASE_URL` apuntando
+  a ese servicio. Antes el grupo `postgres` no corría en CI (sin Postgres, se deseleccionaba).
+  El paso define `DATABASE_URL` **solo ahí** (no a nivel de job) para no alterar la suite normal.
+- **El CI no puede dar verde sin correr los tests**: el paso setea `REQUIRE_POSTGRES=1`. Sin eso,
+  un servicio de Postgres caído (o una `DATABASE_URL` mal puesta) habría dado **15 skips y CI en
+  verde**, o sea los tests de concurrencia no habrían corrido y nadie se habría enterado —
+  justamente el problema que este punto venía a resolver. Con el flag, un Postgres ausente o
+  inalcanzable es un **fallo**. Localmente (sin el flag) sigue siendo un skip amable.
+- **Suite sin regresiones**: `941 passed, 15 deselected` (por defecto) y `15 passed` (grupo
+  `postgres`), corridos tras cerrar las Fases 4 y 5.
+- **Guards en verde**: 11/11. En particular `check_consistencia_frontend` (132 rutas) y
+  `check_css_huerfano` (0 huérfanas), los dos que nombraba este punto.
+- **Contrato de bloqueo documentado**: `Info proyecto/GUIA_DESARROLLO.md` suma la sección
+  **"Convenciones de Concurrencia (Secciones Críticas)"** (contrato de `bloqueo_transaccional`,
+  claves canónicas, redes de seguridad de las Fases 1/4/5, cómo correr el grupo `postgres`) y un
+  **mandato arquitectónico 8**: toda escritura que dependa de un `SELECT` previo debe abrir
+  sección crítica. También se corrigió el conteo de tests del documento (**956 pruebas en 72
+  archivos**, estaba en 756/56).
 
 ---
 
@@ -462,7 +479,7 @@ Fase 4  constraints de BD (Alembic)           <- HECHA: aplicada en Neon sin con
    |
 Fase 5  idempotencia de pagos + 409          <- depende de 1 y 2
    |
-Fase 6  hardening, docs, cierre
+Fase 6  hardening, docs, cierre            <- HECHA: tests en CI + contrato documentado
 ```
 
 La Fase 1 puede arrancar en paralelo con la Fase 0 porque no depende del lock.
