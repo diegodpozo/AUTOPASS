@@ -1,5 +1,10 @@
 #  Contexto del Sistema: AUTOPASS
 
+> **Este es el documento arquitectónico VIGENTE.** Si buscás "cómo está armado el sistema",
+> leé este. `Info proyecto/ARQUITECTURA_DETALLADA.md` cubre el mismo terreno con otro énfasis
+> (árbol de directorios y flujo de datos paso a paso) y puede estar desfasado: ante cualquier
+> diferencia, vale lo que dice acá.
+
 Este documento describe la arquitectura de comunicación y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.1+).
 
 ## 📐 Arquitectura del Ecosistema

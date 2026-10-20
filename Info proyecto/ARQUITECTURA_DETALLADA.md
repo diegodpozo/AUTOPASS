@@ -1,5 +1,9 @@
 # Arquitectura del Sistema: AUTOPASS
 
+> **Documento secundario.** El resumen arquitectónico vigente es
+> `Info proyecto/CONTEXTO_SISTEMA.md`. Este archivo se conserva por su árbol de directorios y su
+> recorrido del flujo de datos; si algo no coincide con `CONTEXTO_SISTEMA.md`, vale ese.
+
 Este documento detalla la estructura técnica y el flujo de datos del ecosistema de estacionamiento inteligente con **Arquitectura Limpia** (v9.14.1+).
 
 ---

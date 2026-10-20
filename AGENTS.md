@@ -4,6 +4,9 @@
 
 - Al iniciar una sesión, revisar `PENDIENTES_PROXIMA_SESION.md` (raíz del repo): contiene el
   estado de la última tanda y los puntos abiertos con las decisiones del usuario.
+- El catálogo de toda la documentación (qué hay, para qué sirve y cuál es el vigente cuando dos
+  cubren lo mismo) está en `INDICE_DOCUMENTACION.md` (raíz). Al agregar o borrar documentos,
+  actualizarlo en la misma tanda.
 
 ## Estilo de código
 

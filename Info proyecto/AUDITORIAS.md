@@ -1,8 +1,20 @@
 ﻿# Auditorías de AUTOPASS — Documento Consolidado
 
+> **Conteos de esta ronda (histórico).** Los números de tests y cobertura que aparecen abajo
+> (756/733/702, etc.) son los de la ronda A1–A9. El estado actual es **956 tests en 72
+> archivos**; ver `INDICE_DOCUMENTACION.md` (raíz) para las cifras vigentes.
+
 > **Estado global: A1–A9 CERRADAS** con remediación aplicada y verificada (última ronda 2026-09-30, suite **756 passed**, cobertura **93%**). Auditorías transversales resueltas (modularización, colores/fuentes, tamaños/proporciones, nomenclatura, componentes, UX/UI). Propuestas CSS: AC-1, AC-2 y AC-4 cerradas; **AC-5 CERRADA (Lotes 1, 2, 7 y 9: 0 clases huérfanas, 0 keyframes duplicados, −15 tokens, −1247 líneas netas)**; **AC-3 CERRADA (2026-09-29: `viewport-fit=cover` + 4 tokens `--safe-area-*` en 11 superficies, `overscroll-behavior-y: contain` en 3 contenedores; touch targets ≥44px descartado por no aplicar)**. **No queda ninguna auditoría CSS abierta de esta tanda.** Pendiente explícito único backend: mediciones con volumen real de Neon (no disponible).
 
 Este documento reemplaza a los informes individuales `AUDITORIA_*.md`, `PLAN_AUDITORIAS.md` y `PROPUESTA_AUDITORIAS_CSS.md` (eliminados 2026-09-27, v9.34.50). Reúne lo más importante de cada auditoría: hallazgos, remediación, verificación y herramientas reutilizables.
+
+> **Auditorías posteriores (NO incluidas en este consolidado).** Esta ronda cierra A1–A9 y las
+> transversales. Después vinieron tres rondas nuevas, cada una en su propio informe:
+> `Info proyecto/AUDITORIA_RBAC.md` (autorización / IDOR, R1–R10),
+> `Info proyecto/AUDITORIA_VALIDACIONES.md` (validaciones de entrada, V1–V12) y
+> `AUDITORIA_DB_NEON.md` (integridad de la base Neon/Postgres). Ese texto de "reemplaza a los
+> `AUDITORIA_*.md`" vale **solo** para la ronda A1–A9 de acá, no para esas tres.
+> El catálogo completo de documentación está en `INDICE_DOCUMENTACION.md` (raíz).
 
 ---
 

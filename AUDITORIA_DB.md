@@ -1,5 +1,9 @@
 # AUDITORIA DE BASE DE DATOS (SQLite seed actual)
 
+> **Documento histórico (ronda SQLite, 2026-08-27).** En ese momento la base de uso era el
+> SQLite *seed*; hoy el sistema corre sobre **Neon/Postgres**. La auditoría vigente es
+> `AUDITORIA_DB_NEON.md`. Se conserva este archivo como registro de la ronda original.
+
 ## Resumen
 - Duplicados usuarios (email/dni): 0
 - Duplicados vehículos (user+patente normalizada): 0

@@ -215,7 +215,7 @@ def test_heartbeat_normaliza_y_registra(client, monkeypatch):
 def test_heartbeat_rechaza_nodo_no_autorizado(client, monkeypatch):
     """Sin node_secret (y host no loopback) el heartbeat debe rechazarse.
 
-    Es el cierre del bug 2.4 de BUGS A RESOLVER.md: el endpoint era publico, asi
+    Es el cierre del bug 2.4 de BUGS_A_RESOLVER.md: el endpoint era publico, asi
     que cualquiera podia escribir en ALPR_HEARTBEATS con un gate_id arbitrario,
     simular un nodo caido como ONLINE y hacer crecer el diccionario sin limite.
     """

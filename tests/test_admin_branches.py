@@ -322,7 +322,7 @@ def test_toggle_branch_inexistente_404(client):
     assert tc.post(f"{BRANCHES_URL}/999/toggle").status_code == 404
 
 # ---------------------------------------------------------------------------
-# AISLAMIENTO POR SEDE DE LOS ENDPOINTS DE PISOS (bug 2.3 de BUGS A RESOLVER.md)
+# AISLAMIENTO POR SEDE DE LOS ENDPOINTS DE PISOS (bug 2.3 de BUGS_A_RESOLVER.md)
 # ---------------------------------------------------------------------------
 
 def test_add_floor_de_otra_sede_403(client):
