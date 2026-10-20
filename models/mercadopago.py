@@ -22,7 +22,13 @@ class MercadoPagoPayment(Base):
 
     external_reference = Column(String, unique=True, index=True, nullable=True)
     preference_id = Column(String, nullable=True)
-    payment_id = Column(String, nullable=True)
+    # CLAVE DE IDEMPOTENCIA (FASE 5): Mercado Pago reintenta los webhooks, por lo que
+    # el mismo pago puede llegar varias veces. `payment_id` es el id del pago en MP y
+    # UNICO a nivel de base: un segundo intento de aplicar el mismo pago choca con el
+    # indice en vez de acreditar dos veces. "Sin id de MP todavia" se guarda como NULL
+    # (no ''): varios NULL NO colisionan en un indice unico, asi que los pagos
+    # pendientes conviven sin romper.
+    payment_id = Column(String, nullable=True, unique=True, index=True)
 
     estado = Column(String, default="PENDIENTE")   # PENDIENTE | APROBADO | FALLIDO | CANCELADO
     mp_status = Column(String, nullable=True)      # status crudo reportado por Mercado Pago

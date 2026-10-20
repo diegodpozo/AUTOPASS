@@ -37,72 +37,38 @@ Estructura de cada carrera:
 """
 import datetime
 import threading
-import uuid
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 
-from core.config import settings
 from core.database import Base
 from models import ParkingAforo, ParkingBranch, Reservation, Settings, User, Vehicle
 from models.enums import PaymentStatus, ReservationStatus, VehicleType
 from schemas import UserReservationCreate
 from services import availability
 from services.reservation_service import ReservationService
+from tests.postgres_helpers import (
+    borrar_schema_efimero,
+    crear_schema_efimero,
+    pg_only,
+    solo_si_postgres_esta_vivo,
+)
 
 # TODO el modulo pertenece al grupo "postgres" (ver pytest.ini).
 pytestmark = pytest.mark.postgres
 
-POSTGRES_URL = None
-if settings.DATABASE_URL and settings.DATABASE_URL.startswith("postgresql"):
-    POSTGRES_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
-    if "postgresql+psycopg://" not in POSTGRES_URL:
-        POSTGRES_URL = None
-
-pg_only = pytest.mark.skipif(
-    POSTGRES_URL is None,
-    reason="R1/R2 requieren Postgres (el lock es no-op en SQLite). Sin DATABASE_URL de Postgres.",
-)
-
-
-def _probe(url):
-    """True si la base de Postgres responde (evita fallar la suite sin red)."""
-    try:
-        eng = create_engine(url, connect_args={"connect_timeout": 8})
-        with eng.connect() as c:
-            c.execute(text("select 1"))
-        eng.dispose()
-        return True
-    except Exception:
-        return False
-
 
 @pytest.fixture(scope="module")
 def pg_engines():
-    if POSTGRES_URL is None:
-        pytest.skip("Sin DATABASE_URL de Postgres")
-    if not _probe(POSTGRES_URL):
-        pytest.skip("Postgres no responde (¿sin red?)")
-
-    schema = f"rk_test_{uuid.uuid4().hex[:12]}"
-    admin = create_engine(POSTGRES_URL, connect_args={"connect_timeout": 10})
-    with admin.begin() as c:
-        c.execute(text(f'CREATE SCHEMA "{schema}"'))
-
-    # search_path por conexion: TODO lo que haga este engine vive en el schema efimero.
-    eng = create_engine(
-        POSTGRES_URL,
-        connect_args={"connect_timeout": 10, "options": f"-csearch_path={schema}"},
-    )
+    solo_si_postgres_esta_vivo()
+    eng, admin, schema = crear_schema_efimero("rk_test")
     Base.metadata.create_all(bind=eng)
     try:
         yield eng
     finally:
         eng.dispose()
-        with admin.begin() as c:
-            c.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
-        admin.dispose()
+        borrar_schema_efimero(admin, schema)
 
 
 @pytest.fixture

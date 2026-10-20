@@ -294,7 +294,9 @@ def _aplicar_pago(db: Session, pago: "models.MercadoPagoPayment", payment_id: st
 
         pago.estado = _APROBADO
         pago.mp_status = "approved"
-        pago.payment_id = str(payment_id or "")
+        # CLAVE DE IDEMPOTENCIA: si no hay id de MP se guarda NULL (varios NULL no
+        # colisionan en el indice unico); nunca '' porque dos '' chocarian.
+        pago.payment_id = str(payment_id) if payment_id else None
         pago.fecha_confirmacion = datetime.datetime.now().isoformat()
         # El commit cierra la seccion critica: a partir de ahi el lock queda libre.
         db.commit()

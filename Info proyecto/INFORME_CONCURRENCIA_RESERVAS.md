@@ -2,7 +2,8 @@
 
 **Fecha:** 2026-09-29
 **Alcance:** backend FastAPI + ALPR + worker de fondo
-**Estado:** informe y plan propuesto. **NINGÚN cambio de código aplicado todavía.**
+**Estado:** plan **en ejecución**. Fases 1, 2, 3, 4 y 5 implementadas y verificadas; queda la
+Fase 6 (hardening y cierre). Ver el estado puntual de cada fase en las secciones de abajo.
 **Severidad global:** ALTA (afecta dinero y disponibilidad de plazas)
 
 ---
@@ -363,24 +364,63 @@ lock se adquiriera más tarde habría que repetir `verificar_disponibilidad` den
 
 ### Fase 4 — Constraints de BD (red de seguridad, Postgres)
 
+> **Estado (20/10/2026): IMPLEMENTADA.** Red de seguridad a nivel de **motor** contra R2
+> (dos reservas vigentes de la misma patente solapadas en la misma sede). Migración
+> `b1c2d3e4f5a6` (`EXCLUDE USING gist`), **solo Postgres**; en SQLite el guard de aplicación
+> de la Fase 2 sigue siendo la única defensa. Test en
+> `tests/test_concurrencia_constraints_postgres.py` (grupo `postgres`), que **importa el DDL
+> real de la migración** (fuente única, no una copia). Verificado contra Neon: `btree_gist`
+> instalada, constraint registrado como tipo `x`, un `INSERT` manual solapado falla con
+> `IntegrityError` y un rango contiguo entra. Suite por defecto: **941 passed, 15 deselected**
+> (los 11 nuevos son del grupo `postgres`); guards 11/11.
+
 Última línea de defensa. No reemplaza el lock: lo hace redundante en los casos que cubre.
 
-- Migración Alembic nueva, **solo Postgres**:
-  - Extensión `btree_gist`.
-  - Columna `patente_norm` mantenida para poder indexar por patente normalizada, que es como
-    hoy filtra `get_overlap_by_patente`.
-  - `EXCLUDE USING gist (patente_norm WITH =, sucursal_nombre WITH =, tsrange(fecha_inicio, fecha_fin) WITH &&) WHERE (estado_reserva IN ('PENDIENTE','ACTIVA') AND estado_pago IN ('PENDIENTE','PAGADO'))`
+- Migración Alembic `b1c2d3e4f5a6`, **solo Postgres**:
+  - `CREATE EXTENSION IF NOT EXISTS btree_gist`.
+  - `EXCLUDE USING gist ((upper(replace(patente,' ',''))) WITH =, sucursal_id WITH =,`
+    `tsrange(fecha_inicio, fecha_fin, '[)') WITH &&)`
+    `WHERE (estado_reserva IN ('Pendiente','Activa') AND estado_pago IN ('Pendiente','Pagado')`
+    `AND fecha_inicio IS NOT NULL AND fecha_fin IS NOT NULL)`.
   - Esto cierra **R2 por completo a nivel de motor**, sin depender de la lógica de aplicación.
 - **R1 no se puede expresar como constraint**: "no más de N reservas solapadas" no es
   declarable en SQL estándar. Sigue dependiendo del lock `aforo:`.
-- `models/reservation.py`: declarar el constraint en el modelo para que `create_all` lo vea.
 - En SQLite el constraint no se crea y el guard de aplicación queda como única defensa.
-  Documentarlo explícitamente.
+
+**Desvíos respecto del borrador de esta fase** (todos verificados contra la base real antes de
+decidir; el borrador no era aplicable tal cual):
+
+1. **Sin columna `patente_norm`.** El borrador proponía agregar y mantener una columna
+   normalizada. Se usa directo la **expresión** `upper(replace(patente,' ',''))`, que es
+   exactamente lo que evalúa `get_overlap_by_patente`. Así no hay columna nueva, ni backfill
+   de las 560 reservas, ni un write-path que mantener sincronizado (si alguien insertaba sin
+   setearla, el constraint no protegía).
+2. **Sobre `sucursal_id`, no `sucursal_nombre`.** El nombre de la sede no es una columna: vive
+   en `parking_branches` y se resuelve por un hybrid. La columna real es `sucursal_id`.
+3. **Estados con los valores reales del enum** (`'Pendiente'`, `'Activa'`, `'Pagado'`,
+   capitalizados). El borrador usaba mayúsculas, que no matchean ninguna fila y habrían creado
+   un constraint **inútil** (peor que nada: daría falsa sensación de protección).
+4. **El modelo NO declara el constraint.** El borrador pedía declararlo en
+   `models/reservation.py` para que `create_all` lo viera, pero `create_all` en SQLite falla al
+   intentar emitir un `EXCLUDE` (`UnsupportedCompilationError`), lo que rompería la suite
+   entera (SQLite es la base de todos los tests). Por eso el constraint vive **solo** en la
+   migración.
 
 **Criterio de salida:** un `INSERT` manual que solape una patente vigente falla con
-`IntegrityError` aunque se esquive el servicio.
+`IntegrityError` aunque se esquive el servicio. ✅ Verificado en Neon.
 
 ### Fase 5 — Idempotencia de pagos y manejo de errores
+
+> **Estado (20/10/2026): IMPLEMENTADA.** Clave de idempotencia `payment_id` con
+> `unique=True` en `models/mercadopago.py` + migración `e5f6a7b8c9d0` (normaliza los `''`
+> previos a `NULL` y crea `ix_mercadopago_payments_payment_id`; `sync_schema` la aplica sola
+> al arrancar). `_aplicar_pago` guarda `NULL` —no `''`— cuando MP no devuelve id, para que los
+> pendientes no colisionen entre sí. Handler global `IntegrityError → HTTP 409` en `main.py`
+> (mismo patrón que `LockTimeoutError`) y rollback explícito en `get_db`. La guarda
+> `if pago.aplicado` (que ya era read-then-write) quedó **doble**: se re-chequea `estado` bajo
+> el lock en `_aplicar_pago` (Fase 2). Tests: `tests/test_concurrencia_idempotencia_pagos.py`.
+> Suite: **941 passed, 4 deselected**. Verificado además contra Postgres real (Neon): el índice
+> único rechaza duplicados con `IntegrityError` y varios `NULL` conviven.
 
 - `IntegrityError` → HTTP 409 con mensaje de negocio, con `db.rollback()` limpio. Envolver las
   mutaciones de los puntos 1-6 de la Fase 2.
@@ -392,13 +432,15 @@ lock se adquiriera más tarde habría que repetir `verificar_disponibilidad` den
   para que deje de ser un read-then-write.
 
 **Criterio de salida:** dos entregas del mismo webhook producen un solo cobro y una sola
-acreditación de puntos.
+acreditación de puntos. **Cumplido** (20/10/2026): `test_dos_entregas_mismo_webhook_un_solo_cobro`
+y `test_webhook_repetido_via_endpoint_no_duplica` verifican un único `PointsLog` y una sola
+acreditación; el índice único rechaza el duplicado a nivel de motor.
 
 ### Fase 6 — Hardening y cierre
 
 - `tests/test_concurrencia_reservas.py` pasa de forma determinista (grupo `postgres`) y queda en CI.
-- Suite completa sin regresiones (baseline actual: **935 passed, 4 deselected**; los 4 del grupo
-  `postgres` son los de R1/R2).
+- Suite completa sin regresiones (baseline actual: **941 passed, 15 deselected**; los 15 del grupo
+  `postgres` son R1/R2 (4) y los constraints de la Fase 4 (11)).
 - `check_consistencia_frontend` y `check_css_huerfano` siguen en verde.
 - Documentar en `Info proyecto/GUIA_DESARROLLO.md` el contrato de `bloqueo_transaccional` y la
   regla: **toda escritura que dependa de un `SELECT` anterior debe abrir sección crítica**.
@@ -416,7 +458,7 @@ Fase 2  helper de bloqueo + 6 puntos entrada <- núcleo, cierra R1 y R2
    |
 Fase 3  invalidación de cache                 <- depende de 2
    |
-Fase 4  constraints de BD (Alembic)           <- ventana de mantenimiento
+Fase 4  constraints de BD (Alembic)           <- HECHA: aplicada en Neon sin conflicto
    |
 Fase 5  idempotencia de pagos + 409          <- depende de 1 y 2
    |
@@ -426,6 +468,11 @@ Fase 6  hardening, docs, cierre
 La Fase 1 puede arrancar en paralelo con la Fase 0 porque no depende del lock.
 Las Fases 2, 3 y 5 deben ir juntas: aplicar el lock sin idempotencia deja R3 a medias, y
 aplicar idempotencia sin lock no serializa las transiciones de estado.
+
+> **Nota (20/10/2026):** la Fase 4 se aplicó sobre Neon (dev/test) después de verificar que las
+> 560 reservas existentes **no tenían ningún solapamiento**, así que la migración aplicó limpia,
+> sin ventana de mantenimiento. La migración es **reversible** (`downgrade` borra el constraint)
+> y no borra `btree_gist` (puede usarla otra cosa).
 
 ---
 

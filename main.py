@@ -46,6 +46,25 @@ async def lock_timeout_handler(request, exc):
         content={"detail": "La operación está siendo procesada por otro proceso. Reintentá en unos segundos."},
     )
 
+
+# CONCURRENCIA (FASE 5): traduccion unica IntegrityError -> HTTP 409 con la sesion limpia.
+# Un choque de unicidad (doble webhook de MP con el mismo payment_id, reserva duplicada que
+# choque contra el constraint de la Fase 4, etc.) significa "esa operacion ya se hizo": no es
+# un error 500 sino un conflicto de negocio que se resuelve reintentando. El rollback deja la
+# sesion usable para que el handler de la request no falle al cerrarla.
+from sqlalchemy.exc import IntegrityError
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request, exc):
+    """HTTP 409 ante un choque de unicidad/integridad, con db.rollback() limpio."""
+    logger.warning(f"IntegrityError en {request.url.path}: {exc.orig if hasattr(exc, 'orig') else exc}")
+    return JSONResponse(
+        status_code=409,
+        content={"detail": "La operación ya fue procesada o entra en conflicto con otra existente. "
+                           "Actualizá la pantalla y reintentá."},
+    )
+
 # --- GUARD DE SEGURIDAD: SECRET_KEY DEMO (SOLO FALLA EN PRODUCCION) ---
 if settings.ENVIRONMENT == "production" and settings.SECRET_KEY == "tu_super_secreto_para_produccion":
     raise RuntimeError(

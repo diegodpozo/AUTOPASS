@@ -31,10 +31,18 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
-    """DEPENDENCIA PARA INYECTAR LA SESION DE DB EN LOS ENDPOINTS DE FASTAPI."""
+    """DEPENDENCIA PARA INYECTAR LA SESION DE DB EN LOS ENDPOINTS DE FASTAPI.
+
+    Si el endpoint termina con excepcion (p.ej. un IntegrityError que el handler
+    global traduce a 409), se hace rollback explicito para devolver la sesion al
+    pool en estado limpio en vez de dejarla con una transaccion abortada.
+    """
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
