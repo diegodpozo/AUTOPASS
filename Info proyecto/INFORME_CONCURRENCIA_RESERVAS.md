@@ -235,11 +235,20 @@ escritura sea agregar una línea, no repetir lógica.
 
 ### Fase 0 — Test de reproducción (RED)
 
-> **Estado (19/10/2026): R3 IMPLEMENTADA; R1/R2 pendientes.** Los tests de R3
-> (`tests/test_concurrencia_saldo_puntos.py`, SQLite de archivo con WAL y `busy_timeout`)
-> están escritos y verificados en **RED** contra `95aca58` (3 fallos deterministas); quedan
-> en verde con la Fase 1. Los de R1/R2 se escriben junto con la Fase 3: hasta que la cache
-> de disponibilidad no se invalide, fallan (y son la prueba de ese arreglo).
+> **Estado (20/10/2026): R3 IMPLEMENTADA; R1/R2 TESTEADAS EN POSTGRES (grupo `postgres`).** Los
+> tests de R3 (`tests/test_concurrencia_saldo_puntos.py`, SQLite de archivo con WAL y
+> `busy_timeout`) están escritos y verificados en **RED** contra `95aca58` (3 fallos
+> deterministas); quedan en verde con la Fase 1. La prueba real de R1/R2 vive en
+> `tests/test_concurrencia_reservas.py`: corre 2 hilos sobre un **schema efímero de Postgres**
+> (Neon) porque en SQLite el lock es no-op y no se puede demostrar la serialización. Cada
+> carrera trae su CONTROL sin lock (los dos hilos insertan) y su GREEN con lock (uno solo
+> gana); se salta sola sin red.
+> Ese módulo está marcado como grupo **`postgres`** y **NO corre en la suite por defecto**
+> (`pytest.ini`: `addopts = -m "not postgres"`), para que la suite normal sea rápida y offline.
+> Para correrlo: `venv\Scripts\python.exe -m pytest -m postgres`.
+> La parte del cache de disponibilidad (el selector seguía ofreciendo un rango recién
+> ocupado) está en `tests/test_concurrencia_cache_disponibilidad.py` y
+> `tests/test_concurrencia_cache_flujos.py` (Fase 3) y sí corre por defecto.
 
 Antes de tocar producción, tests que **demuestren** que las carreras existen. Sin esto, el fix
 no es verificable y puede revertirse en silencio.
@@ -279,10 +288,11 @@ procesos de negocio. Los tests de Fase 0 de R3 pasan.
 
 ### Fase 2 — Helper único de bloqueo transaccional (núcleo de la solución)
 
-> **Estado (19/10/2026): IMPLEMENTADA** en `c408507` (código). `core/db_lock.py` con
-> `bloqueo_transaccional` y `refrescar`, timeout
-> configurable (`LOCK_TIMEOUT_SECONDS`) y handler HTTP 409; aplicado en los 6 puntos de
-> entrada críticos.
+> **Estado (20/10/2026): IMPLEMENTADA y VERIFICADA** en `c408507` (código). `core/db_lock.py`
+> con `bloqueo_transaccional` y `refrescar`, timeout configurable (`LOCK_TIMEOUT_SECONDS`) y
+> handler HTTP 409; aplicado en los 6 puntos de entrada críticos. Los tests de R1/R2
+> (`tests/test_concurrencia_reservas.py`) demuestran en un Postgres real que el advisory lock
+> serializa: sin lock los dos hilos sobrevenden / duplican patente; con lock gana uno solo.
 
 Nuevo módulo `core/db_lock.py`:
 
@@ -335,6 +345,14 @@ lock se adquiriera más tarde habría que repetir `verificar_disponibilidad` den
 
 ### Fase 3 — Invalidación del cache de disponibilidad
 
+> **Estado (20/10/2026): IMPLEMENTADA.** Helper `invalidar_cache_disponibilidad(sucursal=None)`
+> en `services/availability.py` (invalidación por sucursal usando la posición 1 de la clave;
+> `None` vacía el cache completo). Invocado **después del commit** en
+> `create_user_reservation` y `modify_user_reservation` (`services/reservation_service.py`) y
+> en la cancelación (`services/payments.py` → `cancel_reservation`). Tests:
+> `tests/test_concurrencia_cache_disponibilidad.py` (helper, 5 casos) y
+> `tests/test_concurrencia_cache_flujos.py` (los 3 flujos reales). Suite: **935 passed**.
+
 - `services/availability.py`: helper `invalidar_cache_disponibilidad(sucursal=None)`.
 - Invocar desde `create_user_reservation`, `modify_user_reservation` y la cancelación,
   **después** del `commit`. Invalidar antes no sirve: la transacción podría hacer rollback.
@@ -378,8 +396,9 @@ acreditación de puntos.
 
 ### Fase 6 — Hardening y cierre
 
-- `tests/test_concurrencia_reservas.py` pasa de forma determinista y queda en CI.
-- Suite completa sin regresiones (baseline actual: **707 passed**).
+- `tests/test_concurrencia_reservas.py` pasa de forma determinista (grupo `postgres`) y queda en CI.
+- Suite completa sin regresiones (baseline actual: **935 passed, 4 deselected**; los 4 del grupo
+  `postgres` son los de R1/R2).
 - `check_consistencia_frontend` y `check_css_huerfano` siguen en verde.
 - Documentar en `Info proyecto/GUIA_DESARROLLO.md` el contrato de `bloqueo_transaccional` y la
   regla: **toda escritura que dependa de un `SELECT` anterior debe abrir sección crítica**.

@@ -73,6 +73,32 @@ def _get_cached_availability(key: tuple, generator):
     return resultado
 
 
+def invalidar_cache_disponibilidad(sucursal: str = None) -> None:
+    """VACIA EL CACHE DE DISPONIBILIDAD (FASE 3): TODA ESCRITURA QUE CAMBIE LA OCUPACION
+    DE UNA SEDE DEBE LLAMARLO DESPUES DEL COMMIT.
+
+    POR QUE DESPUES DEL COMMIT: el cache se llena con lo que hay en la base; invalidarlo
+    antes de confirmar la transaccion no sirve, porque una consulta concurrente podria
+    repoblarlo con el estado viejo y, si la transaccion hace rollback, quedaria un cache
+    que ya nadie puede justificar.
+
+    ALCANCE: TODAS LAS CLAVES guardan la sucursal en la posicion 1 (ver `cache_key` de
+    `obtener_fechas_deshabilitadas` y `obtener_horas_deshabilitadas`), asi que con
+    `sucursal` se invalidan solo las entradas de esa sede; con `sucursal=None` (caller
+    que no conoce la sede) se vacia el cache completo.
+
+    LIMITACION (importante): este cache vive en MEMORIA DEL PROCESO. Hoy hay un unico
+    worker, pero si uvicorn se escala a mas de uno la invalidacion deja de ser global
+    --cada worker tiene su propia copia-- y habria que moverlo a Redis o invalidar por
+    version en la base (ver `Info proyecto/INFORME_CONCURRENCIA_RESERVAS.md`, pregunta 3).
+    """
+    if sucursal is None:
+        _CACHE_AVAILABILITY.clear()
+        return
+    for key in [k for k in _CACHE_AVAILABILITY if len(k) > 1 and k[1] == sucursal]:
+        _CACHE_AVAILABILITY.pop(key, None)
+
+
 def _calcular_ocupacion_maxima_simultanea(reservas, f_inicio_str: str, f_fin_str: str) -> int:
     """CALCULA LA OCUPACIÓN MÁXIMA SIMULTÁNEA DE RESERVAS EN EL INTERVALO USANDO SWEEP-LINE ALGORITHM."""
     if not reservas:

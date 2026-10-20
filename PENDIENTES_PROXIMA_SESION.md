@@ -1,15 +1,24 @@
 ﻿# PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una proxima sesion.
-Ultima actualizacion: 19/10/2026
+Ultima actualizacion: 20/10/2026
 
 ## Sin commitear en este momento
 
-- Nada pendiente en el arbol de trabajo: la Fase 1 del plan de concurrencia (aritmetica atomica de saldo y puntos) quedo en `960e3a9` (codigo), `a9f3a5e` (tests) y un commit de docs con el informe y este archivo. La Fase 2 ya estaba en `c408507`, y la tanda multi-org del remoto (`2b7d0d6`, `51acaf1`, `ccc0328`, `d858a57`) quedo mergeada en el pull anterior.
-- Falta pushear: nada; el push del 19/10/2026 dejo la rama local al dia con `origin/main` (0 adelante / 0 atras, verificado con `git fetch` + `git rev-list --left-right --count origin/main...HEAD`).
+- **Fase 3 del plan de concurrencia (sin commitear)**: helper `invalidar_cache_disponibilidad(sucursal=None)` en `services/availability.py`, invocado despues del commit en `create_user_reservation`, `modify_user_reservation` (`services/reservation_service.py`) y `cancel_reservation` (`services/payments.py`). Tests nuevos: `tests/test_concurrencia_cache_disponibilidad.py` (5 casos del helper), `tests/test_concurrencia_cache_flujos.py` (los 3 flujos reales) y `tests/test_concurrencia_reservas.py` (R1/R2 sobre un schema efimero de Postgres: sin lock los dos hilos sobrevenden/duplican patente, con lock gana uno solo; se salta sin red). Sin commitear por la regla de AGENTS.md (nada se commitea sin pedido expreso).
+- La Fase 1 del plan de concurrencia (aritmetica atomica de saldo y puntos) quedo en `960e3a9` (codigo), `a9f3a5e` (tests) y un commit de docs con el informe y este archivo. La Fase 2 ya estaba en `c408507`, y la tanda multi-org del remoto (`2b7d0d6`, `51acaf1`, `ccc0328`, `d858a57`) quedo mergeada en el pull anterior.
+- Falta pushear: la Fase 3 (pendiente de tu pedido expreso). Lo ya commiteado esta al dia con `origin/main` (0 adelante / 0 atras, verificado con `git fetch` + `git rev-list --left-right --count origin/main...HEAD`).
 - Archivos de v9.34.99: `static/js/modules/landing-map-pois.js`, `static/sw.js` y los 4 documentos.
 
 ## Cerrado recientemente
+
+### 20/10/2026 - Fase 3 del plan de concurrencia: invalidacion del cache de disponibilidad
+- **Que se hizo**: helper `invalidar_cache_disponibilidad(sucursal=None)` en `services/availability.py`. TODAS las claves del cache guardan la sucursal en la posicion 1, asi que con `sucursal` se invalidan solo las entradas de esa sede y con `None` se vacia el cache completo (callers que no conocen la sede). Se invoca **despues del commit** en `create_user_reservation` y `modify_user_reservation` (`services/reservation_service.py`) y en `cancel_reservation` (`services/payments.py`): invalidar antes no sirve porque la transaccion podria hacer rollback y una consulta concurrente podria repoblar con el estado viejo.
+- **Por que**: con el cache de 30 s, el selector de horarios seguia ofreciendo un rango recien ocupado (o marcando como ocupado uno recien liberado) hasta que expiraba el TTL. Es la parte de R1/R2 que cierra la Fase 3.
+- **Limite documentado en el codigo**: el cache vive en memoria del proceso; con mas de un worker uvicorn la invalidacion deja de ser global (habria que ir a Redis o invalidar por version en BD).
+- **Tests**: `tests/test_concurrencia_cache_disponibilidad.py` (RED->GREEN del helper: horas, fechas, invalidacion por sede, vaciado total, y un caso que documenta que sin invalidar el cache sirve el valor viejo), `tests/test_concurrencia_cache_flujos.py` (los 3 flujos reales de crear/modificar/cancelar invalidan la sede) y `tests/test_concurrencia_reservas.py` (R1/R2 con concurrencia real: schema efimero de Postgres + 2 hilos con barrera; cada carrera trae CONTROL sin lock y GREEN con lock; 5 corridas seguidas en verde). RED confirmado: la importacion fallaba al no existir la funcion.
+- **Grupo `postgres`**: `tests/test_concurrencia_reservas.py` quedo marcado con `pytest.mark.postgres` (module-level) y `pytest.ini` lo deselecciona por defecto (`addopts = -m "not postgres"`), asi que la suite normal es rapida y offline. Para correrlo: `venv\Scripts\python.exe -m pytest -m postgres` (el `-m` de la linea de comandos pisa el addopts).
+- **Verificacion**: suite por defecto `935 passed, 4 deselected, 9 warnings`; grupo `postgres` `4 passed` (y `4 skipped` si la base no responde); guards 11/11; imports OK; sin schemas de test remanentes en Neon. Actualizado `Info proyecto/INFORME_CONCURRENCIA_RESERVAS.md` (estado de Fase 0, Fase 2, Fase 3 y Fase 6).
 
 ### 19/10/2026 - Fase 1 del plan de concurrencia: aritmetica atomica de saldo y puntos
 - **Que se hizo**: todos los ajustes de saldo/puntos pasan por 6 helpers de `repositories/user_repository.py` que ejecutan UN solo `UPDATE ... RETURNING` (`sumar_saldo`, `descontar_saldo`, `fijar_saldo`, `sumar_puntos`, `canjear_puntos`, `descontar_puntos_tope_cero`). Las condiciones (saldo/puntos suficientes, tope cero, `COALESCE` para columnas en NULL) viajan dentro de la sentencia: 0 filas = no alcanzaba (se lee como `None`), asi que desaparece la ventana entre el chequeo y el descuento. Ningun helper hace commit: lo decide el flujo, tipicamente dentro del lock de la Fase 2.
@@ -64,7 +73,7 @@ Ultima actualizacion: 19/10/2026
 
 ## Pendientes abiertos
 
-- **Plan de concurrencia (continuacion)**: hechas la Fase 1 y la Fase 2. Sigue la **Fase 3** (invalidar la cache de disponibilidad despues del commit en crear/modificar/cancelar reserva; es la que cierra R1/R2 y con la que se escriben sus tests RED), despues la **Fase 5** (idempotencia de webhooks por `payment_id`) y la **Fase 4** (constraints en Postgres, requiere ventana de migracion). Referencia: `Info proyecto/INFORME_CONCURRENCIA_RESERVAS.md` (seccion 7).
+- **Plan de concurrencia (continuacion)**: hechas la Fase 1, la Fase 2 y la **Fase 3** (invalidacion del cache de disponibilidad post-commit). R1/R2 ya tienen su prueba real de concurrencia en Postgres (`tests/test_concurrencia_reservas.py`). Sigue la **Fase 5** (idempotencia de webhooks por `payment_id`) y la **Fase 4** (constraints en Postgres, requiere ventana de migracion). Referencia: `Info proyecto/INFORME_CONCURRENCIA_RESERVAS.md` (seccion 7).
 - **git push**: AL DIA. `c60e087` (v9.34.96), `b1288be` (v9.34.97), `e0449b3` (v9.34.98), `f652832` (v9.34.99) y la Fase 1 + Fase 2 del plan de concurrencia pusheados; `origin/main` al dia (verificado con fetch: ahead 0 / behind 0, sin marcadores de conflicto).
 - **Performance parte 2 (CSS/JS local por pagina)**: mover `landing-map.css` (12 KB), `chart-window.css`, `sidebar.css`, `tables.css`, `badges.css` y `action-menu.css` fuera de base.html hacia las paginas que las usan, mas el `style.css` legacy (3.8 KB). Ganancia modesta: ya estan en el precache del service worker, asi que no elimina descargas de red. Exige verificar los estilos computados antes/despues en navegador real.
 - **Nominatim (revision, no tocado)**: `dashboard-admin-branches-crud.js` y `dashboard-promotions.js` hacen fetch cross-origin a nominatim SIN reintento; mismo patron de riesgo (un error sin CORS llega como TypeError). Se puede reutilizar el patron de `esReintentable()`.
@@ -75,8 +84,8 @@ Ultima actualizacion: 19/10/2026
 ## Verificacion usada en esta tanda
 
 - Guards: 11/11 en verde (`Get-ChildItem _tools -Filter "check_*.py"` corridos con `.\venv\Scripts\python.exe`).
-- Suite: 927 passed, 9 warnings (ultima corrida, 19/10/2026, con la Fase 1 aplicada). Todos los tests y guards se corren con el python del venv; el python global del sistema no tiene alembic.
-- Fase 1 (19/10/2026): RED reproducido en un worktree temporal sobre `95aca58` (3 failed) y GREEN con el fix (3 passed); `py_compile` y `git diff --check` en 0.
+- Suite: `935 passed, 4 deselected, 9 warnings` por defecto (ultima corrida, 20/10/2026). Los 4 deselected son `tests/test_concurrencia_reservas.py` (grupo `postgres`); se corren aparte con `venv\Scripts\python.exe -m pytest -m postgres`. Todos los tests y guards se corren con el python del venv; el python global del sistema no tiene alembic.
+- Fase 3 + R1/R2 (20/10/2026): RED confirmado en el cache (import fallaba); `tests/test_concurrencia_reservas.py` corrido 5 veces seguidas en verde; camino de skip verificado (4 skipped con Postgres caido); sin schemas `rk_test_*` remanentes en Neon.
 - `node --check` en `static/js/modules/landing-map-pois.js` y `static/sw.js`.
 - Runtime: Edge headless + CDP contra el server local (puerto 8013). FASE A: 2 fallos CORS simulados -> 2 warns de reintento -> HTTP 200 -> 100 POIs y cache creada. FASE B: saturacion real de Overpass -> 1 fallo real 502-sin-CORS -> reintento -> 100 POIs, 0 errores OVERPASS. La senal de exito es la cache POI (los 5 `poi-marker` fijos son estadios).
 - Script: `C:\Users\usuario.DESKTOP-P7MEQGK\AppData\Local\Temp\opencode\verify_poi_retry.py` (diagnostico previo: `diag_poi_cdp.py` y `diag_overpass_429.py`).

@@ -22,6 +22,7 @@ from repositories.user_repository import UserRepository
 from repositories.vehicle_repository import VehicleRepository
 from services.availability import (
     _calcular_ocupacion_maxima_simultanea,
+    invalidar_cache_disponibilidad,
     obtener_fechas_deshabilitadas,
     obtener_horas_deshabilitadas,
     obtener_horas_deshabilitadas_con_reservas,
@@ -428,6 +429,9 @@ class ReservationService(ReservationPaymentsMixin):
             db.add(new_res)
             db.commit()
             db.refresh(new_res)
+        # FASE 3: recien con la transaccion confirmada el cache de disponibilidad queda
+        # obsoleto (la plaza nueva ya ocupa el rango); se invalida DESPUES del commit.
+        invalidar_cache_disponibilidad(new_res.sucursal_nombre)
         try:
             NotificationService.notify_occupancy_change(db, new_res.sucursal_nombre)
         except Exception as e:
@@ -535,6 +539,9 @@ class ReservationService(ReservationPaymentsMixin):
                 res.estado_pago = PaymentStatus.PENDIENTE
             res.monto_total = monto_nuevo
             db.commit()
+        # FASE 3: la modificacion pudo mover la reserva de rango o de sede, asi que el
+        # cache de disponibilidad de esa sede queda obsoleto: se invalida tras el commit.
+        invalidar_cache_disponibilidad(res.sucursal_nombre)
         try:
             from services.user_notification_service import UserNotificationService
             msg_detalle = f"Tu reserva #{res.id} ({res.patente}) en {res.sucursal_nombre} fue modificada exitosamente."

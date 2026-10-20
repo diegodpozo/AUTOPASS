@@ -16,6 +16,7 @@ from repositories.reservation_repository import ReservationRepository
 from repositories.user_repository import UserRepository
 
 logger = get_logger("Payments")
+from services.availability import invalidar_cache_disponibilidad
 from services.billing_service import BillingService
 from services.branch_service import BranchService
 from services.email_service import EmailService
@@ -397,6 +398,11 @@ class ReservationPaymentsMixin:
 
             # El commit cierra la seccion critica: a partir de ahi el lock queda libre.
             db.commit()
+
+        # FASE 3: la cancelacion libera la plaza, asi que el cache de disponibilidad de
+        # la sede queda obsoleto (seguiria ofreciendo el rango como ocupado): se invalida
+        # DESPUES del commit, ya con la transaccion confirmada.
+        invalidar_cache_disponibilidad(res.sucursal_nombre)
 
         msg = f"Reserva cancelada. Reembolso: ${monto_a_reembolsar}" if monto_a_reembolsar > 0 else "Reserva cancelada sin reembolso."
 
