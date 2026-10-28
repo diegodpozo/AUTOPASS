@@ -40,29 +40,30 @@
 }
 
 .input-premium-readonly {
-    background: rgba(255,255,255,0.03);
-    border: 1.5px solid #1a1a1a;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-light);
     color: #fff;
     padding: 12px 15px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: default;
     width: 100%;
     text-align: center;
-    height: 48px;
+    height: var(--control-height-md);
     box-sizing: border-box;
+    font-family: var(--font-mono);
 }
 
 .dynamic-row-premium {
     display: flex;
-    gap: 20px;
+    gap: 16px;
     justify-content: flex-start;
+    flex-wrap: wrap;
     animation: fadeIn 0.4s ease;
     width: 100%;
     max-width: 440px;
     box-sizing: border-box;
-    overflow: hidden; /* Ensure no content can push boundaries */
 }
 
 .reservation-footer-premium {
@@ -562,6 +563,52 @@
 @media (max-width: 640px) {
     .ticket-title-span {
         font-size: 1rem;
+    }
+    #reserva-form-container.open {
+        padding: 25px 20px 30px;
+    }
+    .dynamic-row-premium {
+        max-width: 100%;
+        gap: 8px;
+    }
+    #weekly-fields .form-group-premium,
+    #fortnight-fields .form-group-premium,
+    #month-fields .form-group-premium {
+        flex: 1 1 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+    .res-day-box {
+        height: 46px;
+    }
+    .input-premium-readonly {
+        height: 46px;
+    }
+    /* En móvil: oculta el ícono para que no tape lafecha y centra el texto */
+    #daily-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password),
+    #weekly-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password),
+    #fortnight-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password),
+    #month-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password) {
+        display: none !important;
+    }
+    #daily-fields .fecha-field-wrap input[type="text"],
+    #daily-fields .fecha-field-wrap .flatpickr-input,
+    #weekly-fields .fecha-field-wrap input[type="text"],
+    #weekly-fields .fecha-field-wrap .flatpickr-input,
+    #fortnight-fields .fecha-field-wrap input[type="text"],
+    #fortnight-fields .fecha-field-wrap .flatpickr-input,
+    #month-fields .fecha-field-wrap input[type="text"],
+    #month-fields .fecha-field-wrap .flatpickr-input {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        font-size: 0.78rem !important;
+        text-align: center !important;
+    }
+    #weekly-fields .input-premium-readonly,
+    #fortnight-fields .input-premium-readonly,
+    #month-fields .input-premium-readonly {
+        font-size: 0.78rem !important;
+        padding: 10px 10px !important;
     }
 }
 
@@ -1646,6 +1693,115 @@
 #quick-add-form-container { width: 100%; max-width: 450px; margin: 5px auto 0; }
 #dynamic-fields-premium { width: 100%; display: flex; justify-content: center; }
 #availability-status-container { width: 100%; margin-top: 15px; display: none; flex-direction: column; align-items: center; gap: 10px; }
+
+/* --------------------------------------------------------------------------
+   CAMPO "DÍA" DE LA RESERVA POR HORA
+   El label envuelve todo el control: el marco (.res-day-box) debe tener la
+   misma superficie que los selectores premium (borde, fondo, radio) y el
+   icono de calendario ir DENTRO, bien alineado.
+--------------------------------------------------------------------------- */
+.res-day-line {
+    width: 100%;
+    max-width: 320px;
+    cursor: pointer;
+}
+
+.res-day-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: var(--control-height-md);
+    padding: 0 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.res-day-line:hover .res-day-box {
+    border-color: rgba(223, 186, 107, 0.6);
+}
+
+.res-day-box:focus-within {
+    border-color: var(--dorado);
+    box-shadow: var(--shadow-15);
+    background: rgba(223, 186, 107, 0.05);
+}
+
+.res-day-line-icon {
+    color: var(--dorado);
+    opacity: 0.8;
+    font-size: 0.9rem;
+    flex: 0 0 auto;
+}
+
+.res-day-line-input {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 0;
+    cursor: pointer;
+}
+
+.res-day-line-input::placeholder {
+    color: var(--text-secondary);
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+/* Los campos "Finaliza" de semana/quincena/mes comparten el mismo ancho que
+   los campos "Inicia" para que no se corten ni queden mas angostos. */
+#weekly-fields .form-group-premium,
+#fortnight-fields .form-group-premium,
+#month-fields .form-group-premium {
+    flex: 1 1 48%;
+    min-width: 130px;
+    max-width: 48%;
+}
+
+/* Icono de calendario de los selectores de PERIODO (dia/semana/quincena/mes).
+   Se deja espacio al icono para que no tape el texto (solo en pantallas angostas). */
+@media (max-width: 640px) {
+    .fecha-field-wrap.input-with-icon {
+        align-items: center !important;
+        display: flex !important;
+    }
+    #daily-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password),
+    #weekly-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password),
+    #fortnight-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password),
+    #month-fields .fecha-field-wrap.input-with-icon > i:not(.toggle-password) {
+        display: none !important;
+    }
+    #daily-fields .fecha-field-wrap input[type="text"],
+    #daily-fields .fecha-field-wrap .flatpickr-input,
+    #weekly-fields .fecha-field-wrap input[type="text"],
+    #weekly-fields .fecha-field-wrap .flatpickr-input,
+    #fortnight-fields .fecha-field-wrap input[type="text"],
+    #fortnight-fields .fecha-field-wrap .flatpickr-input,
+    #month-fields .fecha-field-wrap input[type="text"],
+    #month-fields .fecha-field-wrap .flatpickr-input {
+        padding-left: 10px !important !important;
+        padding-right: 10px !important !important;
+        font-size: 0.78rem !important !important;
+        text-align: center !important !important;
+    }
+    #weekly-fields .input-premium-readonly,
+    #fortnight-fields .input-premium-readonly,
+    #month-fields .input-premium-readonly {
+        font-size: 0.78rem !important !important;
+        padding: 10px 10px !important !important;
+    }
+}
 
 /* Icono absoluto de selects simples (tipo de vehículo) */
 #quick-vehicle-type-icon {

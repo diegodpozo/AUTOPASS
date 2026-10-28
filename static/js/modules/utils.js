@@ -34,6 +34,35 @@ export function computeHourlyAmount(durationHours, hora, fraccion) {
     return Math.floor(n / 2) * hora + (n % 2) * fraccion;
 }
 
+/**
+ * DURACION EN PALABRAS PARA EL RESUMEN DE LA GRILLA HORARIA (INICIO -> FIN).
+ * Recibe las horas (ej: 1.5) y devuelve el texto legible: "30 minutos",
+ * "1 hora", "1 hora y media", "2 horas y media", "3 horas".
+ * Las medias horas se dicen "y media"; cualquier otro resto se expresa en minutos.
+ */
+export function formatDuracionLarga(horas) {
+    const totalMin = Math.round((Number(horas) || 0) * 60);
+    if (totalMin <= 0) return '';
+    if (totalMin < 60) return `${totalMin} minutos`;
+    const h = Math.floor(totalMin / 60);
+    const restoMin = totalMin % 60;
+    const horasTxt = h === 1 ? '1 hora' : `${h} horas`;
+    if (restoMin === 0) return horasTxt;
+    if (restoMin === 30) return `${horasTxt} y media`;
+    return `${horasTxt} y ${restoMin} minutos`;
+}
+
+/**
+ * PROLIJIDAD DE TEXTO PARA ETIQUETAS: PRIMERA LETRA EN MAYUSCULA, RESTO EN
+ * MINUSCULA. Se usa para la fecha del campo "DIA" ("jue 22 de octubre" ->
+ * "Jue 22 de octubre"), que Flatpickr entrega capitalizando cada palabra.
+ * Distinto de toTitle, que capitaliza TODAS las palabras.
+ */
+export function capitalizarFrase(s) {
+    if (!s || typeof s !== 'string') return '';
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 export const toTitle = s => {
     if (!s || typeof s !== 'string') return '---';
     return s.toLowerCase()

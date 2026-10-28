@@ -5,6 +5,7 @@
  */
 
 import api from './api.js';
+import { formatDuracionLarga } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import {
     getUserVehicles,
@@ -160,8 +161,10 @@ export async function updateHourlySlotsUI() {
     }
 
     if (!fecha) {
-        grid.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--dorado); padding:8px;"><i class="fas fa-calendar-day" style="margin-right:6px;"></i> Seleccioná la fecha en el calendario para consultar los horarios libres</div>';
-        grid.style.display = 'flex';
+        // Sin fecha elegida no se pinta la grilla ni se muestra aviso: el campo
+        // "DIA" ya indica que falta elegir el dia.
+        grid.style.display = 'none';
+        grid.innerHTML = '';
         badge.style.display = 'none';
         return;
     }
@@ -278,20 +281,23 @@ export async function updateHourlySlotsUI() {
 }
 
 function _hourlySelectionSummary() {
-    if (!slotRangeStart) {
-        return '<div class="hourly-range-summary hint">Elegí el <b>INICIO</b> (verde) y después el <b>FIN</b> (rojo) de tu estadía:</div>';
+    // SIEMPRE devolvemos el contenedor (aunque este vacio), para que el espacio
+    // del cartel quede reservado desde el arranque y, al elegir una hora, la
+    // grilla NO se corra hacia abajo. El alto vacio lo fija el CSS (min-height).
+    let inner = '';
+    if (slotRangeStart) {
+        let dur = '';
+        if (slotRangeEnd && _slotToMin(slotRangeEnd) > _slotToMin(slotRangeStart)) {
+            const horas = Math.round((_slotToMin(slotRangeEnd) - _slotToMin(slotRangeStart)) / 60 * 10) / 10;
+            dur = `<span class="hsum-dur">(${formatDuracionLarga(horas)})</span>`;
+        }
+        inner = `
+            <span class="hsum-chip hsum-start"><i class="fas fa-arrow-right-to-bracket"></i> INICIO ${slotRangeStart}</span>
+            <span class="hsum-arrow"><i class="fas fa-arrow-right"></i></span>
+            <span class="hsum-chip hsum-end"><i class="fas fa-arrow-right-from-bracket"></i> FIN ${slotRangeEnd || '— toca la hora de <b>fin</b>'}</span>
+            ${dur}`;
     }
-    let dur = '';
-    if (slotRangeEnd && _slotToMin(slotRangeEnd) > _slotToMin(slotRangeStart)) {
-        const horas = Math.round((_slotToMin(slotRangeEnd) - _slotToMin(slotRangeStart)) / 60 * 10) / 10;
-        dur = `<span class="hsum-dur">(${horas} hs)</span>`;
-    }
-    return `<div class="hourly-range-summary">
-        <span class="hsum-chip hsum-start"><i class="fas fa-arrow-right-to-bracket"></i> INICIO ${slotRangeStart}</span>
-        <span class="hsum-arrow"><i class="fas fa-arrow-right"></i></span>
-        <span class="hsum-chip hsum-end"><i class="fas fa-arrow-right-from-bracket"></i> FIN ${slotRangeEnd || '— toca la hora de <b>fin</b>'}</span>
-        ${dur}
-    </div>`;
+    return `<div class="hourly-range-summary${inner ? '' : ' is-empty'}">${inner}</div>`;
 }
 
 let slotDragActive = false;
@@ -454,8 +460,13 @@ export async function updatePeriodAvailabilityBadge() {
 
         if (av.ok && av.data) {
             if (av.data.disponible) {
-                badge.className = 'availability-badge-premium success';
-                badge.innerHTML = `<i class="fas fa-check-circle"></i> Disponibilidad confirmada en ${sucursal} (${av.data.restan} de ${av.data.capacidad_total} plazas libres para ${tipoVehiculo}s)`;
+                // Color segun cuanto queda: verde si hay mas de la mitad, naranja
+                // si queda la mitad o menos (se esta por llenar).
+                const restan = Number(av.data.restan) || 0;
+                const total = Number(av.data.capacidad_total) || 0;
+                const poco = total > 0 && restan <= total / 2;
+                badge.className = `availability-badge-premium ${poco ? 'warning' : 'success'}`;
+                badge.innerHTML = `<i class="fas fa-check-circle"></i> Hay plazas disponibles para ${tipoVehiculo}s en ${sucursal}`;
             } else {
                 badge.className = 'availability-badge-premium danger';
                 badge.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Sin disponibilidad de plazas de ${tipoVehiculo} en ${sucursal} para este período`;

@@ -1,0 +1,28 @@
+{#
+    Campo de fecha con icono de calendario para los selectores de PERIODO de la
+    reserva (dia, semana, quincena, mes).
+
+    El icono va DENTRO del input: se reutiliza el patron .input-with-icon del
+    proyecto, que corre el texto a la derecha (padding izquierdo) para que no
+    caiga debajo del icono.
+
+    OJO: el input que se ve en pantalla NO es este, es el "altInput" que crea
+    Flatpickr. Ese hereda las clases (input-premium) pero NO el placeholder, asi
+    que el JS lo escribe a mano (setPlaceholderVisible).
+
+    Parametros:
+      clase         clase e id del input (es el selector que usa el JS).
+      etiqueta      texto del label ("Inicia" en las 4 modalidades de periodo).
+      placeholder   texto de ayuda del campo.
+      clases_label  clases extra del label.
+      clases_grupo  clases extra del contenedor.
+#}
+{% macro campo_fecha(clase, etiqueta="Inicia", placeholder="Elegí el día", clases_label="fg-label fg-label-sm", clases_grupo="fg-center") %}
+<div class="form-group-premium {{ clases_grupo }}">
+    <label class="{{ clases_label }}" for="{{ clase }}">{{ etiqueta }}</label>
+    <span class="input-with-icon fecha-field-wrap">
+        <i class="fas fa-calendar-day fecha-icon" aria-hidden="true"></i>
+        <input type="text" class="{{ clase }} input-premium" placeholder="{{ placeholder }}" id="{{ clase }}">
+    </span>
+</div>
+{% endmacro %}

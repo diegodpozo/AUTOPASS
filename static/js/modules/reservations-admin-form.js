@@ -633,7 +633,7 @@ function _newHourlySelectionSummary() {
     let dur = '';
     if (newSlotRangeEnd && _newSlotToMin(newSlotRangeEnd) > _newSlotToMin(newSlotRangeStart)) {
         const horas = Math.round((_newSlotToMin(newSlotRangeEnd) - _newSlotToMin(newSlotRangeStart)) / 60 * 10) / 10;
-        dur = `<span class="hsum-dur">(${horas} hs)</span>`;
+        dur = `<span class="hsum-dur">(${utils.formatDuracionLarga(horas)})</span>`;
     }
     return `<div class="hourly-range-summary">
         <span class="hsum-chip hsum-start"><i class="fas fa-arrow-right-to-bracket"></i> INICIO ${newSlotRangeStart}</span>

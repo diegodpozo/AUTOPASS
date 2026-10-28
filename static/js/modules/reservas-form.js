@@ -7,7 +7,7 @@
  */
 
 import api from './api.js';
-import { formatDate, formatPlate, showToast, showConfirm, formatNum, scrollToElement } from './utils.js';
+import { formatDate, formatPlate, showToast, showConfirm, formatNum, scrollToElement, capitalizarFrase } from './utils.js';
 import { getVirtualNow } from './virtual-time.js';
 import { loadReservations } from './reservas-list.js';
 import {
@@ -42,25 +42,74 @@ import {
 let fechaReservaTocada = false;
 let reservaConfirmada = false;
 
+// Texto de ayuda de los campos de fecha. El input que se ve en pantalla NO es
+// el del HTML sino el "altInput" que crea Flatpickr: ese hereda las clases,
+// pero NO el placeholder, asi que hay que escribirlo a mano (si no, el campo
+// arranca vacio y sin ninguna pista de que hay que elegir una fecha).
+const PLACEHOLDER_ELEGIR_DIA = 'Elegí el día';
+
+function setPlaceholderVisible(instance, texto) {
+    const fpObj = Array.isArray(instance) ? instance[0] : instance;
+    if (fpObj && fpObj.altInput) {
+        fpObj.altInput.placeholder = texto;
+    }
+}
+
+// Flatpickr formatea el campo "DIA" como "Jue 22 de Octubre" (cada palabra en
+// mayuscula). Aca se deja "Jue 22 de octubre": primera letra en mayuscula y el
+// resto en minuscula. Es solo cosmetico (el .value real sigue siendo YYYY-MM-DD).
+function embellecerFechaVisible(instance) {
+    const fpObj = Array.isArray(instance) ? instance[0] : instance;
+    if (fpObj && fpObj.altInput) {
+        fpObj.altInput.value = capitalizarFrase(fpObj.altInput.value);
+    }
+}
+
+// Pone una fecha en un calendario y refresca el input visible (altInput).
+// Con triggerChange=true se dispara el onChange del picker, que recalcula la
+// fecha de "Finaliza", el precio, el badge de disponibilidad y el stepper.
+function setPickerDate(instance, fecha) {
+    const fpObj = Array.isArray(instance) ? instance[0] : instance;
+    if (fpObj && typeof fpObj.setDate === 'function') {
+        fpObj.setDate(fecha, true);
+    }
+}
+
+let lastBaseCardHeight = 0;
+
 /**
- * P2.5 UX/UI: el rail del stepper calca el alto de la card de reserva en su
- * estado no expandido. Al elegir "por hora" la card crece (slots/horarios) y
- * este sync se congela: el stepper queda fijado al alto que ya tenía y no
- * acompaña la expansión. Al volver a otra modalidad recalca la card.
+ * P2.5 UX/UI: el rail del stepper calca el largo/alto de la card de reserva en su
+ * estado base. Al elegir "por hora" la card crece con la grilla de horarios
+ * (slots) y este sync no acompaña la expansion, manteniendo el stepper al
+ * alto base de la tarjeta. Al volver a otra modalidad o resetear, vuelve a
+ * emparejar con el alto de la tarjeta.
  */
-function syncStepperToCardHeight() {
+export function syncStepperToCardHeight() {
     const stepper = document.getElementById('reservation-stepper');
-    const card = document.getElementById('reserva-form-container');
+    const card = document.querySelector('.modern-reservation-card') || document.getElementById('reserva-form-container');
     if (!stepper || !card) return;
     if (!window.matchMedia('(min-width: 1281px)').matches) {
         stepper.style.removeProperty('height');
         return;
     }
     const tipoHora = document.querySelector('.res-type')?.value === 'hora';
-    if (tipoHora) return;
+    if (tipoHora) {
+        if (lastBaseCardHeight > 0) {
+            stepper.style.setProperty('height', `${lastBaseCardHeight}px`);
+            return;
+        }
+        const slotsGrid = document.getElementById('hourly-slots-grid');
+        const slotsHeight = slotsGrid && slotsGrid.offsetHeight > 0 ? slotsGrid.offsetHeight : 0;
+        const alto = Math.max(card.getBoundingClientRect().height - slotsHeight, 380);
+        lastBaseCardHeight = alto;
+        stepper.style.setProperty('height', `${alto}px`);
+        return;
+    }
     const alto = card.getBoundingClientRect().height;
-    if (alto === 0) return;
-    stepper.style.setProperty('height', `${alto}px`);
+    if (alto > 0) {
+        lastBaseCardHeight = alto;
+        stepper.style.setProperty('height', `${alto}px`);
+    }
 }
 
 function initStepperHeightSync() {
@@ -98,40 +147,63 @@ export function initReservationForm() {
         }
     };
 
-    getFpInstances().hourlyDate = flatpickr(".res-date-only", { ...commonConfig });
-    getFpInstances().day = flatpickr(".res-day-only", { ...commonConfig });
-    getFpInstances().week = flatpickr(".res-week-start", { 
-        ...commonConfig, 
+    getFpInstances().hourlyDate = flatpickr(".res-date-only", {
+        ...commonConfig,
+        // El campo arranca VACIO (placeholder "Elegí el día") en vez de
+        // precargar hoy: asi el usuario elige el dia a proposito.
+        defaultDate: null,
+        // El campo "DIA" muestra la fecha en palabras ("Jue 22 de octubre").
+        // Se logra con el propio Flatpickr: D=jue, j=22, F=octubre (segun l10n es).
+        // Las letras sueltas de "de" van escapadas con \\.
+        altFormat: "D j \\d\\e F",
+        // OJO: este onChange REEMPLAZA al de commonConfig, no se suma. Por eso
+        // repite aqui lo que aquel hacia (precio, grilla de horarios, badge y
+        // stepper) y ademas normaliza el texto visible de la fecha.
+        onChange: () => {
+            fechaReservaTocada = true;
+            updateReservationPrice();
+            updateHourlySlotsUI();
+            updatePeriodAvailabilityBadge();
+            updateReservationStepper();
+            embellecerFechaVisible(getFpInstances().hourlyDate);
+        },
+        onReady: (ds, a, inst) => {
+            setPlaceholderVisible(inst, PLACEHOLDER_ELEGIR_DIA);
+            embellecerFechaVisible(inst);
+        },
+        onValueUpdate: (ds, a, inst) => embellecerFechaVisible(inst),
+    });
+
+    // Selectores de PERIODO (dia, semana, quincena, mes).
+    // Arrancan VACIOS (antes se precargaba hoy): la fecha la elige el usuario a
+    // proposito, y el input visible muestra el icono de calendario con el texto
+    // "Elegí el día". `dias` es la duracion del periodo (null en "dia", que es
+    // un solo dia) y `finSelector` el campo "Finaliza" que se calcula solo.
+    const configPeriodo = (dias, finSelector) => ({
+        ...commonConfig,
+        defaultDate: null,
+        // OJO: este onChange REEMPLAZA al de commonConfig, no se suma. Por eso
+        // repite aqui lo que aquel hacia (precio, badge y stepper).
         onChange: (sd, ds) => {
             fechaReservaTocada = true;
-            updatePeriodEnd(ds, 7, '.res-week-end');
+            if (dias) updatePeriodEnd(ds, dias, finSelector);
+            updateReservationPrice();
             updatePeriodAvailabilityBadge();
-        } 
+            updateReservationStepper();
+        },
+        onReady: (sd, a, inst) => setPlaceholderVisible(inst, PLACEHOLDER_ELEGIR_DIA),
     });
-    getFpInstances().fortnight = flatpickr(".res-fortnight-start", { 
-        ...commonConfig, 
-        onChange: (sd, ds) => {
-            fechaReservaTocada = true;
-            updatePeriodEnd(ds, 15, '.res-fortnight-end');
-            updatePeriodAvailabilityBadge();
-        } 
-    });
-    getFpInstances().month = flatpickr(".res-month-start", { 
-        ...commonConfig, 
-        onChange: (sd, ds) => {
-            fechaReservaTocada = true;
-            updatePeriodEnd(ds, 30, '.res-month-end');
-            updatePeriodAvailabilityBadge();
-        } 
-    });
+
+    getFpInstances().day = flatpickr(".res-day-only", configPeriodo());
+    getFpInstances().week = flatpickr(".res-week-start", configPeriodo(7, '.res-week-end'));
+    getFpInstances().fortnight = flatpickr(".res-fortnight-start", configPeriodo(15, '.res-fortnight-end'));
+    getFpInstances().month = flatpickr(".res-month-start", configPeriodo(30, '.res-month-end'));
     getFpInstances().start = flatpickr(".res-start", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
     getFpInstances().end = flatpickr(".res-end", { ...commonConfig, enableTime: true, altFormat: "d-m-y H:i", dateFormat: "Y-m-d H:i" });
 
-    // CALCULAR FECHAS DE FIN PARA PERÍODOS CON LA FECHA POR DEFECTO
-    const todayYmd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    updatePeriodEnd(todayYmd, 7, '.res-week-end');
-    updatePeriodEnd(todayYmd, 15, '.res-fortnight-end');
-    updatePeriodEnd(todayYmd, 30, '.res-month-end');
+    // Las fechas de "Finaliza" de los periodos ya NO se precargan: los campos de
+    // inicio arrancan vacios y el final se calcula cuando el usuario elige el
+    // inicio (en el onChange de cada picker).
 
     const typeSelect = document.querySelector('.res-type');
     if (typeSelect) {
@@ -196,7 +268,6 @@ export function initReservationForm() {
     // P2.5 UX/UI: stepper global disponible para el sincronizador de precio
     window.updateReservationStepper = updateReservationStepper;
     updateReservationStepper();
-
     initStepperHeightSync();
 }
 
@@ -234,6 +305,7 @@ export function updateReservationStepper() {
         else if (idx === active) s.classList.add('is-active');
     });
     lines.forEach((l, i) => l.classList.toggle('is-done', complete || i + 1 < active));
+    syncStepperToCardHeight();
 }
 
 export function updatePeriodEnd(startDateStr, days, targetSelector) {
@@ -254,6 +326,10 @@ export async function toggleReservaForm() {
     const container = document.getElementById('reserva-form-container');
     const trigger = document.querySelector('.reserva-trigger-card');
     if (!container || !trigger) return;
+
+    // A partir de aca la tarjeta se abre/cierra en caliente (con trigger), asi que
+    // ya no es el arranque estatico: se quita la marca que anulaba la animacion.
+    container.classList.remove('is-static-open');
 
     const isOpen = container.classList.contains('open');
 
@@ -363,7 +439,7 @@ export async function refreshReservationFormState() {
         const sucursalSelects = document.querySelectorAll('.res-sucursal');
         sucursalSelects.forEach(select => {
             const currentVal = select.value;
-            select.innerHTML = '<option value="" selected disabled hidden>Seleccioná...</option>' + 
+            select.innerHTML = '<option value="" selected disabled hidden>Elegí</option>' + 
                 getBranchesData().map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
@@ -376,9 +452,14 @@ export async function refreshReservationFormState() {
         if (typeof showToast === 'function') showToast('No se pudieron cargar las sucursales. Reintentá en unos segundos.', 'error');
     }
 
-    // YA CON LAS SUCURSALES CARGADAS: consulta tarifas + descuento para la sucursal seleccionada
-    await fetchRates();
-    updateReservationStepper();
+    // YA CON LAS SUCURSALES CARGADAS: consulta tarifas + descuento para la sucursal seleccionada.
+    // En finally (haya exito o error de red) se actualiza el stepper: asi nunca
+    // queda sin los datos de la carga si la ultima consulta falla.
+    try {
+        await fetchRates();
+    } finally {
+        updateReservationStepper();
+    }
 }
 
 export function resetReservaForm() {
@@ -392,6 +473,14 @@ export function resetReservaForm() {
         form.reset();
         updateFormGroups("");
     }
+    // form.reset() no limpia el estado interno de Flatpickr: los campos de
+    // fecha conservarian la fecha anterior en el input visible (y no volveria
+    // el placeholder). clear() los deja vacios.
+    ['hourlyDate', 'day', 'week', 'fortnight', 'month'].forEach(clave => {
+        const fp = getFpInstances()[clave];
+        const fpObj = Array.isArray(fp) ? fp[0] : fp;
+        if (fpObj && typeof fpObj.clear === 'function') fpObj.clear();
+    });
     updateReservationStepper();
     const btnSpan = document.querySelector('.btn-confirm-premium span');
     if (btnSpan) btnSpan.innerText = 'CONTINUAR';
@@ -446,7 +535,18 @@ scrollToElement(container);
         if (r.tipo_estadia === 'hora') {
             const dtParts = r.fecha_inicio.split(' ');
             const endParts = r.fecha_fin.split(' ');
-            document.querySelector('.res-date-only').value = dtParts[0];
+            // setDate (no .value) para que Flatpickr refresque tambien el input
+            // visible, que muestra la fecha en palabras ("jue 22 de octubre").
+            const hourlyFp = getFpInstances().hourlyDate;
+            const hourlyFpObj = Array.isArray(hourlyFp) ? hourlyFp[0] : hourlyFp;
+            if (hourlyFpObj && typeof hourlyFpObj.setDate === 'function') {
+                hourlyFpObj.setDate(dtParts[0], false);
+                // setDate(..., false) NO dispara los hooks de Flatpickr, asi que
+                // el texto visible se normaliza a mano aca.
+                embellecerFechaVisible(hourlyFpObj);
+            } else {
+                document.querySelector('.res-date-only').value = dtParts[0];
+            }
             document.querySelector('.res-time-only').value = dtParts[1];
             setSlotRange({ start: dtParts[1], end: endParts[1] || null, date: dtParts[0] });
             const startDt = new Date(r.fecha_inicio.replace(/-/g, "/"));
@@ -456,13 +556,16 @@ scrollToElement(container);
             document.querySelector('.res-hours-qty').value = hours > 0 ? hours : 1;
             updateHourlySlotsUI();
         } else if (r.tipo_estadia === 'dia') {
-            document.querySelector('.res-day-only').value = r.fecha_inicio.split(' ')[0];
+            // setDate (no .value) para que Flatpickr refresque tambien el input
+            // visible (altInput), que es el que muestra la fecha elegida.
+            setPickerDate(getFpInstances().day, r.fecha_inicio.split(' ')[0]);
         } else {
-            const periodInputs = { 'semana': '.res-week-start', 'quincena': '.res-fortnight-start', 'mes': '.res-month-start' };
-            const specificInput = document.querySelector(periodInputs[r.tipo_estadia]);
-            if (specificInput) {
-                specificInput.value = r.fecha_inicio.split(' ')[0];
-                specificInput.dispatchEvent(new Event('change'));
+            const periodPickers = { 'semana': 'week', 'quincena': 'fortnight', 'mes': 'month' };
+            const pickerKey = periodPickers[r.tipo_estadia];
+            if (pickerKey) {
+                // El onChange del picker recalcula el "Finaliza", el precio, el
+                // badge y el stepper.
+                setPickerDate(getFpInstances()[pickerKey], r.fecha_inicio.split(' ')[0]);
             } else {
                 document.querySelector('.res-start').value = r.fecha_inicio;
                 document.querySelector('.res-end').value = r.fecha_fin;

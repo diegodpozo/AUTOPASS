@@ -1,5 +1,6 @@
 <!-- SECCIÓN: INICIO -->
 {% from "components/saludo.html" import saludo %}
+{% from "components/campo_fecha.html" import campo_fecha %}
 <div id="section-inicio" class="profile-section active">
     {{ saludo(titulo="¡HOLA!",
                id_titulo="welcome-greeting",
@@ -38,7 +39,11 @@
                 </div>
             </div>
 
-            <div id="reserva-form-container" class="open">
+            <!-- is-static-open: en el perfil la tarjeta nace ABIERTA, asi que no
+                 debe animar su apertura (max-height 0 -> alto). Sin esto, el
+                 stepper de arriba se pintaba de una y la tarjeta "crecia"
+                 despues, dando la sensacion de que el stepper cargaba antes. -->
+            <div id="reserva-form-container" class="open is-static-open">
                 <div class="modern-reservation-card">
 
                     <!-- ESTADO SIN VEHÍCULOS -->
@@ -127,7 +132,7 @@
                                         <div class="select-wrapper-premium fg-full">
                                             <i class="fas fa-location-dot" aria-hidden="true"></i>
                                             <select class="res-sucursal fg-select" required id="res-sucursal">
-                                                <option value="" selected disabled hidden>Seleccioná...</option>
+                                                <option value="" selected disabled hidden>Elegí</option>
                                                 <option value="">Cargando sucursales...</option>
                                             </select>
                                         </div>
@@ -137,7 +142,7 @@
                                         <div class="select-wrapper-premium fg-full">
                                             <i class="fas fa-clock" aria-hidden="true"></i>
                                             <select class="res-type fg-select" required id="res-type">
-                                                <option value="" selected disabled hidden>Seleccioná...</option>
+                                                <option value="" selected disabled hidden>Elegí</option>
                                                 <option value="hora">Hora</option>
                                                 <option value="dia">Día</option>
                                                 <option value="semana">Semana</option>
@@ -151,50 +156,46 @@
                                 <!-- CAMPOS DINÁMICOS SEGÚN TIPO DE RESERVA -->
                                 <div id="dynamic-fields-premium">
                                     <div id="hourly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                        <div class="form-group-premium fg-170">
-                                            <label class="fg-label" for="res-date-only">Día y Horario</label>
-                                            <input type="text" class="res-date-only input-premium" placeholder="Fecha..." id="res-date-only">
+                                        <!-- Todo el renglon es un <label>: tocar el icono o la
+                                             fecha enfoca el input y abre el calendario, sin JS extra.
+                                             El marco (res-day-box) lleva la misma superficie que los
+                                             selectores de arriba y ocupa el ancho completo.
+                                             El icono es el unico rotulo del campo (la palabra "DIA"
+                                             se quito); lleva aria-label para lectores de pantalla. -->
+                                        <label class="form-group-premium fg-170 res-day-line" for="res-date-only">
+                                            <span class="res-day-box">
+                                                <i class="fas fa-calendar-day res-day-line-icon" aria-label="Día" role="img"></i>
+                                                <input type="text" class="res-date-only res-day-line-input" placeholder="Elegí el día" id="res-date-only">
+                                            </span>
                                             <input type="hidden" class="res-time-only">
                                             <input type="hidden" class="res-hours-qty" value="1">
-                                        </div>
+                                        </label>
                                     </div>
                                     
-                                    <div id="daily-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden">
-                                        <div class="form-group-premium fg-col">
-                                            <label class="fg-label" for="res-day-only">Día de Estadía</label>
-                                            <input type="text" class="res-day-only input-premium" placeholder="Seleccioná día..." id="res-day-only">
-                                        </div>
+                                    <div id="daily-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
+                                        {{ campo_fecha("res-day-only", clases_label="fg-label", clases_grupo="fg-col") }}
                                     </div>
 
                                     <div id="weekly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                        <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm" for="res-week-start">Inicia el día</label>
-                                            <input type="text" class="res-week-start input-premium" placeholder="Fecha inicio..." id="res-week-start">
-                                        </div>
+                                        {{ campo_fecha("res-week-start") }}
                                         <div class="form-group-premium fg-center">
                                             <label class="fg-label fg-label-sm" for="res-week-end">Finaliza</label>
-                                            <input type="text" class="res-week-end input-premium-readonly" readonly id="res-week-end">
+                                            <input type="text" class="res-week-end input-premium input-premium-readonly" readonly id="res-week-end">
                                         </div>
                                     </div>
 
                                     <div id="fortnight-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                        <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm" for="res-fortnight-start">Inicia el día</label>
-                                            <input type="text" class="res-fortnight-start input-premium" placeholder="Fecha inicio..." id="res-fortnight-start">
-                                        </div>
+                                        {{ campo_fecha("res-fortnight-start") }}
                                         <div class="form-group-premium fg-center">
                                             <label class="fg-label fg-label-sm" for="res-fortnight-end">Finaliza</label>
-                                            <input type="text" class="res-fortnight-end input-premium-readonly" readonly id="res-fortnight-end">
+                                            <input type="text" class="res-fortnight-end input-premium input-premium-readonly" readonly id="res-fortnight-end">
                                         </div>
                                     </div>
                                     <div id="month-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                        <div class="form-group-premium fg-center">
-                                            <label class="fg-label fg-label-sm" for="res-month-start">Inicia el día</label>
-                                            <input type="text" class="res-month-start input-premium" placeholder="Fecha inicio..." id="res-month-start">
-                                        </div>
+                                        {{ campo_fecha("res-month-start") }}
                                         <div class="form-group-premium fg-center">
                                             <label class="fg-label fg-label-sm" for="res-month-end">Finaliza</label>
-                                            <input type="text" class="res-month-end input-premium-readonly" readonly id="res-month-end">
+                                            <input type="text" class="res-month-end input-premium input-premium-readonly" readonly id="res-month-end">
                                         </div>
                                     </div>
                                     <div id="standard-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
