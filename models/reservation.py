@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, CheckConstraint
 from sqlalchemy.orm import relationship
 from core.database import Base
-from models.types import DateTimeAsStr
+from models.types import DateTimeValue, MONEY_ZERO, MoneyValue
 from models.branch_ref import branch_ref_property
 
 class Reservation(Base):
@@ -16,12 +16,12 @@ class Reservation(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     patente = Column(String, index=True)
-    fecha_inicio = Column(DateTimeAsStr)
-    fecha_fin = Column(DateTimeAsStr)
+    fecha_inicio = Column(DateTimeValue)
+    fecha_fin = Column(DateTimeValue)
     dias_semana = Column(String, nullable=True) # ALMACENAMIENTO SERIALIZADO: "0,1,2" (0=LUNES...)
-    monto_total = Column(Float)
-    monto_reembolsado = Column(Float, default=0.0)
-    fecha_pago = Column(DateTimeAsStr, nullable=True) # FECHA DE LA TRANSACCION (PAGO O REEMBOLSO)
+    monto_total = Column(MoneyValue)
+    monto_reembolsado = Column(MoneyValue, default=MONEY_ZERO)
+    fecha_pago = Column(DateTimeValue, nullable=True) # FECHA DE LA TRANSACCION (PAGO O REEMBOLSO)
     mp_preference_id = Column(String, nullable=True) # ID DE INTEGRACION CON MERCADO PAGO
     estado_pago = Column(String, default="Pendiente")
     estado_reserva = Column(String, default="Pendiente")
@@ -35,13 +35,13 @@ class Reservation(Base):
     tipo_vehiculo = Column(String, default="Auto")  # AUTO / MOTO / CAMIONETA
     origen = Column(String, default="cliente")  # 'cliente' (creada por el usuario) o 'manual' (creada por admin/empleado)
     # FOTO DE TARIFAS AL COTIZAR/CREAR LA RESERVA (auditoría de precios históricos)
-    tarifa_hora = Column(Float, nullable=True)       # TARIFA POR HORA VIGENTE EN LA SEDE AL RESERVAR
-    tarifa_fraccion = Column(Float, nullable=True)   # TARIFA DE 30 MIN VIGENTE EN LA SEDE AL RESERVAR
-    tarifa_aplicada = Column(Float, nullable=True)   # TARIFA UNITARIA DE LA MODALIDAD (hora/día/semana/quincena/mes)
-    horas_calculadas = Column(Float, nullable=True)  # DURACIÓN COTIZADA (EN HORAS)
-    monto_calculado = Column(Float, nullable=True)   # TOTAL BASE COTIZADO, ANTES DE DESCUENTOS
+    tarifa_hora = Column(MoneyValue, nullable=True)       # TARIFA POR HORA VIGENTE EN LA SEDE AL RESERVAR
+    tarifa_fraccion = Column(MoneyValue, nullable=True)   # TARIFA DE 30 MIN VIGENTE EN LA SEDE AL RESERVAR
+    tarifa_aplicada = Column(MoneyValue, nullable=True)   # TARIFA UNITARIA DE LA MODALIDAD (hora/d�a/semana/quincena/mes)
+    horas_calculadas = Column(Float, nullable=True)  # DURACI�N COTIZADA (EN HORAS)
+    monto_calculado = Column(MoneyValue, nullable=True)   # TOTAL BASE COTIZADO, ANTES DE DESCUENTOS
     descuento_pct = Column(Float, nullable=True)     # % DE DESCUENTO POR CANJE APLICADO AL PAGAR
-    tarifa_fijada_en = Column(DateTimeAsStr, nullable=True)  # MOMENTO EN QUE SE FIJÓ ESTA FOTO DE TARIFA
+    tarifa_fijada_en = Column(DateTimeValue, nullable=True)  # MOMENTO EN QUE SE FIJÓ ESTA FOTO DE TARIFA
 
     user = relationship("User", back_populates="reservations")
     access_logs = relationship("AccessLog", back_populates="reservation")

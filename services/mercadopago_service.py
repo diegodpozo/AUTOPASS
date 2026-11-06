@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import requests
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -8,6 +9,7 @@ from core.db_lock import bloqueo_transaccional, clave_reserva, clave_usuario
 from core.logger import get_logger
 from core.normalize import normalize_plate
 from models.enums import PaymentStatus, ReservationStatus
+from models.types import to_decimal, to_money
 from services.billing_service import BillingService
 from repositories.access_log_repository import AccessRepository
 from repositories.mercadopago_repository import MercadoPagoPaymentRepository
@@ -87,7 +89,8 @@ def _monto_reserva_con_descuento(db: Session, user: "models.User", res: "models.
     from services.reservation_service import ReservationService
     ticket = ReservationService.validate_redemption_ticket(db, user.id, redemption_ticket_id, res.sucursal_nombre)
     porc = ticket.valor_descuento or 0
-    return round(res.monto_total * (1 - porc / 100.0), 2), ticket
+    descuento_factor = Decimal(100 - porc) / Decimal(100)
+    return to_money(res.monto_total * descuento_factor), ticket
 
 
 
@@ -133,7 +136,7 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
         )
         if deuda is None:
             raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado. No se puede cobrar la estadía.")
-        monto = round(deuda, 2)
+        monto = to_money(deuda)
         title = f"Estadía AutoPass - Patente {log.patente_detectada}"
         desc = f"Sucursal {log.sucursal or '-'} - Ingreso {log.fecha_hora}"
         access_log = log
@@ -178,7 +181,7 @@ def create_payment(db: Session, user: "models.User", data) -> dict:
             "title": title,
             "description": desc,
             "quantity": 1,
-            "unit_price": monto,
+            "unit_price": float(monto),
             "currency_id": "ARS",
         }],
         "payer": {"email": user.email, "name": user.nombre or "", "surname": user.apellido or ""},
@@ -236,7 +239,7 @@ def confirm_payment(db: Session, external_reference: str, payment_id=None) -> di
         pago.mp_status = mp_status
         amount = mp_payment.get("transaction_amount")
         if mp_status == "approved":
-            if amount is not None and abs(float(amount) - float(pago.monto)) > 1.0:
+            if amount is not None and abs(to_decimal(amount) - pago.monto) > Decimal("1.00"):
                 logger.error(f"[MP] Monto no coincide: esperado {pago.monto}, recibido {amount}. No se aplica.")
                 pago.estado = _FALLIDO
                 db.commit()

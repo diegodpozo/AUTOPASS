@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import models, schemas
@@ -6,6 +7,7 @@ from core.database import get_db
 from core.limiter import admin_rate_limit
 from core.security import get_operational_user
 from services.reservation_service import ReservationService
+from models.types import to_money
 from repositories.redemption_repository import RedemptionRepository
 
 router = APIRouter()
@@ -61,14 +63,14 @@ def reservation_available_redemptions(res_id: int, db: Session = Depends(get_db)
     Se usa antes de registrar un pago en caja para informar y aplicar el descuento."""
     reserva = ReservationService.get_permissioned_reservation(db, staff, res_id)
     descuentos = ReservationService.get_available_redemption_discounts(db, reserva.user_id, reserva.sucursal_nombre)
-    monto = reserva.monto_total or 0.0
+    monto = to_money(reserva.monto_total or 0)
     return [{
         "id": d.id,
         "titulo": d.titulo,
         "valor_descuento": d.valor_descuento or 0,
         "monto": monto,
-        "descuento_peso": round(monto * (d.valor_descuento or 0) / 100.0, 2),
-        "monto_final": round(monto - monto * (d.valor_descuento or 0) / 100.0, 2),
+        "descuento_peso": to_money(monto * Decimal(d.valor_descuento or 0) / Decimal(100)),
+        "monto_final": to_money(monto * Decimal(100 - (d.valor_descuento or 0)) / Decimal(100)),
         "created_at": d.created_at
     } for d in descuentos]
 

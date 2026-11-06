@@ -31,6 +31,7 @@ from core.config import settings					# Importa settings, la configuracion centra
 from core.logger import get_logger					# Importa get_logger, factory que crea loggers con
 									# nombre para trazabilidad estandarizada
 from models.enums import VehicleType, AccessEventType, ReservationStatus, PaymentStatus
+from models.types import MONEY_ZERO, parse_fecha
 									# Importa los enums de dominio (tipo de vehiculo,
 									# tipo de evento de acceso, estado de reserva y
 									# estado de pago) usados en las reglas de negocio
@@ -540,10 +541,7 @@ class AccessService(AccessOccupancyMixin):				# Declara la clase AccessService h
 									# Comprueba si el vehiculo debe pago: si no pago
 									# confirmado ni tiene reserva PAGADA, se evalua la
 									# cortesia
-            fecha_str = ultimo.fecha_hora.replace(' ', 'T')		# Normaliza la marca de entrada reemplazando el
-									# espacio por 'T' para que fromisoformat la parsee
-            entrada_dt = datetime.datetime.fromisoformat(fecha_str)	# Convierte la marca de entrada a objeto datetime
-									# con datetime.fromisoformat
+            entrada_dt = parse_fecha(ultimo.fecha_hora)
             minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
 									# Calcula los minutos transcurridos desde el
 									# ingreso hasta ahora (segundos / 60)
@@ -833,10 +831,7 @@ class AccessService(AccessOccupancyMixin):				# Declara la clase AccessService h
 									# Verifica si hay deuda: sin pago confirmado ni
 									# reserva PAGADA se aplica la cortesia de 10
 									# minutos
-                    fecha_str = ultimo.fecha_hora.replace(' ', 'T')	# Normaliza la marca de entrada (' ' -> 'T') para
-									# parsearla con fromisoformat
-                    entrada_dt = datetime.datetime.fromisoformat(fecha_str)
-									# Convierte la marca de entrada a datetime
+                    entrada_dt = parse_fecha(ultimo.fecha_hora)
                     minutos_transcurridos = (now - entrada_dt).total_seconds() / 60
 									# Calcula los minutos transcurridos desde el
 									# ingreso hasta ahora
@@ -1022,9 +1017,7 @@ class AccessService(AccessOccupancyMixin):				# Declara la clase AccessService h
 									# Lanza HTTP 400 indicando que el vehiculo no
 									# figura en esta sede
         
-        fecha_str = ultimo.fecha_hora.replace(' ', 'T')			# Normaliza la marca de entrada (' ' -> 'T') para
-									# parsearla
-        entrada_dt = datetime.datetime.fromisoformat(fecha_str)		# Convierte la marca de entrada a datetime
+        entrada_dt = parse_fecha(ultimo.fecha_hora)
         minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
 									# Calcula los minutos transcurridos desde el
 									# ingreso
@@ -1061,7 +1054,7 @@ class AccessService(AccessOccupancyMixin):				# Declara la clase AccessService h
             tipo_vehiculo=ultimo.tipo_vehiculo,				# Reutiliza el tipo de vehiculo del ingreso
             fecha_hora=TimeService.now().isoformat(),			# Guarda la marca de tiempo ISO de la salida
             pago_confirmado=ultimo.pago_confirmado,			# Hereda el estado de pago del registro de entrada
-            costo_estadia=0.0 if dentro_cortesia else None,		# Registra costo 0.0 si fue dentro de cortesia (o
+            costo_estadia=MONEY_ZERO if dentro_cortesia else None,
 									# None si corresponde cobro aparte)
             metodo_pago="CAJA" if not dentro_cortesia else None,	# Marca metodo_pago 'CAJA' si excedio cortesia
 									# (cobro presencial), o None si fue cortesia
@@ -1119,9 +1112,7 @@ class AccessService(AccessOccupancyMixin):				# Declara la clase AccessService h
 									# Lanza HTTP 400 indicando que el vehiculo no
 									# figura como ingresado
         
-        fecha_str = ultimo.fecha_hora.replace(' ', 'T')			# Normaliza la marca de entrada (' ' -> 'T') para
-									# parsearla
-        entrada_dt = datetime.datetime.fromisoformat(fecha_str)		# Convierte la marca de entrada a datetime
+        entrada_dt = parse_fecha(ultimo.fecha_hora)
         minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
 									# Calcula los minutos transcurridos desde el
 									# ingreso
@@ -1153,7 +1144,7 @@ class AccessService(AccessOccupancyMixin):				# Declara la clase AccessService h
                 fecha_hora=TimeService.now().isoformat(),		# Guarda la marca de tiempo ISO de la salida
                 pago_confirmado=False,					# Deja pago_confirmado en False (cancelacion en
 									# cortesia, sin cobro)
-                costo_estadia=0.0,					# Registra costo_estadia 0.0 porque fue dentro de
+                costo_estadia=MONEY_ZERO,
 									# cortesia
                 sucursal=sucursal					# Guarda la sucursal
             ))								# Cierra la construccion del AccessLog

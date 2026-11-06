@@ -390,8 +390,8 @@ def test_points_redemption_notification_format(db_session: Session):
     # Verificar cálculo de fecha_vencimiento (+30 días)
     ticket_schema = res["ticket"]
     assert ticket_schema.fecha_vencimiento is not None
-    dt_created = datetime.datetime.fromisoformat(ticket_schema.created_at)
-    dt_venc = datetime.datetime.fromisoformat(ticket_schema.fecha_vencimiento)
+    dt_created = ticket_schema.created_at
+    dt_venc = ticket_schema.fecha_vencimiento
     assert (dt_venc - dt_created).days == 30
 
 

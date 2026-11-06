@@ -3,6 +3,7 @@ from typing import Dict
 from sqlalchemy.orm import Session
 import models
 from core.logger import get_logger
+from models.types import MONEY_ZERO, parse_fecha
 from services.billing_service import BillingService
 from services.time_service import TimeService
 from models.enums import PaymentStatus, ReservationStatus
@@ -221,7 +222,7 @@ class OccupancyService:
         sucursales = {e.sucursal for e in entradas if e.sucursal}
         todas_claves = [c for pair in RATE_CLAVES.values() for c in pair]
         rate_map = {
-            (r.clave, r.sucursal): float(r.valor)
+            (r.clave, r.sucursal): r.valor
             for r in SettingsRepository.get_rates_by_claves(db, todas_claves, sucursales)
         }
 
@@ -229,7 +230,7 @@ class OccupancyService:
             clave30, clave_hora = RATE_CLAVES.get(tipo, ("precio_30min", "precio_hora"))
             fraccion = rate_map.get((clave30, suc))
             hora = rate_map.get((clave_hora, suc))
-            delta = TimeService.now() - datetime.datetime.fromisoformat(entry_time_str)
+            delta = TimeService.now() - parse_fecha(entry_time_str)
             return BillingService.hourly_amount_from_rates(delta.total_seconds() / 3600, hora, fraccion)
 
         res = []
@@ -240,7 +241,7 @@ class OccupancyService:
 
             floor_name = e.floor.nombre if e.floor else None
 
-            deuda = 0.0
+            deuda = MONEY_ZERO
             ya_pago = e.pago_confirmado
             reserva_info = None
             en_cortesia = False
@@ -253,7 +254,7 @@ class OccupancyService:
                     now_str = TimeService.now_str()
                     # SI LA RESERVA EXPIRÓ (COMPLETADA/CANCELADA O FECHA_FIN YA PASÓ), ACUMULAR DEUDA DESDE ESE MOMENTO
                     if r.estado_reserva in [ReservationStatus.COMPLETADA, ReservationStatus.CANCELADA] or r.fecha_fin < now_str:
-                        extra = calc_debt(r.fecha_fin, e.sucursal, e.tipo_vehiculo) or 0.0
+                        extra = calc_debt(r.fecha_fin, e.sucursal, e.tipo_vehiculo) or MONEY_ZERO
                         if pagada:
                             deuda = max(0, extra - (e.costo_estadia or 0))
                             ya_pago = deuda == 0
@@ -264,14 +265,14 @@ class OccupancyService:
                     else:
                         # RESERVA VIGENTE DENTRO DE SU RANGO HORARIO
                         if pagada:
-                            deuda = 0.0
+                            deuda = MONEY_ZERO
                             ya_pago = True
                         else:
                             # INGRESÓ CON RESERVA SIN PAGAR: DEBE EL MONTO DE LA RESERVA
                             deuda = (r.monto_total or 0)
                             ya_pago = deuda == 0
             elif not e.pago_confirmado:
-                entrada_dt = datetime.datetime.fromisoformat(e.fecha_hora)
+                entrada_dt = parse_fecha(e.fecha_hora)
                 minutos_transcurridos = (TimeService.now() - entrada_dt).total_seconds() / 60
                 if minutos_transcurridos <= 10:
                     # CORTESIA: PRIMEROS 10 MINUTOS GRATIS

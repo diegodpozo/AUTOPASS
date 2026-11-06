@@ -712,7 +712,7 @@
     <!-- HERO PRINCIPAL -->
     <header class="bd-hero">
         <div class="bd-hero-badge">ARQUITECTURA DE DATOS · AUTOPASS</div>
-        <h1>ESTRUCTURA DE BASE DE DATOS Y COMUNICACION CON LA APLICACION</h1>
+        <h1>ESTRUCTURA DE BASE DE DATOS Y COMUNICACIÓN CON LA APLICACIÓN</h1>
         <p>
             ESTA GUÍA PRESENTA EL MODELO RELACIONAL COMPLETO DE AUTOPASS IMPLEMENTADO CON SQLALCHEMY 2.0,
             LA ESTRUCTURA DE LAS 19 TABLAS FÍSICAS (18 DE NEGOCIO + ALEMBIC_VERSION), SUS CLAVES FORÁNEAS,
@@ -720,9 +720,9 @@
         </p>
         <div class="bd-nav-rapida">
             <a href="EXPLICACION DE CODIGO/index.html" class="bd-btn-nav">← VOLVER AL VISOR GENERAL</a>
-            <a href="EXPLICACION DE CODIGO/recorrido_camaras.html" class="bd-btn-nav">RECORRIDO LOGICO DE CAMARAS</a>
+            <a href="EXPLICACION DE CODIGO/recorrido_camaras.html" class="bd-btn-nav">RECORRIDO LÓGICO DE CÁMARAS</a>
             <a href="#seccion-pantallas-tablas" class="bd-btn-nav bd-btn-nav-destacado">PANTALLAS DE TABLAS (SCREENS)</a>
-            <a href="#seccion-comunicacion" class="bd-btn-nav">COMO SE COMUNICA CON EL CODIGO</a>
+            <a href="#seccion-comunicacion" class="bd-btn-nav">COMO SE COMUNICA CON EL CÓDIGO</a>
             <a href="#seccion-erd" class="bd-btn-nav">MAPA DE RELACIONES (ERD)</a>
             <a href="#seccion-sqlalchemy" class="bd-btn-nav">MODELO SQLALCHEMY</a>
             <a href="#seccion-diccionario" class="bd-btn-nav">DICCIONARIO DE 19 TABLAS</a>
@@ -735,7 +735,7 @@
             <div class="bd-pilar-tag">MOTOR DUAL DE PERSISTENCIA</div>
             <div class="bd-pilar-titulo">POSTGRESQL NEON + SQLITE</div>
             <p class="bd-pilar-desc">
-                SOPORTE NATIVO PARA POSTGRESQL (NEON CLOUD CON DRIVER PSYCOPG 3 Y POOL DE CONEXIONES) EN PRODUCCION
+                SOPORTE NATIVO PARA POSTGRESQL (NEON CLOUD CON DRIVER PSYCOPG 3 Y POOL DE CONEXIONES) EN PRODUCCIÓN
                 Y SQLITE LOCAL (DATA/LOCAL_DEV.DB) PARA PRUEBAS SIN DEPENDENCIAS EXTERNAS.
             </p>
         </div>
@@ -744,11 +744,11 @@
             <div class="bd-pilar-titulo">SQLALCHEMY 2.0 ORM</div>
             <p class="bd-pilar-desc">
                 TODAS LAS CONSULTAS Y ACTUALIZACIONES SE REALIZAN MEDIANTE OBJETOS PYTHON TIPADOS, EVITANDO
-                INYECCION SQL Y GARANTIZANDO INTEGRIDAD TRANSACCIONAL CON COMMIT Y ROLLBACK AUTOMATICOS.
+                INYECCIÓN SQL Y GARANTIZANDO INTEGRIDAD TRANSACCIONAL CON COMMIT Y ROLLBACK AUTOMÁTICOS.
             </p>
         </div>
         <div class="bd-pilar-card">
-            <div class="bd-pilar-tag">ORGANIZACION EN CAPAS</div>
+            <div class="bd-pilar-tag">ORGANIZACIÓN EN CAPAS</div>
             <div class="bd-pilar-titulo">PATTERN REPOSITORY + SCOPING</div>
             <p class="bd-pilar-desc">
                 LOS CONTROLADORES NO TOCAN SQL DIRECTO: DELEGAN EN REPOSITORIOS ESPECIALIZADOS QUE APLICAN
@@ -759,7 +759,7 @@
             <div class="bd-pilar-tag">VERSIONADO CONTINUO</div>
             <div class="bd-pilar-titulo">MIGRACIONES CON ALEMBIC</div>
             <p class="bd-pilar-desc">
-                CADA CAMBIO DE TABLAS O COLUMNAS QUEDA REGISTRADO EN HISTORIALES DE REVISION EN LA CARPETA
+                CADA CAMBIO DE TABLAS O COLUMNAS QUEDA REGISTRADO EN HISTORIALES DE REVISIÓN EN LA CARPETA
                 ALEMBIC, ASEGURANDO LA REPRODUCIBILIDAD EXACTA DEL ESQUEMA EN CUALQUIER COMPUTADORA.
             </p>
         </div>
@@ -783,7 +783,7 @@
         <p style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; margin-top: 0; text-transform: uppercase;">
             SELECCIONE UNA TABLA DE LAS 19 PESTAÑAS INFERIORES PARA VISUALIZAR EL MOCKUP EXACTO EN PANTALLA,
             CON SU CONSULTA SQL DE CONSULTA, SUS METADATOS DE COLUMNAS, REGISTROS DE EJEMPLO DE AUTOPASS,
-            CLAVES FORANEAS Y FUNCION EN LA APLICACION:
+            CLAVES FORÁNEAS Y FUNCIÓN EN LA APLICACIÓN:
         </p>
 
         <!-- CONTENEDOR MARCO DE VENTANA TIPO DBEAVER / DATAGRIP -->
@@ -1565,20 +1565,20 @@
             <!-- PIE DE SCREEN CON DETALLE Y RELACIONES -->
             <div class="bd-screen-pie">
                 <div class="bd-meta-col">
-                    <h4>PROPOSITO DE LA TABLA</h4>
+                    <h4>PROPÓSITO DE LA TABLA</h4>
                     <p id="lbl-proposito-tabla">
                         ALMACENA LA CUENTA CENTRAL DE CADA USUARIO CON CREDENCIALES HASHEADAS BCRYPT, PERFIL, SUCURSAL ASIGNADA Y SALDO MONETARIO.
                     </p>
                 </div>
                 <div class="bd-meta-col">
-                    <h4>CLAVES FORANEAS Y DEPENDENCIAS</h4>
+                    <h4>CLAVES FORÁNEAS Y DEPENDENCIAS</h4>
                     <ul id="lbl-fks-tabla">
                         <li><strong>ORGANIZATION_ID:</strong> VINCULA CON LA EMPRESA MATRIZ MULTITENANT</li>
                         <li><strong>SUCURSAL_ID:</strong> RESTRINGE AL LOCAL_ADMIN A SU SUCURSAL CORRESPONDIENTE</li>
                     </ul>
                 </div>
                 <div class="bd-meta-col">
-                    <h4>ARCHIVOS DEL CODIGO QUE INTERACTUAN</h4>
+                    <h4>ARCHIVOS DEL CÓDIGO QUE INTERACTÚAN</h4>
                     <div id="lbl-archivos-tabla" style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
                         <a href="EXPLICACION DE CODIGO/index.html#/models/user.py" target="_blank" class="bd-archivo-badge">models/user.py</a>
                         <a href="EXPLICACION DE CODIGO/index.html#/repositories/user_repository.py" target="_blank" class="bd-archivo-badge">repositories/user_repository.py</a>
@@ -1601,9 +1601,9 @@
         </div>
 
         <p style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; text-transform: uppercase;">
-            LA COMUNICACION ENTRE EL PROGRAMA PYTHON (FASTAPI Y SERVICIOS DE VISION) Y LA BASE DE DATOS SIGUE UN CIRCUITO
-            ESTRICTAMENTE CONTROLADO EN CAPAS. NINGUN CONTROLADOR ACCEDE AL MOTOR A CIEGAS; TODO VIAJA A TRAVES DE
-            SESIONES AISLADAS, INYECCION DE DEPENDENCIAS Y EL PATRON REPOSITORIO:
+            LA COMUNICACIÓN ENTRE EL PROGRAMA PYTHON (FASTAPI Y SERVICIOS DE VISIÓN) Y LA BASE DE DATOS SIGUE UN CIRCUITO
+            ESTRICTAMENTE CONTROLADO EN CAPAS. NINGÚN CONTROLADOR ACCEDE AL MOTOR A CIEGAS; TODO VIAJA A TRAVÉS DE
+            SESIONES AISLADAS, INYECCIÓN DE DEPENDENCIAS Y EL PATRÓN REPOSITORIO:
         </p>
 
         <div class="bd-flujo-lista">
@@ -1612,10 +1612,10 @@
             <div class="bd-flujo-paso">
                 <div class="bd-flujo-numero">1</div>
                 <div class="bd-flujo-cuerpo">
-                    <h3>DISPARO DEL EVENTO: SOLICITUD WEB O DETECCION DE CAMARA</h3>
+                    <h3>DISPARO DEL EVENTO: SOLICITUD WEB O DETECCIÓN DE CÁMARA</h3>
                     <p>
                         EL RECORRIDO COMIENZA CUANDO UN NAVEGADOR HACE UN PEDIDO HTTP (POR EJEMPLO, CREAR UNA RESERVA EN <code>/API/RESERVATIONS/</code>)
-                        O CUANDO EL HILO DE VISION ARTIFICIAL (OPENCV) RECONOCE UNA PATENTE EN EL VIDEO DE ENTRADA Y DISPARA EL INGRESO DEL AUTO.
+                        O CUANDO EL HILO DE VISIÓN ARTIFICIAL (OPENCV) RECONOCE UNA PATENTE EN EL VIDEO DE ENTRADA Y DISPARA EL INGRESO DEL AUTO.
                     </p>
                     <div class="bd-flujo-archivos">
                         <span>ARCHIVOS:</span>
@@ -1629,12 +1629,12 @@
             <div class="bd-flujo-paso">
                 <div class="bd-flujo-numero">2</div>
                 <div class="bd-flujo-cuerpo">
-                    <h3>INYECCION DE DEPENDENCIAS: CREACION DE SESION LIMPIA (GET_DB)</h3>
+                    <h3>INYECCIÓN DE DEPENDENCIAS: CREACIÓN DE SESIÓN LIMPIA (GET_DB)</h3>
                     <p>
-                        FASTAPI INVOCA LA FUNCION GENERADORA <code>GET_DB()</code> DEFINIDA EN <code>CORE/DATABASE.PY</code>.
-                        ESTA FUNCION TOMA UNA CONEXION PREPARADA DEL POOL DE SQLALCHEMY, ABRE UNA SESION AISLADA (<code>DB = SESSIONLOCAL()</code>)
+                        FASTAPI INVOCA LA FUNCIÓN GENERADORA <code>GET_DB()</code> DEFINIDA EN <code>CORE/DATABASE.PY</code>.
+                        ESTA FUNCIÓN TOMA UNA CONEXIÓN PREPARADA DEL POOL DE SQLALCHEMY, ABRE UNA SESIÓN AISLADA (<code>DB = SESSIONLOCAL()</code>)
                         Y SE LA ENTREGA AL CONTROLADOR MEDIANTE <code>DEPENDS(GET_DB)</code>. SI OCURRE UN ERROR O CUANDO EL ENDPOINT TERMINA,
-                        EL BLOQUE <code>FINALLY: DB.CLOSE()</code> CIERRA LA SESION Y DEVUELVE LA CONEXION AL POOL SIN DEJAR RECURSOS ABIERTOS.
+                        EL BLOQUE <code>FINALLY: DB.CLOSE()</code> CIERRA LA SESIÓN Y DEVUELVE LA CONEXIÓN AL POOL SIN DEJAR RECURSOS ABIERTOS.
                     </p>
                     <div class="bd-flujo-archivos">
                         <span>ARCHIVOS:</span>
@@ -1648,10 +1648,10 @@
             <div class="bd-flujo-paso">
                 <div class="bd-flujo-numero">3</div>
                 <div class="bd-flujo-cuerpo">
-                    <h3>CAPA DE SERVICIOS: LOGICA DE NEGOCIO Y VALIDACIONES</h3>
+                    <h3>CAPA DE SERVICIOS: LÓGICA DE NEGOCIO Y VALIDACIONES</h3>
                     <p>
                         EL ENDPOINT DERIVA LA TAREA AL SERVICIO CORRESPONDIENTE (EJEMPLO: <code>RESERVATION_SERVICE.PY</code> O <code>ACCESS_SERVICE.PY</code>).
-                        ACA SE VERIFICAN LAS CONDICIONES: ¿HAY COCHERA DISPONIBLE EN EL AFORO? ¿EL VEHICULO TIENE MULTAS?
+                        ACÁ SE VERIFICAN LAS CONDICIONES: ¿HAY COCHERA DISPONIBLE EN EL AFORO? ¿EL VEHÍCULO TIENE MULTAS?
                         ¿EL CLIENTE DISPONE DE SALDO SUFICIENTE O PAGO CON MERCADO PAGO?
                     </p>
                     <div class="bd-flujo-archivos">
@@ -1670,7 +1670,7 @@
                     <p>
                         EL SERVICIO NUNCA ARMA CONSULTAS A MANO; LLAMA A LOS REPOSITORIOS (EJEMPLO: <code>RESERVATION_REPOSITORY.PY</code>).
                         EL REPOSITORIO EJECUTA SENTENCIAS ORM COMO <code>DB.QUERY(RESERVATION).FILTER(...)</code>.
-                        ADEMAS, EL MODULO <code>REPOSITORIES/SCOPING.PY</code> APLICA AUTOMATICAMENTE EL FILTRO DE SUCURSAL PARA QUE NINGUN
+                        ADEMÁS, EL MÓDULO <code>REPOSITORIES/SCOPING.PY</code> APLICA AUTOMÁTICAMENTE EL FILTRO DE SUCURSAL PARA QUE NINGÚN
                         OPERADOR DE UNA SEDE PUEDA LEER O MODIFICAR DATOS DE OTRA SUCURSAL.
                     </p>
                     <div class="bd-flujo-archivos">
@@ -1686,13 +1686,13 @@
             <div class="bd-flujo-paso">
                 <div class="bd-flujo-numero">5</div>
                 <div class="bd-flujo-cuerpo">
-                    <h3>MOTOR SQLALCHEMY: TRADUCCION A SQL NATIVO Y POOL DE CONEXIONES</h3>
+                    <h3>MOTOR SQLALCHEMY: TRADUCCIÓN A SQL NATIVO Y POOL DE CONEXIONES</h3>
                     <p>
                         SQLALCHEMY TOMA EL MODELO DECLARATIVO DE <code>MODELS/</code>, VALIDA LOS TIPOS DE DATOS Y CONVIERTE LA CONSULTA
                         A SENTENCIAS SQL NATIVAS (SELECT, INSERT, UPDATE) OPTIMIZADAS PARA EL MOTOR ACTIVO.
-                        UTILIZA PARAMETRIZACION ESTRICTA, HACIENDO IMPOSIBLE CUALQUIER ATAQUE DE INYECCION SQL.
+                        UTILIZA PARAMETRIZACIÓN ESTRICTA, HACIENDO IMPOSIBLE CUALQUIER ATAQUE DE INYECCIÓN SQL.
                         EN POSTGRESQL EN POSTGRESQL EL POOL GESTIONA 20 CONEXIONES PERMANENTES (CON CAPACIDAD DE DESBORDE DE HASTA 40) Y EJECUTA PINGS PREVIOS
-                        PARA COMPROBAR QUE LA CONEXION A LA BASE ACTIVA (DATA/LOCAL_DEV.DB O NEON) SIGA VIVA ANTES DE ENVIAR LA CONSULTA.
+                        PARA COMPROBAR QUE LA CONEXIÓN A LA BASE ACTIVA (DATA/LOCAL_DEV.DB O NEON) SIGA VIVA ANTES DE ENVIAR LA CONSULTA.
                     </p>
                     <div class="bd-flujo-archivos">
                         <span>ARCHIVOS:</span>
@@ -1709,8 +1709,8 @@
                     <h3>BASE DE DATOS RELACIONAL: TRANSACCIONES ACID Y INTEGRIDAD</h3>
                     <p>
                         EL MOTOR DE BASE DE DATOS (POSTGRESQL O SQLITE) EJECUTA EL COMANDO. SI SE TRATA DE UN ALTA (INSERT)
-                        O MODIFICACION (UPDATE), SE APLICA EL <code>DB.COMMIT()</code>. SI CUALQUIER VALIDACION FALLA EN EL MEDIO,
-                        SE DISPARA <code>DB.ROLLBACK()</code> DEJANDO LA BASE DE DATOS EXACTAMENTE EN EL ESTADO ANTERIOR, SIN CORRUPCIONES NI REGISTROS HUERFANOS.
+                        O MODIFICACIÓN (UPDATE), SE APLICA EL <code>DB.COMMIT()</code>. SI CUALQUIER VALIDACIÓN FALLA EN EL MEDIO,
+                        SE DISPARA <code>DB.ROLLBACK()</code> DEJANDO LA BASE DE DATOS EXACTAMENTE EN EL ESTADO ANTERIOR, SIN CORRUPCIONES NI REGISTROS HUÉRFANOS.
                     </p>
                     <div class="bd-flujo-archivos">
                         <span>BASE DE DATOS:</span>
@@ -1724,7 +1724,7 @@
             <div class="bd-flujo-paso">
                 <div class="bd-flujo-numero">7</div>
                 <div class="bd-flujo-cuerpo">
-                    <h3>SERIALIZACION Y RESPUESTA FINAL</h3>
+                    <h3>SERIALIZACIÓN Y RESPUESTA FINAL</h3>
                     <p>
                         LOS OBJETOS RETORNADOS POR LA BASE DE DATOS SE CONVIERTEN EN ESQUEMAS PYDANTIC TIPADOS Y SALEN EN FORMATO JSON
                         HACIA LA INTERFAZ WEB, O EMITEN UN MENSAJE POR WEBSOCKET / SSE PARA QUE LA BARRERA VIRTUAL SE LEVANTE EN PANTALLA.
@@ -2291,15 +2291,15 @@ def get_db():
 <!-- FOOTER FINAL CON ENLACES -->
     <footer style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px; text-align: center; margin-top: 40px;">
         <div style="color: var(--dorado); font-weight: 800; font-size: 15px; margin-bottom: 8px; letter-spacing: 1px;">
-            SISTEMA DE PERSISTENCIA COMPLETAMENTE CONFIGURADO Y HOMOGENEO
+            SISTEMA DE PERSISTENCIA COMPLETAMENTE CONFIGURADO Y HOMOGÉNEO
         </div>
         <p style="color: var(--text-secondary); font-size: 13px; max-width: 850px; margin: 0 auto 18px; text-transform: uppercase;">
-            LA BASE DE DATOS TRABAJA DE MANERA TOTALMENTE INTEGRADA CON EL BACKEND FASTAPI Y LOS MOTORES DE VISION ARTIFICIAL ALPR.
-            CADA ACCION EN PANTALLA QUEDA RESPALDADA BAJO CRITERIOS ESTRICTOS DE TRANSACCIONALIDAD Y SEGURIDAD.
+            LA BASE DE DATOS TRABAJA DE MANERA TOTALMENTE INTEGRADA CON EL BACKEND FASTAPI Y LOS MOTORES DE VISIÓN ARTIFICIAL ALPR.
+            CADA ACCIÓN EN PANTALLA QUEDA RESPALDADA BAJO CRITERIOS ESTRICTOS DE TRANSACCIONALIDAD Y SEGURIDAD.
         </p>
         <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
             <a href="EXPLICACION DE CODIGO/index.html" class="bd-btn-nav bd-btn-nav-destacado">← VOLVER AL VISOR GENERAL</a>
-            <a href="EXPLICACION DE CODIGO/recorrido_camaras.html" class="bd-btn-nav">RECORRIDO DE CAMARAS</a>
+            <a href="EXPLICACION DE CODIGO/recorrido_camaras.html" class="bd-btn-nav">RECORRIDO DE CÁMARAS</a>
         </div>
     </footer>
 

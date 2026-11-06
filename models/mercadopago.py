@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
 from core.database import Base
-from models.types import DateTimeAsStr
+from models.types import DateTimeValue, MoneyValue
 
 class MercadoPagoPayment(Base):
     """REGISTRO DE INTENCIONES Y CONFIRMACIONES DE PAGO MERCADO PAGO (CHECKOUT PRO)."""
@@ -17,7 +17,7 @@ class MercadoPagoPayment(Base):
     access_log_id = Column(Integer, ForeignKey("access_logs.id"), nullable=True)
     redemption_ticket_id = Column(Integer, nullable=True)   # Descuento % por canje (solo reservas)
     patente = Column(String, nullable=True)
-    monto = Column(Float, nullable=False)
+    monto = Column(MoneyValue, nullable=False)
     moneda = Column(String, default="ARS")
 
     external_reference = Column(String, unique=True, index=True, nullable=True)
@@ -33,8 +33,8 @@ class MercadoPagoPayment(Base):
     estado = Column(String, default="PENDIENTE")   # PENDIENTE | APROBADO | FALLIDO | CANCELADO
     mp_status = Column(String, nullable=True)      # status crudo reportado por Mercado Pago
 
-    fecha_creacion = Column(DateTimeAsStr, nullable=True)
-    fecha_confirmacion = Column(DateTimeAsStr, nullable=True)
+    fecha_creacion = Column(DateTimeValue, nullable=True)
+    fecha_confirmacion = Column(DateTimeValue, nullable=True)
 
     user = relationship("User")
     reservation = relationship("Reservation")

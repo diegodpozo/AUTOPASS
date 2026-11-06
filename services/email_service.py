@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from jinja2 import Environment, FileSystemLoader
 from core.config import settings
 from core.logger import get_logger, mask_email
+from models.types import formatear_fecha
 import threading
 import os
 
@@ -17,6 +18,15 @@ template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templat
 jinja_env = Environment(loader=FileSystemLoader(template_dir))
 
 class EmailService:
+    @staticmethod
+    def _normalizar_fechas_reserva(res_data: dict) -> dict:
+        """Serializa fechas de dominio al formato que consumen las plantillas HTML."""
+        datos = dict(res_data)
+        for campo in ("fecha_inicio", "fecha_fin"):
+            if datos.get(campo) is not None:
+                datos[campo] = formatear_fecha(datos[campo])
+        return datos
+
     @staticmethod
     def _render_template(template_name: str, **context):
         """RENDERIZA UN TEMPLATE DE JINJA2 CON EL CONTEXTO PROVISTO."""
@@ -103,6 +113,7 @@ class EmailService:
     @staticmethod
     def send_reservation_confirmation(to_email: str, user_name: str, res_data: dict):
         """ENVIA LA CONFIRMACION DE RESERVA CON EL LOGO CARGADO DINAMICAMENTE."""
+        res_data = EmailService._normalizar_fechas_reserva(res_data)
         subject = f"Tu Pase Digital - Reserva #{res_data['id']} - AUTOPASS"
         
         # GENERAR CODIGO QR
@@ -132,6 +143,7 @@ class EmailService:
     @staticmethod
     def send_reservation_reminder(to_email: str, user_name: str, res_data: dict):
         """ENVIA RECORDATORIO 30 MIN ANTES DE UNA RESERVA."""
+        res_data = EmailService._normalizar_fechas_reserva(res_data)
         pagada = res_data.get('pagada', False)
         if pagada:
             subject = f"Tu reserva #{
@@ -150,6 +162,7 @@ class EmailService:
     @staticmethod
     def send_auto_cancelled_notification(to_email: str, user_name: str, res_data: dict):
         """AVISA AL USUARIO QUE SU RESERVA FUE CANCELADA POR NO INGRESAR A TIEMPO."""
+        res_data = EmailService._normalizar_fechas_reserva(res_data)
         subject = f"Reserva #{res_data['id']} cancelada - AUTOPASS"
         html_content = EmailService._render_template(
             "reservation_auto_cancelled.html",

@@ -10,8 +10,7 @@ from sqlalchemy.orm import relationship					# Importa `relationship` para declar
 									# entre entidades
 from core.database import Base						# Importa `Base`, la clase base declarativa de la
 									# que heredan todos los modelos
-from models.types import DateTimeAsStr					# Importa `DateTimeAsStr`, el tipo custom que
-									# guarda fechas como texto
+from models.types import DateTimeValue, MONEY_ZERO, MoneyValue					# Tipos compartidos para fechas y dinero
 from models.branch_ref import branch_ref_property			# Importa `branch_ref_property`, un helper que
 									# expone la sede como propiedad reutilizable
 
@@ -74,8 +73,7 @@ class ParkingAforo(Base):						# Define el modelo `ParkingAforo` (control de
 									# con 10 por defecto
     ocupacion_reservas = Column(Integer, default=0)			# Define `ocupacion_reservas` (total de reservas
 									# ocupadas) con 0 por defecto
-    ultima_actualizacion = Column(String)				# Define `ultima_actualizacion`, la fecha/hora
-									# textual del ultimo cambio de aforo
+    ultima_actualizacion = Column(DateTimeValue)				# Fecha/hora del ultimo cambio de aforo
     organization_id = Column(Integer, ForeignKey("organizations.id", name="fk_parking_aforo_organization_id_org",
 									# Define `organization_id` como FK a
 									# `organizations.id`, para el aislamiento
@@ -114,8 +112,7 @@ class Settings(Base):							# Define el modelo `Settings` para configuraciones
     )									# Cierra `__table_args__` de Settings
     id = Column(Integer, primary_key=True)				# Define la clave primaria `id`
     clave = Column(String) # REMOVIDO UNIQUE=TRUE PARA PERMITIR VARIANTES POR SEDE
-    valor = Column(Float, nullable=True)				# Define `valor` como Float nullable, para valores
-									# numericos de configuracion
+    valor = Column(MoneyValue, nullable=True)				# Valor monetario nullable de la configuracion
     valor_str = Column(String, nullable=True) # PARA CONFIGURACIONES DE TEXTO (IPS, ETC)
     organization_id = Column(Integer, ForeignKey("organizations.id", name="fk_settings_organization_id_org",
 									# Define `organization_id` como FK a organizaciones
@@ -185,14 +182,13 @@ class AccessLog(Base):							# Define el modelo `AccessLog` (auditoria de
     floor_id = Column(Integer, ForeignKey("parking_floors.id"), nullable=True)
 									# Define `floor_id` como FK opcional a
 									# `parking_floors.id`
-    fecha_hora = Column(DateTimeAsStr)					# Define `fecha_hora` usando el tipo custom
-									# `DateTimeAsStr`
-    fecha_pago = Column(DateTimeAsStr, nullable=True) # NUEVA COLUMNA PARA REPORTES FINANCIEROS
+    fecha_hora = Column(DateTimeValue)
+    fecha_pago = Column(DateTimeValue, nullable=True) # NUEVA COLUMNA PARA REPORTES FINANCIEROS
     imagen_path = Column(String, nullable=True)				# Define `imagen_path`, la ruta de la foto de
 									# evidencia (nullable)
     pago_confirmado = Column(Boolean, default=False)			# Define `pago_confirmado` con False por defecto
     metodo_pago = Column(String, nullable=True) # 'DIGITAL' O 'CAJA'
-    costo_estadia = Column(Float, default=0.0)				# Define `costo_estadia` con 0.0 por defecto
+    costo_estadia = Column(MoneyValue, default=MONEY_ZERO)
     sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_access_logs_sucursal_id_branch",
 									# Define `sucursal_id` como FK a parking_branches
 									# para el aislamiento por sede

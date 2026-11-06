@@ -1,6 +1,7 @@
-from sqlalchemy import inspect, text
+from sqlalchemy import Numeric, bindparam, inspect, text
 from sqlalchemy.orm import Session
 import models
+from models.types import to_money
 from models.enums import UserRole
 from repositories.scoping import scope_by_organization
 
@@ -140,10 +141,14 @@ class UserRepository:
         objeto para que la proxima lectura (respuesta HTTP, mail, notificacion,
         test) vea el valor real de la base y no el viejo.
         NO hace commit."""
-        fila = db.execute(text(sentencia), {"uid": user.id, **parametros}).fetchone()
+        statement = text(sentencia)
+        if "monto" in parametros:
+            statement = statement.bindparams(bindparam("monto", type_=Numeric(12, 2)))
+            parametros = {**parametros, "monto": to_money(parametros["monto"])}
+        fila = db.execute(statement, {"uid": user.id, **parametros}).fetchone()
         if fila is None:
             return None
-        valor_nuevo = fila[0]
+        valor_nuevo = to_money(fila[0]) if columna == "saldo" else fila[0]
         if inspect(user, raiseerr=False) is None:
             # Objeto plano (no es una fila: mocks de tests) -> se copia el valor devuelto.
             setattr(user, columna, valor_nuevo)
@@ -154,14 +159,14 @@ class UserRepository:
         return valor_nuevo
 
     @staticmethod
-    def sumar_saldo(db: Session, user: models.User, monto: float):
+    def sumar_saldo(db: Session, user: models.User, monto):
         """ACREDITA `monto` AL SALDO (UPDATE atomico). Devuelve el saldo nuevo."""
         return UserRepository._ajuste_atomico(
             db, user, _SQL_SUMAR_SALDO, "saldo", {"monto": monto}
         )
 
     @staticmethod
-    def descontar_saldo(db: Session, user: models.User, monto: float):
+    def descontar_saldo(db: Session, user: models.User, monto):
         """DESCUENTA `monto` SOLO SI EL SALDO ALCANZA, en la misma sentencia.
 
         Devuelve el saldo nuevo, o None si no alcanzaba (y entonces NO descontó).
@@ -171,7 +176,7 @@ class UserRepository:
         )
 
     @staticmethod
-    def fijar_saldo(db: Session, user: models.User, monto: float):
+    def fijar_saldo(db: Session, user: models.User, monto):
         """FIJA EL SALDO A UN VALOR ABSOLUTO (ajuste del admin). Devuelve el saldo nuevo."""
         return UserRepository._ajuste_atomico(
             db, user, _SQL_FIJAR_SALDO, "saldo", {"monto": monto}
@@ -200,7 +205,7 @@ class UserRepository:
         )
 
     @staticmethod
-    def update_balance(db: Session, user: models.User, amount: float):
+    def update_balance(db: Session, user: models.User, amount):
         """ACTUALIZA EL SALDO DE LA CUENTA DE UN USUARIO (atomico) y commitea."""
         saldo = UserRepository.sumar_saldo(db, user, amount)
         db.commit()

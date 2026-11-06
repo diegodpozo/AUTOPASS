@@ -1,6 +1,9 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 from typing import Optional
 from schemas.validators import validate_password_strength, validate_dni_digits, validate_phone_digits, validate_email_format
+from models.types import formatear_fecha
+from schemas.types import MoneyAmount
 
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -15,7 +18,7 @@ class UserBase(BaseModel):
     sucursal: Optional[str] = None
     direccion: Optional[str] = None
     puntos_acumulados: Optional[int] = 0
-    saldo: Optional[float] = 0.0
+    saldo: Optional[MoneyAmount] = 0
     is_blocked: Optional[bool] = False
 
     @field_validator('telefono')
@@ -128,7 +131,7 @@ class UserLogin(BaseModel):
         return validate_email_format(v)
 
 class RechargeBalance(BaseModel):
-    monto: float
+    monto: MoneyAmount
 
 class UserPasswordChange(BaseModel):
     new_password: str
@@ -184,10 +187,14 @@ class RedemptionTicketResponse(BaseModel):
     estado: Optional[str] = "VIGENTE"
     qr_data: Optional[str] = None
     observacion: Optional[str] = None
-    created_at: Optional[str] = None
-    fecha_vencimiento: Optional[str] = None
-    fecha_uso: Optional[str] = None
+    created_at: Optional[datetime] = None
+    fecha_vencimiento: Optional[datetime] = None
+    fecha_uso: Optional[datetime] = None
     reserva_id: Optional[int] = None
     direccion: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+
+    @field_serializer("created_at", "fecha_vencimiento", "fecha_uso", when_used="json")
+    def _serializar_fechas(self, valor):
+        return formatear_fecha(valor)

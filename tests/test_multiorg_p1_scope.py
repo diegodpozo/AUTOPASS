@@ -7,6 +7,7 @@ empresa. Un solo tenant (<2 organizaciones) conserva el comportamiento historico
 """
 import datetime
 import uuid
+from decimal import Decimal
 
 import pytest
 from fastapi import HTTPException
@@ -246,7 +247,7 @@ def test_reports_local_admin_no_ve_sede_homonima_de_otra_organizacion(db):
     admin_a = _user(db, rol="local_admin", organization_id=org_a, sucursal="SEDE X")
 
     resumen = ReportService.get_financial_summary(db, admin_a)
-    assert resumen["total_recaudado"] == 100.0
+    assert resumen["total_recaudado"] == Decimal("100.00")
 
 
 def test_reports_admin_ve_su_organizacion_con_org_resuelta(db):

@@ -1,8 +1,10 @@
 import datetime
 import math
+from decimal import Decimal
 from typing import Optional
 from sqlalchemy.orm import Session
 import models
+from models.types import MONEY_ZERO, parse_fecha, to_decimal, to_money
 
 from core.logger import get_logger
 from services.time_service import TimeService
@@ -33,7 +35,7 @@ class BillingService:
         return "Auto"
 
     @staticmethod
-    def get_rate(db: Session, tipo: str = "hora", sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> float:
+    def get_rate(db: Session, tipo: str = "hora", sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> Optional[Decimal]:
         """OBTIENE LA TARIFA CONFIGURADA SEGUN LA MODALIDAD DE ESTADIA, SEDE Y TIPO DE VEHICULO."""
         from core.cache import ttl_cache
         v_str = BillingService._tipo_key(tipo_vehiculo)
@@ -63,12 +65,12 @@ class BillingService:
 
         if not setting:
             return None
-        val = float(setting.valor)
+        val = to_decimal(setting.valor)
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
 
     @staticmethod
-    def get_hourly_rate(db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> float:
+    def get_hourly_rate(db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[Decimal]:
         """ACCESO RAPIDO A LA TARIFA POR HORA BASE."""
         from core.cache import ttl_cache
         cache_key = f"rate_hourly_{sucursal}_{tipo_vehiculo}"
@@ -86,12 +88,12 @@ class BillingService:
 
         if not setting:
             return None
-        val = float(setting.valor)
+        val = to_decimal(setting.valor)
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
 
     @staticmethod
-    def get_30min_rate(db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> float:
+    def get_30min_rate(db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[Decimal]:
         """TARIFA DE LA FRACCION DE 30 MIN. SI NO ESTA CONFIGURADA, USA LA MITAD DE LA TARIFA HORA."""
         from core.cache import ttl_cache
         cache_key = f"rate_30min_{sucursal}_{tipo_vehiculo}"
@@ -111,12 +113,12 @@ class BillingService:
         tarifa_hora = BillingService.get_hourly_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
         if not setting and tarifa_hora is None:
             return None
-        val = float(setting.valor) if setting else (tarifa_hora / 2)
+        val = to_decimal(setting.valor) if setting else (tarifa_hora / 2)
         ttl_cache.set(cache_key, val, ttl=300.0)
         return val
 
     @staticmethod
-    def hourly_amount_from_rates(duration_hours: float, hora: Optional[float], fraccion: Optional[float]) -> Optional[float]:
+    def hourly_amount_from_rates(duration_hours: float, hora: Optional[Decimal], fraccion: Optional[Decimal]) -> Optional[Decimal]:
         """REGLA ESCALONADA DE UNA ESTADIA/RESERVA POR HORA, DADAS LAS TARIFAS.
 
         n = ceil(horas * 2) con minimo 1 bloque (cada bloque es de 30 min).
@@ -134,11 +136,11 @@ class BillingService:
             hora = fraccion * 2
         bloques = max(1, math.ceil((duration_hours or 0) * 2))
         if bloques == 1:
-            return float(fraccion)
-        return float((bloques // 2) * hora + (bloques % 2) * fraccion)
+            return to_money(fraccion)
+        return to_money((bloques // 2) * hora + (bloques % 2) * fraccion)
 
     @staticmethod
-    def calculate_hourly_amount(db: Session, duration_hours: float, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
+    def calculate_hourly_amount(db: Session, duration_hours: float, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[Decimal]:
         """MONTO DE UNA ESTADIA/RESERVA POR HORA (regla escalonada, ver hourly_amount_from_rates).
         Devuelve None si la sucursal no tiene tarifario para el tipo de vehiculo."""
         fraccion = BillingService.get_30min_rate(db, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
@@ -146,23 +148,23 @@ class BillingService:
         return BillingService.hourly_amount_from_rates(duration_hours, hora, fraccion)
 
     @staticmethod
-    def calculate_debt(entry_time_str: str, db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[float]:
+    def calculate_debt(entry_time_str, db: Session, sucursal: str = None, tipo_vehiculo: str = "Auto") -> Optional[Decimal]:
         """CALCULA LA DEUDA ACUMULADA DE UNA ESTADIA, SEDE Y TIPO DE VEHICULO.
         Devuelve None si la sucursal no tiene tarifario configurado (no inventa precio)."""
-        entrada_dt = datetime.datetime.fromisoformat(entry_time_str)
+        entrada_dt = parse_fecha(entry_time_str)
         delta = TimeService.now() - entrada_dt
         horas_transcurridas = delta.total_seconds() / 3600
         return BillingService.calculate_hourly_amount(db, horas_transcurridas, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
 
     @staticmethod
-    def preview_pending_amount(db: Session, log: "models.AccessLog") -> Optional[float]:
+    def preview_pending_amount(db: Session, log: "models.AccessLog") -> Optional[Decimal]:
         """CALCULA EL MONTO QUE UNA ESTADIA IMPAGA DEBERIA ABONAR, SIN MUTAR NADA.
         Espeja la logica de cobro de process_payment para previsualizar el popup de caja.
         Devuelve None si la sucursal no tiene tarifario configurado."""
         from models.enums import PaymentStatus
         r = ReservationRepository.get_by_id(db, log.reserva_id) if log.reserva_id else None
         if r and r.estado_pago != PaymentStatus.PAGADO:
-            monto = float(r.monto_total or 0)
+            monto = to_money(r.monto_total or 0)
             if r.fecha_fin < TimeService.now_str():
                 extra = BillingService.calculate_debt(r.fecha_fin, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
                 if extra is None:
@@ -172,15 +174,15 @@ class BillingService:
         return BillingService.calculate_debt(log.fecha_hora, db, sucursal=log.sucursal, tipo_vehiculo=log.tipo_vehiculo)
 
     @staticmethod
-    def calculate_total_amount(db: Session, tipo_estadia: str, fecha_inicio: str, fecha_fin: str, sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> Optional[float]:
+    def calculate_total_amount(db: Session, tipo_estadia: str, fecha_inicio, fecha_fin, sucursal: str = None, tipo_vehiculo: VehicleType = VehicleType.AUTO) -> Optional[Decimal]:
         """CALCULA EL MONTO TOTAL BASADO EN LA DURACION Y EL TIPO DE ESTADIA.
         Devuelve None si la sucursal no tiene tarifario configurado (no inventa precio)."""
-        start = datetime.datetime.fromisoformat(fecha_inicio)
-        end = datetime.datetime.fromisoformat(fecha_fin)
+        start = parse_fecha(fecha_inicio)
+        end = parse_fecha(fecha_fin)
         duration_hours = (end - start).total_seconds() / 3600
         
         if duration_hours <= 0:
-            return 0.0
+            return MONEY_ZERO
 
         if tipo_estadia == "hora":
             return BillingService.calculate_hourly_amount(db, duration_hours, sucursal=sucursal, tipo_vehiculo=tipo_vehiculo)
@@ -190,15 +192,15 @@ class BillingService:
             return None
         
         if tipo_estadia == "dia":
-            return float(max(1, math.ceil(duration_hours / 24)) * rate)
+            return to_money(max(1, math.ceil(duration_hours / 24)) * rate)
         elif tipo_estadia == "semana":
-            return float(math.ceil(duration_hours / (24 * 7)) * rate)
+            return to_money(math.ceil(duration_hours / (24 * 7)) * rate)
         elif tipo_estadia == "quincena":
-            return float(math.ceil(duration_hours / (24 * 15)) * rate)
+            return to_money(math.ceil(duration_hours / (24 * 15)) * rate)
         elif tipo_estadia == "mes":
-            return float(math.ceil(duration_hours / (24 * 30)) * rate)
+            return to_money(math.ceil(duration_hours / (24 * 30)) * rate)
         else:
-            return float(math.ceil(duration_hours) * rate)
+            return to_money(math.ceil(duration_hours) * rate)
 
     @staticmethod
     def snapshot_tarifas(db: Session, tipo_estadia: str, sucursal: str, tipo_vehiculo, duration_hours: float) -> dict:
@@ -213,13 +215,13 @@ class BillingService:
         }
 
     @staticmethod
-    def calculate_points(amount: float) -> int:
+    def calculate_points(amount: Decimal) -> int:
         """CALCULA LOS PUNTOS AUTOPASS GANADOS (10 PTS POR CADA $1000 ABONADOS)."""
         puntos = int(amount / 100) #EQUIVALE UN (MONTO / 1000) * 10
         return max(1, puntos) if amount > 0 else 0
 
     @staticmethod
-    def apply_stay_mp_payment(db: Session, user, log: "models.AccessLog", monto: float) -> dict:
+    def apply_stay_mp_payment(db: Session, user, log: "models.AccessLog", monto: Decimal) -> dict:
         """MARCA UNA ESTADIA COMO PAGADA POR MERCADO PAGO (CHECKOUT PRO) SIN DESCONTAR SALDO."""
         if log.pago_confirmado:
             return {"status": "ok", "message": "La estadía ya ha sido abonada", "aplicado": False}
@@ -284,10 +286,16 @@ class BillingService:
         if not log.fecha_pago or not fecha_fin:
             return False
         try:
-            pago_dt = datetime.datetime.fromisoformat(str(log.fecha_pago).replace(" ", "T"))
-            fin_dt = datetime.datetime.fromisoformat(str(fecha_fin).replace(" ", "T"))
-        except ValueError:
-            return False
+            pago_dt = parse_fecha(log.fecha_pago)
+            fin_dt = parse_fecha(fecha_fin)
+        except (TypeError, ValueError):
+            logger.exception(
+                "[BILLING] No se pudo comprobar si ya se cobró el extra vencido (access_log_id=%s)",
+                getattr(log, "id", None),
+            )
+            raise
+        if pago_dt is None or fin_dt is None:
+            raise ValueError("Fecha de pago o fin de reserva vacía")
         return pago_dt > fin_dt
 
     @staticmethod
@@ -349,7 +357,7 @@ class BillingService:
                     return {"status": "ok", "monto_cobrado": monto_real, "puntos_ganados": puntos_ganados}
             return {"status": "error", "message": "No se encontraron estadías pendientes de pago"}
 
-        monto_real = 0.0
+        monto_real = MONEY_ZERO
         motivo_puntos = f"Estadía abonada: {plate}"
         now_str = TimeService.now_str()
         if log.reserva_id:

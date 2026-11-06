@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 import pytest
 from fastapi import HTTPException
@@ -187,7 +188,7 @@ def test_extra_por_reserva_vencida_se_cobra_una_sola_vez(db):
     assert segunda["monto_cobrado"] == 0.0
     assert tercera["monto_cobrado"] == 0.0
     assert log_final.costo_estadia == costo_tras_primera
-    assert log_final.costo_estadia == pytest.approx(1000.0 + primera["monto_cobrado"])
+    assert log_final.costo_estadia == Decimal("1000.00") + primera["monto_cobrado"]
 
 
 def test_cobro_en_caja_acredita_puntos_con_patente_normalizada(db):
