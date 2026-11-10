@@ -3,10 +3,7 @@ import datetime
 from sqlalchemy import Boolean, Column, Integer, String
 
 from core.database import Base
-
-
-def _now_iso():
-    return datetime.datetime.now().isoformat()
+from models.types import DateTimeValue
 
 
 class Organization(Base):
@@ -22,4 +19,4 @@ class Organization(Base):
     nombre = Column(String, unique=True, index=True)
     es_principal = Column(Boolean, default=False)
     activa = Column(Boolean, default=True)
-    created_at = Column(String, default=_now_iso)
+    created_at = Column(DateTimeValue, default=datetime.datetime.now)

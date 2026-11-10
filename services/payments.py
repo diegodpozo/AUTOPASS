@@ -1,6 +1,7 @@
 """Pagos de reservas: abono manual/saldo/Mercado Pago, descuentos por canje, simulación y ejecución de reembolsos."""
 
 import datetime
+from decimal import Decimal
 import re
 
 from fastapi import HTTPException
@@ -10,6 +11,7 @@ from core.db_lock import bloqueo_transaccional, clave_reserva, clave_usuario, re
 from core.logger import get_logger
 import models
 from models.enums import PaymentStatus, ReservationStatus
+from models.types import MONEY_ZERO, formatear_fecha, parse_fecha, to_money
 from repositories.access_log_repository import AccessRepository
 from repositories.redemption_repository import RedemptionRepository
 from repositories.reservation_repository import ReservationRepository
@@ -52,21 +54,21 @@ class ReservationPaymentsMixin:
                 return {"status": "ok", "message": "La reserva ya se encuentra pagada", "monto": res.monto_total, "monto_a_cobrar": res.monto_total, "descuento": 0.0, "metodo_pago": res.metodo_pago}
 
             # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
-            descuento = 0.0
-            monto_a_cobrar = res.monto_total or 0.0
+            descuento = MONEY_ZERO
+            monto_a_cobrar = to_money(res.monto_total or 0)
             if redemption_ticket_id:
                 if not res.user_id:
                     raise HTTPException(status_code=400, detail="La reserva no tiene un usuario vinculado para aplicar el descuento")
                 ticket_redencion = ReservationPaymentsMixin.validate_redemption_ticket(db, res.user_id, redemption_ticket_id, res.sucursal_nombre)
                 porc = ticket_redencion.valor_descuento or 0
-                descuento = round(monto_a_cobrar * porc / 100.0, 2)
-                monto_a_cobrar = round(monto_a_cobrar - descuento, 2)
+                descuento = to_money(monto_a_cobrar * porc / 100)
+                monto_a_cobrar = to_money(monto_a_cobrar - descuento)
                 # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
                 if res.monto_calculado is None:
-                    res.monto_calculado = res.monto_total or 0.0
+                    res.monto_calculado = to_money(res.monto_total or 0)
                 res.descuento_pct = porc
                 res.monto_total = monto_a_cobrar
-                res.monto_reembolsado = 0.0
+                res.monto_reembolsado = MONEY_ZERO
                 ticket_redencion.estado = "USADO"
                 ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
                 ticket_redencion.reserva_id = res.id
@@ -145,18 +147,18 @@ class ReservationPaymentsMixin:
                 return {"status": "ok", "message": "La reserva ya ha sido abonada"}
 
             # --- APLICAR DESCUENTO POR CANJE (% de descuento en estacionamiento) ---
-            descuento = 0.0
+            descuento = MONEY_ZERO
             ticket_redencion = None
-            monto_a_cobrar = res.monto_total
+            monto_a_cobrar = to_money(res.monto_total or 0)
 
             if redemption_ticket_id:
                 ticket_redencion = ReservationPaymentsMixin.validate_redemption_ticket(db, user.id, redemption_ticket_id, res.sucursal_nombre)
                 porc = ticket_redencion.valor_descuento or 0
-                descuento = round(res.monto_total * porc / 100.0, 2)
-                monto_a_cobrar = round(res.monto_total - descuento, 2)
+                descuento = to_money(monto_a_cobrar * Decimal(porc) / Decimal(100))
+                monto_a_cobrar = to_money(monto_a_cobrar - descuento)
                 # FOTO DE PRECIO: conservar el total base (pre-descuento) y registrar el % aplicado
                 if res.monto_calculado is None:
-                    res.monto_calculado = res.monto_total or 0.0
+                    res.monto_calculado = to_money(res.monto_total or 0)
                 res.descuento_pct = porc
 
             # DEDUCCION DE SALDO Y ACTUALIZACION DE ESTADO (FASE 1: el chequeo de saldo
@@ -170,7 +172,7 @@ class ReservationPaymentsMixin:
             # SI SE APLICO DESCUENTO, LA RESERVA QUEDA CON SU VALOR FINAL
             if ticket_redencion:
                 res.monto_total = monto_a_cobrar
-                res.monto_reembolsado = 0.0
+                res.monto_reembolsado = MONEY_ZERO
 
             # ACREDITACION DE PUNTOS POR LEALTAD (SOBRE LO EFECTIVAMENTE ABONADO)
             puntos_ganados = BillingService.calculate_points(monto_a_cobrar)
@@ -201,8 +203,8 @@ class ReservationPaymentsMixin:
             "sucursal": res.sucursal_nombre,
             "direccion": dir_info,
             "patente": res.patente,
-            "fecha_inicio": res.fecha_inicio,
-            "fecha_fin": res.fecha_fin,
+            "fecha_inicio": formatear_fecha(res.fecha_inicio),
+            "fecha_fin": formatear_fecha(res.fecha_fin),
             "costo": res.monto_total
         }
         EmailService.send_reservation_confirmation(user.email, user.nombre, res_info)
@@ -222,13 +224,13 @@ class ReservationPaymentsMixin:
                     f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente}).",
                     res.id
                 )
-        except Exception as e:
-            print(f"[ERROR NOTIF] No se pudo notificar pago de reserva: {e}")
+        except Exception:
+            logger.exception("No se pudo notificar pago de reserva #%s", res.id)
 
         return {"status": "ok", "message": "Reserva abonada con éxito", "puntos_ganados": puntos_ganados}
 
     @staticmethod
-    def pay_reservation_mp(db: Session, user: models.User, res: models.Reservation, monto_a_cobrar: float, redemption_ticket_id: int = None):
+    def pay_reservation_mp(db: Session, user: models.User, res: models.Reservation, monto_a_cobrar: Decimal, redemption_ticket_id: int = None):
         """MARCA UNA RESERVA COMO PAGADA POR MERCADO PAGO (CHECKOUT PRO) SIN DESCONTAR SALDO.
         El monto confirmado por Mercado Pago ya incluye el descuento por canje si correspondía."""
         if res.estado_reserva in [ReservationStatus.CANCELADA, ReservationStatus.COMPLETADA]:
@@ -250,10 +252,10 @@ class ReservationPaymentsMixin:
         if ticket_redencion:
             # FOTO DE PRECIO: el monto base es el total previo al descuento; se registra el %
             if res.monto_calculado is None:
-                res.monto_calculado = res.monto_total or 0.0
+                res.monto_calculado = to_money(res.monto_total or 0)
             res.descuento_pct = ticket_redencion.valor_descuento or 0
             res.monto_total = monto_a_cobrar
-            res.monto_reembolsado = 0.0
+            res.monto_reembolsado = MONEY_ZERO
             ticket_redencion.estado = "USADO"
             ticket_redencion.fecha_uso = datetime.datetime.now().isoformat()
             ticket_redencion.reserva_id = res.id
@@ -280,8 +282,8 @@ class ReservationPaymentsMixin:
             "sucursal": res.sucursal_nombre,
             "direccion": dir_info,
             "patente": res.patente,
-            "fecha_inicio": res.fecha_inicio,
-            "fecha_fin": res.fecha_fin,
+            "fecha_inicio": formatear_fecha(res.fecha_inicio),
+            "fecha_fin": formatear_fecha(res.fecha_fin),
             "costo": res.monto_total
         }
         EmailService.send_reservation_confirmation(user.email, user.nombre, res_info)
@@ -301,8 +303,8 @@ class ReservationPaymentsMixin:
                     f"¡Ganaste {puntos_ganados} puntos por abonar la reserva #{res.id} ({res.patente}).",
                     res.id
                 )
-        except Exception as e:
-            print(f"[ERROR NOTIF] No se pudo notificar pago de reserva MP: {e}")
+        except Exception:
+            logger.exception("No se pudo notificar pago de reserva #%s vía Mercado Pago", res.id)
 
         return {"status": "ok", "message": "Reserva abonada con éxito", "puntos_ganados": puntos_ganados, "aplicado": True}
 
@@ -320,28 +322,28 @@ class ReservationPaymentsMixin:
                 es_presencial = True
 
         if es_presencial:
-            return {"reembolso": 0.0, "error": "Vehículo en el predio"}
+            return {"reembolso": MONEY_ZERO, "error": "Vehículo en el predio"}
 
         # 2. CALCULO DE REEMBOLSO
-        monto_a_reembolsar = 0.0
+        monto_a_reembolsar = MONEY_ZERO
         if res.estado_pago == PaymentStatus.PAGADO:
             now = datetime.datetime.now()
-            start = datetime.datetime.fromisoformat(res.fecha_inicio)
-            end = datetime.datetime.fromisoformat(res.fecha_fin)
+            start = parse_fecha(res.fecha_inicio)
+            end = parse_fecha(res.fecha_fin)
 
             if now < start:
                 monto_a_reembolsar = res.monto_total
             elif now > end:
-                monto_a_reembolsar = 0.0
+                monto_a_reembolsar = MONEY_ZERO
             else:
                 if res.tipo_estadia == "hora" and vinc_log:
-                    monto_a_reembolsar = 0.0
+                    monto_a_reembolsar = MONEY_ZERO
                 else:
                     duracion_total = (end - start).total_seconds()
                     tiempo_restante = (end - now).total_seconds()
                     if duracion_total > 0:
                         porcentaje_restante = max(0, tiempo_restante / duracion_total)
-                        monto_a_reembolsar = round(res.monto_total * porcentaje_restante, 2)
+                        monto_a_reembolsar = to_money(res.monto_total * Decimal(str(porcentaje_restante)))
 
         return {"reembolso": monto_a_reembolsar, "error": None}
 
@@ -391,7 +393,7 @@ class ReservationPaymentsMixin:
 
             res.estado_reserva = ReservationStatus.CANCELADA
             res.estado_pago = PaymentStatus.REEMBOLSADO if monto_a_reembolsar > 0 else PaymentStatus.CANCELADO
-            res.monto_reembolsado = float(monto_a_reembolsar)
+            res.monto_reembolsado = to_money(monto_a_reembolsar)
 
             if monto_a_reembolsar > 0:
                 res.fecha_pago = datetime.datetime.now().isoformat()

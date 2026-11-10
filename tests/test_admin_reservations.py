@@ -1,3 +1,4 @@
+from decimal import Decimal
 import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine
@@ -681,7 +682,7 @@ def test_pay_reservation_manual_aplica_descuento_de_canje(db):
     resultado = ReservationService.pay_reservation_manual(db, res, "Efectivo", ticket.id)
     db.refresh(user); db.refresh(ticket); db.refresh(res)
 
-    descuento_esperado = round(monto * 0.10, 2)
+    descuento_esperado = round(monto * Decimal("0.10"), 2)
     assert resultado["status"] == "ok"
     assert resultado["descuento"] == descuento_esperado
     assert res.estado_pago == PaymentStatus.PAGADO
@@ -738,12 +739,12 @@ def test_create_admin_reservation_con_descuento_crea_y_paga(db):
 
     assert resultado["status"] == "ok"
     assert resultado["pagado"] is True
-    assert resultado["descuento"] == round(monto * 0.10, 2)
+    assert resultado["descuento"] == round(monto * Decimal("0.10"), 2)
 
     res = db.query(Reservation).filter(Reservation.id == resultado["id"]).one()
     db.refresh(ticket)
     assert res.estado_pago == PaymentStatus.PAGADO
-    assert res.monto_total == round(monto - round(monto * 0.10, 2), 2)
+    assert res.monto_total == round(monto - round(monto * Decimal("0.10"), 2), 2)
     assert ticket.estado == "USADO"
     assert ticket.reserva_id == res.id
 
@@ -759,7 +760,7 @@ def test_confirm_reservation_payment_aplica_descuento(db):
     monto = _monto(db, "2026-07-10 10:00", "2026-07-10 12:00")
     out = confirm_reservation_payment(r["id"], ConfirmPaymentRequest(metodo_pago="Caja", redemption_ticket_id=ticket.id), db, staff)
     db.refresh(res); db.refresh(ticket)
-    descuento = round(monto * 0.10, 2)
+    descuento = round(monto * Decimal("0.10"), 2)
     assert out["descuento"] == descuento
     assert res.monto_total == round(monto - descuento, 2)
     assert res.estado_pago == PaymentStatus.PAGADO
@@ -790,8 +791,8 @@ def test_reservation_available_redemptions_lista_descuentos(db):
     assert len(out) == 1
     assert out[0]["id"] == ticket.id
     assert out[0]["valor_descuento"] == 10
-    assert out[0]["descuento_peso"] == round(monto * 0.10, 2)
-    assert out[0]["monto_final"] == round(monto * 0.90, 2)
+    assert out[0]["descuento_peso"] == round(monto * Decimal("0.10"), 2)
+    assert out[0]["monto_final"] == round(monto * Decimal("0.90"), 2)
 
 
 def test_reservation_available_redemptions_vacio_sin_usuario(db):
@@ -874,8 +875,8 @@ def test_editar_reserva_pagada_con_descuento_mantiene_descuento_al_recalcular(db
 
     monto_2h = _monto(db, "2026-07-10 10:00", "2026-07-10 12:00")
     monto_4h = _monto(db, "2026-07-10 10:00", "2026-07-10 14:00")
-    desc_2h = round(monto_2h * 0.10, 2)
-    desc_4h = round(monto_4h * 0.10, 2)
+    desc_2h = round(monto_2h * Decimal("0.10"), 2)
+    desc_4h = round(monto_4h * Decimal("0.10"), 2)
 
     res = update_admin_reservation(
         r["id"],

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Literal
+from schemas.types import MoneyAmount
 
 class VehicleCreate(BaseModel):
     patente: str
@@ -108,21 +109,21 @@ class BranchResponse(BranchBase):
     ocupacion_reservas_camionetas_total: int = 0
     ocupacion_reservas_total: int = 0
     # TARIFAS POR TIPO DE VEHICULO (None = sin tarifario configurado en la sucursal)
-    tarifa_hora: Optional[float] = None
-    tarifa_dia: Optional[float] = None
-    tarifa_semana: Optional[float] = None
-    tarifa_quincena: Optional[float] = None
-    tarifa_mes: Optional[float] = None
-    tarifa_hora_moto: Optional[float] = None
-    tarifa_dia_moto: Optional[float] = None
-    tarifa_semana_moto: Optional[float] = None
-    tarifa_quincena_moto: Optional[float] = None
-    tarifa_mes_moto: Optional[float] = None
-    tarifa_hora_camioneta: Optional[float] = None
-    tarifa_dia_camioneta: Optional[float] = None
-    tarifa_semana_camioneta: Optional[float] = None
-    tarifa_quincena_camioneta: Optional[float] = None
-    tarifa_mes_camioneta: Optional[float] = None
+    tarifa_hora: Optional[MoneyAmount] = None
+    tarifa_dia: Optional[MoneyAmount] = None
+    tarifa_semana: Optional[MoneyAmount] = None
+    tarifa_quincena: Optional[MoneyAmount] = None
+    tarifa_mes: Optional[MoneyAmount] = None
+    tarifa_hora_moto: Optional[MoneyAmount] = None
+    tarifa_dia_moto: Optional[MoneyAmount] = None
+    tarifa_semana_moto: Optional[MoneyAmount] = None
+    tarifa_quincena_moto: Optional[MoneyAmount] = None
+    tarifa_mes_moto: Optional[MoneyAmount] = None
+    tarifa_hora_camioneta: Optional[MoneyAmount] = None
+    tarifa_dia_camioneta: Optional[MoneyAmount] = None
+    tarifa_semana_camioneta: Optional[MoneyAmount] = None
+    tarifa_quincena_camioneta: Optional[MoneyAmount] = None
+    tarifa_mes_camioneta: Optional[MoneyAmount] = None
 
 class BranchPublicResponse(BranchBase):
     model_config = ConfigDict(from_attributes=True)

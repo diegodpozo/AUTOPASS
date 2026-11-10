@@ -1,13 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, CheckConstraint
 from sqlalchemy.orm import relationship
 from core.database import Base
-from models.types import DateTimeAsStr
+from models.types import DateTimeValue, MONEY_ZERO, MoneyValue
 from models.branch_ref import branch_ref_property
 import datetime
-
-
-def datetime_now_iso():
-    return datetime.datetime.now().isoformat()
 
 
 class User(Base):
@@ -32,7 +28,7 @@ class User(Base):
     sucursal_id = Column(Integer, ForeignKey("parking_branches.id", name="fk_users_sucursal_id_branch",
                                              onupdate="CASCADE"), nullable=True, index=True)
     puntos_acumulados = Column(Integer, default=0)
-    saldo = Column(Float, default=0.0)
+    saldo = Column(MoneyValue, default=MONEY_ZERO)
     is_blocked = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
 
@@ -64,7 +60,7 @@ class PointsLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     cantidad = Column(Integer)
     motivo = Column(String)
-    fecha = Column(DateTimeAsStr)
+    fecha = Column(DateTimeValue)
 
     user = relationship("User", back_populates="points_logs")
 
@@ -117,8 +113,8 @@ class RedemptionTicket(Base):
     estado = Column(String, default="VIGENTE")         # VIGENTE / USADO / CANCELADO
     qr_data = Column(String)                           # CONTENIDO DEL QR (AUTOPASS_REDEMPTION|...)
     observacion = Column(String, nullable=True)        # 'Válido por 30 días' etc.
-    created_at = Column(String, default=datetime_now_iso)
-    fecha_uso = Column(String, nullable=True)
+    created_at = Column(DateTimeValue, default=datetime.datetime.now)
+    fecha_uso = Column(DateTimeValue, nullable=True)
     reserva_id = Column(Integer, nullable=True)        # RESERVA A LA QUE SE APLICO (si aplica)
 
     # SNAPSHOT DE LA UBICACION DEL CANJE (para el botón de Google Maps en la card del voucher)
@@ -134,8 +130,4 @@ class RedemptionTicket(Base):
     def fecha_vencimiento(self):
         if not self.created_at:
             return None
-        try:
-            dt = datetime.datetime.fromisoformat(self.created_at)
-            return (dt + datetime.timedelta(days=30)).isoformat()
-        except Exception:
-            return None
+        return self.created_at + datetime.timedelta(days=30)

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, Literal
+from schemas.types import MoneyAmount
 
 class MercadoPagoCheckout(BaseModel):
     """SOLICITUD DE CHECKOUT PARA MERCADO PAGO (CHECKOUT PRO)."""
@@ -11,5 +12,5 @@ class MercadoPagoCheckout(BaseModel):
 class MercadoPagoCheckoutResponse(BaseModel):
     init_point: str
     external_reference: str
-    monto: float
+    monto: MoneyAmount
     preference_id: str

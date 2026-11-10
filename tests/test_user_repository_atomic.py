@@ -7,6 +7,8 @@ puntos y los usuarios viejos con la columna en NULL.
 Los tests de carrera real (dos hilos) estan en
 `tests/test_concurrencia_saldo_puntos.py`; aca se fija el contrato de cada helper.
 """
+from decimal import Decimal
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -68,6 +70,15 @@ def test_fijar_saldo_es_absoluto(db):
     u = _usuario(db, saldo=100.0)
     assert UserRepository.fijar_saldo(db, u, 500.0) == 500.0
     assert u.saldo == 500.0
+
+
+def test_ajustes_de_saldo_aceptan_decimal_y_redondean_a_centavos(db):
+    u = _usuario(db, saldo=Decimal("10.00"))
+
+    saldo = UserRepository.sumar_saldo(db, u, Decimal("0.105"))
+
+    assert saldo == Decimal("10.11")
+    assert u.saldo == Decimal("10.11")
 
 
 def test_sumar_puntos_devuelve_el_total(db):

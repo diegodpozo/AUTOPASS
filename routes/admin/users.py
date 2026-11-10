@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from decimal import Decimal
 from typing import List
 import datetime
 import models, schemas
@@ -172,7 +173,7 @@ def toggle_user_block(request: Request, user_id: int, db: Session = Depends(get_
 
 @router.post("/users/{user_id}/balance")
 @limiter.limit("30/minute")
-def adjust_user_balance(request: Request, user_id: int, monto: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+def adjust_user_balance(request: Request, user_id: int, monto: Decimal, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """AJUSTA EL SALDO DE UN USUARIO."""
     user = UserRepository.get_active_by_id(db, user_id)
     if not user: raise HTTPException(status_code=404, detail="Usuario no encontrado")

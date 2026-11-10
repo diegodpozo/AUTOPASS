@@ -10,18 +10,6 @@ import { THEME } from './theme.js';
 
 export async function openBarrier(gateId, command = 'OPEN') {
     const actionText = command === 'CLOSE' ? 'Cerrar' : 'Abrir';
-    const confirmed = await showConfirm(
-        '', 
-        `<div class="flex-col items-center gap-10" style="padding: 10px 0; font-size: 1.25rem; font-weight: 600;">
-            <div class="text-secondary" style="letter-spacing: 1px; text-transform: uppercase;">
-                BARRERA ${gateId}
-            </div>
-            <div style="opacity: 0.9; margin-top: 5px;">
-                ¿Desea ${actionText.toLowerCase()} la barrera?
-            </div>
-        </div>`
-    );
-    if (!confirmed) return;
 
     const iconId = gateId === 'ENTRADA' ? 'icon-barrier-entry' : 'icon-barrier-exit';
     const iconEl = document.getElementById(iconId);

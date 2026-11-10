@@ -11,6 +11,7 @@ from repositories.branch_repository import BranchRepository
 from repositories.reservation_repository import ReservationRepository
 from repositories.vehicle_repository import VehicleRepository
 from core.normalize import normalize_plate
+from models.types import parse_fecha
 from services.time_service import TimeService
 
 
@@ -105,8 +106,8 @@ def _calcular_ocupacion_maxima_simultanea(reservas, f_inicio_str: str, f_fin_str
         return 0
 
     try:
-        f_inicio_dt = datetime.datetime.fromisoformat(f_inicio_str.replace("/", "-"))
-        f_fin_dt = datetime.datetime.fromisoformat(f_fin_str.replace("/", "-"))
+        f_inicio_dt = parse_fecha(f_inicio_str)
+        f_fin_dt = parse_fecha(f_fin_str)
     except (ValueError, TypeError):
         return len(reservas)
 
@@ -115,8 +116,8 @@ def _calcular_ocupacion_maxima_simultanea(reservas, f_inicio_str: str, f_fin_str
 
     for r in reservas:
         try:
-            r_ini = datetime.datetime.fromisoformat(r.fecha_inicio.replace("/", "-"))
-            r_fin = datetime.datetime.fromisoformat(r.fecha_fin.replace("/", "-"))
+            r_ini = parse_fecha(r.fecha_inicio)
+            r_fin = parse_fecha(r.fecha_fin)
         except (ValueError, TypeError):
             continue
 
@@ -199,10 +200,10 @@ def obtener_fechas_deshabilitadas(
 
     try:
         if fecha_desde_str:
-            desde_dt = datetime.datetime.fromisoformat(fecha_desde_str.split("T")[0])
+            desde_dt = parse_fecha(fecha_desde_str).replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             desde_dt = TimeService.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    except Exception:
+    except (TypeError, ValueError):
         logger.warning("[AVAILABILITY] Fecha_desde inválida, usando hoy", exc_info=True)
         desde_dt = TimeService.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -321,8 +322,8 @@ def _obtener_rangos_reservados_dia(db: Session, sucursal_nombre: str, fecha_clea
     rangos = []
     for r in reservas:
         try:
-            r_ini_dt = datetime.datetime.fromisoformat(r.fecha_inicio.replace("/", "-"))
-            r_fin_dt = datetime.datetime.fromisoformat(r.fecha_fin.replace("/", "-"))
+            r_ini_dt = parse_fecha(r.fecha_inicio)
+            r_fin_dt = parse_fecha(r.fecha_fin)
         except (ValueError, TypeError):
             continue
         if r_fin_dt <= r_ini_dt:
@@ -372,7 +373,7 @@ def _calcular_horas_deshabilitadas(
         try:
             start_dt = datetime.datetime.fromisoformat(f"{fecha_clean} {h:02d}:{m:02d}")
             end_dt = start_dt + datetime.timedelta(seconds=duracion_sec)
-        except Exception:
+        except ValueError:
             logger.warning("[AVAILABILITY] Slot con fecha/hora inválida, omitido", exc_info=True)
             continue
 

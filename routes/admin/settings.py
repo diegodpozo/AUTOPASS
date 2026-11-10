@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models
@@ -62,7 +63,7 @@ def get_admin_settings(db: Session = Depends(get_db), admin: models.User = Depen
     return config_dict
 
 @router.post("/settings/prices", dependencies=[Depends(admin_rate_limit)])
-def update_price(clave: str, valor: float, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
+def update_price(clave: str, valor: Decimal, db: Session = Depends(get_db), admin: models.User = Depends(get_local_manager)):
     """ACTUALIZA O CREA UN VALOR DE CONFIGURACION PARA LA ORGANIZACION DEL ADMINISTRADOR."""
     org_id = getattr(admin, "organization_id", None)
     if valor < 0:

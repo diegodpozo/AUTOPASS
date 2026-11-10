@@ -8,6 +8,7 @@ DependencyOverride de get_current_user (403 para staff).
 """
 import datetime
 import importlib
+from decimal import Decimal
 
 import pytest
 from fastapi import FastAPI
@@ -274,7 +275,7 @@ def test_update_price_nuevo_setting_global(client):
     resp = c.post("/settings/prices", params={"clave": "precio_hora", "valor": "9.9"})
     assert resp.json()["message"] == "Precio precio_hora actualizado para Global"
     s = _get_setting(db_factory, "precio_hora", sucursal=None)
-    assert s.valor == 9.9
+    assert s.valor == Decimal("9.90")
     assert s.sucursal is None
 
 

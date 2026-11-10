@@ -1,11 +1,13 @@
 import datetime
 import math
 import re
+from decimal import Decimal
 
 import models
 import schemas
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from models.types import MONEY_ZERO, parse_fecha, to_decimal, to_money
 
 from core.config import settings
 from core.db_lock import bloqueo_transaccional, clave_aforo, clave_patente, clave_reserva, clave_usuario, refrescar
@@ -43,10 +45,10 @@ class ReservationService(ReservationPaymentsMixin):
 
     # TOLERANCIAS DE LA COTIZACIÓN CLIENTE vs SERVIDOR
     COTIZACION_HORAS_TOLERANCIA = 0.02   # ~1 minuto de duración
-    COTIZACION_MONTO_TOLERANCIA = 0.01   # 1 centavo de monto
+    COTIZACION_MONTO_TOLERANCIA = Decimal("0.01")
 
     @staticmethod
-    def _validar_cotizacion(data, horas_server: float, monto_server: float):
+    def _validar_cotizacion(data, horas_server: float, monto_server: Decimal):
         """Controla que el cálculo de horario y total que envió el front coincida con
         el del servidor. Si difiere (tarifario desactualizado o cálculo alterado)
         rechaza con 409 para no guardar una reserva con un precio inconsistente.
@@ -55,7 +57,7 @@ class ReservationService(ReservationPaymentsMixin):
         monto_cli = getattr(data, "monto_calculado", None)
         if horas_cli is not None and abs(float(horas_cli) - horas_server) > ReservationService.COTIZACION_HORAS_TOLERANCIA:
             raise HTTPException(status_code=409, detail="El horario cotizado no coincide con el vigente. Volvé a cotizar la reserva.")
-        if monto_cli is not None and abs(float(monto_cli) - monto_server) > ReservationService.COTIZACION_MONTO_TOLERANCIA:
+        if monto_cli is not None and abs(to_money(monto_cli) - to_money(monto_server)) > ReservationService.COTIZACION_MONTO_TOLERANCIA:
             raise HTTPException(status_code=409, detail="La tarifa cambió desde que se cotizó la reserva. Volvé a cotizar e intentá de nuevo.")
 
     @staticmethod
@@ -65,7 +67,7 @@ class ReservationService(ReservationPaymentsMixin):
 
     @staticmethod
     def _fijar_snapshot_tarifa(res, db, data, tipo_estadia, sucursal, tipo_vehiculo,
-                              duration_hours: float, monto_cotizado: float, descuento_pct: float = None):
+                              duration_hours: float, monto_cotizado: Decimal, descuento_pct: float = None):
         """Persiste en la reserva la foto de tarifas/duración/total usados al cotizarla.
         Las tarifas que envió el front se usan si están informadas (ya validadas contra
         el total); si no, se guarda la tarifa autoritativa calculada por el servidor."""
@@ -93,7 +95,7 @@ class ReservationService(ReservationPaymentsMixin):
         if monto is None:
             raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo. No se puede crear la reserva.")
 
-        duration_hours = (datetime.datetime.fromisoformat(data.fecha_fin) - datetime.datetime.fromisoformat(data.fecha_inicio)).total_seconds() / 3600
+        duration_hours = (parse_fecha(data.fecha_fin) - parse_fecha(data.fecha_inicio)).total_seconds() / 3600
         ReservationService._validar_cotizacion(data, duration_hours, monto)
 
         info_sede = BranchService.get_branch_info_str(db, data.sucursal_nombre)
@@ -375,8 +377,8 @@ class ReservationService(ReservationPaymentsMixin):
             rate = BillingService.get_rate(db, data.tipo_estadia, sucursal=data.sucursal_nombre, tipo_vehiculo=vehicle.tipo)
             if rate is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-            start = datetime.datetime.fromisoformat(data.fecha_inicio)
-            end = datetime.datetime.fromisoformat(data.fecha_fin)
+            start = parse_fecha(data.fecha_inicio)
+            end = parse_fecha(data.fecha_fin)
             max_future = datetime.datetime.now() + datetime.timedelta(days=90)
             if start > max_future:
                 raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
@@ -462,8 +464,8 @@ class ReservationService(ReservationPaymentsMixin):
                 raise HTTPException(status_code=400, detail=f"No se puede modificar una reserva en estado '{res.estado_reserva}'.")
             tipo_efectivo = data.tipo_estadia if data.tipo_estadia else res.tipo_estadia
             suc_efectivo = data.sucursal_nombre if data.sucursal_nombre else res.sucursal_nombre
-            start_efectivo = datetime.datetime.fromisoformat(data.fecha_inicio) if data.fecha_inicio else datetime.datetime.fromisoformat(res.fecha_inicio)
-            end_efectivo = datetime.datetime.fromisoformat(data.fecha_fin) if data.fecha_fin else datetime.datetime.fromisoformat(res.fecha_fin)
+            start_efectivo = parse_fecha(data.fecha_inicio or res.fecha_inicio)
+            end_efectivo = parse_fecha(data.fecha_fin or res.fecha_fin)
             max_future = datetime.datetime.now() + datetime.timedelta(days=90)
             if start_efectivo > max_future:
                 raise HTTPException(status_code=400, detail="No se pueden reservar con más de 3 meses de anticipación.")
@@ -498,7 +500,7 @@ class ReservationService(ReservationPaymentsMixin):
             rate = BillingService.get_rate(db, res.tipo_estadia, sucursal=res.sucursal_nombre, tipo_vehiculo=tipo_vehiculo_mod)
             if rate is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-            duration_hours = (datetime.datetime.fromisoformat(res.fecha_fin) - datetime.datetime.fromisoformat(res.fecha_inicio)).total_seconds() / 3600
+            duration_hours = (parse_fecha(res.fecha_fin) - parse_fecha(res.fecha_inicio)).total_seconds() / 3600
             if duration_hours <= 0:
                 raise HTTPException(status_code=400, detail="Fechas inválidas")
             monto_nuevo = math.ceil(duration_hours) * rate
@@ -658,12 +660,14 @@ class ReservationService(ReservationPaymentsMixin):
                 )
             return {"status": "ok", "id": new_res.id, "monto": new_res.monto_total, "pagado": bool(data.pagar),
                     "metodo_pago": data.metodo_pago,
-                    "descuento": (result or {}).get("descuento", 0.0),
+                    "descuento": (result or {}).get("descuento", MONEY_ZERO),
                     "monto_a_cobrar": (result or {}).get("monto_a_cobrar", new_res.monto_total)}
         except HTTPException:
             raise
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        except Exception:
+            db.rollback()
+            logger.exception("Error creando reserva manual para patente %s", data.patente)
+            raise
 
     @staticmethod
     def update_admin_reservation(db: Session, staff, res_id: int, data) -> dict:
@@ -707,7 +711,7 @@ class ReservationService(ReservationPaymentsMixin):
             )
             if monto is None:
                 raise HTTPException(status_code=409, detail="La sucursal no tiene tarifario configurado para este tipo de vehículo.")
-            duration_hours = (datetime.datetime.fromisoformat(data.fecha_fin) - datetime.datetime.fromisoformat(data.fecha_inicio)).total_seconds() / 3600
+            duration_hours = (parse_fecha(data.fecha_fin) - parse_fecha(data.fecha_inicio)).total_seconds() / 3600
             ReservationService._validar_cotizacion(data, duration_hours, monto)
             monto_base = monto
             porc_aplicado = None
@@ -716,13 +720,13 @@ class ReservationService(ReservationPaymentsMixin):
                 ticket_aplicado = RedemptionRepository.get_used_discount_for_reserva(db, reserva.id)
             if ticket_aplicado and ticket_aplicado.valor_descuento:
                 porc = ticket_aplicado.valor_descuento
-                monto = round(monto * (1 - porc / 100.0), 2)
+                monto = to_money(monto * (Decimal(100 - porc) / Decimal(100)))
                 porc_aplicado = porc
             ReservationService._fijar_snapshot_tarifa(reserva, db, data, data.tipo_estadia, data.sucursal_nombre, tipo_v_str, duration_hours, monto_base, descuento_pct=porc_aplicado)
-            monto_anterior = reserva.monto_total or 0.0
-            reembolsado_previo = reserva.monto_reembolsado or 0.0
-            valor_actual = round(monto_anterior - reembolsado_previo, 2)
-            diferencia = round(monto - valor_actual, 2)
+            monto_anterior = reserva.monto_total or MONEY_ZERO
+            reembolsado_previo = reserva.monto_reembolsado or MONEY_ZERO
+            valor_actual = to_money(monto_anterior - reembolsado_previo)
+            diferencia = to_money(monto - valor_actual)
             reserva.patente = data.patente
             reserva.fecha_inicio = data.fecha_inicio
             reserva.fecha_fin = data.fecha_fin
@@ -739,7 +743,7 @@ class ReservationService(ReservationPaymentsMixin):
                 if diferencia > 0:
                     accion = "cobro"
                     metodo_ajuste = data.cobrar_diferencia_metodo
-                    reserva.monto_total = round(monto_anterior + diferencia, 2)
+                    reserva.monto_total = to_money(monto_anterior + diferencia)
                     if metodo_ajuste:
                         reserva.metodo_pago = metodo_ajuste
                     reserva.fecha_pago = datetime.datetime.now().isoformat()
@@ -748,8 +752,8 @@ class ReservationService(ReservationPaymentsMixin):
                     metodo_ajuste = data.reembolsar_diferencia_metodo
                     if not metodo_ajuste:
                         metodo_ajuste = reserva.metodo_pago or "Saldo"
-                    reembolso = round(abs(diferencia), 2)
-                    reserva.monto_reembolsado = round(reembolsado_previo + reembolso, 2)
+                    reembolso = to_money(abs(diferencia))
+                    reserva.monto_reembolsado = to_money(reembolsado_previo + reembolso)
                     reserva.metodo_pago = metodo_ajuste
                     reserva.fecha_pago = datetime.datetime.now().isoformat()
                     norm_metodo = re.sub(r'[^A-Z]', '', str(metodo_ajuste).upper())
@@ -800,13 +804,14 @@ class ReservationService(ReservationPaymentsMixin):
                 "status": "ok", "id": reserva.id, "monto": reserva.monto_total,
                 "monto_anterior": monto_anterior, "diferencia": diferencia,
                 "accion": accion, "metodo_pago": metodo_ajuste or reserva.metodo_pago,
-                "reembolsado_total": reserva.monto_reembolsado or 0.0
+                "reembolsado_total": reserva.monto_reembolsado or MONEY_ZERO
             }
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception:
             db.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
+            logger.exception("Error actualizando reserva #%s", res_id)
+            raise
 
     @staticmethod
     def confirm_reservation_payment(db: Session, staff, res_id: int, data=None) -> dict:

@@ -3,7 +3,7 @@ import re
 from sqlalchemy.orm import Session
 import models
 from models.enums import UserRole, PaymentStatus, AccessEventType, ReservationStatus
-from models.types import parse_fecha
+from models.types import MONEY_ZERO, parse_fecha, to_money
 from services.billing_service import BillingService
 from services.time_service import TimeService
 from repositories.report_repository import (
@@ -117,21 +117,21 @@ class ReportService:
             return (total or 0, count or 0)
 
         total_logs, count_logs = _logs_agg(payment_method)
-        total_logs = float(total_logs)
+        total_logs = to_money(total_logs)
         count_logs = count_logs or 0
 
         if payment_method == "CAJA":
-            total_efectivo = float(_logs_agg("CAJA")[0])
-            total_digital_logs = 0.0
+            total_efectivo = to_money(_logs_agg("CAJA")[0])
+            total_digital_logs = MONEY_ZERO
         elif payment_method == "DIGITAL":
-            total_efectivo = 0.0
-            total_digital_logs = float(_logs_agg("DIGITAL")[0])
+            total_efectivo = MONEY_ZERO
+            total_digital_logs = to_money(_logs_agg("DIGITAL")[0])
         elif payment_method in PAYMENT_METHOD_VARIANTS:
-            total_efectivo = 0.0
-            total_digital_logs = float(_logs_agg(payment_method)[0])
+            total_efectivo = MONEY_ZERO
+            total_digital_logs = to_money(_logs_agg(payment_method)[0])
         else:
-            total_efectivo = float(_logs_agg("CAJA")[0])
-            total_digital_logs = float(_logs_agg("DIGITAL")[0])
+            total_efectivo = to_money(_logs_agg("CAJA")[0])
+            total_digital_logs = to_money(_logs_agg("DIGITAL")[0])
 
         # 2. Recaudación de Reservations (método real de pago; legacy NULL = DIGITAL)
         total_res_bruto, count_res = ReportRepository.paid_reservations_aggregate(
@@ -139,24 +139,24 @@ class ReportService:
             start_date=start_date, end_date=end_date, method=payment_method,
             organization_id=organization_id
         )
-        total_res_bruto = float(total_res_bruto or 0.0)
+        total_res_bruto = to_money(total_res_bruto or 0)
         count_res = count_res or 0
 
         # Reembolsos
-        total_refunds = float(
+        total_refunds = to_money(
             ReportRepository.refunds_total(
                 db, sucursal=sucursal, vehicle_type=vehicle_type,
                 start_date=start_date, end_date=end_date, method=payment_method,
                 organization_id=organization_id
-            ) or 0.0
+            ) or 0
         )
 
-        total_res_neto = max(0, total_res_bruto - total_refunds)
+        total_res_neto = max(MONEY_ZERO, total_res_bruto - total_refunds)
 
         # 3. Métricas de Cancelación
         if payment_method == "CAJA":
             tasa_cancelacion = 0
-            ingresos_incumplimiento = 0.0
+            ingresos_incumplimiento = MONEY_ZERO
         else:
             cancelled_list = ReportRepository.cancelled_reservations(
                 db, sucursal=sucursal, vehicle_type=vehicle_type,
@@ -171,14 +171,14 @@ class ReportService:
             )
             tasa_cancelacion = round((count_cancelled / count_total_res * 100), 1) if count_total_res > 0 else 0
 
-            ingresos_incumplimiento = 0.0
+            ingresos_incumplimiento = MONEY_ZERO
             for c in cancelled_list:
                 if c.estado_pago == PaymentStatus.CANCELADO:
-                    ingresos_incumplimiento += (c.monto_total or 0.0)
+                    ingresos_incumplimiento += (c.monto_total or MONEY_ZERO)
                 elif c.estado_pago == PaymentStatus.REEMBOLSADO:
-                    ingresos_incumplimiento += max(0.0, (c.monto_total or 0.0) - (c.monto_reembolsado or 0.0))
+                    ingresos_incumplimiento += max(MONEY_ZERO, (c.monto_total or MONEY_ZERO) - (c.monto_reembolsado or MONEY_ZERO))
 
-        total_final = round(total_logs + total_res_neto, 2)
+        total_final = to_money(total_logs + total_res_neto)
         count_final = count_logs + count_res
 
         # 4. Ingresos Proyectados (autos físicamente presentes)
@@ -187,9 +187,9 @@ class ReportService:
             db, sucursal=sucursal, vehicle_type=vehicle_type,
             organization_id=organization_id
         )
-        deuda_proyectada = 0.0
+        deuda_proyectada = MONEY_ZERO
         for e in entradas:
-            delta = TimeService.now() - datetime.datetime.fromisoformat(e.fecha_hora)
+            delta = TimeService.now() - parse_fecha(e.fecha_hora)
             monto = BillingService.calculate_hourly_amount(
                 db, delta.total_seconds() / 3600, sucursal=e.sucursal, tipo_vehiculo=e.tipo_vehiculo
             )
@@ -198,7 +198,7 @@ class ReportService:
             deuda_proyectada += monto
 
         # 5. Desglose por método de pago (estadías + reservas netas)
-        desglose_metodos = {k: {"monto": 0.0, "cantidad": 0} for k in PAYMENT_METHOD_VARIANTS}
+        desglose_metodos = {k: {"monto": MONEY_ZERO, "cantidad": 0} for k in PAYMENT_METHOD_VARIANTS}
 
         for m, monto, cnt in ReportRepository.grouped_logs_by_method(
             db, sucursal=sucursal, vehicle_type=vehicle_type,
@@ -207,7 +207,7 @@ class ReportService:
         ):
             canon = _canonical_method(m)
             if canon in desglose_metodos:
-                desglose_metodos[canon]["monto"] += float(monto or 0.0)
+                desglose_metodos[canon]["monto"] += to_money(monto or 0)
                 desglose_metodos[canon]["cantidad"] += cnt or 0
 
         for m, monto, cnt in ReportRepository.grouped_reservations_by_method(
@@ -217,7 +217,7 @@ class ReportService:
         ):
             canon = _canonical_method(m)
             if canon in desglose_metodos:
-                desglose_metodos[canon]["monto"] += float(monto or 0.0)
+                desglose_metodos[canon]["monto"] += to_money(monto or 0)
                 desglose_metodos[canon]["cantidad"] += cnt or 0
 
         for m, monto, _cnt in ReportRepository.grouped_refunds_by_method(
@@ -227,27 +227,27 @@ class ReportService:
         ):
             canon = _canonical_method(m)
             if canon in desglose_metodos:
-                desglose_metodos[canon]["monto"] -= float(monto or 0.0)
+                desglose_metodos[canon]["monto"] -= to_money(monto or 0)
 
         desglose_metodos = [
-            {"metodo": k, "monto": round(v["monto"], 2), "cantidad": v["cantidad"]}
+            {"metodo": k, "monto": to_money(v["monto"]), "cantidad": v["cantidad"]}
             for k, v in desglose_metodos.items()
-            if v["monto"] != 0.0
+            if v["monto"] != MONEY_ZERO
         ]
 
         return {
             "total_recaudado": total_final,
-            "total_reembolsado": round(total_refunds, 2),
+            "total_reembolsado": to_money(total_refunds),
             "cantidad_pagos": count_final,
-            "ticket_promedio": round(total_final / count_final, 2) if count_final > 0 else 0,
-            "ingresos_proyectados": round(deuda_proyectada, 2),
+            "ticket_promedio": to_money(total_final / count_final) if count_final > 0 else MONEY_ZERO,
+            "ingresos_proyectados": to_money(deuda_proyectada),
             "tasa_cancelacion": tasa_cancelacion,
-            "ingresos_incumplimiento": round(ingresos_incumplimiento, 2),
-            "recaudado_efectivo": round(total_efectivo, 2),
-            "recaudado_digital": round(total_digital_logs + total_res_neto, 2),
+            "ingresos_incumplimiento": to_money(ingresos_incumplimiento),
+            "recaudado_efectivo": to_money(total_efectivo),
+            "recaudado_digital": to_money(total_digital_logs + total_res_neto),
             "desglose": {
-                "estadias": {"monto": total_logs, "cantidad": count_logs, "promedio": round(total_logs / count_logs, 2) if count_logs > 0 else 0},
-                "reservas": {"monto": total_res_neto, "cantidad": count_res, "promedio": round(total_res_neto / count_res, 2) if count_res > 0 else 0}
+                "estadias": {"monto": total_logs, "cantidad": count_logs, "promedio": to_money(total_logs / count_logs) if count_logs > 0 else MONEY_ZERO},
+                "reservas": {"monto": total_res_neto, "cantidad": count_res, "promedio": to_money(total_res_neto / count_res) if count_res > 0 else MONEY_ZERO}
             },
             "desglose_metodos": desglose_metodos
         }
@@ -655,7 +655,7 @@ class ReportService:
         ]
         contadores = {k: sum(1 for r in rows if fn(r)) for k, fn in filtro_reserva}
         total = len(rows)
-        monto_pagado = sum(r[4] or 0 for r in rows if r[3] == PaymentStatus.PAGADO.value)
+        monto_pagado = sum((to_money(r[4] or 0) for r in rows if r[3] == PaymentStatus.PAGADO.value), MONEY_ZERO)
 
         # --- NO-SHOW SOBRE RESERVAS PAGADAS VENCIDAS ---
         ahora = TimeService.now()
@@ -748,8 +748,8 @@ class ReportService:
                 "tasa_pago": round(contadores["PAGADAS"] / total * 100, 1) if total else 0,
                 "tasa_cancelacion": round(contadores["CANCELADAS"] / total * 100, 1) if total else 0,
                 "no_show": no_show,
-                "monto_pagado": round(monto_pagado, 2),
-                "ticket_promedio": round(monto_pagado / contadores["PAGADAS"], 2) if contadores["PAGADAS"] else 0,
+                "monto_pagado": to_money(monto_pagado),
+                "ticket_promedio": to_money(monto_pagado / contadores["PAGADAS"]) if contadores["PAGADAS"] else MONEY_ZERO,
             },
             "por_tipo": por_tipo,
             "horas": list(range(24))

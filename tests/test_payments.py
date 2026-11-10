@@ -5,6 +5,7 @@ validación de tickets, simulación y ejecución de reembolsos, y cancelaciones.
 """
 import datetime
 import uuid
+from decimal import Decimal
 
 import pytest
 from sqlalchemy import create_engine
@@ -460,7 +461,7 @@ def test_simulate_ventana_no_hora_proporcional(session_factory):
     _salida(db, "ABC123", "AUTOPASS Central")
     result = ReservationPaymentsMixin.simulate_refund(db, res)
     assert result["error"] is None
-    assert abs(result["reembolso"] - 500.0) <= 2.0
+    assert abs(result["reembolso"] - Decimal("500.00")) <= Decimal("2.00")
 
 
 # --- CANCELACION DE RESERVA ---
