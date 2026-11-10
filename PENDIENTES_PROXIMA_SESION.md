@@ -9,6 +9,17 @@ Ultima actualizacion: 10/11/2026
 
 ## Cerrado recientemente
 
+### 10/11/2026 - Aislamiento Multiempresa P1 + Informe de Testing y Validaciones
+- **Implementación de los 5 P1 de aislamiento multiempresa (`test_multiorg_p1_scope.py` 13/13 passed)**:
+  - **P1.1 (`lookup_patente`)**: acepta `staff`, acotando búsqueda por patente a la organización del operador; fail-closed si no tiene org o pertenece a otra empresa.
+  - **P1.2 (`get_admin_available_redemptions`)**: valida que el usuario y el operador pertenezcan a la misma empresa (`HTTP 403` si difieren o si el staff carece de empresa).
+  - **P1.3 (`validate_manual_vinculacion`)**: valida alcance multi-tenant al asociar un usuario por patente en caja.
+  - **P1.4 (Reportes y `_branch_filter`)**: `_branch_filter` devuelve `false()` en multi-org si no hay sede/empresa; `get_financial_summary` y `get_access_logs` aplican `require_tenant_scope` y resuelven la empresa para evitar sumar sedes homónimas de otras organizaciones ($100 en lugar de $1099).
+  - **P1.5 (`redeem_points`)**: rechaza con `HTTP 404` el canje de promociones pertenecientes a otra organización.
+- **Informe de Testing y Validaciones**:
+  - `Info proyecto/INFORME_TESTING_Y_VALIDACIONES.md` (matriz de pruebas, validaciones en 4 capas, guards y métricas) y versión para impresión `Info proyecto/INFORME_TESTING_Y_VALIDACIONES.pdf` (5 páginas, generada con `_tools/export_pdf.py`).
+  - Catálogo en `INDICE_DOCUMENTACION.md` actualizado.
+
 ### 10/11/2026 - Soporte WebSocket y Web Serial para Arduino Hardware Bridge + Hardening Concurrencia
 - **Soporte de WebSocket para Arduino Hardware Bridge (Cloudflare / Tailscale)**:
   - **Endpoint WebSocket**: `routes/system/hardware.py` implementa `@router.websocket("/ws/hardware")` con autenticación por `node_secret` (`ALPR_NODE_SECRET` o `SECRET_KEY`), IP de red privada (Tailscale) o token JWT operativo.

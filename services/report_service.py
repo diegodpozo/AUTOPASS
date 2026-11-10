@@ -14,6 +14,7 @@ from repositories.report_repository import (
 from repositories.vehicle_repository import VehicleRepository
 from repositories.user_repository import UserRepository
 from core.normalize import normalize_plate
+from core.security import resolve_actor_organization_id, require_tenant_scope
 
 SPANISH_MONTHS = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
                   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
@@ -74,9 +75,11 @@ class ReportService:
         """Resumen de recaudación. El ADMIN GENERAL ve toda la red y puede filtrar por `sucursal`;
         con el filtro vacío incluye `por_sucursal` (desglose por cada sede activa). El LOCAL_ADMIN
         queda siempre acotado a su propia sucursal (el parámetro `sucursal` se ignora)."""
+        org = resolve_actor_organization_id(db, user)
+        require_tenant_scope(db, org, detail="No tenés permisos para ver reportes de otra organización")
+
         es_admin_global = str(user.rol) == UserRole.ADMIN.value
         suc_real = (sucursal or None) if es_admin_global else (user.sucursal or None)
-        org = getattr(user, "organization_id", None) if es_admin_global else None
 
         resultado = cls._financial_summary_core(
             db, sucursal=suc_real, period=period, start=start, end=end,
@@ -318,9 +321,11 @@ class ReportService:
     @classmethod
     def get_access_logs(cls, db: Session, staff: models.User, patente: str = None, limit: int = 300) -> list:
         """Obtiene historial de accesos ALPR filtrado por sucursal y patente opcional."""
+        org = resolve_actor_organization_id(db, staff)
+        require_tenant_scope(db, org, detail="No tenés permisos para ver accesos de otra organización")
+
         es_admin_global = str(staff.rol) == UserRole.ADMIN.value
         sucursal = staff.sucursal if not es_admin_global else None
-        org = getattr(staff, "organization_id", None) if es_admin_global else None
         logs = ReportRepository.access_logs_history(db, sucursal=sucursal, patente=patente, limit=limit, organization_id=org)
 
         # RESOLVER USUARIO (REGISTRADO O INVITADO) POR PATENTE

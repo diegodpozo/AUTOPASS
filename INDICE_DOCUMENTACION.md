@@ -54,6 +54,7 @@ carpeta con su propio índice (`Diseno_Proyecto/README.md`).
 | `Info proyecto/AUDITORIAS.md` | Consolidado de la ronda A1–A9 + transversales + CSS (AC-1 a AC-5). | VIGENTE |
 | `Info proyecto/AUDITORIA_RBAC.md` | Autorización / IDOR (R1–R10). Ronda posterior, informe propio. | VIGENTE |
 | `Info proyecto/AUDITORIA_VALIDACIONES.md` | Validaciones de entrada (V1–V12). Ronda posterior, informe propio. | VIGENTE |
+| `Info proyecto/INFORME_TESTING_Y_VALIDACIONES.md` | Informe de testing y validaciones de funcionalidades principales (QA, matriz, guards, concurrencia; versión PDF disponible). | VIGENTE |
 | `AUDITORIA_DB_NEON.md` | Integridad de la base Neon/Postgres. | **VIGENTE** |
 | `AUDITORIA_DB.md` | Auditoría de la base SQLite seed (ronda antigua). | Histórico |
 
