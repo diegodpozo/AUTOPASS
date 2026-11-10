@@ -9,6 +9,12 @@ Ultima actualizacion: 10/11/2026
 
 ## Cerrado recientemente
 
+### 10/11/2026 - Limpieza de Documentación Redundante
+- **Limpieza de documentación no operativa**:
+  - Eliminación de la carpeta `Info proyecto/` y archivos sueltos de auditoría/prueba (`AISLAMIENTO_MULTIORG.md`, `AUDITORIA_DB.md`, `AUDITORIA_DB_NEON.md`, `BUGS_A_RESOLVER.md`, `USUARIOS_PRUEBA.xlsx`, `qr-code.png`).
+  - Preservación íntegra de `Diseno_Proyecto/` como documentación formal RUP del sistema.
+  - Actualización de `INDICE_DOCUMENTACION.md` apuntando a `Diseno_Proyecto/` y archivos normativos raíz (`AGENTS.md`, `README.md`, `PENDIENTES_PROXIMA_SESION.md`).
+
 ### 10/11/2026 - Aislamiento Multiempresa P1 + Informe de Testing y Validaciones
 - **Implementación de los 5 P1 de aislamiento multiempresa (`test_multiorg_p1_scope.py` 13/13 passed)**:
   - **P1.1 (`lookup_patente`)**: acepta `staff`, acotando búsqueda por patente a la organización del operador; fail-closed si no tiene org o pertenece a otra empresa.
