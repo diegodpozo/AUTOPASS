@@ -68,6 +68,8 @@ carpeta con su propio índice (`Diseno_Proyecto/README.md`).
 
 - Tablero web: `https://marianojac.github.io/backlogAUTOPASS/` (repo `backlogAUTOPASS/`).
 - Cómo escribirle filas por API: ver la sección "Backlog web" de `AGENTS.md`.
+- `Info proyecto/RESPONSABLES_BACKLOG.md`: relevamiento de **qué responsable tiene cada
+  función/historia** (320 filas, fuente Firebase), con reparto por sección y tareas abiertas.
 
 ## 8. Diseño del proyecto (RUP)
 
@@ -111,7 +113,7 @@ documento está desactualizado y hay que corregirlo contra esta tabla:
 | Componentes Jinja | **14** | `Get-ChildItem templates\components -Filter *.html` |
 | Servicios | **20** | `Get-ChildItem services -File -Filter *.py` |
 | Repositorios | **17** | `Get-ChildItem repositories -File -Filter *.py` |
-| Archivos de test | **72** | `Get-ChildItem tests -Recurse -Filter test_*.py` |
+| Archivos de test | **73** | `Get-ChildItem tests -Recurse -Filter test_*.py` |
 | Tests totales | **956** | `941` por defecto + `15` del grupo `postgres` |
 | Head Alembic | `b1c2d3e4f5a6` | `alembic heads` |
 

@@ -157,6 +157,67 @@ def _correr_dos(cuerpo, sesion_factory):
 
 
 # ---------------------------------------------------------------------------
+# CARRERA DETERMINISTA (control `sin_lock`).
+#
+# Los tests de control quieren mostrar que, SIN lock, los dos hilos leen "hay
+# lugar" y los dos insertan (sobreventa / doble reserva). Eso es una carrera
+# check-then-act, pero NO es determinista: si un hilo commitea antes de que el
+# otro LEA, el segundo ve el estado nuevo y se rechaza solo (justamente el
+# comportamiento que el lock garantiza). En una maquina rapida como el runner
+# de CI eso pasaba de vez en cuando y el test fallaba por timing, no por bug.
+#
+# Para que el control sea confiable se parte el cuerpo en dos fases y se
+# sincronizan los hilos ENTRE la lectura de decision y la escritura:
+#   1. los dos leen disponibilidad/solape (con la barrera, ambos ven "libre");
+#   2. recien despues ambos insertan y commitean.
+# Eso reproduce EXACTAMENTE la ventana de la carrera (dos decisiones tomadas
+# con el mismo estado viejo) y elimina la dependencia del scheduler.
+# ---------------------------------------------------------------------------
+_barrera_tras_leer = threading.local()
+
+
+def _sincronizar_tras_leer():
+    """Espera a que el OTRO hilo tambien haya leido (solo en los tests de control)."""
+    barrera = getattr(_barrera_tras_leer, "barrera", None)
+    if barrera is not None:
+        barrera.wait(timeout=30)
+
+
+def _correr_dos_carrera(cuerpo, sesion_factory):
+    """Como `_correr_dos`, pero sincroniza los hilos ENTRE leer y escribir.
+
+    El cuerpo debe llamar a `_sincronizar_tras_leer()` justo despues de su
+    lectura de decision, antes del `add`/`commit`.
+    """
+    barrera_arranque = threading.Barrier(2)
+    barrera_lectura = threading.Barrier(2)
+    resultados = []
+    lock_res = threading.Lock()
+
+    def worker():
+        sesion = sesion_factory()
+        _barrera_tras_leer.barrera = barrera_lectura
+        barrera_arranque.wait()
+        try:
+            valor = cuerpo(sesion)
+            with lock_res:
+                resultados.append(("ok", valor))
+        except Exception as exc:
+            with lock_res:
+                resultados.append(("err", exc))
+        finally:
+            _barrera_tras_leer.barrera = None
+            sesion.close()
+
+    hilos = [threading.Thread(target=worker) for _ in range(2)]
+    for h in hilos:
+        h.start()
+    for h in hilos:
+        h.join(timeout=60)
+    return resultados
+
+
+# ---------------------------------------------------------------------------
 # R1 - capacidad de la sede
 # ---------------------------------------------------------------------------
 
@@ -166,6 +227,9 @@ def _cuerpo_sin_lock_r1(sesion, user_id, data):
     disp = verificar_disponibilidad(sesion, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin, tipo_vehiculo="Auto")
     if not disp["disponible"]:
         raise AssertionError("no disponible")
+    # Ventana de carrera determinista: el otro hilo tambien tiene que haber leido
+    # "hay lugar" antes de que cualquiera de los dos escriba (ver _correr_dos_carrera).
+    _sincronizar_tras_leer()
     sesion.add(Reservation(
         user_id=user_id, patente=data.patente, sucursal_nombre=data.sucursal_nombre,
         fecha_inicio=data.fecha_inicio, fecha_fin=data.fecha_fin, tipo_estadia="hora",
@@ -184,7 +248,7 @@ def test_r1_sin_lock_demuestra_la_carrera(pg_db, pg_engines):
     data = _data("PGS123", inicio, fin)
     S = sessionmaker(autocommit=False, autoflush=False, bind=pg_engines)
 
-    resultados = _correr_dos(lambda s: _cuerpo_sin_lock_r1(s, user.id, data), S)
+    resultados = _correr_dos_carrera(lambda s: _cuerpo_sin_lock_r1(s, user.id, data), S)
 
     ok = [r for r in resultados if r[0] == "ok"]
     total = pg_db.query(Reservation).filter(Reservation.sucursal_nombre == SUCURSAL).count()
@@ -229,6 +293,9 @@ def _cuerpo_sin_lock_r2(sesion, user_id, data):
         sesion, p, data.sucursal_nombre, data.fecha_inicio, data.fecha_fin
     ):
         raise AssertionError("solape detectado")
+    # Ventana de carrera determinista (ver _correr_dos_carrera): el otro hilo
+    # tambien tiene que haber visto "sin solape" antes de escribir.
+    _sincronizar_tras_leer()
     sesion.add(Reservation(
         user_id=user_id, patente=p, sucursal_nombre=data.sucursal_nombre,
         fecha_inicio=data.fecha_inicio, fecha_fin=data.fecha_fin, tipo_estadia="hora",
@@ -247,7 +314,7 @@ def test_r2_sin_lock_demuestra_la_carrera(pg_db, pg_engines):
     data = _data("PGS123", inicio, fin)
     S = sessionmaker(autocommit=False, autoflush=False, bind=pg_engines)
 
-    resultados = _correr_dos(lambda s: _cuerpo_sin_lock_r2(s, user.id, data), S)
+    resultados = _correr_dos_carrera(lambda s: _cuerpo_sin_lock_r2(s, user.id, data), S)
 
     ok = [r for r in resultados if r[0] == "ok"]
     total = pg_db.query(Reservation).filter(Reservation.patente == "PGS123").count()

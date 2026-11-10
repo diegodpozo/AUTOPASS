@@ -14,6 +14,7 @@ import * as utils from './modules/utils.js';
 import { initVirtualTime } from './modules/virtual-time.js';
 import './modules/notifications.js';
 import { initOperatorAlerts } from './modules/operator-alerts.js';
+import * as webSerial from './modules/dashboard-web-serial.js';
 
 /**
  * PUENTE / ORQUESTADOR: DASHBOARD.JS (v9.9.9)
@@ -126,6 +127,8 @@ window.alternarHeatmapVista = informes.alternarHeatmapVista;
 
 // 6. ACCIONES ADMINISTRATIVAS Y USUARIOS
 window.openBarrier = admin.openBarrier;
+window.toggleWebSerialConnection = webSerial.toggleWebSerialConnection;
+window.sendWebSerialCommand = webSerial.sendWebSerialCommand;
 window.loadUsers = admin.loadUsers;
 window.filterUserList = admin.filterUserList;
 window.toggleUserStatsCollapsible = (btn) => {
@@ -319,6 +322,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // BURBUJA 'RESERVAS': verificar si hay reservas nuevas al cargar
     if (typeof reservations.updateReservationBadge === 'function') {
         reservations.updateReservationBadge();
+    }
+
+    if (typeof webSerial.initWebSerial === 'function') {
+        webSerial.initWebSerial();
     }
 
     document.getElementById('form-add-branch')?.addEventListener('submit', window.handleCreateBranch);

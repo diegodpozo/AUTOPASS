@@ -1,28 +1,26 @@
-﻿# PENDIENTES_PROXIMA_SESION.md
+# PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una proxima sesion.
-Ultima actualizacion: 20/10/2026
+Ultima actualizacion: 10/11/2026
 
 ## Sin commitear en este momento
 
-- **Fase 6 del plan de concurrencia (sin commitear)**: cierre del plan.
-  - **CI**: `.github/workflows/ci.yml` suma un servicio Postgres 16 y un paso que corre `pytest -m postgres tests/` con `DATABASE_URL` apuntando al servicio (solo en ese paso). Antes el grupo `postgres` no corría en CI.
-  - **Docs**: `Info proyecto/GUIA_DESARROLLO.md` suma la seccion "Convenciones de Concurrencia (Secciones Críticas)" (contrato de `bloqueo_transaccional`, claves canonicas, redes de seguridad de Fases 1/4/5) + mandato arquitectonico 8 (toda escritura que dependa de un `SELECT` previo abre seccion critica). Corregido el conteo de tests (956/72, estaba 756/56).
-  - `Info proyecto/INFORME_CONCURRENCIA_RESERVAS.md`: Fase 6 marcada IMPLEMENTADA y encabezado "plan COMPLETO".
-  - **Informe nuevo para dummies**: `Info proyecto/BLOQUEO_TRANSACCIONAL_PARA_DUMMIES.md` (explicacion llana del bloqueo y de las 6 fases, con analogias y sin codigo). Enlazado desde el informe tecnico.
-  - Sin commitear por la regla de AGENTS.md (nada se commitea sin pedido expreso).
-- **Ordenamiento de la documentacion (sin commitear)**: puesta en orden de la doc de `Info proyecto/` y la raiz. Detalle:
-  - **Indice nuevo**: `INDICE_DOCUMENTACION.md` (raiz) cataloga todos los documentos por categoria (normativo, estado, arquitectura, concurrencia, auditorias, changelogs, diseno), marca cual es el **vigente** donde dos cubren lo mismo, y fija las **cifras reales del sistema** (68 modulos JS, 47 CSS, 58 templates, 14 componentes, 20 servicios, 17 repos, 72 archivos de test, 956 tests, head `b1c2d3e4f5a6`) con el comando para medir cada una. `AGENTS.md` apunta a el.
-  - **Renombre**: `BUGS A RESOLVER.md` -> `BUGS_A_RESOLVER.md` (`git mv`, por la regla de "prohibido espacios"); referencias actualizadas en `tests/test_admin_branches.py`, `tests/test_system_health.py` y `Info proyecto/ESTADO_PROYECTO.md`.
-  - **Borrados**: `Info proyecto/LINK_BACKLOG.md` (stub de 1 linea sin titulo; el link al backlog ya vive en `AGENTS.md` y en el indice) y `Info proyecto/README.md` (espejo desactualizado del `README.md` de la raiz, que es la portada canonica).
-  - **Solapamiento arquitectura**: `CONTEXTO_SISTEMA.md` queda como VIGENTE y `ARQUITECTURA_DETALLADA.md` como secundario, con nota cruzada adentro de cada archivo.
-  - **Auditorias**: `AUDITORIAS.md` ahora aclara que su "reemplaza a los `AUDITORIA_*.md`" vale solo para la ronda A1–A9 y **enlaza** a `AUDITORIA_RBAC.md`, `AUDITORIA_VALIDACIONES.md` y `AUDITORIA_DB_NEON.md` (que antes quedaban invisibles para quien leia el consolidado); nota de conteos historicos. `AUDITORIA_DB.md` marcado como historico (era de la ronda SQLite seed).
-  - **Archivos sueltos de la raiz**: borrados los 4 de basura local no versionada (`autopass.db` y `parking.db` vacios, `.env.bak` respaldo del `.env`, `.coverage`); borrado `manual.zip` (12 MB, copia comprimida de la carpeta `manual/` ya versionada: verificado que los 26 archivos del zip existen en `manual/`, 0 faltantes); `base_datos.html` movido a `Info proyecto/` (visor HTML huerfano que apuntaba a un CSS inexistente y nadie referenciaba); `USUARIOS PRUEBA.xlsx` -> `USUARIOS_PRUEBA.xlsx` (regla de "prohibido espacios"). No se tocaron los archivos de codigo que van en raiz por convencion (`main.py`, `init_db.py`, `alpr_service.py`, `locustfile.py`, `pytest.ini`, `alembic.ini`, `requirements.txt`, los `.bat`, `.gitignore`, `.env.example`) ni `usuarios_demo.csv` (lo lee `locustfile.py`).
-  - Sin commitear por la regla de AGENTS.md.
-- Ya pusheado (commit `90e5532`): **Fases 4 y 5**. Antes, la Fase 3 + R1/R2 en `81c5833`.
-- Archivos de v9.34.99: `static/js/modules/landing-map-pois.js`, `static/sw.js` y los 4 documentos.
+- Ninguno (árbol de trabajo limpio).
 
 ## Cerrado recientemente
+
+### 10/11/2026 - Soporte WebSocket y Web Serial para Arduino Hardware Bridge + Hardening Concurrencia
+- **Soporte de WebSocket para Arduino Hardware Bridge (Cloudflare / Tailscale)**:
+  - **Endpoint WebSocket**: `routes/system/hardware.py` implementa `@router.websocket("/ws/hardware")` con autenticación por `node_secret` (`ALPR_NODE_SECRET` o `SECRET_KEY`), IP de red privada (Tailscale) o token JWT operativo.
+  - **HardwareService**: `services/hardware_service.py` añade `register_ws`, `unregister_ws` y `broadcast_ws(payload)`, y en `trigger_barrier` emite el evento por WebSocket hacia todos los puentes conectados (además de MQTT y Serial local).
+  - **Arduino Bridge**: `scripts/arduino_bridge.py` actualizado con soporte dual: modo WebSocket (`--url https://tu-dominio.trycloudflare.com` o IP de Tailscale, reconexión automática y auto-detección de puerto COM) y modo MQTT retrocompatible.
+  - **Web Serial en Dashboard (100% Web sin consola)**: Módulo `static/js/modules/dashboard-web-serial.js` integrado en `dashboard.js` y `templates/dashboard/tabs/live.html`. Permite que desde Chrome/Edge en la laptop el usuario presione "Conectar Maqueta USB", autorice el puerto serie y el propio navegador accione el Arduino por USB en tiempo real ante detecciones ALPR, QR o clics en el panel.
+  - **Tests y Guards**: `tests/test_hardware_routes.py` (7 tests nuevos: autenticación por secret, SECRET_KEY y JWT operativo, rechazo sin auth, broadcast de eventos de barrera, helper `build_ws_url` y procesamiento de payloads). Suite completa en verde.
+- **Fix del control flaky `sin_lock` (R1/R2)**:
+  - `tests/test_concurrencia_reservas.py` suma `_correr_dos_carrera` + `_sincronizar_tras_leer`, que sincronizan los hilos entre la lectura de decisión y la escritura para garantizar la ventana de carrera determinista sin depender de la velocidad del runner de CI. Documentado en `Info proyecto/INFORME_CONCURRENCIA_RESERVAS.md`.
+- **Docs de responsables y catálogo de documentación**:
+  - `Info proyecto/RESPONSABLES_BACKLOG.md` y catálogo en `INDICE_DOCUMENTACION.md`.
+  - Helper portable `run_pytest.bat`.
 
 ### 20/10/2026 - Fase 6 del plan de concurrencia: hardening y cierre (PLAN COMPLETO)
 - **Que se hizo**: los 4 puntos de cierre del informe. (1) El CI ahora corre el grupo `postgres` contra un servicio Postgres 16. (2) Suite sin regresiones. (3) Guards 11/11. (4) El contrato de `bloqueo_transaccional` quedo documentado en la guia de desarrollo.

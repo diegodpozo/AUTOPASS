@@ -462,6 +462,19 @@ acreditación; el índice único rechaza el duplicado a nivel de motor.
   sección crítica. También se corrigió el conteo de tests del documento (**956 pruebas en 72
   archivos**, estaba en 756/56).
 
+> **Corrección (21/10/2026) — control `sin_lock` flaky.** El primer push de la Fase 6 hizo fallar
+> en CI a `test_r1_sin_lock_demuestra_la_carrera` (los otros 14 en verde): en el runner (más rápido
+> que Neon) un hilo alcanzaba a commitear **antes** de que el otro leyera la disponibilidad, así que
+> el segundo se rechazaba solo y el control veía 1 éxito en vez de 2. La aserción era correcta; lo
+> que no era determinista era la ventana de la carrera. **Solución**: los dos controles `sin_lock`
+> (R1 y R2) ahora usan `_correr_dos_carrera`, que sincroniza los hilos **entre la lectura de
+> decisión y la escritura** (`_sincronizar_tras_leer`): los dos leen "libre" y recién después los
+> dos insertan. Reproduce la carrera exacta sin depender del scheduler. **Verificado**: 15 corridas
+> seguidas del archivo (0 fallos), grupo `postgres` `15 passed`, y prueba de mordida (con
+> `capacidad=0`, donde no hay carrera, el control **falla** como debe: la aserción sigue mordiendo).
+> El test `con_lock_serializa` no cambió: es determinista por naturaleza (el lock garantiza el
+> rechazo del perdedor).
+
 ---
 
 ## 7. Orden de ejecución y dependencias
