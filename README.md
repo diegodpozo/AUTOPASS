@@ -24,9 +24,20 @@ Multi-sucursal · Multi-piso · Trimodal (Auto/Moto/Camioneta) · Reservaciones 
 - **Soporte** — Sistema de tickets con aislamiento por sucursal, adjuntos y respuesta en tiempo real
 - **Tiempo Virtual** — Servicio de testing que permite simular el paso del tiempo sin afectar el reloj real
 - **PWA instalable** — Manifest + Service Worker en scope raíz con cache offline de assets
-- **RBAC** — Control de acceso por roles: Admin Global, Local Admin, Staff, User
+- **RBAC & Multi-Tenant** — Control de acceso por roles (Admin Global, Local Admin, Staff, User) y aislamiento multi-empresa (`Organization`) con reglas fail-closed
+- **Concurrencia Robusta** — Protección de aforo y sobreventa con PostgreSQL Advisory Locks, operaciones atómicas de saldo/puntos en SQL (`UPDATE ... RETURNING`) y constraint de no-solape (`EXCLUDE USING gist`)
 - **Base de Datos Online** — Neon/Postgres (sa-east-1) **compartido** por todas las PC (no hay fallback automático; SQLite local queda solo como opción aislada para desarrollo/tests)
 - **Migraciones** — Alembic para control de versiones del esquema
+
+## Documentación de Diseño (Metodología RUP)
+
+Toda la documentación formal técnica, de requerimientos, arquitectura y construcción reside en [`Diseno_Proyecto/`](Diseno_Proyecto/README.md) y está catalogada en [`INDICE_DOCUMENTACION.md`](INDICE_DOCUMENTACION.md):
+
+- **Fase de Inicio (Inception):** Visión del sistema, partes interesadas, alcance del MVP y modelo de negocio.
+- **Fase de Elaboración (Elaboration):** Requisitos funcionales y no funcionales, casos de uso y arquitectura general.
+- **Fase de Construcción (Construction):** Modelo de datos relacional, diagramas de secuencia, diagrama de clases y diseño de interfaz.
+- **Fase de Transición (Transition):** Guías de despliegue, estrategia de pruebas y operaciones de mantenimiento.
+- **Apéndices:** Catálogo de rutas API, arquitectura del motor ALPR e integración con hardware IoT.
 
 ## Arquitectura
 
@@ -39,17 +50,18 @@ AUTOPASS/
 │   ├── admin/          # CRUD admin (users, branches, reservations, promotions, operations, settings, virtual_time, support)
 │   ├── user/           # Portal usuario (profile, vehicles, reservations, balance, fidelization, notifications, support, mercadopago)
 │   ├── parking/        # Control de acceso (ALPR/QR, status, utils)
-│   └── system/         # Sistema (health, cameras, video, common)
-├── services/           # Lógica de negocio (16 servicios + 3 submódulos de apoyo)
+│   └── system/         # Sistema (health, cameras, video, hardware, common)
+├── services/           # Lógica de negocio (20 servicios y módulos de dominio)
 ├── repositories/       # Data Access Layer
 ├── alpr/               # Paquete modular de visión artificial
 ├── static/
-│   ├── js/modules/     # 65 módulos ES6
-│   └── css/            # 46 archivos CSS (Glassmorphism Premium)
+│   ├── js/modules/     # 69 módulos ES6
+│   └── css/            # 47 archivos CSS (Glassmorphism Premium)
 ├── templates/          # Jinja2 (dashboard 9 tabs + página OCR, profile 7 tabs, emails, modales)
-├── tests/              # Suite de pruebas automatizadas (pytest)
+├── tests/              # Suite de 75 archivos de pruebas automatizadas (>960 tests)
 ├── alembic/            # Migraciones de BD
-└── scripts/            # Utilidades y migraciones
+├── Diseno_Proyecto/    # Documentación formal de diseño (RUP)
+└── scripts/            # Utilidades, puentes y scripts de mantenimiento
 ```
 
 ## Stack Tecnológico
@@ -60,7 +72,7 @@ AUTOPASS/
 | Base de Datos | SQLAlchemy — Neon/Postgres (sa-east-1) compartido por defecto · SQLite local (opcional, aislado) |
 | Frontend | Vanilla JS (ES6 Modules), CSS Moderno, Jinja2 |
 | Visión Artificial | PaddleOCR + OpenCV |
-| IoT | ESP32 + Arduino Uno (MQTT + Serie USB) |
+| IoT | ESP32 + Arduino Uno (MQTT + Serie USB + WebSocket Bridge + Web Serial API) |
 | Real-time | WebSockets, MQTT |
 | Migraciones | Alembic |
 | Testing | Pytest |
@@ -111,7 +123,7 @@ MP_PUBLIC_KEY=APP_USR-...     # Public Key de prueba
 MP_WEBHOOK_URL=https://tu-dominio.trycloudflare.com/v1/user/mercadopago/webhook
 MP_PREFERENCE_EXPIRE_MINUTES=45
 
-# Email (opcional). Gmail: requiere contrasena de aplicacion (ver INICIALIZACION.md)
+# Email (opcional). Gmail: requiere contraseña de aplicación (ver .env.example)
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=tu_email@gmail.com
@@ -143,6 +155,10 @@ SMTP_TLS=true
 
 ### 6. Verificar
 ```bash
+# Opción rápida con script portable
+.\run_pytest.bat
+
+# O manual con pytest
 .\venv\Scripts\python.exe -m pytest tests/ --verbose
 ```
 
@@ -165,13 +181,14 @@ SMTP_TLS=true
 | BranchService | CRUD sucursales, capacidad trimodal, gestión de pisos |
 | UserService | CRUD usuarios, validaciones de seguridad |
 | ReportService | Analítica financiera y transacciones (UNION ALL), desglose de recaudación por método (efectivo/digital) |
+| OrganizationService | Gestión de organizaciones y alcance multi-empresa |
 | SupportService | Tickets de soporte con aislamiento por sucursal |
 | EmailService | Emails transaccionales con templates Jinja2 (QR, recuperación) |
 | NotificationService | Notificaciones en tiempo real via WebSocket |
 | UserNotificationService | CRUD de notificaciones in-app |
 | WorkerService | 2 hilos: limpieza/mantenimiento (300s) y notificaciones/recordatorios (30s) |
 | TimeService | Tiempo virtual para testing |
-| HardwareService | Control de barreras MQTT y comunicación Serie USB con Arduino Uno |
+| HardwareService | Control de barreras MQTT, WebSocket remoto (Cloudflare / Tailscale) y Serie USB (Arduino Uno + Web Serial) |
 | MercadoPagoService | Preferencias Checkout Pro, confirmación (retorno/webhook) y aplicación de pagos MP en reservas y estadías |
 | OccupancyService | Ocupación de plazas (física y de reserva) por sucursal, Planta Baja y pisos |
 | OAuthService | Login social (Google/Facebook): state HMAC, intercambio de código y alta de usuario |
