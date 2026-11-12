@@ -1,6 +1,8 @@
 <!-- PESTAÑA: REPORTE FINANCIERO -->
+{% from "components/report_export_button.html" import button as report_pdf_button %}
 <div id="tab-finance" class="tab-view">
     <div class="finance-layout">
+        <div class="finance-report-export-row">{{ report_pdf_button('tab-finance', 'Reporte financiero') }}</div>
         <!-- KPIS Y MÉTRICAS FINANCIERAS (COLAPSIBLE EN MÓVIL) -->
         <div class="finance-stats-collapsible">
             <button type="button" class="user-stats-trigger" onclick="toggleFinanceStatsCollapsible(this)" title="Mostrar u ocultar resumen financiero">
