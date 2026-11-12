@@ -4,6 +4,7 @@ from sqlalchemy import func, union_all, literal_column, or_, and_, false
 import models
 from models.enums import ReservationStatus, PaymentStatus, AccessEventType
 from repositories.branch_repository import BranchRepository
+from repositories.scoping import multi_organization_active
 
 #--- REPOSITORIO DE REPORTES E INTELIGENCIA DE NEGOCIO (CONSULTAS AGREGADAS) ---
 
@@ -119,6 +120,8 @@ def _branch_filter(db: Session, name_column, id_column, sucursal: str = None, or
                 func.lower(_unaccent(name_column)).like(f"%{_branch_key(nombre)}%")
             ))
         return or_(*conds)
+    if multi_organization_active(db):
+        return false()
     return None
 
 
@@ -139,8 +142,9 @@ class ReportRepository:
         if vehicle_type != "all":
             q = q.filter(_vehicle_type_condition(models.AccessLog.tipo_vehiculo, vehicle_type))
 
-        if sucursal or organization_id is not None:
-            q = q.filter(_branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id))
+        bf = _branch_filter(db, models.AccessLog.sucursal, models.AccessLog.sucursal_id, sucursal, organization_id)
+        if bf is not None:
+            q = q.filter(bf)
 
         if start_date:
             q = q.filter((models.AccessLog.fecha_pago >= start_date) |

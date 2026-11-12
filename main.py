@@ -149,6 +149,8 @@ async def startup_event():
         import asyncio
         from services.notification_service import NotificationService
         NotificationService.set_event_loop(asyncio.get_running_loop())
+        from services.hardware_service import HardwareService
+        HardwareService.set_event_loop(asyncio.get_running_loop())
 
         # MQTT
         mqtt_client.connect_async(settings.MQTT_BROKER, settings.MQTT_PORT, 60)

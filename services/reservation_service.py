@@ -266,7 +266,7 @@ class ReservationService(ReservationPaymentsMixin):
         return sucursal_nombre
 
     @staticmethod
-    def lookup_patente(db: Session, patente: str) -> dict:
+    def lookup_patente(db: Session, patente: str, staff: Optional[models.User] = None) -> dict:
         norm = re.sub(r'[^A-Z0-9]', '', (patente or '').upper())
         if len(norm) < 4:
             return {"encontrado": False, "patente": patente}
@@ -274,6 +274,13 @@ class ReservationService(ReservationPaymentsMixin):
         if not vehicle or not vehicle.owner:
             return {"encontrado": False, "patente": patente}
         owner = vehicle.owner
+        if staff is not None and multi_organization_active(db):
+            org_staff = resolve_actor_organization_id(db, staff)
+            if not org_staff:
+                return {"encontrado": False, "patente": patente}
+            org_owner = resolve_actor_organization_id(db, owner)
+            if org_owner != org_staff:
+                return {"encontrado": False, "patente": patente}
         return {
             "encontrado": True, "user_id": owner.id, "nombre": owner.nombre,
             "apellido": owner.apellido,
@@ -282,14 +289,36 @@ class ReservationService(ReservationPaymentsMixin):
         }
 
     @staticmethod
-    def get_admin_available_redemptions(db: Session, user_id: int, sucursal: str = None):
+    def get_admin_available_redemptions(
+        db: Session,
+        user_id: int,
+        staff_or_sucursal=None,
+        sucursal: Optional[str] = None,
+        staff: Optional[models.User] = None
+    ):
         """DESCUENTOS VIGENTES DE UN USUARIO PARA CAJA, VALIDANDO QUE EXISTA Y ESTE ACTIVO.
         El user_id llega del cliente HTTP (vinculacion por patente): sin esta validacion
         permitiria enumerar descuentos de cualquier id arbitrario."""
         if not user_id:
             return []
-        if not UserRepository.get_active_by_id(db, user_id):
+        user = UserRepository.get_active_by_id(db, user_id)
+        if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+        actor_staff = staff
+        if isinstance(staff_or_sucursal, models.User):
+            actor_staff = staff_or_sucursal
+        elif isinstance(staff_or_sucursal, str) and sucursal is None:
+            sucursal = staff_or_sucursal
+
+        if actor_staff is not None and multi_organization_active(db):
+            org_staff = resolve_actor_organization_id(db, actor_staff)
+            if not org_staff:
+                raise HTTPException(status_code=403, detail="No tenés permisos para ver descuentos de otra organización")
+            org_user = resolve_actor_organization_id(db, user)
+            if org_user != org_staff:
+                raise HTTPException(status_code=403, detail="No tenés permisos para ver descuentos de otra organización")
+
         return ReservationService.get_available_redemption_discounts(db, user_id, sucursal)
 
     @staticmethod
@@ -325,7 +354,7 @@ class ReservationService(ReservationPaymentsMixin):
             raise HTTPException(status_code=400, detail=f"La sucursal cierra a las {match.group(3)}:{match.group(4)}. La hora de fin no puede exceder el horario de cierre.")
 
     @staticmethod
-    def validate_manual_vinculacion(db: Session, user_id: int, patente: str):
+    def validate_manual_vinculacion(db: Session, user_id: int, patente: str, staff: Optional[models.User] = None):
         user = None
         vehicle = None
         if user_id:
@@ -335,6 +364,13 @@ class ReservationService(ReservationPaymentsMixin):
             vehicle = VehicleRepository.get_by_user_and_normalized_patente(db, user_id, re.sub(r'[^A-Z0-9]', '', patente.upper()))
             if not vehicle:
                 raise HTTPException(status_code=400, detail="La patente no está vinculada a ese usuario")
+            if staff is not None and multi_organization_active(db):
+                org_staff = resolve_actor_organization_id(db, staff)
+                if not org_staff:
+                    raise HTTPException(status_code=403, detail="No tenés permisos para vincular usuarios de otra organización")
+                org_user = resolve_actor_organization_id(db, user)
+                if org_user != org_staff:
+                    raise HTTPException(status_code=403, detail="No tenés permisos para vincular usuarios de otra organización")
         return user, vehicle
 
     @classmethod

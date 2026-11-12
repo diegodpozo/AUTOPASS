@@ -63,6 +63,18 @@ button, input, select, textarea, option {
     outline: none !important;
 }
 
+/* Campo "DIA" de la reserva por hora: el input no dibuja su propio foco, lo
+   hace su marco (.res-day-box:focus-within -> borde dorado + halo). Por eso se
+   anula el anillo del input en TODOS los casos (click y teclado), no solo en
+   `:not(:focus-visible)`: sin esto el anillo se ve como una "pill" con sombra
+   dorada DENTRO del marco. */
+:root .res-day-line-input,
+:root .res-day-line-input:focus,
+:root .res-day-line-input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 /* --- v9.34.65: FOCO CON INDICADOR INSUFICIENTE O AUSENTE ---
    Medido con WCAG 1.4.11 (>= 3:1 contra el fondo adyacente).
    `.promo-branch-select:focus` usaba rgba(223,186,107,0.40) = 2.54:1  FALLA.

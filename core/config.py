@@ -69,6 +69,13 @@ def _version() -> str:
 
 
 class Settings:
+    """CONFIGURACION CENTRAL DE LA APLICACION (valores por defecto + variables de entorno).
+
+    Cada atributo se lee de una variable de entorno con `os.getenv`, asi que el
+    `.env` o el entorno del proceso pisan los defaults sin tocar codigo. La unica
+    instancia que se usa en el resto del proyecto es `settings` (al final del modulo).
+    """
+
     PROJECT_NAME: str = "AUTOPASS Professional"
     VERSION: str = _version()
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
@@ -167,6 +174,11 @@ class Settings:
 
     @property
     def MP_ENABLED(self) -> bool:
+        """TRUE SI HAY UN ACCESS TOKEN DE MERCADO PAGO CONFIGURADO.
+
+        Con `False`, las rutas de pago quedan deshabilitadas y el frontend oculta
+        los botones de checkout.
+        """
         return bool(self.MP_ACCESS_TOKEN.strip())
 
 settings = Settings()

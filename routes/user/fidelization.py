@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
 from core.database import get_db
-from core.security import get_current_user
+from core.security import get_current_user, resolve_actor_organization_id
 from repositories.promotion_repository import PromotionRepository
 from repositories.redemption_repository import RedemptionRepository
 from repositories.branch_repository import BranchRepository
@@ -83,6 +83,10 @@ def redeem_points(promo_id: int, db: Session = Depends(get_db), current_user: mo
     - tipo_canje == 'voucher': genera un ticket con QR persistente (válido por 30 días), sin validación automática."""
     promo = PromotionRepository.get_active_by_id(db, promo_id)
     if not promo: raise HTTPException(status_code=404, detail="Promoción no encontrada")
+    if promo.organization_id is not None:
+        user_org = resolve_actor_organization_id(db, current_user)
+        if user_org != promo.organization_id:
+            raise HTTPException(status_code=404, detail="Promoción no encontrada")
     # FASE 1: el chequeo de puntos suficientes y el descuento son UNA sola sentencia.
     # Si no alcanzan, no descuenta y devuelve None -> 400 (antes habia una ventana
     # entre el chequeo y el descuento donde dos canjes simultaneos pasaban los dos).

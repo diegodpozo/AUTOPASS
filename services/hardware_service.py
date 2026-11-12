@@ -1,4 +1,4 @@
-'''Orquestador del hardware de barreras: publica los comandos en los topics MQTT de entrada/salida y/o envía la orden por serie USB al Arduino Uno, con resolucion  de barrera'''
+'''Orquestador del hardware de barreras: publica los comandos en los topics MQTT de entrada/salida y/o envía la orden por serie USB al Arduino Uno, con resolucion de barrera'''
 
 import json								# Importa `json` para serializar el payload que se
 									# publica por MQTT
@@ -12,9 +12,8 @@ import time								# Importa `time` para la pausa que espera el reset
 									# del bootloader del Arduino
 import datetime								# Importa `datetime` para sellar con timestamp los
 									# comandos de barrera
-from typing import Optional						# Importa `Optional` para tipar parametros que
-									# pueden ser None (request, detalles)
-from fastapi import Request, HTTPException				# Importa `Request` y `HTTPException` de FastAPI
+from typing import Optional, List						# Importa `Optional` y `List` para tipar parametros
+from fastapi import Request, HTTPException, WebSocket				# Importa `Request`, `HTTPException` y `WebSocket` de FastAPI
 									# para fallar con 400 si el porton es invalido
 from core.config import settings					# Importa `settings` con los parametros de MQTT y
 									# de la conexion serie
@@ -40,7 +39,7 @@ class HardwareService:							# Define la clase `HardwareService`, que orquesta
 									# las barreras fisicas
     """
     Servicio unificado de hardware para orquestación de barreras físicas
-    vía MQTT y/o conexión Serie USB directa con Arduino Uno.
+    vía MQTT, WebSocket remoto (Cloudflare / Tailscale) y/o conexión Serie USB directa con Arduino Uno.
     """
     _serial_port: Optional[object] = None				# Declara el atributo de clase `_serial_port` (la
 									# conexion serie, o None)
@@ -48,6 +47,8 @@ class HardwareService:							# Define la clase `HardwareService`, que orquesta
 									# el acceso concurrente al puerto serie
     _connected_port_name: Optional[str] = None				# Declara `_connected_port_name`, el nombre del
 									# puerto serie conectado actualmente
+    _ws_clients: List[WebSocket] = []
+    _loop: Optional[object] = None
 
     _GATE_ALIASES = {							# Define `_GATE_ALIASES`: mapa que traduce
 									# sinonimos (ENTRADA/INGRESO/ENTRY/IN) a un porton
@@ -59,6 +60,77 @@ class HardwareService:							# Define la clase `HardwareService`, que orquesta
 									# Define los alias de salida: SALIDA, EGRESO, EXIT
 									# y OUT
     }									# Cierra el diccionario de alias de portones
+
+    @classmethod
+    def set_event_loop(cls, loop):
+        """Registra el event loop principal de FastAPI para disparar broadcast WS desde hilos sincrónicos."""
+        cls._loop = loop
+
+    @classmethod
+    async def register_ws(cls, websocket: WebSocket):
+        """Registra un cliente WebSocket de hardware (ej: laptop con Arduino vía Cloudflare/Tailscale)."""
+        import asyncio
+        try:
+            cls._loop = asyncio.get_running_loop()
+        except Exception:
+            pass
+        with cls._lock:
+            if websocket not in cls._ws_clients:
+                cls._ws_clients.append(websocket)
+        logger.info(f"[HARDWARE WS] Cliente conectado. Total activos: {len(cls._ws_clients)}")
+
+    @classmethod
+    async def unregister_ws(cls, websocket: WebSocket):
+        """Elimina un cliente WebSocket desconectado."""
+        with cls._lock:
+            if websocket in cls._ws_clients:
+                cls._ws_clients.remove(websocket)
+        logger.info(f"[HARDWARE WS] Cliente desconectado. Total activos: {len(cls._ws_clients)}")
+
+    @classmethod
+    def broadcast_ws(cls, payload: dict):
+        """Transmite el evento de barrera a todos los clientes WebSocket de hardware conectados."""
+        with cls._lock:
+            clients = list(cls._ws_clients)
+        if not clients:
+            return
+
+        async def _send_all():
+            text = json.dumps(payload)
+            dead = []
+            for ws in clients:
+                try:
+                    await ws.send_text(text)
+                except Exception as e:
+                    logger.debug(f"[HARDWARE WS] Error al enviar a cliente: {e}")
+                    dead.append(ws)
+            if dead:
+                with cls._lock:
+                    for d in dead:
+                        if d in cls._ws_clients:
+                            cls._ws_clients.remove(d)
+
+        import asyncio
+        loop = cls._loop
+        if loop and getattr(loop, "is_running", lambda: False)():
+            try:
+                try:
+                    curr = asyncio.get_running_loop()
+                except RuntimeError:
+                    curr = None
+                if curr is loop:
+                    loop.create_task(_send_all())
+                else:
+                    asyncio.run_coroutine_threadsafe(_send_all(), loop)
+            except Exception as e:
+                logger.error(f"[HARDWARE WS] Error programando broadcast WS: {e}")
+        else:
+            try:
+                curr = asyncio.get_running_loop()
+                if curr and curr.is_running():
+                    curr.create_task(_send_all())
+            except Exception:
+                pass
 
     @classmethod							# Decorador `@classmethod` porque `resolve_gate`
 									# usa el mapa de clase
@@ -262,7 +334,7 @@ class HardwareService:							# Define la clase `HardwareService`, que orquesta
     ) -> dict:								# Declara el tipo de retorno como `dict`
         """
         Orquesta la apertura o cierre de la barrera especificada (ENTRADA o SALIDA).
-        Dispara simultáneamente el mensaje MQTT y el comando Serie a Arduino Uno.
+        Dispara simultáneamente el mensaje MQTT, la transmisión por WebSocket y el comando Serie a Arduino Uno.
         """
         gate = cls.resolve_gate(gate_id)				# Resuelve el porton canonico con `resolve_gate`
 									# (falla si es ambiguo)
@@ -289,7 +361,10 @@ class HardwareService:							# Define la clase `HardwareService`, que orquesta
         # 1. Broker MQTT
         cls.publish_mqtt(request, topic, payload)			# Publica el payload en el topic MQTT elegido
         
-        # 2. USB Serial Directo Arduino Uno (OPEN_ENTRADA, CLOSE_ENTRADA, OPEN_SALIDA, CLOSE_SALIDA)
+        # 2. Clientes WebSocket remotos (ej: Laptop con Arduino vía Cloudflare/Tailscale)
+        cls.broadcast_ws(payload)
+
+        # 3. USB Serial Directo Arduino Uno (OPEN_ENTRADA, CLOSE_ENTRADA, OPEN_SALIDA, CLOSE_SALIDA)
         serial_cmd = f"{cmd}_{gate}"					# Construye el comando serie combinando comando y
 									# porton, por ejemplo `OPEN_ENTRADA`
         cls.send_serial_command(serial_cmd)				# Envia el comando serie al Arduino por USB

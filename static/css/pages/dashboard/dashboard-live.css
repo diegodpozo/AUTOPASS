@@ -377,3 +377,27 @@
    Ingreso manual (tab Monitoreo en vivo)
    ========================================================================== */
 #manual-floor-group { width: 180px; display: none; }
+
+/* Control Web Serial (Maqueta Arduino USB) */
+.barrier-serial-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.12);
+}
+.barrier-serial-btn {
+    width: auto;
+    padding: 6px 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    gap: 8px;
+}
+.barrier-serial-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+}

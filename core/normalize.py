@@ -3,12 +3,18 @@ import unicodedata
 
 
 def normalize_name(text: str):
+    """NORMALIZA UN NOMBRE PARA COMPARARLO: MAYUSCULAS, SIN ACENTOS Y SIN PREFIJO 'AUTOPASS '.
+
+    Es la forma canonica que usa el proyecto para nombres de sede/organizacion
+    ("AUTOPASS Ituzaingó" y "ituzaingo" quedan como la misma clave).
+    """
     if not text: return ""
     text = text.upper().replace("AUTOPASS ", "").strip()
     return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
 
 
 def normalize_branch_name(text: str) -> str:
+    """ALIAS SEMANTICO DE `normalize_name` PARA NOMBRES DE SUCURSAL."""
     return normalize_name(text)
 
 
@@ -21,6 +27,11 @@ def same_branch(a: str, b: str) -> bool:
 
 
 def normalize_user_name(s: str):
+    """NORMALIZA UN NOMBRE DE PERSONA A FORMATO TITULO (sin espacios sobrantes).
+
+    Ej.: "  juan  perez " -> "Juan  Perez". Solo recorta extremos y capitaliza
+    cada palabra; no colapsa espacios internos.
+    """
     if not s: return ""
     return s.strip().title()
 
