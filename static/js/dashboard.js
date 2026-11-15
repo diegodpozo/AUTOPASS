@@ -7,6 +7,7 @@ import * as reservations from './modules/dashboard-reservations.js';
 import * as finance from './modules/dashboard-finance.js';
 import * as metricas from './modules/dashboard-metrics.js';
 import * as informes from './modules/dashboard-informes.js';
+import { exportVisibleReport, exportVisibleReportHtml, exportVisibleReportPdf } from './modules/report-html-export.js';
 import * as tickets from './modules/dashboard-tickets.js';
 import * as adminTour from './modules/admin-tour.js';
 import * as baseUi from './modules/ui.js';
@@ -23,6 +24,9 @@ import * as webSerial from './modules/dashboard-web-serial.js';
 
 // 1. UI & NAVEGACION
 window.switchTab = ui.switchTab;
+window.exportVisibleReport = exportVisibleReport;
+window.exportVisibleReportHtml = exportVisibleReportHtml;
+window.exportVisibleReportPdf = exportVisibleReportPdf;
 window.switchMonitorTab = (tabId, element) => {
     element.parentElement.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     element.classList.add('active');

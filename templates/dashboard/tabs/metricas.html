@@ -1,4 +1,5 @@
 <!-- PESTAÑA: MÉTRICAS -->
+{% from "components/report_export_button.html" import button as report_pdf_button %}
 <div id="tab-metricas" class="tab-view">
     <!-- VISTA: LISTA DE MÉTRICAS -->
     <div id="metricas-list">
@@ -79,6 +80,8 @@
                 <button class="btn btn--outline sm metricas-back-btn" onclick="volverMetricas()">
                     <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
+
+                {{ report_pdf_button('metricas-detail', 'Actividad de accesos') }}
             </div>
 
             <p>
@@ -197,6 +200,8 @@
                     <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">MAPA DE CALOR DE TRÁFICO</span>
+
+                {{ report_pdf_button('metricas-detail-heatmap', 'Mapa de calor de tráfico') }}
             </div>
             <p>
                 Entradas de vehículos por <strong>día del mes</strong> (columnas, 1 al 31) y <strong>hora de apertura</strong> (filas) de la sucursal seleccionada. Los colores van de <strong>blanco (menor movimiento)</strong> a <strong>rojo (mayor)</strong>; debajo de cada día va su total.
@@ -250,6 +255,8 @@
                     <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">OCUPACIÓN Y RESERVAS</span>
+
+                {{ report_pdf_button('metricas-detail-ocupacion', 'Ocupación y reservas') }}
             </div>
             <p>
                 Ocupación de plazas de reserva <strong>promedio por hora del día</strong> sobre la capacidad asignada, y KPIs de reservas de la sucursal.
@@ -290,6 +297,8 @@
                     <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">RECAUDACIÓN</span>
+
+                {{ report_pdf_button('metricas-detail-recaudacion', 'Recaudación') }}
             </div>
             <p>
                 Resumen de recaudación de la sucursal. Si sos administrador general, con <strong>SUCURSAL: TODAS</strong>
@@ -356,6 +365,8 @@
                     <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLVER
                 </button>
                 <span class="metrica-detail-breadcrumb">TIEMPOS OCR &amp; ALPR</span>
+
+                {{ report_pdf_button('metricas-detail-ocr', 'Tiempos OCR y ALPR') }}
             </div>
             <p>
                 Latencia del motor de reconocimiento de patentes: para operar a un ritmo fluido la entrada debe procesarse en menos de un segundo.

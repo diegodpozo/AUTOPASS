@@ -453,3 +453,69 @@
     flex-wrap: wrap;
 }
 .informe-note .fa-circle-info { color: var(--dorado); }
+
+/* EXPORTACION DE VISTAS DE REPORTES */
+.metricas-detail-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.metricas-detail-top .report-export-group,
+.metricas-detail-top .report-pdf-export,
+.metricas-detail-top .report-html-export {
+    margin-left: auto;
+}
+
+.report-export-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.report-export-group .btn {
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.report-btn-export--pdf {
+    border-color: rgba(244, 63, 94, 0.45) !important;
+    color: #fca5a5 !important;
+}
+
+.report-btn-export--pdf:hover {
+    background: rgba(244, 63, 94, 0.15) !important;
+    border-color: #f43f5e !important;
+    color: #ffffff !important;
+}
+
+.report-btn-export--html {
+    border-color: rgba(223, 186, 107, 0.45) !important;
+    color: #dfba6b !important;
+}
+
+.report-btn-export--html:hover {
+    background: rgba(223, 186, 107, 0.15) !important;
+    border-color: #dfba6b !important;
+    color: #ffffff !important;
+}
+
+.finance-report-export-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 640px) {
+    .finance-report-export-row {
+        margin-bottom: 8px;
+    }
+}

@@ -1,0 +1,10 @@
+{% macro button(target_id, title) -%}
+<div class="report-export-group" role="group" aria-label="EXPORTAR INFORME">
+    <button type="button" class="btn btn--outline sm report-btn-export report-btn-export--html" onclick="exportVisibleReport('{{ target_id }}', this, 'html')" data-report-title="{{ title }}" title="EXPORTAR ESTA VISTA A ARCHIVO HTML">
+        <i class="fas fa-file-code" aria-hidden="true"></i> HTML
+    </button>
+    <button type="button" class="btn btn--outline sm report-btn-export report-btn-export--pdf" onclick="exportVisibleReport('{{ target_id }}', this, 'pdf')" data-report-title="{{ title }}" title="EXPORTAR ESTA VISTA A PDF EN HOJA A4 VERTICAL">
+        <i class="fas fa-file-pdf" aria-hidden="true"></i> PDF (A4)
+    </button>
+</div>
+{%- endmacro %}
