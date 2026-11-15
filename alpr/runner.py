@@ -9,10 +9,13 @@ import asyncio								# Importa `asyncio` porque el worker de WebSocket
 import threading							# Importa `threading` para lanzar la captura de
 									# video, el OCR y el monitoreo como hilos
 									# concurrentes sin bloquear el bucle principal
-from alpr.config import VIDEO_SOURCE, GATE_TYPE, GATE_ID, FORCE_OCR, OCR_INTERVAL
+from alpr.config import VIDEO_SOURCE, GATE_TYPE, GATE_ID, FORCE_OCR, OCR_INTERVAL, AUTO_DETECT_USB
 									# Trae de la configuracion los parametros que
 									# gobiernan el arranque: fuente de video, tipo y id
 									# del porton, OCR forzado e intervalo de OCR
+from alpr.camera_detector import resolve_video_source, is_dummy_green_frame
+									# Importa el resolvedor inteligente de fuentes
+									# y detector de standby verde (DroidCam/OBS)
 from alpr.video_streamer import VideoStreamer				# Importa `VideoStreamer`, el componente que abre
 									# la camara/stream y entrega frames
 from alpr.ocr_engine import ALPREngine, ReadingStatusNotifier		# Importa `ALPREngine` (deteccion+OCR) y
@@ -29,31 +32,48 @@ _reading_notifier = ReadingStatusNotifier()				# Crea la instancia global `_read
 def run_alpr_service():							# Define `run_alpr_service()`, la funcion que
 									# orquesta todo el ciclo de vida del nodo ALPR
     """Ejecuta el ciclo principal del servicio ALPR."""
-    try:								# Abre un `try` para capturar fallos fatales al
+    active_source, source_log = resolve_video_source(
+        configured_source=VIDEO_SOURCE,
+        gate_type=GATE_TYPE,
+        auto_detect_usb=AUTO_DETECT_USB
+    )
+    print(f"[ALPR] {source_log}")
+
+    try:								# Abre un `try` para capturar fallos al
 									# inicializar la fuente de video
-        streamer = VideoStreamer(VIDEO_SOURCE, target_width=1280).start()
-									# Crea e inicia el `VideoStreamer` con la fuente
-									# configurada y ancho objetivo 1280 px; `.start()`
-									# lanza su hilo de captura
-    except Exception as e:						# Captura cualquier excepcion al abrir el stream o
-									# la camara para no dejar caer todo el proceso sin
-									# mensaje
-        print(f"[!] Error FATAL al iniciar VideoStreamer: {e}")		# Imprime un error FATAL indicando que fallo el
-									# arranque del `VideoStreamer`
-        return								# Retorna temprano: sin streamer no hay pipeline
-									# ALPR, asi que la funcion termina en vez de
-									# seguir
+        streamer = VideoStreamer(active_source, target_width=1280).start()
+    except Exception as e:						# Captura cualquier excepcion al abrir el stream o la camara
+        print(f"[!] Error al iniciar VideoStreamer con fuente {active_source}: {e}")
+        if active_source != VIDEO_SOURCE:
+            print(f"[INFO] Reintentando con fuente IP configurada: {VIDEO_SOURCE}...")
+            active_source = VIDEO_SOURCE
+            try:
+                streamer = VideoStreamer(active_source, target_width=1280).start()
+            except Exception as e2:
+                print(f"[!] Error FATAL al iniciar VideoStreamer con IP: {e2}")
+                return
+        else:
+            return
     
-    time.sleep(2)							# Espera 2 segundos para dar tiempo a que la camara
-									# entregue los primeros frames antes de validar la
-									# senal
-    if streamer.get_frame() is None:					# Comprueba si el streamer todavia no entrega
-									# ningun frame para advertir que la fuente no
-									# responde
-        print(f"[!] ADVERTENCIA: No se recibe imagen de la fuente {VIDEO_SOURCE}. Verificá la URL o el dispositivo.")
-									# Imprime una advertencia pidiendo verificar la URL
-									# o el dispositivo cuando no llega imagen de la
-									# fuente configurada
+    time.sleep(2)							# Espera 2 segundos para dar tiempo a que la camara entregue frames
+    initial_frame = streamer.get_frame()				# Obtiene el frame inicial de comprobacion
+    if initial_frame is None:						# Comprueba si el streamer entrega frame
+        if active_source != VIDEO_SOURCE:
+            print(f"[!] Dispositivo USB {active_source} no entregó imagen. Conmutando a fuente IP: {VIDEO_SOURCE}...")
+            try:
+                streamer.stop()
+            except Exception:
+                pass
+            active_source = VIDEO_SOURCE
+            try:
+                streamer = VideoStreamer(active_source, target_width=1280).start()
+                time.sleep(1)
+            except Exception as e:
+                print(f"[!] Error al conmutar a IP {active_source}: {e}")
+        else:
+            print(f"[!] ADVERTENCIA: No se recibe imagen de la fuente {active_source}. Verificá la URL o el dispositivo.")
+    elif is_dummy_green_frame(initial_frame):
+        print(f"[AVISO] La cámara USB {active_source} está en standby (pantalla verde). Hacé clic en 'Start' en la app DroidCam de tu PC.")
 
     try:								# Abre el `try` principal que envuelve toda la
 									# logica de hilos y el bucle de captura

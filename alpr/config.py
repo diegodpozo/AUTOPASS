@@ -51,6 +51,9 @@ FORCE_OCR = os.getenv("ALPR_FORCE_OCR", "true").lower() in ("1", "true", "yes")
 									# Convierte `ALPR_FORCE_OCR` a booleano: acepta
 									# '1', 'true' o 'yes' (por defecto true) para
 									# forzar OCR en cada frame
+AUTO_DETECT_USB = os.getenv("ALPR_AUTO_DETECT_USB", "true").lower() in ("1", "true", "yes")
+									# Habilita auto-detección y conmutación USB/IP
+									# para portones de entrada/salida (por defecto true)
 
 from core.normalize import normalize_name as normalize_id		# Importa `normalize_name` como `normalize_id`
 									# desde `core/normalize`, el helper compartido que

@@ -229,8 +229,10 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
 									# Asigna 'entrada' o 'salida' segun si el gate_id
 									# contiene 'ENTRADA'
         env["BACKEND_URL"] = base_url					# Inyecta `BACKEND_URL` con la URL base local
-        env["PYTHONUNBUFFERED"] = "1"					# Activa `PYTHONUNBUFFERED` para que la salida del
+        env["PYTHONUNBUFFERED"] = "1"					# Activa `PYTHONUNBUFFERED`
+        env["ALPR_AUTO_DETECT_USB"] = "1"				# Activa auto-detección USB/celular con fallback a IP para que la salida del
 									# subproceso llegue sin buffering
+        env["ALPR_AUTO_DETECT_USB"] = "1"				# Activa auto-detección USB/celular con fallback a IP
         
         try:								# Abre un `try` para lanzar el subproceso
             logger.info(f"Iniciando ALPR para {gate_id} con fuente: {source}")
@@ -283,6 +285,18 @@ def control_camera_service(gate_id: str, action: str, request: Request, db: Sess
             
     return {"status": "error", "message": "Acción no válida"}		# Devuelve error si la accion no fue ni 'start' ni
 									# 'stop'
+
+@router.get("/cameras/detect-devices")
+def detect_usb_devices(staff: models.User = Depends(get_operational_user)):
+    """Sondea y reporta las cámaras USB / webcam físicas o por USB disponibles."""
+    from alpr.camera_detector import find_available_usb_cameras
+    devices = find_available_usb_cameras(max_devices=4)
+    return {
+        "status": "ok",
+        "available_usb_cameras": devices,
+        "count": len(devices),
+        "message": f"{len(devices)} cámara(s) USB detectada(s)" if devices else "No se detectaron cámaras USB"
+    }
 
 @router.get("/cameras", response_model=List[schemas.CameraResponse])	# Decorador que registra GET `/cameras` con
 									# respuesta lista de `CameraResponse`
@@ -539,6 +553,7 @@ def control_dynamic_camera_service(camera_id: int, action: str, request: Request
             env["GATE_TYPE"] = gt					# Asigna `GATE_TYPE` con el tipo en minusculas
         env["BACKEND_URL"] = base_url					# Inyecta `BACKEND_URL` con la URL base local
         env["PYTHONUNBUFFERED"] = "1"					# Activa `PYTHONUNBUFFERED`
+        env["ALPR_AUTO_DETECT_USB"] = "1"				# Activa auto-detección USB/celular con fallback a IP
         
         try:								# Abre un `try` para lanzar el subproceso
             logger.info(f"Iniciando ALPR para {camera.nombre} ({proc_id}) con fuente: {camera.source}")

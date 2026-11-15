@@ -16,10 +16,11 @@ class VideoStreamer:							# Define la clase `VideoStreamer`, responsable de
     def __init__(self, source, target_width=1280):			# Define el constructor `__init__` con la `source`
 									# (indice o URL) y un ancho objetivo por defecto de
 									# 1280 px
-        if isinstance(source, str) and source.startswith("http"):	# Detecta si la fuente es una URL que empieza con
+        self.source = int(source) if isinstance(source, str) and source.isdigit() else source
+        if isinstance(self.source, str) and self.source.startswith("http"):	# Detecta si la fuente es una URL que empieza con
 									# 'http' para tratarla como stream de red en vez de
 									# camara local
-            self.cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)		# Abre el stream HTTP/RTSP con el backend FFmpeg de
+            self.cap = cv2.VideoCapture(self.source, cv2.CAP_FFMPEG)		# Abre el stream HTTP/RTSP con el backend FFmpeg de
 									# OpenCV, adecuado para camaras IP
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)			# Limita el buffer del stream a 1 frame para que
 									# siempre se lea la imagen mas reciente y no queden
@@ -30,7 +31,7 @@ class VideoStreamer:							# Define la clase `VideoStreamer`, responsable de
 									# bloqueos indefinidos si el stream se corta
         else:								# Rama `else`: la fuente es un dispositivo local
 									# (indice numerico), no una URL
-            self.cap = cv2.VideoCapture(source)				# Abre la camara local con `cv2.VideoCapture`
+            self.cap = cv2.VideoCapture(self.source)			# Abre la camara local con `cv2.VideoCapture`
 									# usando el indice configurado
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)			# Solicita al dispositivo un ancho de frame de 1280
 									# px como resolucion de trabajo
