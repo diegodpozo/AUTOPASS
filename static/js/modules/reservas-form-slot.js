@@ -466,10 +466,10 @@ export async function updatePeriodAvailabilityBadge() {
                 const total = Number(av.data.capacidad_total) || 0;
                 const poco = total > 0 && restan <= total / 2;
                 badge.className = `availability-badge-premium ${poco ? 'warning' : 'success'}`;
-                badge.innerHTML = `<i class="fas fa-check-circle"></i> Hay plazas disponibles para ${tipoVehiculo}s en ${sucursal}`;
+                badge.innerHTML = `<i class="fas fa-check-circle"></i> Hay plazas disponibles para tu vehículo en ${sucursal}`;
             } else {
                 badge.className = 'availability-badge-premium danger';
-                badge.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Sin disponibilidad de plazas de ${tipoVehiculo} en ${sucursal} para este período`;
+                badge.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Sin disponibilidad de plazas para tu vehículo en ${sucursal} para este período`;
             }
             badge.style.display = 'inline-flex';
         }

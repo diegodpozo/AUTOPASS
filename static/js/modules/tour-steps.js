@@ -99,10 +99,10 @@ export const mainTourSteps = [
             }
         }
     },
-    { selector: '#reserva-form-content .res-vehicle', title: 'Seleccioná vehículo', text: 'Tu nuevo vehículo ya aparece seleccionado por defecto.', align: 'right', interactive: true },
-    { selector: '.res-sucursal', title: 'Elegí punto', text: 'Seleccioná el punto AutoPass donde querés estacionar.', align: 'left', interactive: true },
-    { selector: '.res-type', title: 'Tipo de estadía', text: 'Elegí si reservás por hora, día, semana, quincena o mes. Los campos cambiarán acorde al tipo.', align: 'left', interactive: true },
-    { selector: '.reservation-footer-premium .btn-confirm-premium', title: 'Confirmar reserva', text: 'Revisá el total y pulsá "Continuar" para confirmar la reserva.', align: 'top', interactive: true },
+    { selector: '#reserva-form-content .res-vehicle', title: 'Seleccioná vehículo', text: 'Tu nuevo vehículo ya aparece seleccionado por defecto.', align: 'right', interactive: true, beforeShow: () => { if (window.goToBookingStep) window.goToBookingStep(1); } },
+    { selector: '.res-sucursal', title: 'Elegí punto', text: 'Seleccioná el punto AutoPass donde querés estacionar.', align: 'left', interactive: true, beforeShow: () => { if (window.goToBookingStep) window.goToBookingStep(2); } },
+    { selector: '.res-type', title: 'Tipo de estadía', text: 'Elegí si reservás por hora, día, semana, quincena o mes. Los campos cambiarán acorde al tipo.', align: 'left', interactive: true, beforeShow: () => { if (window.goToBookingStep) window.goToBookingStep(3); } },
+    { selector: '.reservation-footer-premium .btn-confirm-premium', title: 'Confirmar reserva', text: 'Revisá el total y pulsá "Continuar" para confirmar la reserva.', align: 'top', interactive: true, beforeShow: () => { if (window.goToBookingStep) window.goToBookingStep(3); } },
     { selector: '#portal-map', title: 'Mapa y ubicación', text: 'En este mapa podés ver la ubicación de las sucursales y elegir una cercana.', align: 'left', interactive: false }
 ];
 
@@ -566,7 +566,7 @@ export const createReservationTourSteps = [
         text: 'Elegí con qué patente de tu flota vas a realizar la reserva.',
         align: 'right',
         interactive: true,
-        beforeShow: ensureReservationFormOpen
+        beforeShow: () => { ensureReservationFormOpen(); if (window.goToBookingStep) window.goToBookingStep(1); }
     },
     {
         selector: '.res-sucursal',
@@ -574,7 +574,7 @@ export const createReservationTourSteps = [
         text: 'Seleccioná la sede AutoPass donde querés estacionar.',
         align: 'left',
         interactive: true,
-        beforeShow: ensureReservationFormOpen
+        beforeShow: () => { ensureReservationFormOpen(); if (window.goToBookingStep) window.goToBookingStep(2); }
     },
     {
         selector: '.res-type',
@@ -582,7 +582,7 @@ export const createReservationTourSteps = [
         text: 'Elegí si reservás por Hora, Día, Semana, Quincena o Mes. Verás cómo la tarifa estimada se actualiza al instante.',
         align: 'left',
         interactive: true,
-        beforeShow: ensureReservationFormOpen
+        beforeShow: () => { ensureReservationFormOpen(); if (window.goToBookingStep) window.goToBookingStep(3); }
     },
     {
         selector: '.reservation-footer-premium .btn-confirm-premium, #reserva-form-content button[type="submit"]',
@@ -590,7 +590,7 @@ export const createReservationTourSteps = [
         text: 'Revisá la cotización y pulsá "CONTINUAR" para generar tu reserva y obtener tu Pase QR.',
         align: 'top',
         interactive: true,
-        beforeShow: ensureReservationFormOpen
+        beforeShow: () => { ensureReservationFormOpen(); if (window.goToBookingStep) window.goToBookingStep(3); }
     }
 ];
 

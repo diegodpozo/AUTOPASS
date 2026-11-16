@@ -9,6 +9,23 @@ Ultima actualizacion: 16/11/2026
 
 ## Cerrado recientemente
 
+### 16/11/2026 - Reserva de usuarios: Flujo paso a paso (step-by-step) con retroceso y optimización responsive
+- **Reserva de usuarios - Flujo de selección paso a paso (step-by-step) con retroceso**:
+  - Reemplazo de los 3 selectores simultáneos (`#res-vehicle`, `#res-sucursal`, `#res-type`) por un flujo secuencial de 3 pasos:
+    1. **Paso 1: Vehículo**: selector a ancho completo y botón `CONTINUAR` (o avance automático al seleccionar).
+    2. **Paso 2: Punto AutoPass (Sucursal)**: botón de retroceso `[ ← Volver ]` hacia el vehículo, badge/chip informativo del vehículo seleccionado, selector a ancho completo y botón `CONTINUAR`.
+    3. **Paso 3: Tipo de Estadía & Horarios**:
+       - Al ingresar a este paso se muestra el selector de Tipo de Estadía a ancho completo (`420px`), con botón `[ ← Volver ]` a la sucursal.
+       - Al seleccionar "Hora", el selector de tipo de estadía desaparece y en su lugar queda el selector de Fecha de Reserva, ensanchado a `420px` (y tipografía proporcional sans-serif) para que fechas largas como "Jue 19 de noviembre" no se corten.
+       - En modo responsive/móvil se eliminó una regla residual obsoleta en `profile-tour.css` que forzaba `10.625rem` (170px) con `!important`, garantizando que el selector de fecha y su caja ocupen el 100% de la tarjeta también en pantallas reducidas.
+       - La cabecera se actualiza con un chip `[ ⏱️ Hora ]` y el botón `[ ← Volver ]` permite regresar al selector de tipo de estadía para cambiarlo sin perder la navegación hacia la sucursal o el vehículo.
+       - Debajo del selector de fecha se despliega la disponibilidad ("Hay plazas disponibles para tu vehículo en [Sucursal]"), grilla de slots por hora, cotización en tiempo real y botón de confirmación de reserva.
+  - Sincronización bidireccional e interactividad con el indicador de pasos superior (`#reservation-stepper`): permite hacer clic en pasos completados o disponibles para regresar directamente.
+  - Eliminación del estrangulamiento de ancho responsive (`max-width: 140px` en `.fg-330` y `.fg-144`), garantizando que en dispositivos móviles los textos de las sucursales y tipos de estadía se lean completos sin truncarse ni cortarse.
+  - Soporte integrado en tours interactivos (`tour-steps.js`), edición de reservas (`prepareEditReservation`) y repetición (`repeatReservation`).
+  - Cumplimiento de la regla de cero estilos inline (`test_inline_styles_guard.py` superado al 100%).
+  - Actualización de versión del service worker a `autopass-v25` en `static/sw.js`.
+
 ### 16/11/2026 - Rediseño de Mapa de Calor de Tráfico, Filtro Semanal y Descarga Directa de PDF
 - **Rediseño del Mapa de Calor de Tráfico (Métricas)**:
   - Cuadrícula mensual interactiva y focalizada mes a mes (28-31 columnas según el mes), con navegación fluida entre meses (`< Anterior` / `Siguiente >`), títulos en dorado suave y resaltado de fines de semana.

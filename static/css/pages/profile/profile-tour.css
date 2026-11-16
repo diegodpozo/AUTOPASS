@@ -1557,20 +1557,18 @@
     }
     #dynamic-fields-premium .dynamic-row-premium {
         gap: 0.5rem !important;
-    }
-    #dynamic-fields-premium .dynamic-row-premium .form-group-premium {
-        max-width: 6.25rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     #dynamic-fields-premium #hourly-fields {
         gap: 0.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
-    #dynamic-fields-premium #hourly-fields .form-group-premium:nth-child(1),
-    #dynamic-fields-premium #hourly-fields .form-group-premium:nth-child(2) {
-        max-width: 10.625rem !important;
-        flex: 1 !important;
-    }
-    #dynamic-fields-premium #hourly-fields .form-group-premium:nth-child(3) {
-        max-width: 5.625rem !important;
+    #dynamic-fields-premium #hourly-fields .form-group-premium,
+    #dynamic-fields-premium #hourly-fields .res-day-line {
+        width: 100% !important;
+        max-width: 100% !important;
     }
     .quick-actions-grid {
         gap: 0.5rem;
