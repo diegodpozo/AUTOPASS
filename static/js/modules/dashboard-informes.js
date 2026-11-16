@@ -23,6 +23,7 @@ let heatmapView = 'mes';
 let heatmapCache = null;
 let hmBarrasChart = null;
 let currentMonthIndex = -1;
+let currentWeekFilter = 'todas';
 
 const DOW_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 const DOW_SHORT = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
@@ -179,24 +180,30 @@ export function navegarHeatmapMes(delta) {
 }
 window.navegarHeatmapMes = navegarHeatmapMes;
 
-export function seleccionarHeatmapMes(idx) {
-    if (!heatmapCache || !heatmapCache.meses || !heatmapCache.meses.length) return;
-    const n = parseInt(idx, 10);
-    if (!isNaN(n) && n >= 0 && n < heatmapCache.meses.length) {
-        currentMonthIndex = n;
-        _renderHeatmap();
-    }
+export function filtrarHeatmapSemana(sem) {
+    currentWeekFilter = (sem === 'todas' || sem === 'all') ? 'todas' : parseInt(sem, 10);
+    _renderHeatmap();
 }
-window.seleccionarHeatmapMes = seleccionarHeatmapMes;
+window.filtrarHeatmapSemana = filtrarHeatmapSemana;
 
 if (typeof document !== 'undefined') {
     document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.heatmap-nav-btn');
-        if (!btn || btn.disabled) return;
-        const delta = parseInt(btn.dataset.delta, 10);
-        if (!isNaN(delta)) {
-            e.preventDefault();
-            navegarHeatmapMes(delta);
+        const btnNav = e.target.closest('.heatmap-nav-btn');
+        if (btnNav && !btnNav.disabled) {
+            const delta = parseInt(btnNav.dataset.delta, 10);
+            if (!isNaN(delta)) {
+                e.preventDefault();
+                navegarHeatmapMes(delta);
+                return;
+            }
+        }
+        const btnWeek = e.target.closest('.heatmap-week-btn');
+        if (btnWeek && !btnWeek.disabled) {
+            const wk = btnWeek.dataset.week;
+            if (wk) {
+                e.preventDefault();
+                filtrarHeatmapSemana(wk);
+            }
         }
     });
 }
@@ -249,8 +256,6 @@ function _renderHeatmapKPIs(data) {
     const nDias = Math.max(1, dias.length);
     const avgDaily = Math.round(total_entradas / nDias);
 
-    const labelHora = contextLabel ? `HORA PICO (${contextLabel})` : 'HORA PICO GLOBAL';
-
     return `
         <div class="heatmap-kpis-grid">
             <div class="heatmap-kpi-card">
@@ -258,9 +263,8 @@ function _renderHeatmapKPIs(data) {
                     <i class="fas fa-fire" aria-hidden="true"></i>
                 </div>
                 <div class="heatmap-kpi-content">
-                    <span class="heatmap-kpi-label">${labelHora}</span>
+                    <span class="heatmap-kpi-label">HORA PICO</span>
                     <div class="heatmap-kpi-val">${peakHourLabel}</div>
-                    <span class="heatmap-kpi-sub">${formatNum(maxHourVal)} vehículos en total</span>
                 </div>
             </div>
             <div class="heatmap-kpi-card">
@@ -270,7 +274,6 @@ function _renderHeatmapKPIs(data) {
                 <div class="heatmap-kpi-content">
                     <span class="heatmap-kpi-label">DÍA CON MÁS FLUJO</span>
                     <div class="heatmap-kpi-val">${peakDayLabel}</div>
-                    <span class="heatmap-kpi-sub">${formatNum(maxDowVal)} vehículos acumulados</span>
                 </div>
             </div>
             <div class="heatmap-kpi-card">
@@ -280,7 +283,6 @@ function _renderHeatmapKPIs(data) {
                 <div class="heatmap-kpi-content">
                     <span class="heatmap-kpi-label">PROMEDIO DIARIO</span>
                     <div class="heatmap-kpi-val">${formatNum(avgDaily)} <small class="heatmap-kpi-unit">veh/día</small></div>
-                    <span class="heatmap-kpi-sub">${formatNum(total_entradas)} en ${nDias} ${nDias === 1 ? 'día' : 'días'}</span>
                 </div>
             </div>
         </div>
@@ -380,13 +382,51 @@ function _renderHeatmapMes(container) {
     const { start, count, label } = monthChunk;
     const end = start + count;
 
-    // Recorte de datos para el mes seleccionado
-    const monthDias = data.dias.slice(start, end);
-    const monthMatrix = data.matrix.map(row => row.slice(start, end));
-    const monthTotalsPerDay = data.totals_per_day.slice(start, end);
+    // Disponibilidad de semanas en el mes seleccionado
+    const hasSem1 = count > 0;
+    const hasSem2 = count > 7;
+    const hasSem3 = count > 14;
+    const hasSem4 = count > 21;
+
+    // Si la semana filtrada no tiene días en este mes, volver a 'todas'
+    if (currentWeekFilter === 1 && !hasSem1) currentWeekFilter = 'todas';
+    if (currentWeekFilter === 2 && !hasSem2) currentWeekFilter = 'todas';
+    if (currentWeekFilter === 3 && !hasSem3) currentWeekFilter = 'todas';
+    if (currentWeekFilter === 4 && !hasSem4) currentWeekFilter = 'todas';
+
+    let sliceStart = start;
+    let sliceEnd = end;
+    let weekDesc = '';
+
+    if (currentWeekFilter === 1) {
+        sliceStart = start;
+        sliceEnd = Math.min(start + 7, end);
+        weekDesc = 'Semana 1 (Días 1 al 7)';
+    } else if (currentWeekFilter === 2) {
+        sliceStart = start + 7;
+        sliceEnd = Math.min(start + 14, end);
+        weekDesc = 'Semana 2 (Días 8 al 14)';
+    } else if (currentWeekFilter === 3) {
+        sliceStart = start + 14;
+        sliceEnd = Math.min(start + 21, end);
+        const diasSem3 = sliceEnd - sliceStart;
+        weekDesc = `Semana 3 (Días 15 al ${14 + diasSem3})`;
+    } else if (currentWeekFilter === 4) {
+        sliceStart = start + 21;
+        sliceEnd = end;
+        const diasSem4 = sliceEnd - sliceStart;
+        weekDesc = `Semana 4 (Días 22 al ${21 + diasSem4})`;
+    }
+
+    // Recorte de datos para el mes / semana seleccionada
+    const monthDias = data.dias.slice(sliceStart, sliceEnd);
+    const monthMatrix = data.matrix.map(row => row.slice(sliceStart, sliceEnd));
+    const monthTotalsPerDay = data.totals_per_day.slice(sliceStart, sliceEnd);
     const monthTotalsPerHour = monthMatrix.map(row => row.reduce((a, b) => a + b, 0));
     const monthTotalEntradas = monthTotalsPerDay.reduce((a, b) => a + b, 0);
     const monthMax = Math.max(...monthMatrix.flatMap(row => row), 0);
+
+    const contextLabel = weekDesc ? `${label} · ${weekDesc}` : label;
 
     const kpisHtml = _renderHeatmapKPIs({
         horas_labels: data.horas_labels,
@@ -394,11 +434,22 @@ function _renderHeatmapMes(container) {
         total_entradas: monthTotalEntradas,
         dias: monthDias,
         matrix: monthMatrix,
-        contextLabel: label
+        contextLabel: contextLabel
     });
 
     const isFirstMonth = currentMonthIndex <= 0;
     const isLastMonth = currentMonthIndex >= data.meses.length - 1;
+
+    const weekButtons = `
+        <div class="heatmap-nav-weeks">
+            <span class="heatmap-weeks-label"><i class="fas fa-filter" aria-hidden="true"></i> SEMANA:</span>
+            <button type="button" class="heatmap-week-btn ${currentWeekFilter === 'todas' ? 'heatmap-week-btn--active' : ''}" data-week="todas" onclick="filtrarHeatmapSemana('todas')" title="Ver mes completo">TODAS</button>
+            <button type="button" class="heatmap-week-btn ${currentWeekFilter === 1 ? 'heatmap-week-btn--active' : ''}" data-week="1" onclick="filtrarHeatmapSemana(1)" title="Semana 1 (Días 1 al 7)">SEM 1</button>
+            <button type="button" class="heatmap-week-btn ${currentWeekFilter === 2 ? 'heatmap-week-btn--active' : ''}" ${!hasSem2 ? 'disabled' : ''} data-week="2" onclick="filtrarHeatmapSemana(2)" title="${hasSem2 ? 'Semana 2 (Días 8 al 14)' : 'Sin registros'}">SEM 2</button>
+            <button type="button" class="heatmap-week-btn ${currentWeekFilter === 3 ? 'heatmap-week-btn--active' : ''}" ${!hasSem3 ? 'disabled' : ''} data-week="3" onclick="filtrarHeatmapSemana(3)" title="${hasSem3 ? 'Semana 3 (Días 15 al 21)' : 'Sin registros'}">SEM 3</button>
+            <button type="button" class="heatmap-week-btn ${currentWeekFilter === 4 ? 'heatmap-week-btn--active' : ''}" ${!hasSem4 ? 'disabled' : ''} data-week="4" onclick="filtrarHeatmapSemana(4)" title="${hasSem4 ? 'Semana 4 (Días 22 al fin de mes)' : 'Sin registros'}">SEM 4</button>
+        </div>
+    `;
 
     const navBar = `
         <div class="heatmap-nav-bar">
@@ -413,8 +464,9 @@ function _renderHeatmapMes(container) {
                     Siguiente <i class="fas fa-chevron-right" aria-hidden="true"></i>
                 </button>
             </div>
+            ${weekButtons}
             <div class="heatmap-nav-meta">
-                <span><strong>${count}</strong> ${count === 1 ? 'día' : 'días'}</span>
+                <span><strong>${monthDias.length}</strong> ${monthDias.length === 1 ? 'día' : 'días'}</span>
                 <span>&bull;</span>
                 <span><strong>${formatNum(monthTotalEntradas)}</strong> entradas</span>
                 ${data.meses.length > 1 ? `<span class="heatmap-nav-counter">(${currentMonthIndex + 1} de ${data.meses.length})</span>` : ''}
@@ -473,7 +525,7 @@ function _renderHeatmapMes(container) {
         ${navBar}
         ${kpisHtml}
         <div class="heatmap-wrap">
-            <div class="heatmap-grid heatmap-grid--mes" style="--hm-cols: ${count};">
+            <div class="heatmap-grid heatmap-grid--mes" style="--hm-cols: ${monthDias.length};">
                 ${cornerCells}${dayRow}
                 ${hourRows}
                 ${footer}

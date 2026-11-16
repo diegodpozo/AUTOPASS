@@ -9,17 +9,19 @@ Ultima actualizacion: 16/11/2026
 
 ## Cerrado recientemente
 
-### 16/11/2026 - Rediseño de Mapa de Calor de Tráfico y Descarga Directa de PDF
+### 16/11/2026 - Rediseño de Mapa de Calor de Tráfico, Filtro Semanal y Descarga Directa de PDF
 - **Rediseño del Mapa de Calor de Tráfico (Métricas)**:
   - Cuadrícula mensual interactiva y focalizada mes a mes (28-31 columnas según el mes), con navegación fluida entre meses (`< Anterior` / `Siguiente >`), títulos en dorado suave y resaltado de fines de semana.
-  - Tarjetas de KPIs calculadas en el frontend específicas para el mes visualizado (hora pico del mes, día de la semana con mayor flujo acumulado, promedio diario y total de entradas).
-  - Remoción de la cabecera duplicada de la grilla (`[ SUCURSAL ] [ MES ] [ TOT ]`), de los filtros obsoletos de fecha (`DESDE`, `HASTA`, `APLICAR`, `LIMPIAR`) y de textos explicativos y notas al pie redundantes.
+  - Filtro por semanas dentro de cada mes (`TODAS`, `SEM 1`, `SEM 2`, `SEM 3`, `SEM 4`): permite acotar la cuadrícula a 7 columnas semanales legibles y espaciosas, recalculando al instante la matriz y los indicadores.
+  - Tarjetas de KPIs compactas, estilizadas y centradas (ancho `220px`, espaciado `22px`): títulos directos (`HORA PICO`, `DÍA CON MÁS FLUJO`, `PROMEDIO DIARIO`), eliminación de subtítulos redundantes y textos largos.
+  - Remoción de la cabecera duplicada de la grilla (`[ SUCURSAL ] [ MES ] [ TOT ]`), de los filtros obsoletos de fecha (`DESDE`, `HASTA`, `APLICAR`, `LIMPIAR`), del breadcrumb superior (`MAPA DE CALOR DE TRÁFICO`) y de textos explicativos y notas al pie redundantes.
 - **Optimización de Exportación a PDF**:
   - Eliminación definitiva del botón y exportación a HTML.
   - Descarga directa de PDF: apertura inmediata del cuadro de diálogo nativo de guardado/impresión del navegador mediante un iframe invisible en la misma pestaña, sin abrir pestañas ni ventanas en blanco.
+  - Nomenclatura dinámica del archivo y título del PDF según el filtro activo (`Mapa de trafico [Mes] [Año].pdf` para mes completo o `Mapa de trafico [Mes] [Año] Semana [N].pdf` para una semana específica).
   - Supresión de la caja de parámetros y filtros activos (`PARAMETROS Y FILTROS ACTIVOS EN EL DASHBOARD`) en el informe exportado.
 - **Cache Busting**:
-  - Actualización del Service Worker a `autopass-shell-v17` en `static/sw.js` y query string `?v=17` en `static/js/dashboard.js`.
+  - Actualización del Service Worker a `autopass-shell-v24` en `static/sw.js` y query string `?v=24` en `static/js/dashboard.js`.
 
 ### 10/11/2026 - Limpieza de Documentación Redundante
 - **Limpieza de documentación no operativa**:

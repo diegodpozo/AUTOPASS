@@ -6,8 +6,8 @@ import * as ops from './modules/dashboard-operations.js';
 import * as reservations from './modules/dashboard-reservations.js';
 import * as finance from './modules/dashboard-finance.js';
 import * as metricas from './modules/dashboard-metrics.js';
-import * as informes from './modules/dashboard-informes.js?v=17';
-import { exportVisibleReport, exportVisibleReportHtml, exportVisibleReportPdf } from './modules/report-html-export.js?v=17';
+import * as informes from './modules/dashboard-informes.js?v=24';
+import { exportVisibleReport, exportVisibleReportHtml, exportVisibleReportPdf } from './modules/report-html-export.js?v=24';
 import * as tickets from './modules/dashboard-tickets.js';
 import * as adminTour from './modules/admin-tour.js';
 import * as baseUi from './modules/ui.js';
@@ -129,6 +129,7 @@ window.aplicarInforme = informes.aplicarInforme;
 window.limpiarInforme = informes.limpiarInforme;
 window.alternarHeatmapVista = informes.alternarHeatmapVista;
 window.navegarHeatmapMes = informes.navegarHeatmapMes;
+window.filtrarHeatmapSemana = informes.filtrarHeatmapSemana;
 window.seleccionarHeatmapMes = informes.seleccionarHeatmapMes;
 
 // 6. ACCIONES ADMINISTRATIVAS Y USUARIOS

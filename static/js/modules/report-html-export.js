@@ -8,7 +8,28 @@ function EscaparHtml(Texto) {
 }
 
 // OBTENER TITULO DEL REPORTE SEGUN BOTON O CONTENEDOR
-function ObtenerTituloReporte(Boton, Destino) {
+function ObtenerTituloReporte(Boton, Destino, DestinoId) {
+    if (DestinoId === 'metricas-detail-heatmap') {
+        const titleEl = Destino.querySelector('.heatmap-nav-title');
+        let mesTexto = '';
+        if (titleEl) {
+            mesTexto = titleEl.textContent
+                .replace(/[\u2022•\u00b7].*$/i, '')
+                .replace(/semana.*$/i, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+        if (!mesTexto) mesTexto = 'Mes';
+
+        const activeWeekBtn = Destino.querySelector('.heatmap-week-btn--active');
+        const weekVal = activeWeekBtn?.dataset?.week;
+
+        if (weekVal && weekVal !== 'todas') {
+            return `Mapa de trafico ${mesTexto} Semana ${weekVal}`;
+        }
+        return `Mapa de trafico ${mesTexto}`;
+    }
+
     return Boton?.dataset?.reportTitle
         || Destino.querySelector('.metrica-detail-breadcrumb')?.textContent.trim()
         || Destino.querySelector('h1, h2, h3')?.textContent.trim()
@@ -175,7 +196,7 @@ function ClonarReporte(DestinoId, Destino) {
     Clon.style.setProperty('display', 'block', 'important');
 
     // REMOVER BOTONES DE EXPORTACION Y NAVEGACION DENTRO DEL CONTENIDO
-    Clon.querySelectorAll('.report-export-group, .report-html-export, .report-pdf-export, .metricas-detail-top, .metricas-back-btn, .heatmap-nav-btn')
+    Clon.querySelectorAll('.report-export-group, .report-html-export, .report-pdf-export, .metricas-detail-top, .metricas-back-btn, .heatmap-nav-btn, .heatmap-nav-weeks')
         .forEach(Elemento => Elemento.remove());
 
     // LIMPIEZA ESPECIFICA PARA METRICAS DETAIL
@@ -381,7 +402,7 @@ function ConstruirCarcasaInforme(DestinoId, Clon, Titulo, Metadatos, LogoDataUrl
 
 // GENERAR DOCUMENTO HTML AUTOSUFICIENTE
 async function ConstruirHtmlAutosuficiente(DestinoId, Destino, Boton, AutoImprimir = false) {
-    const Titulo = ObtenerTituloReporte(Boton, Destino);
+    const Titulo = ObtenerTituloReporte(Boton, Destino, DestinoId);
     const Metadatos = ObtenerMetadatosInforme(DestinoId, Destino);
     const Clon = ClonarReporte(DestinoId, Destino);
 
@@ -412,7 +433,7 @@ async function ConstruirHtmlAutosuficiente(DestinoId, Destino, Boton, AutoImprim
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${EscaparHtml(Titulo)} — AUTOPASS</title>
+<title>${EscaparHtml(Titulo)}</title>
 ${EstilosGlobales}
 <style>
 /* REGLAS BASE DE PRESENTACION */
@@ -768,6 +789,11 @@ export async function exportVisibleReport(DestinoId, Boton, Formato = 'pdf') {
         doc.write(HtmlGenerado);
         doc.close();
 
+        // Alinear el título del documento para que el navegador sugiera el nombre de archivo exacto
+        const tituloSugerido = doc.title || 'INFORME AUTOPASS';
+        const docTitleAnterior = document.title;
+        document.title = tituloSugerido;
+
         setTimeout(() => {
             try {
                 Iframe.contentWindow.focus();
@@ -777,8 +803,9 @@ export async function exportVisibleReport(DestinoId, Boton, Formato = 'pdf') {
                 showToast('NO SE PUDO ABRIR LA VENTANA DE IMPRESIÓN/GUARDADO.', 'error');
             } finally {
                 setTimeout(() => {
+                    document.title = docTitleAnterior;
                     if (Iframe && Iframe.parentNode) Iframe.remove();
-                }, 45000);
+                }, 4000);
             }
         }, 350);
     } catch (ErrorExportacion) {
