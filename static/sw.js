@@ -4,8 +4,8 @@
    - Estáticos y CDN: stale-while-revalidate.
    - API (/v1) y mutaciones: SOLO red (nunca se cachean).
    - Al desplegar una versión nueva, subir CACHE_NAME (ej. autopass-v2). */
-const CACHE_NAME = "autopass-v13";
-const SHELL_CACHE = "autopass-shell-v13";
+const CACHE_NAME = "autopass-v17";
+const SHELL_CACHE = "autopass-shell-v17";
 const RUNTIME_CACHE = "autopass-runtime-v1";
 const PRECACHE = [
   "/manifest.webmanifest",
@@ -74,6 +74,7 @@ const PRECACHE = [
   "/static/js/modules/dashboard-finance.js",
   "/static/js/modules/dashboard-metrics.js",
   "/static/js/modules/dashboard-informes.js",
+  "/static/js/modules/report-html-export.js",
   "/static/js/modules/profile.js",
   "/static/js/modules/reservas.js",
   "/static/js/modules/reservas-form.js",

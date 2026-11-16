@@ -175,7 +175,7 @@ function ClonarReporte(DestinoId, Destino) {
     Clon.style.setProperty('display', 'block', 'important');
 
     // REMOVER BOTONES DE EXPORTACION Y NAVEGACION DENTRO DEL CONTENIDO
-    Clon.querySelectorAll('.report-export-group, .report-html-export, .report-pdf-export, .metricas-detail-top button, .metricas-back-btn')
+    Clon.querySelectorAll('.report-export-group, .report-html-export, .report-pdf-export, .metricas-detail-top, .metricas-back-btn, .heatmap-nav-btn')
         .forEach(Elemento => Elemento.remove());
 
     // LIMPIEZA ESPECIFICA PARA METRICAS DETAIL
@@ -321,14 +321,6 @@ function ConstruirCarcasaInforme(DestinoId, Clon, Titulo, Metadatos, LogoDataUrl
     Principal.className = 'content dashboard-content report-export-document';
     if (DestinoId === 'metricas-detail-heatmap') Principal.classList.add('report-export-heatmap');
 
-    // FILTROS EN FORMATO BADGES
-    const BadgesFiltrosHtml = Metadatos.Filtros.map(Item => `
-        <span class="report-filter-badge">
-            <strong>${EscaparHtml(Item.Etiqueta)}:</strong>
-            <span>${EscaparHtml(Item.Valor)}</span>
-        </span>
-    `).join('');
-
     Principal.innerHTML = `
       <!-- BARRA DE HERRAMIENTAS (SOLO VISIBLE EN PANTALLA) -->
       <div class="report-export-toolbar" role="toolbar" aria-label="ACCIONES DEL INFORME">
@@ -359,17 +351,7 @@ function ConstruirCarcasaInforme(DestinoId, Clon, Titulo, Metadatos, LogoDataUrl
             <span><i class="fas fa-clock" aria-hidden="true"></i> FECHA: ${EscaparHtml(Metadatos.FechaEmision)}</span>
           </div>
         </div>
-      </header>
-
-      <!-- BARRA DE FILTROS APLICADOS EN EL DASHBOARD -->
-      <div class="report-export-filters-bar">
-        <div class="filters-bar-title">
-          <i class="fas fa-filter" aria-hidden="true"></i> PARAMETROS Y FILTROS ACTIVOS EN EL DASHBOARD:
-        </div>
-        <div class="filters-bar-badges">
-          ${BadgesFiltrosHtml}
-        </div>
-      </div>`;
+      </header>`;
 
     Clon.style.setProperty('display', 'block', 'important');
     if (DestinoId === 'tab-metricas') {
@@ -752,8 +734,8 @@ window.addEventListener('load', () => {
 </html>`;
 }
 
-// FUNCION PRINCIPAL DE EXPORTACION (HTML O PDF A4)
-export async function exportVisibleReport(DestinoId, Boton, Formato = 'html') {
+// FUNCION PRINCIPAL DE EXPORTACION (PDF A4)
+export async function exportVisibleReport(DestinoId, Boton, Formato = 'pdf') {
     const Destino = document.getElementById(DestinoId);
     if (!Destino || !Boton) return;
 
@@ -762,53 +744,46 @@ export async function exportVisibleReport(DestinoId, Boton, Formato = 'html') {
     Boton.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> GENERANDO';
 
     try {
-        const EsPdf = (Formato === 'pdf');
-        const HtmlGenerado = await ConstruirHtmlAutosuficiente(DestinoId, Destino, Boton, EsPdf);
-        const BlobHtml = new Blob([HtmlGenerado], { type: 'text/html;charset=utf-8' });
-        const UrlBlob = URL.createObjectURL(BlobHtml);
+        const HtmlGenerado = await ConstruirHtmlAutosuficiente(DestinoId, Destino, Boton, false);
 
-        const NombreArchivoBase = ObtenerTituloReporte(Boton, Destino)
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '_')
-            .replace(/^_|_$/g, '') || 'informe';
+        // Disparar diálogo nativo de imprimir/guardar PDF directamente sin abrir pestañas nuevas
+        let Iframe = document.getElementById('report-pdf-print-iframe');
+        if (Iframe) Iframe.remove();
 
-        const FechaActual = new Date().toISOString().slice(0, 10);
+        Iframe = document.createElement('iframe');
+        Iframe.id = 'report-pdf-print-iframe';
+        Iframe.style.position = 'fixed';
+        Iframe.style.left = '-10000px';
+        Iframe.style.top = '-10000px';
+        Iframe.style.width = '1024px';
+        Iframe.style.height = '768px';
+        Iframe.style.border = '0';
+        Iframe.style.opacity = '0';
+        Iframe.style.pointerEvents = 'none';
 
-        if (EsPdf) {
-            // ABRIR VENTANA AISLADA CON CONFIGURACION DE IMPRESION A4
-            const VentanaImpresion = window.open(UrlBlob, '_blank');
-            if (VentanaImpresion) {
-                showToast('SE ABRIO LA VISTA PREVIA. SELECCIONA GUARDAR COMO PDF EN A4 VERTICAL.', 'info');
-                setTimeout(() => URL.revokeObjectURL(UrlBlob), 120000);
-            } else {
-                // SI EL NAVEGADOR BLOQUEO EL POPUP, DESCARGAR EL ARCHIVO CON DISPARADOR
-                const EnlaceDescarga = document.createElement('a');
-                EnlaceDescarga.href = UrlBlob;
-                EnlaceDescarga.download = `${NombreArchivoBase}_${FechaActual}_a4.html`;
-                EnlaceDescarga.hidden = true;
-                document.body.append(EnlaceDescarga);
-                EnlaceDescarga.click();
-                EnlaceDescarga.remove();
-                setTimeout(() => URL.revokeObjectURL(UrlBlob), 60000);
-                showToast('EL NAVEGADOR BLOQUEO LA VENTANA. SE DESCARGO EL INFORME CON BOTON DIRECTO A PDF.', 'info');
+        document.body.appendChild(Iframe);
+
+        const doc = Iframe.contentWindow.document;
+        doc.open();
+        doc.write(HtmlGenerado);
+        doc.close();
+
+        setTimeout(() => {
+            try {
+                Iframe.contentWindow.focus();
+                Iframe.contentWindow.print();
+            } catch (errPrint) {
+                console.error('Error al invocar diálogo de guardado PDF:', errPrint);
+                showToast('NO SE PUDO ABRIR LA VENTANA DE IMPRESIÓN/GUARDADO.', 'error');
+            } finally {
+                setTimeout(() => {
+                    if (Iframe && Iframe.parentNode) Iframe.remove();
+                }, 45000);
             }
-        } else {
-            // DESCARGA DIRECTA DEL ARCHIVO HTML
-            const EnlaceDescarga = document.createElement('a');
-            EnlaceDescarga.href = UrlBlob;
-            EnlaceDescarga.download = `${NombreArchivoBase}_${FechaActual}.html`;
-            EnlaceDescarga.hidden = true;
-            document.body.append(EnlaceDescarga);
-            EnlaceDescarga.click();
-            EnlaceDescarga.remove();
-            setTimeout(() => URL.revokeObjectURL(UrlBlob), 60000);
-            showToast('INFORME HTML EXPORTADO CORRECTAMENTE.', 'success');
-        }
+        }, 350);
     } catch (ErrorExportacion) {
         console.error('ERROR AL EXPORTAR INFORME:', ErrorExportacion);
-        showToast('NO SE PUDO EXPORTAR EL INFORME.', 'error');
+        showToast('NO SE PUDO GENERAR EL PDF.', 'error');
     } finally {
         Boton.disabled = false;
         Boton.innerHTML = TextoOriginal;
@@ -817,7 +792,7 @@ export async function exportVisibleReport(DestinoId, Boton, Formato = 'html') {
 
 // ALIAS PARA COMPATIBILIDAD CON CODIGO EXISTENTE
 export async function exportVisibleReportHtml(DestinoId, Boton) {
-    return exportVisibleReport(DestinoId, Boton, 'html');
+    return exportVisibleReport(DestinoId, Boton, 'pdf');
 }
 
 export async function exportVisibleReportPdf(DestinoId, Boton) {

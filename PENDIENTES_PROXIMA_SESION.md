@@ -1,13 +1,25 @@
 # PENDIENTES_PROXIMA_SESION.md
 
 Recordatorio de trabajo pendiente para continuar en una proxima sesion.
-Ultima actualizacion: 10/11/2026
+Ultima actualizacion: 16/11/2026
 
 ## Sin commitear en este momento
 
 - Ninguno (árbol de trabajo limpio).
 
 ## Cerrado recientemente
+
+### 16/11/2026 - Rediseño de Mapa de Calor de Tráfico y Descarga Directa de PDF
+- **Rediseño del Mapa de Calor de Tráfico (Métricas)**:
+  - Cuadrícula mensual interactiva y focalizada mes a mes (28-31 columnas según el mes), con navegación fluida entre meses (`< Anterior` / `Siguiente >`), títulos en dorado suave y resaltado de fines de semana.
+  - Tarjetas de KPIs calculadas en el frontend específicas para el mes visualizado (hora pico del mes, día de la semana con mayor flujo acumulado, promedio diario y total de entradas).
+  - Remoción de la cabecera duplicada de la grilla (`[ SUCURSAL ] [ MES ] [ TOT ]`), de los filtros obsoletos de fecha (`DESDE`, `HASTA`, `APLICAR`, `LIMPIAR`) y de textos explicativos y notas al pie redundantes.
+- **Optimización de Exportación a PDF**:
+  - Eliminación definitiva del botón y exportación a HTML.
+  - Descarga directa de PDF: apertura inmediata del cuadro de diálogo nativo de guardado/impresión del navegador mediante un iframe invisible en la misma pestaña, sin abrir pestañas ni ventanas en blanco.
+  - Supresión de la caja de parámetros y filtros activos (`PARAMETROS Y FILTROS ACTIVOS EN EL DASHBOARD`) en el informe exportado.
+- **Cache Busting**:
+  - Actualización del Service Worker a `autopass-shell-v17` en `static/sw.js` y query string `?v=17` en `static/js/dashboard.js`.
 
 ### 10/11/2026 - Limpieza de Documentación Redundante
 - **Limpieza de documentación no operativa**:

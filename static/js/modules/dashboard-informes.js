@@ -18,13 +18,14 @@ const filtros = {
 
 let branchesLoaded = false;
 
-// Vista del mapa de calor: 'calor' (grilla) o 'barras' (gráfico por tramos horarios)
-let heatmapView = 'calor';
+// Vista del mapa de calor: mensual ('mes')
+let heatmapView = 'mes';
 let heatmapCache = null;
 let hmBarrasChart = null;
+let currentMonthIndex = -1;
 
-// Rampa blanco → rojo: menos actividad (blanco) → más actividad (rojo) [solo grilla heatmap]
-const HM_WHITE_TO_RED = [[255, 255, 255], [220, 38, 38]];
+const DOW_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+const DOW_SHORT = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
 // Colores fijos por tramo horario (indicación de horario en el gráfico de barras)
 const HM_TRAMO_COLORS = [
@@ -35,25 +36,44 @@ const HM_TRAMO_COLORS = [
     THEME.gold
 ];
 
-function _hmLerp(ratio) {
-    const t = Math.min(1, Math.max(0, ratio));
-    const [aw, ag, ab] = HM_WHITE_TO_RED[0];
-    const [bw, bg, bb] = HM_WHITE_TO_RED[1];
-    return [
-        Math.round(aw + (bw - aw) * t),
-        Math.round(ag + (bg - ag) * t),
-        Math.round(ab + (bb - ab) * t)
-    ];
+/**
+ * Paleta Glassmorphism Dark Mode:
+ * ratio === 0: celda neutra translúcida
+ * ratio > 0: Dorado suave → Ámbar → Coral/Rojo → Carmesí pico
+ */
+function _hmCellColor(ratio, v) {
+    if (!v || ratio <= 0) return 'rgba(255, 255, 255, 0.02)';
+    const t = Math.min(1, Math.max(0.02, ratio));
+    if (t < 0.25) {
+        const alpha = 0.16 + (t / 0.25) * 0.24;
+        return `rgba(223, 186, 107, ${alpha.toFixed(2)})`;
+    } else if (t < 0.6) {
+        const p = (t - 0.25) / 0.35;
+        const r = Math.round(223 + (245 - 223) * p);
+        const g = Math.round(186 + (158 - 186) * p);
+        const b = Math.round(107 + (11 - 107) * p);
+        const alpha = 0.45 + p * 0.3;
+        return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+    } else if (t < 0.85) {
+        const p = (t - 0.6) / 0.25;
+        const r = Math.round(245 + (239 - 245) * p);
+        const g = Math.round(158 + (68 - 158) * p);
+        const b = Math.round(11 + (68 - 11) * p);
+        const alpha = 0.75 + p * 0.2;
+        return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+    } else {
+        const p = (t - 0.85) / 0.15;
+        const r = Math.round(239 + (220 - 239) * p);
+        const g = Math.round(68 + (38 - 68) * p);
+        const b = Math.round(68 + (38 - 68) * p);
+        return `rgba(${r}, ${g}, ${b}, 0.98)`;
+    }
 }
 
-function _hmCellColor(ratio) {
-    const [r, g, b] = _hmLerp(ratio);
-    return `rgb(${r},${g},${b})`;
-}
-
-function _hmCellText(ratio) {
-    const [r, g, b] = _hmLerp(ratio);
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 150 ? '#14161a' : 'rgba(255,255,255,0.92)';
+function _hmCellText(ratio, v) {
+    if (!v || ratio <= 0) return 'rgba(255, 255, 255, 0.2)';
+    if (ratio < 0.25) return 'rgba(255, 255, 255, 0.9)';
+    return '#ffffff';
 }
 
 async function cargarBranches() {
@@ -92,13 +112,11 @@ export function limpiarInforme(key) {
 }
 
 export function alternarHeatmapVista(vista) {
-    if (vista !== 'calor' && vista !== 'barras') return;
-    heatmapView = vista;
-    document.querySelectorAll('[data-hm-view]').forEach(btn =>
-        btn.classList.toggle('hm-view-btn--active', btn.dataset.hmView === vista));
+    heatmapView = 'mes';
     _pintarLeyenda();
     if (heatmapCache) _renderHeatmap();
 }
+window.alternarHeatmapVista = alternarHeatmapVista;
 
 function _leerFiltros(prefix) {
     return {
@@ -145,64 +163,321 @@ async function cargarHeatmap() {
     }
 
     heatmapCache = data;
+    currentMonthIndex = data.meses && data.meses.length ? data.meses.length - 1 : 0;
     _pintarLeyenda();
     _renderHeatmap();
+}
+
+export function navegarHeatmapMes(delta) {
+    if (!heatmapCache || !heatmapCache.meses || !heatmapCache.meses.length) return;
+    const d = parseInt(delta, 10);
+    const nextIdx = currentMonthIndex + d;
+    if (nextIdx >= 0 && nextIdx < heatmapCache.meses.length) {
+        currentMonthIndex = nextIdx;
+        _renderHeatmap();
+    }
+}
+window.navegarHeatmapMes = navegarHeatmapMes;
+
+export function seleccionarHeatmapMes(idx) {
+    if (!heatmapCache || !heatmapCache.meses || !heatmapCache.meses.length) return;
+    const n = parseInt(idx, 10);
+    if (!isNaN(n) && n >= 0 && n < heatmapCache.meses.length) {
+        currentMonthIndex = n;
+        _renderHeatmap();
+    }
+}
+window.seleccionarHeatmapMes = seleccionarHeatmapMes;
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.heatmap-nav-btn');
+        if (!btn || btn.disabled) return;
+        const delta = parseInt(btn.dataset.delta, 10);
+        if (!isNaN(delta)) {
+            e.preventDefault();
+            navegarHeatmapMes(delta);
+        }
+    });
 }
 
 function _renderHeatmap() {
     const container = document.getElementById('hm-contenido');
     if (!container || !heatmapCache) return;
-    if (heatmapView === 'barras') return _renderHeatmapBarras(container);
-    _renderHeatmapGrid(container);
+    try {
+        return _renderHeatmapMes(container);
+    } catch (err) {
+        console.error('Error al renderizar heatmap mensual:', err);
+    }
 }
 
-function _renderHeatmapGrid(container) {
+function _renderHeatmapKPIs(data) {
+    const { horas_labels, totals_per_hour, total_entradas, dias, matrix, contextLabel } = data;
+
+    // 1. Hora pico global o del mes
+    let maxHourIdx = 0;
+    let maxHourVal = 0;
+    (totals_per_hour || []).forEach((tot, idx) => {
+        if (tot > maxHourVal) {
+            maxHourVal = tot;
+            maxHourIdx = idx;
+        }
+    });
+    const peakHourLabel = horas_labels && horas_labels[maxHourIdx] ? horas_labels[maxHourIdx] : '—';
+
+    // 2. Día de la semana con mayor flujo acumulado
+    const dowTotals = [0, 0, 0, 0, 0, 0, 0];
+    dias.forEach((fecha, c) => {
+        const parts = fecha.split('-');
+        const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        const dow = (dt.getDay() + 6) % 7;
+        for (let r = 0; r < (horas_labels || []).length; r++) {
+            dowTotals[dow] += matrix[r] ? (matrix[r][c] || 0) : 0;
+        }
+    });
+    let maxDowIdx = 0;
+    let maxDowVal = 0;
+    dowTotals.forEach((tot, idx) => {
+        if (tot > maxDowVal) {
+            maxDowVal = tot;
+            maxDowIdx = idx;
+        }
+    });
+    const peakDayLabel = maxDowVal > 0 ? DOW_NAMES[maxDowIdx] : '—';
+
+    // 3. Promedio diario
+    const nDias = Math.max(1, dias.length);
+    const avgDaily = Math.round(total_entradas / nDias);
+
+    const labelHora = contextLabel ? `HORA PICO (${contextLabel})` : 'HORA PICO GLOBAL';
+
+    return `
+        <div class="heatmap-kpis-grid">
+            <div class="heatmap-kpi-card">
+                <div class="heatmap-kpi-icon-wrap heatmap-kpi-icon-wrap--peak">
+                    <i class="fas fa-fire" aria-hidden="true"></i>
+                </div>
+                <div class="heatmap-kpi-content">
+                    <span class="heatmap-kpi-label">${labelHora}</span>
+                    <div class="heatmap-kpi-val">${peakHourLabel}</div>
+                    <span class="heatmap-kpi-sub">${formatNum(maxHourVal)} vehículos en total</span>
+                </div>
+            </div>
+            <div class="heatmap-kpi-card">
+                <div class="heatmap-kpi-icon-wrap heatmap-kpi-icon-wrap--day">
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                </div>
+                <div class="heatmap-kpi-content">
+                    <span class="heatmap-kpi-label">DÍA CON MÁS FLUJO</span>
+                    <div class="heatmap-kpi-val">${peakDayLabel}</div>
+                    <span class="heatmap-kpi-sub">${formatNum(maxDowVal)} vehículos acumulados</span>
+                </div>
+            </div>
+            <div class="heatmap-kpi-card">
+                <div class="heatmap-kpi-icon-wrap heatmap-kpi-icon-wrap--avg">
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                </div>
+                <div class="heatmap-kpi-content">
+                    <span class="heatmap-kpi-label">PROMEDIO DIARIO</span>
+                    <div class="heatmap-kpi-val">${formatNum(avgDaily)} <small class="heatmap-kpi-unit">veh/día</small></div>
+                    <span class="heatmap-kpi-sub">${formatNum(total_entradas)} en ${nDias} ${nDias === 1 ? 'día' : 'días'}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function _renderHeatmapSemana(container) {
     const data = heatmapCache;
-    const { horas_labels, matrix, totals_per_day, totals_per_hour, max, dias, meses } = data;
-    const n_dias = dias.length;
+    const { horas_labels, matrix, totals_per_hour, dias } = data;
 
-    // Cabecera: mes (con su hueco inferior para el día) + días
-    const monthRow = meses.map(m =>
-        `<div class="heatmap-month" style="grid-column: ${m.start + 2} / span ${m.count}">${m.label}</div>`
-    ).join('') + '<div class="heatmap-dia heatmap-dia--total">TOT</div>';
+    const dowCounts = [0, 0, 0, 0, 0, 0, 0];
+    const dowMatrix = Array.from({ length: horas_labels.length }, () => [0, 0, 0, 0, 0, 0, 0]);
+    const dowTotals = [0, 0, 0, 0, 0, 0, 0];
 
-    const dayRow = dias.map((fecha, c) =>
-        `<div class="heatmap-dia" title="${formatDate(fecha)}">${fecha.slice(8, 10)}</div>`
-    ).join('') + '<div class="heatmap-dia heatmap-dia--total">TOT</div>';
+    dias.forEach((fecha, c) => {
+        const parts = fecha.split('-');
+        const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        const dow = (dt.getDay() + 6) % 7;
+        dowCounts[dow]++;
+        for (let r = 0; r < horas_labels.length; r++) {
+            const v = matrix[r][c] || 0;
+            dowMatrix[r][dow] += v;
+            dowTotals[dow] += v;
+        }
+    });
 
-    const cornerCells = ['<div class="heatmap-corner"><span>' + (data.sucursal || 'TODAS') + '</span></div>']
-        .join('');
+    let maxDowCell = 0;
+    for (let r = 0; r < horas_labels.length; r++) {
+        for (let d = 0; d < 7; d++) {
+            if (dowMatrix[r][d] > maxDowCell) maxDowCell = dowMatrix[r][d];
+        }
+    }
 
-    // Filas por hora: label + celdas + total por hora
+    const kpisHtml = _renderHeatmapKPIs(data);
+    const corner = `<div class="heatmap-corner"><span>${data.sucursal || 'TODAS'}</span></div>`;
+
+    const dowHeader = DOW_SHORT.map((shortName, d) => {
+        const isWeekend = d >= 5;
+        const count = dowCounts[d];
+        const countTxt = count === 1 ? '1 día' : `${count} días`;
+        return `
+            <div class="heatmap-dia heatmap-dia--semana ${isWeekend ? 'heatmap-dia--weekend' : ''}" title="${DOW_NAMES[d]} (${countTxt} analizados)">
+                <span class="heatmap-dow-name">${shortName}</span>
+                <span class="heatmap-dow-sub">${countTxt}</span>
+            </div>
+        `;
+    }).join('') + '<div class="heatmap-dia heatmap-dia--total">TOTAL</div>';
+
     const hourRows = horas_labels.map((hl, r) => {
-        const celdas = dias.map((fecha, c) => {
-            const v = matrix[r][c];
-            const ratio = max > 0 ? v / max : 0;
-            const tooltip = `${formatDate(fecha)} ${hl} — ${v} entradas`;
-            return `<div class="heatmap-cell" title="${tooltip}"
-                        style="background:${_hmCellColor(ratio)};color:${_hmCellText(ratio)};">${v || ''}</div>`;
+        const celdas = [0, 1, 2, 3, 4, 5, 6].map(d => {
+            const v = dowMatrix[r][d];
+            const isWeekend = d >= 5;
+            const ratio = maxDowCell > 0 ? v / maxDowCell : 0;
+            const avg = dowCounts[d] > 0 ? (v / dowCounts[d]).toFixed(1) : 0;
+            const tooltip = `${DOW_NAMES[d]} ${hl} — ${formatNum(v)} entradas totales (promedio: ${avg}/día)`;
+            if (!v) {
+                return `<div class="heatmap-cell heatmap-cell--semana heatmap-cell--zero ${isWeekend ? 'heatmap-cell--weekend' : ''}" title="${tooltip}">—</div>`;
+            }
+            return `<div class="heatmap-cell heatmap-cell--semana ${isWeekend ? 'heatmap-cell--weekend' : ''}" title="${tooltip}"
+                         style="background:${_hmCellColor(ratio, v)};color:${_hmCellText(ratio, v)};">${formatNum(v)}</div>`;
         }).join('');
-        return `<div class="heatmap-hour">${hl}</div>${celdas}
-                <div class="heatmap-hour heatmap-hour--total">${formatNum(totals_per_hour[r])}</div>`;
+        return `
+            <div class="heatmap-hour">${hl}</div>
+            ${celdas}
+            <div class="heatmap-hour heatmap-hour--total">${formatNum(totals_per_hour[r])}</div>
+        `;
     }).join('');
 
-    // Fila final: TOTAL + total por día + total general
     const footer = ['<div class="heatmap-day heatmap-day--total">TOTAL</div>']
-        .concat(totals_per_day.map(v => `<div class="heatmap-day heatmap-day--total">${formatNum(v)}</div>`))
+        .concat(dowTotals.map((tot, d) => `<div class="heatmap-day heatmap-day--total ${d >= 5 ? 'heatmap-day--weekend' : ''}">${formatNum(tot)}</div>`))
         .concat([`<div class="heatmap-day heatmap-day--total">${formatNum(data.total_entradas)}</div>`]).join('');
 
     container.innerHTML = `
-        <div class="heatmap-grid heatmap-grid--mes" style="--hm-cols: ${n_dias};">
-            ${cornerCells}${monthRow}
-            ${cornerCells}${dayRow}
-            ${hourRows}
-            ${footer}
+        ${kpisHtml}
+        <div class="heatmap-wrap">
+            <div class="heatmap-grid heatmap-grid--semana" style="--hm-cols: 7;">
+                ${corner}${dowHeader}
+                ${hourRows}
+                ${footer}
+            </div>
         </div>
-        <div class="informe-note">
-            <i class="fas fa-circle-info"></i> Columnas: días del ${data.desde.slice(0, 7)} al ${data.hasta.slice(0, 7)}
-            (cada columna es un día calendario).
-            Filas: horas de apertura de ${data.sucursal || 'todas las sucursales'} (${horas_labels[0]} a ${horas_labels[horas_labels.length - 1]}).
-            Total: ${formatNum(data.total_entradas)} entradas.
+    `;
+}
+
+function _renderHeatmapMes(container) {
+    const data = heatmapCache;
+    if (!data.meses || !data.meses.length) {
+        container.innerHTML = '<div class="heatmap-vacio"><i class="fas fa-calendar-xmark"></i> No hay datos mensuales para mostrar.</div>';
+        return;
+    }
+
+    if (currentMonthIndex < 0 || currentMonthIndex >= data.meses.length) {
+        currentMonthIndex = data.meses.length - 1;
+    }
+
+    const monthChunk = data.meses[currentMonthIndex];
+    const { start, count, label } = monthChunk;
+    const end = start + count;
+
+    // Recorte de datos para el mes seleccionado
+    const monthDias = data.dias.slice(start, end);
+    const monthMatrix = data.matrix.map(row => row.slice(start, end));
+    const monthTotalsPerDay = data.totals_per_day.slice(start, end);
+    const monthTotalsPerHour = monthMatrix.map(row => row.reduce((a, b) => a + b, 0));
+    const monthTotalEntradas = monthTotalsPerDay.reduce((a, b) => a + b, 0);
+    const monthMax = Math.max(...monthMatrix.flatMap(row => row), 0);
+
+    const kpisHtml = _renderHeatmapKPIs({
+        horas_labels: data.horas_labels,
+        totals_per_hour: monthTotalsPerHour,
+        total_entradas: monthTotalEntradas,
+        dias: monthDias,
+        matrix: monthMatrix,
+        contextLabel: label
+    });
+
+    const isFirstMonth = currentMonthIndex <= 0;
+    const isLastMonth = currentMonthIndex >= data.meses.length - 1;
+
+    const navBar = `
+        <div class="heatmap-nav-bar">
+            <div class="heatmap-nav-controls">
+                <button type="button" class="heatmap-nav-btn" data-delta="-1" ${isFirstMonth ? 'disabled' : ''} onclick="navegarHeatmapMes(-1)" title="${isFirstMonth ? 'Primer mes disponible' : 'Ver mes anterior'}">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i> Anterior
+                </button>
+                <span class="heatmap-nav-title">
+                    <i class="fas fa-calendar-alt" aria-hidden="true"></i> ${label}
+                </span>
+                <button type="button" class="heatmap-nav-btn" data-delta="1" ${isLastMonth ? 'disabled' : ''} onclick="navegarHeatmapMes(1)" title="${isLastMonth ? 'Mes actual (más reciente)' : 'Ver mes siguiente'}">
+                    Siguiente <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="heatmap-nav-meta">
+                <span><strong>${count}</strong> ${count === 1 ? 'día' : 'días'}</span>
+                <span>&bull;</span>
+                <span><strong>${formatNum(monthTotalEntradas)}</strong> entradas</span>
+                ${data.meses.length > 1 ? `<span class="heatmap-nav-counter">(${currentMonthIndex + 1} de ${data.meses.length})</span>` : ''}
+            </div>
+        </div>
+    `;
+
+    const dayRow = monthDias.map(fecha => {
+        const parts = fecha.split('-');
+        const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+        const dowIndex = (dt.getDay() + 6) % 7;
+        const dayNum = fecha.slice(8, 10);
+        const dowTxt = DOW_SHORT[dowIndex];
+        return `
+            <div class="heatmap-dia heatmap-dia--col ${isWeekend ? 'heatmap-dia--weekend' : ''}" title="${formatDate(fecha)} (${DOW_NAMES[dowIndex]})">
+                <span class="heatmap-dia-num">${dayNum}</span>
+                <span class="heatmap-dia-dow">${dowTxt}</span>
+            </div>
+        `;
+    }).join('') + '<div class="heatmap-dia heatmap-dia--total">TOT</div>';
+
+    const cornerCells = `<div class="heatmap-corner"><span>${data.sucursal || 'TODAS'}</span></div>`;
+
+    const hourRows = data.horas_labels.map((hl, r) => {
+        const celdas = monthDias.map((fecha, c) => {
+            const v = monthMatrix[r][c];
+            const parts = fecha.split('-');
+            const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+            const ratio = monthMax > 0 ? v / monthMax : 0;
+            const tooltip = `${formatDate(fecha)} ${hl} — ${v} entradas`;
+            if (!v) {
+                return `<div class="heatmap-cell heatmap-cell--zero ${isWeekend ? 'heatmap-cell--weekend' : ''}" title="${tooltip}"></div>`;
+            }
+            return `<div class="heatmap-cell ${isWeekend ? 'heatmap-cell--weekend' : ''}" title="${tooltip}"
+                        style="background:${_hmCellColor(ratio, v)};color:${_hmCellText(ratio, v)};">${v}</div>`;
+        }).join('');
+        return `
+            <div class="heatmap-hour">${hl}</div>
+            ${celdas}
+            <div class="heatmap-hour heatmap-hour--total">${formatNum(monthTotalsPerHour[r])}</div>
+        `;
+    }).join('');
+
+    const footer = ['<div class="heatmap-day heatmap-day--total">TOTAL</div>']
+        .concat(monthTotalsPerDay.map((v, c) => {
+            const parts = monthDias[c].split('-');
+            const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+            return `<div class="heatmap-day heatmap-day--total ${isWeekend ? 'heatmap-day--weekend' : ''}">${formatNum(v)}</div>`;
+        }))
+        .concat([`<div class="heatmap-day heatmap-day--total">${formatNum(monthTotalEntradas)}</div>`]).join('');
+
+    container.innerHTML = `
+        ${navBar}
+        ${kpisHtml}
+        <div class="heatmap-wrap">
+            <div class="heatmap-grid heatmap-grid--mes" style="--hm-cols: ${count};">
+                ${cornerCells}${dayRow}
+                ${hourRows}
+                ${footer}
+            </div>
         </div>`;
 }
 
@@ -311,9 +586,13 @@ function _pintarLeyenda() {
             + '<span class="heatmap-legend"><span class="heatmap-legend-cell hm-leg--tot"></span>TOTAL DÍA</span>';
         return;
     }
-    ley.innerHTML = `<span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Bajo</span>
-        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--m"></span>Medio</span>
-        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>`;
+    ley.innerHTML = `
+        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Sin mov.</span>
+        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--low"></span>Bajo</span>
+        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--mid"></span>Medio</span>
+        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--high"></span>Alto</span>
+        <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--peak"></span>Pico</span>
+    `;
 }
 
 function _err(el, msg) {

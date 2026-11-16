@@ -203,22 +203,11 @@
 
                 {{ report_pdf_button('metricas-detail-heatmap', 'Mapa de calor de tráfico') }}
             </div>
-            <p>
-                Entradas de vehículos por <strong>día del mes</strong> (columnas, 1 al 31) y <strong>hora de apertura</strong> (filas) de la sucursal seleccionada. Los colores van de <strong>blanco (menor movimiento)</strong> a <strong>rojo (mayor)</strong>; debajo de cada día va su total.
-                Con el botón superior podés alternar entre el <strong>mapa de calor</strong> y un <strong>gráfico de barras</strong> con el total por tramo horario de cada día.
-            </p>
-            <div class="metricas-controls-row metricas-filters-row">
-                <span class="toolbar-label super-admin-only"><i class="fas fa-location-dot" aria-hidden="true"></i> SUCURSAL:</span>
-                <select id="hm-sucursal" class="input-premium super-admin-only">
+            <div class="metricas-controls-row metricas-filters-row super-admin-only">
+                <span class="toolbar-label"><i class="fas fa-location-dot" aria-hidden="true"></i> SUCURSAL:</span>
+                <select id="hm-sucursal" class="input-premium" onchange="aplicarInforme('heatmap')">
                     <option value="">TODAS</option>
                 </select>
-                <span class="toolbar-label"><i class="fas fa-calendar-days" aria-hidden="true"></i> DESDE:</span>
-                <input type="date" id="hm-desde" class="input-premium-sm">
-                <span class="metricas-arrow">→</span>
-                <span class="toolbar-label">HASTA:</span>
-                <input type="date" id="hm-hasta" class="input-premium-sm">
-                <button class="btn btn--primary sm" onclick="aplicarInforme('heatmap')"><i class="fas fa-magnifying-glass" aria-hidden="true"></i>APLICAR</button>
-                <button class="btn btn--outline sm" onclick="limpiarInforme('heatmap')"><i class="fas fa-eraser" aria-hidden="true"></i>LIMPIAR</button>
             </div>
             <div class="card channel-card card--flush">
                 <div class="card-header-premium">
@@ -229,19 +218,17 @@
                     <div class="header-actions">
                         <div class="hm-header-tools">
                             <span id="hm-leyenda" class="metricas-chart-legend">
-                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Bajo</span>
-                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--m"></span>Medio</span>
-                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--h"></span>Alto</span>
-                            </span>
-                            <span class="hm-view-toggle">
-                                <button type="button" class="hm-view-btn hm-view-btn--active" data-hm-view="calor" onclick="alternarHeatmapVista('calor')"><i class="fas fa-fire" aria-hidden="true"></i> MAPA</button>
-                                <button type="button" class="hm-view-btn" data-hm-view="barras" onclick="alternarHeatmapVista('barras')"><i class="fas fa-chart-simple" aria-hidden="true"></i> BARRAS</button>
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--0"></span>Sin mov.</span>
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--low"></span>Bajo</span>
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--mid"></span>Medio</span>
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--high"></span>Alto</span>
+                                <span class="heatmap-legend"><span class="heatmap-legend-cell heatmap-legend-cell--peak"></span>Pico</span>
                             </span>
                         </div>
                     </div>
                 </div>
                 <div class="channel-body">
-                    <div id="hm-contenido" class="heatmap-wrap">
+                    <div id="hm-contenido">
                         <div class="heatmap-vacio"><i class="fas fa-fire" aria-hidden="true"></i> Cargando mapa de calor…</div>
                     </div>
                 </div>
