@@ -594,8 +594,6 @@ export async function refreshReservationFormState() {
     // REINICIA EL CACHE DE DESCUENTO (siempre se consulta el estado actual al abrir el formulario)
     setReservationDiscount({ pct: 0, sucursal: '', fetchedFor: '' });
     bumpDiscountToken();
-
-    fetchRates();
     
     // 1. CARGAR VEHÍCULOS
     const resVehicles = await api.get('/user/vehicles');
@@ -677,7 +675,8 @@ export async function refreshReservationFormState() {
     // En finally (haya exito o error de red) se actualiza el stepper: asi nunca
     // queda sin los datos de la carga si la ultima consulta falla.
     try {
-        await fetchRates();
+        const sucursal = document.querySelector('.res-sucursal')?.value || null;
+        await fetchRates(sucursal);
     } finally {
         updateStepSummaries();
         updateStepButtons();

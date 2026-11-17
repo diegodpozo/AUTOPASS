@@ -18,6 +18,8 @@ import {
     bumpDiscountToken
 } from './reservas-form-state.js';
 
+let ratesRequestToken = 0;
+
 // SUFIJO DE CLAVE DE TARIFA SEGUN EL TIPO DE VEHICULO ('' / '_moto' / '_camioneta').
 // Debe coincidir con BillingService._tipo_key del backend.
 function vehicleRateSuffix(vehiculo) {
@@ -28,13 +30,15 @@ function vehicleRateSuffix(vehiculo) {
 }
 
 export async function fetchRates(sucursal = null) {
-    const url = sucursal ? `/user/rates?sucursal=${sucursal}` : '/user/rates';
+    const requestToken = ++ratesRequestToken;
+    const url = sucursal ? `/user/rates?sucursal=${encodeURIComponent(sucursal)}` : '/user/rates';
     const res = await api.get(url);
+    if (requestToken !== ratesRequestToken) return;
     if (res.ok) {
         setCurrentRates(res.data);
     }
     await lazyLoadDiscount(sucursal);
-    updateReservationPrice();
+    if (requestToken === ratesRequestToken) updateReservationPrice();
 }
 
 // CONSULTA EL DESCUENTO DE RESERVA (%) VIGENTE PARA LA SUCURSAL Y LO CACHEA.
