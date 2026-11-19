@@ -81,7 +81,7 @@ def test_retrocede_cuando_head_no_lleva_version(monkeypatch):
 
 def test_retrocede_por_varios_commits_sin_version(monkeypatch):
     _fake_history(monkeypatch, [
-        "Merge branch 'main' of https://github.com/MarianoJAC/AUTOPASS",
+        "Merge branch 'main' of https://github.com/diegodpozo/AUTOPASS",
         "fix(sw): algo roto",
         "docs: informes de auditoria",
         "v9.34.74: la superficie del select era --bg-input",

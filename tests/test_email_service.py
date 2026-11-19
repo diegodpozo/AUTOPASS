@@ -63,3 +63,29 @@ def test_sin_credenciales_no_autentica(monkeypatch):
     email_service.EmailService._send_email("cliente@mail.com", "Asunto", "<p>Hola</p>")
 
     assert FakeSMTP.ultima.calls == ["starttls", "sendmail"]
+
+
+def test_dominios_de_prueba_no_envian_email(monkeypatch):
+    # VERIFICA QUE DIRECCIONES DE PRUEBA NO DISPAREN CONEXION SMTP
+    _configurar(monkeypatch, tls=True)
+    FakeSMTP.ultima = None
+
+    email_service.EmailService._send_email("usuario@test.com", "Asunto", "<p>Hola</p>")
+    email_service.EmailService._send_email("otro@example.com", "Asunto", "<p>Hola</p>")
+
+    assert FakeSMTP.ultima is None
+
+
+def test_notificacion_cancelacion_no_envia_email(monkeypatch):
+    # VERIFICA QUE LA NOTIFICACION DE CANCELACION NO DISPARE ENVIO DE CORREO
+    llamadas_async = []
+    monkeypatch.setattr(email_service.EmailService, "send_async_email", lambda *a, **k: llamadas_async.append(a))
+
+    datos_reserva = {
+        "id": 99,
+        "fecha_inicio": "2026-11-19 12:00",
+        "fecha_fin": "2026-11-19 13:00"
+    }
+    email_service.EmailService.send_auto_cancelled_notification("usuario@mail.com", "Juan", datos_reserva)
+
+    assert len(llamadas_async) == 0

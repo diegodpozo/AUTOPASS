@@ -114,39 +114,21 @@
                     <div id="reserva-form-content">
                         <form class="reservation-form-modern" onsubmit="createReservation(event)" novalidate>
                             <div class="flex-col items-center gap-20">
-                                <!-- PASO 1: SELECCIÓN DE VEHÍCULO -->
-                                <div class="res-step-pane is-active" id="res-step-pane-1" data-step="1">
-                                    <div class="form-group-premium fg-step-select">
-                                        <label class="fg-label fg-label-md" for="res-vehicle">Vehículo</label>
-                                        <div class="select-wrapper-premium fg-full">
-                                            <i class="fas fa-car" aria-hidden="true"></i>
-                                            <select class="res-vehicle fg-select" required id="res-vehicle">
-                                                <option value="">Cargando flota...</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="res-step-actions">
-                                        <button type="button" class="btn-step-next" id="btn-next-to-step-2" disabled>
-                                            <span>CONTINUAR</span>
-                                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                                        </button>
+                                <!-- Vehículo centrado -->
+                                <div class="form-group-premium fg-280">
+                                    <label class="fg-label fg-label-md" for="res-vehicle">Vehículo</label>
+                                    <div class="select-wrapper-premium fg-full">
+                                        <i class="fas fa-car" aria-hidden="true"></i>
+                                        <select class="res-vehicle fg-select" required id="res-vehicle">
+                                            <option value="">Cargando flota...</option>
+                                        </select>
                                     </div>
                                 </div>
                                 
-                                <!-- PASO 2: SELECCIÓN DE SUCURSAL -->
-                                <div class="res-step-pane" id="res-step-pane-2" data-step="2">
-                                    <div class="res-step-nav-header">
-                                        <button type="button" class="btn-step-back" id="btn-back-to-step-1" title="Volver a seleccionar vehículo">
-                                            <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                                            <span>Volver</span>
-                                        </button>
-                                        <div class="res-step-summary-chip" id="summary-chip-vehicle" role="button" tabindex="0" title="Vehículo seleccionado (clic para cambiar)">
-                                            <i class="fas fa-car" aria-hidden="true"></i>
-                                            <span class="chip-val" id="summary-val-vehicle">--</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group-premium fg-step-select">
-                                        <label class="fg-label fg-label-md" for="res-sucursal">Punto AutoPass</label>
+                                <!-- Punto y Tipo centrados -->
+                                <div class="fg-row">
+                                    <div class="form-group-premium fg-330">
+                                        <label class="fg-label" for="res-sucursal">Punto AutoPass</label>
                                         <div class="select-wrapper-premium fg-full">
                                             <i class="fas fa-location-dot" aria-hidden="true"></i>
                                             <select class="res-sucursal fg-select" required id="res-sucursal">
@@ -155,28 +137,8 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="res-step-actions">
-                                        <button type="button" class="btn-step-next" id="btn-next-to-step-3" disabled>
-                                            <span>CONTINUAR</span>
-                                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- PASO 3: TIPO DE ESTADÍA Y HORARIOS -->
-                                <div class="res-step-pane" id="res-step-pane-3" data-step="3">
-                                    <div class="res-step-nav-header">
-                                        <button type="button" class="btn-step-back" id="btn-back-to-step-2" title="Volver a seleccionar sucursal">
-                                            <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                                            <span>Volver</span>
-                                        </button>
-                                        <div class="res-step-summary-chip" id="summary-chip-sucursal" role="button" tabindex="0" title="Sucursal seleccionada (clic para cambiar)">
-                                            <i class="fas fa-location-dot" id="summary-chip-step3-icon" aria-hidden="true"></i>
-                                            <span class="chip-val" id="summary-val-sucursal">--</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group-premium fg-step-select" id="group-res-type">
-                                        <label class="fg-label fg-label-md" for="res-type">Tipo de Estadía</label>
+                                    <div class="form-group-premium fg-144">
+                                        <label class="fg-label" for="res-type">Tipo de Estadía</label>
                                         <div class="select-wrapper-premium fg-full">
                                             <i class="fas fa-clock" aria-hidden="true"></i>
                                             <select class="res-type fg-select" required id="res-type">
@@ -189,79 +151,83 @@
                                             </select>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <!-- CAMPOS DINÁMICOS SEGÚN TIPO DE RESERVA -->
-                                    <div id="dynamic-fields-premium">
-                                        <div id="hourly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                            <label class="form-group-premium fg-step-select res-day-line" for="res-date-only">
-                                                <span class="fg-label fg-label-md">Fecha de Reserva</span>
-                                                <span class="res-day-box">
-                                                    <i class="fas fa-calendar-day res-day-line-icon" aria-label="Día" role="img"></i>
-                                                    <input type="text" class="res-date-only res-day-line-input" placeholder="Elegí el día" id="res-date-only">
-                                                </span>
-                                                <input type="hidden" class="res-time-only">
-                                                <input type="hidden" class="res-hours-qty" value="1">
-                                            </label>
-                                        </div>
+                                <!-- CAMPOS DINÁMICOS SEGÚN TIPO DE RESERVA -->
+                                <div id="dynamic-fields-premium">
+                                    <div id="hourly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
+                                        <!-- Todo el renglón es un <label>: tocar el icono o la
+                                             fecha enfoca el input y abre el calendario, sin JS extra.
+                                             El marco (res-day-box) lleva la misma superficie que los
+                                             selectores de arriba y ocupa el ancho completo.
+                                             El icono es el único rótulo del campo; lleva aria-label para lectores de pantalla. -->
+                                        <label class="form-group-premium fg-170 res-day-line" for="res-date-only">
+                                            <span class="res-day-box">
+                                                <i class="fas fa-calendar-day res-day-line-icon" aria-label="Día" role="img"></i>
+                                                <input type="text" class="res-date-only res-day-line-input" placeholder="Elegí el día" id="res-date-only">
+                                            </span>
+                                            <input type="hidden" class="res-time-only">
+                                            <input type="hidden" class="res-hours-qty" value="1">
+                                        </label>
+                                    </div>
+                                    
+                                    <div id="daily-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
+                                        {{ campo_fecha("res-day-only", clases_label="fg-label", clases_grupo="fg-col") }}
+                                    </div>
 
-                                        <div id="daily-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                            {{ campo_fecha("res-day-only", clases_label="fg-label", clases_grupo="fg-step-select") }}
-                                        </div>
-
-                                        <div id="weekly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                            {{ campo_fecha("res-week-start") }}
-                                            <div class="form-group-premium fg-center">
-                                                <label class="fg-label fg-label-sm" for="res-week-end">Finaliza</label>
-                                                <input type="text" class="res-week-end input-premium input-premium-readonly" readonly id="res-week-end">
-                                            </div>
-                                        </div>
-
-                                        <div id="fortnight-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                            {{ campo_fecha("res-fortnight-start") }}
-                                            <div class="form-group-premium fg-center">
-                                                <label class="fg-label fg-label-sm" for="res-fortnight-end">Finaliza</label>
-                                                <input type="text" class="res-fortnight-end input-premium input-premium-readonly" readonly id="res-fortnight-end">
-                                            </div>
-                                        </div>
-                                        <div id="month-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                            {{ campo_fecha("res-month-start") }}
-                                            <div class="form-group-premium fg-center">
-                                                <label class="fg-label fg-label-sm" for="res-month-end">Finaliza</label>
-                                                <input type="text" class="res-month-end input-premium input-premium-readonly" readonly id="res-month-end">
-                                            </div>
-                                        </div>
-                                        <div id="standard-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
-                                            <div class="form-group-premium fg-200">
-                                                <label class="fg-label fg-label-sm" for="res-start">Inicio</label>
-                                                <input type="text" class="res-start input-premium" placeholder="Fecha y hora..." id="res-start">
-                                            </div>
-                                            <div class="form-group-premium fg-200">
-                                                <label class="fg-label fg-label-sm" for="res-end">Fin</label>
-                                                <input type="text" class="res-end input-premium" placeholder="Fecha y hora..." id="res-end">
-                                            </div>
+                                    <div id="weekly-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
+                                        {{ campo_fecha("res-week-start") }}
+                                        <div class="form-group-premium fg-center">
+                                            <label class="fg-label fg-label-sm" for="res-week-end">Finaliza</label>
+                                            <input type="text" class="res-week-end input-premium input-premium-readonly" readonly id="res-week-end">
                                         </div>
                                     </div>
 
-                                    <!-- CONTENEDOR DE DISPONIBILIDAD DE FECHAS / HORAS -->
-                                    <div id="availability-status-container">
-                                        <div id="availability-badge" class="availability-badge-premium"></div>
-                                        <div id="hourly-slots-grid" class="hourly-slots-grid-premium"></div>
-                                    </div>
-
-                                    <div class="reservation-footer-premium fg-column">
-                                        <div class="price-summary-premium text-center is-pendiente">
-                                            <span class="total-label fg-total-label" id="reserva-total-label">Total:</span>
-                                            <span id="reserva-total-original"></span>
-                                            <span class="total-amount fg-lg" id="reserva-total-est">$ ---</span>
-                                            <div id="reserva-discount-line"></div>
-                                            <div id="reserva-rates-detail" class="reserva-rates-detail"></div>
+                                    <div id="fortnight-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
+                                        {{ campo_fecha("res-fortnight-start") }}
+                                        <div class="form-group-premium fg-center">
+                                            <label class="fg-label fg-label-sm" for="res-fortnight-end">Finaliza</label>
+                                            <input type="text" class="res-fortnight-end input-premium input-premium-readonly" readonly id="res-fortnight-end">
                                         </div>
-                                        <button type="submit" class="btn-confirm-premium fg-full-xl">
-                                            <span>CONTINUAR</span>
-                                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                                        </button>
+                                    </div>
+                                    <div id="month-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
+                                        {{ campo_fecha("res-month-start") }}
+                                        <div class="form-group-premium fg-center">
+                                            <label class="fg-label fg-label-sm" for="res-month-end">Finaliza</label>
+                                            <input type="text" class="res-month-end input-premium input-premium-readonly" readonly id="res-month-end">
+                                        </div>
+                                    </div>
+                                    <div id="standard-fields" class="dynamic-row-premium dynamic-row-premium--center dynamic-row-premium--hidden" data-display="flex">
+                                        <div class="form-group-premium fg-200">
+                                            <label class="fg-label fg-label-sm" for="res-start">Inicio</label>
+                                            <input type="text" class="res-start input-premium" placeholder="Fecha y hora..." id="res-start">
+                                        </div>
+                                        <div class="form-group-premium fg-200">
+                                            <label class="fg-label fg-label-sm" for="res-end">Fin</label>
+                                            <input type="text" class="res-end input-premium" placeholder="Fecha y hora..." id="res-end">
+                                        </div>
                                     </div>
                                 </div>
+
+                                <!-- CONTENEDOR DE DISPONIBILIDAD DE FECHAS / HORAS -->
+                                <div id="availability-status-container">
+                                    <div id="availability-badge" class="availability-badge-premium"></div>
+                                    <div id="hourly-slots-grid" class="hourly-slots-grid-premium"></div>
+                                </div>
+                            </div>
+
+                            <div class="reservation-footer-premium fg-column">
+                                <div class="price-summary-premium text-center is-pendiente">
+                                    <span class="total-label fg-total-label" id="reserva-total-label">Total:</span>
+                                    <span id="reserva-total-original"></span>
+                                    <span class="total-amount fg-lg" id="reserva-total-est">$ ---</span>
+                                    <div id="reserva-discount-line"></div>
+                                    <div id="reserva-rates-detail" class="reserva-rates-detail"></div>
+                                </div>
+                                <button type="submit" class="btn-confirm-premium fg-full-xl">
+                                    <span>CONTINUAR</span>
+                                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </form>
                     </div>

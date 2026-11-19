@@ -49,6 +49,12 @@ class EmailService:
     def _send_email(to_email: str, subject: str, html_content: str):
         """METODO INTERNO PARA ENVIO SINCRONICO (EJECUTADO EN UN HILO)."""
         try:
+            # OMITIR ENVIO A DIRECCIONES O DOMINIOS DE PRUEBA
+            dominios_test = ("@test.com", "@example.com", "@pruebaoc.com", "@test.local", "@autopass.com")
+            if any(to_email.lower().endswith(dom) for dom in dominios_test):
+                logger.info(f"ENVIO DE EMAIL OMITIDO PARA DESTINATARIO DE PRUEBA: {mask_email(to_email)}")
+                return
+
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
             msg["From"] = f"{settings.PROJECT_NAME} <{settings.SMTP_FROM}>"
@@ -162,11 +168,5 @@ class EmailService:
     @staticmethod
     def send_auto_cancelled_notification(to_email: str, user_name: str, res_data: dict):
         """AVISA AL USUARIO QUE SU RESERVA FUE CANCELADA POR NO INGRESAR A TIEMPO."""
-        res_data = EmailService._normalizar_fechas_reserva(res_data)
-        subject = f"Reserva #{res_data['id']} cancelada - AUTOPASS"
-        html_content = EmailService._render_template(
-            "reservation_auto_cancelled.html",
-            user_name=user_name,
-            res_data=res_data
-        )
-        EmailService.send_async_email(to_email, subject, html_content)
+        # SUPRIMIDO: NO ENVIAR CORREO ANTE PRUEBAS O RESERVAS FALLIDAS / CANCELADAS
+        logger.info(f"ENVIO DE EMAIL OMITIDO POR PRUEBA O RESERVA CANCELADA/FALLIDA: {mask_email(to_email)}")

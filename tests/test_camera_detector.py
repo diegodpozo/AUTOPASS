@@ -164,6 +164,25 @@ class TestResolveVideoSource:
         assert source == "http://172.17.111.65:8080/video"
         assert "Usando fuente configurada" in msg
 
+    def test_explicit_numeric_index_source_is_respected(self):
+        # Si el usuario configura explícitamente el índice "1", no se debe forzar al índice 0
+        src_str, msg_str = resolve_video_source(
+            configured_source="1",
+            gate_type="entrada",
+            auto_detect_usb=True,
+            available_devices=[0, 1]
+        )
+        assert src_str == 1
+        assert "Usando cámara USB configurada explícitamente" in msg_str
+
+        src_int, msg_int = resolve_video_source(
+            configured_source=1,
+            gate_type="entrada",
+            auto_detect_usb=True,
+            available_devices=[0, 1]
+        )
+        assert src_int == 1
+
     def test_auto_detect_disabled_respects_configured_source(self):
         source, msg = resolve_video_source(
             configured_source="http://192.168.0.132:8080/video",

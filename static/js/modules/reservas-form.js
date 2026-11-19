@@ -41,91 +41,6 @@ import {
 // flags marcan la interacción real del usuario: tocar una fecha y confirmar.
 let fechaReservaTocada = false;
 let reservaConfirmada = false;
-let currentBookingStep = 1;
-
-export function getBookingStep() {
-    return currentBookingStep;
-}
-
-export function updateStepSummaries() {
-    const vehicleSelect = document.querySelector('.res-vehicle');
-    const sucursalSelect = document.querySelector('.res-sucursal');
-    const typeSelect = document.querySelector('.res-type');
-    const pane3 = document.getElementById('res-step-pane-3');
-
-    const chipVehVal = document.getElementById('summary-val-vehicle');
-    if (chipVehVal && vehicleSelect) {
-        const opt = vehicleSelect.selectedOptions ? vehicleSelect.selectedOptions[0] : null;
-        chipVehVal.textContent = (opt && opt.value) ? opt.textContent.trim() : '--';
-    }
-
-    const chipSucVal = document.getElementById('summary-val-sucursal');
-    const chipSucIcon = document.getElementById('summary-chip-step3-icon');
-    const chipSucWrapper = document.getElementById('summary-chip-sucursal');
-    const btnBack2 = document.getElementById('btn-back-to-step-2');
-
-    if (pane3 && pane3.classList.contains('is-type-selected')) {
-        if (chipSucVal && typeSelect) {
-            const opt = typeSelect.selectedOptions ? typeSelect.selectedOptions[0] : null;
-            chipSucVal.textContent = (opt && opt.value) ? opt.textContent.trim() : 'Hora';
-        }
-        if (chipSucIcon) {
-            chipSucIcon.className = 'fas fa-clock';
-        }
-        if (chipSucWrapper) {
-            chipSucWrapper.title = 'Estadía seleccionada (clic para cambiar)';
-        }
-        if (btnBack2) {
-            btnBack2.title = 'Cambiar tipo de estadía';
-        }
-    } else {
-        if (chipSucVal && sucursalSelect) {
-            const opt = sucursalSelect.selectedOptions ? sucursalSelect.selectedOptions[0] : null;
-            chipSucVal.textContent = (opt && opt.value) ? opt.textContent.trim() : '--';
-        }
-        if (chipSucIcon) {
-            chipSucIcon.className = 'fas fa-location-dot';
-        }
-        if (chipSucWrapper) {
-            chipSucWrapper.title = 'Sucursal seleccionada (clic para cambiar)';
-        }
-        if (btnBack2) {
-            btnBack2.title = 'Volver a seleccionar sucursal';
-        }
-    }
-}
-
-export function updateStepButtons() {
-    const vehicle = document.querySelector('.res-vehicle')?.value;
-    const sucursal = document.querySelector('.res-sucursal')?.value;
-
-    const btnNext2 = document.getElementById('btn-next-to-step-2');
-    if (btnNext2) {
-        btnNext2.disabled = !vehicle;
-    }
-
-    const btnNext3 = document.getElementById('btn-next-to-step-3');
-    if (btnNext3) {
-        btnNext3.disabled = !sucursal;
-    }
-}
-
-export function goToBookingStep(step) {
-    currentBookingStep = Math.max(1, Math.min(3, step));
-
-    const pane1 = document.getElementById('res-step-pane-1');
-    const pane2 = document.getElementById('res-step-pane-2');
-    const pane3 = document.getElementById('res-step-pane-3');
-
-    if (pane1) pane1.classList.toggle('is-active', currentBookingStep === 1);
-    if (pane2) pane2.classList.toggle('is-active', currentBookingStep === 2);
-    if (pane3) pane3.classList.toggle('is-active', currentBookingStep === 3);
-
-    updateStepSummaries();
-    updateStepButtons();
-    updateReservationStepper();
-    syncStepperToCardHeight();
-}
 
 // Texto de ayuda de los campos de fecha. El input que se ve en pantalla NO es
 // el del HTML sino el "altInput" que crea Flatpickr: ese hereda las clases,
@@ -294,20 +209,11 @@ export function initReservationForm() {
     if (typeSelect) {
         typeSelect.addEventListener('change', (e) => {
             resetSlotRange();
-            const val = e.target.value;
-            const pane3 = document.getElementById('res-step-pane-3');
-            if (val) {
-                if (pane3) pane3.classList.add('is-type-selected');
-            } else {
-                if (pane3) pane3.classList.remove('is-type-selected');
-            }
-            updateFormGroups(val);
+            updateFormGroups(e.target.value);
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
-            updateStepSummaries();
             updateReservationStepper();
-            syncStepperToCardHeight();
         });
     }
 
@@ -319,12 +225,7 @@ export function initReservationForm() {
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
-            updateStepSummaries();
-            updateStepButtons();
             updateReservationStepper();
-            if (vehicleSelect.value) {
-                setTimeout(() => goToBookingStep(2), 120);
-            }
         });
     }
 
@@ -337,116 +238,7 @@ export function initReservationForm() {
             updateDisabledDatesInPicker();
             updateHourlySlotsUI();
             updatePeriodAvailabilityBadge();
-            updateStepSummaries();
-            updateStepButtons();
             updateReservationStepper();
-            if (sucursalSelect.value) {
-                setTimeout(() => goToBookingStep(3), 120);
-            }
-        });
-    }
-
-    // Botones de avance y retroceso entre pasos
-    const btnNext2 = document.getElementById('btn-next-to-step-2');
-    if (btnNext2) {
-        btnNext2.addEventListener('click', () => {
-            const v = document.querySelector('.res-vehicle')?.value;
-            if (v) goToBookingStep(2);
-        });
-    }
-
-    const btnNext3 = document.getElementById('btn-next-to-step-3');
-    if (btnNext3) {
-        btnNext3.addEventListener('click', () => {
-            const s = document.querySelector('.res-sucursal')?.value;
-            if (s) goToBookingStep(3);
-        });
-    }
-
-    const btnBack1 = document.getElementById('btn-back-to-step-1');
-    if (btnBack1) {
-        btnBack1.addEventListener('click', () => goToBookingStep(1));
-    }
-
-    const btnBack2 = document.getElementById('btn-back-to-step-2');
-    if (btnBack2) {
-        btnBack2.addEventListener('click', () => {
-            const pane3 = document.getElementById('res-step-pane-3');
-            if (pane3 && pane3.classList.contains('is-type-selected')) {
-                pane3.classList.remove('is-type-selected');
-                const tSelect = document.querySelector('.res-type');
-                if (tSelect) tSelect.value = '';
-                updateFormGroups('');
-                resetSlotRange();
-                updateStepSummaries();
-                updateReservationStepper();
-                syncStepperToCardHeight();
-            } else {
-                goToBookingStep(2);
-            }
-        });
-    }
-
-    const chipVeh = document.getElementById('summary-chip-vehicle');
-    if (chipVeh) {
-        chipVeh.addEventListener('click', () => goToBookingStep(1));
-        chipVeh.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                goToBookingStep(1);
-            }
-        });
-    }
-
-    const chipSuc = document.getElementById('summary-chip-sucursal');
-    if (chipSuc) {
-        const handleChipStep3Click = () => {
-            const pane3 = document.getElementById('res-step-pane-3');
-            if (pane3 && pane3.classList.contains('is-type-selected')) {
-                pane3.classList.remove('is-type-selected');
-                const tSelect = document.querySelector('.res-type');
-                if (tSelect) tSelect.value = '';
-                updateFormGroups('');
-                resetSlotRange();
-                updateStepSummaries();
-                updateReservationStepper();
-                syncStepperToCardHeight();
-            } else {
-                goToBookingStep(2);
-            }
-        };
-        chipSuc.addEventListener('click', handleChipStep3Click);
-        chipSuc.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleChipStep3Click();
-            }
-        });
-    }
-
-    // Clic en pasos del stepper para volver a pasos completados o disponibles
-    const stepperEl = document.getElementById('reservation-stepper');
-    if (stepperEl) {
-        const stepItems = stepperEl.querySelectorAll('.stepper-step');
-        stepItems.forEach(s => {
-            s.addEventListener('click', () => {
-                const targetStep = parseInt(s.dataset.step, 10);
-                const vehicle = document.querySelector('.res-vehicle')?.value;
-                const sucursal = document.querySelector('.res-sucursal')?.value;
-                if (targetStep === 1) {
-                    goToBookingStep(1);
-                } else if (targetStep === 2 && vehicle) {
-                    goToBookingStep(2);
-                } else if (targetStep === 3 && sucursal) {
-                    goToBookingStep(3);
-                }
-            });
-            s.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    s.click();
-                }
-            });
         });
     }
 
@@ -475,13 +267,12 @@ export function initReservationForm() {
 
     // P2.5 UX/UI: stepper global disponible para el sincronizador de precio
     window.updateReservationStepper = updateReservationStepper;
-    window.goToBookingStep = goToBookingStep;
-    goToBookingStep(1);
+    updateReservationStepper();
     initStepperHeightSync();
 }
 
 // P2.5 UX/UI: refleja el progreso de la reserva en el stepper.
-// Calcula el estado según los datos ya completados en el formulario y el paso actual.
+// Calcula el estado según los datos ya completados en el formulario.
 export function updateReservationStepper() {
     const stepper = document.getElementById('reservation-stepper');
     if (!stepper) return;
@@ -501,10 +292,10 @@ export function updateReservationStepper() {
         ? Boolean(document.querySelector('.res-time-only')?.value)
         : fechaReservaTocada;
 
-    let active = currentBookingStep;
-    if (currentBookingStep === 3 && horarioElegido) {
-        active = 4;
-    }
+    let active = 1;
+    if (vehicle) active = 2;
+    if (vehicle && sucursal) active = 3;
+    if (vehicle && sucursal && horarioElegido) active = 4;
     const complete = reservaConfirmada;
 
     steps.forEach((s, i) => {
@@ -512,14 +303,6 @@ export function updateReservationStepper() {
         s.classList.remove('is-active', 'is-done');
         if (complete || idx < active) s.classList.add('is-done');
         else if (idx === active) s.classList.add('is-active');
-
-        // Permite saltar con clic a los pasos completados o disponibles
-        const isClickable = (idx === 1) ||
-                            (idx === 2 && Boolean(vehicle)) ||
-                            (idx === 3 && Boolean(vehicle && sucursal));
-        s.classList.toggle('is-clickable', isClickable);
-        s.setAttribute('role', 'button');
-        s.setAttribute('tabindex', isClickable ? '0' : '-1');
     });
     lines.forEach((l, i) => l.classList.toggle('is-done', complete || i + 1 < active));
     syncStepperToCardHeight();
@@ -628,8 +411,6 @@ export async function refreshReservationFormState() {
                     updateReservationPrice();
                 }
             }
-            updateStepSummaries();
-            updateStepButtons();
 
             try {
                 if (getUserVehicles().length === 1) {
@@ -660,8 +441,6 @@ export async function refreshReservationFormState() {
                 getBranchesData().map(b => `<option value="${b.nombre}">${b.nombre}</option>`).join('');
             if (currentVal) select.value = currentVal;
         });
-        updateStepSummaries();
-        updateStepButtons();
     } else {
         // No dejar el select colgado en "Cargando sucursales..." ante un fallo.
         console.error('[!] Error al cargar sucursales:', resBranches.status, resBranches.error);
@@ -678,8 +457,6 @@ export async function refreshReservationFormState() {
         const sucursal = document.querySelector('.res-sucursal')?.value || null;
         await fetchRates(sucursal);
     } finally {
-        updateStepSummaries();
-        updateStepButtons();
         updateReservationStepper();
     }
 }
@@ -703,9 +480,6 @@ export function resetReservaForm() {
         const fpObj = Array.isArray(fp) ? fp[0] : fp;
         if (fpObj && typeof fpObj.clear === 'function') fpObj.clear();
     });
-    const pane3 = document.getElementById('res-step-pane-3');
-    if (pane3) pane3.classList.remove('is-type-selected');
-    goToBookingStep(1);
     updateReservationStepper();
     const btnSpan = document.querySelector('.btn-confirm-premium span');
     if (btnSpan) btnSpan.innerText = 'CONTINUAR';
@@ -796,9 +570,6 @@ scrollToElement(container);
                 document.querySelector('.res-end').value = r.fecha_fin;
             }
         }
-        const pane3 = document.getElementById('res-step-pane-3');
-        if (pane3 && r.tipo_estadia) pane3.classList.add('is-type-selected');
-        goToBookingStep(3);
         updateReservationPrice();
     }, 500);
 }
@@ -884,9 +655,9 @@ export async function createReservation(e) {
     const tipo = tipoEl.value;
     const originalContent = btn.innerHTML;
     
-    if (!patente) { goToBookingStep(1); console.groupEnd(); return marcarFaltaReserva(patenteEl, 'Seleccioná un vehículo', 'info'); }
-    if (!sucursal) { goToBookingStep(2); console.groupEnd(); return marcarFaltaReserva(sucursalEl, 'Seleccioná una sucursal', 'info'); }
-    if (!tipo) { goToBookingStep(3); console.groupEnd(); return marcarFaltaReserva(tipoEl, 'Seleccioná tipo de estadía', 'info'); }
+    if (!patente) { console.groupEnd(); return marcarFaltaReserva(patenteEl, 'Seleccioná un vehículo', 'info'); }
+    if (!sucursal) { console.groupEnd(); return marcarFaltaReserva(sucursalEl, 'Seleccioná una sucursal', 'info'); }
+    if (!tipo) { console.groupEnd(); return marcarFaltaReserva(tipoEl, 'Seleccioná tipo de estadía', 'info'); }
 
     let inicio, fin;
 
@@ -1132,9 +903,6 @@ export async function repeatReservation(patente, sucursal, tipo) {
             tSelect.value = tipo;
             updateFormGroups(tipo);
         }
-        const pane3 = document.getElementById('res-step-pane-3');
-        if (pane3 && tipo) pane3.classList.add('is-type-selected');
-        goToBookingStep(3);
         showToast('¡Datos cargados! Seleccioná la nueva fecha.', 'info');
     }, 500);
 }

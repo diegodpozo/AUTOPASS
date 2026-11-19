@@ -46,3 +46,10 @@ DEFENSA_FASE2/
 EXPLICACION_DE_CODIGO.zip
 EXPLICACION DE CODIGO.zip
 
+# Reportes temporales exportados y archivos de sesion
+/*_2026-*.html
+/reporte_backlog_autopass.html
+conversacion-de-sesion.jsonl
+scratch/
+
+

@@ -134,6 +134,21 @@ def resolve_video_source(
     if not auto_detect_usb or not is_alpr_gate:
         return configured_source, f"[INFO] Modo {gt.upper()}: Usando fuente configurada ({configured_source})"
 
+    # Si el usuario configuró explícitamente un índice numérico local (ej: "0", "1", 0, 1),
+    # respetar esa selección manual en vez de forzar el primer dispositivo detectado
+    is_explicit_local = (
+        isinstance(configured_source, int) or
+        (isinstance(configured_source, str) and str(configured_source).strip().isdigit())
+    )
+    if is_explicit_local:
+        chosen_idx = int(configured_source)
+        if available_devices is not None and len(available_devices) > 0:
+            if chosen_idx in available_devices:
+                return chosen_idx, f"[OK] Usando cámara USB configurada explícitamente (Dispositivo {chosen_idx})"
+            else:
+                return chosen_idx, f"[AVISO] Cámara USB {chosen_idx} configurada pero no figura en dispositivos disponibles"
+        return chosen_idx, f"[OK] Usando cámara USB configurada explícitamente (Dispositivo {chosen_idx})"
+
     # Obtener dispositivos disponibles si no fueron inyectados (inyección útil para tests)
     if available_devices is None:
         available_devices = find_available_usb_cameras(max_devices=4)

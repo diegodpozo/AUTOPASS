@@ -26,6 +26,9 @@
 
 ## Control de versiones (git)
 
+- **REPOSITORIO Y DESTINO DE PUSH EXCLUSIVO:**
+  - El repositorio remoto único del proyecto (`origin`) es el repositorio personal de **`diegodpozo`**: `https://github.com/diegodpozo/AUTOPASS.git`.
+  - **Cualquier `git push` ordenado por el usuario debe realizarse ÚNICA Y EXCLUSIVAMENTE sobre el repositorio de `diegodpozo`** (`origin`). No existe ni se utiliza ningún otro repositorio remoto ni secundario.
 - **NUNCA hacer `git commit` ni `git push` (ni `--force`) salvo que el usuario lo pida expresamente**, indicando el mensaje de commit cuando corresponda. Esto incluye cambios en documentación, manuales, imágenes, `.env`, AGENTS.md y cualquier otro archivo: aunque el cambio parezca terminado o solicitado en conversación, hasta que no haya un pedido explícito de commitear/pushear, los cambios quedan locales.
 - Antes de hacer `git push`, verificar que no haya conflictos de merge sin resolver (marcas `<<<<<<<`, `=======`, `>>>>>>>`) en ningún archivo del proyecto.
 - Si durante un `git rebase`, `git merge` o `git pull` surge un conflicto, AVISAR AL USUARIO antes de resolverlo. No resolver conflictos automáticamente sin autorización.
@@ -52,7 +55,7 @@
 
 ## Backlog web (backlogAUTOPASS)
 
-- El tablero vive en el repo `backlogAUTOPASS/` (sitio: `https://marianojac.github.io/backlogAUTOPASS/`). El `DATA` dentro de `index.html` es solo la semilla/fallback: si Firebase (`backlog/rows2`) tiene datos, la app los usa e IGNORA el `DATA` del HTML.
+- El tablero vive en la carpeta `backlogAUTOPASS/` (o su despliegue web). El `DATA` dentro de `index.html` es solo la semilla/fallback: si Firebase (`backlog/rows2`) tiene datos, la app los usa e IGNORA el `DATA` del HTML.
 - Por lo tanto, para que filas/secciones nuevas (o ediciones hechas a mano en `index.html`) se vean en el tablero, hay que escribirlas también en Firebase:
   - `GET https://backlog-dd061-default-rtdb.firebaseio.com/backlog/rows2.json`
   - `PUT` (reemplazo completo del array) con la lista final; Firebase está en reglas de lectura/escritura pública.

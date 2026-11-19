@@ -31,5 +31,5 @@ Toda la documentación técnica, de requerimientos, arquitectura y construcción
 
 ## 3. Conexión con el Tablero de Trabajo
 
-- **Tablero Web del Backlog:** `https://marianojac.github.io/backlogAUTOPASS/` (repositorio `backlogAUTOPASS/`).
+- **Tablero Web del Backlog:** Carpeta local `backlogAUTOPASS/` (desplegable en GitHub Pages).
 - **Actualización por API:** Según las directivas especificadas en [`AGENTS.md`](AGENTS.md).

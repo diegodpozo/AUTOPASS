@@ -87,7 +87,7 @@ AUTOPASS/
 #### Opción recomendada (automática)
 ```bash
 # Clonar el repositorio
-git clone https://github.com/MarianoJAC/AUTOPASS.git
+git clone https://github.com/diegodpozo/AUTOPASS.git
 cd AUTOPASS
 
 # Ejecutar el instalador — crea venv, instala dependencias, configura .env,

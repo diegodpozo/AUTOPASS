@@ -1702,7 +1702,7 @@
 --------------------------------------------------------------------------- */
 .res-day-line {
     width: 100%;
-    max-width: 420px;
+    max-width: 320px;
     margin: 0 auto;
     cursor: pointer;
 }
@@ -1710,11 +1710,11 @@
 .res-day-box {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     height: var(--control-height-md);
     padding: 0 16px;
-    background-color: var(--bg-main);
+    background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     box-sizing: border-box;
@@ -1836,210 +1836,6 @@
 .form-group-premium.fg-330 { margin-bottom: 0; flex: 1 1 120px; min-width: 100px; max-width: 140px; align-items: center; }
 .form-group-premium.fg-144 { margin-bottom: 0; flex: 0 0 130px; min-width: 100px; max-width: 140px; align-items: center; }
 .form-group-premium.fg-col { display: flex; flex-direction: column; width: 100%; max-width: 350px; align-items: center; }
-.form-group-premium.fg-step-select { width: 100%; max-width: 420px; align-items: center; margin: 0 auto; }
-
-/* --- PASOS SECUENCIALES DE RESERVA (STEP-BY-STEP) --- */
-.res-step-pane {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    animation: fadeIn 0.3s ease;
-}
-
-.res-step-pane.is-active {
-    display: flex;
-}
-
-/* Cuando el tipo de estadía está seleccionado en Paso 3, se oculta su selector para dejar sólo la fecha */
-#res-step-pane-3.is-type-selected #group-res-type {
-    display: none !important;
-}
-
-#res-step-pane-3:not(.is-type-selected) #dynamic-fields-premium {
-    display: none !important;
-}
-
-#res-step-pane-3:not(.is-type-selected) #availability-status-container {
-    display: none !important;
-}
-
-#res-step-pane-3:not(.is-type-selected) .reservation-footer-premium {
-    display: none !important;
-}
-
-/* Fila de campos horarios del mismo ancho que los selectores */
-#hourly-fields {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    justify-content: center;
-}
-
-.res-step-nav-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 420px;
-    margin-bottom: 14px;
-    gap: 10px;
-}
-
-.btn-step-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: rgba(229, 169, 60, 0.08);
-    border: 1px solid rgba(229, 169, 60, 0.3);
-    color: var(--dorado);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.btn-step-back:hover {
-    background: rgba(229, 169, 60, 0.2);
-    border-color: var(--dorado);
-    transform: translateX(-2px);
-}
-
-.btn-step-back i {
-    font-size: 0.75rem;
-    transition: transform 0.2s ease;
-}
-
-.btn-step-back:hover i {
-    transform: translateX(-2px);
-}
-
-.res-step-summary-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #aaa;
-    font-size: 0.75rem;
-    padding: 5px 12px;
-    border-radius: var(--radius-full);
-    max-width: 220px;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.res-step-summary-chip:hover {
-    border-color: rgba(229, 169, 60, 0.4);
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.res-step-summary-chip i {
-    color: var(--dorado);
-    font-size: 0.75rem;
-    flex-shrink: 0;
-}
-
-.res-step-summary-chip .chip-val {
-    color: #fff;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.res-step-actions {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin-top: 18px;
-}
-
-.btn-step-next {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: var(--dorado);
-    color: #000;
-    border: none;
-    border-radius: var(--radius-full);
-    font-weight: 900;
-    font-size: 0.88rem;
-    letter-spacing: 0.5px;
-    padding: 12px 30px;
-    min-width: 180px;
-    max-width: 320px;
-    width: 100%;
-    cursor: pointer;
-    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.btn-step-next:hover:not(:disabled) {
-    background: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(229, 169, 60, 0.25);
-}
-
-.btn-step-next:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    filter: grayscale(0.6);
-}
-
-.btn-step-next i {
-    font-size: 0.75rem;
-    transition: transform 0.2s ease;
-}
-
-.btn-step-next:hover:not(:disabled) i {
-    transform: translateX(3px);
-}
-
-.stepper-step.is-clickable {
-    cursor: pointer;
-}
-
-.stepper-step.is-clickable:hover .stepper-dot {
-    border-color: var(--dorado);
-    box-shadow: 0 0 10px rgba(229, 169, 60, 0.4);
-}
-
-@media (max-width: 640px) {
-    .res-step-nav-header,
-    .form-group-premium.fg-step-select,
-    #hourly-fields,
-    .res-day-line {
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-    .res-day-box {
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    .btn-step-next {
-        width: 100%;
-        min-width: 0;
-    }
-    .res-step-summary-chip {
-        max-width: 180px;
-    }
-}
-
-@media (max-width: 480px) {
-    .res-day-line-input {
-        font-size: 0.88rem !important;
-    }
-    .res-step-summary-chip {
-        max-width: 150px;
-    }
-}
 
 /* Form directo (quick add) */
 .form-compact-premium.fg-bare { padding: 0; background: transparent; border: none; box-shadow: none; }
